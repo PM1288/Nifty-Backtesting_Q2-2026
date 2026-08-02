@@ -1,0 +1,46 @@
+# Example only. Production must load authoritative, effective-dated exchange and
+# broker rules. Do not infer historical rules from the current weekday.
+session_profiles:
+  - profile_id: NSE_CM_REGULAR_V1
+    exchange: NSE
+    segment: NSE_CM
+    timezone: Asia/Kolkata
+    effective_from: 2000-01-01
+    regular_open: "09:15"
+    regular_close: "15:30"
+    bar_timestamp_semantics: bar_start
+    bar_close_inclusive: false
+  - profile_id: NSE_FO_PRE_CAS_V1
+    exchange: NSE
+    segment: NSE_FO
+    timezone: Asia/Kolkata
+    effective_from: 2000-01-01
+    effective_to: 2026-08-02
+    regular_open: "09:15"
+    regular_close: "15:30"
+    expiry_close: "15:30"
+  - profile_id: NSE_FO_CAS_V1
+    exchange: NSE
+    segment: NSE_FO
+    timezone: Asia/Kolkata
+    effective_from: 2026-08-03
+    regular_open: "09:15"
+    regular_close: "15:40"
+    expiry_close: "15:40"
+
+expiry_rules:
+  - rule_id: NIFTY_WEEKLY_TUESDAY_EXAMPLE
+    underlying_scope: NIFTY
+    frequency: weekly
+    weekday: 1
+    effective_from: 2026-01-01
+    holiday_adjustment: previous_trading_day
+  - rule_id: STOCK_MONTHLY_LAST_TUESDAY_EXAMPLE
+    underlying_scope: STOCK_OPTIONS
+    frequency: monthly
+    weekday: 1
+    effective_from: 2026-01-01
+    holiday_adjustment: previous_trading_day
+
+holidays: []
+special_trading_days: []

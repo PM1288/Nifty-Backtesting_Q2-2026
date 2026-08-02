@@ -1,0 +1,4 @@
+platform/nifty_stratlab/.venv/
+platform/nifty_stratlab/__pycache__/
+platform/nifty_stratlab/**/__pycache__/
+platform/nifty_stratlab/outputs/

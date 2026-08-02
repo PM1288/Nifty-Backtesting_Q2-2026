@@ -1,0 +1,104 @@
+{
+  "$defs": {
+    "Side": {
+      "enum": [
+        "buy",
+        "sell"
+      ],
+      "title": "Side",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "confidence_score": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence Score"
+    },
+    "decision_ts": {
+      "format": "date-time",
+      "title": "Decision Ts",
+      "type": "string"
+    },
+    "feature_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Feature Snapshot Id"
+    },
+    "instrument_id": {
+      "title": "Instrument Id",
+      "type": "string"
+    },
+    "intent_type": {
+      "enum": [
+        "enter",
+        "exit",
+        "carry_review"
+      ],
+      "title": "Intent Type",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    },
+    "reason_codes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "side": {
+      "$ref": "#/$defs/Side"
+    },
+    "signal_id": {
+      "title": "Signal Id",
+      "type": "string"
+    },
+    "strategy_version_id": {
+      "title": "Strategy Version Id",
+      "type": "string"
+    },
+    "symbol": {
+      "title": "Symbol",
+      "type": "string"
+    }
+  },
+  "required": [
+    "signal_id",
+    "strategy_version_id",
+    "instrument_id",
+    "symbol",
+    "decision_ts",
+    "available_at",
+    "side",
+    "intent_type",
+    "reason_codes"
+  ],
+  "title": "SignalIntent",
+  "type": "object"
+}

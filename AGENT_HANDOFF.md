@@ -183,3 +183,18 @@ For future synchronization, review changes from `/home/novius2/trading-stack`
 and copy only maintainable source. Run Gitleaks and the relevant tests before
 staging. Always use `docker compose -p trading-stack-novius2` for the live
 project; omitting `-p` creates an unintended parallel Compose project.
+
+## GitHub publication
+
+- GitHub repository: `PM1288/Nifty-Backtesting_Q2-2026`
+- remote: `https://github.com/PM1288/Nifty-Backtesting_Q2-2026.git`
+- branch: `DEV_PM_CODE`
+- derivatives gate commit: `3e7efbe`
+- canonical stack import commit: `4bf4178`
+- draft pull request: https://github.com/PM1288/Nifty-Backtesting_Q2-2026/pull/1
+- PR base/head: `master` <- `DEV_PM_CODE`
+
+GitHub CLI is installed and authenticated as `PM1288`. Git HTTPS credentials
+are routed through `gh auth git-credential`. Future agents should run
+`gh auth status`, `git status -sb`, the relevant validations, and Gitleaks before
+committing and pushing additional stack changes.

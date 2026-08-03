@@ -437,3 +437,20 @@ PY
 
 Manifest load passed; focused tests passed (`4 passed`) and the full Strategy
 Lab suite passed (`31 passed`). This change was not run across all symbols.
+
+One-symbol execution was then run on the supplied RELIANCE minute CSV:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+PYTHONPATH=src:tools .venv/bin/python tools/run_daily_rising_oversold_intraday.py \
+  --csv /home/novius2/data/nifty-50-minute-data/aaditya555/NIFTY50/RELIANCE.csv \
+  --symbol RELIANCE --start 2024-01-01 --end 2025-07-31 \
+  --output-dir outputs/daily_rising_oversold_reliance_20240101_20250731
+```
+
+Result: `PASS`, 147,205 evaluation bars, 0 entries, 0 closed trades, 0 open
+positions, final cash `₹16,00,000`. The zero-trade result is consistent with the
+strict daily gate: diagnostic counts found zero daily setup bars for RELIANCE in
+this window before the intraday filters were applied. No broker orders were
+created. Review artifacts are in
+`platform/nifty_stratlab/outputs/daily_rising_oversold_reliance_20240101_20250731/`.

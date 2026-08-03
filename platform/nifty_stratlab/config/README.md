@@ -18,6 +18,10 @@ two-standard-deviation lower Bollinger band. It emits at the next minute open;
 the existing target/exit policy remains simulator-owned and the manifest records
 the unchanged 1.25% target assumption.
 
+Run one explicit stock with `tools/run_daily_rising_oversold_intraday.py`; it
+writes `trades.csv`, `signals.csv`, `equity_curve.csv`, `summary.json`,
+`SUMMARY.md`, and a checksummed artifact manifest.
+
 `programme.runtime.example.yml` provides the non-secret V2.0 programme paths and
 safety defaults. Database credentials remain environment variables. Full-estate
 execution is disabled until the documented data and owner gates are accepted.

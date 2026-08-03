@@ -132,15 +132,13 @@ class DailyRisingOversoldIntradayStrategy(BaseStrategy):
         self.willr_below = float(manifest.parameters.get("minute_willr_below", -80))
         self.entry_start = time.fromisoformat(str(manifest.parameters.get("entry_start", "09:30:00")))
         self.entry_end = time.fromisoformat(str(manifest.parameters.get("entry_end", "12:00:00")))
-        self.exit_above = float(manifest.parameters.get("minute_rsi_above", 70))
 
     def on_bar(self, context: StrategyContext) -> Sequence[SignalIntent]:
         values = context.current.features
         local_time = context.current.event_ts.astimezone(ZoneInfo("Asia/Kolkata")).time()
         if context.position_open:
-            minute_rsi = values.get("rsi_14")
-            if minute_rsi is not None and float(minute_rsi) > self.exit_above:
-                return (self.exit_signal(context, ("minute_rsi_above_exit",), {"minute_rsi_14": float(minute_rsi)}),)
+            # This strategy is target-only. The simulator owns intraday/swing
+            # target detection from the actual entry price; no RSI exit signal.
             return ()
         required = (
             values.get("setup_rsi"), values.get("setup_rsi_prev1"), values.get("setup_close"),

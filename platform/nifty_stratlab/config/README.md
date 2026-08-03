@@ -16,7 +16,8 @@ close. A completed 1-minute bar between 09:30 and 12:00 IST must then have
 RSI(14) below 25, Williams %R below -80, and its low above the 20-period,
 two-standard-deviation lower Bollinger band. It emits at the next minute open;
 the existing target/exit policy remains simulator-owned and the manifest records
-the unchanged 1.25% target assumption.
+the unchanged 1.25% target assumption. Positions are target-only: RSI does not
+close a position.
 
 Run one explicit stock with `tools/run_daily_rising_oversold_intraday.py`; it
 writes `trades.csv`, `signals.csv`, `equity_curve.csv`, `summary.json`,

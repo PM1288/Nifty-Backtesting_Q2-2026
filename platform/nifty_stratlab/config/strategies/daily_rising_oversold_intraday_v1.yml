@@ -9,7 +9,6 @@ required_features: [rsi_14, willr_14, bollinger_lower_20_2, setup_rsi, setup_rsi
 parameters:
   minute_rsi_below: 25
   minute_willr_below: -80
-  minute_rsi_above: 70
   entry_start: "09:30:00"
   entry_end: "12:00:00"
   target_exit_pct: 1.25
@@ -18,7 +17,7 @@ assumptions:
   opening_gap: "current session open must be above previous completed session close"
   intraday_entry: "completed 1-minute bar RSI(14) < 25, WILLR(14) < -80, and low above lower Bollinger(20,2)"
   execution: next_1m_bar_open
-  exit: "existing target/exit policy; RSI > 70 exit remains enabled"
+  exit: "target only; target is calculated from the actual buy price and simulator target profile"
   timezone: Asia/Kolkata
   target_exit_pct: 1.25
   order_authority: false

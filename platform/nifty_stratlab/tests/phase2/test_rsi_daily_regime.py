@@ -120,6 +120,7 @@ def test_daily_rising_setup_requires_all_intraday_confirmations():
          "rsi_14": 20, "willr_14": -85, "bollinger_lower_20_2": 100},
     )
     assert strategy.on_bar(StrategyContext(manifest, blocked, None, False)) == ()
+    assert strategy.on_bar(StrategyContext(manifest, bar, None, True)) == ()
 
 
 def test_daily_setup_is_shifted_and_bollinger_is_point_in_time():

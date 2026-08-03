@@ -477,3 +477,15 @@ trades, 0 open positions, final cash `₹15,98,801.77`. Net trade P&L was
 trades exited on the RSI `>70` rule before the target was reached. The detailed
 CSV evidence is in
 `platform/nifty_stratlab/outputs/daily_rising_oversold_reliance_20240101_20250731/`.
+
+Correction: that first relaxed run incorrectly allowed RSI `>70` to emit an exit.
+That behavior has been removed. This strategy is now target-only: the simulator
+calculates the target from the actual buy price and configured ticket/target
+profile, and a position remains open until the target is reached (or the run
+ends). RSI is never an exit condition.
+
+Corrected target-only rerun result: `PASS`, 147,205 bars, 1 entry, 1 closed
+trade, 0 open positions, final cash `₹16,02,501.76`. The trade entered at
+`₹1,340.25` and exited at `₹1,360.15` with exit reason `target_intraday_hit`;
+net P&L after charges was `₹2,501.76`. The previous two-trade RSI-exit result
+must not be used for strategy evaluation.

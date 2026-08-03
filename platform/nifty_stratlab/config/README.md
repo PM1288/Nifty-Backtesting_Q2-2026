@@ -10,8 +10,8 @@ the prior completed session's daily RSI(14) is above 45; exit after completed
 1-minute RSI(14) is above 70. Entries and exits occur at the next minute open.
 
 `strategies/daily_rising_oversold_intraday_v1.yml` adds the new multi-timeframe
-setup. The previous completed daily RSI(14) must be below 30 and above each of
-the two daily RSI values before it; the next session open must exceed that prior
+setup. The previous completed daily RSI(14) must simply be greater than the
+immediately preceding daily RSI(14); the next session open must exceed that prior
 close. A completed 1-minute bar between 09:30 and 12:00 IST must then have
 RSI(14) below 25, Williams %R below -80, and its low above the 20-period,
 two-standard-deviation lower Bollinger band. It emits at the next minute open;

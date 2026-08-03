@@ -7,7 +7,6 @@ plugin: nifty_stratlab.strategies.reference_equity:DailyRisingOversoldIntradaySt
 supported_intervals: [1m]
 required_features: [rsi_14, willr_14, bollinger_lower_20_2, setup_rsi, setup_rsi_prev1, setup_rsi_prev2, setup_close]
 parameters:
-  daily_rsi_below: 30
   minute_rsi_below: 25
   minute_willr_below: -80
   minute_rsi_above: 70
@@ -15,7 +14,7 @@ parameters:
   entry_end: "12:00:00"
   target_exit_pct: 1.25
 assumptions:
-  daily_setup: "previous completed day RSI(14) < 30 and greater than the two preceding daily RSI values"
+  daily_setup: "previous completed day RSI(14) is greater than the immediately preceding daily RSI(14)"
   opening_gap: "current session open must be above previous completed session close"
   intraday_entry: "completed 1-minute bar RSI(14) < 25, WILLR(14) < -80, and low above lower Bollinger(20,2)"
   execution: next_1m_bar_open

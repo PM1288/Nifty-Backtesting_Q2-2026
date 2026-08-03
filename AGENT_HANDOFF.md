@@ -454,3 +454,26 @@ strict daily gate: diagnostic counts found zero daily setup bars for RELIANCE in
 this window before the intraday filters were applied. No broker orders were
 created. Review artifacts are in
 `platform/nifty_stratlab/outputs/daily_rising_oversold_reliance_20240101_20250731/`.
+
+## Relaxed daily RSI gate and RELIANCE rerun (2026-08-03)
+
+The daily condition was relaxed per request. It now requires only:
+
+```text
+setup-day daily RSI(14) > immediately preceding day's daily RSI(14)
+```
+
+The daily `<30` threshold and comparison against the second prior day were
+removed. The opening-gap, 09:30–12:00 intraday RSI/WILLR/Bollinger conditions,
+next-minute-open execution, RSI `>70` exit, and target profile are unchanged.
+
+Focused tests and the full Strategy Lab suite were rerun after this change. The
+RELIANCE bounded runner should be rerun with the same command above; its new
+summary will show whether the relaxed gate creates qualifying signals.
+
+RELIANCE rerun result: `PASS`, 147,205 bars, 2 entries, 2 exits, 2 closed
+trades, 0 open positions, final cash `₹15,98,801.77`. Net trade P&L was
+`₹173.00 - ₹1,371.23 = -₹1,198.23` after the configured delivery charges. Both
+trades exited on the RSI `>70` rule before the target was reached. The detailed
+CSV evidence is in
+`platform/nifty_stratlab/outputs/daily_rising_oversold_reliance_20240101_20250731/`.

@@ -198,3 +198,49 @@ GitHub CLI is installed and authenticated as `PM1288`. Git HTTPS credentials
 are routed through `gh auth git-credential`. Future agents should run
 `gh auth status`, `git status -sb`, the relevant validations, and Gitleaks before
 committing and pushing additional stack changes.
+
+## Live backtesting dashboard ingress repair (2026-08-03)
+
+The backtesting UI is publicly available at:
+
+- overview: `https://n50.nifty50today.co.in/n50/backtesting`
+- runs: `https://n50.nifty50today.co.in/n50/backtesting/runs`
+- strategies: `https://n50.nifty50today.co.in/n50/backtesting/strategies`
+- results: `https://n50.nifty50today.co.in/n50/backtesting/results`
+- regimes: `https://n50.nifty50today.co.in/n50/backtesting/regimes`
+- stocks: `https://n50.nifty50today.co.in/n50/backtesting/stocks`
+- daily summary: `https://n50.nifty50today.co.in/n50/backtesting/daily-summary`
+- comparison: `https://n50.nifty50today.co.in/n50/backtesting/compare`
+
+The dashboard and API were healthy locally, but Cloudflare returned `502`
+because its remotely managed ingress targets
+`http://host.docker.internal:19090` while the connector lacked a Linux
+`host.docker.internal` mapping. The `cloudflared50` connector was relaunched
+with Docker's `host-gateway` mapping. Do not commit or print the tunnel token.
+
+Safe relaunch pattern (obtain the token from the secret manager or Cloudflare,
+never from a tracked file):
+
+```bash
+docker rm -f cloudflared50
+docker run -d \
+  --name cloudflared50 \
+  --restart unless-stopped \
+  --add-host host.docker.internal:host-gateway \
+  cloudflare/cloudflared:latest \
+  tunnel --no-autoupdate run --token "$N50_TUNNEL_TOKEN"
+```
+
+Verification commands and expected result:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' \
+  http://127.0.0.1:19090/n50/backtesting
+curl -sS -o /dev/null -w '%{http_code}\n' \
+  https://n50.nifty50today.co.in/n50/backtesting
+curl -sS -o /dev/null -w '%{http_code}\n' \
+  https://n50.nifty50today.co.in/n50/v1/backtesting/runs
+```
+
+All three probes returned `200` after the repair. The public runs endpoint
+returned latest publish batch `247` with 100-symbol scenarios.

@@ -401,3 +401,39 @@ node sidebar-backtesting-acceptance.mjs
 ```
 
 Live acceptance passed at `https://n50.nifty50today.co.in/n50/backtesting` on desktop `1440x1000` and a real mobile viewport `430x932`. Both tests found all eight sidebar links exactly once, confirmed Backtesting Overview has `aria-current="page"`, confirmed the group is in the initial viewport, and found zero modal login dialogs. Machine-readable evidence is in `docs/backtesting-ui/SIDEBAR_BACKTESTING_TEST_RESULTS.json`; screenshots are `docs/backtesting-ui/screenshots/sidebar-backtesting-desktop.png` and `sidebar-backtesting-mobile.png`.
+
+## Daily rising oversold intraday strategy (2026-08-03)
+
+Added the research-only Strategy Lab manifest and plugin:
+
+```text
+platform/nifty_stratlab/config/strategies/daily_rising_oversold_intraday_v1.yml
+platform/nifty_stratlab/src/nifty_stratlab/strategies/reference_equity.py
+platform/nifty_stratlab/src/nifty_stratlab/features/technical.py
+```
+
+The point-in-time-safe rule is: previous completed daily RSI(14) `< 30` and
+greater than both preceding daily RSI values; next session open above the prior
+close; then a completed 1-minute bar from `09:30:00` through `12:00:00` IST with
+RSI(14) `< 25`, Williams %R `< -80`, and `low > lower Bollinger(20, 2)`. Entry
+is the next 1-minute open and RSI `> 70` remains the exit signal. The manifest
+preserves the existing `1.25%` target assumption; target/stop execution remains
+owned by the simulator, with no broker order authority.
+
+The daily context is shifted before joining to intraday bars, so the current
+day's close cannot leak into its own signal. Validation:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+.venv/bin/python - <<'PY'
+from pathlib import Path
+from nifty_stratlab.strategy.sdk import load_manifest, instantiate_strategy
+m = load_manifest(Path('config/strategies/daily_rising_oversold_intraday_v1.yml'))
+print(m.strategy_version_id, type(instantiate_strategy(m)).__name__)
+PY
+.venv/bin/pytest -q tests/phase2/test_rsi_daily_regime.py
+.venv/bin/pytest -q
+```
+
+Manifest load passed; focused tests passed (`4 passed`) and the full Strategy
+Lab suite passed (`31 passed`). This change was not run across all symbols.

@@ -7,10 +7,10 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from nifty_stratlab.contracts import ProductType
-from nifty_stratlab.features.technical import attach_prior_completed_daily_rsi
+from nifty_stratlab.features.technical import attach_prior_completed_daily_rsi, attach_daily_oversold_setup, compute_technical_features
 from nifty_stratlab.simulation.engine import BacktestEngine
 from nifty_stratlab.simulation.models import SimulationConfig
-from nifty_stratlab.strategies.reference_equity import RsiIntradayDailyRegimeStrategy
+from nifty_stratlab.strategies.reference_equity import DailyRisingOversoldIntradayStrategy, RsiIntradayDailyRegimeStrategy
 from nifty_stratlab.strategy.sdk import StrategyBar, StrategyContext, StrategyManifest
 
 
@@ -92,3 +92,45 @@ def test_daily_rsi_uses_only_prior_completed_session():
     assert first_value.notna().all()
     assert first_value.nunique() == 1
     assert first_value.tolist() == second_value.tolist()
+
+
+def test_daily_rising_setup_requires_all_intraday_confirmations():
+    tz = ZoneInfo("Asia/Kolkata")
+    start = datetime(2026, 8, 4, 9, 30, tzinfo=tz)
+    manifest = StrategyManifest(
+        strategy_id="daily_rising_oversold_intraday", strategy_version_id="daily_rising_oversold_intraday_v1",
+        display_name="Daily Rising", version=1, archetype="test", plugin="test:plugin",
+        supported_intervals=("1m",), required_features=(), parameters={}, assumptions={}, owner="test",
+    )
+    strategy = DailyRisingOversoldIntradayStrategy(manifest)
+    bar = StrategyBar(
+        "AAA", "NSE:AAA", start, start + timedelta(minutes=1), "1m", 101, 102, 100.5, 101, 1000,
+        {"setup_rsi": 28, "setup_rsi_prev1": 24, "setup_rsi_prev2": 26, "setup_close": 100,
+         "rsi_14": 20, "willr_14": -85, "bollinger_lower_20_2": 100},
+    )
+    result = strategy.on_bar(StrategyContext(manifest, bar, None, False))
+    assert len(result) == 1
+    assert result[0].reason_codes == (
+        "daily_rsi_lt_30", "daily_rsi_gt_previous_two", "open_gt_previous_day_close",
+        "minute_rsi_lt_25", "minute_willr_lt_minus80", "low_gt_bollinger_lower",
+    )
+    blocked = StrategyBar(
+        "AAA", "NSE:AAA", start, start + timedelta(minutes=1), "1m", 101, 102, 99, 101, 1000,
+        {"setup_rsi": 28, "setup_rsi_prev1": 24, "setup_rsi_prev2": 26, "setup_close": 100,
+         "rsi_14": 20, "willr_14": -85, "bollinger_lower_20_2": 100},
+    )
+    assert strategy.on_bar(StrategyContext(manifest, blocked, None, False)) == ()
+
+
+def test_daily_setup_is_shifted_and_bollinger_is_point_in_time():
+    tz = ZoneInfo("Asia/Kolkata")
+    rows = []
+    for day in range(45):
+        session = datetime(2026, 6, 1, 9, 15, tzinfo=tz) + timedelta(days=day)
+        for minute in range(25):
+            close = 100 + day + minute * 0.01
+            rows.append({"symbol": "AAA", "event_ts": session + timedelta(minutes=minute), "open": close,
+                         "high": close + 0.1, "low": close - 0.1, "close": close, "volume": 1000})
+    frame = attach_daily_oversold_setup(compute_technical_features(pd.DataFrame(rows)))
+    assert "bollinger_lower_20_2" in frame.columns
+    assert {"setup_rsi", "setup_rsi_prev1", "setup_rsi_prev2", "setup_close"}.issubset(frame.columns)

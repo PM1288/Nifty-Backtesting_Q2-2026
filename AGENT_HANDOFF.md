@@ -495,3 +495,40 @@ RELIANCE produced 2 target-only trades: 1 same-day target (`₹135.75` net) and
 1 swing target (`₹1,519.47` net), for total net P&L `₹1,655.22`. Final cash was
 `₹16,01,655.22`; capital was returned to cash after each target exit. Both exits
 were `target_intraday_hit`; no RSI exit and no stop exit was used.
+
+## Historical CSV minute importer (2026-08-03)
+
+Added the resumable, non-destructive importer documented in
+`docs/csv-minute-import/README.md`. It loads IST regular-session CSV bars into
+`public.bars_1m` without overwriting conflicts and stores technical indicators
+in `research.security_minute_technical`. `catalog.csv_minute_import` records
+SHA-256, requested date scope, counts, timestamps, and status so completed work
+can resume safely.
+
+Important design call: historical rows are not copied to
+`nse_intraday.raw_security_1m`, because that table is monthly-partitioned and the
+operational intraday cleanup job deletes old history. `public.bars_1m` is the
+durable raw source used by the existing stack. The dedicated research feature
+table avoids deleting/rebuilding live operational feature partitions.
+
+Commands used for validation:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+.venv/bin/pip install -e '.[postgres,dev]'
+.venv/bin/pytest -q tests/phase2/test_csv_minute_import.py
+.venv/bin/pytest -q
+```
+
+Live bounded proof imported RELIANCE for `2025-07-01`: 375 accepted IST bars,
+375 new raw rows, and 375 technical rows. Indicator non-null counts were RSI
+361, Williams %R 362, and lower Bollinger 356; earlier nulls are expected
+warm-up. Repeating the same source/date scope kept the raw count at 375 and the
+audit correctly skipped completed work. No existing raw rows were changed or
+deleted. The all-symbol import was not started.
+
+Full-file RELIANCE dry-run proof: 972,529 source rows, 971,871 accepted
+regular-session rows, 658 rejected out-of-session rows, 0 invalid OHLCV rows,
+and 0 duplicate timestamps. Accepted coverage was `2015-02-02 09:15 IST`
+through `2025-08-06 15:29 IST`. Special NSE weekend sessions are deliberately
+retained rather than rejected by weekday.

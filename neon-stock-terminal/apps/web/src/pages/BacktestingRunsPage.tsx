@@ -28,7 +28,7 @@ export function BacktestingRunsPage() {
   const runCategories = runs.data.runs.slice(0, 8).map((row) => formatDateIST(row.asOfDate));
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={tr("Runs / Audit")}
         subtitle={tr("Operational transparency for the Backtesting module: published runs, validations, warnings, and last-known-good snapshot.")}

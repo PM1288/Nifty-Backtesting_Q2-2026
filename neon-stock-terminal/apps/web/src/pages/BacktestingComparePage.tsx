@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { DataTable, ErrorState, KpiCard, LoadingSkeletonCard } from "../components/ui/DashboardPrimitives";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useAuthGate } from "../auth/AuthGateProvider";
@@ -8,6 +8,7 @@ import { formatDateIST, formatNumberIN } from "../lib/format";
 import { useBacktestingCompare } from "../lib/hooks";
 import {
   BacktestingCompareScopeBar,
+  BacktestingContextStrip,
   BacktestingGroupedBarChart,
   BacktestingHeader,
   BacktestingHorizontalBarChart,
@@ -37,6 +38,8 @@ export function BacktestingComparePage() {
   const bestReturn = useMemo(() => [...rows].sort((left, right) => right.totalReturnPct - left.totalReturnPct)[0], [rows]);
   const safestRow = useMemo(() => [...rows].sort((left, right) => right.maxDrawdownPct - left.maxDrawdownPct)[0], [rows]);
   const highestWin = useMemo(() => [...rows].sort((left, right) => right.winRatePct - left.winRatePct)[0], [rows]);
+  const [objective, setObjective] = useState<"return" | "drawdown" | "win">("return");
+  const objectiveWinner = objective === "drawdown" ? safestRow : objective === "win" ? highestWin : bestReturn;
   const regimeOrder = ["Rising", "Falling", "Volatile", "Shock", "Neutral"];
 
   usePageLoadProfile({
@@ -55,12 +58,22 @@ export function BacktestingComparePage() {
   if (compare.error || !compare.data) return <ErrorState title={tr("Compare Strategies is unavailable")} body={tr("The comparison snapshot could not be loaded.")} />;
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={tr("Compare Strategies")}
         subtitle={tr("These three strategies are intentionally different archetypes. Use this page to see which style worked where, not just which one made more money.")}
         testRunAt={compare.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(compare.data.asOfDate) })}
+      />
+
+      <BacktestingContextStrip
+        runLabel={tr("Published comparison")}
+        generatedAt={compare.data.generatedAt}
+        asOfDate={compare.data.asOfDate}
+        universe={universeMode}
+        capital={capitalMode}
+        benchmark="NIFTY 50 price index"
+        state="EXPLORATORY"
       />
 
       <BacktestingCompareScopeBar
@@ -70,10 +83,38 @@ export function BacktestingComparePage() {
         onCapitalChange={(value) => setFilter("capital", value)}
       />
 
+      <section className={styles.compatibilityBanner}>
+        <span className={styles.compatibilityIcon}>✓</span>
+        <div className={styles.compatibilityCopy}>
+          <strong>{tr("Comparison is compatible")}</strong>
+          <span>{tr("Rows share the published test date, universe and capital lens shown above. Rankings are exploratory until OOS and stability gates are supplied.")}</span>
+        </div>
+        <span className={styles.compatibilityBadge}>{tr("LIKE FOR LIKE")}</span>
+      </section>
+
+      <section className={styles.objectiveStory}>
+        <div className={styles.objectiveLead}>
+          <span>{tr("Winner for selected objective")}</span>
+          <strong>{objectiveWinner ? tr(objectiveWinner.displayName) : "—"}</strong>
+          <em>{objectiveWinner ? (objective === "return" ? fmtPct(objectiveWinner.totalReturnPct) : objective === "drawdown" ? fmtPct(objectiveWinner.maxDrawdownPct) : fmtPct(objectiveWinner.winRatePct)) : "—"}</em>
+        </div>
+        <div className={styles.objectiveExplanation}>
+          <label>
+            <span>{tr("Ranking objective")}</span>
+            <select className={styles.input} value={objective} onChange={(event) => setObjective(event.target.value as "return" | "drawdown" | "win")}>
+              <option value="return">{tr("Highest total return")}</option>
+              <option value="drawdown">{tr("Shallowest drawdown")}</option>
+              <option value="win">{tr("Highest closed-trade win rate")}</option>
+            </select>
+          </label>
+          <p>{tr("There is no universal best strategy. Change the objective to see how the leader changes, then inspect its path, open positions and regime fit before deciding.")}</p>
+        </div>
+      </section>
+
       <section className={styles.systemHealthRow}>
-        <KpiCard label={tr("Best total return")} value={bestReturn ? tr(bestReturn.displayName) : "—"} meta={bestReturn ? fmtPct(bestReturn.totalReturnPct) : "—"} tone="green" />
-        <KpiCard label={tr("Best win rate")} value={highestWin ? tr(highestWin.displayName) : "—"} meta={highestWin ? fmtPct(highestWin.winRatePct) : "—"} />
-        <KpiCard label={tr("Shallowest drawdown")} value={safestRow ? tr(safestRow.displayName) : "—"} meta={safestRow ? fmtPct(safestRow.maxDrawdownPct) : "—"} />
+        <KpiCard label={tr("Net economics leader")} value={bestReturn ? tr(bestReturn.displayName) : "—"} meta={bestReturn ? fmtPct(bestReturn.totalReturnPct) : "—"} tone="green" />
+        <KpiCard label={tr("Closed-trade hit-rate leader")} value={highestWin ? tr(highestWin.displayName) : "—"} meta={highestWin ? fmtPct(highestWin.winRatePct) : "—"} />
+        <KpiCard label={tr("Drawdown leader")} value={safestRow ? tr(safestRow.displayName) : "—"} meta={safestRow ? fmtPct(safestRow.maxDrawdownPct) : "—"} />
         <KpiCard label={tr("Strategies compared")} value={formatNumberIN(rows.length)} />
       </section>
 
@@ -118,33 +159,32 @@ export function BacktestingComparePage() {
         <article className={styles.chartPanel}>
           <div className={styles.chartHeader}>
             <div>
-              <h3 className={styles.panelTitle}>{tr("Return vs FD")}</h3>
-              <div className={styles.chartCaption}>{tr("Compare absolute strategy return against excess over the common NIFTY 50 price benchmark without mixing drawdown into the same chart.")}</div>
+              <h3 className={styles.panelTitle}>{tr("Portfolio total return")}</h3>
+              <div className={styles.chartCaption}>{tr("One shared percentage scale keeps the strategy outcome comparison honest and readable.")}</div>
             </div>
           </div>
           <BacktestingGroupedBarChart
             categories={rows.map((row) => tr(row.displayName))}
             series={[
-              { name: tr("Total Return"), values: rows.map((row) => row.totalReturnPct) },
-              { name: tr("Excess vs benchmark"), values: rows.map((row) => row.excessOverFd ?? 0) }
+              { name: tr("Total Return"), values: rows.map((row) => row.totalReturnPct) }
             ]}
             xAxisName={tr("Strategy")}
-            yAxisName={tr("Value")}
-            formatter="currency"
+            yAxisName={tr("Total Return %")}
+            formatter="percent"
           />
         </article>
         <article className={styles.chartPanel}>
           <div className={styles.chartHeader}>
             <div>
               <h3 className={styles.panelTitle}>{tr("Capital sensitivity")}</h3>
-              <div className={styles.chartCaption}>{tr("Same strategies across 10L, 20L, and 50L. This shows how much the result changes once capital constraints loosen.")}</div>
+              <div className={styles.chartCaption}>{tr("Same strategies across 10L, 16L, 20L, and 50L. This shows how much the result changes once capital constraints loosen.")}</div>
             </div>
           </div>
           <BacktestingGroupedBarChart
-            categories={["10L", "20L", "50L"]}
+            categories={["10L", "16L", "20L", "50L"]}
             series={Array.from(new Set(capitalSensitivity.map((row) => row.displayName))).map((displayName) => ({
               name: tr(displayName),
-              values: ["capital_16l", "capital_10l", "capital_20l", "capital_50l"].map((capital) => capitalSensitivity.find((row) => row.displayName === displayName && row.capitalMode === capital)?.totalReturnPct ?? 0)
+              values: ["capital_10l", "capital_16l", "capital_20l", "capital_50l"].map((capital) => capitalSensitivity.find((row) => row.displayName === displayName && row.capitalMode === capital)?.totalReturnPct ?? 0)
             }))}
             xAxisName={tr("Capital Mode")}
             yAxisName={tr("Total Return %")}
@@ -204,7 +244,7 @@ export function BacktestingComparePage() {
             sortValue: (row) => row.displayName,
             cell: (row) => (
               <div className={styles.headline}>
-                <strong>{tr(row.displayName)}</strong>
+                <strong><Link to={`/backtesting/strategies/${row.strategyId}`} className={styles.inlineLink}>{tr(row.displayName)}</Link></strong>
                 <span className={styles.muted}>{tr(humanizeArchetype(row.archetype))}</span>
               </div>
             )

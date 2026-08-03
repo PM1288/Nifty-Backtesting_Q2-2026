@@ -19,6 +19,7 @@ import type {
   BacktestingLinePoint,
   BacktestingPriceIndicatorChart,
   BacktestingScenario,
+  BacktestingScenarioSummary,
   BacktestingStrategyDetailResponse
 } from "../lib/types";
 import { AnalyticsHeader } from "./AnalyticsChrome";
@@ -51,6 +52,7 @@ export function humanizeCapitalMode(value: string) {
   return {
     no_capital_limit: "No Capital Limit",
     capital_10l: "10L",
+    capital_16l: "16L",
     capital_20l: "20L",
     capital_50l: "50L"
   }[value] ?? value;
@@ -95,7 +97,135 @@ export function BacktestingHeader({
   );
 }
 
-const STRATEGY_COLORS = ["#e3b341", "#3fb950", "#58a6ff", "#ff7b72", "#a371f7"];
+export function BacktestingContextStrip({
+  runLabel,
+  generatedAt,
+  asOfDate,
+  universe,
+  capital,
+  benchmark,
+  state = "INCONCLUSIVE"
+}: {
+  runLabel: string;
+  generatedAt: string;
+  asOfDate: string;
+  universe: string;
+  capital: string;
+  benchmark: string;
+  state?: string;
+}) {
+  const { tr } = useI18n();
+  const items = [
+    { label: tr("Run"), value: runLabel },
+    { label: tr("Tested"), value: formatDateIST(generatedAt, { includeTime: true }) },
+    { label: tr("Data through"), value: formatDateIST(asOfDate) },
+    { label: tr("Universe"), value: humanizeUniverse(universe) },
+    { label: tr("Capital"), value: humanizeCapitalMode(capital) },
+    { label: tr("Benchmark"), value: benchmark },
+    { label: tr("Research state"), value: state, state: true }
+  ];
+  return (
+    <section className={styles.backtestContextStrip} aria-label={tr("Backtest identity and assumptions")}>
+      {items.map((item) => (
+        <div key={item.label} className={styles.backtestContextItem} data-state={item.state ? "true" : "false"}>
+          <span>{item.label}</span>
+          <strong>{tr(item.value)}</strong>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export function BacktestingDecisionBrief({
+  summary,
+  closedTrades,
+  title = "Decision brief"
+}: {
+  summary: BacktestingScenarioSummary;
+  closedTrades?: number;
+  title?: string;
+}) {
+  const { tr } = useI18n();
+  const belowCapital = summary.currentValue < summary.investedAmount;
+  const closedBookPositive = summary.realizedPnl > 0;
+  const openBookNegative = summary.unrealizedPnl < 0;
+  const headline = belowCapital && closedBookPositive
+    ? "Closed trades made money, but open positions pulled the total portfolio below starting capital."
+    : belowCapital
+      ? "The portfolio finished below starting capital; the current evidence does not support promotion."
+      : "The portfolio finished above starting capital, but robustness evidence is still required before promotion.";
+  const status = summary.openPositions > 0 ? "INCONCLUSIVE" : summary.totalReturnPct < 0 ? "RESEARCH FAIL" : "PROMISING";
+
+  return (
+    <section className={styles.decisionBrief} data-tone={belowCapital ? "caution" : "positive"}>
+      <div className={styles.decisionStatusColumn}>
+        <span className={styles.decisionEyebrow}>{tr(title)}</span>
+        <strong className={styles.decisionStatus}>{tr(status)}</strong>
+        <span className={styles.decisionQualifier}>{tr("Engineering-ready snapshot; full research acceptance gates are not supplied.")}</span>
+      </div>
+      <div className={styles.decisionNarrative}>
+        <h2>{tr(headline)}</h2>
+        <p>
+          {tr("Read the closed book and open book separately.")} {closedTrades != null ? `${formatNumberIN(closedTrades)} ${tr("closed trades")}; ` : ""}
+          {formatNumberIN(summary.openPositions)} {tr("positions remain open")}.
+          {openBookNegative ? ` ${tr("Their mark-to-market loss is the main reason the headline win rate does not equal final portfolio success.")}` : ""}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export function BacktestingEvidenceCards({
+  summary,
+  closedTrades
+}: {
+  summary: BacktestingScenarioSummary;
+  closedTrades?: number;
+}) {
+  const { tr } = useI18n();
+  return (
+    <section className={styles.evidenceTriptych} aria-label={tr("Good bad and watch evidence")}>
+      <article className={styles.evidenceCard} data-tone="good">
+        <span>{tr("GOOD")}</span>
+        <h3>{tr("Closed-book economics")}</h3>
+        <p>{tr("After-tax realized P&L")} <strong>{fmtCompactCurrency(summary.realizedPnl)}</strong>. {tr("Excess versus the published benchmark")} <strong>{fmtCompactCurrency(summary.excessOverBenchmark ?? summary.excessOverFd)}</strong>.</p>
+      </article>
+      <article className={styles.evidenceCard} data-tone="bad">
+        <span>{tr("BAD")}</span>
+        <h3>{tr("Portfolio mark-to-market")}</h3>
+        <p>{tr("Total return")} <strong>{fmtPct(summary.totalReturnPct)}</strong>; {tr("open-position P&L")} <strong>{fmtCompactCurrency(summary.unrealizedPnl)}</strong>; {tr("max drawdown")} <strong>{fmtPct(summary.maxDrawdownPct)}</strong>.</p>
+      </article>
+      <article className={styles.evidenceCard} data-tone="watch">
+        <span>{tr("WATCH")}</span>
+        <h3>{tr("Interpretation limits")}</h3>
+        <p>{closedTrades != null ? `${fmtPct(summary.winRatePct)} ${tr("win rate covers")} ${formatNumberIN(closedTrades)} ${tr("closed trades only")}. ` : ""}{tr("Open positions, OOS stability, capacity and calibrated target evidence must be resolved before promotion.")}</p>
+      </article>
+    </section>
+  );
+}
+
+export function BacktestingStrategyJourney({ scenario }: { scenario: BacktestingScenario }) {
+  const { tr } = useI18n();
+  const steps = [
+    { n: "01", title: "Rules", body: "Immutable strategy version and scenario assumptions define eligibility." },
+    { n: "02", title: "Signals", body: `${formatNumberIN(scenario.trades.length + scenario.openPositions.length)} accepted positions; ${formatNumberIN(scenario.skippedSignals.length)} signals skipped.` },
+    { n: "03", title: "Closed book", body: `${formatNumberIN(scenario.trades.length)} closed trades produced ${fmtCompactCurrency(scenario.summary.realizedPnl)} after the tax reserve.` },
+    { n: "04", title: "Open book", body: `${formatNumberIN(scenario.openPositions.length)} positions remain open at ${fmtCompactCurrency(scenario.summary.unrealizedPnl)} mark-to-market P&L.` },
+    { n: "05", title: "Portfolio outcome", body: `${fmtCompactCurrency(scenario.summary.currentValue)} ending value; ${fmtPct(scenario.summary.totalReturnPct)} total return.` }
+  ];
+  return (
+    <section className={styles.strategyJourney} aria-label={tr("Strategy journey")}>
+      {steps.map((step) => (
+        <article key={step.n} className={styles.journeyStep}>
+          <span>{step.n}</span>
+          <div><h3>{tr(step.title)}</h3><p>{tr(step.body)}</p></div>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+const STRATEGY_COLORS = ["#2563a6", "#0f8a5f", "#d4a72c", "#c23b3b", "#7a5ba7"];
 const GRID = {
   top: 24,
   right: 18,
@@ -406,8 +536,8 @@ export function BacktestingLineChart({
         type: "line" as const,
         smooth: true,
         showSymbol: false,
-        lineStyle: { width: 2.5, color: "#3fb950" },
-        areaStyle: indexed ? undefined : { color: "rgba(63, 185, 80, 0.12)" },
+        lineStyle: { width: 2.5, color: "#2563a6" },
+        areaStyle: indexed ? undefined : { color: "rgba(37, 99, 166, 0.12)" },
         data: points.map((point) => point.strategyValue)
       },
       ...(benchmark
@@ -417,7 +547,7 @@ export function BacktestingLineChart({
               type: "line" as const,
               smooth: true,
               showSymbol: false,
-              lineStyle: { width: 2, color: "#e6edf3", type: "dashed" as const },
+              lineStyle: { width: 2, color: "#d4a72c", type: "dashed" as const },
               data: points.map((point) => point.benchmarkValue)
             }
           ]
@@ -425,7 +555,7 @@ export function BacktestingLineChart({
     ]
   }), [benchmark, indexed, points, resolvedBenchmarkLabel, resolvedDate, resolvedStrategyLabel, resolvedYAxisName]);
 
-  return <EChartSurface ariaLabel="Backtesting line chart" className={styles.chartSurface} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting line chart" className={styles.chartSurface} option={option} />;
 }
 
 export function BacktestingDrawdownChart({ points }: { points: BacktestingDrawdownPoint[] }) {
@@ -461,19 +591,19 @@ export function BacktestingDrawdownChart({ points }: { points: BacktestingDrawdo
         name: resolvedDrawdown,
         smooth: true,
         showSymbol: false,
-        lineStyle: { width: 2.5, color: "#ff7b72" },
-        areaStyle: { color: "rgba(255, 123, 114, 0.18)" },
+        lineStyle: { width: 2.5, color: "#c23b3b" },
+        areaStyle: { color: "rgba(194, 59, 59, 0.14)" },
         markLine: {
           symbol: "none",
           data: [{ yAxis: 0 }],
-          lineStyle: { color: "rgba(230, 237, 243, 0.35)", type: "dashed" }
+          lineStyle: { color: "rgba(11, 31, 58, 0.28)", type: "dashed" }
         },
         data: points.map((point) => point.drawdownPct)
       }
     ]
   }), [points, resolvedDate, resolvedDrawdown, resolvedDrawdownAxis]);
 
-  return <EChartSurface ariaLabel="Backtesting drawdown chart" className={styles.chartSurface} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting drawdown chart" className={styles.chartSurface} option={option} />;
 }
 
 export function BacktestingMultiLineChart({
@@ -523,7 +653,7 @@ export function BacktestingMultiLineChart({
     }))
   }), [resolvedDate, resolvedIndexed, resolvedSeries]);
 
-  return <EChartSurface ariaLabel="Backtesting multi-line comparison chart" className={styles.chartSurface} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting multi-line comparison chart" className={styles.chartSurface} option={option} />;
 }
 
 export function BacktestingScatterChart({
@@ -593,7 +723,7 @@ export function BacktestingScatterChart({
     ]
   }), [resolvedSizeLabel, resolvedXAxisName, resolvedYAxisName, sizeMax, translatedPoints]);
 
-  return <EChartSurface ariaLabel="Backtesting scatter comparison chart" className={styles.chartSurface} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting scatter comparison chart" className={styles.chartSurface} option={option} />;
 }
 
 export function BacktestingHistogramChart({
@@ -632,13 +762,13 @@ export function BacktestingHistogramChart({
       {
         type: "bar" as const,
         barMaxWidth: 28,
-        itemStyle: { color: "#58a6ff", borderRadius: [6, 6, 0, 0] },
+        itemStyle: { color: "#2563a6", borderRadius: [6, 6, 0, 0] },
         data: rows.map((row) => row.count)
       }
     ]
   }), [resolvedTrades, resolvedXAxisName, resolvedYAxisName, rows]);
 
-  return <EChartSurface ariaLabel="Backtesting histogram chart" className={styles.chartSurface} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting histogram chart" className={styles.chartSurface} option={option} />;
 }
 
 export function BacktestingHorizontalBarChart({
@@ -697,10 +827,10 @@ export function BacktestingHorizontalBarChart({
           itemStyle: {
             color:
               item.tone === "red"
-                ? "#ff7b72"
+                ? "#c23b3b"
                 : item.tone === "white"
-                  ? "#e6edf3"
-                  : "#3fb950",
+                  ? "#617087"
+                  : "#0f8a5f",
             borderRadius: [0, 6, 6, 0]
           }
         }))
@@ -708,7 +838,7 @@ export function BacktestingHorizontalBarChart({
     ]
   }), [resolvedSymbolStrategy, resolvedXAxisName, translatedItems, valueFormatter]);
 
-  return <EChartSurface ariaLabel="Backtesting horizontal bar chart" className={styles.chartSurfaceTall} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting horizontal bar chart" className={styles.chartSurfaceTall} option={option} />;
 }
 
 export function BacktestingGroupedBarChart({
@@ -784,13 +914,13 @@ export function BacktestingGroupedBarChart({
       markLine: {
         symbol: "none",
         data: [{ yAxis: 0 }],
-        lineStyle: { color: "rgba(230, 237, 243, 0.28)", type: "dashed" as const }
+        lineStyle: { color: "rgba(11, 31, 58, 0.24)", type: "dashed" as const }
       },
       data: item.values
     }))
   }), [formatter, resolvedXAxisName, resolvedYAxisName, rotateLabels, translatedCategories, translatedSeries]);
 
-  return <EChartSurface ariaLabel="Backtesting grouped bar chart" className={styles.chartSurface} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting grouped bar chart" className={styles.chartSurface} option={option} />;
 }
 
 export function BacktestingDeploymentChart({
@@ -844,8 +974,8 @@ export function BacktestingDeploymentChart({
         type: "line" as const,
         showSymbol: false,
         smooth: true,
-        lineStyle: { width: 2.5, color: "#58a6ff" },
-        areaStyle: { color: "rgba(88, 166, 255, 0.14)" },
+        lineStyle: { width: 2.5, color: "#2563a6" },
+        areaStyle: { color: "rgba(37, 99, 166, 0.12)" },
         data: points.map((point) => point.deployedCapital)
       },
       {
@@ -854,13 +984,13 @@ export function BacktestingDeploymentChart({
         yAxisIndex: 1,
         showSymbol: false,
         smooth: true,
-        lineStyle: { width: 2, color: "#e3b341", type: "dashed" as const },
+        lineStyle: { width: 2, color: "#d4a72c", type: "dashed" as const },
         data: points.map((point) => point.openPositions)
       }
     ]
   }), [points, resolvedCapitalAxis, resolvedCapitalDeployed, resolvedDate, resolvedOpenAxis, resolvedOpenPositions]);
 
-  return <EChartSurface ariaLabel="Backtesting capital deployment chart" className={styles.chartSurface} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting capital deployment chart" className={styles.chartSurface} option={option} />;
 }
 
 export function BacktestingPriceContextChart({
@@ -947,7 +1077,7 @@ export function BacktestingPriceContextChart({
           xAxisIndex: 0,
           yAxisIndex: 0,
           showSymbol: false,
-          lineStyle: { color: "#e6edf3", width: 2.5 },
+          lineStyle: { color: "#0b1f3a", width: 2.5 },
           data: chart.points.map((point) => point.price)
         },
         {
@@ -956,11 +1086,11 @@ export function BacktestingPriceContextChart({
           xAxisIndex: 1,
           yAxisIndex: 1,
           showSymbol: false,
-          lineStyle: { color: "#3fb950", width: 2 },
+          lineStyle: { color: "#0f8a5f", width: 2 },
           markLine: {
             symbol: "none",
             data: [{ yAxis: 30 }, { yAxis: 50 }, { yAxis: 70 }],
-            lineStyle: { color: "rgba(230, 237, 243, 0.28)", type: "dashed" as const }
+            lineStyle: { color: "rgba(11, 31, 58, 0.24)", type: "dashed" as const }
           },
           data: chart.points.map((point) => point.rsi)
         },
@@ -970,7 +1100,7 @@ export function BacktestingPriceContextChart({
           xAxisIndex: 1,
           yAxisIndex: 1,
           showSymbol: false,
-          lineStyle: { color: "#ff7b72", width: 2 },
+          lineStyle: { color: "#c23b3b", width: 2 },
           data: chart.points.map((point) => point.willr)
         },
         {
@@ -979,7 +1109,7 @@ export function BacktestingPriceContextChart({
           xAxisIndex: 0,
           yAxisIndex: 0,
           symbolSize: 10,
-          itemStyle: { color: "#3fb950" },
+          itemStyle: { color: "#0f8a5f" },
           data: entryMarkers
         },
         {
@@ -988,12 +1118,12 @@ export function BacktestingPriceContextChart({
           xAxisIndex: 0,
           yAxisIndex: 0,
           symbolSize: 10,
-          itemStyle: { color: "#ff7b72" },
+          itemStyle: { color: "#c23b3b" },
           data: exitMarkers
         }
       ]
     };
   }, [chart, resolvedDate, resolvedEntries, resolvedExits, resolvedIndicatorAxis, resolvedPrice, resolvedPriceAxis, resolvedRsi, resolvedWillr]);
 
-  return <EChartSurface ariaLabel="Backtesting price and indicator context chart" className={styles.chartSurfaceTall} option={option} />;
+  return <EChartSurface appearance="light" ariaLabel="Backtesting price and indicator context chart" className={styles.chartSurfaceTall} option={option} />;
 }

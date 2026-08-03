@@ -14,6 +14,30 @@ import {
 import type { EChartsOption, SetOptionOpts } from "echarts";
 import { useI18n, useLocale } from "../../i18n/LocaleProvider";
 
+type ChartAppearance = "dark" | "light";
+
+function chartPalette(appearance: ChartAppearance) {
+  return appearance === "light"
+    ? {
+        text: "rgba(11, 31, 58, 0.78)",
+        muted: "rgba(11, 31, 58, 0.62)",
+        faint: "rgba(11, 31, 58, 0.10)",
+        tooltipBackground: "#0B1F3A",
+        tooltipBorder: "rgba(255, 255, 255, 0.16)",
+        tooltipText: "#ffffff",
+        title: "#0B1F3A"
+      }
+    : {
+        text: "rgba(255, 255, 255, 0.78)",
+        muted: "rgba(255, 255, 255, 0.62)",
+        faint: "rgba(255, 255, 255, 0.08)",
+        tooltipBackground: "#000000",
+        tooltipBorder: "rgba(255, 255, 255, 0.08)",
+        tooltipText: "#ffffff",
+        title: "#ffffff"
+      };
+}
+
 echarts.use([
   BarChart,
   HeatmapChart,
@@ -55,8 +79,9 @@ function translateLegendData(data: unknown, translate: (value: string) => string
   }) as Array<string | Record<string, unknown>>;
 }
 
-function normalizeLegend(legend: unknown, translate: (value: string) => string, fontFamily: string) {
+function normalizeLegend(legend: unknown, translate: (value: string) => string, fontFamily: string, appearance: ChartAppearance) {
   const compact = isCompactViewport();
+  const palette = chartPalette(appearance);
   return asArray<Record<string, unknown>>(legend as Record<string, unknown> | Record<string, unknown>[]).map((item) => {
     const translatedData = item.data ? translateLegendData(item.data, translate) : undefined;
     return {
@@ -69,7 +94,7 @@ function normalizeLegend(legend: unknown, translate: (value: string) => string, 
       itemGap: compact ? 10 : 16,
       ...(translatedData ? { data: translatedData } : {}),
       textStyle: {
-        color: "rgba(255, 255, 255, 0.78)",
+        color: palette.text,
         fontFamily,
         fontSize: compact ? 10 : 11,
         ...(item.textStyle as Record<string, unknown> | undefined)
@@ -109,8 +134,9 @@ function normalizeGrid(
   }));
 }
 
-function normalizeVisualMap(visualMap: unknown, translate: (value: string) => string, fontFamily: string) {
+function normalizeVisualMap(visualMap: unknown, translate: (value: string) => string, fontFamily: string, appearance: ChartAppearance) {
   const compact = isCompactViewport();
+  const palette = chartPalette(appearance);
   return asArray<Record<string, unknown>>(visualMap as Record<string, unknown> | Record<string, unknown>[]).map((item) => ({
     orient: "horizontal",
     left: "center",
@@ -120,7 +146,7 @@ function normalizeVisualMap(visualMap: unknown, translate: (value: string) => st
     itemHeight: compact ? 8 : 9,
     text: Array.isArray(item.text) ? item.text.map((entry) => (typeof entry === "string" ? translate(entry) : entry)) : item.text,
     textStyle: {
-      color: "rgba(255, 255, 255, 0.68)",
+      color: palette.muted,
       fontFamily,
       fontSize: compact ? 9 : 10,
       ...(item.textStyle as Record<string, unknown> | undefined)
@@ -129,7 +155,8 @@ function normalizeVisualMap(visualMap: unknown, translate: (value: string) => st
   }));
 }
 
-function normalizeCalendar(calendar: unknown, hasVisualMap: boolean) {
+function normalizeCalendar(calendar: unknown, hasVisualMap: boolean, appearance: ChartAppearance) {
+  const palette = chartPalette(appearance);
   return asArray<Record<string, unknown>>(calendar as Record<string, unknown> | Record<string, unknown>[]).map((item) => ({
     top: maxNumeric(item.top, 34),
     left: item.left ?? 18,
@@ -137,11 +164,11 @@ function normalizeCalendar(calendar: unknown, hasVisualMap: boolean) {
     bottom: hasVisualMap ? maxNumeric(item.bottom, 88) : item.bottom ?? 44,
     cellSize: item.cellSize ?? ["auto", 18],
     dayLabel: {
-      color: "rgba(255, 255, 255, 0.54)",
+      color: palette.muted,
       ...((item.dayLabel as Record<string, unknown> | undefined) ?? {})
     },
     monthLabel: {
-      color: "rgba(255, 255, 255, 0.78)",
+      color: palette.text,
       ...((item.monthLabel as Record<string, unknown> | undefined) ?? {})
     },
     ...item
@@ -152,11 +179,13 @@ function normalizeAxis(
   axis: unknown,
   isValueAxis: boolean,
   translate: (value: string) => string,
-  fontFamily: string
+  fontFamily: string,
+  appearance: ChartAppearance
 ) {
   const compact = isCompactViewport();
+  const palette = chartPalette(appearance);
   const baseNameTextStyle = {
-    color: "rgba(255, 255, 255, 0.72)",
+    color: palette.text,
     fontFamily,
     fontSize: compact ? 10 : 11,
     fontWeight: 600,
@@ -166,7 +195,7 @@ function normalizeAxis(
   return asArray<Record<string, unknown>>(axis as Record<string, unknown> | Record<string, unknown>[]).map((item) => ({
     ...(typeof item.name === "string" ? { name: translate(item.name) } : {}),
     axisLabel: {
-      color: "rgba(255, 255, 255, 0.68)",
+      color: palette.muted,
       fontFamily,
       fontSize: compact ? 10 : 11,
       hideOverlap: true,
@@ -176,7 +205,7 @@ function normalizeAxis(
     axisLine: {
       show: !isValueAxis,
       lineStyle: {
-        color: "rgba(255, 255, 255, 0.08)",
+        color: palette.faint,
         ...((item.axisLine as { lineStyle?: Record<string, unknown> } | undefined)?.lineStyle ?? {})
       },
       ...(item.axisLine as Record<string, unknown> | undefined)
@@ -188,7 +217,7 @@ function normalizeAxis(
     splitLine: isValueAxis
       ? {
           lineStyle: {
-            color: "rgba(255, 255, 255, 0.08)",
+            color: palette.faint,
             ...((item.splitLine as { lineStyle?: Record<string, unknown> } | undefined)?.lineStyle ?? {})
           },
           ...(item.splitLine as Record<string, unknown> | undefined)
@@ -320,27 +349,29 @@ function applyValueAxisExtents(option: EChartsOption): EChartsOption {
 function normalizeOption(
   option: EChartsOption,
   translate: (value: string) => string,
-  fontFamily: string
+  fontFamily: string,
+  appearance: ChartAppearance
 ): EChartsOption {
+  const palette = chartPalette(appearance);
   const legends = option.legend != null
-    ? normalizeLegend(option.legend, translate, fontFamily)
+    ? normalizeLegend(option.legend, translate, fontFamily, appearance)
     : [];
   const hasVisualMap = option.visualMap != null;
   let nextOption: EChartsOption = {
     backgroundColor: "transparent",
     ...option,
     textStyle: {
-      color: "rgba(255, 255, 255, 0.78)",
+      color: palette.text,
       fontFamily,
       ...(option.textStyle as Record<string, unknown> | undefined)
     },
     tooltip: option.tooltip
       ? {
-        backgroundColor: "#000000",
-        borderColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: palette.tooltipBackground,
+        borderColor: palette.tooltipBorder,
         borderWidth: 1,
         textStyle: {
-          color: "#ffffff",
+          color: palette.tooltipText,
           fontFamily,
           fontSize: 11,
             ...((option.tooltip as { textStyle?: Record<string, unknown> } | undefined)?.textStyle ?? {})
@@ -357,14 +388,14 @@ function normalizeOption(
       ...(typeof item.text === "string" ? { text: translate(item.text) } : {}),
       ...(typeof item.subtext === "string" ? { subtext: translate(item.subtext) } : {}),
       textStyle: {
-        color: "#ffffff",
+        color: palette.title,
         fontFamily,
         fontSize: 13,
         fontWeight: 700,
         ...(item.textStyle as Record<string, unknown> | undefined)
       },
       subtextStyle: {
-        color: "rgba(255, 255, 255, 0.62)",
+        color: palette.muted,
         fontFamily,
         fontSize: 11,
         lineHeight: 16,
@@ -384,22 +415,22 @@ function normalizeOption(
   }
 
   if (option.visualMap != null) {
-    const visualMap = normalizeVisualMap(option.visualMap, translate, fontFamily);
+    const visualMap = normalizeVisualMap(option.visualMap, translate, fontFamily, appearance);
     nextOption.visualMap = (Array.isArray(option.visualMap) ? visualMap : visualMap[0]) as EChartsOption["visualMap"];
   }
 
   if (option.calendar != null) {
-    const calendar = normalizeCalendar(option.calendar, hasVisualMap);
+    const calendar = normalizeCalendar(option.calendar, hasVisualMap, appearance);
     nextOption.calendar = (Array.isArray(option.calendar) ? calendar : calendar[0]) as EChartsOption["calendar"];
   }
 
   if (option.xAxis != null) {
-    const xAxis = normalizeAxis(option.xAxis, false, translate, fontFamily);
+    const xAxis = normalizeAxis(option.xAxis, false, translate, fontFamily, appearance);
     nextOption.xAxis = (Array.isArray(option.xAxis) ? xAxis : xAxis[0]) as EChartsOption["xAxis"];
   }
 
   if (option.yAxis != null) {
-    const yAxis = normalizeAxis(option.yAxis, true, translate, fontFamily);
+    const yAxis = normalizeAxis(option.yAxis, true, translate, fontFamily, appearance);
     nextOption.yAxis = (Array.isArray(option.yAxis) ? yAxis : yAxis[0]) as EChartsOption["yAxis"];
   }
 
@@ -417,12 +448,14 @@ export function EChartSurface({
   ariaLabel,
   className,
   option,
-  setOptionOpts
+  setOptionOpts,
+  appearance = "dark"
 }: {
   ariaLabel: string;
   className?: string;
   option: EChartsOption;
   setOptionOpts?: SetOptionOpts;
+  appearance?: ChartAppearance;
 }) {
   const { tr } = useI18n();
   const { language, digits } = useLocale();
@@ -435,7 +468,10 @@ export function EChartSurface({
         : "\"Inter Variable\", \"Inter\", sans-serif",
     [digits, language]
   );
-  const normalizedOption = useMemo(() => normalizeOption(option, tr, fontFamily), [fontFamily, option, tr]);
+  const normalizedOption = useMemo(
+    () => normalizeOption(option, tr, fontFamily, appearance),
+    [appearance, fontFamily, option, tr]
+  );
 
   useEffect(() => {
     const host = hostRef.current;

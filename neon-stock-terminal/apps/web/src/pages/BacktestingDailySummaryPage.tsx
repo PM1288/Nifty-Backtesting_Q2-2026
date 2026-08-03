@@ -34,7 +34,7 @@ export function BacktestingDailySummaryPage() {
   ).sort((left, right) => right.value - left.value);
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={tr("Daily Summary")}
         subtitle={tr("This is the latest day-level read after the snapshot updates: entries, exits, open positions, skipped signals, and deployment.")}

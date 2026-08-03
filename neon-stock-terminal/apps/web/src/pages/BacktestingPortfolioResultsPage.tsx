@@ -55,7 +55,7 @@ export function BacktestingPortfolioResultsPage() {
     .sort((left, right) => right.value - left.value);
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={tr("Portfolio Results")}
         subtitle={tr("Portfolio-level outcomes across the selected universe and capital bucket.")}

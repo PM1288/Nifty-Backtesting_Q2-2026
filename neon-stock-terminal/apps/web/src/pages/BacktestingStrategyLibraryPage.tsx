@@ -65,7 +65,7 @@ export function BacktestingStrategyLibraryPage() {
   const topStockFit = [...leaderboardRows].find((row) => row.performance.topPerformingStock) ?? null;
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={tr("Strategy Leaderboard")}
         subtitle={tr("This ranks the published strategy set under one explicit comparison lens so you can decide what to inspect next without mistaking the library for arbitrary browser-side code.")}

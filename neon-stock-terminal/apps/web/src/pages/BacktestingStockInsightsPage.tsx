@@ -48,7 +48,7 @@ export function BacktestingStockInsightsPage() {
   const bestWin = [...rows].sort((left, right) => right.winRatePct - left.winRatePct)[0];
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={tr("Stock Insights")}
         subtitle={tr("This page compares stock suitability across all three strategy archetypes, so you can see where each style tends to fit or fail.")}

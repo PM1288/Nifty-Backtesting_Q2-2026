@@ -9,13 +9,17 @@ import type { AnalyticsParams } from "../analytics/types";
 import { formatDateIST, formatNumberIN } from "../lib/format";
 import { useBacktestingStrategy } from "../lib/hooks";
 import {
+  BacktestingContextStrip,
+  BacktestingDecisionBrief,
   BacktestingDrawdownChart,
+  BacktestingEvidenceCards,
   BacktestingFilterBar,
   BacktestingHeader,
   BacktestingHistogramChart,
   BacktestingLineChart,
   BacktestingHorizontalBarChart,
   BacktestingPriceContextChart,
+  BacktestingStrategyJourney,
   fmtCompactCurrency,
   fmtCurrency,
   fmtPct,
@@ -140,7 +144,7 @@ export function BacktestingStrategyDetailPage() {
       : scenario.capitalMode.replace("capital_", "").toUpperCase();
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={`${tr(detail.data.strategy.displayName)} • v${detail.data.version.versionNumber}`}
         subtitle={tr("This page explains the logic, assumptions, and latest evidence for the selected strategy version.")}
@@ -148,17 +152,31 @@ export function BacktestingStrategyDetailPage() {
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(detail.data.asOfDate) })}
       />
 
+      <BacktestingContextStrip
+        runLabel={`Strategy v${detail.data.version.versionNumber}`}
+        generatedAt={detail.data.generatedAt}
+        asOfDate={detail.data.asOfDate}
+        universe={scenario.universeMode}
+        capital={scenario.capitalMode}
+        benchmark={scenario.summary.benchmarkLabel ?? "NIFTY 50 price index"}
+      />
+
+      <section ref={summaryRef} data-analytics-section="backtesting_detail_summary">
+        <BacktestingDecisionBrief summary={scenario.summary} closedTrades={scenario.trades.length} title="Strategy verdict" />
+        <BacktestingEvidenceCards summary={scenario.summary} closedTrades={scenario.trades.length} />
+        <BacktestingStrategyJourney scenario={scenario} />
+      </section>
+
       <section ref={filtersRef} data-analytics-section="backtesting_detail_filters">
         <BacktestingFilterBar filters={detail.data.filters} detail={detail.data} />
       </section>
 
-      <section
-        ref={summaryRef}
-        data-analytics-section="backtesting_detail_summary"
-        className={styles.systemHealthRow}
-      >
-        <KpiCard label={tr("Final value")} value={fmtCompactCurrency(scenario.summary.currentValue)} />
-        <KpiCard label={tr("Invested amount")} value={fmtCompactCurrency(scenario.summary.investedAmount)} />
+      <section className={styles.systemHealthRow}>
+        <KpiCard label={tr("Ending portfolio")} value={fmtCompactCurrency(scenario.summary.currentValue)} tone={scenario.summary.currentValue >= scenario.summary.investedAmount ? "green" : "red"} />
+        <KpiCard label={tr("Starting capital")} value={fmtCompactCurrency(scenario.summary.investedAmount)} />
+        <KpiCard label={tr("Total portfolio return")} value={fmtPct(scenario.summary.totalReturnPct)} tone={scenario.summary.totalReturnPct >= 0 ? "green" : "red"} />
+        <KpiCard label={tr("After-tax realized P&L")} value={fmtCompactCurrency(scenario.summary.realizedPnl)} tone={scenario.summary.realizedPnl >= 0 ? "green" : "red"} meta={tr("Closed trades only")} />
+        <KpiCard label={tr("Open-position P&L")} value={fmtCompactCurrency(scenario.summary.unrealizedPnl)} tone={scenario.summary.unrealizedPnl >= 0 ? "green" : "red"} />
         <KpiCard label={tr("Excess vs benchmark")} value={fmtCompactCurrency(scenario.summary.excessOverBenchmark ?? scenario.summary.excessOverFd)} tone={(scenario.summary.excessOverBenchmark ?? scenario.summary.excessOverFd ?? 0) >= 0 ? "green" : "red"} />
         <KpiCard label={tr("35% realized-profit reserve")} value={fmtCompactCurrency(scenario.summary.taxDeducted ?? 0)} meta={tr("Applied only to positive realized trade profit; configurable research assumption, not tax advice.")} />
         <KpiCard label={tr("Win rate")} value={fmtPct(scenario.summary.winRatePct)} />
@@ -195,6 +213,14 @@ export function BacktestingStrategyDetailPage() {
               <span>{tr("Benchmark")}</span>
               <strong>{tr(scenario.summary.benchmarkLabel ?? (scenario.benchmarkMode === "nifty50_price" ? "NIFTY 50 price benchmark" : "FD benchmark"))}</strong>
             </div>
+          </div>
+          <div className={styles.ruleGrid}>
+            {Object.entries(detail.data.version.config).slice(0, 10).map(([key, value]) => (
+              <div key={key} className={styles.ruleFactor}>
+                <span>{tr(key.replaceAll("_", " "))}</span>
+                <strong>{typeof value === "object" ? JSON.stringify(value) : String(value)}</strong>
+              </div>
+            ))}
           </div>
         </article>
         <article

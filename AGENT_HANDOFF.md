@@ -294,3 +294,52 @@ Validation completed:
 - browser login-dialog count after 35 seconds: `0`
 - dashboard container restart count: `0`
 - overview snapshot explicitly refreshed after deployment
+
+## Backtesting visual analytics rebuild (2026-08-03)
+
+The full UI guidance set in `/home/novius2/NIFTY50/UI-CHnages-1` was reviewed, including the Markdown implementation brief, CSV widget catalogue, DOCX UX specification and embedded images, and HTML reference. The implementation record is in `docs/backtesting-ui/README.md`.
+
+The new story order is trust, money, risk, explanation, stability, and action. The overview now explains the closed-book/open-book contradiction. Compare only ranks compatible rows and lets the reviewer select the objective. Strategy detail tells the full rules-to-portfolio journey. Missing OOS, walk-forward, capacity, and parameter-stability evidence is shown as unavailable rather than synthesized.
+
+Primary live review URLs:
+
+```text
+https://n50.nifty50today.co.in/n50/backtesting
+https://n50.nifty50today.co.in/n50/backtesting/compare
+https://n50.nifty50today.co.in/n50/backtesting/strategies/rsi30_willr80_closegtprev_tp125
+```
+
+Commands used to compile, synchronize, deploy, and verify:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/neon-stock-terminal
+docker build --target builder -t nifty-backtesting-ui-v2-test .
+
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+rsync -a neon-stock-terminal/apps/web/src/components/visual/EChartSurface.tsx \
+  /home/novius2/trading-stack/neon-stock-terminal/apps/web/src/components/visual/EChartSurface.tsx
+while IFS= read -r changed_file; do
+  case "$changed_file" in
+    neon-stock-terminal/apps/web/src/pages/*)
+      rsync -a "$changed_file" \
+        /home/novius2/trading-stack/neon-stock-terminal/apps/web/src/pages/
+      ;;
+  esac
+done < docs/backtesting-ui/BACKTEST_UI_CHANGED_FILES.txt
+
+docker compose -p trading-stack-novius2 \
+  -f /home/novius2/trading-stack/docker-compose.yml \
+  build n50-dashboard
+docker compose -p trading-stack-novius2 \
+  -f /home/novius2/trading-stack/docker-compose.yml \
+  up -d --no-deps --force-recreate n50-dashboard
+
+docker exec trading-stack-novius2-n50-dashboard-1 \
+  node -e "fetch('http://127.0.0.1:18184/health').then(async r=>console.log(r.status,await r.text()))"
+cd /tmp/nifty-playwright-test
+node backtesting-ui-acceptance.mjs
+```
+
+Final acceptance result: four browser journeys passed with no failed backtesting API requests, no page errors, no modal login dialogs, and no page-level horizontal overflow. Viewports were 1440x1000 for overview, comparison, and strategy detail, plus 430x932 for mobile overview. Results are recorded in `docs/backtesting-ui/BACKTEST_UI_TEST_RESULTS.json`; screenshots are in `docs/backtesting-ui/screenshots/`.
+
+The source files were also synchronized to `/home/novius2/trading-stack/neon-stock-terminal` so the next Compose rebuild retains the UI. Do not use a broad sync that overwrites unrelated stack changes; follow `docs/backtesting-ui/BACKTEST_UI_CHANGED_FILES.txt`.

@@ -44,7 +44,7 @@ export function BacktestingRegimeAnalysisPage() {
   const worst = [...flattened].sort((left, right) => left.avgReturnPct - right.avgReturnPct)[0];
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={tr("Regime Analysis")}
         subtitle={tr("Entry-date regimes use NIFTY 50 trend/return plus India VIX level and change. Shock: |NIFTY daily return| ≥1.75% or VIX jump ≥15%; Volatile: VIX at/above its trailing 75th percentile; otherwise Rising, Falling, or Neutral from 20/50-day trend.")}

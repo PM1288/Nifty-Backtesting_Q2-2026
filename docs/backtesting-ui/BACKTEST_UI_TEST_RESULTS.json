@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-08-03T15:48:22.620Z",
+  "checks": [
+    {
+      "name": "overview-desktop",
+      "path": "/backtesting",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "dialogs": 0,
+      "horizontalOverflow": false,
+      "title": "Nifty 50 Market Intelligence",
+      "textLength": 2892
+    },
+    {
+      "name": "compare-desktop",
+      "path": "/backtesting/compare",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "dialogs": 0,
+      "horizontalOverflow": false,
+      "title": "Nifty 50 Market Intelligence",
+      "textLength": 5945
+    },
+    {
+      "name": "strategy-journey-desktop",
+      "path": "/backtesting/strategies/rsi30_willr80_closegtprev_tp125",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "dialogs": 0,
+      "horizontalOverflow": false,
+      "title": "Nifty 50 Market Intelligence",
+      "textLength": 5899
+    },
+    {
+      "name": "overview-mobile",
+      "path": "/backtesting",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "dialogs": 0,
+      "horizontalOverflow": false,
+      "title": "Nifty 50 Market Intelligence",
+      "textLength": 2892
+    }
+  ],
+  "failures": []
+}

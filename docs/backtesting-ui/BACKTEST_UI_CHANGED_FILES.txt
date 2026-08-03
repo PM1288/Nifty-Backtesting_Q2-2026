@@ -1,0 +1,13 @@
+neon-stock-terminal/apps/web/src/components/visual/EChartSurface.tsx
+neon-stock-terminal/apps/web/src/pages/AnalyticsPage.module.css
+neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingComparePage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingDailySummaryPage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingOverviewPage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingPortfolioResultsPage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingRegimeAnalysisPage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingRunsPage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingStockInsightsPage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingStrategyDetailPage.tsx
+neon-stock-terminal/apps/web/src/pages/BacktestingStrategyLibraryPage.tsx
+docs/backtesting-ui/

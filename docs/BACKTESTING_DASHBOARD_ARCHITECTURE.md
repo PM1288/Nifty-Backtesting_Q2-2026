@@ -98,6 +98,8 @@ Shared selectors, chart wrappers, currency/percent formatting and scenario contr
 
 For very large time series, publish daily/monthly downsampled points for interactive ECharts. Generate immutable Matplotlib PNG/SVG artifacts for dense audit plots, store URI plus SHA-256 in the manifest, and let the detail page open the full image. The raw trade table remains downloadable/filterable and is the source behind every plotted aggregate.
 
+Published database results are also mirrored to host-persistent per-strategy CSV packages by `services/nse_analytics_worker/app/backtesting_csv.py`. CSV is a review/processing artifact, not a competing source of truth. Each batch contains one folder per strategy with summary, trade, open-position, equity, stock, regime, skipped-signal, validation, and checksum-manifest files. See `docs/backtesting-csv/README.md`.
+
 ## Add a strategy
 
 1. Create a stable registry entry and immutable versioned config containing indicators, completed-bar timing, entry/exit fill rules, costs, universe and data requirements.

@@ -12,6 +12,8 @@ services/nse_ingestor/runtime/logs/*
 !services/nse_ingestor/runtime/staging/.gitkeep
 !services/nse_ingestor/runtime/logs/.gitkeep
 services/nse_analytics_worker/runtime/logs/*
+services/nse_analytics_worker/runtime/exports/*
+!services/nse_analytics_worker/runtime/exports/.gitkeep
 services/nse_orchestration_exports/runtime/exports/*
 services/nse_intraday_intelligence/runtime/exports/*
 services/nse_reco_state_engine/runtime/exports/*

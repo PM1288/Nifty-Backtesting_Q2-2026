@@ -364,6 +364,8 @@ services:
       SNAPSHOT_REFRESH_URL: ${N50_SNAPSHOT_REFRESH_URL:-http://n50-dashboard:18184/internal/snapshots/refresh}
       SNAPSHOT_REFRESH_TOKEN: ${N50_SNAPSHOT_REFRESH_TOKEN:-}
       SNAPSHOT_REFRESH_TIMEOUT_SECONDS: ${N50_SNAPSHOT_REFRESH_TIMEOUT_SECONDS:-120}
+      BACKTEST_CSV_EXPORT_ENABLED: ${NSE_BACKTEST_CSV_EXPORT_ENABLED:-1}
+      BACKTEST_CSV_EXPORT_DIR: /app/runtime/exports/backtesting
     depends_on:
       postgres:
         condition: service_healthy
@@ -371,6 +373,7 @@ services:
         condition: service_started
     volumes:
       - ./services/nse_analytics_worker/runtime/logs:/app/runtime/logs
+      - ./services/nse_analytics_worker/runtime/exports:/app/runtime/exports
       - ./services/nse_analytics_worker/ops:/app/ops:ro
     entrypoint: ["/bin/bash", "/app/ops/entrypoint.sh"]
     restart: unless-stopped

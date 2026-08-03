@@ -29,6 +29,23 @@ Run checks only:
 docker compose run --rm nse-analytics-worker python -m app.cli run-checks
 ```
 
+Export the latest published backtesting batch to per-strategy CSV folders without rerunning the backtest:
+
+```bash
+docker compose exec -T nse-analytics-worker \
+  python -m app.cli export-backtesting-csv
+```
+
+Export a specific validated historical/current published batch or override the container output root:
+
+```bash
+python -m app.cli export-backtesting-csv \
+  --batch-run-id 247 \
+  --output-dir /app/runtime/exports/backtesting
+```
+
+`refresh-all` and `refresh-backtesting` automatically export CSV after a successful publish when `BACKTEST_CSV_EXPORT_ENABLED=1`, which is the default. The host-persistent output is `runtime/exports/backtesting`. See `docs/backtesting-csv/README.md` for layout and data contracts.
+
 ## Runtime behavior
 
 When started through the main `docker-compose.yml`, the service:

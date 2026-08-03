@@ -41,6 +41,6 @@ COPY README.md /app/README.md
 COPY README.overlay.md /app/README.overlay.md
 
 RUN chmod +x /app/ops/entrypoint.sh \
-    && mkdir -p /app/runtime/logs
+    && mkdir -p /app/runtime/logs /app/runtime/exports/backtesting
 
 CMD ["python", "-m", "app.cli", "refresh-all"]

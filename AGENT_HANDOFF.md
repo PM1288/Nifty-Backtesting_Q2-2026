@@ -343,3 +343,28 @@ node backtesting-ui-acceptance.mjs
 Final acceptance result: four browser journeys passed with no failed backtesting API requests, no page errors, no modal login dialogs, and no page-level horizontal overflow. Viewports were 1440x1000 for overview, comparison, and strategy detail, plus 430x932 for mobile overview. Results are recorded in `docs/backtesting-ui/BACKTEST_UI_TEST_RESULTS.json`; screenshots are in `docs/backtesting-ui/screenshots/`.
 
 The source files were also synchronized to `/home/novius2/trading-stack/neon-stock-terminal` so the next Compose rebuild retains the UI. Do not use a broad sync that overwrites unrelated stack changes; follow `docs/backtesting-ui/BACKTEST_UI_CHANGED_FILES.txt`.
+
+## Per-strategy CSV persistence (2026-08-03)
+
+Every future successful `refresh-all` or `refresh-backtesting` now exports the published database batch to persistent CSV when `BACKTEST_CSV_EXPORT_ENABLED=1` (default). A manual export command is also available and does not rerun the backtest.
+
+Host path:
+
+```text
+/home/novius2/trading-stack/services/nse_analytics_worker/runtime/exports/backtesting
+```
+
+Layout and contract: `docs/backtesting-csv/README.md`. Each batch has one folder per strategy. Each strategy folder contains `strategy_summary.csv`, `trades.csv`, `open_positions.csv`, `daily_equity.csv`, `stock_summary.csv`, `regime_summary.csv`, `skipped_signals.csv`, `validation.csv`, and `manifest.csv`. Files carry batch, strategy version, and scenario tags; stock results are rows, not separate files.
+
+Commands used to build, deploy, and export the existing published batch without rerunning it:
+
+```bash
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 -f docker-compose.yml build nse-analytics-worker
+docker compose -p trading-stack-novius2 -f docker-compose.yml \
+  up -d --no-deps --force-recreate nse-analytics-worker
+docker compose -p trading-stack-novius2 -f docker-compose.yml exec -T \
+  nse-analytics-worker python -m app.cli export-backtesting-csv
+```
+
+Initial proof for batch `247`: 3 strategy folders, 252,753 exported data rows, 0 checksum failures. The worker container was healthy with 0 restarts after export. Six focused backtesting/CSV unit tests passed in the production image.

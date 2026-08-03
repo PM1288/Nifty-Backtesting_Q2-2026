@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .checks import run_checks
 from .backtesting import refresh_backtesting_snapshots
+from .backtesting_csv import export_backtesting_csv
 from .config import get_settings
 from .db import connect, create_job_run, finish_job_run, run_migrations
 from .indicator_strategy import refresh_indicator_strategy_snapshots
@@ -28,7 +29,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("refresh-signals", help="Refresh only the signal table")
     sub.add_parser("refresh-summary", help="Refresh only the market summary and performance tables")
     sub.add_parser("refresh-indicator-strategy", help="Refresh only the precomputed indicator and strategy snapshots")
-    sub.add_parser("refresh-backtesting", help="Refresh only the precomputed backtesting snapshots")
+    sub.add_parser("refresh-backtesting", help="Refresh backtesting snapshots and export the published batch to CSV")
+    export_csv = sub.add_parser("export-backtesting-csv", help="Export one published backtesting batch to per-strategy CSV folders")
+    export_csv.add_argument("--batch-run-id", type=int, help="Published batch ID; defaults to the latest published batch")
+    export_csv.add_argument("--output-dir", type=Path, help="Override the configured CSV export root")
     sub.add_parser("run-checks", help="Run data-quality checks")
     sub.add_parser("purge", help="Purge old analytics rows")
 
@@ -46,10 +50,27 @@ def main() -> None:
         logger.info("Migrations complete")
         return
 
+    if args.command == "export-backtesting-csv":
+        metrics = export_backtesting_csv(
+            conn,
+            output_root=args.output_dir or settings.backtest_csv_export_dir,
+            batch_run_id=args.batch_run_id,
+        )
+        logger.info("Backtesting CSV export complete: %s", metrics)
+        return
+
     if args.command == "refresh-all":
         run_id = create_job_run(conn, "refresh-all")
         try:
             metrics = refresh_all_pipeline(conn, settings, run_id)
+            if settings.backtest_csv_export_enabled and metrics.get("backtesting_published_batch_run_id") is not None:
+                metrics.update(
+                    export_backtesting_csv(
+                        conn,
+                        output_root=settings.backtest_csv_export_dir,
+                        batch_run_id=int(metrics["backtesting_published_batch_run_id"]),
+                    )
+                )
             check_metrics = run_checks(conn, settings.quality_checks_path, job_run_id=run_id)
             metrics.update(check_metrics)
             metrics.update(trigger_snapshot_refresh(settings))
@@ -97,6 +118,14 @@ def main() -> None:
                 metrics = refresh_indicator_strategy_snapshots(conn, settings.indicator_strategy_registry_path, run_id)
             elif args.command == "refresh-backtesting":
                 metrics = refresh_backtesting_snapshots(conn, run_id)
+                if settings.backtest_csv_export_enabled:
+                    metrics.update(
+                        export_backtesting_csv(
+                            conn,
+                            output_root=settings.backtest_csv_export_dir,
+                            batch_run_id=int(metrics["backtesting_published_batch_run_id"]),
+                        )
+                    )
             else:
                 metrics = {}
                 metrics.update(refresh_market_summary(conn, window))

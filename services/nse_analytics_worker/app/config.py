@@ -22,6 +22,15 @@ class Settings:
     snapshot_refresh_url: str | None
     snapshot_refresh_token: str | None
     snapshot_refresh_timeout_seconds: int
+    backtest_csv_export_enabled: bool
+    backtest_csv_export_dir: Path
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def get_settings() -> Settings:
@@ -43,4 +52,6 @@ def get_settings() -> Settings:
         snapshot_refresh_url=os.environ.get("SNAPSHOT_REFRESH_URL"),
         snapshot_refresh_token=os.environ.get("SNAPSHOT_REFRESH_TOKEN"),
         snapshot_refresh_timeout_seconds=int(os.environ.get("SNAPSHOT_REFRESH_TIMEOUT_SECONDS", "120")),
+        backtest_csv_export_enabled=_env_bool("BACKTEST_CSV_EXPORT_ENABLED", True),
+        backtest_csv_export_dir=Path(os.environ.get("BACKTEST_CSV_EXPORT_DIR", "/app/runtime/exports/backtesting")),
     )

@@ -128,7 +128,6 @@ class DailyRisingOversoldIntradayStrategy(BaseStrategy):
 
     def __init__(self, manifest: StrategyManifest) -> None:
         super().__init__(manifest)
-        self.daily_below = float(manifest.parameters.get("daily_rsi_below", 30))
         self.minute_below = float(manifest.parameters.get("minute_rsi_below", 25))
         self.willr_below = float(manifest.parameters.get("minute_willr_below", -80))
         self.entry_start = time.fromisoformat(str(manifest.parameters.get("entry_start", "09:30:00")))
@@ -144,22 +143,21 @@ class DailyRisingOversoldIntradayStrategy(BaseStrategy):
                 return (self.exit_signal(context, ("minute_rsi_above_exit",), {"minute_rsi_14": float(minute_rsi)}),)
             return ()
         required = (
-            values.get("setup_rsi"), values.get("setup_rsi_prev1"), values.get("setup_rsi_prev2"),
-            values.get("setup_close"), values.get("rsi_14"), values.get("willr_14"),
-            values.get("bollinger_lower_20_2"),
+            values.get("setup_rsi"), values.get("setup_rsi_prev1"), values.get("setup_close"),
+            values.get("rsi_14"), values.get("willr_14"), values.get("bollinger_lower_20_2"),
         )
         if any(value is None for value in required) or not self.entry_start <= local_time <= self.entry_end:
             return ()
-        setup_rsi, prev1, prev2, setup_close, minute_rsi, willr, lower_band = map(float, required)
+        setup_rsi, prev1, setup_close, minute_rsi, willr, lower_band = map(float, required)
         if (
-            setup_rsi < self.daily_below and setup_rsi > prev1 and setup_rsi > prev2
+            setup_rsi > prev1
             and context.current.open > setup_close
             and minute_rsi < self.minute_below and willr < self.willr_below
             and context.current.low > lower_band
         ):
             return (self.entry_signal(context, (
-                "daily_rsi_lt_30", "daily_rsi_gt_previous_two", "open_gt_previous_day_close",
+                "daily_rsi_gt_yesterday", "open_gt_previous_day_close",
                 "minute_rsi_lt_25", "minute_willr_lt_minus80", "low_gt_bollinger_lower",
-            ), {"setup_rsi": setup_rsi, "setup_rsi_prev1": prev1, "setup_rsi_prev2": prev2,
+            ), {"setup_rsi": setup_rsi, "setup_rsi_prev1": prev1,
                 "minute_rsi_14": minute_rsi, "willr_14": willr, "bollinger_lower_20_2": lower_band}),)
         return ()

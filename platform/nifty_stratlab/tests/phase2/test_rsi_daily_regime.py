@@ -111,7 +111,7 @@ def test_daily_rising_setup_requires_all_intraday_confirmations():
     result = strategy.on_bar(StrategyContext(manifest, bar, None, False))
     assert len(result) == 1
     assert result[0].reason_codes == (
-        "daily_rsi_lt_30", "daily_rsi_gt_previous_two", "open_gt_previous_day_close",
+        "daily_rsi_gt_yesterday", "open_gt_previous_day_close",
         "minute_rsi_lt_25", "minute_willr_lt_minus80", "low_gt_bollinger_lower",
     )
     blocked = StrategyBar(

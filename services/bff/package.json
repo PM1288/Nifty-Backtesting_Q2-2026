@@ -1,0 +1,25 @@
+{
+  "name": "trading-stack-bff",
+  "version": "1.0.0",
+  "description": "Mobile BFF for Trading Stack",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "fastify": "^4.24.3",
+    "@fastify/cors": "^8.4.1",
+    "@fastify/jwt": "^7.2.3",
+    "axios": "^1.6.2",
+    "ioredis": "^5.3.2",
+    "firebase-admin": "^11.11.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.2",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.1"
+  }
+}

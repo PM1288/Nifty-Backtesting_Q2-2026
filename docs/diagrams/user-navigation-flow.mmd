@@ -1,0 +1,17 @@
+flowchart TD
+  Start["User enters /n50 or /n50-stage"] --> Home["Home / overview"]
+  Home --> Market["Market surfaces<br/>/analytics, /analytics/regime, /analytics/supporting-metrics"]
+  Home --> Options["Option Chain<br/>/options"]
+  Home --> Heatmaps["Heatmaps<br/>/heatmap/change, /heatmap/rsi, /heatmap/will"]
+  Home --> Backtesting["Backtesting<br/>/backtesting and child routes"]
+  Home --> Learning["Learning<br/>/analytics/learn, /analytics/simulator, /analytics/indicators"]
+
+  Market --> Stock["Stock detail<br/>/analytics/stock/:symbol"]
+  Backtesting --> Strategy["Strategy detail<br/>/backtesting/strategies/:strategyId"]
+  Backtesting --> Compare["Compare / runs / daily summary"]
+  Learning --> Simulator["Simulator"]
+  Options --> Diagnostics["Snapshot / Equilibrium / ATM Combo / Diagnostics"]
+
+  Home --> Feedback["Feedback<br/>/feedback"]
+  Market --> Trust["Trust Board<br/>/analytics/system/quality"]
+  Backtesting --> Trust

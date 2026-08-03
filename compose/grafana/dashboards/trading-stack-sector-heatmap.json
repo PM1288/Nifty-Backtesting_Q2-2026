@@ -1,0 +1,196 @@
+{
+  "id": null,
+  "uid": "trading-stack-sector-heatmap",
+  "title": "Sector Heatmap (NIFTY100)",
+  "tags": [
+    "sector",
+    "heatmap",
+    "trading-stack"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "type": "custom",
+        "name": "taxonomy",
+        "label": "Taxonomy",
+        "query": "Macro,Sector,Industry,BasicIndustry",
+        "current": {
+          "text": "Sector",
+          "value": "Sector"
+        },
+        "options": [
+          {
+            "text": "Macro",
+            "value": "Macro"
+          },
+          {
+            "text": "Sector",
+            "value": "Sector"
+          },
+          {
+            "text": "Industry",
+            "value": "Industry"
+          },
+          {
+            "text": "BasicIndustry",
+            "value": "BasicIndustry"
+          }
+        ]
+      },
+      {
+        "type": "custom",
+        "name": "perf_mode",
+        "label": "Performance",
+        "query": "intraday,1d,1w",
+        "current": {
+          "text": "1d",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "text": "intraday",
+            "value": "intraday"
+          },
+          {
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "text": "1w",
+            "value": "1w"
+          }
+        ]
+      },
+      {
+        "type": "query",
+        "name": "sector",
+        "label": "Sector Filter",
+        "datasource": {
+          "type": "postgres",
+          "uid": "postgres"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": "All",
+        "query": "SELECT DISTINCT\n  CASE\n    WHEN '$taxonomy' = 'Macro' THEN macro_sector\n    WHEN '$taxonomy' = 'Sector' THEN sector\n    WHEN '$taxonomy' = 'Industry' THEN industry\n    ELSE basic_industry\n  END AS __text,\n  CASE\n    WHEN '$taxonomy' = 'Macro' THEN macro_sector\n    WHEN '$taxonomy' = 'Sector' THEN sector\n    WHEN '$taxonomy' = 'Industry' THEN industry\n    ELSE basic_industry\n  END AS __value\nFROM index_constituents\nWHERE index_name = 'NIFTY100'\nORDER BY 1;"
+      }
+    ]
+  },
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "trading-stack"
+      ],
+      "targetBlank": false,
+      "title": "Navigate Dashboards",
+      "tooltip": "Jump to another dashboard",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "marcusolsson-treemap-panel",
+      "title": "Sector Treemap (size=weight, color=return)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (index_name, symbol)\n    index_name,\n    exchange,\n    symbol,\n    symbol_token,\n    last_price,\n    pct_intraday,\n    pct_1d,\n    pct_1w,\n    volume_today,\n    ts\n  FROM symbol_perf_snapshot\n  WHERE index_name = 'NIFTY100'\n  ORDER BY index_name, symbol, ts DESC\n),\nbase AS (\n  SELECT\n    CASE\n      WHEN '$taxonomy' = 'Macro' THEN c.macro_sector\n      WHEN '$taxonomy' = 'Sector' THEN c.sector\n      WHEN '$taxonomy' = 'Industry' THEN c.industry\n      ELSE c.basic_industry\n    END AS group_name,\n    c.symbol AS label,\n    COALESCE(c.weight, 1.0) AS size_value,\n    COALESCE(\n      CASE\n        WHEN '$perf_mode' = 'intraday' THEN l.pct_intraday\n        WHEN '$perf_mode' = '1d' THEN l.pct_1d\n        ELSE l.pct_1w\n      END,\n      0::double precision\n    ) AS color_value,\n    COALESCE(l.last_price, 0::double precision) AS last_price,\n    COALESCE(l.volume_today, 0::double precision) AS volume_today,\n    COALESCE(c.weight, 0::double precision) AS weight,\n    COALESCE(l.ts, now()) AS snapshot_ts\n  FROM index_constituents c\n  LEFT JOIN latest l\n    ON l.symbol = c.symbol AND l.index_name = c.index_name\n  WHERE c.index_name = 'NIFTY100'\n    AND (\n      '$sector' = 'All'\n      OR (\n        CASE\n          WHEN '$taxonomy' = 'Macro' THEN c.macro_sector\n          WHEN '$taxonomy' = 'Sector' THEN c.sector\n          WHEN '$taxonomy' = 'Industry' THEN c.industry\n          ELSE c.basic_industry\n        END\n      ) = '$sector'\n    )\n)\nSELECT * FROM base\nUNION ALL\nSELECT\n  'NIFTY100'::text AS group_name,\n  'NO_DATA'::text AS label,\n  1.0::double precision AS size_value,\n  0.0::double precision AS color_value,\n  0.0::double precision AS last_price,\n  0.0::double precision AS volume_today,\n  0.0::double precision AS weight,\n  now() AS snapshot_ts\nWHERE NOT EXISTS (SELECT 1 FROM base);",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "groupByField": "group_name",
+        "labelField": "label",
+        "sizeField": "size_value",
+        "colorField": "color_value",
+        "tooltipFields": [
+          "last_price",
+          "volume_today",
+          "weight",
+          "snapshot_ts"
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Top Movers (by return)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (index_name, symbol)\n    index_name,\n    exchange,\n    symbol,\n    last_price,\n    pct_intraday,\n    pct_1d,\n    pct_1w,\n    volume_today,\n    ts\n  FROM symbol_perf_snapshot\n  WHERE index_name = 'NIFTY100'\n  ORDER BY index_name, symbol, ts DESC\n)\nSELECT\n  l.symbol,\n  l.last_price,\n  CASE\n    WHEN '$perf_mode' = 'intraday' THEN l.pct_intraday\n    WHEN '$perf_mode' = '1d' THEN l.pct_1d\n    ELSE l.pct_1w\n  END AS return_pct,\n  l.volume_today,\n  l.ts\nFROM latest l\nORDER BY return_pct DESC NULLS LAST\nLIMIT 20;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Bottom Movers (by return)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (index_name, symbol)\n    index_name,\n    exchange,\n    symbol,\n    last_price,\n    pct_intraday,\n    pct_1d,\n    pct_1w,\n    volume_today,\n    ts\n  FROM symbol_perf_snapshot\n  WHERE index_name = 'NIFTY100'\n  ORDER BY index_name, symbol, ts DESC\n)\nSELECT\n  l.symbol,\n  l.last_price,\n  CASE\n    WHEN '$perf_mode' = 'intraday' THEN l.pct_intraday\n    WHEN '$perf_mode' = '1d' THEN l.pct_1d\n    ELSE l.pct_1w\n  END AS return_pct,\n  l.volume_today,\n  l.ts\nFROM latest l\nORDER BY return_pct ASC NULLS LAST\nLIMIT 20;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ]
+}

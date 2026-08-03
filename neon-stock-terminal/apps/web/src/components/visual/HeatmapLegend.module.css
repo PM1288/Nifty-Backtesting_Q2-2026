@@ -1,0 +1,96 @@
+.legend {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.copy {
+  display: grid;
+  gap: 3px;
+}
+
+.title {
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hint {
+  color: var(--w-72);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.scale {
+  position: relative;
+  padding-top: 10px;
+}
+
+.bar {
+  height: 10px;
+  border: 1px solid var(--w-12);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.markers {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 24px;
+  pointer-events: none;
+}
+
+.marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.tick {
+  width: 1px;
+  height: 6px;
+  background: var(--w-92);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.48);
+}
+
+.value {
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-variant-numeric: lining-nums tabular-nums slashed-zero;
+}
+
+.labels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  color: var(--w-92);
+  font-size: 10px;
+}
+
+.labels span:nth-child(2) {
+  text-align: center;
+}
+
+.labels span:last-child {
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .legend {
+    min-width: 0;
+  }
+
+  .hint {
+    font-size: 9px;
+  }
+
+  .labels {
+    font-size: 9px;
+  }
+}

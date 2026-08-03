@@ -1,0 +1,15 @@
+.wrap {
+  width: 100%;
+  height: 340px;
+  background: var(--black);
+}
+
+@media (min-width: 900px) {
+  .wrap {
+    height: 420px;
+  }
+}
+
+.canvas {
+  display: block;
+}

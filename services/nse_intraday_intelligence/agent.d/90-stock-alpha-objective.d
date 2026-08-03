@@ -1,0 +1,1 @@
+Objective: upgrade the integrated intraday package so stock-level conclusions are based on residual behavior, VWAP control, persistence, and minute-volume baselines rather than only raw intraday return.

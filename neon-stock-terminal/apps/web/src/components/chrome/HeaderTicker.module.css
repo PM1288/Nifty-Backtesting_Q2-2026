@@ -1,0 +1,19 @@
+.header {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--page-padding);
+}
+
+.tickerWrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.rightSlot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}

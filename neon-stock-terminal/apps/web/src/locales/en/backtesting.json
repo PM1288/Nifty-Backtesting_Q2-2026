@@ -1,0 +1,15 @@
+{
+  "literals": {
+    "Review historical strategy evidence, compare capital modes, and inspect regime-aware trade behavior.": "Review historical strategy evidence, compare capital modes, and inspect regime-aware trade behavior.",
+    "Backtesting here means reviewing historical daily-data evidence with fixed rules and assumptions.": "Backtesting here means reviewing historical daily-data evidence with fixed rules and assumptions.",
+    "Scenario filters": "Scenario filters",
+    "Comparison scope": "Comparison scope",
+    "Compare all active archetypes using the same published scenario lens.": "Compare all active archetypes using the same published scenario lens.",
+    "Strategy": "Strategy",
+    "Universe": "Universe",
+    "Capital": "Capital",
+    "Date range": "Date range",
+    "Stock": "Stock",
+    "Select stock": "Select stock"
+  }
+}

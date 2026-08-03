@@ -1,0 +1,1064 @@
+{
+  "id": null,
+  "uid": "trading-stack-home",
+  "title": "Trading Stack Home",
+  "tags": [
+    "home",
+    "trading-stack"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 21,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "trading-stack"
+      ],
+      "targetBlank": false,
+      "title": "Navigate Dashboards",
+      "tooltip": "Jump to another dashboard",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "NIFTY50 % Change",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT percent_change AS value FROM instrument_state WHERE exchange = 'NSE' AND symbol_token = '99926000' ORDER BY last_seen_ts DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -0.5
+              },
+              {
+                "color": "yellow",
+                "value": -0.1
+              },
+              {
+                "color": "green",
+                "value": 0.1
+              },
+              {
+                "color": "blue",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "BANKNIFTY % Change",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT percent_change AS value FROM instrument_state WHERE exchange = 'NSE' AND symbol_token = '99926009' ORDER BY last_seen_ts DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -0.7
+              },
+              {
+                "color": "yellow",
+                "value": -0.2
+              },
+              {
+                "color": "green",
+                "value": 0.2
+              },
+              {
+                "color": "blue",
+                "value": 0.9
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "NIFTY50 PCR",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT pcr AS value FROM pcr_snapshots WHERE underlying = 'NIFTY50' ORDER BY ts DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "blue",
+                "value": 0.8
+              },
+              {
+                "color": "yellow",
+                "value": 1.05
+              },
+              {
+                "color": "red",
+                "value": 1.2
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Breadth Ratio (Adv/Dec)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH bars_today AS (\n  SELECT b.*\n  FROM bars_1m b\n  JOIN instrument_universe u ON u.exchange = b.exchange AND u.symbol_token = b.symbol_token\n  WHERE u.universe_name = 'nifty100_equity'\n    AND u.active_to IS NULL\n    AND (b.ts AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date\n),\nfirst_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, open\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts ASC\n),\nlast_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, close\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts DESC\n),\nagg AS (\n  SELECT\n    SUM(CASE WHEN l.close > f.open THEN 1 ELSE 0 END) AS advancers,\n    SUM(CASE WHEN l.close < f.open THEN 1 ELSE 0 END) AS decliners\n  FROM first_bar f\n  JOIN last_bar l USING (exchange, symbol_token)\n)\nSELECT ROUND(advancers::numeric / NULLIF(decliners::numeric, 0), 2) AS value FROM agg;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.85
+              },
+              {
+                "color": "yellow",
+                "value": 1.0
+              },
+              {
+                "color": "green",
+                "value": 1.2
+              },
+              {
+                "color": "blue",
+                "value": 1.5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 1,
+      "type": "text",
+      "title": "DigiTrader Command Deck",
+      "gridPos": {
+        "h": 16,
+        "w": 16,
+        "x": 0,
+        "y": 4
+      },
+      "options": {
+        "mode": "html",
+        "content": "<style>\n.home-wrap{font-family:Segoe UI,Arial,sans-serif;padding:8px} .home-title{margin:0 0 8px 0;font-size:24px;letter-spacing:.2px} .home-sub{margin:0 0 16px 0;opacity:.85} .home-grid{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px} .home-card{border:1px solid #2f3f59;border-radius:12px;padding:12px;background:linear-gradient(180deg,#19263a 0%,#121a28 100%)} .home-card h3{margin:0 0 10px 0;font-size:15px} .btn-grid{display:grid;grid-template-columns:1fr;gap:8px} .nav-btn{display:block;text-decoration:none !important;color:#fff !important;font-weight:600;padding:10px 12px;border-radius:10px;border:1px solid #35507a;background:linear-gradient(90deg,#1e3352 0%,#2a4c7f 100%);transition:all .2s ease} .nav-btn:hover{transform:translateY(-1px);border-color:#6fa8ff;background:linear-gradient(90deg,#2b4f7f 0%,#3b6eb2 100%)} .api-btn{background:linear-gradient(90deg,#23304a 0%,#2e466d 100%)} .accent{display:inline-block;padding:4px 10px;border-radius:999px;background:#18324f;border:1px solid #35507a;font-size:12px;margin-bottom:8px}</style>\n<div class='home-wrap'>\n  <div class='accent'>Trading Stack Navigation</div>\n  <h2 class='home-title'>DigiTrader Home</h2>\n  <p class='home-sub'>Fast navigation for dashboards, trading apps, and APIs. Use the top <b>Navigate Dashboards</b> control or these direct buttons.</p>\n  <div class='home-grid'>\n    <div class='home-card'>\n      <h3>Dashboards</h3>\n      <div class='btn-grid'>\n        <a class='nav-btn' href='/d/trading-stack-overview' target='_self'>Trading Stack Overview</a>\n        <a class='nav-btn' href='/d/trading-stack-trading' target='_self'>Trading Live</a>\n        <a class='nav-btn' href='/d/trading-stack-market-data' target='_self'>Market Data &amp; Depth</a>\n        <a class='nav-btn' href='/d/trading-stack-strategy' target='_self'>Strategy + Paper Trading</a>\n        <a class='nav-btn' href='/d/trading-stack-watchlist' target='_self'>Watchlist Alerts</a>\n        <a class='nav-btn' href='/d/trading-stack-backtest' target='_self'>Backtest Equity & Options</a>\n        <a class='nav-btn' href='/d/trading-stack-equilibrium' target='_self'>Options Equilibrium</a>\n        <a class='nav-btn' href='/d/trading-stack-option-greeks' target='_self'>Option Greeks</a>\n        <a class='nav-btn' href='/d/trading-stack-max-pain' target='_self'>Max Pain</a>\n      </div>\n    </div>\n    <div class='home-card'>\n      <h3>Native Apps</h3>\n      <div class='btn-grid'>\n        <a class='nav-btn' href='/paper' target='_self'>Paper Trades UI</a>\n        <a class='nav-btn' href='/digii4/manual-trackers' target='_self'>Manual Trackers UI</a>\n        <a class='nav-btn' href='/watcher' target='_self'>Nifty Watcher UI</a>\n        <a class='nav-btn' href='/watcher/manual-options' target='_self'>Manual Option Trades UI</a>\n        <a class='nav-btn' href='/rsi-willr/' target='_self'>RSI + WILLR Monitor</a>\n        <a class='nav-btn' href='/option-chain/' target='_self'>Option Chain Watcher UI</a>\n        <a class='nav-btn' href='/n8n/' target='_self'>n8n UI</a>\n        <a class='nav-btn' href='/gateway/' target='_self'>Gateway UI</a>\n      </div>\n    </div>\n    <div class='home-card'>\n      <h3>Health + API</h3>\n      <div class='btn-grid'>\n        <a class='nav-btn api-btn' href='/backend/healthz' target='_blank'>Watchlist Health</a>\n        <a class='nav-btn api-btn' href='/rsi-willr/api/healthz' target='_blank'>RSI/WILLR Health</a>\n        <a class='nav-btn api-btn' href='/option-chain/healthz' target='_blank'>Option Chain Health</a>\n        <a class='nav-btn api-btn' href='/option-chain/api/latest' target='_blank'>Option Chain Latest Snapshot</a>\n        <a class='nav-btn api-btn' href='/backend/paper/summary' target='_blank'>Paper Summary API</a>\n        <a class='nav-btn api-btn' href='/backend/digii4/manual-trackers' target='_blank'>Manual Trackers API</a>\n        <a class='nav-btn api-btn' href='/backend/watcher/summary' target='_blank'>Watcher Summary API</a>\n        <a class='nav-btn api-btn' href='/backend/watcher/manual-options' target='_blank'>Manual Option Trades API</a>\n        <a class='nav-btn api-btn' href='/api/mobile/v1/search?query=trading' target='_blank'>Mobile BFF Search API</a>\n      </div>\n    </div>\n  </div>\n</div>"
+      }
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "NIFTY50 Index Price",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT last_price AS value FROM instrument_state WHERE exchange='NSE' AND symbol_token='99926000' ORDER BY last_seen_ts DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Breadth A/D Ratio",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 4
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest_perf AS (\n  SELECT pct_intraday\n  FROM symbol_perf_snapshot\n  WHERE index_name='NIFTY100'\n    AND ts=(SELECT max(ts) FROM symbol_perf_snapshot WHERE index_name='NIFTY100')\n), breadth AS (\n  SELECT\n    count(*) FILTER (WHERE pct_intraday > 0) AS advances,\n    count(*) FILTER (WHERE pct_intraday < 0) AS declines\n  FROM latest_perf\n)\nSELECT CASE WHEN declines=0 THEN NULL ELSE (advances::numeric/declines::numeric) END AS value\nFROM breadth;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "yellow",
+                "value": 0.95
+              },
+              {
+                "color": "green",
+                "value": 1.05
+              },
+              {
+                "color": "blue",
+                "value": 1.25
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "NIFTY PCR Regime",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 4
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT pcr AS value FROM pcr_snapshots WHERE underlying='NIFTY50' ORDER BY ts DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.7
+              },
+              {
+                "color": "yellow",
+                "value": 0.85
+              },
+              {
+                "color": "green",
+                "value": 0.95
+              },
+              {
+                "color": "yellow",
+                "value": 1.15
+              },
+              {
+                "color": "orange",
+                "value": 1.3
+              },
+              {
+                "color": "red",
+                "value": 1.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Advances",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 7
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest_perf AS (\n  SELECT pct_intraday\n  FROM symbol_perf_snapshot\n  WHERE index_name='NIFTY100'\n    AND ts=(SELECT max(ts) FROM symbol_perf_snapshot WHERE index_name='NIFTY100')\n)\nSELECT count(*) FILTER (WHERE pct_intraday > 0)::numeric AS value\nFROM latest_perf;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 35
+              },
+              {
+                "color": "yellow",
+                "value": 45
+              },
+              {
+                "color": "green",
+                "value": 55
+              },
+              {
+                "color": "blue",
+                "value": 65
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Declines",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 7
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest_perf AS (\n  SELECT pct_intraday\n  FROM symbol_perf_snapshot\n  WHERE index_name='NIFTY100'\n    AND ts=(SELECT max(ts) FROM symbol_perf_snapshot WHERE index_name='NIFTY100')\n)\nSELECT count(*) FILTER (WHERE pct_intraday < 0)::numeric AS value\nFROM latest_perf;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 35
+              },
+              {
+                "color": "orange",
+                "value": 45
+              },
+              {
+                "color": "red",
+                "value": 55
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Top Gainer %",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 10
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest_perf AS (\n  SELECT pct_intraday\n  FROM symbol_perf_snapshot\n  WHERE index_name='NIFTY100'\n    AND ts=(SELECT max(ts) FROM symbol_perf_snapshot WHERE index_name='NIFTY100')\n)\nSELECT COALESCE(max(pct_intraday),0)::numeric AS value\nFROM latest_perf;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              },
+              {
+                "color": "blue",
+                "value": 2.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Top Loser %",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 10
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest_perf AS (\n  SELECT pct_intraday\n  FROM symbol_perf_snapshot\n  WHERE index_name='NIFTY100'\n    AND ts=(SELECT max(ts) FROM symbol_perf_snapshot WHERE index_name='NIFTY100')\n)\nSELECT COALESCE(min(pct_intraday),0)::numeric AS value\nFROM latest_perf;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -2.5
+              },
+              {
+                "color": "yellow",
+                "value": -1.0
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 29,
+      "type": "table",
+      "title": "Top Gainer Symbol",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 13
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest_perf AS (\n  SELECT symbol, pct_intraday\n  FROM symbol_perf_snapshot\n  WHERE index_name='NIFTY100'\n    AND ts=(SELECT max(ts) FROM symbol_perf_snapshot WHERE index_name='NIFTY100')\n), pick AS (\n  SELECT COALESCE(symbol,'NA') AS symbol,\n         COALESCE(round(pct_intraday::numeric,2),0)::numeric AS pct_change\n  FROM latest_perf\n  ORDER BY pct_intraday DESC NULLS LAST\n  LIMIT 1\n)\nSELECT symbol, pct_change FROM pick\nUNION ALL\nSELECT 'NA'::text AS symbol, 0::numeric AS pct_change\nWHERE NOT EXISTS (SELECT 1 FROM pick);",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false,
+          "reducer": [],
+          "fields": "",
+          "countRows": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pct_change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix:%"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 30,
+      "type": "table",
+      "title": "Top Loser Symbol",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 13
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH latest_perf AS (\n  SELECT symbol, pct_intraday\n  FROM symbol_perf_snapshot\n  WHERE index_name='NIFTY100'\n    AND ts=(SELECT max(ts) FROM symbol_perf_snapshot WHERE index_name='NIFTY100')\n), pick AS (\n  SELECT COALESCE(symbol,'NA') AS symbol,\n         COALESCE(round(pct_intraday::numeric,2),0)::numeric AS pct_change\n  FROM latest_perf\n  ORDER BY pct_intraday ASC NULLS LAST\n  LIMIT 1\n)\nSELECT symbol, pct_change FROM pick\nUNION ALL\nSELECT 'NA'::text AS symbol, 0::numeric AS pct_change\nWHERE NOT EXISTS (SELECT 1 FROM pick);",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false,
+          "reducer": [],
+          "fields": "",
+          "countRows": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pct_change"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix:%"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 28,
+      "type": "stat",
+      "title": "Spot vs Max Pain %",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 16
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH mp AS (\n  SELECT spot_price, max_pain_strike\n  FROM max_pain_summary\n  WHERE underlying='NIFTY50'\n  ORDER BY updated_at DESC\n  LIMIT 1\n)\nSELECT CASE WHEN max_pain_strike IS NULL OR max_pain_strike=0 OR spot_price IS NULL THEN NULL\n            ELSE ((spot_price-max_pain_strike)/max_pain_strike)*100 END AS value\nFROM mp;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -2.0
+              },
+              {
+                "color": "yellow",
+                "value": -0.5
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              },
+              {
+                "color": "yellow",
+                "value": 2.0
+              },
+              {
+                "color": "orange",
+                "value": 4.0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "OC Freshness (min)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 16
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT EXTRACT(EPOCH FROM (now()-captured_at))/60.0 AS value FROM option_chain_snapshots WHERE symbol IN ('NIFTY','NIFTY50') ORDER BY captured_at DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "orange",
+                "value": 6
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Option Chain ATM",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 19
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT atm_strike AS value FROM option_chain_snapshots WHERE symbol IN ('NIFTY','NIFTY50') ORDER BY captured_at DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "OC Updated IST",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 19
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COALESCE(to_char((captured_at AT TIME ZONE 'Asia/Kolkata'),'HH24:MI:SS'),'NA') AS value FROM option_chain_snapshots WHERE symbol IN ('NIFTY','NIFTY50') ORDER BY captured_at DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value",
+        "colorMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "string",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

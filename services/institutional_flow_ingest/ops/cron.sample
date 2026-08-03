@@ -1,0 +1,1 @@
+10 8 * * 1-5 /path/to/venv/bin/python /repo/services/institutional_flow_ingest/scripts/run_daily.py >> /repo/services/institutional_flow_ingest/logs/cron.log 2>&1

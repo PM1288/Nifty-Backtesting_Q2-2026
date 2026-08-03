@@ -1,0 +1,397 @@
+You are an expert Go engineer. Extend the existing Dockerized SmartAPI collector repo by implementing a robust Postgres database layer that includes:
+
+1) Idempotent database initialization & migrations (create schema/tables/indexes/constraints/partitions)
+2) CLI operations for DB admin (migrate, validate, cleanup retention, reset)
+3) Docker-friendly setup and cleanup scripts (host-run scripts that call docker compose, plus local run support)
+4) Production-grade structured JSON logging around DB operations, migrations, cleanup, and query timing.
+
+This must integrate with ANY Postgres DB by credentials provided via config/env. It must NOT assume TimescaleDB or superuser privileges.
+
+############################
+# REQUIRED REPO ADDITIONS  #
+############################
+Add/update the following files:
+
+cmd/collector/main.go                        (add flags for migrate/cleanup/reset/validate)
+internal/store/postgres.go                   (pool, DSN, search_path, advisory lock)
+internal/store/migrations.go                 (versioned migrations + schema_migrations table)
+internal/store/partitions.go                 (monthly partitions helpers)
+internal/store/cleanup.go                    (retention cleanup logic)
+internal/logging/logger.go                   (slog JSON logger, helpers)
+scripts/db_init.sh                           (docker compose DB init + migrate)
+scripts/db_cleanup.sh                        (run cleanup via collector CLI)
+scripts/db_reset.sh                          (dangerous reset; drop schema)
+scripts/db_validate.sh                       (validate schema exists + required tables/indexes)
+README.md                                    (document DB setup, scripts, retention)
+
+Keep everything dockerized and runnable via docker compose.
+
+############################
+# CONFIG REQUIREMENTS      #
+############################
+Extend config YAML (config.example.yaml). Add:
+
+postgres:
+  host: "postgres"
+  port: 5432
+  user: "postgres"
+  password: "postgres"                # ENV override POSTGRES_PASSWORD
+  database: "marketdata"
+  sslmode: "disable"
+  schema: "public"
+  app_name: "nifty100_collector"
+  connect_timeout_seconds: 10
+  max_conns: 10
+  min_conns: 2
+  max_conn_lifetime_minutes: 30
+  slow_query_ms: 250                  # log warning if query exceeds this
+retention:
+  enable: true
+  bars_1m_days: 45
+  quote_snapshots_days: 7
+  option_greeks_days: 14
+  keep_instruments_forever: true
+  dry_run: false                      # if true, only log what would be deleted
+runtime:
+  log_level: "info"
+  log_json: true
+  service_name: "smartapi-collector"
+  service_version: "dev"
+
+Secrets precedence:
+- POSTGRES_PASSWORD overrides config postgres.password
+- other existing secret env overrides remain
+
+############################
+# DB INITIALIZATION GOALS  #
+############################
+On startup (normal collector mode), the service MUST:
+- Connect to Postgres using pgxpool
+- Set application_name
+- Ensure schema exists (CREATE SCHEMA IF NOT EXISTS)
+- Acquire advisory lock so only one instance runs migrations/cleanup at a time
+- Run migrations (versioned)
+- Ensure partitions for current month + next 2 months exist (for partitioned tables)
+- Release lock
+- Continue normal ingestion
+
+Additionally, implement CLI-only DB modes:
+- collector --config X --db-migrate-only
+- collector --config X --db-validate-only
+- collector --config X --db-cleanup-only
+- collector --config X --db-reset --i-understand-this-will-delete-data
+
+Each mode must exit after completion with proper exit codes.
+
+############################
+# MIGRATION SYSTEM         #
+############################
+Implement a minimal, robust migration framework:
+
+1) A table schema_migrations under the configured schema:
+   - version TEXT PRIMARY KEY
+   - applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   - checksum TEXT NOT NULL
+2) Each migration step has:
+   - version string e.g. "001_init"
+   - checksum (sha256 of the SQL string)
+   - SQL statements (single multi-statement string)
+3) On migrate:
+   - read applied versions
+   - apply missing migrations in order
+   - verify checksum if version already applied (fail hard if mismatch to prevent drift)
+
+Use a Postgres advisory lock around migrations:
+- SELECT pg_advisory_lock(hashtext(schema || ':migrate'));
+- Ensure unlock in defer.
+
+All migrations must be idempotent where possible (CREATE TABLE IF NOT EXISTS, CREATE INDEX IF NOT EXISTS, ALTER TABLE ADD COLUMN IF NOT EXISTS).
+
+############################
+# TABLES & INDEXES (PHASE 2)
+############################
+Create or upgrade to include these tables (under schema):
+
+A) instruments
+- exchange TEXT NOT NULL
+- symbol_token TEXT NOT NULL
+- tradingsymbol TEXT NOT NULL
+- name TEXT NULL
+- instrumenttype TEXT NULL
+- expiry DATE NULL
+- strike NUMERIC NULL
+- lotsize INT NULL
+- tick_size NUMERIC NULL
+- raw JSONB NOT NULL
+- updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+PRIMARY KEY (exchange, symbol_token)
+INDEX IF NOT EXISTS instruments_tradingsymbol_idx ON (exchange, tradingsymbol)
+INDEX IF NOT EXISTS instruments_name_idx ON (exchange, name)
+INDEX IF NOT EXISTS instruments_type_expiry_idx ON (exchange, instrumenttype, expiry)
+
+B) universe_underlyings
+- underlying TEXT PRIMARY KEY
+- equity_exchange TEXT NOT NULL
+- equity_token TEXT NOT NULL
+- is_index BOOLEAN NOT NULL DEFAULT false
+- is_fno BOOLEAN NOT NULL DEFAULT false
+- created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+
+C) subscriptions
+- exchange TEXT NOT NULL
+- symbol_token TEXT NOT NULL
+- mode TEXT NOT NULL                       -- LTP/QUOTE/SNAPQUOTE
+- kind TEXT NOT NULL                       -- EQUITY/INDEX/FUT/OPT
+- instrumenttype TEXT NULL                 -- FUTSTK/OPTIDX etc
+- underlying TEXT NULL
+- expiry DATE NULL
+- strike NUMERIC NULL
+- right TEXT NULL                          -- CE/PE
+- priority INT NOT NULL DEFAULT 100
+- active BOOLEAN NOT NULL DEFAULT true
+- reason TEXT NULL
+- updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+PRIMARY KEY (exchange, symbol_token, mode)
+INDEX IF NOT EXISTS subs_active_idx ON (active, priority)
+INDEX IF NOT EXISTS subs_kind_idx ON (kind, active)
+INDEX IF NOT EXISTS subs_underlying_expiry_idx ON (underlying, expiry, active)
+CONSTRAINT subs_right_chk CHECK (right IS NULL OR right IN ('CE','PE'))
+CONSTRAINT subs_kind_chk CHECK (kind IN ('EQUITY','INDEX','FUT','OPT'))
+
+D) bars_1m  (PARTITIONED)
+Parent table bars_1m partitioned by RANGE(ts) monthly partitions.
+Columns:
+- ts TIMESTAMPTZ NOT NULL               -- minute start UTC
+- exchange TEXT NOT NULL
+- symbol_token TEXT NOT NULL
+- open NUMERIC NOT NULL
+- high NUMERIC NOT NULL
+- low NUMERIC NOT NULL
+- close NUMERIC NOT NULL
+- volume BIGINT NOT NULL DEFAULT 0
+- oi BIGINT NULL
+- source TEXT NOT NULL DEFAULT 'ws'     -- ws|backfill|rest
+- created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+PRIMARY KEY (ts, exchange, symbol_token)
+
+Indexes:
+- INDEX IF NOT EXISTS bars_token_ts_idx ON (symbol_token, ts DESC)
+- INDEX IF NOT EXISTS bars_ts_idx ON (ts DESC)
+
+E) quote_snapshots (PARTITIONED)
+Partition by RANGE(ts) monthly.
+- ts TIMESTAMPTZ NOT NULL
+- exchange TEXT NOT NULL
+- symbol_token TEXT NOT NULL
+- ltp NUMERIC NULL
+- open NUMERIC NULL
+- high NUMERIC NULL
+- low NUMERIC NULL
+- close NUMERIC NULL
+- volume BIGINT NULL
+- oi BIGINT NULL
+- bid NUMERIC NULL
+- ask NUMERIC NULL
+- bid_qty BIGINT NULL
+- ask_qty BIGINT NULL
+- raw JSONB NOT NULL
+PRIMARY KEY (ts, exchange, symbol_token)
+Index (symbol_token, ts DESC)
+
+F) option_greeks (PARTITIONED)
+Partition by RANGE(ts) monthly.
+- ts TIMESTAMPTZ NOT NULL
+- underlying TEXT NOT NULL
+- expiry DATE NOT NULL
+- tradingsymbol TEXT NOT NULL
+- strike NUMERIC NULL
+- right TEXT NULL
+- iv NUMERIC NULL
+- delta NUMERIC NULL
+- gamma NUMERIC NULL
+- theta NUMERIC NULL
+- vega NUMERIC NULL
+- ltp NUMERIC NULL
+- raw JSONB NOT NULL
+PRIMARY KEY (ts, tradingsymbol)
+INDEX IF NOT EXISTS greeks_underlying_expiry_ts_idx ON (underlying, expiry, ts DESC)
+
+G) watermarks
+- exchange TEXT NOT NULL
+- symbol_token TEXT NOT NULL
+- last_completed_minute TIMESTAMPTZ NOT NULL
+- updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+PRIMARY KEY (exchange, symbol_token)
+
+H) backfill_runs (ops visibility)
+- started_at TIMESTAMPTZ NOT NULL
+- finished_at TIMESTAMPTZ NULL
+- tokens_considered INT NOT NULL DEFAULT 0
+- candle_requests INT NOT NULL DEFAULT 0
+- bars_upserted INT NOT NULL DEFAULT 0
+- status TEXT NOT NULL DEFAULT 'running'   -- running|ok|error|skipped
+- error TEXT NULL
+PRIMARY KEY (started_at)
+
+I) app_runs (recommended)
+Track restarts and versions:
+- run_id UUID PRIMARY KEY
+- started_at TIMESTAMPTZ NOT NULL DEFAULT now()
+- finished_at TIMESTAMPTZ NULL
+- service_version TEXT NOT NULL
+- config_hash TEXT NOT NULL
+- host TEXT NULL
+- notes TEXT NULL
+
+Note: UUID generation must not require extensions. Generate UUID in Go.
+
+############################
+# PARTITION MANAGEMENT      #
+############################
+Implement internal/store/partitions.go:
+
+- Partition naming convention:
+  <table>_yYYYYmMM  (e.g. bars_1m_y2026m01)
+- Partition boundaries:
+  [monthStartUTC, nextMonthStartUTC)
+
+Functions:
+- EnsureMonthlyPartition(ctx, tableName, monthStart time.Time)
+- EnsureFuturePartitions(ctx, tableName, monthsAhead int)  // create current + N future
+
+Call EnsureFuturePartitions for each partitioned table at startup and before cleanup.
+
+Cleanup strategy uses partitions for fast deletion:
+- Drop partitions older than retention cutoff month.
+- Also support non-partition fallback deletion if table isn’t partitioned (but we will partition by default).
+
+############################
+# CLEANUP / RETENTION       #
+############################
+Implement internal/store/cleanup.go:
+
+- collector --db-cleanup-only runs cleanup once and exits.
+- Normal run: if retention.enable is true, run cleanup once at startup and then once daily at a quiet time (e.g., 03:00 IST) OR every 6 hours; make it configurable later if needed.
+
+Retention rules:
+- bars_1m: keep last retention.bars_1m_days
+- quote_snapshots: keep last retention.quote_snapshots_days
+- option_greeks: keep last retention.option_greeks_days
+- instruments: keep forever by default
+
+Cleanup method:
+1) Acquire advisory lock (hashtext(schema || ':cleanup')).
+2) Compute cutoff timestamps in UTC based on IST-now minus N days.
+3) If partitioned:
+   - identify partitions with range end <= cutoff
+   - if dry_run: log partitions that would be dropped
+   - else: DROP TABLE schema.partition_name
+4) If not partitioned:
+   - DELETE FROM table WHERE ts < cutoff (batched deletes by LIMIT, loop)
+5) After deletion:
+   - ANALYZE affected tables
+6) Release lock.
+
+Log:
+- how many partitions dropped
+- estimated rows deleted (if available)
+- durations per step
+
+############################
+# DB VALIDATION MODE        #
+############################
+Implement --db-validate-only:
+- Ensure schema exists
+- Check required tables exist
+- Check required columns exist (especially bars_1m.oi, subscriptions fields)
+- Check primary keys exist
+- Return exit 0 if OK, non-zero if missing pieces
+- Print a short report to logs
+
+############################
+# DB RESET MODE (DANGEROUS) #
+############################
+Implement --db-reset with required flag --i-understand-this-will-delete-data:
+- Acquire advisory lock migrate/reset
+- DROP SCHEMA <schema> CASCADE;
+- Recreate schema and run migrations from scratch.
+- Log warnings.
+
+############################
+# SCRIPTS (DOCKER FRIENDLY) #
+############################
+Implement bash scripts in scripts/:
+
+1) scripts/db_init.sh
+- set -euo pipefail
+- docker compose up -d postgres
+- wait for postgres health:
+  - loop `docker compose ps --format json` OR attempt `docker compose exec -T postgres pg_isready -U ...`
+- then run:
+  docker compose run --rm collector --config /app/config.yaml --db-migrate-only
+  docker compose run --rm collector --config /app/config.yaml --db-validate-only
+- Print success message.
+
+2) scripts/db_cleanup.sh
+- runs cleanup:
+  docker compose run --rm collector --config /app/config.yaml --db-cleanup-only
+- accept optional env overrides:
+  RETENTION_DRY_RUN=true, BARS_DAYS=, SNAP_DAYS=, GREEKS_DAYS=
+  (script exports env vars that override config via Go)
+
+3) scripts/db_reset.sh
+- require explicit confirmation:
+  DB_RESET_I_KNOW=YES ./scripts/db_reset.sh
+- then:
+  docker compose run --rm collector --config /app/config.yaml --db-reset --i-understand-this-will-delete-data
+
+4) scripts/db_validate.sh
+- just runs validate
+
+Scripts must work even if user uses an external Postgres:
+- if POSTGRES_HOST is not "postgres", do not start postgres service; just run collector commands.
+
+############################
+# LOGGING REQUIREMENTS      #
+############################
+Implement structured logging using slog JSON handler.
+
+- logging fields always include:
+  service, version, module, op, schema, db_host
+- levels: debug/info/warn/error based on config.runtime.log_level
+- log_json bool controls JSON vs text (default JSON)
+- Add helper: logger.With("module","store") etc.
+
+DB query timing:
+- Wrap pgx queries with timing:
+  - if duration >= postgres.slow_query_ms => WARN with op=sql_slow, sql_tag, duration_ms, args_count
+  - else DEBUG if log_level=debug
+Do NOT log secrets. Do not log full raw SQL with credentials.
+For migrations, do log the migration version and checksum.
+
+Cleanup logs:
+- op=cleanup, table, cutoff_ts, dry_run, partitions_dropped, duration_ms
+
+############################
+# README UPDATES            #
+############################
+Update README to document:
+- How migrations work
+- How to run:
+  ./scripts/db_init.sh
+  ./scripts/db_validate.sh
+  ./scripts/db_cleanup.sh
+  ./scripts/db_reset.sh
+- Retention knobs
+- Partition approach and naming
+
+############################
+# IMPLEMENT NOW             #
+############################
+Implement all the code and scripts. Ensure:
+- `docker compose up --build` works
+- scripts execute cleanly
+- migrations are repeatable and safe
+- logging is structured and helpful
+
+Produce the full repo changes with all files and code.

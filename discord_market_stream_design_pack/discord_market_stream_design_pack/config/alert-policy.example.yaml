@@ -1,0 +1,100 @@
+version: 1
+
+global:
+  enable_shadow_mode: true
+  enable_discord_send: false
+  send_ops_alerts_even_when_shadow: false
+  default_min_trust: 0.75
+  max_high_alerts_per_hour: 2
+  max_medium_alerts_per_hour: 4
+  burst_mode:
+    enabled: true
+    window_minutes: 10
+    followup_delta_required: 0.25
+
+freshness:
+  quotes_stale_seconds: 90
+  breadth_stale_seconds: 120
+  options_stale_seconds: 180
+  fii_stale_hours: 36
+  minimum_breadth_coverage_pct: 90
+
+cooldowns:
+  market_regime_minutes: 15
+  volatility_shock_minutes: 10
+  stock_symbol_minutes: 20
+  sector_minutes: 20
+  options_underlying_expiry_minutes: 10
+  fii_daily_hours: 12
+  ops_minutes: 30
+
+severity_thresholds:
+  info: 0.35
+  watch: 0.50
+  medium: 0.65
+  high: 0.80
+  critical: 0.92
+
+event_rules:
+  broad_participation_trend:
+    min_severity: medium
+    required_confirmations: 2
+    chart: true
+
+  narrow_leadership_warning:
+    min_severity: medium
+    required_confirmations: 2
+    chart: true
+
+  breadth_failure:
+    min_severity: high
+    required_confirmations: 2
+    chart: true
+
+  volatility_shock:
+    min_severity: high
+    required_confirmations: 2
+    chart: true
+
+  stock_true_leader:
+    min_severity: medium
+    required_confirmations: 3
+    chart: true
+
+  stock_false_leader:
+    min_severity: medium
+    required_confirmations: 2
+    chart: false
+
+  stock_breakdown:
+    min_severity: medium
+    required_confirmations: 3
+    chart: true
+
+  options_wall_shift:
+    min_severity: medium
+    required_confirmations: 2
+    chart: true
+
+  max_pain_pin_risk:
+    min_severity: watch
+    required_confirmations: 2
+    chart: false
+
+  fii_regime_shift:
+    min_severity: medium
+    required_confirmations: 2
+    chart: false
+
+  source_stale:
+    min_severity: high
+    required_confirmations: 1
+    chart: false
+
+routing:
+  market_regime: market
+  volatility: market
+  stock: stocks
+  options: derivatives
+  fii: close_summary
+  ops: ops

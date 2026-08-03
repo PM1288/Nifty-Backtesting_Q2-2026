@@ -1,0 +1,22 @@
+flowchart TB
+  Internet["Public internet / Cloudflare"] --> Nginx["nginx on localhost:19090"]
+
+  Nginx --> ProdHost["Host: m.nifty50today.co.in<br/>/ -> /n50/"]
+  Nginx --> StageHost["Host: stage.nifty50today.co.in<br/>/ -> /n50-stage/"]
+
+  ProdHost --> ProdApp["n50-dashboard<br/>base path /n50/"]
+  StageHost --> StageApp["n50-dashboard-stage<br/>base path /n50-stage/"]
+
+  ProdApp --> Redis0["redis db 0<br/>prod session + snapshot cache"]
+  StageApp --> Redis1["redis db 1<br/>stage session + snapshot cache"]
+
+  ProdApp --> SharedPG["shared postgres"]
+  StageApp --> SharedPG
+
+  Nginx --> OptionChain["/option-chain/* -> option-chain-watcher"]
+  Nginx --> Matomo["/matomo/* -> matomo"]
+
+  Writers["collector + ingestion + analytics writers"] --> SharedPG
+  ReadApis["export + intraday + reco APIs"] --> SharedPG
+  ProdApp --> ReadApis
+  StageApp --> ReadApis

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WatchlistIntraday",
+  "type": "object",
+  "required": ["trade_date", "slug", "title", "rows"],
+  "properties": {
+    "trade_date": {"type": "string"},
+    "slug": {"type": "string"},
+    "title": {"type": "string"},
+    "as_of": {"type": "string"},
+    "rows": {"type": "array"}
+  }
+}

@@ -1,0 +1,103 @@
+ARG GRAFANA_VERSION="12.3.1"
+
+# ---- Stage 1: build branded frontend from source ----
+FROM node:22-bookworm-slim AS ui_builder
+ARG GRAFANA_VERSION
+WORKDIR /src
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+RUN apt-get update && \
+    apt-get install -y git ca-certificates python3 build-essential golang && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 --branch v${GRAFANA_VERSION} https://github.com/grafana/grafana.git .
+
+# Apply UI overrides + branding assets
+COPY grafana/src-overrides/ ./
+COPY grafana/img /src/public/img
+COPY grafana/css/custom.css /src/public/css/custom.css
+
+RUN mkdir -p /src/public/brand && \
+    cp -n /src/public/brand/brand.sample.json /src/public/brand/brand.json || true
+
+RUN corepack enable
+RUN yarn install --immutable
+RUN yarn build
+RUN test -d public/build
+
+# ---- Stage 2: runtime image with branded assets ----
+FROM grafana/grafana:${GRAFANA_VERSION}
+
+ARG PRODUCT_NAME="DigiTrader"
+ARG VERSION="v1.0"
+ARG ECCN="N/A"
+
+USER root
+RUN mkdir -p /var/lib/grafana/plugins /var/lib/grafana/dashboards /usr/share/grafana/public/css /usr/share/grafana/public/img/bg /usr/share/grafana/public/fonts \
+ && chown -R 472:472 /var/lib/grafana /usr/share/grafana
+
+COPY --from=ui_builder /src/public/build  /usr/share/grafana/public/build
+COPY --from=ui_builder /src/public/img    /usr/share/grafana/public/img
+COPY --from=ui_builder /src/public/views  /usr/share/grafana/public/views
+COPY --from=ui_builder /src/public/css/custom.css /usr/share/grafana/public/css/custom.css
+COPY --from=ui_builder /src/public/brand  /usr/share/grafana/public/brand
+
+RUN cp /usr/share/grafana/public/brand/brand.sample.json /usr/share/grafana/public/brand/brand.json || true
+
+# Also replace Grafana's hashed static assets (built by Webpack) that still use Grafana filenames.
+RUN set -eu; \
+    SRC="/usr/share/grafana/public/img/brand-mark.svg"; \
+    STATIC_DIR="/usr/share/grafana/public/build/static/img"; \
+    if [ -f "${SRC}" ]; then \
+      for name in grafana_icon.svg grafana_typelogo.svg grafana_enterprise_typelogo.svg grafana_net_logo.svg grafana_com_auth_icon.svg grafana_mask_icon.svg grafana_mask_icon_white.svg grafana_text_logo-light.svg grafana_text_logo-dark.svg grafana_text_logo_light.svg grafana_text_logo_dark.svg; do \
+        cp "${SRC}" "/usr/share/grafana/public/img/${name}"; \
+      done; \
+      if [ -d "${STATIC_DIR}" ]; then \
+        find "${STATIC_DIR}" -maxdepth 1 -type f \( \
+          -name 'grafana_icon*.svg' -o \
+          -name 'grafana_typelogo*.svg' -o \
+          -name 'grafana_text_logo*.svg' -o \
+          -name 'grafana_mask_icon*.svg' -o \
+          -name 'grafana_net_logo*.svg' -o \
+          -name 'grafana_com_auth_icon*.svg' \
+        \) -print | while read -r f; do \
+          cp -f "${SRC}" "${f}"; \
+        done; \
+      fi; \
+    fi
+
+# Branding (title + custom styles)
+RUN sed -i "s|<title>\\[\\[\\.AppTitle\\]\\]</title>|<title>${PRODUCT_NAME}</title>|g" /usr/share/grafana/public/views/index.html && \
+    if ! grep -q 'public/css/custom.css' /usr/share/grafana/public/views/index.html; then \
+      sed -i '/<\/head>/i\\  <link rel=\"stylesheet\" href=\"public/css/custom.css\" />' /usr/share/grafana/public/views/index.html; \
+    fi
+
+# Simple plugin installer with fallback
+RUN install_plugin() { \
+      echo "Installing $1@$2 (fallback: $3)"; \
+      grafana cli plugins install "$1" "$2" || grafana cli plugins install "$1" "$3"; \
+    }; \
+    install_plugin volkovlabs-form-panel           5.1.0 5.0.0 && \
+    install_plugin volkovlabs-echarts-panel        6.6.0 6.5.0 && \
+    install_plugin volkovlabs-image-panel          6.3.0 6.2.0 && \
+    install_plugin volkovlabs-variable-panel       3.9.0 3.8.0 && \
+    install_plugin volkovlabs-grapi-datasource     3.6.0 3.5.0 && \
+    install_plugin volkovlabs-table-panel          2.7.0 2.6.0
+
+ENV QIO_PRODUCT_NAME="${PRODUCT_NAME}"
+ENV GF_SERVER_HTTP_PORT=3012
+ENV GF_SECURITY_ADMIN_USER=admin
+ENV GF_SECURITY_ADMIN_PASSWORD=QiOPassword1#
+
+COPY grafana/config/grafana.ini /etc/grafana/grafana.ini
+COPY grafana/provisioning       /etc/grafana/provisioning
+COPY grafana/provisioning/dashboards/home.json /usr/share/grafana/public/dashboards/home.json
+
+COPY NOTICE_CUSTOM /usr/share/grafana/NOTICE_CUSTOM
+
+RUN chown -R 472:472 /etc/grafana /usr/share/grafana/public /usr/share/grafana/public/fonts || true
+USER grafana
+
+EXPOSE 3012
+CMD ["/run.sh"]

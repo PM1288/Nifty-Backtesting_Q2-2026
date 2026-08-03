@@ -1,0 +1,60 @@
+{
+  "$schema": "../../contracts/comparison-run-config.schema.json",
+  "mode": "BACKTEST_COMPARISON",
+  "suite_file": "../suites/nifty_intraday_baseline_comparison_v1.json",
+  "suite_id": "nifty_intraday_baseline_comparison_v1",
+  "data": {
+    "source_id": "postgres_qualified_equity_1m",
+    "daily_feature_source_id": "postgres_qualified_equity_1d",
+    "timezone": "Asia/Kolkata",
+    "date_start": "2026-07-28",
+    "date_end": "2026-07-31",
+    "universe_mode": "explicit_symbols",
+    "symbols": [
+      "RELIANCE",
+      "HDFCBANK",
+      "INFY",
+      "TATAMOTORS",
+      "SBIN"
+    ],
+    "point_in_time_index_code": "NIFTY50",
+    "require_qualified_data": true,
+    "data_snapshot_mode": "freeze_at_run_start"
+  },
+  "portfolio": {
+    "comparison_capital_mode": "isolated_equal_capital",
+    "initial_cash_per_strategy_inr": 1000000,
+    "ticket_size_inr": 200000,
+    "max_open_positions_per_strategy": 5,
+    "reserve_entry_costs": true,
+    "reject_when_cash_insufficient": true
+  },
+  "execution": {
+    "workers": 1,
+    "days_per_shard": 4,
+    "symbols_per_shard": 5,
+    "checkpoint_every_bars": 5000,
+    "heartbeat_seconds": 10,
+    "resume_policy": "reuse_verified_completed_shards",
+    "path_policy": "stop_first",
+    "random_seed": 0
+  },
+  "outputs": {
+    "artifact_root": "artifacts/backtest-comparisons",
+    "persist_to_postgres": true,
+    "write_csv": true,
+    "write_json": true,
+    "write_parquet": true,
+    "build_html_report": true,
+    "build_pdiagram_snapshots": true,
+    "build_comparison_report": true
+  },
+  "publication": {
+    "auto_publish": false,
+    "require_validation_pass": true,
+    "require_compatibility_hash_match": true,
+    "require_independent_verification_for_full_run": false
+  },
+  "requested_by": "operator",
+  "run_name": "baseline_suite_postgres_smoke"
+}

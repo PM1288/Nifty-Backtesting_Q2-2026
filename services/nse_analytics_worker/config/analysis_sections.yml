@@ -1,0 +1,67 @@
+sections:
+  - key: overview
+    title: Overview
+    tables:
+      - nse_app.market_summary_daily
+      - nse_app.vw_latest_watchlist
+    description: Latest market state and highest-priority watchlist.
+
+  - key: regime_breadth
+    title: Regime & Breadth
+    tables:
+      - nse_app.market_summary_daily
+    description: Participation, breakout-vs-breakdown balance, and regime labeling.
+
+  - key: momentum_breakout
+    title: Momentum & Breakouts
+    tables:
+      - nse_app.stock_analysis_signals_daily
+      - nse_app.signal_performance_summary
+    description: Trend continuation and breakout quality.
+
+  - key: mean_reversion
+    title: Mean Reversion
+    tables:
+      - nse_app.stock_analysis_signals_daily
+      - nse_app.signal_performance_summary
+    description: Exhaustion reversals and snapback setups.
+
+  - key: delivery_conviction
+    title: Delivery & Conviction
+    tables:
+      - nse_app.stock_analysis_signals_daily
+      - nse_app.signal_performance_summary
+    description: Accumulation, distribution, and speculative churn.
+
+  - key: event_flow
+    title: Events & Flows
+    tables:
+      - nse_app.stock_analysis_signals_daily
+      - nse.fact_bulk_deals
+      - nse.fact_block_deals
+      - nse.fact_text_events
+    description: Bulk/block, short-selling, announcements, board meetings, and corporate actions.
+
+  - key: anomalies_risk
+    title: Anomalies & Risk
+    tables:
+      - nse_app.stock_analysis_signals_daily
+      - nse.fact_surveillance_indicators
+      - nse.fact_var_margin
+      - nse.fact_margin_trading_scrip
+    description: Outliers, caution overlays, financed crowding, and risk pressure.
+
+  - key: historical_learner
+    title: Historical Learner
+    tables:
+      - nse_app.signal_performance_summary
+      - nse_app.security_daily_features
+    description: Which signals historically worked, failed, or degraded by regime.
+
+  - key: data_quality
+    title: Data Quality
+    tables:
+      - nse_app.quality_check_results
+      - nse_app.job_runs
+      - nse_app.job_steps
+    description: Freshness, coverage, row consistency, and job execution health.

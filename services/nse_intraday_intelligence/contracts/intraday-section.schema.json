@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IntradaySection",
+  "type": "object",
+  "required": ["trade_date", "index_code", "section_slug", "title", "direction", "accent_token", "summary_metrics", "highlights", "rows", "charts"],
+  "properties": {
+    "trade_date": {"type": "string"},
+    "index_code": {"type": "string"},
+    "section_slug": {"type": "string"},
+    "title": {"type": "string"},
+    "direction": {"type": "string", "enum": ["up", "down", "neutral"]},
+    "accent_token": {"type": "string", "enum": ["green", "red", "white"]},
+    "summary_metrics": {"type": "object"},
+    "highlights": {"type": "array", "items": {"type": "string"}},
+    "narrative": {"type": ["string", "null"]},
+    "rows": {"type": "array", "items": {"type": "object"}},
+    "charts": {"type": "array", "items": {"type": "object"}},
+    "historical_context": {"type": "object"}
+  },
+  "examples": [
+    {"section_slug": "stock-quality", "title": "Stock Quality & Residual Strength"}
+  ]
+}

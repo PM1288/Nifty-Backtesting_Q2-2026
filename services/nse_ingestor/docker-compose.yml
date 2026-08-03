@@ -1,0 +1,14 @@
+services:
+  nse_ingestor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nse_ingestor
+    env_file:
+      - .env
+    command: ["sync", "--backfill-days", "7"]
+    volumes:
+      - ./runtime/staging:/var/lib/nse/staging
+      - ./runtime/logs:/var/log/nse
+      - ./input:/input
+    restart: "no"

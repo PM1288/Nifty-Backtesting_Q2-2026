@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DashboardSectionPayload",
+  "type": "object",
+  "required": [
+    "trade_date",
+    "section_slug",
+    "title",
+    "direction",
+    "accent_token",
+    "generated_at",
+    "rows"
+  ],
+  "properties": {
+    "trade_date": {
+      "type": "string"
+    },
+    "section_slug": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "direction": {
+      "enum": [
+        "up",
+        "down",
+        "neutral"
+      ]
+    },
+    "accent_token": {
+      "enum": [
+        "green",
+        "red",
+        "white"
+      ]
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "summary_metrics": {
+      "type": "object"
+    },
+    "highlights": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "narrative": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rows": {
+      "type": "array"
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MarketEvent",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "severity",
+    "entity_type",
+    "entity_id",
+    "as_of",
+    "headline",
+    "metrics",
+    "trust",
+    "send_decision"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "event_family": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "watch",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "entity_type": {
+      "type": "string"
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "headline": {
+      "type": "string"
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "confirmations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trust": {
+      "type": "object",
+      "required": [
+        "overall"
+      ],
+      "properties": {
+        "overall": {
+          "type": "number"
+        },
+        "quotes": {
+          "type": "string"
+        },
+        "options": {
+          "type": "string"
+        },
+        "breadth": {
+          "type": "string"
+        },
+        "fii": {
+          "type": "string"
+        }
+      }
+    },
+    "chart_requested": {
+      "type": "boolean"
+    },
+    "chart_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "send_decision": {
+      "type": "string",
+      "enum": [
+        "send",
+        "suppress",
+        "digest_only"
+      ]
+    }
+  }
+}

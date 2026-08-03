@@ -1,0 +1,18 @@
+programme_version: "2.0"
+target_repository: /home/novius2/trading-stack
+artifact_root: /home/novius2/artifacts/nifty-stratlab
+source_sets:
+  stocks: /home/novius2/data/nifty-50-minute-data/aaditya555
+  indices: /home/novius2/data/nifty-50-minute-data/debashis74017
+  fii_dii: /home/novius2/data/fii-dii-and-nifty-historical-study-july-2023
+database:
+  production_dsn_env: TRADING_DATABASE_URL
+  disposable_test_dsn_env: TRADING_TEST_DATABASE_URL
+safety:
+  production_read_only: true
+  source_files_immutable: true
+  broker_orders_allowed: false
+  full_estate_run_allowed: false
+notes:
+  - The target directory has no Git metadata; use the SHA-256 change manifest until an owner approves a Git repository boundary.
+  - Copy this example before editing. Never put DSN values or credentials in YAML.

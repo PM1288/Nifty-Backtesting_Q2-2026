@@ -1,0 +1,95 @@
+@import url("./tokens.css");
+@import url("./animations.css");
+@import "@fontsource-variable/inter";
+@import "@fontsource/hind/400.css";
+@import "@fontsource/hind/500.css";
+@import "@fontsource/hind/600.css";
+@import "@fontsource/noto-sans-devanagari/400.css";
+@import "@fontsource/noto-sans-devanagari/500.css";
+@import "@fontsource/noto-sans-devanagari/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  font-family: var(--font-ui);
+  font-optical-sizing: auto;
+  font-variant-numeric: lining-nums tabular-nums;
+  scroll-padding-bottom: var(--footer-disclaimer-offset, 0px);
+  background: var(--bg);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  font-family: var(--font-ui);
+  color: inherit;
+}
+
+::selection {
+  background: var(--w-12);
+  color: var(--white);
+}
+
+:focus-visible {
+  outline: 2px solid rgba(212, 175, 55, 0.34);
+  outline-offset: 2px;
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+  color: var(--w-92);
+}
+
+:where(.mono, .numeric, .price, .percent, .symbol, .ticker, .log-line) {
+  font-family: var(--font-numeric);
+  font-variant-numeric: lining-nums tabular-nums slashed-zero;
+  font-feature-settings: "zero" 1, "lnum" 1, "tnum" 1;
+}
+
+:root[data-digit-system="deva"] :where(.mono, .numeric, .price, .percent, .symbol, .ticker, .log-line) {
+  font-variant-numeric: normal;
+  font-feature-settings: normal;
+}
+
+/* Scrollbar (minimal) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--w-12);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -1,0 +1,172 @@
+{
+  "$schema": "../../contracts/strategy-comparison-suite.schema.json",
+  "suite_id": "nifty_intraday_baseline_comparison_v1",
+  "version": 1,
+  "display_name": "NIFTY Intraday Baseline Strategy Comparison Suite",
+  "description": "A controlled comparison suite containing a non-alpha fixed-time control and eight widely recognised strategy archetypes. All strategies are long-only cash-equity intraday references and must be compared on identical point-in-time data, costs, execution assumptions and isolated capital.",
+  "status": "reference",
+  "strategies": [
+    {
+      "strategy_version_id": "fixed_time_control_intraday_v1",
+      "strategy_file": "../strategies/fixed_time_control_intraday_v1.json",
+      "role": "control",
+      "tier": 1,
+      "notes": "Tier 1 establishes comparison functionality."
+    },
+    {
+      "strategy_version_id": "rsi15_daily40_intraday_v1",
+      "strategy_file": "../strategies/rsi15_daily40_intraday_v1.json",
+      "role": "candidate",
+      "tier": 1,
+      "notes": "Tier 1 establishes comparison functionality."
+    },
+    {
+      "strategy_version_id": "rsi_willr_recovery_intraday_v1",
+      "strategy_file": "../strategies/rsi_willr_recovery_intraday_v1.json",
+      "role": "candidate",
+      "tier": 1,
+      "notes": "Tier 1 establishes comparison functionality."
+    },
+    {
+      "strategy_version_id": "ema9_21_vwap_trend_intraday_v1",
+      "strategy_file": "../strategies/ema9_21_vwap_trend_intraday_v1.json",
+      "role": "candidate",
+      "tier": 1,
+      "notes": "Tier 1 establishes comparison functionality."
+    },
+    {
+      "strategy_version_id": "orb15_volume_breakout_intraday_v1",
+      "strategy_file": "../strategies/orb15_volume_breakout_intraday_v1.json",
+      "role": "candidate",
+      "tier": 1,
+      "notes": "Tier 1 establishes comparison functionality."
+    },
+    {
+      "strategy_version_id": "bollinger_rsi_reentry_intraday_v1",
+      "strategy_file": "../strategies/bollinger_rsi_reentry_intraday_v1.json",
+      "role": "candidate",
+      "tier": 1,
+      "notes": "Tier 1 establishes comparison functionality."
+    },
+    {
+      "strategy_version_id": "vwap_pullback_continuation_intraday_v1",
+      "strategy_file": "../strategies/vwap_pullback_continuation_intraday_v1.json",
+      "role": "candidate",
+      "tier": 2,
+      "notes": "Tier 2 exercises richer market-context features."
+    },
+    {
+      "strategy_version_id": "macd_vwap_momentum_intraday_v1",
+      "strategy_file": "../strategies/macd_vwap_momentum_intraday_v1.json",
+      "role": "candidate",
+      "tier": 2,
+      "notes": "Tier 2 exercises richer market-context features."
+    },
+    {
+      "strategy_version_id": "relative_strength_volume_momentum_intraday_v1",
+      "strategy_file": "../strategies/relative_strength_volume_momentum_intraday_v1.json",
+      "role": "candidate",
+      "tier": 2,
+      "notes": "Tier 2 exercises richer market-context features."
+    }
+  ],
+  "tiers": {
+    "tier_1": [
+      "fixed_time_control_intraday_v1",
+      "rsi15_daily40_intraday_v1",
+      "rsi_willr_recovery_intraday_v1",
+      "ema9_21_vwap_trend_intraday_v1",
+      "orb15_volume_breakout_intraday_v1",
+      "bollinger_rsi_reentry_intraday_v1"
+    ],
+    "tier_2": [
+      "vwap_pullback_continuation_intraday_v1",
+      "macd_vwap_momentum_intraday_v1",
+      "relative_strength_volume_momentum_intraday_v1"
+    ]
+  },
+  "fairness_contract": {
+    "comparison_capital_mode": "isolated_equal_capital",
+    "same_data_snapshot": true,
+    "same_point_in_time_universe": true,
+    "same_calendar_version": true,
+    "same_fee_profile": true,
+    "same_execution_model": true,
+    "same_slippage": true,
+    "same_ticket_size": true,
+    "same_max_positions": true,
+    "same_date_range": true,
+    "same_quality_admission_policy": true,
+    "compatibility_hash_fields": [
+      "data_snapshot_hash",
+      "universe_hash",
+      "calendar_version",
+      "fee_profile_id",
+      "execution_model_id",
+      "slippage_bps_per_side",
+      "ticket_size_inr",
+      "initial_cash_per_strategy_inr",
+      "max_open_positions_per_strategy",
+      "date_start",
+      "date_end",
+      "quality_policy_hash"
+    ],
+    "incompatible_result_policy": "show_but_block_ranking_and_display_reason"
+  },
+  "benchmarks": [
+    {
+      "benchmark_id": "nifty50_buy_hold",
+      "display_name": "NIFTY 50 Buy-and-Hold",
+      "purpose": "Market-direction context only; not directly equivalent to an intraday cash strategy."
+    },
+    {
+      "benchmark_id": "fixed_time_control_intraday_v1",
+      "display_name": "Fixed-Time Control",
+      "purpose": "Detects whether apparent performance is attributable to market drift or implementation defects rather than signal logic."
+    }
+  ],
+  "required_metrics": [
+    "trade_count",
+    "eligible_symbol_days",
+    "executed_trade_count",
+    "skipped_signal_count",
+    "gross_pnl_inr",
+    "total_charges_inr",
+    "net_pnl_inr",
+    "net_pnl_per_trade_inr",
+    "target_500_hit_rate_pct",
+    "win_rate_pct",
+    "profit_factor",
+    "payoff_ratio",
+    "max_drawdown_pct",
+    "max_drawdown_inr",
+    "turnover_inr",
+    "capital_utilisation_pct",
+    "median_holding_minutes",
+    "time_in_market_pct",
+    "stop_exit_pct",
+    "forced_exit_pct",
+    "data_quality_skip_count",
+    "ambiguous_path_count"
+  ],
+  "required_breakdowns": [
+    "symbol",
+    "sector",
+    "month",
+    "day_of_week",
+    "entry_time_bucket",
+    "market_regime",
+    "nifty_direction",
+    "vix_bucket",
+    "exit_reason",
+    "trade_net_pnl_bucket"
+  ],
+  "ui_routes": {
+    "suite": "/dashboard/strategy-lab/suites/nifty_intraday_baseline_comparison_v1",
+    "run_create": "/dashboard/strategy-lab/suites/nifty_intraday_baseline_comparison_v1/run",
+    "comparison": "/dashboard/strategy-lab/comparisons/<comparison_run_id>",
+    "strategy": "/dashboard/strategy-lab/strategies/<strategy_version_id>",
+    "trade": "/dashboard/strategy-lab/runs/<run_id>/trades/<trade_id>",
+    "pdiagram": "/dashboard/p-diagram?mode=HISTORICAL&runId=<run_id>&tradeId=<trade_id>"
+  }
+}

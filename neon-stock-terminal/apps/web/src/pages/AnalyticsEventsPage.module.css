@@ -1,0 +1,133 @@
+.page {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+  min-height: calc(100vh - 160px);
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.searchInput {
+  min-height: 32px;
+  min-width: 180px;
+  border: 1px solid var(--w-08);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.68);
+  color: var(--white);
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.searchInput:focus-visible {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.34);
+  box-shadow: var(--glow-white);
+}
+
+.calendarWrap {
+  display: grid;
+  gap: 12px;
+}
+
+.calendarSurface {
+  width: 100%;
+  min-height: 320px;
+  border: 1px solid var(--w-08);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(212, 175, 55, 0.08), transparent 35%),
+    linear-gradient(180deg, rgba(255,255,255,0.03), transparent 55%),
+    rgba(0, 0, 0, 0.78);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chartMetaText,
+.caption,
+.detailText,
+.attachmentText {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--w-72);
+}
+
+.tablePurpose {
+  display: grid;
+  gap: 2px;
+}
+
+.tablePurpose strong {
+  font-size: 12px;
+  color: var(--white);
+}
+
+.tablePurpose span {
+  font-size: 11px;
+  color: var(--w-72);
+}
+
+.dateCell {
+  display: grid;
+  gap: 2px;
+}
+
+.dateCell strong {
+  font-size: 12px;
+  color: var(--white);
+}
+
+.dateCell span {
+  font-size: 11px;
+  color: var(--w-72);
+}
+
+.symbolCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detailsBlock {
+  max-width: 540px;
+}
+
+.attachmentLink {
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.26);
+}
+
+.attachmentLink:hover,
+.attachmentLink:focus-visible {
+  outline: none;
+  border-bottom-color: rgba(212, 175, 55, 0.48);
+}
+
+@media (max-width: 760px) {
+  .filterRow,
+  .chipRow {
+    justify-content: flex-start;
+  }
+
+  .calendarSurface {
+    min-height: 280px;
+  }
+}

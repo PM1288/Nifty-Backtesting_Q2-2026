@@ -1,0 +1,9 @@
+[Unit]
+Description=Institutional Flow Daily Ingestion
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/repo/services/institutional_flow_ingest
+Environment=TZ=Asia/Kolkata
+ExecStart=/path/to/venv/bin/python /repo/services/institutional_flow_ingest/scripts/run_daily.py

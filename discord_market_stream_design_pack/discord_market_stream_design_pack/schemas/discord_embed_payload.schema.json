@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DiscordEmbedPayloadPreview",
+  "type": "object",
+  "required": [
+    "content",
+    "allowed_mentions"
+  ],
+  "properties": {
+    "content": {
+      "type": "string"
+    },
+    "username": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "embeds": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object"
+      }
+    },
+    "allowed_mentions": {
+      "type": "object",
+      "properties": {
+        "parse": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

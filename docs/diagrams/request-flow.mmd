@@ -1,0 +1,36 @@
+sequenceDiagram
+  participant User as Browser user
+  participant Nginx as nginx
+  participant App as n50-dashboard / n50-dashboard-stage
+  participant Redis as redis
+  participant PG as postgres
+  participant Upstream as proxied APIs
+
+  User->>Nginx: GET /n50/... or /n50-stage/...
+  Nginx->>App: forward SPA / app request
+  App-->>User: HTML + assets + same-origin shell
+
+  User->>Nginx: GET /auth/session or /v1/overview
+  Nginx->>App: same-origin API request
+  App->>Redis: session / snapshot lookup
+  alt snapshot hit or session hit
+    Redis-->>App: cached value
+    App-->>User: fast response with freshness headers
+  else cache miss
+    App->>PG: query read model / snapshot source tables
+    PG-->>App: rows / aggregates
+    App->>Redis: cache session or snapshot
+    App-->>User: response
+  end
+
+  User->>Nginx: GET /api/v1/intraday/... or /option-chain/api/latest
+  Nginx->>App: proxy if /api/v1/*
+  App->>Upstream: forward request to export/intraday/reco API
+  Upstream->>PG: read from postgres
+  Upstream-->>App: proxied JSON
+  App-->>User: same-origin JSON
+
+  User->>Nginx: GET /option-chain/api/latest
+  Nginx->>Upstream: direct proxy to option-chain watcher
+  Upstream->>PG: read latest chain state
+  Upstream-->>User: JSON

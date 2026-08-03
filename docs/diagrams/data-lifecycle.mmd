@@ -1,0 +1,15 @@
+flowchart LR
+  Collect["Collect<br/>collector / nse_ingestor / option-chain watcher"] --> Transform["Transform<br/>strategy / analytics worker / schedulers"]
+  Transform --> Publish["Publish<br/>snapshot tables, read models, export manifests"]
+  Publish --> Serve["Serve<br/>Node API, intraday API, reco API, option-chain API"]
+  Serve --> Trust["Trust<br/>health, readiness, freshness, feedback, quality surfaces"]
+
+  Collect --> PG["postgres"]
+  Transform --> PG
+  Publish --> PG
+  Publish --> Redis["redis snapshots"]
+  Serve --> Redis
+  Trust --> Browser["Browser surfaces<br/>overview, options, backtesting, trust board"]
+
+  Trust --> Operator["Operators / reviewers"]
+  Operator --> Trust

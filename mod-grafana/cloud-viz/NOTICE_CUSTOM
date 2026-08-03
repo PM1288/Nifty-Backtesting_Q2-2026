@@ -1,0 +1,8 @@
+Custom Grafana build for QiO Cloud Viz
+
+- Base: grafana/grafana tag v12.3.1 (AGPLv3).
+- Source code: this repository contains all modifications (see dockerfile_qio-cloud-viz, grafana/src-overrides, grafana/img, grafana/css). If you redistribute this image, publish the corresponding source (for example at https://github.com/qiotech-cloud/qio-cloud-viz or your fork/tag) to satisfy AGPL network use.
+- Trademarks: Grafana wordmarks/logos have been removed or replaced with QiO Cloud Viz branding across login, navigation, favicons, and build assets.
+- License notices from upstream remain; do not remove upstream copyright headers.
+
+Default admin for local builds: user `admin` / password `QiOPassword1#` (override via GRAFANA_ADMIN_PASSWORD).

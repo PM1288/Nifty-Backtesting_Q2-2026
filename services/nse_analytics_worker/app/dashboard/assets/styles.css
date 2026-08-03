@@ -1,0 +1,39 @@
+.block-container {
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+  max-width: 1400px;
+}
+
+.metric-card {
+  background: linear-gradient(135deg, #101820 0%, #1f2a37 100%);
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  min-height: 110px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  margin-bottom: 0.75rem;
+}
+
+.metric-label {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  margin-bottom: 0.4rem;
+}
+
+.metric-value {
+  color: #f8fafc;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.metric-help {
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  margin-top: 0.35rem;
+}
+
+.section-note {
+  color: #475569;
+  font-size: 0.95rem;
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WatchlistPayload",
+  "type": "object",
+  "required": [
+    "trade_date",
+    "watchlist",
+    "rows"
+  ],
+  "properties": {
+    "trade_date": {
+      "type": "string"
+    },
+    "watchlist": {
+      "type": "object"
+    },
+    "rows": {
+      "type": "array"
+    },
+    "generated_at": {
+      "type": "string"
+    }
+  }
+}

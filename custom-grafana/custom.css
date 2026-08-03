@@ -1,0 +1,34 @@
+/* Custom branding layer for the local DigiTrader Grafana build. */
+:root {
+  --digitrader-bg: #0f141d;
+  --digitrader-bg-elev: #182130;
+  --digitrader-border: #2f3f59;
+  --digitrader-text: #ffffff;
+  --digitrader-link: #ffffff;
+}
+
+body,
+.grafana-app,
+.main-view {
+  background: radial-gradient(circle at 0 0, #1b2538 0%, var(--digitrader-bg) 38%, #0c1017 100%) !important;
+  color: var(--digitrader-text) !important;
+}
+
+.navbar,
+.sidemenu,
+.sidemenu__top,
+.sidemenu__bottom {
+  background: var(--digitrader-bg) !important;
+  border-color: var(--digitrader-border) !important;
+}
+
+.panel-container,
+.dashboard-container .panel-container {
+  background-color: var(--digitrader-bg-elev) !important;
+  border: 1px solid var(--digitrader-border) !important;
+  border-radius: 8px;
+}
+
+a {
+  color: var(--digitrader-link) !important;
+}

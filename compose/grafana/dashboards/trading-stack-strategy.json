@@ -1,0 +1,313 @@
+{
+  "id": null,
+  "uid": "trading-stack-strategy",
+  "title": "Strategy + Paper Trading",
+  "tags": [
+    "strategy",
+    "paper",
+    "trading-stack"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "trading-stack"
+      ],
+      "targetBlank": false,
+      "title": "Navigate Dashboards",
+      "tooltip": "Jump to another dashboard",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Last Strategy Run",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT status AS value FROM strategy_runs ORDER BY started_at DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Current Regime",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT value AS value FROM strategy_state WHERE name = 'regime' ORDER BY ts DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Open Positions",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS value FROM paper_positions WHERE qty <> 0;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Signals per 5m",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "WITH buckets AS (\n  SELECT generate_series(\n    date_trunc('minute', now() - interval '24 hours'),\n    date_trunc('minute', now()),\n    interval '5 minutes'\n  ) AS bucket_ts\n), counts AS (\n  SELECT date_trunc('minute', ts) AS bucket_ts, COUNT(*) AS cnt\n  FROM strategy_signals\n  WHERE ts > now() - interval '24 hours'\n  GROUP BY 1\n)\nSELECT b.bucket_ts AS \"time\", COALESCE(c.cnt, 0) AS value\nFROM buckets b\nLEFT JOIN counts c ON c.bucket_ts = b.bucket_ts\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "axisLabel": "Value"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Latest Signals",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT s.ts,\n       s.strategy,\n       s.exchange,\n       COALESCE(u.tradingsymbol, subs.tradingsymbol, s.symbol_token) AS symbol,\n       s.side,\n       s.confidence,\n       s.entry_price,\n       s.stop_loss,\n       s.take_profit,\n       s.reason\nFROM strategy_signals s\nLEFT JOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nLEFT JOIN subscriptions subs ON subs.symbol_token = s.symbol_token\nORDER BY s.ts DESC LIMIT 20;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Paper Positions",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COALESCE(u.tradingsymbol, subs.tradingsymbol, p.symbol_token) AS symbol,\n       p.strategy,\n       p.side,\n       p.qty,\n       p.avg_price,\n       p.stop_loss,\n       p.take_profit,\n       p.mark_price,\n       p.unrealized_calc AS unrealized_pnl,\n       p.total_pnl,\n       p.updated_at\nFROM paper_pnl p\nLEFT JOIN instrument_universe u ON u.exchange = p.exchange AND u.symbol_token = p.symbol_token\nLEFT JOIN subscriptions subs ON subs.symbol_token = p.symbol_token\nUNION ALL\nSELECT 'NO_OPEN_POSITIONS' AS symbol,\n       'system' AS strategy,\n       'NA' AS side,\n       0::numeric AS qty,\n       0::numeric AS avg_price,\n       0::numeric AS stop_loss,\n       0::numeric AS take_profit,\n       0::numeric AS mark_price,\n       0::numeric AS unrealized_pnl,\n       0::numeric AS total_pnl,\n       now() AS updated_at\nWHERE NOT EXISTS (SELECT 1 FROM paper_pnl)\nORDER BY updated_at DESC;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Paper Trades (Recent)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT t.ts,\n       t.strategy,\n       t.exchange,\n       COALESCE(u.tradingsymbol, subs.tradingsymbol, t.symbol_token) AS symbol,\n       t.side,\n       t.qty,\n       t.price,\n       t.fees\nFROM paper_trades t\nLEFT JOIN instrument_universe u ON u.exchange = t.exchange AND u.symbol_token = t.symbol_token\nLEFT JOIN subscriptions subs ON subs.symbol_token = t.symbol_token\nUNION ALL\nSELECT now() AS ts,\n       'system' AS strategy,\n       'NSE' AS exchange,\n       'NO_RECENT_TRADES' AS symbol,\n       'NA' AS side,\n       0::numeric AS qty,\n       0::numeric AS price,\n       0::numeric AS fees\nWHERE NOT EXISTS (SELECT 1 FROM paper_trades)\nORDER BY ts DESC LIMIT 20;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "text",
+      "title": "Strategy Parameters (Editable)",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div id=\"strategy-params-app\">\n  <style>\n    .sp-card { font-family: 'Segoe UI', Arial, sans-serif; padding: 12px; background: #0f1419; color: #e6edf3; border-radius: 8px; }\n    .sp-header { font-size: 18px; margin-bottom: 6px; font-weight: 600; }\n    .sp-sub { font-size: 12px; color: #9da7b3; margin-bottom: 8px; }\n    .sp-actions { margin: 8px 0; display: flex; gap: 8px; align-items: center; }\n    .sp-actions button { padding: 6px 10px; border-radius: 6px; border: none; background: #1f6feb; color: white; cursor: pointer; }\n    .sp-actions button.secondary { background: #30363d; }\n    .sp-status { margin: 6px 0; font-size: 12px; }\n    .sp-table { width: 100%; border-collapse: collapse; margin-top: 8px; }\n    .sp-table th, .sp-table td { border-bottom: 1px solid #2a2f36; padding: 6px; font-size: 12px; vertical-align: top; }\n    .sp-table th { text-align: left; color: #9da7b3; }\n    .sp-input { padding: 4px 6px; border-radius: 6px; border: 1px solid #2a2f36; background: #141a21; color: #e6edf3; width: 100%; }\n    .sp-desc { color: #8b949e; font-size: 11px; }\n  </style>\n  <div class=\"sp-card\">\n    <div class=\"sp-header\">Core Strategy Parameters</div>\n    <div class=\"sp-sub\">EMA pullback, ORB, Supertrend, and Bollinger squeeze inputs.</div>\n    <div class=\"sp-actions\">\n      <button id=\"stp-refresh\" type=\"button\">Refresh</button>\n      <span class=\"sp-status\" id=\"stp-status\"></span>\n    </div>\n    <table class=\"sp-table\">\n      <thead>\n        <tr>\n          <th>Parameter</th>\n          <th>Value</th>\n          <th>Default</th>\n          <th>Updated</th>\n          <th>By</th>\n          <th>Actions</th>\n          <th>Description</th>\n        </tr>\n      </thead>\n      <tbody id=\"stp-body\"></tbody>\n    </table>\n  </div>\n</div>\n<script>\n(function() {\n  const scope = 'strategy_core';\n  const listUrl = `/backend/strategy/params?scope=${scope}`;\n  const updateBase = '/backend/strategy/params/';\n  const statusEl = document.getElementById('stp-status');\n  const bodyEl = document.getElementById('stp-body');\n\n  function setStatus(msg, ok) {\n    statusEl.textContent = msg;\n    statusEl.style.color = ok ? '#3fb950' : '#f85149';\n  }\n\n  function formatUpdated(ts) {\n    if (!ts) return '-';\n    try {\n      return new Date(ts).toLocaleString();\n    } catch (e) {\n      return ts;\n    }\n  }\n\n  function buildInput(param) {\n    const kind = param.kind;\n    const input = document.createElement('input');\n    input.className = 'sp-input';\n    if (kind === 'bool') {\n      input.type = 'checkbox';\n      input.checked = Boolean(param.value);\n      return input;\n    }\n    if (kind === 'int') {\n      input.type = 'number';\n      input.step = param.step || '1';\n    } else if (kind === 'number') {\n      input.type = 'number';\n      input.step = param.step || 'any';\n    } else {\n      input.type = 'text';\n    }\n    input.value = param.value !== null && param.value !== undefined ? param.value : '';\n    if (param.min !== null && param.min !== undefined) input.min = param.min;\n    if (param.max !== null && param.max !== undefined) input.max = param.max;\n    return input;\n  }\n\n  function readValue(kind, input) {\n    if (kind === 'bool') return input.checked;\n    if (kind === 'int') return parseInt(input.value, 10);\n    if (kind === 'number') return parseFloat(input.value);\n    return input.value;\n  }\n\n  async function updateParam(name, kind, input) {\n    const value = readValue(kind, input);\n    if ((kind === 'int' || kind === 'number') && Number.isNaN(value)) {\n      setStatus('Invalid numeric value for ' + name, false);\n      return;\n    }\n    const res = await fetch(updateBase + encodeURIComponent(name) + `?scope=${scope}`, {\n      method: 'PUT',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ value, updated_by: 'grafana' })\n    });\n    if (!res.ok) {\n      const err = await res.json().catch(() => ({}));\n      setStatus(err.error || 'Update failed', false);\n      return;\n    }\n    setStatus('Updated ' + name, true);\n    await load();\n  }\n\n  async function resetParam(name) {\n    const res = await fetch(updateBase + encodeURIComponent(name) + `?scope=${scope}`, { method: 'DELETE' });\n    if (!res.ok) {\n      const err = await res.json().catch(() => ({}));\n      setStatus(err.error || 'Reset failed', false);\n      return;\n    }\n    setStatus('Reset ' + name, true);\n    await load();\n  }\n\n  function render(params) {\n    bodyEl.innerHTML = '';\n    params.forEach(param => {\n      const tr = document.createElement('tr');\n      const input = buildInput(param);\n      const updateBtn = document.createElement('button');\n      updateBtn.textContent = 'Update';\n      updateBtn.addEventListener('click', () => updateParam(param.name, param.kind, input));\n      const resetBtn = document.createElement('button');\n      resetBtn.textContent = 'Reset';\n      resetBtn.className = 'secondary';\n      resetBtn.addEventListener('click', () => resetParam(param.name));\n      const actionWrap = document.createElement('div');\n      actionWrap.style.display = 'flex';\n      actionWrap.style.gap = '6px';\n      actionWrap.appendChild(updateBtn);\n      actionWrap.appendChild(resetBtn);\n\n      tr.innerHTML = `\n        <td>${param.label || param.name}</td>\n        <td></td>\n        <td>${param.default !== undefined ? param.default : '-'}</td>\n        <td>${formatUpdated(param.updated_at)}</td>\n        <td>${param.updated_by || '-'}</td>\n        <td></td>\n        <td><span class=\"sp-desc\">${param.description || ''}</span></td>\n      `;\n      tr.children[1].appendChild(input);\n      tr.children[5].appendChild(actionWrap);\n      bodyEl.appendChild(tr);\n    });\n  }\n\n  async function load() {\n    setStatus('Loading...', true);\n    const res = await fetch(listUrl);\n    if (!res.ok) {\n      setStatus('Failed to load parameters', false);\n      return;\n    }\n    const data = await res.json();\n    render(data.params || []);\n    setStatus('Loaded ' + (data.params || []).length + ' parameters', true);\n  }\n\n  document.getElementById('stp-refresh').addEventListener('click', load);\n  load();\n})();\n</script>"
+      }
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "title": "A02 Strategy Parameters (Editable)",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div id=\"a02-params-app\">\n  <style>\n    .sp-card { font-family: 'Segoe UI', Arial, sans-serif; padding: 12px; background: #0f1419; color: #e6edf3; border-radius: 8px; }\n    .sp-header { font-size: 18px; margin-bottom: 6px; font-weight: 600; }\n    .sp-sub { font-size: 12px; color: #9da7b3; margin-bottom: 8px; }\n    .sp-actions { margin: 8px 0; display: flex; gap: 8px; align-items: center; }\n    .sp-actions button { padding: 6px 10px; border-radius: 6px; border: none; background: #1f6feb; color: white; cursor: pointer; }\n    .sp-actions button.secondary { background: #30363d; }\n    .sp-status { margin: 6px 0; font-size: 12px; }\n    .sp-table { width: 100%; border-collapse: collapse; margin-top: 8px; }\n    .sp-table th, .sp-table td { border-bottom: 1px solid #2a2f36; padding: 6px; font-size: 12px; vertical-align: top; }\n    .sp-table th { text-align: left; color: #9da7b3; }\n    .sp-input { padding: 4px 6px; border-radius: 6px; border: 1px solid #2a2f36; background: #141a21; color: #e6edf3; width: 100%; }\n    .sp-pill { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 11px; background: #1f6feb; }\n    .sp-pill.default { background: #6e7681; }\n    .sp-desc { color: #8b949e; font-size: 11px; }\n  </style>\n  <div class=\"sp-card\">\n    <div class=\"sp-header\">A02 Strategy Parameters</div>\n    <div class=\"sp-sub\">Percentile + RSI + WILLR + Volume filters used in backtest and live screening.</div>\n    <div class=\"sp-actions\">\n      <button id=\"sp-refresh\" type=\"button\">Refresh</button>\n      <span class=\"sp-status\" id=\"sp-status\"></span>\n    </div>\n    <table class=\"sp-table\">\n      <thead>\n        <tr>\n          <th>Parameter</th>\n          <th>Value</th>\n          <th>Default</th>\n          <th>Updated</th>\n          <th>By</th>\n          <th>Actions</th>\n          <th>Description</th>\n        </tr>\n      </thead>\n      <tbody id=\"sp-body\"></tbody>\n    </table>\n  </div>\n</div>\n<script>\n(function() {\n  const scope = 'backtest_a02';\n  const listUrl = `/backend/strategy/params?scope=${scope}`;\n  const updateBase = '/backend/strategy/params/';\n  const statusEl = document.getElementById('sp-status');\n  const bodyEl = document.getElementById('sp-body');\n\n  function setStatus(msg, ok) {\n    statusEl.textContent = msg;\n    statusEl.style.color = ok ? '#3fb950' : '#f85149';\n  }\n\n  function formatUpdated(ts) {\n    if (!ts) return '-';\n    try {\n      return new Date(ts).toLocaleString();\n    } catch (e) {\n      return ts;\n    }\n  }\n\n  function buildInput(param) {\n    const kind = param.kind;\n    const input = document.createElement('input');\n    input.className = 'sp-input';\n    if (kind === 'bool') {\n      input.type = 'checkbox';\n      input.checked = Boolean(param.value);\n      return input;\n    }\n    if (kind === 'int') {\n      input.type = 'number';\n      input.step = param.step || '1';\n    } else if (kind === 'number') {\n      input.type = 'number';\n      input.step = param.step || 'any';\n    } else {\n      input.type = 'text';\n    }\n    input.value = param.value !== null && param.value !== undefined ? param.value : '';\n    if (param.min !== null && param.min !== undefined) input.min = param.min;\n    if (param.max !== null && param.max !== undefined) input.max = param.max;\n    return input;\n  }\n\n  function readValue(kind, input) {\n    if (kind === 'bool') return input.checked;\n    if (kind === 'int') return parseInt(input.value, 10);\n    if (kind === 'number') return parseFloat(input.value);\n    return input.value;\n  }\n\n  async function updateParam(name, kind, input) {\n    const value = readValue(kind, input);\n    if ((kind === 'int' || kind === 'number') && Number.isNaN(value)) {\n      setStatus('Invalid numeric value for ' + name, false);\n      return;\n    }\n    const res = await fetch(updateBase + encodeURIComponent(name) + `?scope=${scope}`, {\n      method: 'PUT',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ value, updated_by: 'grafana' })\n    });\n    if (!res.ok) {\n      const err = await res.json().catch(() => ({}));\n      setStatus(err.error || 'Update failed', false);\n      return;\n    }\n    setStatus('Updated ' + name, true);\n    await load();\n  }\n\n  async function resetParam(name) {\n    const res = await fetch(updateBase + encodeURIComponent(name) + `?scope=${scope}`, { method: 'DELETE' });\n    if (!res.ok) {\n      const err = await res.json().catch(() => ({}));\n      setStatus(err.error || 'Reset failed', false);\n      return;\n    }\n    setStatus('Reset ' + name, true);\n    await load();\n  }\n\n  function render(params) {\n    bodyEl.innerHTML = '';\n    params.forEach(param => {\n      const tr = document.createElement('tr');\n      const input = buildInput(param);\n      const updateBtn = document.createElement('button');\n      updateBtn.textContent = 'Update';\n      updateBtn.addEventListener('click', () => updateParam(param.name, param.kind, input));\n      const resetBtn = document.createElement('button');\n      resetBtn.textContent = 'Reset';\n      resetBtn.className = 'secondary';\n      resetBtn.addEventListener('click', () => resetParam(param.name));\n      const actionWrap = document.createElement('div');\n      actionWrap.style.display = 'flex';\n      actionWrap.style.gap = '6px';\n      actionWrap.appendChild(updateBtn);\n      actionWrap.appendChild(resetBtn);\n\n      tr.innerHTML = `\n        <td>${param.label || param.name}</td>\n        <td></td>\n        <td>${param.default !== undefined ? param.default : '-'}</td>\n        <td>${formatUpdated(param.updated_at)}</td>\n        <td>${param.updated_by || '-'}</td>\n        <td></td>\n        <td><span class=\"sp-desc\">${param.description || ''}</span></td>\n      `;\n      tr.children[1].appendChild(input);\n      tr.children[5].appendChild(actionWrap);\n      bodyEl.appendChild(tr);\n    });\n  }\n\n  async function load() {\n    setStatus('Loading...', true);\n    const res = await fetch(listUrl);\n    if (!res.ok) {\n      setStatus('Failed to load parameters', false);\n      return;\n    }\n    const data = await res.json();\n    render(data.params || []);\n    setStatus('Loaded ' + (data.params || []).length + ' parameters', true);\n  }\n\n  document.getElementById('sp-refresh').addEventListener('click', load);\n  load();\n})();\n</script>"
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Strategy Parameter History (A02)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT updated_at, name, value #>> '{}' AS value, updated_by\nFROM strategy_parameter_history\nWHERE scope='backtest_a02'\nUNION ALL\nSELECT now() AS updated_at,\n       'NO_HISTORY' AS name,\n       'No strategy_parameter_history rows yet' AS value,\n       'system' AS updated_by\nWHERE NOT EXISTS (SELECT 1 FROM strategy_parameter_history WHERE scope='backtest_a02')\nORDER BY updated_at DESC LIMIT 50;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ]
+}

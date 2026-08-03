@@ -13,6 +13,10 @@ class PostgresDependencyError(RuntimeError):
     pass
 
 
+class UniverseCoverageError(RuntimeError):
+    pass
+
+
 def _psycopg():
     try:
         import psycopg  # type: ignore
@@ -77,20 +81,88 @@ def inspect_core_coverage(dsn: str | None = None) -> list[dict[str, Any]]:
     return rows
 
 
-def point_in_time_universe(as_of: date, *, dsn: str | None = None, universe_name: str = "nifty50") -> list[dict[str, Any]]:
-    """Read the effective-dated universe instead of current members only."""
+def point_in_time_universe(
+    as_of: date,
+    *,
+    dsn: str | None = None,
+    universe_name: str = "NIFTY100",
+    allow_snapshot_dedupe: bool = False,
+) -> list[dict[str, Any]]:
+    """Read an as-of universe and fail closed when effective dates are ambiguous."""
 
     sql = """
-        SELECT symbol, sector_name, universe_weight, effective_from, effective_to
-        FROM nse_intraday.universe_membership
-        WHERE universe_name = %(universe_name)s
-          AND effective_from <= %(as_of)s
-          AND (effective_to IS NULL OR effective_to >= %(as_of)s)
-        ORDER BY symbol
+        SELECT DISTINCT ON (symbol)
+               symbol, sector_name, weight AS universe_weight, effective_from, effective_to
+          FROM nse_intraday.universe_membership
+         WHERE universe_name = %(universe_name)s
+           AND effective_from <= %(as_of)s
+           AND (effective_to IS NULL OR effective_to >= %(as_of)s)
+         ORDER BY symbol, effective_from DESC, created_at DESC
     """
     with readonly_connection(dsn) as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT min(effective_from) AS oldest,
+                   count(*) FILTER (WHERE effective_to IS NULL) AS open_rows,
+                   count(DISTINCT symbol) FILTER (WHERE effective_to IS NULL) AS open_symbols
+              FROM nse_intraday.universe_membership
+             WHERE universe_name = %(universe_name)s
+            """,
+            {"universe_name": universe_name},
+        )
+        coverage = cur.fetchone()
+        if coverage["oldest"] is None or as_of < coverage["oldest"]:
+            raise UniverseCoverageError(
+                f"{universe_name} membership starts at {coverage['oldest']}; requested {as_of}"
+            )
+        duplicate_open_rows = int(coverage["open_rows"]) - int(coverage["open_symbols"])
+        if duplicate_open_rows > 0 and not allow_snapshot_dedupe:
+            raise UniverseCoverageError(
+                f"{universe_name} has {duplicate_open_rows} overlapping open-ended membership rows"
+            )
         cur.execute(sql, {"as_of": as_of, "universe_name": universe_name})
         return list(cur.fetchall())
+
+
+def point_in_time_universe_snapshot(
+    as_of: date,
+    *,
+    dsn: str | None = None,
+    universe_name: str = "NIFTY100",
+) -> dict[str, Any]:
+    """Resolve the latest complete membership snapshot on or before a date.
+
+    The current estate stores repeated open-ended daily snapshots rather than true
+    effective intervals.  This adapter models that fact explicitly and never
+    extends coverage before the first stored snapshot.
+    """
+
+    with readonly_connection(dsn) as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT max(effective_from) AS snapshot_date
+              FROM nse_intraday.universe_membership
+             WHERE universe_name=%s AND effective_from<=%s
+            """,
+            (universe_name, as_of),
+        )
+        snapshot_date = cur.fetchone()["snapshot_date"]
+        if snapshot_date is None:
+            raise UniverseCoverageError(f"{universe_name} has no snapshot on or before {as_of}")
+        cur.execute(
+            """
+            SELECT DISTINCT ON (symbol)
+                   symbol, sector_name, weight AS universe_weight, effective_from
+              FROM nse_intraday.universe_membership
+             WHERE universe_name=%s AND effective_from=%s
+             ORDER BY symbol, created_at DESC
+            """,
+            (universe_name, snapshot_date),
+        )
+        members = list(cur.fetchall())
+    if not members:
+        raise UniverseCoverageError(f"{universe_name} snapshot {snapshot_date} is empty")
+    return {"universe_name": universe_name, "requested_as_of": as_of, "snapshot_date": snapshot_date, "members": members}
 
 
 def load_security_minute_bars(

@@ -1,0 +1,57 @@
+services:
+  nifty-stratlab:
+    image: trading-stack-nifty-stratlab:latest
+    build:
+      context: ../platform/nifty_stratlab
+    env_file:
+      - ../.env
+      - ./env/jobs.env
+    environment:
+      TZ: Asia/Kolkata
+      TRADING_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    volumes:
+      - /home/novius2/data:/data:ro
+      - /home/novius2/artifacts/nifty-stratlab:/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["--help"]
+    restart: "no"
+
+  institutional-flow-ingest:
+    image: trading-stack-institutional-flow-ingest:latest
+    build:
+      context: ../services/institutional_flow_ingest
+    env_file:
+      - ../.env
+      - ./env/jobs.env
+    environment:
+      TZ: Asia/Kolkata
+      MIF_ROOT_DIR: /app
+      MIF_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      MIF_DATABASE_SCHEMA: ${MIF_DATABASE_SCHEMA:-institutional_flow}
+      MIF_RETAIN_RAW_FILES: ${MIF_RETAIN_RAW_FILES:-false}
+      MIF_RETAIN_CURATED_FILES: ${MIF_RETAIN_CURATED_FILES:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - institutional_flow_raw:/app/raw
+      - institutional_flow_staging:/app/staging
+      - institutional_flow_curated:/app/curated
+      - institutional_flow_logs:/app/logs
+      - institutional_flow_run_reports:/app/run_reports
+    command: ["python", "scripts/run_daily.py"]
+    restart: "no"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  institutional_flow_raw:
+  institutional_flow_staging:
+  institutional_flow_curated:
+  institutional_flow_logs:
+  institutional_flow_run_reports:

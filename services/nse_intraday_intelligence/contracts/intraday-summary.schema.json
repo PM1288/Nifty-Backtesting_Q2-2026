@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IntradaySummary",
+  "type": "object",
+  "required": ["trade_date", "index_code", "as_of", "hero", "state", "summary_table", "breadth", "leaders", "ticker_tape", "accent_token", "footer_disclaimer"],
+  "properties": {
+    "trade_date": {"type": "string"},
+    "index_code": {"type": "string"},
+    "as_of": {"type": "string"},
+    "hero": {"type": "object"},
+    "state": {"type": "object"},
+    "summary_table": {"type": "array", "items": {"type": "object"}},
+    "breadth": {"type": "object"},
+    "leaders": {"type": "object"},
+    "ticker_tape": {"type": "array", "items": {"type": "object"}},
+    "accent_token": {"type": "string", "enum": ["green", "red", "white"]},
+    "footer_disclaimer": {"type": "string"},
+    "meta": {"type": "object"}
+  }
+}

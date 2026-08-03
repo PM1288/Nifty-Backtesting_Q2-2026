@@ -1,0 +1,803 @@
+﻿{
+    "id":  null,
+    "uid":  "trading-stack-market-data",
+    "title":  "Market Data \u0026 Depth",
+    "tags":  [
+                 "market",
+                 "depth",
+                 "trading-stack"
+             ],
+    "timezone":  "browser",
+    "schemaVersion":  38,
+    "version":  1,
+    "refresh":  "15s",
+    "time":  {
+                 "from":  "now-2h",
+                 "to":  "now"
+             },
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "name":  "symbol",
+                                        "type":  "query",
+                                        "datasource":  {
+                                                           "type":  "postgres",
+                                                           "uid":  "postgres"
+                                                       },
+                                        "refresh":  2,
+                                        "hide":  0,
+                                        "query":  "SELECT tradingsymbol FROM instrument_universe WHERE universe_name = \u0027nifty100_equity\u0027 AND active_to IS NULL ORDER BY tradingsymbol;",
+                                        "current":  {
+                                                        "text":  "RELIANCE-EQ",
+                                                        "value":  "RELIANCE-EQ"
+                                                    }
+                                    }
+                                ]
+                   },
+    "links":  [
+                  {
+                      "asDropdown":  true,
+                      "icon":  "dashboard",
+                      "includeVars":  true,
+                      "keepTime":  true,
+                      "tags":  [
+                                   "trading-stack"
+                               ],
+                      "targetBlank":  false,
+                      "title":  "Navigate Dashboards",
+                      "tooltip":  "Jump to another dashboard",
+                      "type":  "dashboards"
+                  }
+              ],
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "stat",
+                       "title":  "LTP",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.last_price AS value FROM instrument_state s JOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token WHERE u.tradingsymbol = \u0027$symbol\u0027 ORDER BY s.last_seen_ts DESC LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyINR"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "Total Buy Qty",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  4,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.total_buy_qty AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "Total Sell Qty",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  8,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.total_sell_qty AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Avg Price",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  12,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.avg_price AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyINR"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  5,
+                       "type":  "stat",
+                       "title":  "Net Change",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  16,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.net_change AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  6,
+                       "type":  "stat",
+                       "title":  "% Change",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  20,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.percent_change AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent",
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "orange",
+                                                                                                 "value":  -1
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  -0.2
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0.2
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "blue",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  11,
+                       "type":  "stat",
+                       "title":  "Volume",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  0,
+                                       "y":  4
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.last_volume AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  12,
+                       "type":  "stat",
+                       "title":  "Open Interest",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  4,
+                                       "y":  4
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.last_oi AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  13,
+                       "type":  "stat",
+                       "title":  "OI Change %",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  8,
+                                       "y":  4
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT o.oi_change_pct AS value\nFROM oi_snapshots_equity o\nJOIN instrument_universe u ON u.exchange = o.exchange AND u.symbol_token = o.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY o.ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent",
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "orange",
+                                                                                                 "value":  -1
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  -0.2
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0.2
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "blue",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  15,
+                       "type":  "stat",
+                       "title":  "Last Trade Qty",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  12,
+                                       "y":  4
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.last_trade_qty AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  16,
+                       "type":  "stat",
+                       "title":  "Feed Time (IST)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  16,
+                                       "y":  4
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COALESCE(to_char(q.exch_feed_time AT TIME ZONE \u0027Asia/Kolkata\u0027, \u0027HH24:MI:SS\u0027), \u0027\u0027) AS value\nFROM quote_snapshots q\nJOIN instrument_universe u ON u.exchange = q.exchange AND u.symbol_token = q.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY q.ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  17,
+                       "type":  "stat",
+                       "title":  "Trade Time (IST)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  20,
+                                       "y":  4
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COALESCE(to_char(q.exch_trade_time AT TIME ZONE \u0027Asia/Kolkata\u0027, \u0027HH24:MI:SS\u0027), \u0027\u0027) AS value\nFROM quote_snapshots q\nJOIN instrument_universe u ON u.exchange = q.exchange AND u.symbol_token = q.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY q.ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  14,
+                       "type":  "table",
+                       "title":  "Open/High/Low/Close",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.last_open AS open, s.last_high AS high, s.last_low AS low, s.last_close AS close\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  18,
+                       "type":  "stat",
+                       "title":  "Order Imbalance",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT (COALESCE(s.total_buy_qty, 0) - COALESCE(s.total_sell_qty, 0)) AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  19,
+                       "type":  "stat",
+                       "title":  "Bid-Ask Spread",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT CASE\n  WHEN s.last_bid IS NULL OR s.last_ask IS NULL THEN NULL\n  ELSE s.last_ask - s.last_bid\nEND AS value\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  7,
+                       "type":  "table",
+                       "title":  "Best Bid/Ask",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  12,
+                                       "w":  12,
+                                       "h":  6
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.last_seen_ts AS ts, s.last_bid AS bid, s.last_bid_qty AS bid_qty, s.last_ask AS ask, s.last_ask_qty AS ask_qty\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  8,
+                       "type":  "table",
+                       "title":  "Depth (Top 5)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  18,
+                                       "w":  24,
+                                       "h":  10
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH latest AS (SELECT max(d.ts) AS ts FROM depth_5_snapshots d JOIN instrument_universe u ON u.exchange = d.exchange AND u.symbol_token = d.symbol_token WHERE u.tradingsymbol = \u0027$symbol\u0027) SELECT d.side, d.level, d.price, d.quantity, d.orders FROM depth_5_snapshots d JOIN instrument_universe u ON u.exchange = d.exchange AND u.symbol_token = d.symbol_token JOIN latest l ON d.ts = l.ts WHERE u.tradingsymbol = \u0027$symbol\u0027 ORDER BY d.side DESC, d.level;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  9,
+                       "type":  "table",
+                       "title":  "Circuit Limits",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "x":  12,
+                                       "y":  12,
+                                       "w":  6,
+                                       "h":  6
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.upper_circuit, s.lower_circuit\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  10,
+                       "type":  "table",
+                       "title":  "52 Week High/Low",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "x":  18,
+                                       "y":  12,
+                                       "w":  6,
+                                       "h":  6
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT s.week52_high, s.week52_low\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.tradingsymbol = \u0027$symbol\u0027\nORDER BY s.last_seen_ts DESC\nLIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   }
+               ]
+}

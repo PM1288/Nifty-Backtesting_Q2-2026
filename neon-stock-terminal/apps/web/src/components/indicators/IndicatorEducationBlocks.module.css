@@ -1,0 +1,330 @@
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 1100px) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  }
+}
+
+.heroPrimary,
+.heroSide,
+.glossaryCard,
+.bandCard,
+.infoListCard {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-ui);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
+  padding: 14px;
+}
+
+.heroSide {
+  align-content: start;
+}
+
+.eyebrowRow,
+.selectorRow,
+.metaStack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.heroSummary,
+.heroBody,
+.glossaryRow span,
+.helperBox span,
+.chartState span,
+.staleBanner span,
+.ruleList p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.heroMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metaTile {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.36);
+  padding: 10px 12px;
+}
+
+.metaTile span {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.metaTile strong {
+  color: var(--text-1);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.selectorPill {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.38);
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--text-1);
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.glossaryList,
+.bandList,
+.infoList,
+.ruleList {
+  display: grid;
+  gap: 8px;
+}
+
+.glossaryRow,
+.bandRow,
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 12px;
+}
+
+.glossaryRow strong,
+.bandCopy strong,
+.infoCopy strong,
+.helperBox strong,
+.chartState strong,
+.staleBanner strong,
+.cardHeading {
+  color: var(--text-1);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.cardHeading {
+  margin: 0;
+}
+
+.bandCopy,
+.infoCopy,
+.infoValues {
+  display: grid;
+  gap: 4px;
+}
+
+.bandCopy span,
+.infoCopy span,
+.bandValue span,
+.infoValues span {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.stackSection {
+  display: grid;
+  gap: 12px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 980px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 980px) {
+  .metricGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.helperBox {
+  display: grid;
+  gap: 4px;
+}
+
+.chartRangeSelector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chartState,
+.staleBanner {
+  display: grid;
+  gap: 4px;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.chartState {
+  border: 1px dashed var(--border-subtle);
+  background: rgba(0, 0, 0, 0.26);
+}
+
+.staleBanner {
+  border: 1px solid rgba(255, 0, 51, 0.28);
+  background: rgba(255, 0, 51, 0.08);
+}
+
+.chartSurface,
+.chartSurfaceTall {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+  overflow: hidden;
+}
+
+.chartSurface {
+  min-height: 320px;
+}
+
+.chartSurfaceTall {
+  min-height: 420px;
+}
+
+.heatmapScale {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.heatmapScaleHeader,
+.heatmapScaleTicks {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.heatmapScaleHeader {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.heatmapScaleHeader span:nth-child(2),
+.heatmapScaleTicks span:nth-child(2) {
+  text-align: center;
+}
+
+.heatmapScaleHeader span:last-child,
+.heatmapScaleTicks span:last-child {
+  text-align: right;
+}
+
+.heatmapScaleTicks {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: "IBM Plex Mono", "Inter Variable", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.heatmapScaleBar {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(255, 0, 51, 0.95) 0%, rgba(15, 19, 24, 0.98) 50%, rgba(0, 255, 102, 0.95) 100%);
+  box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.04);
+}
+
+.tableSymbol {
+  display: grid;
+  gap: 2px;
+}
+
+.tableSymbol strong {
+  color: var(--text-1);
+}
+
+.stockButton {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stockButton:hover,
+.stockButton:focus-visible {
+  outline: none;
+  color: var(--warn, #d4af37);
+}
+
+.tableSymbol span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .heroMetaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heatmapScaleHeader,
+  .heatmapScaleTicks {
+    grid-template-columns: 1fr;
+  }
+
+  .heatmapScaleHeader span,
+  .heatmapScaleTicks span {
+    text-align: left;
+  }
+}

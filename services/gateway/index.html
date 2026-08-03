@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Stack System Workspace</title>
+    <style>
+        :root {
+            --black: #000000;
+            --white: #ffffff;
+            --green: #00ff66;
+            --red: #ff0033;
+            --surface: rgba(255, 255, 255, 0.035);
+            --surface-strong: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.12);
+            --border-strong: rgba(255, 255, 255, 0.22);
+            --text-primary: rgba(255, 255, 255, 0.92);
+            --text-secondary: rgba(255, 255, 255, 0.62);
+            --text-dim: rgba(255, 255, 255, 0.42);
+            --glow-green: 0 0 24px rgba(0, 255, 102, 0.18);
+            --glow-red: 0 0 24px rgba(255, 0, 51, 0.16);
+            --glow-white: 0 0 24px rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 28px 80px rgba(0, 0, 0, 0.5);
+            --font-heading: Inter, "Segoe UI", sans-serif;
+            --font-body: Inter, "Segoe UI", sans-serif;
+            --font-mono: "IBM Plex Mono", Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background:
+                radial-gradient(circle at top left, rgba(0, 255, 102, 0.12), transparent 24%),
+                radial-gradient(circle at 88% 0%, rgba(255, 0, 51, 0.09), transparent 24%),
+                linear-gradient(180deg, #050505 0%, var(--black) 100%);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-variant-numeric: tabular-nums;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 3px, 3px 100%;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 88%);
+            opacity: 0.28;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.86);
+            padding: 1rem 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(14px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--green);
+            filter: drop-shadow(0 0 12px rgba(0, 255, 102, 0.32));
+        }
+
+        #system-time {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-size: 0.74rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .container {
+            flex: 1;
+            padding: 2rem 1.4rem 2.6rem;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        h1 {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            margin: 0 0 0.9rem;
+            padding-bottom: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            font-size: clamp(2rem, 3vw, 3rem);
+            letter-spacing: -0.04em;
+        }
+
+        .container>p {
+            max-width: 720px;
+            margin: 0 0 2rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 0.98rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.25rem;
+            box-shadow: var(--card-shadow);
+            transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+            text-decoration: none;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at top right, rgba(0, 255, 102, 0.08), transparent 42%),
+                linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 65%);
+            opacity: 0;
+            transition: opacity 180ms ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 255, 102, 0.42);
+            box-shadow: var(--card-shadow), var(--glow-green);
+            background-color: var(--surface-strong);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 1.9rem;
+            margin-bottom: 0.9rem;
+            color: var(--green);
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-title {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            flex-grow: 1;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-desc::after {
+            content: "Open";
+            display: block;
+            margin-top: 1.1rem;
+            color: var(--text-dim);
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem 1.4rem 1.4rem;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            background: transparent;
+            border-top: 1px solid var(--border);
+            font-family: var(--font-mono);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.2rem 1rem 2rem;
+            }
+
+            header {
+                padding: 1rem;
+                align-items: flex-start;
+            }
+
+            #system-time {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">
+            <span>🚀</span> Trading Stack
+        </a>
+        <div id="system-time">Loading...</div>
+    </header>
+
+    <div class="container">
+        <h1>System Workspace</h1>
+        <p>Operational launch surface for the market-learning platform. Use it to move between the compact board, options workspace, signal monitor, practice tools, and automation without leaving the shared shell.</p>
+        <div class="card" style="min-height:auto; margin-bottom: 1rem;">
+            <div class="card-title">System status</div>
+            <div class="card-desc">N50 remains the primary landing surface. The links below are supporting workspaces for options, watchlists, practice, and operational checks.</div>
+        </div>
+        <div class="grid">
+            <a href="/" class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Overview Dashboard</div>
+                <div class="card-desc">Open the main market-learning overview, heatmap, simulator, and stock analysis routes.</div>
+            </a>
+            <a href="/option-chain/" class="card">
+                <div class="card-icon">🔗</div>
+                <div class="card-title">Options Workspace</div>
+                <div class="card-desc">Review ATM balance, open-interest pressure, volatility slope, and then open the full chain when you need the pro detail view.</div>
+            </a>
+            <a href="/rsi-willr/" class="card">
+                <div class="card-icon">📈</div>
+                <div class="card-title">Signal Monitor</div>
+                <div class="card-desc">Track RSI and Williams %R alert streams in a denser monitoring workspace.</div>
+            </a>
+            <a href="/api/latest" class="card" target="_blank">
+                <div class="card-icon">📡</div>
+                <div class="card-title">API Status</div>
+                <div class="card-desc">Direct access to backend API endpoints (JSON).</div>
+            </a>
+            <a href="/paper" class="card" target="_blank">
+                <div class="card-icon">📝</div>
+                <div class="card-title">Practice Account</div>
+                <div class="card-desc">Review paper positions, recent simulated trades, and practice-oriented execution outcomes.</div>
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Trading Stack. All systems operational.</p>
+    </footer>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const options = {
+                timeZone: 'Asia/Kolkata',
+                hour12: false,
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('system-time').textContent = now.toLocaleString('en-IN', options);
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+</body>
+
+</html>

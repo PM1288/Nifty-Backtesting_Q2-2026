@@ -1,0 +1,6 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+requests==2.32.3
+yfinance==0.2.61
+pypdf==5.4.0
+python-dateutil==2.9.0.post0

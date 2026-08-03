@@ -1,0 +1,21 @@
+{
+  "name": "neon-stock-terminal",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c auto \"corepack pnpm --filter @app/api dev\" \"corepack pnpm --filter @app/web dev\"",
+    "build": "corepack pnpm --filter @app/api build && corepack pnpm --filter @app/web build",
+    "lint": "corepack pnpm --filter @app/api lint && corepack pnpm --filter @app/web lint",
+    "format": "prettier -w .",
+    "typecheck": "corepack pnpm --filter @app/api typecheck && corepack pnpm --filter @app/web typecheck",
+    "utm:generate": "node scripts/generate-utm.mjs",
+    "guard:camera": "node scripts/check-no-camera.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "prettier": "^3.3.3"
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "$schema": "../../contracts/declarative-strategy-v2.schema.json",
+  "strategy_id": "ema9_21_vwap_trend_intraday",
+  "strategy_version_id": "ema9_21_vwap_trend_intraday_v1",
+  "display_name": "EMA 9/21 Trend with VWAP Confirmation",
+  "description": "Trend-following comparator. Requires the previous completed daily close above daily EMA(50), then enters when one-minute EMA(9) crosses above EMA(21), price is above session VWAP and volume is not below its expected minute profile.",
+  "version": 1,
+  "status": "reference",
+  "owner": "strategy-lab",
+  "archetype": "trend_following",
+  "instrument_scope": "equity",
+  "product": "equity_intraday",
+  "universe": {
+    "mode": "point_in_time_index_membership",
+    "index_code": "NIFTY50",
+    "series": [
+      "EQ"
+    ],
+    "membership_as_of": "trade_date",
+    "symbols": []
+  },
+  "calendar": {
+    "exchange": "NSE",
+    "segment": "CM",
+    "timezone": "Asia/Kolkata",
+    "regular_session": {
+      "open": "09:15:00",
+      "close": "15:30:00"
+    }
+  },
+  "features": [
+    {
+      "feature_id": "daily_close_prev",
+      "registry_key": "canonical.daily_close",
+      "interval": "1d",
+      "availability": "previous_completed_session",
+      "lag_sessions": 1,
+      "warmup_bars": 1,
+      "calculation_version": "canonical_daily_close_v1"
+    },
+    {
+      "feature_id": "daily_ema_50_prev",
+      "registry_key": "indicator.ema",
+      "interval": "1d",
+      "availability": "previous_completed_session",
+      "lag_sessions": 1,
+      "warmup_bars": 100,
+      "calculation_version": "ema_recursive_v1",
+      "parameters": {
+        "period": 50,
+        "source": "close"
+      }
+    },
+    {
+      "feature_id": "minute_ema_9",
+      "registry_key": "indicator.ema",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 100,
+      "calculation_version": "ema_recursive_v1",
+      "parameters": {
+        "period": 9,
+        "source": "close"
+      }
+    },
+    {
+      "feature_id": "minute_ema_21",
+      "registry_key": "indicator.ema",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 100,
+      "calculation_version": "ema_recursive_v1",
+      "parameters": {
+        "period": 21,
+        "source": "close"
+      }
+    },
+    {
+      "feature_id": "close_px",
+      "registry_key": "canonical.close_px",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 0,
+      "calculation_version": "canonical_v1"
+    },
+    {
+      "feature_id": "day_vwap",
+      "registry_key": "canonical.day_vwap",
+      "interval": "1m",
+      "availability": "session_accumulated",
+      "lag_sessions": 0,
+      "warmup_bars": 0,
+      "calculation_version": "session_vwap_v1"
+    },
+    {
+      "feature_id": "minute_volume_ratio",
+      "registry_key": "canonical.minute_volume_ratio",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 0,
+      "calculation_version": "minute_volume_profile_ratio_v1"
+    }
+  ],
+  "day_eligibility": {
+    "all": [
+      {
+        "feature": "daily_close_prev",
+        "operator": ">",
+        "compare_feature": "daily_ema_50_prev"
+      }
+    ]
+  },
+  "entry": {
+    "conditions": {
+      "all": [
+        {
+          "feature": "minute_ema_9",
+          "operator": "crosses_above",
+          "compare_feature": "minute_ema_21"
+        },
+        {
+          "feature": "close_px",
+          "operator": ">",
+          "compare_feature": "day_vwap"
+        },
+        {
+          "feature": "minute_volume_ratio",
+          "operator": ">=",
+          "value": 1.0
+        }
+      ]
+    },
+    "trigger_mode": "first_true_per_symbol_per_day",
+    "signal_on": "completed_bar",
+    "execute_on": "next_bar_open",
+    "allowed_signal_time": {
+      "start": "09:30:00",
+      "end": "14:30:00"
+    }
+  },
+  "exit": {
+    "conditions": {
+      "any": [
+        {
+          "feature": "minute_ema_9",
+          "operator": "crosses_below",
+          "compare_feature": "minute_ema_21"
+        },
+        {
+          "feature": "close_px",
+          "operator": "crosses_below",
+          "compare_feature": "day_vwap"
+        }
+      ]
+    },
+    "signal_on": "completed_bar",
+    "execute_on": "next_bar_open",
+    "forced_session_exit": {
+      "decision_time": "15:15:00",
+      "fill_policy": "next_available_bar_open",
+      "latest_fill_time": "15:20:00"
+    },
+    "carry_allowed": false,
+    "price_stop": {
+      "type": "percentage_from_entry",
+      "value_pct": 0.75,
+      "trigger_on": "intrabar_low",
+      "fill_policy": "stop_price_with_slippage",
+      "active_after_entry_bars": 1
+    }
+  },
+  "position_rules": {
+    "side": "long",
+    "one_position_per_symbol": true,
+    "max_completed_trades_per_symbol_per_day": 1,
+    "reentry_after_exit": false
+  },
+  "economics": {
+    "ticket_size_inr": 200000,
+    "evaluation_target_net_pnl_inr": 500,
+    "fee_profile_id": "zerodha_equity_intraday_effective_dated",
+    "execution_model_id": "next_bar_open_slippage_2_5bps_v1",
+    "slippage_bps_per_side": 2.5
+  },
+  "data_policy": {
+    "bar_interval": "1m",
+    "bar_timestamp_semantics": "bar_start",
+    "admitted_quality_statuses": [
+      "PASS",
+      "WARN"
+    ],
+    "missing_feature_action": "skip_and_log",
+    "missing_next_bar_action": "fail_trade_and_log",
+    "corporate_action_policy": "canonical_point_in_time_adjusted_series"
+  },
+  "reporting": {
+    "persist_signals": true,
+    "persist_skipped_signals": true,
+    "persist_feature_snapshots": true,
+    "persist_pdiagram_snapshots": true,
+    "breakdowns": [
+      "symbol",
+      "sector",
+      "trade_date",
+      "entry_time_bucket",
+      "market_regime",
+      "exit_reason",
+      "data_quality_status"
+    ]
+  },
+  "assumptions": {
+    "trend_filter": "D-1 close versus D-1 EMA50.",
+    "volume_ratio": "1.0 means at least the expected minute-volume level under the canonical profile.",
+    "stop": "0.75 percent price stop."
+  }
+}

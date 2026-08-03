@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nse-reco-state-aware-engine"
+version = "1.0.0"
+description = "State-aware recommendation engine + anomaly detection + exports for NSE intraday analytics (Postgres + FastAPI)."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+authors = [{name = "QiO Platform", email = "devnull@example.com"}]
+license = {text = "MIT"}
+
+dependencies = [
+  "fastapi==0.110.0",
+  "uvicorn[standard]==0.27.1",
+  "pydantic==2.6.1",
+  "pydantic-settings==2.2.1",
+  "SQLAlchemy==2.0.27",
+  "psycopg[binary]==3.1.18",
+  "APScheduler==3.10.4",
+  "python-dotenv==1.0.1",
+  "PyYAML==6.0.1",
+  "orjson==3.9.15",
+  "httpx==0.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.0.0",
+  "pytest-cov==4.1.0",
+  "ruff==0.2.2",
+]
+
+[project.scripts]
+nse-reco-cli = "nse_reco_state_aware_engine.jobs.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

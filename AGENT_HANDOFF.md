@@ -113,3 +113,73 @@ The live dashboard, PostgreSQL publication and worker changes were implemented i
 `/home/novius2/trading-stack`, which is not this Git repository and has no `.git`
 metadata. See `/home/novius2/NIFTY50/AGENT_HANDOFF_UI_BACKTESTING_2026-08-03.md`
 for the complete implementation, deployment and verification record.
+
+## 2026-08-03 canonical trading-stack import
+
+The complete maintainable source from `/home/novius2/trading-stack` was merged
+into this repository on branch `DEV_PM_CODE`. This repository is now the Git
+home for the live stack as requested by the owner.
+
+Imported scope includes:
+
+- Go collectors, strategies, storage, backtests and commands
+- Docker/Compose topology and operational scripts
+- `neon-stock-terminal` Express/Prisma API and React/Vite UI
+- PostgreSQL schema/migrations and the analytics/backtesting worker
+- service packages, tests, contracts and configuration examples
+- governed `platform/nifty_stratlab` research source
+- current architecture, dashboard and operations documentation
+
+Deliberately excluded from Git:
+
+- `.env` and runtime credential files
+- PostgreSQL/Redis/runtime state and exports
+- virtual environments, `node_modules`, build output and caches
+- generated backtest artifacts and qualification outputs
+- temporary HTML/JSON captures, logs, ZIP exports, screenshots and videos
+- local Android build state and `local.properties`
+
+The exclusions are encoded in the root `.gitignore`. Never force-add these
+paths. The source import was scanned with Gitleaks and reported no leaks.
+
+Validation commands used:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+go test ./...
+
+docker run --rm -v "$PWD:/repo:ro" zricethezav/gitleaks:latest \
+  dir /repo --redact --exit-code 1 --no-banner --no-color
+
+docker run --rm \
+  -v "$PWD/services/nse_analytics_worker:/app" -w /app \
+  trading-stack-nse-analytics-worker:latest \
+  python -m unittest -v tests.test_backtesting_contracts
+
+cd neon-stock-terminal
+docker build --target builder -t nifty-github-import-dashboard-test .
+
+cd ../platform/nifty_stratlab
+./.venv/bin/python -m pytest -q
+```
+
+Results: Go suite passed; dashboard API/web production build passed; analytics
+worker contracts passed (3); StratLab tests passed (29); Gitleaks found no
+leaks. The Node production build reports 12 dependency audit findings (7
+moderate, 3 high, 2 critical); upgrade them only in a separately tested change.
+
+Live publication at import time:
+
+- Compose project: `trading-stack-novius2`
+- dashboard and analytics worker: running, restart count 0
+- latest backtesting batch: `247`, published and validation passed
+- primary scenario: `nifty_100:capital_16l`
+- primary RSI run: 100 symbols, 67 closed trades
+- pre-tax net P&L: INR 165,734.6353
+- 35% reserve: INR 58,007.1219
+- after-tax net P&L: INR 107,727.5134
+
+For future synchronization, review changes from `/home/novius2/trading-stack`
+and copy only maintainable source. Run Gitleaks and the relevant tests before
+staging. Always use `docker compose -p trading-stack-novius2` for the live
+project; omitting `-p` creates an unintended parallel Compose project.

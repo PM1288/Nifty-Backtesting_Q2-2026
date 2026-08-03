@@ -1,0 +1,31 @@
+strategy_id: rsi15_daily40_intraday
+strategy_version_id: rsi15_daily40_intraday_v1
+display_name: Daily RSI >40 / minute RSI 15-70 intraday
+version: 1
+archetype: intraday_long_equity
+plugin: nifty_stratlab.strategies.reference_equity:RsiIntradayDailyRegimeStrategy
+supported_intervals: [1m]
+required_features: [rsi_14, daily_rsi_14_prior]
+parameters:
+  minute_rsi_below: 15
+  minute_rsi_above: 70
+  prior_daily_rsi_above: 40
+  entry_start: '09:15:00'
+  entry_end: '14:45:00'
+  forced_exit_decision_time: '15:15:00'
+  forced_exit_latest_fill_time: '15:20:00'
+  one_trade_per_symbol_per_day: true
+  evaluation_target_net_pnl_inr: 500
+  slippage_bps_per_side: 2.5
+assumptions:
+  daily_gate: previous completed session only
+  rsi_calculation: rsi_wilder_sma_seed_v1
+  minute_rsi_session_reset: false
+  signal_fill: next minute open
+  price_stop: disabled
+  overnight_carry: prohibited
+  probability: not_calibrated
+  order_authority: false
+owner: strategy-lab
+status: reference
+entry_timing: next_bar_open

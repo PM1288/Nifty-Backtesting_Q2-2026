@@ -1,0 +1,211 @@
+{
+  "id": null,
+  "uid": "trading-stack-option-greeks",
+  "title": "Option Greeks",
+  "tags": [
+    "options",
+    "greeks",
+    "trading-stack"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "underlying",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "postgres"
+        },
+        "refresh": 2,
+        "hide": 0,
+        "query": "SELECT DISTINCT underlying FROM option_greeks ORDER BY underlying;",
+        "current": {
+          "text": "NIFTY50",
+          "value": "NIFTY50"
+        }
+      },
+      {
+        "name": "expiry",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "postgres"
+        },
+        "refresh": 2,
+        "hide": 0,
+        "query": "SELECT DISTINCT expiry FROM option_greeks WHERE underlying = '$underlying' ORDER BY expiry DESC;",
+        "current": {
+          "text": "latest",
+          "value": "latest"
+        }
+      }
+    ]
+  },
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "trading-stack"
+      ],
+      "targetBlank": false,
+      "title": "Navigate Dashboards",
+      "tooltip": "Jump to another dashboard",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Latest Snapshot (IST)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH picked AS (\n  SELECT CASE WHEN '$expiry' = 'latest' THEN (SELECT max(expiry) FROM option_greeks WHERE underlying = '$underlying') WHEN '$expiry' LIKE '%-%' THEN to_date(NULLIF('$expiry','latest'), 'YYYY-MM-DD') ELSE to_timestamp((NULLIF(regexp_replace('$expiry','\\D','','g'),'')::double precision) / 1000)::date END AS expiry\n)\nSELECT COALESCE(to_char(max(ts) AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI:SS'), '') AS value\nFROM option_greeks o\nJOIN picked p ON o.expiry = p.expiry\nWHERE o.underlying = '$underlying';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Avg IV",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH picked AS (\n  SELECT CASE WHEN '$expiry' = 'latest' THEN (SELECT max(expiry) FROM option_greeks WHERE underlying = '$underlying') WHEN '$expiry' LIKE '%-%' THEN to_date(NULLIF('$expiry','latest'), 'YYYY-MM-DD') ELSE to_timestamp((NULLIF(regexp_replace('$expiry','\\D','','g'),'')::double precision) / 1000)::date END AS expiry\n), latest AS (\n  SELECT max(ts) AS ts FROM option_greeks o JOIN picked p ON o.expiry = p.expiry WHERE o.underlying = '$underlying'\n)\nSELECT AVG(o.iv) AS value\nFROM option_greeks o\nJOIN picked p ON o.expiry = p.expiry\nJOIN latest l ON o.ts = l.ts\nWHERE o.underlying = '$underlying';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total Trade Volume",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH picked AS (\n  SELECT CASE WHEN '$expiry' = 'latest' THEN (SELECT max(expiry) FROM option_greeks WHERE underlying = '$underlying') WHEN '$expiry' LIKE '%-%' THEN to_date(NULLIF('$expiry','latest'), 'YYYY-MM-DD') ELSE to_timestamp((NULLIF(regexp_replace('$expiry','\\D','','g'),'')::double precision) / 1000)::date END AS expiry\n), latest AS (\n  SELECT max(ts) AS ts FROM option_greeks o JOIN picked p ON o.expiry = p.expiry WHERE o.underlying = '$underlying'\n)\nSELECT SUM(o.trade_volume) AS value\nFROM option_greeks o\nJOIN picked p ON o.expiry = p.expiry\nJOIN latest l ON o.ts = l.ts\nWHERE o.underlying = '$underlying';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Latest Greeks (By Strike)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH picked AS (\n  SELECT CASE WHEN '$expiry' = 'latest' THEN (SELECT max(expiry) FROM option_greeks WHERE underlying = '$underlying') WHEN '$expiry' LIKE '%-%' THEN to_date(NULLIF('$expiry','latest'), 'YYYY-MM-DD') ELSE to_timestamp((NULLIF(regexp_replace('$expiry','\\D','','g'),'')::double precision) / 1000)::date END AS expiry\n), latest AS (\n  SELECT max(ts) AS ts FROM option_greeks o JOIN picked p ON o.expiry = p.expiry WHERE o.underlying = '$underlying'\n)\nSELECT o.tradingsymbol,\n       o.strike,\n       o.\"right\",\n       o.iv,\n       o.delta,\n       o.gamma,\n       o.theta,\n       o.vega,\n       o.trade_volume,\n       o.ltp,\n       o.ts\nFROM option_greeks o\nJOIN picked p ON o.expiry = p.expiry\nJOIN latest l ON o.ts = l.ts\nWHERE o.underlying = '$underlying'\nORDER BY o.strike, o.\"right\";",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ]
+}

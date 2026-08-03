@@ -1,0 +1,172 @@
+x-go-suite-image: &go_suite_image
+  image: trading-stack-go-suite:latest
+  build:
+    context: ..
+
+services:
+  collector:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ../.env.collector.runtime
+      - ./env/legacy.env
+    environment:
+      POSTGRES_MAX_CONNS: "3"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+      - ../samples/nifty100.sample.csv:/app/nifty100.csv:ro
+      - ../docs/source/ind_nifty100list.csv:/app/nifty100_constituents.csv:ro
+      - ../state:/app/state
+    ports:
+      - "${COLLECTOR_PORT:-8080}:8080"
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+
+  strategy:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ./env/legacy.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MAX_CONNS: "2"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/strategy"]
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+  watchlist:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ./env/legacy.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MAX_CONNS: "2"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/watchlist"]
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+  rsi-willr-monitor:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ./env/legacy.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MAX_CONNS: "2"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/rsiwillr"]
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+  nginx:
+    image: trading-stack-nginx-legacy:latest
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+      args:
+        NGINX_CONF: nginx.legacy.conf
+    depends_on:
+      - watchlist
+      - rsi-willr-monitor
+    ports:
+      - "19090:19090"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:rw,noexec,nosuid,size=32m
+      - /var/run:rw,noexec,nosuid,size=8m
+      - /tmp:rw,noexec,nosuid,size=16m
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128m

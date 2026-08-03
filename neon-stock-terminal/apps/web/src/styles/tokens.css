@@ -1,0 +1,118 @@
+:root {
+  /* Base */
+  --black: #050607;
+  --white: #ffffff;
+  --red: #ff0033;
+  --green: #00ff66;
+  --gold: #d4af37;
+
+  /* Opacity whites (grays) */
+  --w-92: rgba(255, 255, 255, 0.92);
+  --w-72: rgba(255, 255, 255, 0.72);
+  --w-54: rgba(255, 255, 255, 0.54);
+  --w-38: rgba(255, 255, 255, 0.38);
+  --w-18: rgba(255, 255, 255, 0.18);
+  --w-12: rgba(255, 255, 255, 0.12);
+  --w-08: rgba(255, 255, 255, 0.08);
+  --w-04: rgba(255, 255, 255, 0.04);
+  --w-02: rgba(255, 255, 255, 0.02);
+
+  /* Surface and border semantics */
+  --bg: #07090b;
+  --surface-canvas: #07090b;
+  --surface-1: #0f1318;
+  --surface-2: #0b0d10;
+  --surface-3: #11161b;
+  --surface-panel: rgba(255, 255, 255, 0.04);
+  --surface-panel-strong: rgba(255, 255, 255, 0.06);
+  --surface-overlay: rgba(7, 9, 11, 0.94);
+  --surface-inset: rgba(0, 0, 0, 0.58);
+  --surface-interactive: rgba(255, 255, 255, 0.02);
+  --surface-interactive-hover: rgba(255, 255, 255, 0.05);
+  --border-weak: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-accent: rgba(212, 175, 55, 0.28);
+  --border-accent-strong: rgba(212, 175, 55, 0.4);
+
+  /* Text semantics */
+  --text-1: rgba(255, 255, 255, 0.92);
+  --text-2: rgba(255, 255, 255, 0.78);
+  --text-3: rgba(255, 255, 255, 0.62);
+  --text-4: rgba(255, 255, 255, 0.48);
+  --muted: var(--text-4);
+  --pos: var(--green);
+  --neg: var(--red);
+  --warn: var(--gold);
+  --info: var(--white);
+
+  /* Glows */
+  --glow-red: 0 0 12px rgba(255, 0, 51, 0.35);
+  --glow-green: 0 0 12px rgba(0, 255, 102, 0.35);
+  --glow-white: 0 0 10px rgba(255, 255, 255, 0.18);
+  --shadow-1: 0 8px 28px rgba(0, 0, 0, 0.22);
+  --shadow-2: 0 14px 40px rgba(0, 0, 0, 0.3);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* Layout scales */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 32px;
+  --radius-1: 8px;
+  --radius-2: 10px;
+  --radius-3: 12px;
+  --radius-4: 14px;
+  --radius-ui: var(--radius-2);
+  --radius-pill: 999px;
+  --control-height-xs: 24px;
+  --control-height-sm: 30px;
+  --control-height-md: 36px;
+  --control-height-lg: 40px;
+  --control-height-xl: 46px;
+  --page-max-width: 1680px;
+  --page-padding: clamp(10px, 1.2vw, 16px);
+  --section-gap: 16px;
+  --grid-gap: 12px;
+
+  /* Typography */
+  --font-sans-latin: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-sans-devanagari: "Hind", "Noto Sans Devanagari", "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-sans: var(--font-sans-latin);
+  --font-mono: "IBM Plex Mono", "Inter Variable", "Inter", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-ui: var(--font-sans-latin);
+  --font-numeric: var(--font-mono);
+  --font-size-display: clamp(1.75rem, 2vw, 2rem);
+  --font-size-page: 1.25rem;
+  --font-size-section: 1rem;
+  --font-size-body: 0.875rem;
+  --font-size-caption: 0.75rem;
+  --font-size-label: 0.6875rem;
+  --line-height-display: 1.05;
+  --line-height-body: 1.45;
+
+  /* Z layers */
+  --z-backdrop: 0;
+  --z-content: 10;
+  --z-header: 20;
+  --z-footer: 20;
+}
+
+:root[data-ui-language="hi"],
+:root[data-ui-language="mr"] {
+  --font-ui: var(--font-sans-devanagari);
+}
+
+:root[data-digit-system="latn"] {
+  --font-numeric: var(--font-mono);
+}
+
+:root[data-digit-system="deva"] {
+  --font-numeric: var(--font-sans-devanagari);
+}

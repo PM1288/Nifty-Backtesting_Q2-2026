@@ -152,7 +152,9 @@ def profile_csv(
         raise ValueError("interval_minutes must be positive")
     csv_path = Path(path).expanduser().resolve()
     profile = CsvProfile(
-        path=str(csv_path), sha256=sha256_file(csv_path), bytes=csv_path.stat().st_size,
+        path=str(csv_path),
+        sha256=sha256_file(csv_path),
+        bytes=csv_path.stat().st_size,
         interval_minutes=interval_minutes,
     )
     day_minutes: dict[date, set[tuple[int, int]]] = defaultdict(set)

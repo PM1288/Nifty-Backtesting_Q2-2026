@@ -22,6 +22,9 @@ dependencies = [
 postgres = ["psycopg[binary]>=3.2,<4"]
 dev = ["pytest>=8,<10", "pytest-cov>=5,<8"]
 
+[project.scripts]
+nifty-stratlab = "nifty_stratlab.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

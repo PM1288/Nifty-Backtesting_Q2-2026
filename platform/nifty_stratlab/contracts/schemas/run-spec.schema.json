@@ -1,0 +1,95 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "code_hash": {
+      "title": "Code Hash",
+      "type": "string"
+    },
+    "data_snapshot_id": {
+      "title": "Data Snapshot Id",
+      "type": "string"
+    },
+    "date_end": {
+      "format": "date",
+      "title": "Date End",
+      "type": "string"
+    },
+    "date_start": {
+      "format": "date",
+      "title": "Date Start",
+      "type": "string"
+    },
+    "execution_model_id": {
+      "title": "Execution Model Id",
+      "type": "string"
+    },
+    "feature_set_id": {
+      "title": "Feature Set Id",
+      "type": "string"
+    },
+    "feature_version": {
+      "title": "Feature Version",
+      "type": "string"
+    },
+    "fee_profile_id": {
+      "title": "Fee Profile Id",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    },
+    "random_seed": {
+      "default": 0,
+      "title": "Random Seed",
+      "type": "integer"
+    },
+    "requested_by": {
+      "default": "system",
+      "title": "Requested By",
+      "type": "string"
+    },
+    "scenario_key": {
+      "title": "Scenario Key",
+      "type": "string"
+    },
+    "simulation_config": {
+      "additionalProperties": true,
+      "title": "Simulation Config",
+      "type": "object"
+    },
+    "strategy_version_id": {
+      "title": "Strategy Version Id",
+      "type": "string"
+    },
+    "symbols": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Symbols",
+      "type": "array"
+    },
+    "universe_snapshot_id": {
+      "title": "Universe Snapshot Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "strategy_version_id",
+    "data_snapshot_id",
+    "feature_set_id",
+    "feature_version",
+    "fee_profile_id",
+    "execution_model_id",
+    "universe_snapshot_id",
+    "date_start",
+    "date_end",
+    "symbols",
+    "scenario_key",
+    "simulation_config",
+    "code_hash"
+  ],
+  "title": "RunSpec",
+  "type": "object"
+}

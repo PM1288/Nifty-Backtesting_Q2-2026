@@ -1,0 +1,65 @@
+services:
+  matomo-db:
+    image: mariadb:11
+    env_file:
+      - ../.env
+      - ./env/telemetry.env
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD:-change-me-matomo-root}
+      MARIADB_DATABASE: ${MATOMO_DB_NAME:-matomo}
+      MARIADB_USER: ${MATOMO_DB_USER:-matomo}
+      MARIADB_PASSWORD: ${MATOMO_DB_PASSWORD:-change-me-matomo-db}
+    volumes:
+      - matomo_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u${MATOMO_DB_USER:-matomo} -p${MATOMO_DB_PASSWORD:-change-me-matomo-db} --silent"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  matomo:
+    image: matomo:5-apache
+    env_file:
+      - ../.env
+      - ./env/telemetry.env
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER:-matomo}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD:-change-me-matomo-db}
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME:-matomo}
+      PHP_MEMORY_LIMIT: 256M
+    depends_on:
+      matomo-db:
+        condition: service_healthy
+    ports:
+      - "19091:80"
+    volumes:
+      - matomo_data:/var/www/html
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384m
+
+volumes:
+  matomo_db_data:
+  matomo_data:

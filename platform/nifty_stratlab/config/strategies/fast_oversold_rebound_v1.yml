@@ -1,0 +1,22 @@
+strategy_id: rsi30_willr80_closegtprev_net_target
+strategy_version_id: rsi30_willr80_closegtprev_net_target_v1
+display_name: Fast Oversold Rebound — Net Target
+version: 1
+archetype: mean_reversion_fast
+plugin: nifty_stratlab.strategies.reference_equity:FastOversoldReboundStrategy
+supported_intervals: [1m, 5m, 1d]
+required_features: [rsi_14, willr_14]
+parameters:
+  rsi_below: 30
+  willr_below: -80
+  target_net_rupees: 500
+  stop_loss_pct: 1.0
+  max_hold_bars: 360
+assumptions:
+  signal_time: completed_bar
+  entry_time: next_bar_open
+  same_bar_conflict: stop_first
+  universe: point_in_time
+owner: backtest-core
+status: reference
+entry_timing: next_bar_open

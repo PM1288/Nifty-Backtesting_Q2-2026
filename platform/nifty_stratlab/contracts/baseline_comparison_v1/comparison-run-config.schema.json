@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal.novius2/schemas/comparison-run-config-v1.json",
+  "title": "Comparison Run Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_name",
+    "mode",
+    "suite_file",
+    "suite_id",
+    "data",
+    "portfolio",
+    "execution",
+    "outputs",
+    "publication",
+    "requested_by"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "run_name": {
+      "type": "string"
+    },
+    "mode": {
+      "const": "BACKTEST_COMPARISON"
+    },
+    "suite_file": {
+      "type": "string"
+    },
+    "suite_id": {
+      "type": "string"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "source_id",
+        "daily_feature_source_id",
+        "timezone",
+        "date_start",
+        "date_end",
+        "universe_mode",
+        "symbols",
+        "point_in_time_index_code",
+        "require_qualified_data",
+        "data_snapshot_mode"
+      ]
+    },
+    "portfolio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_capital_mode",
+        "initial_cash_per_strategy_inr",
+        "ticket_size_inr",
+        "max_open_positions_per_strategy",
+        "reserve_entry_costs",
+        "reject_when_cash_insufficient"
+      ],
+      "properties": {
+        "comparison_capital_mode": {
+          "const": "isolated_equal_capital"
+        },
+        "initial_cash_per_strategy_inr": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "ticket_size_inr": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "max_open_positions_per_strategy": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reserve_entry_costs": {
+          "type": "boolean"
+        },
+        "reject_when_cash_insufficient": {
+          "type": "boolean"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "workers",
+        "days_per_shard",
+        "symbols_per_shard",
+        "checkpoint_every_bars",
+        "heartbeat_seconds",
+        "resume_policy",
+        "path_policy",
+        "random_seed"
+      ]
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "artifact_root",
+        "persist_to_postgres",
+        "write_csv",
+        "write_json",
+        "write_parquet",
+        "build_html_report",
+        "build_pdiagram_snapshots",
+        "build_comparison_report"
+      ]
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "auto_publish",
+        "require_validation_pass",
+        "require_compatibility_hash_match",
+        "require_independent_verification_for_full_run"
+      ]
+    },
+    "requested_by": {
+      "type": "string"
+    }
+  }
+}

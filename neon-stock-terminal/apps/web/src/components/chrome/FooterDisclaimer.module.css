@@ -1,0 +1,215 @@
+.banner {
+  position: relative;
+  z-index: calc(var(--z-header) + 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(11, 13, 16, 0.94);
+  padding: 4px var(--page-padding);
+  margin: 0;
+}
+
+.bannerCopy {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
+.warning {
+  color: var(--warn);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex: 0 0 auto;
+}
+
+.copy {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: initial;
+}
+
+.readMore,
+.closeButton,
+.modalLink {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.readMore,
+.closeButton {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-1);
+  cursor: pointer;
+  padding: 0 9px;
+  flex: 0 0 auto;
+}
+
+.readMore:hover,
+.readMore:focus-visible,
+.closeButton:hover,
+.closeButton:focus-visible,
+.modalLink:hover,
+.modalLink:focus-visible {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.modalLayer {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-footer) + 12);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.modal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(680px, calc(100vw - 24px));
+  max-height: calc(100vh - 32px);
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 16px;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: #0b0d10;
+  padding: 20px;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.46);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.modalCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.modalTitle {
+  margin: 0;
+  color: var(--white);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.modalBody {
+  display: grid;
+  gap: 12px;
+}
+
+.modalText {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.modalLinks {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.modalLink {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-1);
+  padding: 0 12px;
+}
+
+.legalGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.legalCard {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 14px;
+}
+
+.legalTitle {
+  margin: 0;
+  color: var(--white);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.legalText {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+@media (max-width: 920px) {
+  .legalGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .banner {
+    align-items: flex-start;
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .copy {
+    white-space: normal;
+  }
+
+  .modal {
+    width: min(100vw - 16px, 680px);
+    max-height: calc(100vh - 16px);
+    padding: 18px;
+  }
+
+  .modalHeader {
+    flex-direction: column;
+  }
+
+  .closeButton {
+    width: 100%;
+  }
+}

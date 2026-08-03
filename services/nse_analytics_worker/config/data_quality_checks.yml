@@ -1,0 +1,171 @@
+checks:
+  - name: raw_trade_dates_exist
+    severity: high
+    operator: ">="
+    threshold: 1
+    sql: |
+      SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END::numeric AS value
+      FROM nse.fact_eod_prices;
+
+  - name: feature_latest_matches_raw_latest
+    severity: high
+    operator: ">="
+    threshold: 1
+    sql: |
+      WITH raw_max AS (
+        SELECT MAX(trade_date) AS d FROM nse.fact_eod_prices
+      ),
+      feat_max AS (
+        SELECT MAX(trade_date) AS d FROM nse_app.security_daily_features
+      )
+      SELECT CASE WHEN raw_max.d = feat_max.d THEN 1 ELSE 0 END::numeric AS value
+      FROM raw_max, feat_max;
+
+  - name: latest_feature_row_count_reasonable
+    severity: high
+    operator: ">="
+    threshold: 1000
+    sql: |
+      SELECT COUNT(*)::numeric AS value
+      FROM nse_app.security_daily_features
+      WHERE trade_date = (SELECT MAX(trade_date) FROM nse_app.security_daily_features);
+
+  - name: latest_market_summary_exists
+    severity: high
+    operator: ">="
+    threshold: 1
+    sql: |
+      SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END::numeric AS value
+      FROM nse_app.market_summary_daily
+      WHERE trade_date = (SELECT MAX(trade_date) FROM nse_app.security_daily_features);
+
+  - name: latest_signal_rows_exist
+    severity: medium
+    operator: ">="
+    threshold: 10
+    sql: |
+      SELECT COUNT(*)::numeric AS value
+      FROM nse_app.stock_analysis_signals_daily
+      WHERE trade_date = (SELECT MAX(trade_date) FROM nse_app.security_daily_features);
+
+  - name: null_close_price_rate_ok
+    severity: medium
+    operator: "<="
+    threshold: 0.02
+    sql: |
+      SELECT
+        CASE WHEN COUNT(*) = 0 THEN 0::numeric
+             ELSE SUM(CASE WHEN close_price IS NULL THEN 1 ELSE 0 END)::numeric / COUNT(*)::numeric
+        END AS value
+      FROM nse_app.security_daily_features
+      WHERE trade_date = (SELECT MAX(trade_date) FROM nse_app.security_daily_features);
+
+  - name: negative_volume_count_zero
+    severity: high
+    operator: "<="
+    threshold: 0
+    sql: |
+      SELECT COUNT(*)::numeric AS value
+      FROM nse_app.security_daily_features
+      WHERE total_traded_qty < 0;
+
+  - name: duplicate_feature_keys_zero
+    severity: high
+    operator: "<="
+    threshold: 0
+    sql: |
+      SELECT COUNT(*)::numeric AS value
+      FROM (
+        SELECT trade_date, symbol, series, COUNT(*) AS c
+        FROM nse_app.security_daily_features
+        GROUP BY 1,2,3
+        HAVING COUNT(*) > 1
+      ) d;
+
+  - name: published_indicator_strategy_batch_exists
+    severity: high
+    operator: ">="
+    threshold: 1
+    sql: |
+      SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END::numeric AS value
+      FROM nse_app.batch_run_audit
+      WHERE batch_name = 'indicator_strategy_precompute'
+        AND published_flag = TRUE;
+
+  - name: published_indicator_strategy_matches_latest_feature_date
+    severity: high
+    operator: ">="
+    threshold: 1
+    sql: |
+      WITH latest_features AS (
+        SELECT MAX(trade_date) AS trade_date
+        FROM nse_app.security_daily_features
+      ),
+      latest_batch AS (
+        SELECT data_as_of_date
+        FROM nse_app.batch_run_audit
+        WHERE batch_name = 'indicator_strategy_precompute'
+          AND published_flag = TRUE
+        ORDER BY published_at DESC NULLS LAST, generated_at DESC
+        LIMIT 1
+      )
+      SELECT CASE WHEN latest_features.trade_date = latest_batch.data_as_of_date THEN 1 ELSE 0 END::numeric AS value
+      FROM latest_features, latest_batch;
+
+  - name: latest_rsi_snapshot_exists
+    severity: high
+    operator: ">="
+    threshold: 1
+    sql: |
+      WITH latest_batch AS (
+        SELECT batch_run_id
+        FROM nse_app.batch_run_audit
+        WHERE batch_name = 'indicator_strategy_precompute'
+          AND published_flag = TRUE
+        ORDER BY published_at DESC NULLS LAST, generated_at DESC
+        LIMIT 1
+      )
+      SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END::numeric AS value
+      FROM latest_batch b
+      JOIN nse_app.indicator_summary_snapshot s
+        ON s.batch_run_id = b.batch_run_id
+      WHERE s.indicator_slug = 'rsi';
+
+  - name: latest_rsi_value_out_of_range_count_zero
+    severity: high
+    operator: "<="
+    threshold: 0
+    sql: |
+      WITH latest_batch AS (
+        SELECT batch_run_id
+        FROM nse_app.batch_run_audit
+        WHERE batch_name = 'indicator_strategy_precompute'
+          AND published_flag = TRUE
+        ORDER BY published_at DESC NULLS LAST, generated_at DESC
+        LIMIT 1
+      )
+      SELECT COUNT(*)::numeric AS value
+      FROM latest_batch b
+      JOIN nse_app.indicator_daily_values v
+        ON v.batch_run_id = b.batch_run_id
+      WHERE v.indicator_slug = 'rsi'
+        AND v.trade_date = (SELECT MAX(trade_date) FROM nse_app.indicator_daily_values WHERE batch_run_id = b.batch_run_id AND indicator_slug = 'rsi')
+        AND (v.indicator_value < 0 OR v.indicator_value > 100);
+
+  - name: latest_strategy_summary_rows_exist
+    severity: high
+    operator: ">="
+    threshold: 3
+    sql: |
+      WITH latest_batch AS (
+        SELECT batch_run_id
+        FROM nse_app.batch_run_audit
+        WHERE batch_name = 'indicator_strategy_precompute'
+          AND published_flag = TRUE
+        ORDER BY published_at DESC NULLS LAST, generated_at DESC
+        LIMIT 1
+      )
+      SELECT COUNT(*)::numeric AS value
+      FROM latest_batch b
+      JOIN nse_app.strategy_summary_snapshot s
+        ON s.batch_run_id = b.batch_run_id;

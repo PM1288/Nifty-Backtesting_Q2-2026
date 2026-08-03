@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "institutional-flow-ingest"
+version = "0.1.0"
+description = "Official-source Indian market institutional-flow ingestion pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [
+  { name = "Codex" }
+]
+dependencies = [
+  "beautifulsoup4>=4.13.0",
+  "httpx>=0.28.0",
+  "lxml>=5.3.0",
+  "pandas>=2.2.3",
+  "pyarrow>=19.0.1",
+  "psycopg[binary]>=3.2.6",
+  "pydantic>=2.11.0",
+  "pydantic-settings>=2.8.1",
+  "python-dateutil>=2.9.0.post0",
+  "pyyaml>=6.0.2",
+  "sqlalchemy>=2.0.40",
+  "tenacity>=9.0.0",
+]
+
+[project.optional-dependencies]
+browser = [
+  "playwright>=1.52.0",
+]
+dev = [
+  "pytest>=8.3.5",
+  "pytest-mock>=3.14.0",
+]
+
+[project.scripts]
+market-ingest = "market_ingest.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/market_ingest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

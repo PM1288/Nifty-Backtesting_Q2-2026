@@ -1,0 +1,349 @@
+{
+  "id": null,
+  "uid": "trading-stack-overview",
+  "title": "Trading Stack Overview",
+  "tags": [
+    "trading",
+    "nifty100",
+    "trading-stack"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "trading-stack"
+      ],
+      "targetBlank": false,
+      "title": "Navigate Dashboards",
+      "tooltip": "Jump to another dashboard",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active Subscriptions",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM subscriptions WHERE active = true;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Active Equities",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM subscriptions WHERE active = true AND upper(kind) = 'EQUITY';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Active Indices",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM subscriptions WHERE active = true AND upper(kind) = 'INDEX';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Bars 1m (last 10m)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM bars_1m WHERE ts > now() - interval '10 minutes';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Bars Per Minute (last 60m)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('minute', ts) AS \"time\", count(*) AS value FROM bars_1m WHERE ts > now() - interval '60 minutes' GROUP BY 1 ORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "axisLabel": "Value"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Latest Bar Timestamp",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT max(ts) AS latest_bar_utc FROM bars_1m;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Subscriptions By Kind",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT upper(kind) AS kind, count(*) AS active_subscriptions FROM subscriptions WHERE active = true GROUP BY 1 ORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Daily Test Quick Check",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH coverage AS (\n  SELECT coverage_ratio::numeric AS value\n  FROM metrics_1m\n  WHERE source_name = 'equity_ticks'\n  ORDER BY minute_ts DESC\n  LIMIT 1\n)\nSELECT 'bars_last_5m' AS metric, count(*)::numeric AS value\nFROM bars_1m\nWHERE ts > now() - interval '5 minutes'\nUNION ALL\nSELECT 'seen_last_15s' AS metric, count(*)::numeric AS value\nFROM instrument_state\nWHERE last_seen_ts > now() - interval '15 seconds'\nUNION ALL\nSELECT 'equity_coverage_ratio' AS metric, COALESCE((SELECT value FROM coverage), 0::numeric) AS value\nUNION ALL\nSELECT 'api_429_last_5m' AS metric, count(*)::numeric AS value\nFROM api_request_log\nWHERE ts > now() - interval '5 minutes' AND http_status = 429;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Daily History Errors (last 15m)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM api_request_log WHERE ts > now() - interval '15 minutes' AND name = 'daily_history' AND success = false;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

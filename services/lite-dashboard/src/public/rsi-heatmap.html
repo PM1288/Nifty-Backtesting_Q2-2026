@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Compact RSI Map</title>
+  <style>
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --green: #00ff66;
+      --red: #ff0033;
+      --surface: rgba(255, 255, 255, 0.035);
+      --surface-strong: rgba(255, 255, 255, 0.06);
+      --line: rgba(255, 255, 255, 0.12);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.62);
+      --dim: rgba(255, 255, 255, 0.42);
+      --glow-green: 0 0 24px rgba(0, 255, 102, 0.18);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Inter, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(0, 255, 102, 0.12), transparent 24%),
+        radial-gradient(circle at 88% 0%, rgba(255, 0, 51, 0.08), transparent 24%),
+        linear-gradient(180deg, #050505 0%, var(--black) 100%);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      font-variant-numeric: tabular-nums;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 3px, 3px 100%;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.34), transparent 90%);
+      opacity: 0.28;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(0, 0, 0, 0.86);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.36);
+    }
+    .topbar h1 { margin: 0; font-size: 1.3rem; letter-spacing: -0.04em; }
+    .topbar .links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .topbar a, .topbar button {
+      border: 1px solid var(--line);
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      padding: 0 13px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    }
+    .topbar a:hover, .topbar button:hover {
+      border-color: rgba(0, 255, 102, 0.42);
+      background: var(--surface-strong);
+      box-shadow: var(--glow-green);
+      transform: translateY(-1px);
+    }
+    main { max-width: 1450px; margin: 0 auto; padding: 16px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+      padding: 14px;
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.48),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+    }
+    .section-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .section-head h2 { margin: 0; font-size: 1rem; }
+    .meta {
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: "IBM Plex Mono", Consolas, monospace;
+    }
+    .marks {
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-bottom: 10px;
+      line-height: 1.6;
+      font-family: "IBM Plex Mono", monospace;
+    }
+    canvas {
+      width: 100%;
+      height: 680px;
+      background: #040404;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      display: block;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    @media (max-width: 980px) {
+      canvas { height: 560px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Compact RSI Map</h1>
+    <div class="links">
+      <a href="./">Main Lite</a>
+      <a href="./heatmap">Market Heatmap</a>
+      <a href="/gateway/">System</a>
+      <a href="/rsi-willr/">Signal Monitor</a>
+      <button id="logoutBtn" type="button">Logout</button>
+    </div>
+  </div>
+
+  <main>
+    <section class="card">
+      <div class="section-head">
+        <h2>RSI Heatmap (NIFTY + Universe)</h2>
+        <div class="meta" id="heatmapMeta">Loading...</div>
+      </div>
+      <div class="marks">RSI scale: oversold compresses toward black and neon red, 50 stays white, and strength above 60 moves into neon green. Outside 20..80 is clamped to the nearest edge color.</div>
+      <canvas id="rsiHeatmapChart"></canvas>
+    </section>
+  </main>
+
+  <script>
+    const refreshMs = 5000;
+    let latestPayload = null;
+    const palette = {
+      canvas: '#040404',
+      muted: 'rgba(255,255,255,0.62)',
+      grid: 'rgba(255,255,255,0.2)',
+      category: 'rgba(255,255,255,0.72)',
+      separator: 'rgba(255,255,255,0.12)',
+    };
+
+    function toIst(iso) {
+      if (!iso) return '-';
+      return new Date(iso).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
+    }
+
+    function resizeCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(10, Math.floor(rect.width * dpr));
+      const height = Math.max(10, Math.floor(rect.height * dpr));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      return { width, height };
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function hexToRgb(hex) {
+      const h = hex.replace('#', '');
+      return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+    }
+
+    function lerpColor(aHex, bHex, t) {
+      const a = hexToRgb(aHex);
+      const b = hexToRgb(bHex);
+      const u = clamp(t, 0, 1);
+      const r = Math.round(a.r + (b.r - a.r) * u);
+      const g = Math.round(a.g + (b.g - a.g) * u);
+      const bb = Math.round(a.b + (b.b - a.b) * u);
+      return `rgb(${r},${g},${bb})`;
+    }
+
+    function rsiColor(v) {
+      if (!Number.isFinite(v)) return 'rgba(255,255,255,0.08)';
+      if (v <= 20) return '#000000';
+      if (v >= 80) return '#00ff66';
+      const anchors = [
+        { v: 20, c: '#000000' },
+        { v: 30, c: '#610014' },
+        { v: 40, c: '#ff0033' },
+        { v: 50, c: '#ffffff' },
+        { v: 60, c: '#d8ffe8' },
+        { v: 70, c: '#7dffaf' },
+        { v: 80, c: '#00ff66' },
+      ];
+      for (let i = 0; i < anchors.length - 1; i += 1) {
+        const a = anchors[i];
+        const b = anchors[i + 1];
+        if (v >= a.v && v <= b.v) {
+          return lerpColor(a.c, b.c, (v - a.v) / (b.v - a.v));
+        }
+      }
+      return '#ffffff';
+    }
+
+    function drawHeatmap(canvas, timelineLabels, symbols, matrix, categoryRanges) {
+      const ctx = canvas.getContext('2d');
+      const { width, height } = resizeCanvas(canvas);
+      const pad = { l: 182, r: 16, t: 18, b: 34 };
+      const w = width - pad.l - pad.r;
+      const h = height - pad.t - pad.b;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = palette.canvas;
+      ctx.fillRect(0, 0, width, height);
+
+      if (!timelineLabels?.length || !symbols?.length || !matrix?.length) {
+        ctx.fillStyle = palette.muted;
+        ctx.font = '12px sans-serif';
+        ctx.fillText('No RSI heatmap data', 12, 22);
+        return;
+      }
+
+      const cols = timelineLabels.length;
+      const rows = symbols.length;
+      const cellW = w / cols;
+      const cellH = h / rows;
+
+      for (let r = 0; r < rows; r += 1) {
+        const row = matrix[r] || [];
+        for (let c = 0; c < cols; c += 1) {
+          const v = Number(row[c]);
+          ctx.fillStyle = rsiColor(v);
+          ctx.fillRect(pad.l + c * cellW, pad.t + r * cellH, Math.max(1, cellW + 0.4), Math.max(1, cellH + 0.4));
+        }
+      }
+
+      ctx.strokeStyle = palette.grid;
+      ctx.strokeRect(pad.l, pad.t, w, h);
+
+      ctx.fillStyle = palette.muted;
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const rowStep = Math.max(1, Math.ceil(13 / Math.max(1, cellH)));
+      for (let i = 0; i < rows; i += rowStep) {
+        const y = pad.t + (i + 0.5) * cellH;
+        ctx.fillText(symbols[i], pad.l - 8, y);
+      }
+      if ((rows - 1) % rowStep !== 0) {
+        const y = pad.t + (rows - 0.5) * cellH;
+        ctx.fillText(symbols[rows - 1], pad.l - 8, y);
+      }
+
+      if (Array.isArray(categoryRanges) && categoryRanges.length > 0) {
+        categoryRanges.forEach((g, idx) => {
+          const startY = pad.t + g.start * cellH;
+          const endY = pad.t + (g.end + 1) * cellH;
+          const midY = (startY + endY) / 2;
+          if (idx > 0) {
+            ctx.strokeStyle = palette.separator;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.moveTo(pad.l, startY);
+            ctx.lineTo(pad.l + w, startY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          ctx.fillStyle = palette.category;
+          ctx.font = '600 10px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(g.name, 8, midY);
+        });
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const xIdx = [0, Math.floor((cols - 1) / 2), cols - 1].filter((v, i, a) => a.indexOf(v) === i);
+      xIdx.forEach(i => {
+        const x = pad.l + (i + 0.5) * cellW;
+        ctx.fillText(timelineLabels[i], x, pad.t + h + 6);
+      });
+    }
+
+    async function loadHeatmap() {
+      const res = await fetch('./api/rsi-heatmap', { cache: 'no-store' });
+      if (!res.ok) throw new Error('RSI heatmap API failed');
+      const body = await res.json();
+      if (!body.ok) throw new Error(body.error || 'API error');
+      latestPayload = body.data;
+      document.getElementById('heatmapMeta').textContent = `Updated ${toIst(body.data.generatedAt)} IST${body.cached ? ' (cached)' : ''}`;
+      drawHeatmap(
+        document.getElementById('rsiHeatmapChart'),
+        body.data.timelineIst || [],
+        body.data.symbols || [],
+        body.data.matrix || [],
+        body.data.categoryRanges || [],
+      );
+    }
+
+    async function refreshLoop() {
+      try {
+        await loadHeatmap();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function logout() {
+      await fetch('./auth/logout', { method: 'POST' });
+      window.location.href = './login';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    window.addEventListener('resize', () => {
+      if (!latestPayload) return;
+      drawHeatmap(
+        document.getElementById('rsiHeatmapChart'),
+        latestPayload.timelineIst || [],
+        latestPayload.symbols || [],
+        latestPayload.matrix || [],
+        latestPayload.categoryRanges || [],
+      );
+    });
+
+    refreshLoop();
+    setInterval(refreshLoop, refreshMs);
+  </script>
+</body>
+</html>

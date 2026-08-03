@@ -13,6 +13,7 @@ class WorkbookProfile:
     path: str
     sha256: str
     bytes: int
+    sample_rows: int
     sheets: list[dict[str, Any]] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -21,9 +22,9 @@ class WorkbookProfile:
         return "WARN" if self.warnings else "PASS"
 
     def as_dict(self) -> dict[str, Any]:
-        result = asdict(self)
-        result["status"] = self.status
-        return result
+        payload = asdict(self)
+        payload["status"] = self.status
+        return payload
 
 
 def _normalise(value: Any) -> str:
@@ -32,45 +33,46 @@ def _normalise(value: Any) -> str:
     return str(value).strip()
 
 
-def profile_workbook(path: str | Path) -> WorkbookProfile:
-    """Profile a workbook without changing it or treating it as an available feature.
-
-    Date coverage is intentionally reported from date-like cells only; publication
-    timing remains an explicit manual `available_at` decision.
-    """
+def profile_workbook_structure(path: str | Path, *, sample_rows: int = 25) -> WorkbookProfile:
+    """Inspect workbook structure and bounded samples without scanning all rows."""
+    if sample_rows <= 0:
+        raise ValueError("sample_rows must be positive")
     try:
         from openpyxl import load_workbook
-    except ImportError as exc:  # pragma: no cover - installation error is actionable
-        raise RuntimeError("openpyxl is required; install nifty-stratlab dependencies") from exc
+    except ImportError as exc:  # pragma: no cover
+        raise RuntimeError("openpyxl is required to inspect workbook structure") from exc
 
     workbook_path = Path(path).expanduser().resolve()
     result = WorkbookProfile(
-        path=str(workbook_path), sha256=sha256_file(workbook_path), bytes=workbook_path.stat().st_size
+        path=str(workbook_path),
+        sha256=sha256_file(workbook_path),
+        bytes=workbook_path.stat().st_size,
+        sample_rows=sample_rows,
     )
     workbook = load_workbook(workbook_path, read_only=True, data_only=True)
     for worksheet in workbook.worksheets:
-        headers = [_normalise(cell.value) for row in worksheet.iter_rows(min_row=1, max_row=1) for cell in row if cell.value is not None]
-        date_values: list[date] = []
-        nonempty = 0
-        for row in worksheet.iter_rows():
-            for cell in row:
-                if cell.value is not None:
-                    nonempty += 1
-                    if isinstance(cell.value, datetime):
-                        date_values.append(cell.value.date())
-                    elif isinstance(cell.value, date):
-                        date_values.append(cell.value)
-        result.sheets.append({
-            "name": worksheet.title,
-            "rows": worksheet.max_row,
-            "columns": worksheet.max_column,
-            "nonempty_cells": nonempty,
-            "headers": headers,
-            "first_date": min(date_values).isoformat() if date_values else None,
-            "last_date": max(date_values).isoformat() if date_values else None,
-        })
+        rows = list(worksheet.iter_rows(min_row=1, max_row=min(worksheet.max_row, sample_rows), values_only=True))
+        headers = [_normalise(value) for value in (rows[0] if rows else ()) if value is not None]
+        sampled_dates = [
+            value.date() if isinstance(value, datetime) else value
+            for row in rows
+            for value in row
+            if isinstance(value, (date, datetime))
+        ]
+        result.sheets.append(
+            {
+                "name": worksheet.title,
+                "reported_rows": worksheet.max_row,
+                "reported_columns": worksheet.max_column,
+                "sampled_rows": len(rows),
+                "headers": headers,
+                "first_sampled_date": min(sampled_dates).isoformat() if sampled_dates else None,
+                "last_sampled_date": max(sampled_dates).isoformat() if sampled_dates else None,
+            }
+        )
     workbook.close()
     if not result.sheets:
         result.warnings.append("workbook contains no worksheets")
+    result.warnings.append("structure/sample inspection only; workbook was not fully processed")
     result.warnings.append("available_at rule is unassigned; workbook is excluded from model features")
     return result

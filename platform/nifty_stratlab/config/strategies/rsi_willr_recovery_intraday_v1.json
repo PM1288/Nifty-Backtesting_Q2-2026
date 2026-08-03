@@ -1,0 +1,200 @@
+{
+  "$schema": "../../contracts/declarative-strategy-v2.schema.json",
+  "strategy_id": "rsi_willr_recovery_intraday",
+  "strategy_version_id": "rsi_willr_recovery_intraday_v1",
+  "display_name": "Confirmed RSI and Williams %R Recovery",
+  "description": "Confirmed mean-reversion comparator adapted from the existing oversold-recovery family. It waits for RSI to reclaim 30, Williams %R to reclaim -80 and a green completed bar before entry.",
+  "version": 1,
+  "status": "reference",
+  "owner": "strategy-lab",
+  "archetype": "confirmed_mean_reversion",
+  "instrument_scope": "equity",
+  "product": "equity_intraday",
+  "universe": {
+    "mode": "point_in_time_index_membership",
+    "index_code": "NIFTY50",
+    "series": [
+      "EQ"
+    ],
+    "membership_as_of": "trade_date",
+    "symbols": []
+  },
+  "calendar": {
+    "exchange": "NSE",
+    "segment": "CM",
+    "timezone": "Asia/Kolkata",
+    "regular_session": {
+      "open": "09:15:00",
+      "close": "15:30:00"
+    }
+  },
+  "features": [
+    {
+      "feature_id": "daily_rsi_14_prev_session",
+      "registry_key": "indicator.rsi_wilder",
+      "interval": "1d",
+      "availability": "previous_completed_session",
+      "lag_sessions": 1,
+      "warmup_bars": 100,
+      "calculation_version": "rsi_wilder_sma_seed_v1",
+      "parameters": {
+        "period": 14,
+        "source": "close"
+      }
+    },
+    {
+      "feature_id": "minute_rsi_14",
+      "registry_key": "indicator.rsi_wilder",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 100,
+      "calculation_version": "rsi_wilder_sma_seed_v1",
+      "parameters": {
+        "period": 14,
+        "source": "close"
+      }
+    },
+    {
+      "feature_id": "minute_willr_14",
+      "registry_key": "indicator.williams_r",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 100,
+      "calculation_version": "williams_r_v1",
+      "parameters": {
+        "period": 14
+      }
+    },
+    {
+      "feature_id": "close_px",
+      "registry_key": "canonical.close_px",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 0,
+      "calculation_version": "canonical_v1"
+    },
+    {
+      "feature_id": "open_px",
+      "registry_key": "canonical.open_px",
+      "interval": "1m",
+      "availability": "completed_bar",
+      "lag_sessions": 0,
+      "warmup_bars": 0,
+      "calculation_version": "canonical_v1"
+    }
+  ],
+  "day_eligibility": {
+    "all": [
+      {
+        "feature": "daily_rsi_14_prev_session",
+        "operator": ">",
+        "value": 40
+      }
+    ]
+  },
+  "entry": {
+    "conditions": {
+      "all": [
+        {
+          "feature": "minute_rsi_14",
+          "operator": "crosses_above",
+          "value": 30
+        },
+        {
+          "feature": "minute_willr_14",
+          "operator": "crosses_above",
+          "value": -80
+        },
+        {
+          "feature": "close_px",
+          "operator": ">",
+          "compare_feature": "open_px"
+        }
+      ]
+    },
+    "trigger_mode": "first_true_per_symbol_per_day",
+    "signal_on": "completed_bar",
+    "execute_on": "next_bar_open",
+    "allowed_signal_time": {
+      "start": "09:30:00",
+      "end": "14:30:00"
+    }
+  },
+  "exit": {
+    "conditions": {
+      "any": [
+        {
+          "feature": "minute_rsi_14",
+          "operator": ">=",
+          "value": 60
+        },
+        {
+          "feature": "minute_willr_14",
+          "operator": ">=",
+          "value": -20
+        }
+      ]
+    },
+    "signal_on": "completed_bar",
+    "execute_on": "next_bar_open",
+    "forced_session_exit": {
+      "decision_time": "15:15:00",
+      "fill_policy": "next_available_bar_open",
+      "latest_fill_time": "15:20:00"
+    },
+    "carry_allowed": false,
+    "price_stop": {
+      "type": "percentage_from_entry",
+      "value_pct": 0.75,
+      "trigger_on": "intrabar_low",
+      "fill_policy": "stop_price_with_slippage",
+      "active_after_entry_bars": 1
+    }
+  },
+  "position_rules": {
+    "side": "long",
+    "one_position_per_symbol": true,
+    "max_completed_trades_per_symbol_per_day": 1,
+    "reentry_after_exit": false
+  },
+  "economics": {
+    "ticket_size_inr": 200000,
+    "evaluation_target_net_pnl_inr": 500,
+    "fee_profile_id": "zerodha_equity_intraday_effective_dated",
+    "execution_model_id": "next_bar_open_slippage_2_5bps_v1",
+    "slippage_bps_per_side": 2.5
+  },
+  "data_policy": {
+    "bar_interval": "1m",
+    "bar_timestamp_semantics": "bar_start",
+    "admitted_quality_statuses": [
+      "PASS",
+      "WARN"
+    ],
+    "missing_feature_action": "skip_and_log",
+    "missing_next_bar_action": "fail_trade_and_log",
+    "corporate_action_policy": "canonical_point_in_time_adjusted_series"
+  },
+  "reporting": {
+    "persist_signals": true,
+    "persist_skipped_signals": true,
+    "persist_feature_snapshots": true,
+    "persist_pdiagram_snapshots": true,
+    "breakdowns": [
+      "symbol",
+      "sector",
+      "trade_date",
+      "entry_time_bucket",
+      "market_regime",
+      "exit_reason",
+      "data_quality_status"
+    ]
+  },
+  "assumptions": {
+    "source_lineage": "Reuses the confirmed oversold-recovery concept already present in historical Python code; intraday thresholds are frozen starting hypotheses.",
+    "stop": "0.75 percent price stop for baseline risk comparability."
+  }
+}

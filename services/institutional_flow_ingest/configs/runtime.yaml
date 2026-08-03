@@ -1,0 +1,26 @@
+timezone: Asia/Kolkata
+database:
+  url: postgresql+psycopg://postgres:CHANGE_ME_POSTGRES_PASSWORD@postgres:5432/marketdata
+  schema: institutional_flow
+paths:
+  raw_root: raw
+  staging_root: staging
+  curated_root: curated
+  logs_root: logs
+  run_reports_root: run_reports
+  completion_marker: run_reports/bootstrap_complete.json
+network:
+  user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+  timeout_seconds: 30
+  max_retries: 4
+  polite_pause_seconds: 1.0
+runtime:
+  default_lookback_years: 5
+  daily_target_time: "08:10"
+  late_arrival_window: 3
+  browser_fallback_enabled: false
+  retain_raw_files: false
+  retain_curated_files: false
+holiday_overrides:
+  - "2025-10-02"
+  - "2025-11-05"

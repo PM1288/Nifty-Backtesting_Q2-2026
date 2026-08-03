@@ -7,7 +7,10 @@ instrument: index_options
 
 entry:
   trigger: high_volatility_start
-  volatility_inputs: [india_vix_close, india_vix_daily_return, nifty_50_intraday_realized_volatility]
+  volatility_inputs:
+    - india_vix_close
+    - india_vix_daily_return
+    - nifty_50_intraday_realized_volatility
   strike_selection: nearest_atm_strike_available_at_entry
   expiry_selection: nearest_liquid_expiry_after_entry
   legs:

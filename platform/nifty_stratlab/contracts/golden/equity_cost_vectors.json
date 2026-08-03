@@ -1,0 +1,86 @@
+{
+  "warning": "Reference vectors; production rates require contract-note validation.",
+  "cases": [
+    {
+      "product": "equity_intraday",
+      "trade_date": "2026-08-02",
+      "entry_price": "500",
+      "quantity": 400,
+      "target_net_pnl": "500",
+      "tick_size": "0.05",
+      "expected_exit_price": "501.55",
+      "expected_cost": {
+        "entry_value": "200000.00",
+        "exit_value": "200620.00",
+        "turnover": "400620.00",
+        "gross_pnl": "620.00",
+        "brokerage": "40.00",
+        "stt": "50",
+        "exchange_transaction_charge": "12.30",
+        "sebi_charge": "0.40",
+        "ipft_charge": "0.00",
+        "stamp_duty": "6.00",
+        "gst": "9.48",
+        "dp_charge": "0",
+        "slippage": "0.00",
+        "impact": "0.00",
+        "total_cost": "118.18",
+        "net_pnl": "501.82"
+      }
+    },
+    {
+      "product": "equity_intraday",
+      "trade_date": "2026-08-02",
+      "entry_price": "1000",
+      "quantity": 200,
+      "target_net_pnl": "500",
+      "tick_size": "0.05",
+      "expected_exit_price": "1003.10",
+      "expected_cost": {
+        "entry_value": "200000.00",
+        "exit_value": "200620.00",
+        "turnover": "400620.00",
+        "gross_pnl": "620.00",
+        "brokerage": "40.00",
+        "stt": "50",
+        "exchange_transaction_charge": "12.30",
+        "sebi_charge": "0.40",
+        "ipft_charge": "0.00",
+        "stamp_duty": "6.00",
+        "gst": "9.48",
+        "dp_charge": "0",
+        "slippage": "0.00",
+        "impact": "0.00",
+        "total_cost": "118.18",
+        "net_pnl": "501.82"
+      }
+    },
+    {
+      "product": "equity_delivery",
+      "trade_date": "2026-08-02",
+      "entry_price": "500",
+      "quantity": 400,
+      "target_net_pnl": "1000",
+      "tick_size": "0.05",
+      "expected_exit_price": "503.70",
+      "expected_cost": {
+        "entry_value": "200000.00",
+        "exit_value": "201480.00",
+        "turnover": "401480.00",
+        "gross_pnl": "1480.00",
+        "brokerage": "0.00",
+        "stt": "401",
+        "exchange_transaction_charge": "12.33",
+        "sebi_charge": "0.40",
+        "ipft_charge": "0.00",
+        "stamp_duty": "30.00",
+        "gst": "2.29",
+        "dp_charge": "15.34",
+        "slippage": "0.00",
+        "impact": "0.00",
+        "total_cost": "461.36",
+        "net_pnl": "1018.64"
+      }
+    }
+  ]
+}

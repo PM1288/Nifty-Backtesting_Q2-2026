@@ -1,0 +1,323 @@
+﻿{
+    "id":  null,
+    "uid":  "trading-stack-sla",
+    "title":  "Trading Stack SLA",
+    "tags":  [
+                 "trading",
+                 "sla",
+                 "trading-stack"
+             ],
+    "timezone":  "browser",
+    "schemaVersion":  38,
+    "version":  1,
+    "refresh":  "30s",
+    "time":  {
+                 "from":  "now-6h",
+                 "to":  "now"
+             },
+    "links":  [
+                  {
+                      "asDropdown":  true,
+                      "icon":  "dashboard",
+                      "includeVars":  true,
+                      "keepTime":  true,
+                      "tags":  [
+                                   "trading-stack"
+                               ],
+                      "targetBlank":  false,
+                      "title":  "Navigate Dashboards",
+                      "tooltip":  "Jump to another dashboard",
+                      "type":  "dashboards"
+                  }
+              ],
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "stat",
+                       "title":  "Equity Coverage (NIFTY100)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT coverage_ratio AS value FROM metrics_1m WHERE source_name = \u0027equity_ticks\u0027 ORDER BY minute_ts DESC LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percentunit"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "Equity Bars Missing (last minute)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COALESCE(bars_missing, 0) AS value FROM metrics_1m WHERE source_name = \u0027equity_bars_1m\u0027 ORDER BY minute_ts DESC LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "Indices Staleness Max (sec)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COALESCE(staleness_max_sec, 0) AS value FROM metrics_1m WHERE source_name = \u0027indices_ticks\u0027 ORDER BY minute_ts DESC LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Options Coverage (NIFTY)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT COALESCE(coverage_ratio, 0) AS value FROM metrics_1m WHERE source_name = \u0027options_index_nifty_ticks\u0027 ORDER BY minute_ts DESC LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percentunit"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  5,
+                       "type":  "timeseries",
+                       "title":  "Bars Written Per Minute (Equity)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  5
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "SELECT minute_ts AS \"time\", bars_written AS value FROM metrics_1m WHERE source_name = \u0027equity_bars_1m\u0027 AND minute_ts \u003e now() - interval \u00276 hours\u0027 ORDER BY 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "custom":  {
+                                                                           "axisLabel":  "Value"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  6,
+                       "type":  "table",
+                       "title":  "Coverage By Source (last 5m)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  7,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  13
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT minute_ts, source_name, universe_name, coverage_ratio, staleness_max_sec, missing_instruments FROM metrics_1m WHERE minute_ts \u003e= now() - interval \u00275 minutes\u0027 ORDER BY minute_ts DESC, source_name;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  7,
+                       "type":  "timeseries",
+                       "title":  "API Errors / Minute",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  6,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  20
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "SELECT minute_ts AS \"time\", SUM(api_error_count) AS value FROM metrics_1m WHERE minute_ts \u003e now() - interval \u00276 hours\u0027 GROUP BY 1 ORDER BY 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "custom":  {
+                                                                           "axisLabel":  "Value"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  8,
+                       "type":  "timeseries",
+                       "title":  "API 429 / Minute",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  6,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  20
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "SELECT minute_ts AS \"time\", SUM(api_429_count) AS value FROM metrics_1m WHERE minute_ts \u003e now() - interval \u00276 hours\u0027 GROUP BY 1 ORDER BY 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "custom":  {
+                                                                           "axisLabel":  "Value"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   }
+               ]
+}

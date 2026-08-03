@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Compact Watchlist</title>
+  <style>
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --green: #00ff66;
+      --red: #ff0033;
+      --surface: rgba(255, 255, 255, 0.035);
+      --surface-strong: rgba(255, 255, 255, 0.06);
+      --surface-muted: rgba(255, 255, 255, 0.025);
+      --line: rgba(255, 255, 255, 0.12);
+      --line-strong: rgba(255, 255, 255, 0.22);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.62);
+      --dim: rgba(255, 255, 255, 0.42);
+      --good: var(--green);
+      --bad: var(--red);
+      --glow-green: 0 0 24px rgba(0, 255, 102, 0.18);
+      --glow-red: 0 0 24px rgba(255, 0, 51, 0.16);
+      --glow-white: 0 0 24px rgba(255, 255, 255, 0.08);
+      --font-sans: Inter, "Segoe UI", sans-serif;
+      --font-mono: "IBM Plex Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: var(--font-sans);
+      background:
+        radial-gradient(circle at top left, rgba(0, 255, 102, 0.12), transparent 24%),
+        radial-gradient(circle at 88% 0%, rgba(255, 0, 51, 0.08), transparent 24%),
+        linear-gradient(180deg, #050505 0%, var(--black) 100%);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      font-variant-numeric: tabular-nums;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 3px, 3px 100%;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.34), transparent 90%);
+      opacity: 0.28;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(0, 0, 0, 0.86);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.36);
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: -0.04em;
+    }
+    .topbar small {
+      color: var(--muted);
+      display: block;
+      margin-top: 4px;
+      max-width: 540px;
+      line-height: 1.5;
+    }
+    .topbar .links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .topbar a, .topbar button {
+      border: 1px solid var(--line);
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      padding: 0 13px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    }
+    .topbar a:hover, .topbar button:hover {
+      border-color: rgba(0, 255, 102, 0.4);
+      background: var(--surface-strong);
+      box-shadow: var(--glow-green);
+      transform: translateY(-1px);
+    }
+    main {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 16px;
+    }
+    .stack {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .sidebar {
+      display: grid;
+      align-content: start;
+      gap: 16px;
+    }
+    .sticky {
+      position: sticky;
+      top: 92px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+      padding: 14px;
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.48),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+      padding: 10px;
+      min-height: 82px;
+    }
+    .stat .k {
+      color: var(--muted);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+    }
+    .stat .v {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-top: 7px;
+      line-height: 1.35;
+    }
+    .v.good { color: var(--good); }
+    .v.bad { color: var(--bad); }
+    .row2 {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 10px;
+    }
+    .row3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .chart-wrap {
+      display: grid;
+      gap: 6px;
+    }
+    .chart-label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+    canvas {
+      width: 100%;
+      height: 260px;
+      background: #040404;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      display: block;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    .small-canvas { height: 220px; }
+    .heatmap-canvas { height: 260px; }
+    select {
+      min-height: 38px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 14px;
+      font: inherit;
+      transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    }
+    select:focus {
+      outline: none;
+      border-color: rgba(0, 255, 102, 0.42);
+      box-shadow: var(--glow-green);
+    }
+    .marks {
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-top: 6px;
+      line-height: 1.6;
+      font-family: var(--font-mono);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    th {
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+    }
+    td {
+      color: var(--text);
+    }
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    th:first-child, td:first-child { text-align: left; }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.22);
+    }
+    .atm {
+      background: rgba(0, 255, 102, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(0, 255, 102, 0.14);
+    }
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .sticky { position: static; }
+    }
+    @media (max-width: 980px) {
+      .row2, .row3 { grid-template-columns: 1fr; }
+      canvas { height: 230px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>Compact Watchlist</h1>
+      <small>Compact live board for quick market review, stock context, and a lighter options read.</small>
+    </div>
+    <div class="links">
+      <a href="/gateway/">System</a>
+      <a href="/rsi-willr/">Signal Monitor</a>
+      <a href="/option-chain/">Options Workspace</a>
+      <a href="./heatmap">Heatmap</a>
+      <a href="./rsi-heatmap">RSI Map</a>
+      <a href="/watcher">Live Watch</a>
+      <button id="logoutBtn" type="button">Logout</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="layout">
+      <div class="stack">
+    <section class="card">
+      <div class="section-head">
+        <h2>NIFTY 50</h2>
+        <div class="meta" id="niftyMeta">Loading...</div>
+      </div>
+      <div class="stats" id="niftyStats"></div>
+      <canvas id="niftyChart"></canvas>
+      <div class="marks" id="niftyMarks"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>Stock Focus</h2>
+        <div>
+          <label class="meta" for="stockSelect">Select Stock:</label>
+          <select id="stockSelect"></select>
+        </div>
+      </div>
+      <div class="stats" id="stockStats"></div>
+      <div class="row3">
+        <div class="chart-wrap">
+          <div class="chart-label">Price + Volume (Intraday)</div>
+          <canvas id="stockPriceChart"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-label">RSI (14)</div>
+          <canvas id="stockRsiChart" class="small-canvas"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-label">WILLR (14)</div>
+          <canvas id="stockWillrChart" class="small-canvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>Option Chain + Equilibrium</h2>
+        <div class="meta" id="ocMeta">Loading...</div>
+      </div>
+      <div class="stats" id="optionStats"></div>
+      <div class="row2">
+        <div class="chart-wrap">
+          <div class="chart-label">ATM CE+PE Sum (Intraday)</div>
+          <canvas id="optionStraddleChart"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-label">Equilibrium (Normalized CE vs PE)</div>
+          <canvas id="equilibriumChart"></canvas>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Strike</th>
+              <th>CE LTP</th>
+              <th>PE LTP</th>
+              <th>CE+PE</th>
+              <th>CE OI</th>
+              <th>PE OI</th>
+              <th>CE ΔOI</th>
+              <th>PE ΔOI</th>
+            </tr>
+          </thead>
+          <tbody id="ocTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+      </div>
+      <aside class="sidebar">
+        <section class="card sticky">
+          <div class="section-head">
+            <h2>Market KPI</h2>
+            <div class="meta" id="kpiMeta">Loading...</div>
+          </div>
+          <div class="stats" id="kpiStats"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const refreshMs = 5000;
+    const fmt2 = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+    const fmt0 = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
+    const palette = {
+      canvas: '#040404',
+      muted: 'rgba(255,255,255,0.62)',
+      grid: 'rgba(255,255,255,0.12)',
+      guide: 'rgba(255,255,255,0.28)',
+      overlay: 'rgba(255,255,255,0.5)',
+      green: '#00ff66',
+      greenSoft: 'rgba(0,255,102,0.38)',
+      red: '#ff0033',
+      redSoft: 'rgba(255,0,51,0.38)',
+      white: '#ffffff',
+      whiteSoft: 'rgba(255,255,255,0.18)',
+      volume: 'rgba(255,255,255,0.18)',
+    };
+
+    let selectedStock = '';
+    let latestPayload = null;
+
+    function fmt(v, d = 2) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return '-';
+      const n = Number(v);
+      return d === 0 ? fmt0.format(n) : fmt2.format(n);
+    }
+
+    function toIst(iso) {
+      if (!iso) return '-';
+      return new Date(iso).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
+    }
+
+    function toIstShort(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return String(iso);
+      return d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+
+    function resizeCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(10, Math.floor(rect.width * dpr));
+      const height = Math.max(10, Math.floor(rect.height * dpr));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      return { width, height, dpr };
+    }
+
+    function drawLineChart(canvas, labels, lines, opts = {}) {
+      const ctx = canvas.getContext('2d');
+      const { width, height } = resizeCanvas(canvas);
+      const pad = { l: 58, r: 16, t: 14, b: 30 };
+      const w = width - pad.l - pad.r;
+      const h = height - pad.t - pad.b;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = palette.canvas;
+      ctx.fillRect(0, 0, width, height);
+
+      const allY = [];
+      lines.forEach(l => l.data.forEach(v => { if (Number.isFinite(v)) allY.push(v); }));
+      if (opts.guideLines) {
+        opts.guideLines.forEach(g => { if (Number.isFinite(g.value)) allY.push(g.value); });
+      }
+      if (allY.length === 0) {
+        ctx.fillStyle = palette.muted;
+        ctx.font = '12px sans-serif';
+        ctx.fillText('No data', 12, 20);
+        return;
+      }
+
+      let minY = opts.minY !== undefined ? opts.minY : Math.min(...allY);
+      let maxY = opts.maxY !== undefined ? opts.maxY : Math.max(...allY);
+      if (minY === maxY) {
+        minY -= 1;
+        maxY += 1;
+      }
+      const padY = (maxY - minY) * 0.08;
+      minY -= padY;
+      maxY += padY;
+
+      const xToPx = i => pad.l + (labels.length <= 1 ? 0 : (i * w / (labels.length - 1)));
+      const yToPx = y => pad.t + ((maxY - y) * h / (maxY - minY));
+
+      ctx.strokeStyle = palette.grid;
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.t + (h * i / 4);
+        ctx.beginPath();
+        ctx.moveTo(pad.l, y);
+        ctx.lineTo(pad.l + w, y);
+        ctx.stroke();
+      }
+
+      if (opts.guideLines) {
+        opts.guideLines.forEach(g => {
+          if (!Number.isFinite(g.value)) return;
+          const y = yToPx(g.value);
+          ctx.strokeStyle = g.color || palette.whiteSoft;
+          ctx.setLineDash(g.dash || [6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(pad.l, y);
+          ctx.lineTo(pad.l + w, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = g.color || palette.whiteSoft;
+          ctx.font = '11px sans-serif';
+          ctx.fillText(g.label || String(g.value), pad.l + 4, y - 4);
+        });
+      }
+
+      lines.forEach(line => {
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth = line.width || 2;
+        ctx.setLineDash(line.dash || []);
+        ctx.beginPath();
+        let started = false;
+        line.data.forEach((v, i) => {
+          if (!Number.isFinite(v)) {
+            started = false;
+            return;
+          }
+          const x = xToPx(i);
+          const y = yToPx(v);
+          if (!started) {
+            ctx.moveTo(x, y);
+            started = true;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      if (opts.segment && Number.isFinite(opts.segment.fromY) && Number.isFinite(opts.segment.toY)) {
+        const x = pad.l + w;
+        const y1 = yToPx(opts.segment.fromY);
+        const y2 = yToPx(opts.segment.toY);
+        ctx.strokeStyle = palette.overlay;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.fillStyle = palette.muted;
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= 4; i++) {
+        const value = maxY - ((maxY - minY) * i / 4);
+        const y = pad.t + (h * i / 4);
+        ctx.fillText(fmt(value, 2), pad.l - 6, y);
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const idx = [0, Math.floor((labels.length - 1) / 2), labels.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+      idx.forEach(i => {
+        const label = labels[i] || '';
+        const shortLabel = toIstShort(label);
+        ctx.fillText(shortLabel, xToPx(i), pad.t + h + 6);
+      });
+    }
+
+    function drawBarLineChart(canvas, labels, lineData, bars, opts = {}) {
+      const ctx = canvas.getContext('2d');
+      const { width, height } = resizeCanvas(canvas);
+      const pad = { l: 58, r: 16, t: 14, b: 30 };
+      const w = width - pad.l - pad.r;
+      const h = height - pad.t - pad.b;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = palette.canvas;
+      ctx.fillRect(0, 0, width, height);
+
+      const validLine = lineData.filter(Number.isFinite);
+      const validBars = bars.filter(Number.isFinite);
+      if (!validLine.length) return;
+
+      let minY = Math.min(...validLine);
+      let maxY = Math.max(...validLine);
+      if (opts.guideValues) {
+        opts.guideValues.forEach(v => { if (Number.isFinite(v)) { minY = Math.min(minY, v); maxY = Math.max(maxY, v); } });
+      }
+      if (minY === maxY) { minY -= 1; maxY += 1; }
+      const padY = (maxY - minY) * 0.1;
+      minY -= padY;
+      maxY += padY;
+
+      const maxBar = validBars.length ? Math.max(...validBars) : 1;
+      const xToPx = i => pad.l + (labels.length <= 1 ? 0 : i * w / (labels.length - 1));
+      const yToPx = y => pad.t + ((maxY - y) * h / (maxY - minY));
+
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.t + (h * i / 4);
+        ctx.strokeStyle = palette.grid;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, y);
+        ctx.lineTo(pad.l + w, y);
+        ctx.stroke();
+      }
+
+      const bw = Math.max(1, w / Math.max(2, labels.length));
+      bars.forEach((v, i) => {
+        if (!Number.isFinite(v)) return;
+        const barH = (v / maxBar) * (h * 0.35);
+        const x = xToPx(i) - (bw * 0.4);
+        const y = pad.t + h - barH;
+        ctx.fillStyle = palette.volume;
+        ctx.fillRect(x, y, bw * 0.8, barH);
+      });
+
+      if (opts.guideValues) {
+        opts.guideValues.forEach(g => {
+          if (!Number.isFinite(g.value)) return;
+          const y = yToPx(g.value);
+          ctx.strokeStyle = g.color;
+          ctx.setLineDash(g.dash || [6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(pad.l, y);
+          ctx.lineTo(pad.l + w, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        });
+      }
+
+      ctx.strokeStyle = palette.white;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      lineData.forEach((v, i) => {
+        if (!Number.isFinite(v)) return;
+        const x = xToPx(i);
+        const y = yToPx(v);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      if (opts.segment && Number.isFinite(opts.segment.fromY) && Number.isFinite(opts.segment.toY)) {
+        const x = pad.l + w;
+        ctx.strokeStyle = palette.overlay;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x, yToPx(opts.segment.fromY));
+        ctx.lineTo(x, yToPx(opts.segment.toY));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.fillStyle = palette.muted;
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= 4; i++) {
+        const v = maxY - ((maxY - minY) * i / 4);
+        const y = pad.t + (h * i / 4);
+        ctx.fillText(fmt(v), pad.l - 5, y);
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const idx = [0, Math.floor((labels.length - 1) / 2), labels.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+      idx.forEach(i => {
+        const label = labels[i] || '';
+        ctx.fillText(toIstShort(label), xToPx(i), pad.t + h + 6);
+      });
+    }
+
+
+    function statCard(key, value, className = '') {
+      return `<div class="stat"><div class="k">${key}</div><div class="v ${className}">${value}</div></div>`;
+    }
+
+    function latestFinite(values) {
+      if (!Array.isArray(values)) return null;
+      for (let i = values.length - 1; i >= 0; i -= 1) {
+        const n = Number(values[i]);
+        if (Number.isFinite(n)) return n;
+      }
+      return null;
+    }
+
+    function avgFinite(values) {
+      const nums = values
+        .map(v => Number(v))
+        .filter(v => Number.isFinite(v));
+      if (!nums.length) return null;
+      return nums.reduce((a, b) => a + b, 0) / nums.length;
+    }
+
+    async function loadDashboard() {
+      const qs = selectedStock ? `?symbol=${encodeURIComponent(selectedStock)}` : '';
+      const res = await fetch(`./api/dashboard${qs}`, { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error('Dashboard API failed');
+      }
+      const body = await res.json();
+      if (!body.ok) throw new Error(body.error || 'API error');
+      latestPayload = body.data;
+      renderDashboard(body.data);
+    }
+
+    async function loadKpis() {
+      const [rsiRes, heatRes] = await Promise.all([
+        fetch('./api/rsi-heatmap', { cache: 'no-store' }),
+        fetch('./api/heatmap', { cache: 'no-store' }),
+      ]);
+      if (!rsiRes.ok || !heatRes.ok) {
+        throw new Error('KPI API failed');
+      }
+      const rsiBody = await rsiRes.json();
+      const heatBody = await heatRes.json();
+      renderKpis(rsiBody.data || {}, heatBody.data || {});
+    }
+
+    function renderKpis(rsiData, heatData) {
+      const rsiSymbols = Array.isArray(rsiData.symbols) ? rsiData.symbols : [];
+      const rsiMatrix = Array.isArray(rsiData.matrix) ? rsiData.matrix : [];
+      const heatSymbols = Array.isArray(heatData.symbols) ? heatData.symbols : [];
+      const heatMatrix = Array.isArray(heatData.matrix) ? heatData.matrix : [];
+
+      const niftyIdx = rsiSymbols.indexOf('NIFTY50');
+      const niftyRsi = niftyIdx >= 0 ? latestFinite(rsiMatrix[niftyIdx]) : null;
+
+      const stockRsiValues = rsiSymbols
+        .map((s, i) => ({ s, v: latestFinite(rsiMatrix[i]) }))
+        .filter(x => x.s !== 'NIFTY50')
+        .map(x => x.v);
+      const avgStockRsi = avgFinite(stockRsiValues);
+
+      const avgPctAllStocks = avgFinite(
+        heatSymbols
+          .map((s, i) => ({ s, v: latestFinite(heatMatrix[i]) }))
+          .filter(x => x.s !== 'NIFTY50')
+          .map(x => x.v),
+      );
+
+      document.getElementById('kpiMeta').textContent = `Updated ${toIst(new Date().toISOString())} IST`;
+      document.getElementById('kpiStats').innerHTML = [
+        statCard('NIFTY 50 RSI', fmt(niftyRsi), Number(niftyRsi || 0) >= 50 ? 'good' : 'bad'),
+        statCard('Avg Stocks RSI', fmt(avgStockRsi), Number(avgStockRsi || 0) >= 50 ? 'good' : 'bad'),
+        statCard('Avg Stocks % Chg', fmt(avgPctAllStocks), Number(avgPctAllStocks || 0) >= 0 ? 'good' : 'bad'),
+      ].join('');
+    }
+
+    function renderDashboard(data) {
+      const stockSelect = document.getElementById('stockSelect');
+      if (!selectedStock) {
+        selectedStock = data.selectedStock;
+      }
+      if (stockSelect.options.length === 0 || stockSelect.options.length !== data.stocks.length) {
+        stockSelect.innerHTML = data.stocks.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
+      stockSelect.value = data.selectedStock;
+
+      renderNifty(data.nifty, data.generatedAt);
+      renderStock(data.stock, data.generatedAt);
+      renderOptionChain(data.optionChain, data.generatedAt);
+    }
+
+    function renderNifty(nifty, generatedAt) {
+      const state = nifty.state || {};
+      const pct = Number(state.percentChange || 0);
+      const cls = pct >= 0 ? 'good' : 'bad';
+      document.getElementById('niftyMeta').textContent = `Updated ${toIst(generatedAt)} IST | Feed ${toIst(state.lastSeen)} IST`;
+      document.getElementById('niftyStats').innerHTML = [
+        statCard('LTP', fmt(state.ltp), cls),
+        statCard('% Change', fmt(state.percentChange), cls),
+        statCard('Net Change', fmt(state.netChange), cls),
+        statCard('Open', fmt(nifty.open)),
+        statCard('Day Low', fmt(nifty.dayLow)),
+        statCard('Day High', fmt(nifty.dayHigh)),
+      ].join('');
+      document.getElementById('niftyMarks').textContent = `100-point marks: ${nifty.hundredMarks?.join(', ') || '-'}`;
+
+      const labels = nifty.bars.map(r => r.ts);
+      const close = nifty.bars.map(r => Number(r.close));
+      const guides = (nifty.hundredMarks || []).map(v => ({ value: v, color: palette.guide, dash: [3, 5], label: String(v) }));
+      if (Number.isFinite(nifty.open)) {
+        guides.push({ value: Number(nifty.open), color: palette.greenSoft, dash: [8, 4], label: `Open ${fmt(nifty.open)}` });
+      }
+      drawLineChart(document.getElementById('niftyChart'), labels, [{ data: close, color: palette.white, width: 2 }], { guideLines: guides });
+    }
+
+    function renderStock(stock, generatedAt) {
+      const state = stock.state || {};
+      const cls = Number(stock.dayDeltaPct || 0) >= 0 ? 'good' : 'bad';
+      document.getElementById('stockStats').innerHTML = [
+        statCard('Symbol', stock.symbol),
+        statCard('LTP', fmt(state.ltp), cls),
+        statCard('Open', fmt(stock.open)),
+        statCard('High', fmt(state.high)),
+        statCard('Low', fmt(state.low)),
+        statCard('Close', fmt(state.close)),
+        statCard('Day Δ', fmt(stock.dayDelta), cls),
+        statCard('Day Δ %', fmt(stock.dayDeltaPct), cls),
+      ].join('');
+
+      const labels = stock.bars.map(r => r.ts);
+      const closes = stock.bars.map(r => Number(r.close));
+      const vols = stock.bars.map(r => Number(r.volume));
+      const rsi = stock.bars.map(r => Number(r.rsi));
+      const willr = stock.bars.map(r => Number(r.willr));
+
+      drawBarLineChart(document.getElementById('stockPriceChart'), labels, closes, vols, {
+        guideValues: [
+          { value: Number(stock.open), color: palette.greenSoft, dash: [8, 4] },
+        ],
+        segment: {
+          fromY: closes.length ? closes[closes.length - 1] : null,
+          toY: Number(stock.open),
+        },
+      });
+
+      drawLineChart(document.getElementById('stockRsiChart'), labels, [{ data: rsi, color: palette.green, width: 2 }], {
+        minY: 0,
+        maxY: 100,
+        guideLines: [
+          { value: stock.guides.rsi30, color: palette.redSoft, dash: [7, 4], label: '30' },
+          { value: stock.guides.rsi75, color: palette.whiteSoft, dash: [7, 4], label: '75' },
+        ],
+      });
+
+      drawLineChart(document.getElementById('stockWillrChart'), labels, [{ data: willr, color: palette.red, width: 2 }], {
+        minY: -100,
+        maxY: 0,
+        guideLines: [
+          { value: stock.guides.willr80, color: palette.redSoft, dash: [7, 4], label: '-80' },
+        ],
+      });
+    }
+
+    function renderOptionChain(oc, generatedAt) {
+      const latest = oc.latest || {};
+      document.getElementById('ocMeta').textContent = `Snapshot ${toIst(latest.capturedAt)} IST | Expiry ${latest.expiryDate || '-'} | Underlying ${fmt(latest.underlyingValue)}`;
+      document.getElementById('optionStats').innerHTML = [
+        statCard('ATM Strike', fmt(latest.atmStrike, 0)),
+        statCard('ATM CE', fmt(latest.atm?.ceLtp)),
+        statCard('ATM PE', fmt(latest.atm?.peLtp)),
+        statCard('ATM CE+PE (Now)', fmt(latest.atmCurrentCombo)),
+        statCard('ATM Open Strike', fmt(latest.atmOpenStrike, 0)),
+        statCard('ATM CE+PE (Open)', fmt(latest.atmOpenCombo)),
+        statCard('ATM Open Time (IST)', toIst(latest.atmOpenAt)),
+      ].join('');
+
+      const rows = (latest.strikes || []);
+      const body = document.getElementById('ocTableBody');
+      body.innerHTML = rows.map(r => {
+        const combo = Number(r.ceLtp || 0) + Number(r.peLtp || 0);
+        const isAtm = Number(r.strike) === Number(latest.atmStrike);
+        return `
+          <tr class="${isAtm ? 'atm' : ''}">
+            <td>${fmt(r.strike, 0)}</td>
+            <td>${fmt(r.ceLtp)}</td>
+            <td>${fmt(r.peLtp)}</td>
+            <td>${fmt(combo)}</td>
+            <td>${fmt(r.ceOi, 0)}</td>
+            <td>${fmt(r.peOi, 0)}</td>
+            <td>${fmt(r.ceChangeOi, 0)}</td>
+            <td>${fmt(r.peChangeOi, 0)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const atmSeries = latest.atmSeries || [];
+      const optionLabels = atmSeries.map(r => r.ts);
+      const straddle = atmSeries.map(r => Number(r.combo));
+      drawLineChart(document.getElementById('optionStraddleChart'), optionLabels, [{ data: straddle, color: palette.white, width: 2 }], {
+        guideLines: [
+          { value: Number(latest.atmOpenCombo), color: palette.greenSoft, dash: [8, 4], label: `Open ${fmt(latest.atmOpenCombo)}` },
+        ],
+      });
+
+      const eqLabels = (oc.equilibriumSeries || []).map(r => r.ts);
+      const ce = (oc.equilibriumSeries || []).map(r => Number(r.ceNorm));
+      const pe = (oc.equilibriumSeries || []).map(r => Number(r.peNorm));
+      drawLineChart(document.getElementById('equilibriumChart'), eqLabels, [
+        { data: ce, color: palette.green, width: 2 },
+        { data: pe, color: palette.red, width: 2 },
+      ]);
+    }
+
+    async function logout() {
+      await fetch('./auth/logout', { method: 'POST' });
+      window.location.href = './login';
+    }
+
+    async function refreshLoop() {
+      try {
+        await Promise.all([loadDashboard(), loadKpis()]);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    document.getElementById('stockSelect').addEventListener('change', (e) => {
+      selectedStock = e.target.value;
+      refreshLoop();
+    });
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    window.addEventListener('resize', () => {
+      if (latestPayload) renderDashboard(latestPayload);
+    });
+
+    refreshLoop();
+    setInterval(refreshLoop, refreshMs);
+  </script>
+</body>
+</html>

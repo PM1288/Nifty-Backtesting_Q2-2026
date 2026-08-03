@@ -1,0 +1,90 @@
+ARG GRAFANA_VERSION="12.3.1"
+FROM grafana/grafana:${GRAFANA_VERSION}
+
+ARG PRODUCT_NAME="DigiTrader"
+
+USER root
+RUN mkdir -p /usr/share/grafana/public/css /usr/share/grafana/public/js /usr/share/grafana/public/img/bg /usr/share/grafana/public/fonts
+
+# Cloud-viz reference assets.
+COPY mod-grafana/cloud-viz/img/fav32.png /usr/share/grafana/public/img/fav32.png
+COPY mod-grafana/cloud-viz/img/favicon.ico /usr/share/grafana/public/img/favicon.ico
+COPY mod-grafana/cloud-viz/img/logo.svg /usr/share/grafana/public/img/logo.svg
+COPY mod-grafana/cloud-viz/img/digi4-bg.svg /usr/share/grafana/public/img/g8_login_dark.svg
+COPY mod-grafana/cloud-viz/img/digi4-bg.svg /usr/share/grafana/public/img/g8_login_light.svg
+COPY mod-grafana/cloud-viz/img/qio_logo.png /usr/share/grafana/public/img/bg/qio_logo.png
+COPY mod-grafana/cloud-viz/img/qio_logo_small.png /usr/share/grafana/public/img/bg/qio_logo_small.png
+COPY mod-grafana/cloud-viz/img/DC.png /usr/share/grafana/public/img/bg/DC.png
+COPY mod-grafana/cloud-viz/img/server.png /usr/share/grafana/public/img/bg/server.png
+COPY mod-grafana/cloud-viz/img/cooling.png /usr/share/grafana/public/img/bg/cooling.png
+COPY mod-grafana/cloud-viz/img/Nunito-Regular.ttf /usr/share/grafana/public/fonts/Nunito-Regular.ttf
+COPY custom-grafana/custom.css /usr/share/grafana/public/css/custom.css
+COPY custom-grafana/branding.js /usr/share/grafana/public/js/branding.js
+
+# Title + custom stylesheet injection.
+RUN set -eux; \
+    sed -i "s|<title>\\[\\[\\.AppTitle\\]\\]</title>|<title>${PRODUCT_NAME}</title>|g" /usr/share/grafana/public/views/index.html; \
+    sed -i 's/Loading Grafana/Loading DigiTrader/g' /usr/share/grafana/public/views/index.html; \
+    sed -i 's/this Grafana has failed to load its application files/this DigiTrader has failed to load its application files/g' /usr/share/grafana/public/views/index.html; \
+    sed -i "s/If you host grafana under a subpath/If you host DigiTrader under a subpath/g" /usr/share/grafana/public/views/index.html; \
+    sed -i "s|<code>grafana.ini</code>|<code>digitrader.ini</code>|g" /usr/share/grafana/public/views/index.html; \
+    sed -i "s|<code>grafana-server</code>|<code>digitrader-server</code>|g" /usr/share/grafana/public/views/index.html; \
+    sed -i "s|https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers|https://digii4.co.in/docs|g" /usr/share/grafana/public/views/index.html; \
+    sed -i 's/not supported by Grafana/not supported by DigiTrader/g' /usr/share/grafana/public/views/index.html; \
+    sed -i "s/supported by Grafana/supported by DigiTrader/g" /usr/share/grafana/public/views/index.html; \
+    sed -i 's/Welcome to Grafana/Welcome to DigiTrader/g' /usr/share/grafana/public/views/index.html; \
+    sed -i 's/-- Grafana --/-- DigiTrader --/g' /usr/share/grafana/public/views/index.html; \
+    sed -i 's/Grafana v/DigiTrader v/g' /usr/share/grafana/public/views/index.html; \
+    sed -i 's|public/js/branding.js[^"]*|public/js/branding.js?v=20260211b|g' /usr/share/grafana/public/views/index.html; \
+    if ! grep -q 'public/css/custom.css' /usr/share/grafana/public/views/index.html; then \
+      sed -i '/<\/head>/i\\  <link rel=\"stylesheet\" href=\"public/css/custom.css\" />' /usr/share/grafana/public/views/index.html; \
+    fi; \
+    if ! grep -q 'public/js/branding.js?v=20260211b' /usr/share/grafana/public/views/index.html; then \
+      sed -i '/<\/head>/i\\  <script src=\"public/js/branding.js?v=20260211b\"></script>' /usr/share/grafana/public/views/index.html; \
+    fi
+
+# Locale and plugin display-text branding.
+RUN set -eux; \
+    for f in /usr/share/grafana/public/locales/*/grafana.json; do \
+      [ -f "${f}" ] || continue; \
+      sed -i -e 's/Grafana Labs/DigiTrader Labs/g' -e 's/Grafana/DigiTrader/g' -e 's#grafana.com#digii4.co.in#g' "${f}"; \
+    done; \
+    find /usr/share/grafana/public/app/plugins -type f -name plugin.json -print0 \
+      | xargs -0 sed -i -e 's/Grafana Labs/DigiTrader Labs/g' -e 's/Grafana/DigiTrader/g' -e 's#grafana.com#digii4.co.in#g'
+
+# Replace stock logo assets (including hashed static files) with custom mark.
+RUN set -eux; \
+    SRC="/usr/share/grafana/public/img/logo.svg"; \
+    for name in \
+      grafana_icon.svg \
+      grafana_typelogo.svg \
+      grafana_enterprise_typelogo.svg \
+      grafana_net_logo.svg \
+      grafana_com_auth_icon.svg \
+      grafana_mask_icon.svg \
+      grafana_mask_icon_white.svg \
+      grafana_text_logo-light.svg \
+      grafana_text_logo-dark.svg \
+      grafana_text_logo_light.svg \
+      grafana_text_logo_dark.svg; do \
+      cp -f "${SRC}" "/usr/share/grafana/public/img/${name}"; \
+    done; \
+    STATIC_DIR="/usr/share/grafana/public/build/static/img"; \
+    if [ -d "${STATIC_DIR}" ]; then \
+      find "${STATIC_DIR}" -maxdepth 1 -type f \( \
+        -name 'grafana_icon*.svg' -o \
+        -name 'grafana_typelogo*.svg' -o \
+        -name 'grafana_text_logo*.svg' -o \
+        -name 'grafana_mask_icon*.svg' -o \
+        -name 'grafana_net_logo*.svg' -o \
+        -name 'grafana_com_auth_icon*.svg' \
+      \) -print | while read -r f; do \
+        cp -f "${SRC}" "${f}"; \
+      done; \
+    fi
+
+RUN chown -R 472:472 /usr/share/grafana/public /usr/share/grafana/public/fonts
+USER grafana
+
+EXPOSE 3000
+CMD ["/run.sh"]

@@ -1,0 +1,6 @@
+apiVersion: 1
+
+# Dashboard file provisioning is intentionally disabled.
+# Dashboards are imported into Grafana's database so they remain fully editable in UI
+# without provisioned-lock semantics.
+providers: []

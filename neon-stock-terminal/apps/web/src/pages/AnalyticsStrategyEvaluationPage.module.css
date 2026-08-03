@@ -1,0 +1,136 @@
+.page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.metricGrid,
+.doubleGrid,
+.tripleGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.sectionStack {
+  display: grid;
+  gap: 1rem;
+}
+
+.verdictCard,
+.noteCard,
+.setupCard {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(17, 20, 28, 0.94), rgba(10, 12, 18, 0.96));
+  padding: 1.1rem 1.2rem;
+}
+
+.eyebrow {
+  display: inline-block;
+  color: #9aa3b5;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.sectionText,
+.smallPrint {
+  margin: 0;
+  color: #d7deea;
+  line-height: 1.55;
+}
+
+.smallPrint {
+  color: #aeb7c6;
+  font-size: 0.92rem;
+}
+
+.bulletList,
+.setupList,
+.tagWrap {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.setupHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.setupMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.metricChip {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  color: #cfd7e4;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.88rem;
+}
+
+.chartPanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.chartSurface {
+  min-height: 340px;
+}
+
+.rubricGrid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.rubricItem {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.85rem 0.95rem;
+}
+
+.rubricItem strong {
+  display: block;
+  color: #f3f4f6;
+  margin-bottom: 0.35rem;
+}
+
+.rubricItem p {
+  margin: 0;
+  color: #c8d0db;
+  line-height: 1.5;
+}
+
+.takeaway {
+  border-left: 3px solid #d4af37;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: rgba(212, 175, 55, 0.08);
+  color: #f0f3f8;
+  line-height: 1.6;
+}
+
+.kickerGrid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+@media (max-width: 900px) {
+  .chartSurface {
+    min-height: 300px;
+  }
+
+  .rubricGrid {
+    grid-template-columns: 1fr;
+  }
+}

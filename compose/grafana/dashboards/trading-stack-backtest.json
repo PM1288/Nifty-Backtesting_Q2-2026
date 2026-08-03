@@ -1,0 +1,752 @@
+{
+  "id": null,
+  "uid": "trading-stack-backtest",
+  "title": "Backtest Equity & Options",
+  "tags": [
+    "backtest",
+    "equity",
+    "trading-stack"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "trading-stack"
+      ],
+      "targetBlank": false,
+      "title": "Navigate Dashboards",
+      "tooltip": "Jump to another dashboard",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Last Run Trades",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT total_trades AS value FROM a02_backtest_runs ORDER BY run_id DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Last Run Win %",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT win_rate AS value FROM a02_backtest_runs ORDER BY run_id DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -1
+              },
+              {
+                "color": "yellow",
+                "value": -0.2
+              },
+              {
+                "color": "green",
+                "value": 0.2
+              },
+              {
+                "color": "blue",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Net Profit by Run",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT run_id AS \"time\", total_net_profit AS value FROM a02_backtest_runs ORDER BY run_id ASC;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currency",
+          "custom": {
+            "axisLabel": "Value"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Recent Signals (Live)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT entry_time, symbol, tradingsymbol, percentile, gain_pct, success FROM a02_backtest_live_signals ORDER BY entry_time DESC LIMIT 25;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Latest Trades",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT entry_time, exit_time, symbol, tradingsymbol, success, gain_pct, net_profit FROM a02_backtest_results ORDER BY run_id DESC, entry_time DESC LIMIT 25;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Swing Last Run Trades",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 15
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COALESCE(\n  (SELECT total_trades FROM a02_archive_swing_runs ORDER BY run_id DESC LIMIT 1),\n  0\n) AS value;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Swing Last Run Win %",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 15
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COALESCE(\n  (SELECT win_rate FROM a02_archive_swing_runs ORDER BY run_id DESC LIMIT 1),\n  0\n) AS value;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -1
+              },
+              {
+                "color": "yellow",
+                "value": -0.2
+              },
+              {
+                "color": "green",
+                "value": 0.2
+              },
+              {
+                "color": "blue",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Swing Net Profit by Run",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT run_id AS \"time\", total_net_profit AS value\nFROM a02_archive_swing_runs\nUNION ALL\nSELECT now() AS \"time\", 0::double precision AS value\nWHERE NOT EXISTS (SELECT 1 FROM a02_archive_swing_runs)\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currency",
+          "custom": {
+            "axisLabel": "Value"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Swing Latest Trades",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT entry_time, exit_time, symbol, tradingsymbol, success, gain_pct, net_profit, holding_days\nFROM a02_archive_swing_results\nUNION ALL\nSELECT now() AS entry_time,\n       now() AS exit_time,\n       'NO_DATA'::text AS symbol,\n       'NO_DATA'::text AS tradingsymbol,\n       false AS success,\n       0::numeric AS gain_pct,\n       0::numeric AS net_profit,\n       0::integer AS holding_days\nWHERE NOT EXISTS (SELECT 1 FROM a02_archive_swing_results)\nORDER BY entry_time DESC\nLIMIT 25;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Live Heartbeat Age (sec)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 29
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT EXTRACT(EPOCH FROM (now() - last_entry_time)) AS value FROM a02_backtest_live_status WHERE key = '__heartbeat__' ORDER BY updated_at DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Net Profit by Trade Date",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT trade_date AS \"time\", SUM(total_net_profit) AS value FROM a02_backtest_runs WHERE $__timeFilter(trade_date) GROUP BY trade_date ORDER BY trade_date ASC;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currency",
+          "custom": {
+            "axisLabel": "Value"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Win Rate by Trade Date",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT trade_date AS \"time\", AVG(win_rate) AS value FROM a02_backtest_runs WHERE $__timeFilter(trade_date) GROUP BY trade_date ORDER BY trade_date ASC;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "axisLabel": "Percent (%)"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "Equity Parameters Snapshot",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT name, value #>> '{}' AS value, updated_at, updated_by FROM strategy_parameters WHERE scope='backtest_a02' ORDER BY name;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 20,
+      "type": "table",
+      "title": "Strategy Backtest Runs (OHLCV)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT trade_date, status, total_trades, win_rate, total_pnl, max_drawdown FROM strategy_backtest_runs ORDER BY trade_date DESC LIMIT 10;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 21,
+      "type": "table",
+      "title": "Strategy Backtest Trades (Recent)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT exit_time, strategy, COALESCE(symbol, tradingsymbol, symbol_token) AS symbol, direction, entry_price, exit_price, pnl, pnl_pct, exit_reason FROM strategy_backtest_trades ORDER BY exit_time DESC LIMIT 20;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Stock Win Rate (1Y)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 60
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT CASE WHEN COALESCE(SUM(total_trades),0) > 0 THEN (SUM(wins)::double precision / SUM(total_trades)::double precision) * 100 ELSE 0 END AS value FROM a02_backtest_runs WHERE trade_date >= current_date - interval '365 days';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Options Win Rate (1Y)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 60
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT CASE WHEN COALESCE(SUM(total_trades),0) > 0 THEN (SUM(wins)::double precision / SUM(total_trades)::double precision) * 100 ELSE 0 END AS value FROM option_backtest_runs WHERE trade_date >= current_date - interval '365 days';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Options Net PnL (1Y)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 60
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(total_pnl),0) AS value FROM option_backtest_runs WHERE trade_date >= current_date - interval '365 days';",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currency"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Options Net PnL by Trade Date",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 64
+      },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT trade_date AS \"time\", SUM(total_pnl) AS value FROM option_backtest_runs WHERE $__timeFilter(trade_date) GROUP BY trade_date ORDER BY trade_date ASC;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currency",
+          "custom": {
+            "axisLabel": "Value"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 26,
+      "type": "table",
+      "title": "Options Backtest Runs",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 71
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT trade_date, status, total_trades, win_rate, total_pnl, avg_pnl, max_drawdown, avg_norm_diff FROM option_backtest_runs ORDER BY trade_date DESC LIMIT 30;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 27,
+      "type": "table",
+      "title": "Options Backtest Trades (Recent)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT entry_time, strategy, underlying, strike, ce_symbol, pe_symbol, entry_combo, exit_combo, pnl, success, rsi, willr, norm_diff, exit_reason FROM option_backtest_trades ORDER BY entry_time DESC LIMIT 40;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ]
+}

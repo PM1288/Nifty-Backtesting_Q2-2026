@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal.novius2/schemas/comparison-result-v1.json",
+  "title": "Strategy Comparison Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "comparison_run_id",
+    "suite_id",
+    "status",
+    "compatibility_hash",
+    "data_snapshot_hash",
+    "universe_hash",
+    "fee_profile_id",
+    "execution_model_id",
+    "strategy_results",
+    "validation"
+  ],
+  "properties": {
+    "comparison_run_id": {
+      "type": "string"
+    },
+    "suite_id": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "running",
+        "completed",
+        "failed",
+        "validated",
+        "published"
+      ]
+    },
+    "compatibility_hash": {
+      "type": "string"
+    },
+    "data_snapshot_hash": {
+      "type": "string"
+    },
+    "universe_hash": {
+      "type": "string"
+    },
+    "fee_profile_id": {
+      "type": "string"
+    },
+    "execution_model_id": {
+      "type": "string"
+    },
+    "strategy_results": {
+      "type": "array"
+    },
+    "validation": {
+      "type": "object"
+    }
+  }
+}

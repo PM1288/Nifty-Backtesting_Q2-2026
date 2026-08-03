@@ -1,0 +1,75 @@
+﻿{
+    "id":  null,
+    "uid":  "trading-stack-watchlist",
+    "title":  "Watchlist Alerts",
+    "tags":  [
+                 "watchlist",
+                 "alerts",
+                 "trading-stack"
+             ],
+    "timezone":  "browser",
+    "schemaVersion":  38,
+    "version":  1,
+    "refresh":  "1m",
+    "time":  {
+                 "from":  "now-24h",
+                 "to":  "now"
+             },
+    "links":  [
+                  {
+                      "asDropdown":  true,
+                      "icon":  "dashboard",
+                      "includeVars":  true,
+                      "keepTime":  true,
+                      "tags":  [
+                                   "trading-stack"
+                               ],
+                      "targetBlank":  false,
+                      "title":  "Navigate Dashboards",
+                      "tooltip":  "Jump to another dashboard",
+                      "type":  "dashboards"
+                  }
+              ],
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "text",
+                       "title":  "Watchlist Manager",
+                       "gridPos":  {
+                                       "h":  12,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "options":  {
+                                       "mode":  "html",
+                                       "content":  "\u003cdiv id=\"watchlist-app\"\u003e\n  \u003cstyle\u003e\n    .wl-card { font-family: \u0027Segoe UI\u0027, Arial, sans-serif; padding: 12px; background: #0f1419; color: #e6edf3; border-radius: 8px; }\n    .wl-header { font-size: 18px; margin-bottom: 8px; font-weight: 600; }\n    .wl-form { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 8px; align-items: center; }\n    .wl-form input, .wl-form select { padding: 6px 8px; border-radius: 6px; border: 1px solid #2a2f36; background: #141a21; color: #e6edf3; }\n    .wl-form button { padding: 6px 10px; border-radius: 6px; border: none; background: #1f6feb; color: white; cursor: pointer; }\n    .wl-form button.secondary { background: #30363d; }\n    .wl-status { margin: 8px 0; font-size: 12px; }\n    .wl-table { width: 100%; border-collapse: collapse; margin-top: 8px; }\n    .wl-table th, .wl-table td { border-bottom: 1px solid #2a2f36; padding: 6px; font-size: 12px; }\n    .wl-table th { text-align: left; color: #9da7b3; }\n    .wl-table button { padding: 4px 6px; font-size: 11px; margin-right: 4px; }\n    .wl-actions { display: flex; gap: 6px; }\n    .wl-pill { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 11px; background: #1f6feb; }\n    .wl-pill.off { background: #6e7681; }\n  \u003c/style\u003e\n  \u003cdiv class=\"wl-card\"\u003e\n    \u003cdiv class=\"wl-header\"\u003ePriority Watchlist\u003c/div\u003e\n    \u003cform class=\"wl-form\" id=\"wl-form\"\u003e\n      \u003cinput id=\"wl-symbol\" placeholder=\"Symbol (e.g., RELIANCE)\" required /\u003e\n      \u003cinput id=\"wl-name\" placeholder=\"Display name\" /\u003e\n      \u003cinput id=\"wl-threshold\" type=\"number\" step=\"0.01\" placeholder=\"Threshold\" required /\u003e\n      \u003cselect id=\"wl-direction\"\u003e\n        \u003coption value=\"below\"\u003eBelow\u003c/option\u003e\n        \u003coption value=\"above\"\u003eAbove\u003c/option\u003e\n      \u003c/select\u003e\n      \u003clabel style=\"display:flex; gap:6px; align-items:center; font-size:12px;\"\u003e\n        \u003cinput id=\"wl-active\" type=\"checkbox\" checked /\u003e Active\n      \u003c/label\u003e\n      \u003cdiv class=\"wl-actions\"\u003e\n        \u003cbutton id=\"wl-save\" type=\"submit\"\u003eAdd / Update\u003c/button\u003e\n        \u003cbutton id=\"wl-refresh\" class=\"secondary\" type=\"button\"\u003eRefresh\u003c/button\u003e\n      \u003c/div\u003e\n    \u003c/form\u003e\n    \u003cdiv id=\"wl-status\" class=\"wl-status\"\u003e\u003c/div\u003e\n    \u003ctable class=\"wl-table\"\u003e\n      \u003cthead\u003e\n        \u003ctr\u003e\n          \u003cth\u003eSymbol\u003c/th\u003e\n          \u003cth\u003eName\u003c/th\u003e\n          \u003cth\u003eThreshold\u003c/th\u003e\n          \u003cth\u003eDirection\u003c/th\u003e\n          \u003cth\u003eActive\u003c/th\u003e\n          \u003cth\u003eLast Price\u003c/th\u003e\n          \u003cth\u003eLast Seen\u003c/th\u003e\n          \u003cth\u003eLast Alert\u003c/th\u003e\n          \u003cth\u003eActions\u003c/th\u003e\n        \u003c/tr\u003e\n      \u003c/thead\u003e\n      \u003ctbody id=\"wl-table-body\"\u003e\u003c/tbody\u003e\n    \u003c/table\u003e\n  \u003c/div\u003e\n\u003c/div\u003e\n\u003cscript\u003e\n(function() {\n  const base = \u0027/api/stock/watchlist\u0027;\n  const status = document.getElementById(\u0027wl-status\u0027);\n  const form = document.getElementById(\u0027wl-form\u0027);\n  const symbolEl = document.getElementById(\u0027wl-symbol\u0027);\n  const nameEl = document.getElementById(\u0027wl-name\u0027);\n  const thresholdEl = document.getElementById(\u0027wl-threshold\u0027);\n  const directionEl = document.getElementById(\u0027wl-direction\u0027);\n  const activeEl = document.getElementById(\u0027wl-active\u0027);\n  const bodyEl = document.getElementById(\u0027wl-table-body\u0027);\n  let editId = null;\n\n  function setStatus(msg, ok) {\n    status.textContent = msg;\n    status.style.color = ok ? \u0027#3fb950\u0027 : \u0027#f85149\u0027;\n  }\n\n  async function load() {\n    setStatus(\u0027Loading...\u0027, true);\n    const res = await fetch(base + \u0027?all=1\u0027);\n    if (!res.ok) {\n      setStatus(\u0027Failed to load watchlist\u0027, false);\n      return;\n    }\n    const data = await res.json();\n    render(data.targets || []);\n    setStatus(\u0027Loaded \u0027 + (data.targets || []).length + \u0027 targets\u0027, true);\n  }\n\n  function render(targets) {\n    bodyEl.innerHTML = \u0027\u0027;\n    targets.forEach(t =\u003e {\n      const tr = document.createElement(\u0027tr\u0027);\n      tr.innerHTML = `\n        \u003ctd\u003e${t.symbol}\u003c/td\u003e\n        \u003ctd\u003e${t.display_name || \u0027\u0027}\u003c/td\u003e\n        \u003ctd\u003e${Number(t.threshold).toFixed(2)}\u003c/td\u003e\n        \u003ctd\u003e${t.direction}\u003c/td\u003e\n        \u003ctd\u003e${t.active ? \u0027\u003cspan class=\"wl-pill\"\u003eon\u003c/span\u003e\u0027 : \u0027\u003cspan class=\"wl-pill off\"\u003eoff\u003c/span\u003e\u0027}\u003c/td\u003e\n        \u003ctd\u003e${t.last_price ? Number(t.last_price).toFixed(2) : \u0027-\u0027}\u003c/td\u003e\n        \u003ctd\u003e${t.last_seen ? new Date(t.last_seen).toLocaleTimeString() : \u0027-\u0027}\u003c/td\u003e\n        \u003ctd\u003e${t.last_alert_date ? t.last_alert_date : \u0027-\u0027}\u003c/td\u003e\n        \u003ctd\u003e\n          \u003cbutton data-action=\"edit\" data-id=\"${t.id}\"\u003eEdit\u003c/button\u003e\n          \u003cbutton data-action=\"delete\" data-id=\"${t.id}\"\u003eDelete\u003c/button\u003e\n        \u003c/td\u003e\n      `;\n      bodyEl.appendChild(tr);\n    });\n  }\n\n  bodyEl.addEventListener(\u0027click\u0027, async (e) =\u003e {\n    const btn = e.target.closest(\u0027button\u0027);\n    if (!btn) return;\n    const id = btn.getAttribute(\u0027data-id\u0027);\n    const action = btn.getAttribute(\u0027data-action\u0027);\n    if (action === \u0027edit\u0027) {\n      editId = id;\n      const row = btn.closest(\u0027tr\u0027).children;\n      symbolEl.value = row[0].textContent.trim();\n      nameEl.value = row[1].textContent.trim();\n      thresholdEl.value = row[2].textContent.trim();\n      directionEl.value = row[3].textContent.trim();\n      activeEl.checked = row[4].textContent.includes(\u0027on\u0027);\n      setStatus(\u0027Editing \u0027 + symbolEl.value + \u0027 (updates only).\u0027, true);\n    }\n    if (action === \u0027delete\u0027) {\n      const res = await fetch(base + \u0027/\u0027 + id, { method: \u0027DELETE\u0027 });\n      if (!res.ok) {\n        setStatus(\u0027Delete failed\u0027, false);\n        return;\n      }\n      editId = null;\n      await load();\n    }\n  });\n\n  form.addEventListener(\u0027submit\u0027, async (e) =\u003e {\n    e.preventDefault();\n    const payload = {\n      symbol: symbolEl.value.trim(),\n      display_name: nameEl.value.trim(),\n      threshold: Number(thresholdEl.value),\n      direction: directionEl.value,\n      active: activeEl.checked\n    };\n    const method = editId ? \u0027PUT\u0027 : \u0027POST\u0027;\n    const url = editId ? base + \u0027/\u0027 + editId : base;\n    const res = await fetch(url, {\n      method,\n      headers: { \u0027Content-Type\u0027: \u0027application/json\u0027 },\n      body: JSON.stringify(payload)\n    });\n    if (!res.ok) {\n      const err = await res.json().catch(() =\u003e ({}));\n      setStatus(err.error || \u0027Save failed\u0027, false);\n      return;\n    }\n    editId = null;\n    symbolEl.value = \u0027\u0027;\n    nameEl.value = \u0027\u0027;\n    thresholdEl.value = \u0027\u0027;\n    directionEl.value = \u0027below\u0027;\n    activeEl.checked = true;\n    await load();\n  });\n\n  document.getElementById(\u0027wl-refresh\u0027).addEventListener(\u0027click\u0027, load);\n  load();\n})();\n\u003c/script\u003e"
+                                   }
+                   },
+                   {
+                       "id":  2,
+                       "type":  "table",
+                       "title":  "Recent Watchlist Alerts",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  12
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT e.alert_ts, t.symbol, t.display_name, e.price, e.message\nFROM watchlist_alert_events e\nLEFT JOIN watchlist_targets t ON t.id = e.target_id\nORDER BY e.alert_ts DESC\nLIMIT 50;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   }
+               ]
+}

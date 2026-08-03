@@ -1,0 +1,104 @@
+# Thresholds & weights for the state-aware recommendation engine.
+# Tune gradually and record changes.
+
+regime:
+  # Breadth: large-cap breadth (Nifty100 universe).
+  breadth_up_pct:
+    broad: 60
+    narrow: 50
+  breadth_above_vwap_pct:
+    broad: 60
+
+  # Dispersion and realized volatility should be percentiles (0..100) vs recent history.
+  dispersion_pctile:
+    high: 75
+    low: 35
+  realized_vol_pctile:
+    high: 75
+    low: 35
+
+  # Absolute opening gap (index open vs prior close) in percent.
+  opening_gap_abs_pct:
+    significant: 0.40
+
+  # Opening range (first 15m) expansion vs prior day range (percent).
+  first15_range_expansion_pct:
+    strong: 18
+
+signal:
+  # Residual return thresholds (stock return - beta*index return).
+  residual_ret_15m_pct:
+    strong_up: 0.35
+    strong_down: -0.35
+  residual_ret_30m_pct:
+    strong_up: 0.55
+    strong_down: -0.55
+
+  time_above_vwap_pct:
+    strong: 65
+    weak: 40
+
+  vwap_deviation_abs_pct:
+    extreme: 0.80
+
+  volume_surprise_z:
+    burst: 2.5
+    elevated: 1.2
+
+  range_efficiency:
+    trend: 0.65
+    noisy: 0.40
+
+  close_location:
+    strong: 0.75
+    weak: 0.25
+
+anomaly:
+  single_stock:
+    residual_10m_abs_pct:
+      warn: 0.90
+      severe: 1.50
+    volume_ratio:
+      warn: 4.0
+      severe: 8.0
+    vwap_dev_abs_pct:
+      warn: 0.90
+      severe: 1.40
+    reversal_speed:
+      warn: 3
+      severe: 5
+
+  market:
+    breadth_shock_abs_pp:
+      warn: 20
+      severe: 30
+    dispersion_shock_pctile:
+      warn: 85
+      severe: 95
+    correlation_snap_abs:
+      warn: 0.25
+      severe: 0.35
+
+weights:
+  # Base score is 50.
+  base_score: 50
+  regime_fit_weight: 1.0
+  signal_quality_weight: 0.9
+  historical_edge_weight: 0.8
+  risk_penalty_weight: 1.0
+  anomaly_penalty_weight: 1.0
+
+  # Confidence shrinkage for low-sample scorecards.
+  scorecard_min_samples:
+    low: 30
+    medium: 100
+
+actions:
+  # Action thresholds based on final_score.
+  buy_now: 72
+  wait_for_pullback: 62
+  watch_only: 52
+  avoid_despite_strength: 45
+
+  # If severe anomalies are present, force anomaly review.
+  force_anomaly_review_on_severe: true

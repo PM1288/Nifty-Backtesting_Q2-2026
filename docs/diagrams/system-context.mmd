@@ -1,0 +1,29 @@
+flowchart LR
+  PublicUser["Public user"] --> Browser["Browser / SPA under /n50 or /n50-stage"]
+  Reviewer["Reviewer / operator"] --> Browser
+  Browser --> Nginx["nginx ingress<br/>compose/nginx/nginx.conf"]
+  Nginx --> Prod["n50-dashboard<br/>web + Node API"]
+  Nginx --> Stage["n50-dashboard-stage<br/>web + Node API"]
+  Nginx --> OptionChain["option-chain-watcher<br/>/option-chain/*"]
+  Nginx --> Matomo["matomo<br/>/matomo/*"]
+
+  Prod --> Redis["redis<br/>session + snapshot cache"]
+  Stage --> Redis
+  Prod --> Postgres["postgres<br/>shared primary datastore"]
+  Stage --> Postgres
+
+  Prod --> ExportApi["nse-export-api<br/>/api/v1/exports, dashboard, ops"]
+  Prod --> IntradayApi["nse-intraday-api<br/>/api/v1/intraday/*"]
+  Prod --> RecoApi["nse-reco-api"]
+  Stage --> ExportApi
+  Stage --> IntradayApi
+  Stage --> RecoApi
+
+  Collector["collector / strategy / watchlist / monitor"] --> Postgres
+  Ingest["nse_ingestor"] --> Postgres
+  AnalyticsWorker["nse-analytics-worker"] --> Postgres
+  Orchestrator["nse-orchestrator"] --> Postgres
+  OptionChain --> Postgres
+  ExportApi --> Postgres
+  IntradayApi --> Postgres
+  RecoApi --> Postgres

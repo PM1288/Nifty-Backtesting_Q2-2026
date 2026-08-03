@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: neon_stock_terminal_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: neon
+      POSTGRES_PASSWORD: neon
+      POSTGRES_DB: neon_stock_terminal
+    ports:
+      - "5432:5432"
+    volumes:
+      - neon_stock_terminal_pg:/var/lib/postgresql/data
+
+volumes:
+  neon_stock_terminal_pg:

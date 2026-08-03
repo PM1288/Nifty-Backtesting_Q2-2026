@@ -1,0 +1,58 @@
+version: 1
+
+defaults:
+  username: "Market Intelligence"
+  avatar_url: ""
+  use_allowed_mentions_parse_empty: true
+  include_machine_facts: true
+  include_learner_note: true
+
+message_layouts:
+  event:
+    include_header_box: true
+    include_summary: true
+    include_confirms: true
+    include_risk: true
+    include_next_watch: true
+    include_machine_facts_code_block: true
+    max_embeds: 1
+    attach_chart_when_available: true
+
+  digest:
+    include_header_box: true
+    include_market_snapshot: true
+    include_leaders_laggards: true
+    include_options: true
+    include_quality: true
+    max_embeds: 2
+    attach_chart_when_available: true
+
+  close_summary:
+    include_header_box: true
+    include_market_snapshot: true
+    include_fii: true
+    include_watchlist: true
+    include_quality: true
+    max_embeds: 2
+    attach_chart_when_available: true
+
+  ops:
+    include_header_box: true
+    include_market_snapshot: false
+    include_quality: true
+    max_embeds: 1
+    attach_chart_when_available: false
+
+colors:
+  positive: 3066993
+  caution: 15105570
+  negative: 15158332
+  neutral: 3447003
+  ops: 9807270
+
+routes:
+  market: "${DISCORD_WEBHOOK_URL_TEST}"
+  stocks: "${DISCORD_WEBHOOK_URL_TEST}"
+  derivatives: "${DISCORD_WEBHOOK_URL_TEST}"
+  close_summary: "${DISCORD_WEBHOOK_URL_TEST}"
+  ops: "${DISCORD_WEBHOOK_URL_TEST}"

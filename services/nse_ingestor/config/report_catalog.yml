@@ -1,0 +1,120 @@
+reports:
+  sec_bhavdata_full:
+    enabled: true
+    parser: sec_bhavdata_full
+    filename: "sec_bhavdata_full_{ddmmyyyy}.csv"
+    url_candidates:
+      - "https://archives.nseindia.com/products/content/sec_bhavdata_full_{ddmmyyyy}.csv"
+      - "https://nsearchives.nseindia.com/content/equities/sec_bhavdata_full_{ddmmyyyy}.csv"
+
+  bhavcopy_udiff:
+    enabled: true
+    parser: bhavcopy_udiff
+    filename: "BhavCopy_NSE_CM_0_0_0_{yyyymmdd}_F_0000.csv.zip"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_{yyyymmdd}_F_0000.csv.zip"
+
+  security_master:
+    enabled: true
+    parser: security_master
+    filename: "NSE_CM_security_{ddmmyyyy}.csv.gz"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/cm/NSE_CM_security_{ddmmyyyy}.csv.gz"
+
+  cmvolt:
+    enabled: true
+    parser: cmvolt
+    filename: "CMVOLT_{ddmmyyyy}.CSV"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/archives/equities/bhavcopy/CMVOLT_{ddmmyyyy}.CSV"
+
+  market_activity:
+    enabled: true
+    parser: market_activity
+    filename: "MA{ddmmyy}.csv"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/archives/equities/mkt/MA{ddmmyy}.csv"
+
+  shortselling:
+    enabled: true
+    parser: shortselling
+    filename: "shortselling_{ddmmyyyy}.csv"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/shortselling_{ddmmyyyy}.csv"
+
+  reg_ind:
+    enabled: true
+    parser: reg_ind
+    filename: "REG_IND{ddmmyy}.csv"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/archives/equities/surveillance/REG_IND{ddmmyy}.csv"
+
+  reg1_ind:
+    enabled: true
+    parser: reg1_ind
+    filename: "REG1_IND{ddmmyy}.csv"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/archives/equities/surveillance/REG1_IND{ddmmyy}.csv"
+
+  high_low_52w:
+    enabled: true
+    parser: high_low_52w
+    filename: "CM_52_wk_High_low_{ddmmyyyy}.csv"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/CM_52_wk_High_low_{ddmmyyyy}.csv"
+
+  pr_zip:
+    enabled: true
+    parser: pr_zip
+    filename: "PR{ddmmyy}.zip"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/archives/equities/bhavcopy/pr/PR{ddmmyy}.zip"
+
+  margin_trading:
+    enabled: true
+    parser: margin_trading
+    filename: "mrg_trading_{ddmmyy}.zip"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/mrg_trading_{ddmmyy}.zip"
+
+  var_margin_1:
+    enabled: true
+    parser: var_margin
+    filename: "C_VAR1_{ddmmyyyy}_1.DAT"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/C_VAR1_{ddmmyyyy}_1.DAT"
+
+  var_margin_2:
+    enabled: true
+    parser: var_margin
+    filename: "C_VAR1_{ddmmyyyy}_2.DAT"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/C_VAR1_{ddmmyyyy}_2.DAT"
+
+  var_margin_3:
+    enabled: true
+    parser: var_margin
+    filename: "C_VAR1_{ddmmyyyy}_3.DAT"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/C_VAR1_{ddmmyyyy}_3.DAT"
+
+  var_margin_4:
+    enabled: true
+    parser: var_margin
+    filename: "C_VAR1_{ddmmyyyy}_4.DAT"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/C_VAR1_{ddmmyyyy}_4.DAT"
+
+  var_margin_5:
+    enabled: true
+    parser: var_margin
+    filename: "C_VAR1_{ddmmyyyy}_5.DAT"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/C_VAR1_{ddmmyyyy}_5.DAT"
+
+  var_margin_6:
+    enabled: true
+    parser: var_margin
+    filename: "C_VAR1_{ddmmyyyy}_6.DAT"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/equities/C_VAR1_{ddmmyyyy}_6.DAT"

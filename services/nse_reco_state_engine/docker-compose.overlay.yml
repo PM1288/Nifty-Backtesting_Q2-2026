@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  nse-reco-api:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      RECO_API_PORT: "8010"
+    ports:
+      - "8010:8010"
+    restart: unless-stopped
+
+  nse-reco-scheduler:
+    build:
+      context: .
+    env_file:
+      - .env
+    command: ["python", "-m", "nse_reco_state_aware_engine.jobs.scheduler"]
+    restart: unless-stopped

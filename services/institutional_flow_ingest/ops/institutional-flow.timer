@@ -1,0 +1,9 @@
+[Unit]
+Description=Run institutional flow daily ingestion at 08:10 Asia/Kolkata
+
+[Timer]
+OnCalendar=*-*-* 08:10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

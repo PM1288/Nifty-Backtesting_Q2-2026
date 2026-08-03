@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IntradayStock",
+  "type": "object",
+  "required": ["trade_date", "symbol", "direction", "accent_token", "series"],
+  "properties": {
+    "trade_date": {"type": "string"},
+    "as_of": {"type": "string"},
+    "symbol": {"type": "string"},
+    "sector_name": {"type": ["string", "null"]},
+    "last_price": {"type": ["number", "null"]},
+    "change_pct_from_prev_close": {"type": ["number", "null"]},
+    "change_pct_from_open": {"type": ["number", "null"]},
+    "direction": {"type": "string", "enum": ["up", "down", "neutral"]},
+    "accent_token": {"type": "string", "enum": ["green", "red", "white"]},
+    "dominant_signal": {"type": ["string", "null"]},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "conclusion": {"type": ["string", "null"]},
+    "payload": {"type": "object"},
+    "explanation": {"type": "object"},
+    "history_context": {"type": "object"},
+    "series": {"type": "array", "items": {"type": "object"}}
+  }
+}

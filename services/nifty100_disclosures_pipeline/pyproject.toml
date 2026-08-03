@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nifty100-disclosures-pipeline"
+version = "0.1.0"
+description = "Nifty 100 disclosures pipeline for NSE financial results, event calendar, corporate actions, and yfinance financial statements"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "pandas>=2.2,<3.0",
+  "requests>=2.32,<3.0",
+  "python-dateutil>=2.9,<3.0",
+  "python-dotenv>=1.0,<2.0",
+  "yfinance>=0.2.61,<2.0",
+  "nselib>=2.4.4,<3.0",
+  "psycopg2-binary>=2.9,<3.0",
+  "fastapi>=0.110,<1.0",
+  "uvicorn[standard]>=0.30,<1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2,<9.0"]
+
+[project.scripts]
+nifty100-disclosures = "nifty100_pipeline.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

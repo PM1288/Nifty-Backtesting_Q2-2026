@@ -1,0 +1,5 @@
+[project]
+name = "nse-premium-cockpit"
+version = "0.1.0"
+description = "Premium NSE learning cockpit UI (FastAPI + static Canvas UI)."
+requires-python = ">=3.11"

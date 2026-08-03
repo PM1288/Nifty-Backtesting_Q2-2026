@@ -1,0 +1,39 @@
+services:
+  loki:
+    image: grafana/loki:2.9.3
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./compose/loki/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m

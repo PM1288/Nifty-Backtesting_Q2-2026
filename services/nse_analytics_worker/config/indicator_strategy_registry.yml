@@ -1,0 +1,225 @@
+config_version: "2026-03-10"
+default_transaction_cost_bps: 10
+default_slippage_bps: 5
+default_execution_assumptions:
+  signal_generated_at: day_t_close
+  indicator_entry_execution: day_t_plus_1_open
+  indicator_exit_execution: day_t_plus_1_open
+  take_profit_logic:
+    type: fixed_pct_intraday
+    take_profit_pct: 1.25
+    rules:
+      - if open >= target, exit at open
+      - else if high >= target, exit at target
+      - else remain open
+  missing_ohlc_policy: skip_invalid_execution_and_keep_position_open
+  universe_policy: current_members_only
+capital_variants:
+  no_capital_limit:
+    capital_model: no_capital_limit
+    scenario_suffix: nolimit
+    label_suffix: ""
+    ticket_size_rule: every_valid_signal
+    max_open_positions: null
+    starting_capital: null
+  finite_10l:
+    capital_model: finite_capital_portfolio
+    scenario_suffix: 10l
+    label_suffix: " - 10L"
+    ticket_size_rule: starting_capital_div_10
+    max_open_positions: 10
+    starting_capital: 1000000
+  finite_20l:
+    capital_model: finite_capital_portfolio
+    scenario_suffix: 20l
+    label_suffix: " - 20L"
+    ticket_size_rule: starting_capital_div_10
+    max_open_positions: 10
+    starting_capital: 2000000
+  finite_50l:
+    capital_model: finite_capital_portfolio
+    scenario_suffix: 50l
+    label_suffix: " - 50L"
+    ticket_size_rule: starting_capital_div_10
+    max_open_positions: 10
+    starting_capital: 5000000
+indicators:
+  - slug: rsi
+    indicator_type: rsi
+    indicator_params:
+      period: 14
+    validation_range:
+      min: 0
+      max: 100
+    display_name: RSI
+    short_description: Relative Strength Index (14) measures the speed and persistence of recent price moves on a 0 to 100 scale.
+    one_line_summary: RSI helps separate washed-out momentum, neutral consolidation, and stretched upside, but it can stay extreme when trends are strong.
+    formula_text: RSI stands for Relative Strength Index. It compares the average size of recent up closes to recent down closes over 14 daily bars and converts that balance into a 0 to 100 momentum score.
+    what_it_is:
+      - RSI stands for Relative Strength Index.
+      - RSI measures recent momentum, not fair value. It asks whether price has been rising or falling with unusual persistence over the last 14 daily closes.
+      - High RSI usually means buyers have been dominant and the move is strong, but also increasingly stretched.
+      - Low RSI usually means selling pressure has been persistent and the move may be washed out enough to watch for a rebound.
+      - RSI slope matters. A rising RSI from low levels can signal a recovery or reversal attempt, while a falling RSI from high levels can signal momentum exhaustion.
+      - RSI is most useful in range-bound markets, pullbacks inside broader trends, and for comparing which stocks are most stretched or most washed out.
+      - RSI can fail when trends are powerful. It can remain oversold in downtrends and overbought in uptrends for longer than expected.
+    how_to_read:
+      - Below 20 is extreme oversold. That is where panic selling can become unsustainably one-sided, but it is still not a buy signal by itself.
+      - The 20 to 30 band is oversold. This is where rebound setups begin to matter.
+      - The 30 to 50 band is recovering or weak-to-neutral. Momentum is stabilizing, but not yet strong.
+      - The 50 to 70 band is healthy to strong. Buyers are in control without necessarily being euphoric.
+      - Above 70 is overbought and above 80 is extreme overbought. Strength is real, but risk of a pause or pullback rises.
+      - The most useful information often comes from the transition: reclaiming 30, losing 70, or changing slope sharply.
+    threshold_bands:
+      - key: extreme_oversold
+        label: Extreme oversold
+        range_label: "< 20"
+        interpretation: Selling pressure is extremely stretched. A reversal can become violent, but timing still needs confirmation.
+        lower_bound: null
+        upper_bound: 20
+        tone: green
+      - key: oversold
+        label: Oversold
+        range_label: "20 to 30"
+        interpretation: Momentum is weak and washed out. This is the classic mean-reversion watch zone.
+        lower_bound: 20
+        upper_bound: 30
+        tone: green
+      - key: recovering
+        label: Recovering / weak-to-neutral
+        range_label: "30 to 50"
+        interpretation: Momentum is healing from weakness but has not yet become clearly strong.
+        lower_bound: 30
+        upper_bound: 50
+        tone: white
+      - key: healthy
+        label: Healthy / strong
+        range_label: "50 to 70"
+        interpretation: Buyers are in control and momentum is constructive without being especially stretched.
+        lower_bound: 50
+        upper_bound: 70
+        tone: white
+      - key: overbought
+        label: Overbought
+        range_label: "70 to 80"
+        interpretation: Momentum is strong but extended. New entries usually need tighter risk management here.
+        lower_bound: 70
+        upper_bound: 80
+        tone: red
+      - key: extreme_overbought
+        label: Extreme overbought
+        range_label: "> 80"
+        interpretation: Upside momentum is extremely stretched. Strength can continue, but reversal risk is elevated.
+        lower_bound: 80
+        upper_bound: null
+        tone: red
+    chart_labels:
+      price_axis: Price
+      indicator_axis: RSI (14)
+      heatmap_legend: Average forward return (%)
+      equity_axis: Portfolio value / index
+      drawdown_axis: Drawdown (%)
+      capital_axis: Open positions / capital deployed
+      return_axis: Trade count
+      holding_axis: Trade count
+    chart_help_text:
+      price_indicator_signal_chart: Daily data only. This chart shows one representative stock's daily close and RSI with entry and exit markers for the selected precomputed scenario.
+      forward_return_heatmap: Daily data only. Each cell groups historical RSI observations by threshold band and shows the average forward return after 5, 10, 20, or 40 trading days.
+      equity_curve_chart: Daily data only. This equity curve compares the selected precomputed RSI strategy with buy-and-hold over the same evidence window.
+      drawdown_chart: Daily data only. Drawdown shows how far the selected strategy fell from its prior peak while trades were active.
+      trade_return_distribution: Daily data only. This histogram shows whether results came from many small outcomes or a few large winners and losers.
+      holding_duration_chart: Daily data only. This histogram shows how quickly the selected scenario typically resolves.
+      capital_deployment_chart: Daily data only. This chart tracks open positions and capital deployed over time so you can see how busy the strategy stays.
+    glossary_terms:
+      - term: RSI
+        definition: Relative Strength Index, a bounded momentum oscillator based on recent up and down closes.
+      - term: Oversold
+        definition: A condition where selling pressure has been unusually persistent and momentum is stretched to the downside.
+      - term: Overbought
+        definition: A condition where buying pressure has been unusually persistent and momentum is stretched to the upside.
+      - term: RSI slope
+        definition: The rate at which RSI is rising or falling. A sharp change in slope can hint at recovery or exhaustion.
+    assumptions_text:
+      - Evidence uses the current tracked universe and the last three years of daily bars available in the analytics feature store.
+      - Strategy signals are observed on the close, entries execute on the next trading day's open, and indicator exits execute on the next trading day's open.
+      - Fixed +1.25 percent take-profit rules are evaluated from daily OHLC only. If the next open gaps through target, execution uses that open.
+      - Scenario switches and capital-mode switches read from precomputed snapshots. The page never launches a new backtest.
+    limitations_text:
+      - All evidence and strategy outcomes are based on daily data only. Intraday path, fills, liquidity, and order-book effects are not modeled.
+      - The current-status block uses the current-members-only tracked universe, not historical constituent changes.
+      - RSI can remain stretched for long periods in strong trends, so an extreme reading is context, not a standalone instruction.
+      - Taxes, impact costs, borrow constraints, and execution slippage beyond the configured assumptions are not modeled.
+    evidence_years: 3
+    warmup_days: 90
+    max_forward_days: 40
+    current_value_label: Current RSI
+    universe: nifty100_equity
+    universe_display_name: Nifty 100
+    universe_membership_mode: current_members_only
+    benchmark_index_name: Nifty 50
+    benchmark_index_label: NIFTY 50
+    scenario_templates:
+      - key: cross_below_30_exit_above_70
+        label: Scenario A
+        short_description: Enter on oversold breaks and hold until RSI fully recovers into overbought.
+        entry_rule: Entry when RSI crosses below 30 on the close. Enter next session's open.
+        exit_rule: Exit when RSI crosses above 70 on the close. Exit next session's open.
+        max_hold_days: 120
+        priority_rule: lowest_indicator_first
+        priority_rule_note: Lower RSI gets capital first because the deepest oversold readings are treated as the strongest mean-reversion candidates.
+        capital_variants:
+          - no_capital_limit
+          - finite_10l
+          - finite_20l
+          - finite_50l
+        indicator_page_variant: no_capital_limit
+        show_on_indicator_page: true
+        entry_config:
+          type: cross_below
+          threshold: 30
+        exit_config:
+          cross_above: 70
+          max_hold_days: 120
+      - key: cross_below_30_take_profit_125
+        label: Scenario B
+        short_description: Enter on oversold breaks and exit on a fixed +1.25 percent rebound.
+        entry_rule: Entry when RSI crosses below 30 on the close. Enter next session's open.
+        exit_rule: Exit when price reaches +1.25 percent from entry using daily OHLC.
+        max_hold_days: 120
+        priority_rule: lowest_indicator_first
+        priority_rule_note: Lower RSI gets capital first because the deepest oversold readings are treated as the strongest mean-reversion candidates.
+        capital_variants:
+          - no_capital_limit
+          - finite_10l
+          - finite_20l
+          - finite_50l
+        indicator_page_variant: no_capital_limit
+        show_on_indicator_page: true
+        entry_config:
+          type: cross_below
+          threshold: 30
+        exit_config:
+          take_profit_pct: 1.25
+          max_hold_days: 120
+      - key: cross_below_30_earliest_tp_or_70
+        label: Scenario C
+        short_description: Enter on oversold breaks and exit at the earliest of +1.25 percent target or RSI reclaim above 70.
+        entry_rule: Entry when RSI crosses below 30 on the close. Enter next session's open.
+        exit_rule: Exit at the earliest of price reaching +1.25 percent or RSI crossing above 70 on the close.
+        max_hold_days: 120
+        priority_rule: lowest_indicator_first
+        priority_rule_note: Lower RSI gets capital first because the deepest oversold readings are treated as the strongest mean-reversion candidates.
+        capital_variants:
+          - no_capital_limit
+          - finite_10l
+          - finite_20l
+          - finite_50l
+        indicator_page_variant: no_capital_limit
+        show_on_indicator_page: true
+        entry_config:
+          type: cross_below
+          threshold: 30
+        exit_config:
+          take_profit_pct: 1.25
+          cross_above: 70
+          max_hold_days: 120

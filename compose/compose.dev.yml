@@ -1,0 +1,625 @@
+x-go-suite-image: &go_suite_image
+  image: trading-stack-go-suite:latest
+  build:
+    context: ..
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  nse-export-api:
+    ports:
+      - "8091:8091"
+
+  nse-intraday-api:
+    ports:
+      - "8092:8092"
+
+  nse-reco-api:
+    ports:
+      - "8010:8010"
+
+  nifty100-disclosures-api:
+    ports:
+      - "8000:8000"
+
+  nse-fii-reports-api:
+    ports:
+      - "8001:8000"
+
+  nse_ingestor:
+    environment:
+      FILE_LOG_ENABLED: "1"
+
+  nse-analytics-worker:
+    environment:
+      FILE_LOG_ENABLED: "1"
+
+  collector:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ../.env.collector.runtime
+      - ./env/dev.env
+    environment:
+      POSTGRES_MAX_CONNS: "3"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+      - ../samples/nifty100.sample.csv:/app/nifty100.csv:ro
+      - ../docs/source/ind_nifty100list.csv:/app/nifty100_constituents.csv:ro
+      - ../state:/app/state
+    ports:
+      - "${COLLECTOR_PORT:-8080}:8080"
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+
+  strategy:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MAX_CONNS: "2"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/strategy"]
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+  watchlist:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MAX_CONNS: "2"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/watchlist"]
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+  rsi-willr-monitor:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MAX_CONNS: "2"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/rsiwillr"]
+    command: ["--config", "/app/config.yaml"]
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+  matomo-db:
+    image: mariadb:11
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD:-change-me-matomo-root}
+      MARIADB_DATABASE: ${MATOMO_DB_NAME:-matomo}
+      MARIADB_USER: ${MATOMO_DB_USER:-matomo}
+      MARIADB_PASSWORD: ${MATOMO_DB_PASSWORD:-change-me-matomo-db}
+    volumes:
+      - matomo_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u${MATOMO_DB_USER:-matomo} -p${MATOMO_DB_PASSWORD:-change-me-matomo-db} --silent"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  matomo:
+    image: matomo:5-apache
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER:-matomo}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD:-change-me-matomo-db}
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME:-matomo}
+      PHP_MEMORY_LIMIT: 256M
+    depends_on:
+      matomo-db:
+        condition: service_healthy
+    ports:
+      - "19091:80"
+    volumes:
+      - matomo_data:/var/www/html
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384m
+
+  n50-dashboard:
+    image: trading-stack-n50-dashboard:latest
+    build:
+      context: ../neon-stock-terminal
+      args:
+        VITE_BASE_PATH: /n50/
+        VITE_API_BASE_URL: /n50
+        VITE_WS_URL: /n50
+        VITE_GA_MEASUREMENT_ID: ${N50_GA_MEASUREMENT_ID:-G-K82ZDQ7XYN}
+        VITE_CLARITY_PROJECT_ID: ${N50_CLARITY_PROJECT_ID:-vt3rv00fze}
+        VITE_MATOMO_BASE_URL: ${N50_MATOMO_BASE_URL_PROD:-/n50/matomo/}
+        VITE_MATOMO_SITE_ID: ${N50_MATOMO_SITE_ID_PROD:-1}
+        VITE_FIREBASE_API_KEY: ${FIREBASE_WEB_API_KEY:-}
+        VITE_DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      PORT: "18184"
+      SERVE_CLIENT: "1"
+      TZ: "Asia/Kolkata"
+      N50_API_DB_CONNECTION_LIMIT: ${N50_API_DB_CONNECTION_LIMIT:-2}
+      N50_API_DB_POOL_TIMEOUT: ${N50_API_DB_POOL_TIMEOUT:-5}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=${POSTGRES_SCHEMA:-public}&connection_limit=${N50_API_DB_CONNECTION_LIMIT:-2}&pool_timeout=${N50_API_DB_POOL_TIMEOUT:-5}
+      DASHBOARD_SNAPSHOT_SCHEDULER_ENABLED: "1"
+      AUTH_REQUIRED: ${N50_AUTH_REQUIRED:-1}
+      DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
+      DEV_LOCAL_AUTH_EMAIL: ${DEV_LOCAL_AUTH_EMAIL:-}
+      DEV_LOCAL_AUTH_PASSWORD: ${DEV_LOCAL_AUTH_PASSWORD:-}
+      DEV_LOCAL_AUTH_DISPLAY_NAME: ${DEV_LOCAL_AUTH_DISPLAY_NAME:-Local Admin}
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:-}
+      CORS_ALLOWED_ORIGINS: ${N50_CORS_ALLOWED_ORIGINS:-}
+      AUTH_ALLOWED_ORIGINS: ${N50_AUTH_ALLOWED_ORIGINS:-https://m.nifty50today.co.in,http://localhost:19090}
+      REDIS_URL: ${N50_PROD_REDIS_URL:-redis://redis:6379/0}
+      FEEDBACK_WEBHOOK_URL: ${N50_FEEDBACK_WEBHOOK_URL:-}
+      FEEDBACK_SIGNING_SECRET: ${N50_FEEDBACK_SIGNING_SECRET:-}
+      N50_DISCORD_STREAM_ENABLED: ${N50_DISCORD_STREAM_ENABLED:-0}
+      N50_DISCORD_STREAM_SCHEDULER_ENABLED: "0"
+      N50_DISCORD_STREAM_SHADOW_MODE: ${N50_DISCORD_STREAM_SHADOW_MODE:-1}
+      N50_DISCORD_STREAM_USE_WAIT: ${N50_DISCORD_STREAM_USE_WAIT:-1}
+      N50_DISCORD_STREAM_INTERVAL_SECONDS: ${N50_DISCORD_STREAM_INTERVAL_SECONDS:-1800}
+      N50_DISCORD_STREAM_COOLDOWN_MINUTES: ${N50_DISCORD_STREAM_COOLDOWN_MINUTES:-180}
+      N50_DISCORD_WEBHOOK_URL_TEST: ${N50_DISCORD_WEBHOOK_URL_TEST:-}
+      N50_DISCORD_WEBHOOK_URL_PROD: ${N50_DISCORD_WEBHOOK_URL_PROD:-}
+      N50_DISCORD_THREAD_ID_TEST: ${N50_DISCORD_THREAD_ID_TEST:-}
+      N50_DISCORD_THREAD_ID_PROD: ${N50_DISCORD_THREAD_ID_PROD:-}
+      N50_DISCORD_THREAD_ID_MARKET: ${N50_DISCORD_THREAD_ID_MARKET:-}
+      SESSION_COOKIE_NAME: ${N50_PROD_SESSION_COOKIE_NAME:-n50-prod-session}
+      SESSION_COOKIE_NAME_INSECURE: ${N50_PROD_SESSION_COOKIE_NAME_INSECURE:-n50-prod-session}
+      SESSION_COOKIE_PATH: ${N50_PROD_SESSION_COOKIE_PATH:-/n50}
+      NSE_RECO_API_BASE_URL: http://nse-reco-api:8010
+      SUPPORTING_METRICS_API_BASE_URL: http://market-data-gateway:8000
+      NIFTY100_DISCLOSURES_API_BASE_URL: http://nifty100-disclosures-api:8000
+      NIFTY100_DISCLOSURES_TIMEOUT_MS: ${NIFTY100_DISCLOSURES_TIMEOUT_MS:-600000}
+      NSE_FII_REPORTS_API_BASE_URL: http://nse-fii-reports-api:8000
+      NSE_FII_REPORTS_TIMEOUT_MS: ${NSE_FII_REPORTS_TIMEOUT_MS:-600000}
+      SNAPSHOT_REFRESH_TOKEN: ${N50_SNAPSHOT_REFRESH_TOKEN:-}
+      MATOMO_PROXY_BASE_URL: ${N50_MATOMO_PROXY_BASE_URL:-http://matomo:80}
+      N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
+      N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nse-reco-api:
+        condition: service_started
+      market-data-gateway:
+        condition: service_started
+      nifty100-disclosures-api:
+        condition: service_started
+      nse-fii-reports-api:
+        condition: service_started
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  n50-discord-stream-dispatcher:
+    image: trading-stack-n50-dashboard:latest
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      TZ: "Asia/Kolkata"
+      N50_API_DB_CONNECTION_LIMIT: ${N50_API_DB_CONNECTION_LIMIT:-2}
+      N50_API_DB_POOL_TIMEOUT: ${N50_API_DB_POOL_TIMEOUT:-5}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=${POSTGRES_SCHEMA:-public}&connection_limit=${N50_API_DB_CONNECTION_LIMIT:-2}&pool_timeout=${N50_API_DB_POOL_TIMEOUT:-5}
+      REDIS_URL: ${N50_PROD_REDIS_URL:-redis://redis:6379/0}
+      N50_DISCORD_STREAM_ENABLED: ${N50_DISCORD_STREAM_ENABLED:-0}
+      N50_DISCORD_STREAM_SCHEDULER_ENABLED: "1"
+      N50_DISCORD_STREAM_SHADOW_MODE: ${N50_DISCORD_STREAM_SHADOW_MODE:-1}
+      N50_DISCORD_STREAM_USE_WAIT: ${N50_DISCORD_STREAM_USE_WAIT:-1}
+      N50_DISCORD_STREAM_INTERVAL_SECONDS: ${N50_DISCORD_STREAM_INTERVAL_SECONDS:-1800}
+      N50_DISCORD_STREAM_COOLDOWN_MINUTES: ${N50_DISCORD_STREAM_COOLDOWN_MINUTES:-180}
+      N50_DISCORD_WEBHOOK_URL_TEST: ${N50_DISCORD_WEBHOOK_URL_TEST:-}
+      N50_DISCORD_WEBHOOK_URL_PROD: ${N50_DISCORD_WEBHOOK_URL_PROD:-}
+      N50_DISCORD_THREAD_ID_TEST: ${N50_DISCORD_THREAD_ID_TEST:-}
+      N50_DISCORD_THREAD_ID_PROD: ${N50_DISCORD_THREAD_ID_PROD:-}
+      N50_DISCORD_THREAD_ID_MARKET: ${N50_DISCORD_THREAD_ID_MARKET:-}
+      NSE_RECO_API_BASE_URL: http://nse-reco-api:8010
+      SUPPORTING_METRICS_API_BASE_URL: http://market-data-gateway:8000
+      NIFTY100_DISCLOSURES_API_BASE_URL: http://nifty100-disclosures-api:8000
+      NIFTY100_DISCLOSURES_TIMEOUT_MS: ${NIFTY100_DISCLOSURES_TIMEOUT_MS:-600000}
+      NSE_FII_REPORTS_API_BASE_URL: http://nse-fii-reports-api:8000
+      NSE_FII_REPORTS_TIMEOUT_MS: ${NSE_FII_REPORTS_TIMEOUT_MS:-600000}
+      SNAPSHOT_REFRESH_TOKEN: ${N50_SNAPSHOT_REFRESH_TOKEN:-}
+      N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
+      N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
+    command: ["node", "apps/api/dist/scripts/discordStreamDispatcher.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nse-reco-api:
+        condition: service_started
+      market-data-gateway:
+        condition: service_started
+      nifty100-disclosures-api:
+        condition: service_started
+      nse-fii-reports-api:
+        condition: service_started
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256m
+
+  institutional-flow-ingest-scheduler:
+    image: trading-stack-institutional-flow-ingest:latest
+    build:
+      context: ../services/institutional_flow_ingest
+    env_file:
+      - ../.env
+      - ./env/jobs.env
+    environment:
+      TZ: Asia/Kolkata
+      MIF_ROOT_DIR: /app
+      MIF_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      MIF_DATABASE_SCHEMA: ${MIF_DATABASE_SCHEMA:-institutional_flow}
+      MIF_RETAIN_RAW_FILES: ${MIF_RETAIN_RAW_FILES:-false}
+      MIF_RETAIN_CURATED_FILES: ${MIF_RETAIN_CURATED_FILES:-false}
+      MIF_SCHEDULER_ENABLED: ${MIF_SCHEDULER_ENABLED:-1}
+      MIF_SCHEDULER_RUN_ON_START: ${MIF_SCHEDULER_RUN_ON_START:-1}
+      MIF_SCHEDULER_TIME: ${MIF_SCHEDULER_TIME:-08:10}
+      MIF_SCHEDULER_LATE_ARRIVAL_WINDOW: ${MIF_SCHEDULER_LATE_ARRIVAL_WINDOW:-5}
+      MIF_SCHEDULER_SLEEP_CAP_SECONDS: ${MIF_SCHEDULER_SLEEP_CAP_SECONDS:-300}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - institutional_flow_raw:/app/raw
+      - institutional_flow_staging:/app/staging
+      - institutional_flow_curated:/app/curated
+      - institutional_flow_logs:/app/logs
+      - institutional_flow_run_reports:/app/run_reports
+    command: ["python", "scripts/scheduler.py"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256m
+
+  n50-dashboard-stage:
+    image: trading-stack-n50-dashboard-stage:latest
+    build:
+      context: ../neon-stock-terminal
+      args:
+        VITE_BASE_PATH: /n50-stage/
+        VITE_API_BASE_URL: /n50-stage
+        VITE_WS_URL: /n50-stage
+        VITE_GA_MEASUREMENT_ID: ${N50_GA_MEASUREMENT_ID:-G-K82ZDQ7XYN}
+        VITE_CLARITY_PROJECT_ID: ${N50_CLARITY_PROJECT_ID:-vt3rv00fze}
+        VITE_MATOMO_BASE_URL: ${N50_MATOMO_BASE_URL_STAGE:-/n50-stage/matomo/}
+        VITE_MATOMO_SITE_ID: ${N50_MATOMO_SITE_ID_STAGE:-2}
+        VITE_FIREBASE_API_KEY: ${FIREBASE_WEB_API_KEY:-}
+        VITE_DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      PORT: "18184"
+      SERVE_CLIENT: "1"
+      TZ: "Asia/Kolkata"
+      N50_API_DB_CONNECTION_LIMIT: ${N50_API_DB_CONNECTION_LIMIT:-2}
+      N50_API_DB_POOL_TIMEOUT: ${N50_API_DB_POOL_TIMEOUT:-5}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=${POSTGRES_SCHEMA:-public}&connection_limit=${N50_API_DB_CONNECTION_LIMIT:-2}&pool_timeout=${N50_API_DB_POOL_TIMEOUT:-5}
+      DASHBOARD_SNAPSHOT_SCHEDULER_ENABLED: "0"
+      AUTH_REQUIRED: ${N50_STAGE_AUTH_REQUIRED:-1}
+      DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
+      DEV_LOCAL_AUTH_EMAIL: ${DEV_LOCAL_AUTH_EMAIL:-}
+      DEV_LOCAL_AUTH_PASSWORD: ${DEV_LOCAL_AUTH_PASSWORD:-}
+      DEV_LOCAL_AUTH_DISPLAY_NAME: ${DEV_LOCAL_AUTH_DISPLAY_NAME:-Local Admin}
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:-}
+      CORS_ALLOWED_ORIGINS: ${N50_STAGE_CORS_ALLOWED_ORIGINS:-}
+      AUTH_ALLOWED_ORIGINS: ${N50_STAGE_AUTH_ALLOWED_ORIGINS:-https://stage.nifty50today.co.in,https://n50test.digii4.co.in,http://localhost:19090}
+      REDIS_URL: ${N50_STAGE_REDIS_URL:-redis://redis:6379/1}
+      FEEDBACK_WEBHOOK_URL: ${N50_FEEDBACK_WEBHOOK_URL:-}
+      FEEDBACK_SIGNING_SECRET: ${N50_FEEDBACK_SIGNING_SECRET:-}
+      N50_DISCORD_STREAM_ENABLED: ${N50_STAGE_DISCORD_STREAM_ENABLED:-0}
+      N50_DISCORD_STREAM_SCHEDULER_ENABLED: "0"
+      N50_DISCORD_STREAM_SHADOW_MODE: ${N50_STAGE_DISCORD_STREAM_SHADOW_MODE:-1}
+      N50_DISCORD_STREAM_USE_WAIT: ${N50_STAGE_DISCORD_STREAM_USE_WAIT:-1}
+      N50_DISCORD_STREAM_INTERVAL_SECONDS: ${N50_STAGE_DISCORD_STREAM_INTERVAL_SECONDS:-1800}
+      N50_DISCORD_STREAM_COOLDOWN_MINUTES: ${N50_STAGE_DISCORD_STREAM_COOLDOWN_MINUTES:-180}
+      N50_DISCORD_WEBHOOK_URL_TEST: ${N50_STAGE_DISCORD_WEBHOOK_URL_TEST:-}
+      N50_DISCORD_WEBHOOK_URL_PROD: ${N50_STAGE_DISCORD_WEBHOOK_URL_PROD:-}
+      N50_DISCORD_THREAD_ID_TEST: ${N50_STAGE_DISCORD_THREAD_ID_TEST:-}
+      N50_DISCORD_THREAD_ID_PROD: ${N50_STAGE_DISCORD_THREAD_ID_PROD:-}
+      N50_DISCORD_THREAD_ID_MARKET: ${N50_STAGE_DISCORD_THREAD_ID_MARKET:-}
+      SESSION_COOKIE_NAME: ${N50_STAGE_SESSION_COOKIE_NAME:-n50-stage-session}
+      SESSION_COOKIE_NAME_INSECURE: ${N50_STAGE_SESSION_COOKIE_NAME_INSECURE:-n50-stage-session}
+      SESSION_COOKIE_PATH: ${N50_STAGE_SESSION_COOKIE_PATH:-/n50-stage}
+      NSE_RECO_API_BASE_URL: http://nse-reco-api:8010
+      SUPPORTING_METRICS_API_BASE_URL: http://market-data-gateway:8000
+      NIFTY100_DISCLOSURES_API_BASE_URL: http://nifty100-disclosures-api:8000
+      NIFTY100_DISCLOSURES_TIMEOUT_MS: ${NIFTY100_DISCLOSURES_TIMEOUT_MS:-600000}
+      NSE_FII_REPORTS_API_BASE_URL: http://nse-fii-reports-api:8000
+      NSE_FII_REPORTS_TIMEOUT_MS: ${NSE_FII_REPORTS_TIMEOUT_MS:-600000}
+      SNAPSHOT_REFRESH_TOKEN: ${N50_SNAPSHOT_REFRESH_TOKEN:-}
+      MATOMO_PROXY_BASE_URL: ${N50_MATOMO_PROXY_BASE_URL:-http://matomo:80}
+      N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
+      N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nse-reco-api:
+        condition: service_started
+      market-data-gateway:
+        condition: service_started
+      nifty100-disclosures-api:
+        condition: service_started
+      nse-fii-reports-api:
+        condition: service_started
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  n50-discord-stream-dispatcher-stage:
+    image: trading-stack-n50-dashboard-stage:latest
+    env_file:
+      - ../.env
+      - ./env/dev.env
+    environment:
+      TZ: "Asia/Kolkata"
+      N50_API_DB_CONNECTION_LIMIT: ${N50_API_DB_CONNECTION_LIMIT:-2}
+      N50_API_DB_POOL_TIMEOUT: ${N50_API_DB_POOL_TIMEOUT:-5}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=${POSTGRES_SCHEMA:-public}&connection_limit=${N50_API_DB_CONNECTION_LIMIT:-2}&pool_timeout=${N50_API_DB_POOL_TIMEOUT:-5}
+      REDIS_URL: ${N50_STAGE_REDIS_URL:-redis://redis:6379/1}
+      N50_DISCORD_STREAM_ENABLED: ${N50_STAGE_DISCORD_STREAM_ENABLED:-0}
+      N50_DISCORD_STREAM_SCHEDULER_ENABLED: "1"
+      N50_DISCORD_STREAM_SHADOW_MODE: ${N50_STAGE_DISCORD_STREAM_SHADOW_MODE:-1}
+      N50_DISCORD_STREAM_USE_WAIT: ${N50_STAGE_DISCORD_STREAM_USE_WAIT:-1}
+      N50_DISCORD_STREAM_INTERVAL_SECONDS: ${N50_STAGE_DISCORD_STREAM_INTERVAL_SECONDS:-1800}
+      N50_DISCORD_STREAM_COOLDOWN_MINUTES: ${N50_STAGE_DISCORD_STREAM_COOLDOWN_MINUTES:-180}
+      N50_DISCORD_WEBHOOK_URL_TEST: ${N50_STAGE_DISCORD_WEBHOOK_URL_TEST:-}
+      N50_DISCORD_WEBHOOK_URL_PROD: ${N50_STAGE_DISCORD_WEBHOOK_URL_PROD:-}
+      N50_DISCORD_THREAD_ID_TEST: ${N50_STAGE_DISCORD_THREAD_ID_TEST:-}
+      N50_DISCORD_THREAD_ID_PROD: ${N50_STAGE_DISCORD_THREAD_ID_PROD:-}
+      N50_DISCORD_THREAD_ID_MARKET: ${N50_STAGE_DISCORD_THREAD_ID_MARKET:-}
+      NSE_RECO_API_BASE_URL: http://nse-reco-api:8010
+      SUPPORTING_METRICS_API_BASE_URL: http://market-data-gateway:8000
+      NIFTY100_DISCLOSURES_API_BASE_URL: http://nifty100-disclosures-api:8000
+      NIFTY100_DISCLOSURES_TIMEOUT_MS: ${NIFTY100_DISCLOSURES_TIMEOUT_MS:-600000}
+      NSE_FII_REPORTS_API_BASE_URL: http://nse-fii-reports-api:8000
+      NSE_FII_REPORTS_TIMEOUT_MS: ${NSE_FII_REPORTS_TIMEOUT_MS:-600000}
+      SNAPSHOT_REFRESH_TOKEN: ${N50_SNAPSHOT_REFRESH_TOKEN:-}
+      N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
+      N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
+    command: ["node", "apps/api/dist/scripts/discordStreamDispatcher.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nse-reco-api:
+        condition: service_started
+      market-data-gateway:
+        condition: service_started
+      nifty100-disclosures-api:
+        condition: service_started
+      nse-fii-reports-api:
+        condition: service_started
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256m
+
+  cdsl-fii-daily-ingest:
+    image: trading-stack-cdsl-fii-daily-ingest:latest
+    build:
+      context: ../services/cdsl_fii_daily_ingest
+    env_file:
+      - ../.env
+      - ./env/jobs.env
+    environment:
+      TZ: Asia/Kolkata
+      CDSL_FII_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      CDSL_FII_POSTGRES_SCHEMA: ${CDSL_FII_POSTGRES_SCHEMA:-institutional_flow}
+      CDSL_FII_MORNING_TIME: ${CDSL_FII_MORNING_TIME:-08:00}
+      CDSL_FII_EVENING_TIME: ${CDSL_FII_EVENING_TIME:-21:00}
+      CDSL_FII_RUN_ON_START: ${CDSL_FII_RUN_ON_START:-1}
+      CDSL_FII_SLEEP_CAP_SECONDS: ${CDSL_FII_SLEEP_CAP_SECONDS:-300}
+      CDSL_FII_REQUEST_TIMEOUT_SECONDS: ${CDSL_FII_REQUEST_TIMEOUT_SECONDS:-30}
+      CDSL_FII_LOG_LEVEL: ${CDSL_FII_LOG_LEVEL:-INFO}
+      CDSL_FII_HOLIDAY_OVERRIDES: ${CDSL_FII_HOLIDAY_OVERRIDES:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python", "scripts/scheduler.py"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256m
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - watchlist
+      - rsi-willr-monitor
+      - option-chain-watcher
+      - matomo
+      - n50-dashboard
+      - n50-dashboard-stage
+      - nse-export-api
+      - nse-intraday-api
+    ports:
+      - "19090:19090"
+    volumes:
+      - ../compose/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../services/gateway:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128m
+
+volumes:
+  matomo_db_data:
+  matomo_data:

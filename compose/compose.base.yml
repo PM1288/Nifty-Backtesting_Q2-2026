@@ -1,0 +1,668 @@
+name: trading-stack
+
+x-option-chain-image: &option_chain_image
+  image: trading-stack-option-chain-watcher:latest
+  build:
+    context: ../services/option-chain-watcher
+
+x-nse-ingestor-image: &nse_ingestor_image
+  image: trading-stack-nse-ingestor:latest
+  build:
+    context: ../services/nse_ingestor
+
+x-nse-analytics-worker-image: &nse_analytics_worker_image
+  image: trading-stack-nse-analytics-worker:latest
+  build:
+    context: ../services/nse_analytics_worker
+
+x-nse-orchestration-image: &nse_orchestration_image
+  image: trading-stack-nse-orchestration-exports:latest
+  build:
+    context: ../services
+    dockerfile: ./nse_orchestration_exports/docker/Dockerfile
+
+x-nse-intraday-image: &nse_intraday_image
+  image: trading-stack-nse-intraday-intelligence:latest
+  build:
+    context: ../services/nse_intraday_intelligence
+    dockerfile: ./docker/Dockerfile
+
+x-nse-reco-image: &nse_reco_image
+  image: trading-stack-nse-reco-state-engine:latest
+  build:
+    context: ../services/nse_reco_state_engine
+
+x-market-data-gateway-image: &market_data_gateway_image
+  image: trading-stack-market-data-gateway:latest
+  build:
+    context: ../services/market_data_gateway
+
+x-go-suite-image: &go_suite_image
+  image: trading-stack-go-suite:latest
+  build:
+    context: ..
+
+x-nifty100-disclosures-image: &nifty100_disclosures_image
+  image: trading-stack-nifty100-disclosures-pipeline:latest
+  build:
+    context: ../services/nifty100_disclosures_pipeline
+
+x-nse-fii-reports-image: &nse_fii_reports_image
+  image: trading-stack-nse-fii-reports-service:latest
+  build:
+    context: ../services/nse_fii_reports_service
+
+services:
+  postgres:
+    image: postgres:16
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-marketdata}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: ["postgres", "-c", "shared_buffers=256MB", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=all", "-c", "pg_stat_statements.max=10000", "-c", "track_io_timing=on", "-c", "wal_compression=on", "-c", "checkpoint_timeout=15min", "-c", "checkpoint_completion_target=0.9", "-c", "max_wal_size=2GB", "-c", "min_wal_size=512MB", "-c", "max_connections=50"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+
+  collector:
+    <<: *go_suite_image
+    env_file:
+      - ../.env
+      - ../.env.collector.runtime
+      - ./env/core.env
+    environment:
+      POSTGRES_MAX_CONNS: "3"
+      POSTGRES_MIN_CONNS: "0"
+      POSTGRES_MAX_CONN_IDLE_SECONDS: "10"
+      POSTGRES_HEALTH_CHECK_SECONDS: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../config/config.yaml:/app/config.yaml:ro
+      - ../samples/nifty100.sample.csv:/app/nifty100.csv:ro
+      - ../docs/source/ind_nifty100list.csv:/app/nifty100_constituents.csv:ro
+      - ../state:/app/state
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+
+  option-chain-watcher:
+    <<: *option_chain_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      NSE_OC_DB_MAX_CONNS: "2"
+      NSE_OC_DB_IDLE_TIMEOUT_MS: "10000"
+      NSE_OC_DB_CONNECTION_TIMEOUT_MS: "5000"
+      NSE_OC_DB_MAX_LIFETIME_SECONDS: "1800"
+      NSE_REFERER: https://www.nseindia.com/option-chain
+      NSE_OC_RUN_MIGRATIONS_ON_START: ${NSE_OC_RUN_MIGRATIONS_ON_START:-0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse_ingestor:
+    <<: *nse_ingestor_image
+    container_name: nse_ingestor
+    env_file:
+      - ../services/nse_ingestor/.env
+      - ./env/core.env
+    environment:
+      TZ: Asia/Kolkata
+      FILE_LOG_ENABLED: "0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - nse_ingestor_inbound:/data/inbound
+      - nse_ingestor_staging:/data/staging
+    entrypoint: ["/bin/bash", "/app/ops/entrypoint.sh"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-analytics-worker:
+    <<: *nse_analytics_worker_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      TZ: Asia/Kolkata
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      LOG_DIR: /app/runtime/logs
+      POLL_SECONDS: ${NSE_ANALYTICS_POLL_SECONDS:-1800}
+      REBUILD_WINDOW_DAYS: ${NSE_ANALYTICS_REBUILD_WINDOW_DAYS:-120}
+      FEATURE_RETENTION_DAYS: ${NSE_ANALYTICS_FEATURE_RETENTION_DAYS:-1825}
+      SUMMARY_RETENTION_DAYS: ${NSE_ANALYTICS_SUMMARY_RETENTION_DAYS:-3650}
+      LOG_RETENTION_DAYS: ${NSE_ANALYTICS_LOG_RETENTION_DAYS:-365}
+      SNAPSHOT_REFRESH_URL: ${N50_SNAPSHOT_REFRESH_URL:-http://n50-dashboard:18184/internal/snapshots/refresh}
+      SNAPSHOT_REFRESH_TOKEN: ${N50_SNAPSHOT_REFRESH_TOKEN:-}
+      SNAPSHOT_REFRESH_TIMEOUT_SECONDS: ${N50_SNAPSHOT_REFRESH_TIMEOUT_SECONDS:-120}
+      FILE_LOG_ENABLED: "0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse_ingestor:
+        condition: service_started
+    entrypoint: ["/bin/bash", "/app/ops/entrypoint.sh"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-orchestrator:
+    <<: *nse_orchestration_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      TZ: Asia/Kolkata
+      PG_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NSE_EXPORT_DB_POOL_MIN_SIZE: "1"
+      NSE_EXPORT_DB_POOL_MAX_SIZE: "4"
+      NSE_EXPORT_DB_POOL_TIMEOUT_SECONDS: "10"
+      NSE_EXPORT_DB_POOL_MAX_IDLE_SECONDS: "30"
+      EXPORT_ROOT: /var/lib/nse/exports
+      INSTALL_SQL_ON_START: ${NSE_ORCHESTRATION_INSTALL_SQL_ON_START:-0}
+    command: ["python", "-m", "nse_orchestration_exports.scheduler_main"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse_ingestor:
+        condition: service_started
+      nse-analytics-worker:
+        condition: service_started
+    volumes:
+      - nse_orchestration_exports:/var/lib/nse/exports
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-export-api:
+    <<: *nse_orchestration_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      TZ: Asia/Kolkata
+      PG_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NSE_EXPORT_DB_POOL_MIN_SIZE: "1"
+      NSE_EXPORT_DB_POOL_MAX_SIZE: "4"
+      NSE_EXPORT_DB_POOL_TIMEOUT_SECONDS: "10"
+      NSE_EXPORT_DB_POOL_MAX_IDLE_SECONDS: "30"
+      EXPORT_ROOT: /var/lib/nse/exports
+      INSTALL_SQL_ON_START: ${NSE_ORCHESTRATION_INSTALL_SQL_ON_START:-0}
+    command: ["python", "-m", "nse_orchestration_exports.api_main"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse-orchestrator:
+        condition: service_started
+    volumes:
+      - nse_orchestration_exports:/var/lib/nse/exports
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-intraday-api:
+    <<: *nse_intraday_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      PG_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NSE_INTRADAY_DB_POOL_MIN_SIZE: "1"
+      NSE_INTRADAY_DB_POOL_MAX_SIZE: "4"
+      NSE_INTRADAY_DB_POOL_TIMEOUT_SECONDS: "10"
+      NSE_INTRADAY_DB_POOL_MAX_IDLE_SECONDS: "30"
+      TIMEZONE: Asia/Kolkata
+      LOG_LEVEL: INFO
+      API_HOST: 0.0.0.0
+      API_PORT: "8092"
+      DEFAULT_INDEX_CODE: NIFTY 50
+      EXPORT_ROOT: /var/lib/nse/intraday_exports
+      INSTALL_SQL_ON_START: ${NSE_INTRADAY_INSTALL_SQL_ON_START:-0}
+      RAW_RETENTION_DAYS: ${NSE_INTRADAY_RAW_RETENTION_DAYS:-31}
+      MINUTE_RETENTION_DAYS: ${NSE_INTRADAY_MINUTE_RETENTION_DAYS:-31}
+      FEATURE_RETENTION_DAYS: ${NSE_INTRADAY_FEATURE_RETENTION_DAYS:-730}
+      SNAPSHOT_RETENTION_DAYS: ${NSE_INTRADAY_SNAPSHOT_RETENTION_DAYS:-45}
+      OPS_RUN_RETENTION_DAYS: ${NSE_INTRADAY_OPS_RUN_RETENTION_DAYS:-365}
+      NSE_INTRADAY_LIVE_SOURCE_MAX_DELAY_SECONDS: ${NSE_INTRADAY_LIVE_SOURCE_MAX_DELAY_SECONDS:-120}
+      NSE_INTRADAY_RAW_SYNC_MAX_LAG_MINUTES: ${NSE_INTRADAY_RAW_SYNC_MAX_LAG_MINUTES:-3}
+      NSE_INTRADAY_SNAPSHOT_MAX_LAG_MINUTES: ${NSE_INTRADAY_SNAPSHOT_MAX_LAG_MINUTES:-5}
+      NSE_INTRADAY_MARKET_OPEN_LIVE_STOCK_MIN_ROWS: ${NSE_INTRADAY_MARKET_OPEN_LIVE_STOCK_MIN_ROWS:-80}
+      NSE_INTRADAY_MARKET_ALERT_START_TIME: ${NSE_INTRADAY_MARKET_ALERT_START_TIME:-09:30}
+      NSE_INTRADAY_MARKET_ALERT_END_TIME: ${NSE_INTRADAY_MARKET_ALERT_END_TIME:-15:30}
+      NSE_INTRADAY_ALERTS_ENABLE_WEBHOOK: ${NSE_INTRADAY_ALERTS_ENABLE_WEBHOOK:-0}
+      NSE_INTRADAY_ALERTS_WEBHOOK_URL: ${NSE_INTRADAY_ALERTS_WEBHOOK_URL:-}
+      NSE_INTRADAY_ALERTS_WEBHOOK_TIMEOUT_SECONDS: ${NSE_INTRADAY_ALERTS_WEBHOOK_TIMEOUT_SECONDS:-5}
+      NSE_INTRADAY_ALERTS_WEBHOOK_HEADERS: ${NSE_INTRADAY_ALERTS_WEBHOOK_HEADERS:-{}}
+      NSE_INTRADAY_ALERTS_COOLDOWN_MINUTES: ${NSE_INTRADAY_ALERTS_COOLDOWN_MINUTES:-5}
+      NSE_INTRADAY_ALERTS_SEND_RECOVERY: ${NSE_INTRADAY_ALERTS_SEND_RECOVERY:-1}
+      CRON_SYNC_RAW: ${NSE_INTRADAY_CRON_SYNC_RAW:-*/1 9-15 * * 1-5}
+      CRON_REFRESH_FEATURES: ${NSE_INTRADAY_CRON_REFRESH_FEATURES:-*/1 9-15 * * 1-5}
+      CRON_REFRESH_DASHBOARD: ${NSE_INTRADAY_CRON_REFRESH_DASHBOARD:-*/1 9-15 * * 1-5}
+      CRON_REFRESH_WATCHLISTS: ${NSE_INTRADAY_CRON_REFRESH_WATCHLISTS:-*/2 9-15 * * 1-5}
+      CRON_RUN_QUALITY: ${NSE_INTRADAY_CRON_RUN_QUALITY:-*/5 9-15 * * 1-5}
+      CRON_FINALIZE_SESSION: ${NSE_INTRADAY_CRON_FINALIZE_SESSION:-40 15 * * 1-5}
+      CRON_RETENTION: ${NSE_INTRADAY_CRON_RETENTION:-25 2 * * *}
+      CRON_BACKFILL_HISTORY: ${NSE_INTRADAY_CRON_BACKFILL_HISTORY:-20 3 * * 6}
+      JOB_CMD_SYNC_RAW: python -m nse_intraday_intelligence.manual_jobs sync-raw
+      JOB_CMD_REFRESH_FEATURES: python -m nse_intraday_intelligence.manual_jobs refresh-features
+      JOB_CMD_REFRESH_DASHBOARD: python -m nse_intraday_intelligence.manual_jobs refresh-dashboard
+      JOB_CMD_REFRESH_WATCHLISTS: python -m nse_intraday_intelligence.manual_jobs refresh-watchlists
+      JOB_CMD_RUN_QUALITY: python -m nse_intraday_intelligence.manual_jobs run-quality-checks
+      JOB_CMD_FINALIZE_SESSION: python -m nse_intraday_intelligence.manual_jobs finalize-session
+      JOB_CMD_RETENTION: python -m nse_intraday_intelligence.manual_jobs retention
+      JOB_CMD_BACKFILL_HISTORY: python -m nse_intraday_intelligence.manual_jobs backfill-history --days 90
+    command: ["python", "-m", "nse_intraday_intelligence.api_main"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse-orchestrator:
+        condition: service_started
+    volumes:
+      - nse_intraday_exports:/var/lib/nse/intraday_exports
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-intraday-scheduler:
+    <<: *nse_intraday_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      PG_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NSE_INTRADAY_DB_POOL_MIN_SIZE: "1"
+      NSE_INTRADAY_DB_POOL_MAX_SIZE: "4"
+      NSE_INTRADAY_DB_POOL_TIMEOUT_SECONDS: "10"
+      NSE_INTRADAY_DB_POOL_MAX_IDLE_SECONDS: "30"
+      TIMEZONE: Asia/Kolkata
+      LOG_LEVEL: INFO
+      API_HOST: 0.0.0.0
+      API_PORT: "8092"
+      DEFAULT_INDEX_CODE: NIFTY 50
+      EXPORT_ROOT: /var/lib/nse/intraday_exports
+      INSTALL_SQL_ON_START: ${NSE_INTRADAY_INSTALL_SQL_ON_START:-0}
+      RAW_RETENTION_DAYS: ${NSE_INTRADAY_RAW_RETENTION_DAYS:-31}
+      MINUTE_RETENTION_DAYS: ${NSE_INTRADAY_MINUTE_RETENTION_DAYS:-31}
+      FEATURE_RETENTION_DAYS: ${NSE_INTRADAY_FEATURE_RETENTION_DAYS:-730}
+      SNAPSHOT_RETENTION_DAYS: ${NSE_INTRADAY_SNAPSHOT_RETENTION_DAYS:-45}
+      OPS_RUN_RETENTION_DAYS: ${NSE_INTRADAY_OPS_RUN_RETENTION_DAYS:-365}
+      NSE_INTRADAY_LIVE_SOURCE_MAX_DELAY_SECONDS: ${NSE_INTRADAY_LIVE_SOURCE_MAX_DELAY_SECONDS:-120}
+      NSE_INTRADAY_RAW_SYNC_MAX_LAG_MINUTES: ${NSE_INTRADAY_RAW_SYNC_MAX_LAG_MINUTES:-3}
+      NSE_INTRADAY_SNAPSHOT_MAX_LAG_MINUTES: ${NSE_INTRADAY_SNAPSHOT_MAX_LAG_MINUTES:-5}
+      NSE_INTRADAY_MARKET_OPEN_LIVE_STOCK_MIN_ROWS: ${NSE_INTRADAY_MARKET_OPEN_LIVE_STOCK_MIN_ROWS:-80}
+      NSE_INTRADAY_MARKET_ALERT_START_TIME: ${NSE_INTRADAY_MARKET_ALERT_START_TIME:-09:30}
+      NSE_INTRADAY_MARKET_ALERT_END_TIME: ${NSE_INTRADAY_MARKET_ALERT_END_TIME:-15:30}
+      NSE_INTRADAY_ALERTS_ENABLE_WEBHOOK: ${NSE_INTRADAY_ALERTS_ENABLE_WEBHOOK:-0}
+      NSE_INTRADAY_ALERTS_WEBHOOK_URL: ${NSE_INTRADAY_ALERTS_WEBHOOK_URL:-}
+      NSE_INTRADAY_ALERTS_WEBHOOK_TIMEOUT_SECONDS: ${NSE_INTRADAY_ALERTS_WEBHOOK_TIMEOUT_SECONDS:-5}
+      NSE_INTRADAY_ALERTS_WEBHOOK_HEADERS: ${NSE_INTRADAY_ALERTS_WEBHOOK_HEADERS:-{}}
+      NSE_INTRADAY_ALERTS_COOLDOWN_MINUTES: ${NSE_INTRADAY_ALERTS_COOLDOWN_MINUTES:-5}
+      NSE_INTRADAY_ALERTS_SEND_RECOVERY: ${NSE_INTRADAY_ALERTS_SEND_RECOVERY:-1}
+      CRON_SYNC_RAW: ${NSE_INTRADAY_CRON_SYNC_RAW:-*/1 9-15 * * 1-5}
+      CRON_REFRESH_FEATURES: ${NSE_INTRADAY_CRON_REFRESH_FEATURES:-*/1 9-15 * * 1-5}
+      CRON_REFRESH_DASHBOARD: ${NSE_INTRADAY_CRON_REFRESH_DASHBOARD:-*/1 9-15 * * 1-5}
+      CRON_REFRESH_WATCHLISTS: ${NSE_INTRADAY_CRON_REFRESH_WATCHLISTS:-*/2 9-15 * * 1-5}
+      CRON_RUN_QUALITY: ${NSE_INTRADAY_CRON_RUN_QUALITY:-*/5 9-15 * * 1-5}
+      CRON_FINALIZE_SESSION: ${NSE_INTRADAY_CRON_FINALIZE_SESSION:-40 15 * * 1-5}
+      CRON_RETENTION: ${NSE_INTRADAY_CRON_RETENTION:-25 2 * * *}
+      CRON_BACKFILL_HISTORY: ${NSE_INTRADAY_CRON_BACKFILL_HISTORY:-20 3 * * 6}
+      JOB_CMD_SYNC_RAW: python -m nse_intraday_intelligence.manual_jobs sync-raw
+      JOB_CMD_REFRESH_FEATURES: python -m nse_intraday_intelligence.manual_jobs refresh-features
+      JOB_CMD_REFRESH_DASHBOARD: python -m nse_intraday_intelligence.manual_jobs refresh-dashboard
+      JOB_CMD_REFRESH_WATCHLISTS: python -m nse_intraday_intelligence.manual_jobs refresh-watchlists
+      JOB_CMD_RUN_QUALITY: python -m nse_intraday_intelligence.manual_jobs run-quality-checks
+      JOB_CMD_FINALIZE_SESSION: python -m nse_intraday_intelligence.manual_jobs finalize-session
+      JOB_CMD_RETENTION: python -m nse_intraday_intelligence.manual_jobs retention
+      JOB_CMD_BACKFILL_HISTORY: python -m nse_intraday_intelligence.manual_jobs backfill-history --days 90
+    command: ["python", "-m", "nse_intraday_intelligence.scheduler_main"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse-intraday-api:
+        condition: service_started
+    volumes:
+      - nse_intraday_exports:/var/lib/nse/intraday_exports
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-reco-api:
+    <<: *nse_reco_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      TZ: Asia/Kolkata
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DB_POOL_SIZE: "4"
+      DB_POOL_MAX_OVERFLOW: "2"
+      DB_POOL_TIMEOUT_SECONDS: "10"
+      DB_POOL_RECYCLE_SECONDS: "1800"
+      INSTALL_SQL_ON_START: ${NSE_RECO_INSTALL_SQL_ON_START:-0}
+      RETENTION_DAYS: ${NSE_RECO_RETENTION_DAYS:-185}
+      SCHEDULER_ENABLED: "false"
+      CRON_REFRESH_BASELINES: ${NSE_RECO_CRON_REFRESH_BASELINES:-10 8 * * 1-5}
+      CRON_REFRESH_ANOMALIES: ${NSE_RECO_CRON_REFRESH_ANOMALIES:-*/2 9-15 * * 1-5}
+      CRON_REFRESH_RECOMMENDATIONS: ${NSE_RECO_CRON_REFRESH_RECOMMENDATIONS:-*/2 9-15 * * 1-5}
+      CRON_REFRESH_SCORECARDS: ${NSE_RECO_CRON_REFRESH_SCORECARDS:-40 16 * * 1-5}
+      CRON_REFRESH_QUALITY: ${NSE_RECO_CRON_REFRESH_QUALITY:-45 16 * * 1-5}
+      DEFAULT_INDEX_CODE: NIFTY 50
+      DEFAULT_HORIZON: 30m
+      RECO_CONFIG_PATH: config/reco_thresholds.yml
+      EXPORT_DIR: /app/exports
+      MAX_EXPORT_ROWS: ${NSE_RECO_MAX_EXPORT_ROWS:-2000}
+      LOG_LEVEL: INFO
+    command: ["/bin/sh", "-c", "if [ \"$${INSTALL_SQL_ON_START}\" = \"1\" ]; then python scripts/install_sql.py --database-url \"$$DATABASE_URL\"; fi && uvicorn nse_reco_state_aware_engine.api.main:app --host 0.0.0.0 --port 8010"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse-intraday-api:
+        condition: service_started
+    volumes:
+      - nse_reco_exports:/app/exports
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-reco-scheduler:
+    <<: *nse_reco_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      TZ: Asia/Kolkata
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DB_POOL_SIZE: "4"
+      DB_POOL_MAX_OVERFLOW: "2"
+      DB_POOL_TIMEOUT_SECONDS: "10"
+      DB_POOL_RECYCLE_SECONDS: "1800"
+      INSTALL_SQL_ON_START: ${NSE_RECO_INSTALL_SQL_ON_START:-0}
+      RETENTION_DAYS: ${NSE_RECO_RETENTION_DAYS:-185}
+      SCHEDULER_ENABLED: "true"
+      CRON_REFRESH_BASELINES: ${NSE_RECO_CRON_REFRESH_BASELINES:-10 8 * * 1-5}
+      CRON_REFRESH_ANOMALIES: ${NSE_RECO_CRON_REFRESH_ANOMALIES:-*/2 9-15 * * 1-5}
+      CRON_REFRESH_RECOMMENDATIONS: ${NSE_RECO_CRON_REFRESH_RECOMMENDATIONS:-*/2 9-15 * * 1-5}
+      CRON_REFRESH_SCORECARDS: ${NSE_RECO_CRON_REFRESH_SCORECARDS:-40 16 * * 1-5}
+      CRON_REFRESH_QUALITY: ${NSE_RECO_CRON_REFRESH_QUALITY:-45 16 * * 1-5}
+      DEFAULT_INDEX_CODE: NIFTY 50
+      DEFAULT_HORIZON: 30m
+      RECO_CONFIG_PATH: config/reco_thresholds.yml
+      EXPORT_DIR: /app/exports
+      MAX_EXPORT_ROWS: ${NSE_RECO_MAX_EXPORT_ROWS:-2000}
+      LOG_LEVEL: INFO
+    command: ["/bin/sh", "-c", "if [ \"$${INSTALL_SQL_ON_START}\" = \"1\" ]; then python scripts/install_sql.py --database-url \"$$DATABASE_URL\"; fi && python -m nse_reco_state_aware_engine.jobs.scheduler"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse-reco-api:
+        condition: service_started
+    volumes:
+      - nse_reco_exports:/app/exports
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  market-data-gateway:
+    <<: *market_data_gateway_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      FRED_API_KEY: ${FRED_API_KEY:-}
+      CACHE_TTL_SECONDS: ${SUPPORTING_METRICS_CACHE_TTL_SECONDS:-300}
+      IBJA_CACHE_TTL_SECONDS: ${SUPPORTING_METRICS_IBJA_CACHE_TTL_SECONDS:-21600}
+      REQUEST_TIMEOUT_SECONDS: ${SUPPORTING_METRICS_REQUEST_TIMEOUT_SECONDS:-8}
+      USER_AGENT: ${SUPPORTING_METRICS_USER_AGENT:-market-data-gateway/1.0.0}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384m
+
+  nifty100-disclosures-api:
+    <<: *nifty100_disclosures_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      OUTPUT_DIR: ${NIFTY100_DISCLOSURES_OUTPUT_DIR:-data}
+      SYMBOLS: ${NIFTY100_DISCLOSURES_SYMBOLS:-}
+      NSE_FIN_START_DATE: ${NIFTY100_DISCLOSURES_NSE_FIN_START_DATE:-2015-01-01}
+      NSE_FIN_END_DATE: ${NIFTY100_DISCLOSURES_NSE_FIN_END_DATE:-}
+      CORP_ACTIONS_START_DATE: ${NIFTY100_DISCLOSURES_CORP_ACTIONS_START_DATE:-2015-01-01}
+      CORP_ACTIONS_END_DATE: ${NIFTY100_DISCLOSURES_CORP_ACTIONS_END_DATE:-}
+      EVENT_START_DATE: ${NIFTY100_DISCLOSURES_EVENT_START_DATE:-2015-01-01}
+      EVENT_END_DATE: ${NIFTY100_DISCLOSURES_EVENT_END_DATE:-}
+      REQUEST_RETRIES: ${NIFTY100_DISCLOSURES_REQUEST_RETRIES:-3}
+      REQUEST_SLEEP_SECONDS: ${NIFTY100_DISCLOSURES_REQUEST_SLEEP_SECONDS:-0.35}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SCHEMA: ${NIFTY100_DISCLOSURES_POSTGRES_SCHEMA:-market_data}
+      POSTGRES_AUDIT_SCHEMA: ${NIFTY100_DISCLOSURES_POSTGRES_AUDIT_SCHEMA:-audit}
+      TRUNCATE_TABLES_ON_LOAD: ${NIFTY100_DISCLOSURES_TRUNCATE_TABLES_ON_LOAD:-true}
+      LOG_LEVEL: ${NIFTY100_DISCLOSURES_LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - nifty100_disclosures_data:/app/data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  nse-fii-reports-api:
+    <<: *nse_fii_reports_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      OUTPUT_DIR: ${NSE_FII_REPORTS_OUTPUT_DIR:-data}
+      REQUEST_TIMEOUT_SECONDS: ${NSE_FII_REPORTS_REQUEST_TIMEOUT_SECONDS:-30}
+      ENABLE_REPORTS_API_FALLBACK: ${NSE_FII_REPORTS_ENABLE_REPORTS_API_FALLBACK:-true}
+      AUTO_PULL_ENABLED: ${NSE_FII_REPORTS_AUTO_PULL_ENABLED:-false}
+      AUTO_PULL_INTERVAL_MINUTES: ${NSE_FII_REPORTS_AUTO_PULL_INTERVAL_MINUTES:-60}
+      AUTO_PULL_MAX_LOOKBACK_DAYS: ${NSE_FII_REPORTS_AUTO_PULL_MAX_LOOKBACK_DAYS:-10}
+      AUTO_PULL_SAVE_PARSED: ${NSE_FII_REPORTS_AUTO_PULL_SAVE_PARSED:-true}
+      LOG_LEVEL: ${NSE_FII_REPORTS_LOG_LEVEL:-INFO}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SCHEMA: ${NSE_FII_REPORTS_POSTGRES_SCHEMA:-market_data}
+      POSTGRES_AUDIT_SCHEMA: ${NSE_FII_REPORTS_POSTGRES_AUDIT_SCHEMA:-audit}
+      TRUNCATE_TABLES_ON_LOAD: ${NSE_FII_REPORTS_TRUNCATE_TABLES_ON_LOAD:-false}
+    volumes:
+      - nse_fii_reports_data:/app/data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384m
+
+volumes:
+  pgdata:
+  redis_data:
+  nse_ingestor_inbound:
+  nse_ingestor_staging:
+  nse_orchestration_exports:
+  nse_intraday_exports:
+  nse_reco_exports:
+  nifty100_disclosures_data:
+  nse_fii_reports_data:
+  institutional_flow_raw:
+  institutional_flow_staging:
+  institutional_flow_curated:
+  institutional_flow_logs:
+  institutional_flow_run_reports:

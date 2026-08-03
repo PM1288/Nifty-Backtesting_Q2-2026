@@ -1,0 +1,37 @@
+# Reference schedule for golden tests only. Before production use, reconcile each
+# component and rounding rule against current broker contract notes and retain
+# the resulting effective-dated version. Decimal rates are fractions.
+fee_schedules:
+  - schedule_id: ZERODHA_NSE_EQUITY_INTRADAY_REFERENCE_2026_08_02
+    exchange: NSE
+    product: equity_intraday
+    effective_from: 2026-08-02
+    brokerage_rate: "0.0003"
+    brokerage_cap_per_order: "20"
+    stt_buy_rate: "0"
+    stt_sell_rate: "0.00025"
+    exchange_transaction_rate: "0.0000307"
+    sebi_rate: "0.000001"
+    ipft_rate: "0"
+    stamp_buy_rate: "0.00003"
+    gst_rate: "0.18"
+    dp_sell_flat: "0"
+    stt_rounding: rupee_nearest
+    notes: "Reference only; validate before production."
+
+  - schedule_id: ZERODHA_NSE_EQUITY_DELIVERY_REFERENCE_2026_08_02
+    exchange: NSE
+    product: equity_delivery
+    effective_from: 2026-08-02
+    brokerage_rate: "0"
+    brokerage_cap_per_order: "0"
+    stt_buy_rate: "0.001"
+    stt_sell_rate: "0.001"
+    exchange_transaction_rate: "0.0000307"
+    sebi_rate: "0.000001"
+    ipft_rate: "0"
+    stamp_buy_rate: "0.00015"
+    gst_rate: "0.18"
+    dp_sell_flat: "15.34"
+    stt_rounding: rupee_nearest
+    notes: "Reference only; validate before production."

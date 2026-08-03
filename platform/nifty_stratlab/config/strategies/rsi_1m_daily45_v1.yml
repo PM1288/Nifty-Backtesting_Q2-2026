@@ -1,0 +1,24 @@
+strategy_id: rsi_1m_daily45
+strategy_version_id: rsi_1m_daily45_v1
+display_name: 1-Minute RSI 30/70 with Prior Daily RSI Above 45
+version: 1
+archetype: multi_timeframe_mean_reversion
+plugin: nifty_stratlab.strategies.reference_equity:RsiIntradayDailyRegimeStrategy
+supported_intervals: [1m]
+required_features: [rsi_14, daily_rsi_14_prior]
+parameters:
+  minute_rsi_below: 30
+  minute_rsi_above: 70
+  prior_daily_rsi_above: 45
+assumptions:
+  daily_filter_availability: prior_completed_session_only
+  signal_time: completed_1m_bar
+  entry_time: next_1m_bar_open
+  exit_time: next_1m_bar_open
+  target_exit: disabled
+  stop_exit: disabled
+  product: equity_delivery
+  universe: explicit_single_symbol_test
+owner: backtest-core
+status: reference
+entry_timing: next_bar_open

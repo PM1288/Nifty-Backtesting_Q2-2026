@@ -1,0 +1,490 @@
+﻿{
+    "id":  null,
+    "uid":  "trading-stack-trading",
+    "title":  "Trading Live",
+    "tags":  [
+                 "trading",
+                 "live",
+                 "trading-stack"
+             ],
+    "timezone":  "browser",
+    "schemaVersion":  38,
+    "version":  1,
+    "refresh":  "15s",
+    "time":  {
+                 "from":  "now-6h",
+                 "to":  "now"
+             },
+    "links":  [
+                  {
+                      "asDropdown":  true,
+                      "icon":  "dashboard",
+                      "includeVars":  true,
+                      "keepTime":  true,
+                      "tags":  [
+                                   "trading-stack"
+                               ],
+                      "targetBlank":  false,
+                      "title":  "Navigate Dashboards",
+                      "tooltip":  "Jump to another dashboard",
+                      "type":  "dashboards"
+                  }
+              ],
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "stat",
+                       "title":  "NIFTY50 LTP",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT last_price AS value FROM instrument_state WHERE exchange = \u0027NSE\u0027 AND symbol_token = \u002799926000\u0027 LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyINR"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "BANKNIFTY LTP",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT last_price AS value FROM instrument_state WHERE exchange = \u0027NSE\u0027 AND symbol_token = \u002799926009\u0027 LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyINR"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "NIFTY50 PCR",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT pcr AS value FROM pcr_snapshots WHERE underlying = \u0027NIFTY50\u0027 ORDER BY ts DESC LIMIT 1;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  0.75
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0.95
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "orange",
+                                                                                                 "value":  1.25
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  1.6
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Equity Breadth (Adv-Dec)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH bars_today AS (\n  SELECT b.*\n  FROM bars_1m b\n  JOIN instrument_universe u ON u.exchange = b.exchange AND u.symbol_token = b.symbol_token\n  WHERE u.universe_name = \u0027nifty100_equity\u0027\n    AND u.active_to IS NULL\n    AND (b.ts AT TIME ZONE \u0027Asia/Kolkata\u0027)::date = (now() AT TIME ZONE \u0027Asia/Kolkata\u0027)::date\n),\nfirst_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, open\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts ASC\n),\nlast_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, close\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts DESC\n)\nSELECT\n  (SELECT COUNT(*) FROM last_bar l JOIN first_bar f USING (exchange, symbol_token) WHERE l.close \u003e f.open) AS advancers,\n  (SELECT COUNT(*) FROM last_bar l JOIN first_bar f USING (exchange, symbol_token) WHERE l.close \u003c f.open) AS decliners;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  5,
+                       "type":  "timeseries",
+                       "title":  "NIFTY50 Intraday",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  5
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "SELECT ts AS \"time\", close AS value FROM bars_1m WHERE exchange = \u0027NSE\u0027 AND symbol_token = \u002799926000\u0027 AND ts \u003e now() - interval \u00276 hours\u0027 ORDER BY ts;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "custom":  {
+                                                                           "axisLabel":  "Value"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  6,
+                       "type":  "timeseries",
+                       "title":  "BANKNIFTY Intraday",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  5
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "SELECT ts AS \"time\", close AS value FROM bars_1m WHERE exchange = \u0027NSE\u0027 AND symbol_token = \u002799926009\u0027 AND ts \u003e now() - interval \u00276 hours\u0027 ORDER BY ts;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "custom":  {
+                                                                           "axisLabel":  "Value"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  7,
+                       "type":  "table",
+                       "title":  "Top Gainers (NIFTY100 Intraday)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  13
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH bars_today AS (\n  SELECT b.*\n  FROM bars_1m b\n  JOIN instrument_universe u ON u.exchange = b.exchange AND u.symbol_token = b.symbol_token\n  WHERE u.universe_name = \u0027nifty100_equity\u0027\n    AND u.active_to IS NULL\n    AND (b.ts AT TIME ZONE \u0027Asia/Kolkata\u0027)::date = (now() AT TIME ZONE \u0027Asia/Kolkata\u0027)::date\n),\nfirst_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, open\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts ASC\n),\nlast_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, close\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts DESC\n)\nSELECT u.tradingsymbol AS symbol,\n       l.close AS last_price,\n       f.open AS day_open,\n       ROUND((l.close - f.open) * 100.0 / NULLIF(f.open, 0), 2) AS pct_change\nFROM first_bar f\nJOIN last_bar l USING (exchange, symbol_token)\nJOIN instrument_universe u ON u.exchange = l.exchange AND u.symbol_token = l.symbol_token\nORDER BY pct_change DESC\nLIMIT 10;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  8,
+                       "type":  "table",
+                       "title":  "Top Losers (NIFTY100 Intraday)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  13
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH bars_today AS (\n  SELECT b.*\n  FROM bars_1m b\n  JOIN instrument_universe u ON u.exchange = b.exchange AND u.symbol_token = b.symbol_token\n  WHERE u.universe_name = \u0027nifty100_equity\u0027\n    AND u.active_to IS NULL\n    AND (b.ts AT TIME ZONE \u0027Asia/Kolkata\u0027)::date = (now() AT TIME ZONE \u0027Asia/Kolkata\u0027)::date\n),\nfirst_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, open\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts ASC\n),\nlast_bar AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, close\n  FROM bars_today\n  ORDER BY exchange, symbol_token, ts DESC\n)\nSELECT u.tradingsymbol AS symbol,\n       l.close AS last_price,\n       f.open AS day_open,\n       ROUND((l.close - f.open) * 100.0 / NULLIF(f.open, 0), 2) AS pct_change\nFROM first_bar f\nJOIN last_bar l USING (exchange, symbol_token)\nJOIN instrument_universe u ON u.exchange = l.exchange AND u.symbol_token = l.symbol_token\nORDER BY pct_change ASC\nLIMIT 10;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  9,
+                       "type":  "table",
+                       "title":  "NIFTY50 Options (Active Slice)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  21
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH opts AS (\n  SELECT exchange, symbol_token, tradingsymbol, strike, \"right\", expiry\n  FROM subscriptions\n  WHERE active = true AND kind = \u0027OPTIDX\u0027 AND upper(underlying) = \u0027NIFTY50\u0027\n),\nexpiry_sel AS (\n  SELECT min(expiry) AS expiry FROM opts\n)\nSELECT o.tradingsymbol,\n       o.strike,\n       o.\"right\",\n       o.expiry,\n       s.last_price AS ltp,\n       s.last_seen_ts\nFROM opts o\nJOIN expiry_sel e ON o.expiry = e.expiry\nLEFT JOIN instrument_state s ON s.exchange = o.exchange AND s.symbol_token = o.symbol_token\nORDER BY o.strike, o.\"right\";\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  10,
+                       "type":  "table",
+                       "title":  "Futures (Active)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  21
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH futs AS (\n  SELECT exchange, symbol_token, tradingsymbol, underlying, expiry\n  FROM subscriptions\n  WHERE active = true AND kind = \u0027FUT\u0027\n),\nlatest_oi AS (\n  SELECT DISTINCT ON (exchange, symbol_token) exchange, symbol_token, oi\n  FROM oi_snapshots_futures\n  ORDER BY exchange, symbol_token, ts DESC\n)\nSELECT f.underlying,\n       f.tradingsymbol,\n       f.expiry,\n       s.last_price AS ltp,\n       o.oi\nFROM futs f\nLEFT JOIN instrument_state s ON s.exchange = f.exchange AND s.symbol_token = f.symbol_token\nLEFT JOIN latest_oi o ON o.exchange = f.exchange AND o.symbol_token = f.symbol_token\nORDER BY f.underlying\nLIMIT 50;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  11,
+                       "type":  "table",
+                       "title":  "Order Imbalance (NIFTY100)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  30
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT u.tradingsymbol AS symbol,\n       s.total_buy_qty,\n       s.total_sell_qty,\n       (COALESCE(s.total_buy_qty, 0) - COALESCE(s.total_sell_qty, 0)) AS imbalance,\n       s.last_price,\n       s.last_seen_ts\nFROM instrument_state s\nJOIN instrument_universe u ON u.exchange = s.exchange AND u.symbol_token = s.symbol_token\nWHERE u.universe_name = \u0027nifty100_equity\u0027\n  AND u.active_to IS NULL\nORDER BY imbalance DESC NULLS LAST\nLIMIT 15;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  12,
+                       "type":  "table",
+                       "title":  "Gainers/Losers (REST Aggregates)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  30
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ts,\n       exchange,\n       label,\n       raw-\u003e\u0027data\u0027 AS data\nFROM gainers_losers_snapshots\nORDER BY ts DESC\nLIMIT 4;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  13,
+                       "type":  "table",
+                       "title":  "OI Buildup (REST Aggregates)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  38
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ts,\n       exchange,\n       label,\n       raw-\u003e\u0027data\u0027 AS data\nFROM oibuildup_snapshots\nORDER BY ts DESC\nLIMIT 4;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  14,
+                       "type":  "table",
+                       "title":  "Put/Call Ratio (REST Aggregates)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  38
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT ts,\n       label,\n       raw-\u003e\u0027data\u0027 AS data\nFROM putcallratio_snapshots\nORDER BY ts DESC\nLIMIT 4;\n",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   }
+               ]
+}

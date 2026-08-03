@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NSE Learning Platform — Premium Cockpit</title>
+  <link rel="stylesheet" href="./static/styles/tokens.css" />
+  <link rel="stylesheet" href="./static/styles/app.css" />
+</head>
+<body>
+  <div id="appRoot">
+    <header class="chromeHeader">
+      <div class="wm">NSE • Learning</div>
+      <div class="tickerTape" id="tickerTape">
+        <div class="tickerTrack" id="tickerTrack"></div>
+      </div>
+      <div class="hdrRight">
+        <button class="neonBtn" id="btnConnect" aria-label="Toggle live connection">LIVE</button>
+      </div>
+    </header>
+
+    <div class="liquidBackdrop" id="liquidBackdrop" data-accent="green" aria-hidden="true"></div>
+
+    <main class="main" id="main">
+      <nav class="topNav">
+        <a href="#/" class="navItem" data-route="/">Fleet</a>
+        <a href="#/cockpit" class="navItem" data-route="/cockpit">Cockpit</a>
+        <a href="#/anomaly" class="navItem" data-route="/anomaly">Anomaly Lab</a>
+        <a href="#/strategy" class="navItem" data-route="/strategy">Strategy</a>
+        <a href="#/data" class="navItem" data-route="/data">DQ & Lineage</a>
+      </nav>
+
+      <section id="routeView" class="routeView" aria-live="polite"></section>
+    </main>
+
+    <footer class="chromeFooter">
+      <div class="marquee" aria-label="Educational disclaimer">
+        <div class="marqueeTrack" id="disclaimerTrack">
+          Educational purpose only. Not financial advice. Do not trade based on internet advice. Do not follow any instruction on this website. Verify with licensed professionals. •
+          Educational purpose only. Not financial advice. Do not trade based on internet advice. Do not follow any instruction on this website. Verify with licensed professionals. •
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!--CONFIG-->
+  <script type="module" src="./static/js/app.js"></script>
+</body>
+</html>

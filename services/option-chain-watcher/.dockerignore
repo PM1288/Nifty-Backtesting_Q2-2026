@@ -1,0 +1,7 @@
+npm-debug.log
+.env
+.env.*
+node_modules
+dist
+coverage
+tmp-i18n-local-review.mjs

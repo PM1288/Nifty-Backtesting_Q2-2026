@@ -1,0 +1,120 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "analyst_name": {
+      "title": "Analyst Name",
+      "type": "string"
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
+    },
+    "contrary_evidence": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Contrary Evidence",
+      "type": "array"
+    },
+    "expected_direction": {
+      "enum": [
+        "up",
+        "down",
+        "uncertain"
+      ],
+      "title": "Expected Direction",
+      "type": "string"
+    },
+    "invalidation_conditions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Invalidation Conditions",
+      "type": "array"
+    },
+    "limitations": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    },
+    "order_authority": {
+      "default": false,
+      "title": "Order Authority",
+      "type": "boolean"
+    },
+    "pack_id": {
+      "title": "Pack Id",
+      "type": "string"
+    },
+    "produced_at": {
+      "format": "date-time",
+      "title": "Produced At",
+      "type": "string"
+    },
+    "source_references": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Source References",
+      "type": "array"
+    },
+    "stance": {
+      "enum": [
+        "avoid",
+        "watch",
+        "eligible",
+        "insufficient_evidence"
+      ],
+      "title": "Stance",
+      "type": "string"
+    },
+    "supporting_evidence": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supporting Evidence",
+      "type": "array"
+    },
+    "symbol": {
+      "title": "Symbol",
+      "type": "string"
+    },
+    "thesis": {
+      "title": "Thesis",
+      "type": "string"
+    },
+    "time_horizon": {
+      "title": "Time Horizon",
+      "type": "string"
+    }
+  },
+  "required": [
+    "pack_id",
+    "analyst_name",
+    "produced_at",
+    "symbol",
+    "stance",
+    "expected_direction",
+    "time_horizon",
+    "thesis",
+    "supporting_evidence",
+    "contrary_evidence",
+    "invalidation_conditions",
+    "source_references"
+  ],
+  "title": "AnalystResponse",
+  "type": "object"
+}

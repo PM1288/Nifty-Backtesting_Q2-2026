@@ -1,0 +1,142 @@
+{
+  "$schema": "../../contracts/declarative-strategy-v2.schema.json",
+  "strategy_id": "fixed_time_control_intraday",
+  "strategy_version_id": "fixed_time_control_intraday_v1",
+  "display_name": "Fixed-Time Intraday Control",
+  "description": "System-control comparator. Enters at the first completed bar at or after 10:00 and exits at the first completed bar at or after 15:00. It is not presented as an alpha strategy; it detects data, execution, cost, capital, persistence and comparison defects.",
+  "version": 1,
+  "status": "reference",
+  "owner": "strategy-lab",
+  "archetype": "control",
+  "instrument_scope": "equity",
+  "product": "equity_intraday",
+  "universe": {
+    "mode": "point_in_time_index_membership",
+    "index_code": "NIFTY50",
+    "series": [
+      "EQ"
+    ],
+    "membership_as_of": "trade_date",
+    "symbols": []
+  },
+  "calendar": {
+    "exchange": "NSE",
+    "segment": "CM",
+    "timezone": "Asia/Kolkata",
+    "regular_session": {
+      "open": "09:15:00",
+      "close": "15:30:00"
+    }
+  },
+  "features": [
+    {
+      "feature_id": "previous_session_data_qualified",
+      "registry_key": "quality.previous_session_qualified",
+      "interval": "1d",
+      "availability": "previous_completed_session",
+      "lag_sessions": 1,
+      "warmup_bars": 0,
+      "calculation_version": "quality_gate_v1"
+    },
+    {
+      "feature_id": "session_time",
+      "registry_key": "session.clock_hhmmss",
+      "interval": "session",
+      "availability": "session_clock",
+      "lag_sessions": 0,
+      "warmup_bars": 0,
+      "calculation_version": "session_clock_v1"
+    }
+  ],
+  "day_eligibility": {
+    "all": [
+      {
+        "feature": "previous_session_data_qualified",
+        "operator": "==",
+        "value": true
+      }
+    ]
+  },
+  "entry": {
+    "conditions": {
+      "all": [
+        {
+          "feature": "session_time",
+          "operator": ">=",
+          "value": "10:00:00"
+        }
+      ]
+    },
+    "trigger_mode": "first_true_per_symbol_per_day",
+    "signal_on": "completed_bar",
+    "execute_on": "next_bar_open",
+    "allowed_signal_time": {
+      "start": "10:00:00",
+      "end": "10:00:59"
+    }
+  },
+  "exit": {
+    "conditions": {
+      "any": [
+        {
+          "feature": "session_time",
+          "operator": ">=",
+          "value": "15:00:00"
+        }
+      ]
+    },
+    "signal_on": "completed_bar",
+    "execute_on": "next_bar_open",
+    "forced_session_exit": {
+      "decision_time": "15:15:00",
+      "fill_policy": "next_available_bar_open",
+      "latest_fill_time": "15:20:00"
+    },
+    "carry_allowed": false,
+    "price_stop": null
+  },
+  "position_rules": {
+    "side": "long",
+    "one_position_per_symbol": true,
+    "max_completed_trades_per_symbol_per_day": 1,
+    "reentry_after_exit": false
+  },
+  "economics": {
+    "ticket_size_inr": 200000,
+    "evaluation_target_net_pnl_inr": 500,
+    "fee_profile_id": "zerodha_equity_intraday_effective_dated",
+    "execution_model_id": "next_bar_open_slippage_2_5bps_v1",
+    "slippage_bps_per_side": 2.5
+  },
+  "data_policy": {
+    "bar_interval": "1m",
+    "bar_timestamp_semantics": "bar_start",
+    "admitted_quality_statuses": [
+      "PASS",
+      "WARN"
+    ],
+    "missing_feature_action": "skip_and_log",
+    "missing_next_bar_action": "fail_trade_and_log",
+    "corporate_action_policy": "canonical_point_in_time_adjusted_series"
+  },
+  "reporting": {
+    "persist_signals": true,
+    "persist_skipped_signals": true,
+    "persist_feature_snapshots": true,
+    "persist_pdiagram_snapshots": true,
+    "breakdowns": [
+      "symbol",
+      "sector",
+      "trade_date",
+      "entry_time_bucket",
+      "market_regime",
+      "exit_reason",
+      "data_quality_status"
+    ]
+  },
+  "assumptions": {
+    "role": "Negative/control baseline only; do not interpret as a recommendation.",
+    "execution": "Signal on completed bar; fill next bar open.",
+    "comparison": "Must use the same data snapshot, costs, slippage and capital as candidates."
+  }
+}

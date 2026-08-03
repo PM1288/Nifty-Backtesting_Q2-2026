@@ -1,0 +1,650 @@
+smartapi:
+  api_key: "CHANGE_ME_SMARTAPI_API_KEY"
+  client_code: "CHANGE_ME_SMARTAPI_CLIENT_CODE"
+  password: "CHANGE_ME_SMARTAPI_PASSWORD" # legacy field; SmartAPI now expects your account MPIN here
+  mpin: ""
+  totp_secret: "CHANGE_ME_SMARTAPI_TOTP_SECRET" # base32 seed or current 6-digit code
+  totp_code: ""
+  access_token: ""
+  feed_token: ""
+  rest_base_url: "https://apiconnect.angelone.in"
+  ws_url: "wss://smartapisocket.angelone.in/smart-stream"
+  disable_live_orders: true
+postgres:
+  host: "postgres"
+  port: 5432
+  user: "trader"
+  password: "CHANGE_ME_POSTGRES_PASSWORD"
+  database: "tradingdb"
+  sslmode: "disable"
+  schema: "public"
+  app_name: "nifty100_collector"
+  connect_timeout_seconds: 10
+  max_conns: 10
+  min_conns: 2
+  max_conn_idle_seconds: 10
+  health_check_seconds: 15
+  max_conn_lifetime_minutes: 30
+  slow_query_ms: 250
+runtime:
+  timezone: "Asia/Kolkata"
+  log_level: "info"
+  log_json: true
+  service_name: "smartapi-collector"
+  service_version: "dev"
+  http_timeout_seconds: 15
+  flush_seconds: 2
+  trading_start: "09:15"
+  trading_end: "15:30"
+  weekend_pull_last_working_day: true
+files:
+  symbols_csv_path: "/app/nifty100.csv"
+  constituents_csv_path: "/app/nifty100_constituents.csv"
+  instrument_cache_path: "/app/state/OpenAPIScripMaster.json"
+universe:
+  equities_exchange: "NSE"
+  derivatives_exchange: "NFO"
+  include_indices: ["NIFTY50","BANKNIFTY"]
+  index_tokens:
+    NIFTY50: "99926000"
+    BANKNIFTY: "99926009"
+  fno_current_month_only: true
+  futures:
+    enable_stock_futures: true
+    enable_index_futures: true
+    expiry_rank: 0
+  options:
+    enable_index_options: true
+    enable_stock_options: true
+    index_underlyings: ["NIFTY50"]
+    stock_underlyings_max: 100
+    expiry_rank_index: 0
+    expiry_rank_stock: 0
+    strikes_each_side: 40
+    strike_refresh_minutes: 5
+    atm_shift_rebuild_steps: 2
+ws:
+  mode_equities: "LTP"
+  mode_indices: "LTP"
+  mode_futures: "SNAPQUOTE"
+  mode_options: "SNAPQUOTE"
+  max_reconnect_backoff_seconds: 30
+  max_connections: 3
+  max_tokens_per_connection: 1000
+  insecure_skip_verify: false
+  enable_depth_snapshots: true
+  depth_snapshot_interval_seconds: 5
+  depth_snapshot_kinds: ["EQUITY","INDEX","FUT"]
+health:
+  enable_http: true
+  listen_addr: "0.0.0.0:8080"
+rest_tasks:
+  enable_quote_snapshots: true
+  quote_snapshot_interval_seconds: 60
+  quote_snapshot_include_options: false
+  quote_snapshot_primary_kinds: ["EQUITY","INDEX"]
+  quote_snapshot_primary_indices: ["NIFTY50","BANKNIFTY"]
+  quote_snapshot_rotation_max_tokens: 200
+  quote_snapshot_rotation_budgets:
+    - kind: "INDEX"
+      max_tokens: 20
+    - kind: "FUT"
+      max_tokens: 80
+    - kind: "OPTIDX"
+      max_tokens: 60
+    - kind: "OPTSTK"
+      max_tokens: 40
+  enable_option_quote_snapshots: true
+  option_quote_snapshot_interval_seconds: 600
+  option_quote_snapshot_rotation_max_tokens: 300
+  enable_option_greeks: true
+  option_greeks_interval_seconds: 60
+  option_greeks_underlyings: ["NIFTY50","BANKNIFTY"]
+  enable_oi_snapshots: true
+  oi_snapshot_interval_seconds: 60
+  enable_pcr_snapshots: true
+  pcr_snapshot_interval_seconds: 300
+  enable_gainers_losers: true
+  gainers_losers_interval_seconds: 300
+  gainers_losers_payloads:
+    - datatype: "PercPriceGainers"
+      expirytype: "NEAR"
+    - datatype: "PercPriceLosers"
+      expirytype: "NEAR"
+  enable_oi_buildup: true
+  oi_buildup_interval_seconds: 300
+  oi_buildup_payloads:
+    - datatype: "Long Built Up"
+      expirytype: "NEAR"
+    - datatype: "Short Built Up"
+      expirytype: "NEAR"
+  enable_put_call_ratio: true
+  put_call_ratio_interval_seconds: 300
+  enable_rest_fallback: true
+  rest_fallback_interval_seconds: 60
+  rest_fallback_stale_seconds: 90
+  rest_fallback_lookback_minutes: 2
+history:
+  enable_daily: true
+  daily_years: 3
+  daily_chunk_days: 365
+  daily_run_time_ist: "18:00"
+  track_kinds: ["EQUITY","INDEX"]
+limits:
+  quote_rps: 1
+  quote_per_minute_cap: 500
+  quote_per_hour_cap: 5000
+  quote_max_symbols_per_request: 50
+  candles_rps: 3
+  candles_per_hour_cap: 5000
+  greeks_rps: 1
+  aggregates_rps: 1
+  aggregates_per_minute_cap: 60
+  aggregates_per_hour_cap: 1000
+  adaptive_min_rps: 1
+  adaptive_step_up_after_seconds: 5
+retention:
+  enable: true
+  enable_cleanup: true
+  intraday_days: 90
+  bars_1m_days: 90
+  quote_snapshots_days: 90
+  depth_5_days: 1
+  depth_5_hours: 1
+  option_greeks_days: 90
+  depth_5_max_gb: 1
+  keep_instruments_forever: true
+  dry_run: false
+  cleanup_run_time_ist: "18:30"
+metrics:
+  enable: true
+  rollup_interval_seconds: 60
+  state_flush_seconds: 5
+  enable_api_request_log: true
+  sla:
+    - source_name: "equity_ticks"
+      universe_name: "nifty100_equity"
+      dataset: "instrument_state"
+      expected_interval_seconds: 4
+      max_staleness_seconds: 15
+      priority: "P0"
+      enabled: true
+    - source_name: "equity_bars_1m"
+      universe_name: "nifty100_equity"
+      dataset: "bars_1m"
+      expected_interval_seconds: 60
+      max_staleness_seconds: 120
+      bar_late_seconds: 120
+      priority: "P0"
+      enabled: true
+    - source_name: "indices_ticks"
+      universe_name: "indices"
+      dataset: "instrument_state"
+      expected_interval_seconds: 1
+      max_staleness_seconds: 5
+      priority: "P0"
+      enabled: true
+    - source_name: "futures_stock_ticks"
+      universe_name: "futures_stock"
+      dataset: "instrument_state"
+      expected_interval_seconds: 60
+      max_staleness_seconds: 180
+      priority: "P1"
+      enabled: true
+    - source_name: "futures_index_ticks"
+      universe_name: "futures_index"
+      dataset: "instrument_state"
+      expected_interval_seconds: 60
+      max_staleness_seconds: 180
+      priority: "P1"
+      enabled: true
+    - source_name: "options_index_nifty_ticks"
+      universe_name: "options_index_nifty50"
+      dataset: "instrument_state"
+      expected_interval_seconds: 5
+      max_staleness_seconds: 10
+      priority: "P1"
+      enabled: true
+    - source_name: "options_index_banknifty_ticks"
+      universe_name: "options_index_banknifty"
+      dataset: "instrument_state"
+      expected_interval_seconds: 5
+      max_staleness_seconds: 10
+      priority: "P1"
+      enabled: true
+    - source_name: "options_stock_ticks"
+      universe_name: "options_stock"
+      dataset: "instrument_state"
+      expected_interval_seconds: 60
+      max_staleness_seconds: 180
+      priority: "P1"
+      enabled: true
+    - source_name: "gainers_losers"
+      universe_name: "aggregate"
+      dataset: "gainers_losers"
+      expected_interval_seconds: 300
+      max_staleness_seconds: 600
+      endpoint: "aggregates"
+      priority: "P2"
+      enabled: true
+    - source_name: "oi_buildup"
+      universe_name: "aggregate"
+      dataset: "oibuildup"
+      expected_interval_seconds: 300
+      max_staleness_seconds: 600
+      endpoint: "aggregates"
+      priority: "P2"
+      enabled: true
+    - source_name: "put_call_ratio"
+      universe_name: "aggregate"
+      dataset: "putcallratio"
+      expected_interval_seconds: 300
+      max_staleness_seconds: 600
+      endpoint: "aggregates"
+      priority: "P2"
+      enabled: true
+    - source_name: "option_greeks"
+      universe_name: "aggregate"
+      dataset: "option_greeks"
+      expected_interval_seconds: 60
+      max_staleness_seconds: 180
+      endpoint: "greeks"
+      priority: "P2"
+      enabled: true
+strategy:
+  enable: true
+  run_interval_seconds: 30
+  max_symbols: 25
+  min_daily_volume: 1000000
+  ema_fast: 20
+  ema_slow: 50
+  rsi_period: 14
+  rsi_setup_min: 45
+  rsi_setup_max: 60
+  rsi_trigger: 50
+  vwap_distance_pct: 0.3
+  pullback_pct: 0.5
+  volume_spike_multiplier: 1.5
+  atr_period: 14
+  stop_atr_multiplier: 1.2
+  target_atr_multiplier: 2.4
+  cooldown_minutes: 15
+  allow_short: false
+  index_token: "99926000"
+  vix_token: "99926017"
+  lookback_minutes: 180
+  max_signals_per_run: 10
+  min_confidence: 0.6
+  run_outside_market_hours: true
+  use_options: true
+  option_expiry_rank: 0
+  option_min_days_to_expiry: 0
+  option_stop_loss_pct: 0.3
+  option_target_pct: 0.6
+  option_time_stop_minutes: 30
+  option_min_premium: 5
+  option_allow_single_leg: false
+  option_straddle_equalize: true
+  option_straddle_ratio_min: 0.6
+  option_straddle_ratio_max: 1.7
+  option_straddle_max_spread_pct: 3.5
+  ema_pullback_enable: true
+  orb_enable: true
+  orb_range_minutes: 15
+  orb_volume_multiplier: 1.2
+  orb_min_range_pct: 0.2
+  orb_max_range_pct: 5
+  supertrend_enable: true
+  supertrend_atr_period: 10
+  supertrend_multiplier: 3
+  supertrend_timeframe_minutes: 5
+  bb_squeeze_enable: true
+  bb_period: 20
+  bb_stddev: 2
+  bb_timeframe_minutes: 5
+  bb_squeeze_bandwidth_pct: 2
+  bb_squeeze_lookback: 50
+  bb_squeeze_mode: "directional"
+  event_straddle_enable: true
+  event_straddle_dates: ["2026-02-01"]
+  event_straddle_token: "99926000"
+  event_straddle_underlying: "NIFTY50"
+  event_straddle_exchange: "NSE"
+  event_straddle_start: ""
+  event_straddle_end: ""
+  event_straddle_timeframe_minutes: 5
+  event_straddle_lookback_minutes: 60
+  event_straddle_bandwidth_pct: 2.0
+  event_straddle_bandwidth_slope_max: 0.3
+    event_straddle_range_pct: 1.2
+    event_straddle_atr_pct_max: 3.5
+    event_straddle_atr_pct_slope_max: 0.3
+    event_straddle_cooldown_minutes: 180
+    nifty_level_straddle_enable: true
+    nifty_level_straddle_underlying: "NIFTY50"
+    nifty_level_straddle_token: "99926000"
+    nifty_level_straddle_step: 100
+    nifty_level_straddle_buffer: 4
+    nifty_level_straddle_expiry_rank: 0
+    nifty_level_straddle_lots: 1
+    nifty_level_straddle_lot_size: 65
+    nifty_level_straddle_target_rupees: 500
+    nifty_level_straddle_stop_rupees: -10000
+    nifty_level_straddle_exit_time: "15:30"
+    nifty_level_straddle_equilibrium_on: false
+    nifty_level_straddle_equilibrium_diff_max: 5
+    nifty_level_straddle_equilibrium_max_age_minutes: 5
+    manual_straddles: []
+paper_trading:
+  enable: true
+  auto_place: true
+  capital_per_trade: 100000
+  max_open_positions: 10
+  slippage_bps: 2
+  brokerage_per_trade: 20
+  allow_partial_fills: false
+backtest:
+  enable: true
+  run_daily: true
+  run_live: true
+  skip_weekends: true
+  daily_run_time_ist: "16:00"
+  eod_telegram_chat_id: ""
+  live_interval_seconds: 60
+  live_window_minutes: 5
+  live_max_signals_per_run: 5
+  live_max_alerts_per_day: 2
+  run_outside_market_hours: false
+  use_trading_calendar: true
+  use_last_working_day: true
+  universe_name: "nifty100_equity"
+  strategy_enable: true
+  strategy_universe_name: "nifty100_equity"
+  strategy_max_symbols: 50
+  strategy_slippage_bps: 2
+  strategy_capital_per_trade: 100000
+  strategy_time_stop_minutes: 30
+  days_back: 365
+  max_percentile: 60
+  rsi_period: 14
+  willr_period: 14
+  rsi_threshold: 30
+  willr_threshold: -80
+  require_daily_ema_trend: false
+  daily_ema_fast: 20
+  daily_ema_slow: 50
+  require_bollinger_touch: false
+  bollinger_period: 20
+  bollinger_stddev: 2
+  bollinger_lower_buffer_pct: 0.2
+  require_vwap_reclaim: false
+  require_volume_spike: false
+  volume_spike_min_ratio: 1.5
+  close_lookback: 3
+  volume_lookback: 10
+  volume_median_max_ratio: 1
+  start_offset_minutes: 30
+  entry_cutoff_time: ""
+  equity_entry_start: "09:30"
+  equity_entry_end: "12:30"
+  equity_selection_rsi_max: 50
+  equity_selection_willr_max: -60
+  equity_entry_rsi_threshold: 25
+  equity_entry_willr_threshold: -80
+  equity_intraday_target_net: 1000
+  equity_delivery_target_net: 1500
+  equity_capital_scenarios: [200000, 500000, 1000000]
+  equity_alert_capitals: [100000, 200000, 500000]
+  target_gain: 0.0022
+  trade_capital: 1000000
+  capital_limit: 2000000
+  max_concurrent_trades: 2
+  charges:
+    brokerage_rate: 0.0003
+    brokerage_cap: 20
+    stt_rate: 0.00025
+    exchange_txn_rate: 0.0000307
+    sebi_fee_rate: 0.000001
+    stamp_duty_rate: 0.00003
+    gst_rate: 0.18
+  swing:
+    enable: false
+    intraday_target: 0.0022
+    swing_target: 0.021
+    brokerage_cap: 250
+    stop_loss_pct: 0
+    hold_min_gain_pct: 0
+  archive:
+    enable: false
+    run_time_ist: "17:00"
+    run_on_start: false
+    root: "/app/archive"
+    exchange: "NSE"
+    symbols_csv_path: ""
+    symbols: []
+    start_date: ""
+    end_date: ""
+    run_intraday: true
+    run_swing: true
+  option_backtest:
+    enable: true
+    underlying: "NIFTY50"
+    index_token: "99926000"
+    step: 100
+    buffer: 4
+    expiry_rank: 0
+    lots: 1
+    lot_size: 65
+    target_rupees: 350
+    entry_start: "10:00"
+    entry_end: "12:00"
+    exit_time: "15:30"
+    rsi_period: 14
+    willr_period: 14
+    lookback_minutes: 180
+    rsi_low_threshold: 30
+    rsi_high_threshold: 70
+    equilibrium_diff_threshold: 60
+    include_rsi80_willr40: true
+    normalization_start: "09:15"
+    slope_guard_enable: true
+    slope_guard_min_angle: 45
+    run_tuesday_only: true
+  alerts:
+    enable_webhook: true
+    enable_error_alerts: false
+    webhook_url: "https://example.invalid/n8n-webhook"
+    discord_webhook_url: "https://example.invalid/discord-webhook"
+    webhook_timeout_seconds: 5
+    webhook_headers:
+      Authorization: "Basic YWRtaW46YWRtaW4xMjM0"
+    title_prefix: "equity_backtest"
+    max_per_run: 5
+    telegram_enable: false
+    telegram_bot_token: ""
+    telegram_chat_id: ""
+    telegram_parse_mode: ""
+    include_details: false
+    include_targets: false
+equilibrium:
+  enable: true
+  run_interval_seconds: 60
+  lookback_minutes: 390
+  underlyings: ["NIFTY50"]
+  kinds: ["OPTIDX"]
+  expiry_rank: 0
+  max_data_staleness_minutes: 480
+  underlying_stale_seconds: 120
+max_pain:
+  enable: true
+  run_interval_seconds: 300
+  run_outside_market_hours: false
+  underlyings: ["NIFTY50","BANKNIFTY"]
+  expiry_ranks: [0]
+  max_data_staleness_minutes: 10
+  alerts:
+    enable_webhook: true
+    enable_error_alerts: false
+    webhook_url: "https://example.invalid/n8n-webhook"
+    discord_webhook_url: "https://example.invalid/discord-webhook"
+    webhook_timeout_seconds: 5
+    webhook_headers:
+      Authorization: "Basic YWRtaW46YWRtaW4xMjM0"
+    title_prefix: "max_pain"
+    max_per_run: 5
+    telegram_enable: false
+    telegram_bot_token: ""
+    telegram_chat_id: ""
+    telegram_parse_mode: ""
+    include_details: false
+    include_targets: false
+alerts:
+  enable_webhook: true
+  enable_error_alerts: false
+  webhook_url: "https://example.invalid/n8n-webhook"
+  discord_webhook_url: "https://example.invalid/discord-webhook"
+  webhook_timeout_seconds: 5
+  webhook_headers:
+    Authorization: "Basic YWRtaW46YWRtaW4xMjM0"
+  title_prefix: "strategy"
+  max_per_run: 5
+  telegram_enable: false
+  telegram_bot_token: ""
+  telegram_chat_id: ""
+  telegram_parse_mode: ""
+  include_details: false
+  include_targets: false
+watchlist:
+  enable: true
+  listen_addr: "0.0.0.0:8090"
+  exchange: "NSE"
+  check_interval_seconds: 30
+  alert_window_start: "09:30"
+  alert_window_minutes: 10
+  max_alerts_per_day: 2
+  max_alerts_per_run: 2
+  max_price_staleness_seconds: 120
+  alert_title: "Portfolio"
+  defaults:
+    - symbol: "BAJAFINSV"
+      display_name: "Bajaj Finserv"
+      threshold: 1990
+      direction: "below"
+      active: true
+    - symbol: "BAJFINANCE"
+      display_name: "Bajaj Finance"
+      threshold: 950
+      direction: "below"
+      active: true
+    - symbol: "RELIANCE"
+      display_name: "Reliance"
+      threshold: 1400
+      direction: "below"
+      active: true
+rsi_willr_monitor:
+  enable: false
+  listen_addr: "0.0.0.0:8091"
+  exchange: "NSE"
+  eval_interval_seconds: 60
+  run_window_start: "09:30"
+  run_window_end: "13:00"
+  lookback_minutes: 180
+  rsi_period: 14
+  willr_period: 14
+  rsi_threshold: 30
+  willr_threshold: -80
+  max_bar_staleness_seconds: 180
+  alert_cooldown_minutes: 60
+  # Alerts inherit from top-level `alerts:` unless overridden here.
+  # For direct Telegram (instead of n8n webhook), set telegram_enable=true and provide token/chat_id.
+  alerts:
+    enable_webhook: true
+    webhook_url: "https://example.invalid/digii4-webhook"
+    webhook_headers: {}
+    telegram_enable: false
+    telegram_bot_token: ""
+    telegram_chat_id: ""
+    telegram_parse_mode: ""
+portfolio:
+  enable: true
+  default_exchange: "NSE"
+digii4_flow:
+  enable: false
+  startup_after: "09:15"
+  daily_scan_time: "09:22"
+  universe_name: "nifty100_equity"
+  daily_target_count: 10
+  days_back: 365
+  max_percentile: 60
+  vix_jump_threshold_pct: 2
+  nifty_level_token: "99926000"
+  nifty_level_step: 100
+  nifty_level_buffer: 3
+  silver_exchange: "MCX"
+  silver_underlying: "SILVER"
+  silver_level_step: 100000
+  silver_level_buffer: 50000
+  silver_jump_threshold_pct: 10
+  silver_check_interval_minutes: 60
+  sum_symbols: ["TMCV","TMPV"]
+  sum_alert_threshold: 900
+  sum_log_target: 910
+  sum_check_interval_minutes: 1
+  daily_rsi_period: 14
+  daily_rsi_max: 50
+  daily_willr_period: 14
+  daily_willr_max: -60
+  entry_lookback_minutes: 180
+  entry_rsi_period: 14
+  entry_rsi_threshold: 25
+  entry_willr_period: 14
+  entry_willr_threshold: -80
+  entry_bb_period: 20
+  entry_bb_stddev: 2
+  entry_monitor_start: "09:30"
+  entry_monitor_end: "12:30"
+  manual_symbols: []
+  alert_capitals: [100000, 200000, 500000]
+  alerts:
+    enable_webhook: true
+    enable_error_alerts: false
+    webhook_url: "https://example.invalid/digii4-webhook"
+    discord_webhook_url: ""
+    webhook_timeout_seconds: 5
+    webhook_headers: {}
+    title_prefix: "stock"
+    max_per_run: 5
+
+nifty_watcher:
+  enable: false
+  underlying: "NIFTY50"
+  index_token: "99926000"
+  step: 100
+  buffer: 4
+  expiry_rank: 0
+  lots: 1
+  lot_size: 65
+  target_rupees: 350
+  entry_start: "10:00"
+  entry_end: "12:00"
+  exit_time: "15:30"
+  rsi_period: 14
+  willr_period: 14
+  rsi_low_threshold: 30
+  rsi_high_threshold: 70
+  lookback_minutes: 180
+  equilibrium_diff_threshold: 60
+  include_rsi80_willr40: true
+  normalization_start: "09:15"
+  slope_guard_enable: true
+  slope_guard_min_angle: 45
+  alerts:
+    enable_webhook: true
+    enable_error_alerts: true
+    webhook_url: "https://example.invalid/digii4-webhook"
+    discord_webhook_url: ""
+    webhook_timeout_seconds: 5
+    webhook_headers:
+      Authorization: "Basic YWRtaW46YWRtaW4xMjM0"
+    title_prefix: "niftywatch"
+    max_per_run: 5

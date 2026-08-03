@@ -1,0 +1,79 @@
+{
+  "suite_id": "nifty_intraday_baseline_comparison_v1",
+  "expected_strategy_count": 9,
+  "expected_trade_count": 9,
+  "trades": [
+    {
+      "strategy_version_id": "fixed_time_control_intraday_v1",
+      "symbol": "CTRL",
+      "entry_signal_ts": "2026-07-31T10:00:00+05:30",
+      "entry_fill_ts": "2026-07-31T10:01:00+05:30",
+      "exit_signal_ts": "2026-07-31T15:00:00+05:30",
+      "exit_fill_ts": "2026-07-31T15:01:00+05:30"
+    },
+    {
+      "strategy_version_id": "rsi15_daily40_intraday_v1",
+      "symbol": "RSIX",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    },
+    {
+      "strategy_version_id": "rsi_willr_recovery_intraday_v1",
+      "symbol": "RSIR",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    },
+    {
+      "strategy_version_id": "ema9_21_vwap_trend_intraday_v1",
+      "symbol": "EMA",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    },
+    {
+      "strategy_version_id": "orb15_volume_breakout_intraday_v1",
+      "symbol": "ORB",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    },
+    {
+      "strategy_version_id": "bollinger_rsi_reentry_intraday_v1",
+      "symbol": "BB",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    },
+    {
+      "strategy_version_id": "vwap_pullback_continuation_intraday_v1",
+      "symbol": "VWAP",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    },
+    {
+      "strategy_version_id": "macd_vwap_momentum_intraday_v1",
+      "symbol": "MACD",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    },
+    {
+      "strategy_version_id": "relative_strength_volume_momentum_intraday_v1",
+      "symbol": "RSM",
+      "entry_signal_ts": "2026-07-31T09:30:00+05:30",
+      "entry_fill_ts": "2026-07-31T09:31:00+05:30",
+      "exit_signal_ts": "2026-07-31T10:01:00+05:30",
+      "exit_fill_ts": "2026-07-31T10:02:00+05:30"
+    }
+  ]
+}

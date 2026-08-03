@@ -1,0 +1,246 @@
+datasets:
+  - dataset_name: nse_fii_dii_nse_only
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_cash_api
+    normalizer: nse_fii_dii_api
+    exchange_scope: nse_only
+    official_anchor: https://www.nseindia.com/reports/fii-dii
+    notes: Daily NSE-exclusive FII/FPI and DII capital-market activity.
+
+  - dataset_name: nse_fii_dii_combined
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_fii_dii
+    normalizer: nse_fii_dii
+    exchange_scope: combined
+    official_anchor: https://www.nseindia.com/reports/fii-dii
+    notes: Daily combined NSE+BSE+MSEI FII/FPI and DII capital-market activity.
+
+  - dataset_name: nse_cm_bhavcopy
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_bhavcopy
+    normalizer: nse_bhavcopy
+    official_anchor: https://www.nseindia.com/resources/historical-reports-capital-market-daily-monthly-archives
+    url_candidates:
+      - https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_{yyyymmdd}_F_0000.csv.zip
+      - https://archives.nseindia.com/content/historical/EQUITIES/{yyyy}/{mon}/cm{ddMONyyyybhav}.zip
+    notes: NSE cash-market bhavcopy with stable normalized schema across UDiFF and legacy layouts.
+
+  - dataset_name: nse_bulk_deals
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_bulk_block
+    normalizer: nse_bulk_block
+    deal_kind: bulk
+    official_anchor: https://www.nseindia.com/all-reports
+    notes: Daily NSE bulk deals where public source can be verified.
+
+  - dataset_name: nse_block_deals
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_bulk_block
+    normalizer: nse_bulk_block
+    deal_kind: block
+    official_anchor: https://www.nseindia.com/all-reports
+    notes: Daily NSE block deals where public source can be verified.
+
+  - dataset_name: nse_short_selling
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_security_archives
+    normalizer: nse_bulk_block
+    archive_key: shortselling
+    official_anchor: https://www.nseindia.com/resources/historical-reports-capital-market-daily-monthly-archives
+    notes: NSE daily short-selling report when official file is publicly reachable.
+
+  - dataset_name: nse_security_price_volume_archives
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_security_archives
+    normalizer: nse_bhavcopy
+    archive_key: sec_bhavdata_full
+    official_anchor: https://www.nseindia.com/resources/historical-reports-capital-market-daily-monthly-archives
+    notes: Security-wise price, volume, and delivery archive.
+
+  - dataset_name: nse_fo_participant_open_interest
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_participant_oi
+    normalizer: nse_participant_oi
+    report_type: oi
+    official_anchor: https://www.nseindia.com/all-reports
+    notes: Participant-wise derivative open-interest files from the public NSE archives.
+
+  - dataset_name: nse_fo_participant_trading_volumes
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_derivatives_participants
+    normalizer: nse_derivatives_participants
+    report_type: volume
+    official_anchor: https://www.nseindia.com/all-reports
+    notes: Participant-wise derivative trading volume files; discovery may classify as unavailable if no stable public endpoint exists.
+
+  - dataset_name: nse_fii_derivatives_statistics
+    source_system: NSE
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nse_derivatives_participants
+    normalizer: nse_derivatives_participants
+    report_type: fii_stats
+    official_anchor: https://www.nseindia.com/all-reports
+    notes: FII derivatives statistics where official public files are available.
+
+  - dataset_name: nse_shareholding_pattern
+    source_system: NSE
+    frequency: periodic
+    tier: 1
+    enabled: true
+    adapter: nse_shareholding
+    normalizer: nse_shareholding
+    official_anchor: https://www.nseindia.com/companies-listing/corporate-filings-shareholding-pattern
+    notes: Quarterly shareholding pattern via official filings/iXBRL discovery.
+
+  - dataset_name: nse_reference_isin_sector_map
+    source_system: NSE
+    frequency: periodic
+    tier: 1
+    enabled: true
+    adapter: nse_isin_sector_map
+    normalizer: reference_isin_map
+    official_anchor: https://archives.nseindia.com/content/indices/ind_nifty500list.csv
+    notes: Nifty 500 ISIN to sector/industry mapping used to enrich NSDL tradewise monthly data.
+
+  - dataset_name: nsdl_daily_trends
+    source_system: NSDL
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nsdl_daily
+    normalizer: nsdl_daily
+    official_anchor: https://www.fpi.nsdl.co.in/web/Reports/Latest.aspx
+    notes: Latest NSDL daily net flow trends for equity, debt, and hybrid FPI flows.
+
+  - dataset_name: nsdl_monthly_history
+    source_system: NSDL
+    frequency: periodic
+    tier: 1
+    enabled: true
+    adapter: nsdl_monthly_history
+    normalizer: nsdl_monthly_history
+    official_anchor: https://www.fpi.nsdl.co.in/web/Reports/Monthly.aspx
+    notes: Monthly NSDL FPI flow history page.
+
+  - dataset_name: nsdl_yearly_history
+    source_system: NSDL
+    frequency: periodic
+    tier: 1
+    enabled: true
+    adapter: nsdl_yearly_history
+    normalizer: nsdl_yearly_history
+    official_anchor: https://www.fpi.nsdl.co.in/web/Reports/Yearwise.aspx?RptType=6
+    notes: Yearly NSDL FPI flow history page.
+
+  - dataset_name: nsdl_fortnightly_sector_latest
+    source_system: NSDL
+    frequency: daily
+    tier: 1
+    enabled: true
+    adapter: nsdl_fortnightly_latest
+    normalizer: nsdl_fortnightly
+    official_anchor: https://www.fpi.nsdl.co.in/web/StaticReports/Fortnightly_Sector_wise_FII_Investment_Data/
+    notes: Latest available NSDL fortnightly sector snapshot, searched back over recent publication dates.
+
+  - dataset_name: nsdl_fortnightly_sector_history
+    source_system: NSDL
+    frequency: periodic
+    tier: 1
+    enabled: true
+    adapter: nsdl_fortnightly_history
+    normalizer: nsdl_fortnightly
+    official_anchor: https://www.fpi.nsdl.co.in/web/StaticReports/Fortnightly_Sector_wise_FII_Investment_Data/
+    period_kind: fortnightly
+    backfill_partitioned: true
+    notes: Historical NSDL fortnightly sector snapshots for each reporting cutoff.
+
+  - dataset_name: nsdl_tradewise_monthly
+    source_system: NSDL
+    frequency: periodic
+    tier: 1
+    enabled: true
+    adapter: nsdl_tradewise_monthly
+    normalizer: nsdl_tradewise
+    official_anchor: https://www.fpi.nsdl.co.in/web/StaticReports/statistics/zip/
+    period_kind: monthly
+    backfill_partitioned: true
+    notes: NSDL monthly trade-wise ZIP archives aggregated by sector using the Nifty 500 ISIN map.
+
+  - dataset_name: bse_bhavcopy
+    source_system: BSE
+    frequency: daily
+    tier: 2
+    enabled: true
+    adapter: bse_discovery
+    normalizer: bse_bhavcopy
+    official_anchor: https://www.bseindia.com
+    notes: Discovery-first; downloader enabled only after public endpoint verification.
+
+  - dataset_name: bse_bulk_deals
+    source_system: BSE
+    frequency: daily
+    tier: 2
+    enabled: true
+    adapter: bse_discovery
+    normalizer: bse_bhavcopy
+    official_anchor: https://www.bseindia.com
+    notes: Discovery-first; mark unavailable when no stable official endpoint is verified.
+
+  - dataset_name: bse_block_deals
+    source_system: BSE
+    frequency: daily
+    tier: 2
+    enabled: true
+    adapter: bse_discovery
+    normalizer: bse_bhavcopy
+    official_anchor: https://www.bseindia.com
+    notes: Discovery-first; mark unavailable when no stable official endpoint is verified.
+
+  - dataset_name: bse_shareholding_pattern
+    source_system: BSE
+    frequency: periodic
+    tier: 2
+    enabled: true
+    adapter: bse_discovery
+    normalizer: bse_bhavcopy
+    official_anchor: https://www.bseindia.com
+    notes: Discovery-first; mark unavailable when no stable official endpoint is verified.
+
+  - dataset_name: bse_index_history_sensex
+    source_system: BSE
+    frequency: daily
+    tier: 2
+    enabled: true
+    adapter: bse_discovery
+    normalizer: bse_index_history
+    official_anchor: https://www.bseindia.com/sensex/code/44
+    notes: Sensex historical data discovery-first; implement downloader only when public endpoint is verified.

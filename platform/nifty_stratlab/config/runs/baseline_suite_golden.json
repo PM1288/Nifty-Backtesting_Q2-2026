@@ -1,0 +1,64 @@
+{
+  "$schema": "../../contracts/comparison-run-config.schema.json",
+  "mode": "BACKTEST_COMPARISON",
+  "suite_file": "../suites/nifty_intraday_baseline_comparison_v1.json",
+  "suite_id": "nifty_intraday_baseline_comparison_v1",
+  "data": {
+    "source_id": "fixture_feature_snapshots",
+    "daily_feature_source_id": "fixture_feature_snapshots",
+    "timezone": "Asia/Kolkata",
+    "date_start": "2026-07-31",
+    "date_end": "2026-07-31",
+    "universe_mode": "explicit_symbols",
+    "symbols": [
+      "CTRL",
+      "RSIX",
+      "RSIR",
+      "EMA",
+      "ORB",
+      "BB",
+      "VWAP",
+      "MACD",
+      "RSM"
+    ],
+    "point_in_time_index_code": "NIFTY50",
+    "require_qualified_data": true,
+    "data_snapshot_mode": "fixture_hash"
+  },
+  "portfolio": {
+    "comparison_capital_mode": "isolated_equal_capital",
+    "initial_cash_per_strategy_inr": 200000,
+    "ticket_size_inr": 200000,
+    "max_open_positions_per_strategy": 1,
+    "reserve_entry_costs": true,
+    "reject_when_cash_insufficient": true
+  },
+  "execution": {
+    "workers": 1,
+    "days_per_shard": 1,
+    "symbols_per_shard": 1,
+    "checkpoint_every_bars": 1000,
+    "heartbeat_seconds": 10,
+    "resume_policy": "reuse_verified_completed_shards",
+    "path_policy": "stop_first",
+    "random_seed": 0
+  },
+  "outputs": {
+    "artifact_root": "artifacts/backtest-comparisons",
+    "persist_to_postgres": false,
+    "write_csv": true,
+    "write_json": true,
+    "write_parquet": false,
+    "build_html_report": true,
+    "build_pdiagram_snapshots": true,
+    "build_comparison_report": true
+  },
+  "publication": {
+    "auto_publish": false,
+    "require_validation_pass": true,
+    "require_compatibility_hash_match": true,
+    "require_independent_verification_for_full_run": false
+  },
+  "requested_by": "operator",
+  "run_name": "baseline_suite_golden_feature_fixture"
+}

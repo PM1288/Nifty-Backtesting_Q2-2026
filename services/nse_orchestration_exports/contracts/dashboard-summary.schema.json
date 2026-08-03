@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DashboardSummaryPayload",
+  "type": "object",
+  "required": [
+    "trade_date",
+    "generated_at",
+    "hero",
+    "ticker_tape",
+    "footer_disclaimer",
+    "educational_purpose_only"
+  ],
+  "properties": {
+    "trade_date": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "is_stale": {
+      "type": "boolean"
+    },
+    "accent_token": {
+      "enum": [
+        "green",
+        "red",
+        "white"
+      ]
+    },
+    "hero": {
+      "type": "object"
+    },
+    "top_gainers": {
+      "type": "array"
+    },
+    "top_losers": {
+      "type": "array"
+    },
+    "sector_groups": {
+      "type": "array"
+    },
+    "ticker_tape": {
+      "type": "array"
+    },
+    "summary_cards": {
+      "type": "array"
+    },
+    "footer_disclaimer": {
+      "type": "string"
+    },
+    "educational_purpose_only": {
+      "const": true
+    }
+  }
+}

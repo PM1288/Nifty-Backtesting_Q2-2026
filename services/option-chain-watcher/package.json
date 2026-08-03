@@ -1,0 +1,25 @@
+{
+  "name": "trading-stack-option-chain-watcher",
+  "version": "1.0.0",
+  "description": "NSE Option Chain watcher (Playwright) that stores NIFTY current-expiry ATM±N snapshots into Postgres",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "migrate": "node dist/cli.js migrate",
+    "migrate:dev": "ts-node src/cli.ts migrate",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts"
+  },
+  "dependencies": {
+    "luxon": "^3.5.0",
+    "pg": "^8.13.1",
+    "playwright": "1.58.2"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^20.11.30",
+    "@types/pg": "^8.11.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

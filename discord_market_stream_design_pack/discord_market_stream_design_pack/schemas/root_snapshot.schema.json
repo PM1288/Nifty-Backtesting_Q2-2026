@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RootSnapshot",
+  "type": "object",
+  "required": [
+    "as_of",
+    "mode",
+    "headline",
+    "index_snapshot",
+    "full_stock_snapshot",
+    "machine_facts"
+  ],
+  "properties": {
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "live",
+        "latest_completed",
+        "date"
+      ]
+    },
+    "headline": {
+      "type": "string"
+    },
+    "overall_bias": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "key_conclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "index_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "options_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "fii_snapshot": {
+      "type": "object"
+    },
+    "sector_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "full_stock_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "best_entries": {
+      "type": "object"
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_alerts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "data_quality": {
+      "type": "object"
+    },
+    "llm_brief": {
+      "type": "string"
+    },
+    "machine_facts": {
+      "type": "string"
+    }
+  }
+}

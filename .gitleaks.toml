@@ -1,0 +1,10 @@
+title = "trading-stack gitleaks config"
+
+[allowlist]
+description = "Repo placeholders and documentation-only example values"
+regexes = [
+  '''CHANGE_ME_[A-Z0-9_]+''',
+  '''EXAMPLE_ONLY_NOT_REAL''',
+  '''https://example\.invalid/[A-Za-z0-9._/-]*''',
+  '''redis://redis:6379/[0-9]+'''
+]

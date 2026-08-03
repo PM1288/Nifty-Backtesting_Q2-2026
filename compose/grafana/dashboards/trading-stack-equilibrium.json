@@ -1,0 +1,468 @@
+﻿{
+    "id":  null,
+    "uid":  "trading-stack-equilibrium-editable",
+    "title":  "Options Equilibrium (Editable)",
+    "tags":  [
+                 "options",
+                 "equilibrium",
+                 "trading-stack"
+             ],
+    "timezone":  "Asia/Kolkata",
+    "schemaVersion":  38,
+    "version":  1,
+    "refresh":  "30s",
+    "time":  {
+                 "from":  "now-6h",
+                 "to":  "now"
+             },
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "name":  "underlying",
+                                        "type":  "query",
+                                        "datasource":  {
+                                                           "type":  "postgres",
+                                                           "uid":  "postgres"
+                                                       },
+                                        "refresh":  2,
+                                        "hide":  0,
+                                        "query":  "SELECT DISTINCT underlying FROM equilibrium_mean_series ORDER BY underlying;",
+                                        "current":  {
+                                                        "text":  "NIFTY50",
+                                                        "value":  "NIFTY50"
+                                                    }
+                                    },
+                                    {
+                                        "name":  "expiry",
+                                        "type":  "query",
+                                        "datasource":  {
+                                                           "type":  "postgres",
+                                                           "uid":  "postgres"
+                                                       },
+                                        "refresh":  2,
+                                        "hide":  0,
+                                        "query":  "SELECT expiry FROM (SELECT \u0027latest\u0027 AS expiry UNION SELECT DISTINCT to_char(expiry, \u0027YYYY-MM-DD\u0027) FROM equilibrium_mean_series WHERE underlying = \u0027$underlying\u0027) AS s ORDER BY (expiry = \u0027latest\u0027) DESC, expiry DESC;",
+                                        "current":  {
+                                                        "text":  "latest",
+                                                        "value":  "latest"
+                                                    }
+                                    }
+                                ]
+                   },
+    "links":  [
+                  {
+                      "asDropdown":  true,
+                      "icon":  "dashboard",
+                      "includeVars":  true,
+                      "keepTime":  true,
+                      "tags":  [
+                                   "trading-stack"
+                               ],
+                      "targetBlank":  false,
+                      "title":  "Navigate Dashboards",
+                      "tooltip":  "Jump to another dashboard",
+                      "type":  "dashboards"
+                  }
+              ],
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "stat",
+                       "title":  "Last Update (IST)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_mean_series WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n)\nSELECT extract(epoch from max(ts)) * 1000 AS value\nFROM equilibrium_mean_series e\nJOIN picked p ON e.expiry = p.expiry\nWHERE e.underlying = \u0027$underlying\u0027;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "dateTimeAsIso",
+                                                            "decimals":  0
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   }
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "Latest ATM CE Norm",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_mean_series WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n), latest AS (\n  SELECT max(ts) AS ts FROM equilibrium_mean_series e JOIN picked p ON e.expiry = p.expiry WHERE e.underlying = \u0027$underlying\u0027\n)\nSELECT e.ce_mean_norm AS value\nFROM equilibrium_mean_series e\nJOIN picked p ON e.expiry = p.expiry\nJOIN latest l ON e.ts = l.ts\nWHERE e.underlying = \u0027$underlying\u0027;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "Latest ATM PE Norm",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_mean_series WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n), latest AS (\n  SELECT max(ts) AS ts FROM equilibrium_mean_series e JOIN picked p ON e.expiry = p.expiry WHERE e.underlying = \u0027$underlying\u0027\n)\nSELECT e.pe_mean_norm AS value\nFROM equilibrium_mean_series e\nJOIN picked p ON e.expiry = p.expiry\nJOIN latest l ON e.ts = l.ts\nWHERE e.underlying = \u0027$underlying\u0027;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Latest Delta (CE-PE)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  0
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_mean_series WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n), latest AS (\n  SELECT max(ts) AS ts FROM equilibrium_mean_series e JOIN picked p ON e.expiry = p.expiry WHERE e.underlying = \u0027$underlying\u0027\n)\nSELECT (e.ce_mean_norm - e.pe_mean_norm) AS value\nFROM equilibrium_mean_series e\nJOIN picked p ON e.expiry = p.expiry\nJOIN latest l ON e.ts = l.ts\nWHERE e.underlying = \u0027$underlying\u0027;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "orientation":  "horizontal",
+                                       "textMode":  "auto"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  5,
+                       "type":  "timeseries",
+                       "title":  "ATM CE vs PE (Normalized)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  4
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_mean_series WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n)\nSELECT ts AS time, ce_mean_norm AS \"CE Mean\", pe_mean_norm AS \"PE Mean\"\nFROM equilibrium_mean_series e\nJOIN picked p ON e.expiry = p.expiry\nWHERE e.underlying = \u0027$underlying\u0027\n  AND $__timeFilter(e.ts)\n  AND (e.ts AT TIME ZONE \u0027Asia/Kolkata\u0027)::time \u003e= \u002709:15:00\u0027\nORDER BY ts;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "legend":  {
+                                                      "showLegend":  true,
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "custom":  {
+                                                                           "axisLabel":  "Value"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  6,
+                       "type":  "table",
+                       "title":  "Strike Snapshot",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  16,
+                                       "x":  0,
+                                       "y":  12
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_strike_snapshot WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n)\nSELECT strike, ce_close, pe_close, ce_norm, pe_norm, updated_at\nFROM equilibrium_strike_snapshot e\nJOIN picked p ON e.expiry = p.expiry\nWHERE e.underlying = \u0027$underlying\u0027\nORDER BY strike;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  7,
+                       "type":  "table",
+                       "title":  "Current Snapshot",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  8,
+                                       "x":  16,
+                                       "y":  12
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "SELECT underlying, expiry, strike, ref_price, strike_step, ce_norm, pe_norm, reason, updated_at\nFROM equilibrium_current_snapshot\nWHERE underlying = \u0027$underlying\u0027;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "showHeader":  true
+                                   }
+                   },
+                   {
+                       "id":  8,
+                       "type":  "timeseries",
+                       "title":  "NIFTY50 Intraday",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  20
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "SELECT ts AS \"time\", close AS value FROM bars_1m WHERE exchange = \u0027NSE\u0027 AND symbol_token = \u002799926000\u0027 AND $__timeFilter(ts) ORDER BY ts;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "short",
+                                                            "custom":  {
+                                                                           "axisLabel":  "Value"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  9,
+                       "type":  "timeseries",
+                       "title":  "ATM CE/PE (Percent Stacked)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  20
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "time_series",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_mean_series WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n)\nSELECT ts AS time, ce_mean_norm AS \"CE Mean\", pe_mean_norm AS \"PE Mean\"\nFROM equilibrium_mean_series e\nJOIN picked p ON e.expiry = p.expiry\nWHERE e.underlying = \u0027$underlying\u0027\n  AND $__timeFilter(e.ts)\n  AND (e.ts AT TIME ZONE \u0027Asia/Kolkata\u0027)::time \u003e= \u002709:15:00\u0027\nORDER BY ts;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent",
+                                                            "custom":  {
+                                                                           "drawStyle":  "bars",
+                                                                           "lineWidth":  0,
+                                                                           "fillOpacity":  70,
+                                                                           "stacking":  {
+                                                                                            "mode":  "percent",
+                                                                                            "group":  "A"
+                                                                                        },
+                                                                           "axisLabel":  "Percent (%)"
+                                                                       },
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "orange",
+                                                                                                 "value":  -1
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  -0.2
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0.2
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "blue",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "options":  {
+                                       "legend":  {
+                                                      "showLegend":  true,
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom"
+                                                  }
+                                   }
+                   },
+                   {
+                       "id":  10,
+                       "type":  "barchart",
+                       "title":  "Option Price Cloud (CE/PE by Strike)",
+                       "datasource":  {
+                                          "type":  "postgres",
+                                          "uid":  "postgres"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  28
+                                   },
+                       "targets":  [
+                                       {
+                                           "format":  "table",
+                                           "rawSql":  "WITH picked AS (\n  SELECT CASE WHEN \u0027$expiry\u0027 = \u0027latest\u0027 THEN (SELECT max(expiry) FROM equilibrium_strike_snapshot WHERE underlying = \u0027$underlying\u0027) WHEN \u0027$expiry\u0027 LIKE \u0027%-%\u0027 THEN to_date(NULLIF(\u0027$expiry\u0027,\u0027latest\u0027), \u0027YYYY-MM-DD\u0027) ELSE to_timestamp((NULLIF(regexp_replace(\u0027$expiry\u0027,\u0027\\\\D\u0027,\u0027\u0027,\u0027g\u0027),\u0027\u0027)::double precision) / 1000)::date END AS expiry\n)\nSELECT strike::text AS strike, ce_close AS \"CE Close\", pe_close AS \"PE Close\"\nFROM equilibrium_strike_snapshot e\nJOIN picked p ON e.expiry = p.expiry\nWHERE e.underlying = \u0027$underlying\u0027\nORDER BY strike;",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "options":  {
+                                       "orientation":  "horizontal",
+                                       "xField":  "strike",
+                                       "stacking":  "normal",
+                                       "showValue":  "never"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "currencyINR",
+                                                            "custom":  {
+                                                                           "axisLabel":  "INR"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   }
+               ]
+}

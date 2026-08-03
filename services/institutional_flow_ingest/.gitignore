@@ -1,0 +1,16 @@
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+logs/*
+run_reports/*
+warehouse/*
+raw/**
+curated/**
+staging/**
+!logs/.gitkeep
+!run_reports/.gitkeep
+!warehouse/.gitkeep
+!raw/.gitkeep
+!curated/.gitkeep
+!staging/.gitkeep

@@ -52,6 +52,7 @@ export function BacktestingStockInsightsPage() {
       <BacktestingHeader
         title={tr("Stock Insights")}
         subtitle={tr("This page compares stock suitability across all three strategy archetypes, so you can see where each style tends to fit or fail.")}
+        testRunAt={compare.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(compare.data.asOfDate) })}
       />
 

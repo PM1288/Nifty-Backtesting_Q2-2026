@@ -48,6 +48,7 @@ export function BacktestingRegimeAnalysisPage() {
       <BacktestingHeader
         title={tr("Regime Analysis")}
         subtitle={tr("Entry-date regimes use NIFTY 50 trend/return plus India VIX level and change. Shock: |NIFTY daily return| ≥1.75% or VIX jump ≥15%; Volatile: VIX at/above its trailing 75th percentile; otherwise Rising, Falling, or Neutral from 20/50-day trend.")}
+        testRunAt={compare.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(compare.data.asOfDate) })}
       />
 

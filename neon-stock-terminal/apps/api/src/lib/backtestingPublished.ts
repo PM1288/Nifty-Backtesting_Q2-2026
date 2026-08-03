@@ -701,9 +701,11 @@ export async function loadPublishedBacktestingOverview(prisma: PrismaClient) {
     miniEquityCurve: scenario.equityCurve.slice(-90),
     miniDrawdownCurve: scenario.drawdownCurve.slice(-90),
     shortcuts: [
+      { label: "Open Latest Analysis Report", to: "/backtesting/results" },
       { label: "Open Strategy Detail", to: `/backtesting/strategies/${DEFAULT_STRATEGY_ID}` },
       { label: "Open Daily Summary", to: "/backtesting/daily-summary" },
-      { label: "Compare Strategies", to: "/backtesting/compare" }
+      { label: "Compare Strategies", to: "/backtesting/compare" },
+      { label: "Open Run Audit", to: "/backtesting/runs" }
     ]
   };
 }

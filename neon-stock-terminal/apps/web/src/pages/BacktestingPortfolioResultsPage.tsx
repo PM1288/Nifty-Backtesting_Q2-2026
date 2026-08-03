@@ -59,6 +59,7 @@ export function BacktestingPortfolioResultsPage() {
       <BacktestingHeader
         title={tr("Portfolio Results")}
         subtitle={tr("Portfolio-level outcomes across the selected universe and capital bucket.")}
+        testRunAt={detail.data.generatedAt}
         meta={t("literals.Scenario {{label}}", "Scenario {{label}}", { label: tr(scenario.label) })}
       />
       <BacktestingFilterBar filters={detail.data.filters} detail={detail.data} />

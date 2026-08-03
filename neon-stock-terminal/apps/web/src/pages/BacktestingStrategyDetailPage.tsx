@@ -144,6 +144,7 @@ export function BacktestingStrategyDetailPage() {
       <BacktestingHeader
         title={`${tr(detail.data.strategy.displayName)} • v${detail.data.version.versionNumber}`}
         subtitle={tr("This page explains the logic, assumptions, and latest evidence for the selected strategy version.")}
+        testRunAt={detail.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(detail.data.asOfDate) })}
       />
 

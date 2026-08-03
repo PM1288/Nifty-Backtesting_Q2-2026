@@ -32,6 +32,7 @@ export function BacktestingRunsPage() {
       <BacktestingHeader
         title={tr("Runs / Audit")}
         subtitle={tr("Operational transparency for the Backtesting module: published runs, validations, warnings, and last-known-good snapshot.")}
+        testRunAt={runs.data.generatedAt}
         meta={`Last known good ${formatDateIST(runs.data.lastKnownGoodSnapshot.asOfDate)}`}
       />
 

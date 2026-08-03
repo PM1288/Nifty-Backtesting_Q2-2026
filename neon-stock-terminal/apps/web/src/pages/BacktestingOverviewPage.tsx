@@ -38,7 +38,8 @@ export function BacktestingOverviewPage() {
       <BacktestingHeader
         title={tr("Backtesting Overview")}
         subtitle={tr("Use this as the landing page for historical strategy evidence built from daily market data.")}
-        meta={`Market date ${formatDateIST(data.marketDate)} • Snapshot ${data.snapshotAgeLabel} old`}
+        testRunAt={data.generatedAt}
+        meta={`Data through ${formatDateIST(data.marketDate)} • ${data.snapshotAgeLabel}`}
       />
 
       <SectionDivider
@@ -49,7 +50,7 @@ export function BacktestingOverviewPage() {
 
       <section className={styles.systemHealthRow}>
         <KpiCard label={tr("Last market date")} value={formatDateIST(data.marketDate)} />
-        <KpiCard label={tr("Snapshot generated")} value={formatDateIST(data.latestSnapshot.generatedAt, { includeTime: true })} meta={data.snapshotAgeLabel} />
+        <KpiCard label={tr("Test run date")} value={formatDateIST(data.generatedAt, { includeTime: true })} meta={data.snapshotAgeLabel} />
         <KpiCard label={tr("Active strategies")} value={formatNumberIN(data.activeStrategies)} />
         <KpiCard label={tr("Symbols covered")} value={formatNumberIN(data.symbolsCovered)} />
         <KpiCard label={tr("Open positions today")} value={formatNumberIN(data.latestSnapshot.openPositionsToday)} />

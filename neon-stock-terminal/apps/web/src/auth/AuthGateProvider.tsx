@@ -39,6 +39,9 @@ import type { SessionUser } from "../lib/types";
 const HOME_GATE_DELAY_MS = 5 * 60 * 1000;
 const DETAIL_GATE_DELAY_MS = 30 * 1000;
 const RSI_SURFACE_GATE_DELAY_MS = 60 * 1000;
+// Keep authentication available from the explicit account control, but never
+// interrupt dashboard review with an unsolicited login modal by default.
+const AUTO_AUTH_GATE_ENABLED = import.meta.env.VITE_AUTO_AUTH_GATE === "true";
 const DISMISS_STORAGE_KEY = "nifty50trader.homeGateDismissed";
 const ACTION_QUEUE_STORAGE_KEY = "nifty50trader.pendingActions";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -271,8 +274,8 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     setUser(null);
     sessionUserRef.current = null;
     setVerificationEmail(email);
-    setGateVisible(true);
-    setGateReason("email-verification");
+    setGateVisible(AUTO_AUTH_GATE_ENABLED);
+    setGateReason(AUTO_AUTH_GATE_ENABLED ? "email-verification" : null);
     setAuthError(message ?? null);
   }, []);
 
@@ -399,8 +402,8 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
         setUser(null);
         sessionUserRef.current = null;
         setAuthError("Unable to establish a secure server session. Please log in again.");
-        setGateReason("manual");
-        setGateVisible(true);
+        setGateReason(null);
+        setGateVisible(false);
         void clearAnalyticsUser();
       } finally {
         if (active && authSyncSeqRef.current === seq) {
@@ -423,6 +426,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!AUTO_AUTH_GATE_ENABLED) return;
 
     const onAuthRequired = () => {
       if (sessionUserRef.current) return;
@@ -465,6 +469,12 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!authReady && !user && !verificationEmail) return;
     if (user) {
+      setGateVisible(false);
+      setGateReason(null);
+      return;
+    }
+
+    if (!AUTO_AUTH_GATE_ENABLED) {
       setGateVisible(false);
       setGateReason(null);
       return;

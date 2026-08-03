@@ -244,3 +244,53 @@ curl -sS -o /dev/null -w '%{http_code}\n' \
 
 All three probes returned `200` after the repair. The public runs endpoint
 returned latest publish batch `247` with 100-symbol scenarios.
+
+## Latest analysis report, visible run date, and manual-only login (2026-08-03)
+
+The latest analysis is publish batch `247`:
+
+- analysis report: `https://n50.nifty50today.co.in/n50/backtesting/results`
+- run and validation audit: `https://n50.nifty50today.co.in/n50/backtesting/runs`
+- generated: `2026-08-03T12:46:17.355Z` (`3 Aug 2026, 18:16 IST`)
+- market data through: `2026-07-31`
+
+Every backtesting page now shows a `Test run` timestamp in the shared header.
+The overview also has a dedicated `Test run date` KPI and direct cards for the
+latest analysis report and run audit.
+
+Unsolicited login prompts are disabled by default. Timed prompts,
+authentication-required browser events, verification prompts, and session-sync
+errors no longer open the modal automatically. The account control can still
+open login manually. Set `VITE_AUTO_AUTH_GATE=true` at web build time only if
+the automatic gate is intentionally required again.
+
+Build and targeted live deployment commands used:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/neon-stock-terminal
+docker build \
+  --build-arg VITE_BASE_PATH=/n50/ \
+  --build-arg VITE_API_BASE_URL=/n50 \
+  --build-arg VITE_WS_URL=/n50 \
+  -t trading-stack-n50-dashboard:latest .
+
+docker compose \
+  -p trading-stack-novius2 \
+  -f /home/novius2/trading-stack/docker-compose.yml \
+  up -d --no-deps --force-recreate n50-dashboard
+```
+
+The 12 changed API/UI source files were synchronized to
+`/home/novius2/trading-stack/neon-stock-terminal` so a future Compose rebuild
+does not revert the deployed behavior. The GitHub repository remains the
+reviewable source of truth.
+
+Validation completed:
+
+- Docker production API and web TypeScript/Vite build: passed
+- local dashboard and overview API: HTTP `200`
+- public overview, results, and runs pages: HTTP `200`
+- browser-visible header: `Test run 3 Aug 2026, 18:16 IST`
+- browser login-dialog count after 35 seconds: `0`
+- dashboard container restart count: `0`
+- overview snapshot explicitly refreshed after deployment

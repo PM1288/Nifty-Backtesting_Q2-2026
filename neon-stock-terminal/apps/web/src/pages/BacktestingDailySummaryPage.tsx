@@ -38,6 +38,7 @@ export function BacktestingDailySummaryPage() {
       <BacktestingHeader
         title={tr("Daily Summary")}
         subtitle={tr("This is the latest day-level read after the snapshot updates: entries, exits, open positions, skipped signals, and deployment.")}
+        testRunAt={summary.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(summary.data.asOfDate) })}
       />
 

@@ -71,18 +71,24 @@ export function humanizeArchetype(value: string) {
 export function BacktestingHeader({
   title,
   subtitle,
-  meta
+  meta,
+  testRunAt
 }: {
   title: string;
   subtitle: string;
   meta?: string;
+  testRunAt?: string;
 }) {
   const { tr } = useI18n();
+  const testRunMeta = testRunAt
+    ? `${tr("Test run")} ${formatDateIST(testRunAt, { includeTime: true })}`
+    : null;
+  const combinedMeta = [testRunMeta, meta].filter(Boolean).join(" • ");
   return (
     <AnalyticsHeader
       title={tr(title)}
       subtitle={tr(subtitle)}
-      meta={meta}
+      meta={combinedMeta || undefined}
       sectionTabs={[...BACKTESTING_SECTION_TABS]}
       learningPrompt={tr("Backtesting here means reviewing historical daily-data evidence with fixed rules and assumptions.")}
     />

@@ -685,6 +685,7 @@ services:
         VITE_MATOMO_SITE_ID: ${N50_MATOMO_SITE_ID_PROD:-1}
         VITE_FIREBASE_API_KEY: ${FIREBASE_WEB_API_KEY:-}
         VITE_DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
+        VITE_AUTO_AUTH_GATE: ${N50_AUTO_AUTH_GATE:-false}
     env_file: .env
     environment:
       PORT: "18184"
@@ -825,6 +826,7 @@ services:
         VITE_MATOMO_SITE_ID: ${N50_MATOMO_SITE_ID_STAGE:-2}
         VITE_FIREBASE_API_KEY: ${FIREBASE_WEB_API_KEY:-}
         VITE_DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
+        VITE_AUTO_AUTH_GATE: ${N50_AUTO_AUTH_GATE:-false}
     env_file: .env
     environment:
       PORT: "18184"

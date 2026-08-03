@@ -59,6 +59,7 @@ export function BacktestingComparePage() {
       <BacktestingHeader
         title={tr("Compare Strategies")}
         subtitle={tr("These three strategies are intentionally different archetypes. Use this page to see which style worked where, not just which one made more money.")}
+        testRunAt={compare.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(compare.data.asOfDate) })}
       />
 

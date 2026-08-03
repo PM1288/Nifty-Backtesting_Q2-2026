@@ -96,3 +96,20 @@ PY
 - Set and document the FII/DII `available_at` rule before using workbook values as features.
 - Production migration and point-in-time universe integration remain blocked on absent database DSNs/schema evidence. No production data was written.
 - Review and commit the work only after the full report is captured.
+
+## 2026-08-03 derivatives research addition
+
+Added `config/research/nifty_atm_long_straddle_v1.yml` and executable
+`tools/audit_derivatives_readiness.py`. The requested NIFTY ATM CE+PE experiment
+is deliberately research-only and `BLOCKED` until point-in-time contracts and
+observed historical option quotes/premiums exist. Run:
+
+```bash
+cd platform/nifty_stratlab
+./tools/audit_derivatives_readiness.py --json
+```
+
+The live dashboard, PostgreSQL publication and worker changes were implemented in
+`/home/novius2/trading-stack`, which is not this Git repository and has no `.git`
+metadata. See `/home/novius2/NIFTY50/AGENT_HANDOFF_UI_BACKTESTING_2026-08-03.md`
+for the complete implementation, deployment and verification record.

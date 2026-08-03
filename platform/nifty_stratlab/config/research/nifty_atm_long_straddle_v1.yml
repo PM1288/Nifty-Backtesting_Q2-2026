@@ -1,0 +1,48 @@
+strategy_id: nifty_atm_long_straddle_v1
+display_name: NIFTY ATM Long Straddle - Volatility Trigger
+status: blocked_pending_historical_option_premiums
+research_only: true
+underlying: NIFTY
+instrument: index_options
+
+entry:
+  trigger: high_volatility_start
+  volatility_inputs: [india_vix_close, india_vix_daily_return, nifty_50_intraday_realized_volatility]
+  strike_selection: nearest_atm_strike_available_at_entry
+  expiry_selection: nearest_liquid_expiry_after_entry
+  legs:
+    - {right: CE, side: buy, lots: 1}
+    - {right: PE, side: buy, lots: 1}
+  fill: next_available_ask
+
+exit:
+  combined_net_profit_target_inr: 1000
+  target_semantics: first_observed_touch_after_costs
+  forced_exit: market_close
+  fill: next_available_bid
+
+contract_rules:
+  lot_size_source: catalog.option_contract_observation
+  point_in_time_required: true
+  current_web_page_values_are_not_historical_evidence: true
+
+required_data:
+  - point_in_time_contract_master
+  - timestamped_bid_ask_or_quote_premiums_for_both_legs
+  - effective_dated_lot_size
+  - underlying_nifty_50_bars
+  - india_vix_bars
+  - exchange_and_broker_fee_schedule
+  - source_ref_and_available_at_for_every_observation
+
+quality_gates:
+  forbid_theoretical_premium_as_observed_result: true
+  forbid_forward_filled_option_quotes: true
+  require_both_legs_at_entry_and_exit: true
+  require_spread_and_slippage: true
+  require_expiry_and_strike_identity: true
+
+outputs:
+  trade_table: research.option_trade_result
+  ui_publish_after_gate: nse_app_backtesting_adapter
+  leaderboard_eligible_only_when: all_data_and_quality_gates_pass

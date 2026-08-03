@@ -368,3 +368,36 @@ docker compose -p trading-stack-novius2 -f docker-compose.yml exec -T \
 ```
 
 Initial proof for batch `247`: 3 strategy folders, 252,753 exported data rows, 0 checksum failures. The worker container was healthy with 0 restarts after export. Six focused backtesting/CSV unit tests passed in the production image.
+
+## Backtesting promoted in the primary sidebar (2026-08-03)
+
+The complete Backtesting navigation group was moved directly below Overview in the primary sidebar. It is now visible without scrolling on desktop and appears at the top of the mobile navigation drawer. No route was duplicated or changed. The group retains these eight destinations: Overview, Strategy Leaderboard, Portfolio Results, Regime Analysis, Stock Insights, Daily Summary, Compare, and Run Monitor.
+
+Source changed:
+
+```text
+neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx
+```
+
+Commands used to build, synchronize, deploy, and verify:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/neon-stock-terminal
+docker build --target builder -t nifty-sidebar-backtesting-test .
+
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+rsync -a neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx \
+  /home/novius2/trading-stack/neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx
+docker compose -p trading-stack-novius2 \
+  -f /home/novius2/trading-stack/docker-compose.yml build n50-dashboard
+docker compose -p trading-stack-novius2 \
+  -f /home/novius2/trading-stack/docker-compose.yml \
+  up -d --no-deps --force-recreate n50-dashboard
+docker exec trading-stack-novius2-n50-dashboard-1 \
+  node -e "fetch('http://127.0.0.1:18184/health').then(async r=>console.log(r.status,await r.text()))"
+
+cd /tmp/nifty-playwright-test
+node sidebar-backtesting-acceptance.mjs
+```
+
+Live acceptance passed at `https://n50.nifty50today.co.in/n50/backtesting` on desktop `1440x1000` and a real mobile viewport `430x932`. Both tests found all eight sidebar links exactly once, confirmed Backtesting Overview has `aria-current="page"`, confirmed the group is in the initial viewport, and found zero modal login dialogs. Machine-readable evidence is in `docs/backtesting-ui/SIDEBAR_BACKTESTING_TEST_RESULTS.json`; screenshots are `docs/backtesting-ui/screenshots/sidebar-backtesting-desktop.png` and `sidebar-backtesting-mobile.png`.

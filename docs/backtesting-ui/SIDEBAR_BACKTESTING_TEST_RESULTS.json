@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-08-03T16:49:55.891Z",
+  "publicUrl": "https://n50.nifty50today.co.in/n50/backtesting",
+  "checks": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "expectedLinkCount": 8,
+      "actualLinkCount": 8,
+      "activePage": "backtesting-overview",
+      "backtestingVisibleInInitialViewport": true,
+      "modalDialogCount": 0
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "mobileNavigationOpened": true,
+      "expectedLinkCount": 8,
+      "actualLinkCount": 8,
+      "activePage": "backtesting-overview",
+      "backtestingVisibleInInitialViewport": true,
+      "modalDialogCount": 0
+    }
+  ],
+  "failures": []
+}

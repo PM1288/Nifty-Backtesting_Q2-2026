@@ -89,6 +89,60 @@ function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
       ]
     },
     {
+      id: "backtesting",
+      label: tr("Backtesting"),
+      items: [
+        {
+          label: tr("Overview"),
+          to: "/backtesting",
+          icon: FlaskConical,
+          match: (pathname) => pathname === "/backtesting"
+        },
+        {
+          label: tr("Strategy Leaderboard"),
+          to: "/backtesting/strategies",
+          icon: LibraryBig,
+          match: (pathname) => pathname.startsWith("/backtesting/strategies")
+        },
+        {
+          label: tr("Portfolio Results"),
+          to: "/backtesting/results",
+          icon: BarChart3,
+          match: (pathname) => pathname.startsWith("/backtesting/results")
+        },
+        {
+          label: tr("Regime Analysis"),
+          to: "/backtesting/regimes",
+          icon: TrendingUp,
+          match: (pathname) => pathname.startsWith("/backtesting/regimes")
+        },
+        {
+          label: tr("Stock Insights"),
+          to: "/backtesting/stocks",
+          icon: Activity,
+          match: (pathname) => pathname.startsWith("/backtesting/stocks")
+        },
+        {
+          label: tr("Daily Summary"),
+          to: "/backtesting/daily-summary",
+          icon: ClipboardList,
+          match: (pathname) => pathname.startsWith("/backtesting/daily-summary")
+        },
+        {
+          label: tr("Compare"),
+          to: "/backtesting/compare",
+          icon: LayoutDashboard,
+          match: (pathname) => pathname.startsWith("/backtesting/compare")
+        },
+        {
+          label: tr("Run Monitor"),
+          to: "/backtesting/runs",
+          icon: ClipboardList,
+          match: (pathname) => pathname.startsWith("/backtesting/runs")
+        }
+      ]
+    },
+    {
       id: "market",
       label: tr("Market"),
       items: [
@@ -230,60 +284,6 @@ function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
           to: "/heatmap/will",
           icon: Gauge,
           match: (pathname) => pathname === "/heatmap/will" || pathname === "/will-surface"
-        }
-      ]
-    },
-    {
-      id: "backtesting",
-      label: tr("Backtesting"),
-      items: [
-        {
-          label: tr("Overview"),
-          to: "/backtesting",
-          icon: FlaskConical,
-          match: (pathname) => pathname === "/backtesting"
-        },
-        {
-          label: tr("Strategy Leaderboard"),
-          to: "/backtesting/strategies",
-          icon: LibraryBig,
-          match: (pathname) => pathname.startsWith("/backtesting/strategies")
-        },
-        {
-          label: tr("Portfolio Results"),
-          to: "/backtesting/results",
-          icon: BarChart3,
-          match: (pathname) => pathname.startsWith("/backtesting/results")
-        },
-        {
-          label: tr("Regime Analysis"),
-          to: "/backtesting/regimes",
-          icon: TrendingUp,
-          match: (pathname) => pathname.startsWith("/backtesting/regimes")
-        },
-        {
-          label: tr("Stock Insights"),
-          to: "/backtesting/stocks",
-          icon: Activity,
-          match: (pathname) => pathname.startsWith("/backtesting/stocks")
-        },
-        {
-          label: tr("Daily Summary"),
-          to: "/backtesting/daily-summary",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/backtesting/daily-summary")
-        },
-        {
-          label: tr("Compare"),
-          to: "/backtesting/compare",
-          icon: LayoutDashboard,
-          match: (pathname) => pathname.startsWith("/backtesting/compare")
-        },
-        {
-          label: tr("Run Monitor"),
-          to: "/backtesting/runs",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/backtesting/runs")
         }
       ]
     },

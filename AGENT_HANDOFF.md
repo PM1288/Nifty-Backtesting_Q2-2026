@@ -489,3 +489,9 @@ trade, 0 open positions, final cash `₹16,02,501.76`. The trade entered at
 `₹1,340.25` and exited at `₹1,360.15` with exit reason `target_intraday_hit`;
 net P&L after charges was `₹2,501.76`. The previous two-trade RSI-exit result
 must not be used for strategy evaluation.
+
+The two-stage target rerun then used `0.3%` same-day and `1.0%` swing targets.
+RELIANCE produced 2 target-only trades: 1 same-day target (`₹135.75` net) and
+1 swing target (`₹1,519.47` net), for total net P&L `₹1,655.22`. Final cash was
+`₹16,01,655.22`; capital was returned to cash after each target exit. Both exits
+were `target_intraday_hit`; no RSI exit and no stop exit was used.

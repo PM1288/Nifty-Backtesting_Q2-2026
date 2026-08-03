@@ -29,6 +29,8 @@ class SimulationConfig:
     exchange: str = "NSE"
     enable_target_exit: bool = True
     enable_stop_exit: bool = True
+    target_intraday_pct: Decimal | None = None
+    target_swing_pct: Decimal | None = None
 
     def validate(self) -> None:
         if self.initial_cash <= 0 or self.ticket_size <= 0:
@@ -43,6 +45,12 @@ class SimulationConfig:
             raise ValueError("max_hold_bars must be positive")
         if self.tick_size <= 0:
             raise ValueError("tick_size must be positive")
+        if self.target_intraday_pct is not None and self.target_intraday_pct <= 0:
+            raise ValueError("target_intraday_pct must be positive")
+        if self.target_swing_pct is not None and self.target_swing_pct <= 0:
+            raise ValueError("target_swing_pct must be positive")
+        if self.target_intraday_pct is not None and self.target_swing_pct is None:
+            raise ValueError("target_swing_pct is required with target_intraday_pct")
 
 
 @dataclass

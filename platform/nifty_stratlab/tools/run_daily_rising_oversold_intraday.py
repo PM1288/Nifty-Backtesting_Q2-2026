@@ -40,15 +40,20 @@ def main() -> int:
         strategy=instantiate_strategy(manifest),
         config=SimulationConfig(
             initial_cash=Decimal("1600000"), ticket_size=Decimal("200000"), max_open_positions=1,
-            product=ProductType.EQUITY_DELIVERY, target_net_pnl=Decimal("2500"),
+            product=ProductType.EQUITY_DELIVERY, target_net_pnl=Decimal("0"),
             stop_loss_pct=Decimal("99"), max_hold_bars=1_000_000,
             enable_target_exit=True, enable_stop_exit=False,
+            target_intraday_pct=Decimal("0.3"), target_swing_pct=Decimal("1.0"),
         ),
         fee_registry=demo_fee_registry(ProductType.EQUITY_DELIVERY),
     ).run(bars)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     trades = [trade.model_dump(mode="json") for trade in result.trades]
     signals = [signal.model_dump(mode="json") for signal in result.signals]
+    for trade in trades:
+        entry_day = pd.Timestamp(trade["entry_ts"]).tz_convert("Asia/Kolkata").date()
+        exit_day = pd.Timestamp(trade["exit_ts"]).tz_convert("Asia/Kolkata").date()
+        trade["target_stage"] = "same_day_0.3pct" if entry_day == exit_day else "swing_1.0pct"
     write_csv(args.output_dir / "trades.csv", trades)
     write_csv(args.output_dir / "signals.csv", signals)
     write_csv(args.output_dir / "equity_curve.csv", [asdict(point) for point in result.equity_curve])
@@ -58,8 +63,10 @@ def main() -> int:
         "evaluation_bars": len(bars), "entry_signals": sum(s["intent_type"] == "enter" for s in signals),
         "exit_signals": sum(s["intent_type"] == "exit" for s in signals),
         "closed_trades": len(trades), "open_positions": len(result.open_positions),
-        "final_cash": str(result.final_cash), "target_net_pnl": "2500",
-        "target_assumption": "approximately 1.25% of a 200000 ticket, solved net of costs",
+        "final_cash": str(result.final_cash), "target_intraday_pct": "0.3", "target_swing_pct": "1.0",
+        "target_assumption": "0.3% during entry session, promoted to 1.0% from original buy price after session close",
+        "same_day_target_trades": sum(t["target_stage"] == "same_day_0.3pct" for t in trades),
+        "swing_target_trades": sum(t["target_stage"] == "swing_1.0pct" for t in trades),
         "order_authority": False,
     }
     write_json(args.output_dir / "summary.json", summary)
@@ -67,7 +74,7 @@ def main() -> int:
         f"# Daily Rising Oversold Intraday — {args.symbol.upper()}\n\n"
         f"- Period: {args.start} through {args.end}\n- Bars: {len(bars)}\n"
         f"- Entries: {summary['entry_signals']}\n- Closed trades: {len(trades)}\n"
-        f"- Final cash: {result.final_cash}\n- Target: net ₹2,500 per ₹2L ticket (~1.25%)\n"
+        f"- Final cash: {result.final_cash}\n- Target: 0.3% same-day, 1.0% swing from buy price\n"
         "\nResearch only; no broker orders.\n", encoding="utf-8"
     )
     build_artifact_manifest(args.output_dir)

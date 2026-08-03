@@ -87,6 +87,11 @@ class BacktestEngine:
             quantity -= 1
         return None
 
+    def _percentage_target(self, entry_price: Decimal, percentage: Decimal) -> Decimal:
+        raw = entry_price * (Decimal("1") + percentage / Decimal("100"))
+        ticks = (raw / self.config.tick_size).to_integral_value(rounding=ROUND_FLOOR)
+        return ticks * self.config.tick_size
+
     def _exit_trade(
         self,
         position: PositionState,
@@ -172,6 +177,18 @@ class BacktestEngine:
         for event_ts in sorted(by_time):
             current_bars = by_time[event_ts]
 
+            # A target is 0.3% during the entry session. If it was not reached,
+            # promote it to the 1% swing target before the first bar of the next
+            # session. The target remains based on the original buy price.
+            if self.config.target_intraday_pct is not None:
+                current_date = self._trade_date(event_ts)
+                for position in positions.values():
+                    entry_date = self._trade_date(position.entry_ts)
+                    if entry_date != current_date and position.metadata.get("target_stage") == "intraday":
+                        position.target_price = self._percentage_target(position.entry_price, self.config.target_swing_pct)
+                        position.metadata["target_stage"] = "swing"
+                        position.metadata["target_pct"] = str(self.config.target_swing_pct)
+
             # 1. Execute strategy-requested exits at the next observable open.
             for symbol in sorted(list(positions)):
                 position = positions[symbol]
@@ -226,14 +243,20 @@ class BacktestEngine:
                     )
                     continue
                 quantity, entry_cost = sized
-                target = solve_minimum_exit_price(
-                    entry_price=entry_price,
-                    quantity=quantity,
-                    target_net_pnl=self.config.target_net_pnl,
-                    tick_size=self.config.tick_size,
-                    schedule=schedule,
-                    friction=self.friction,
-                )
+                if self.config.target_intraday_pct is not None:
+                    target_price = self._percentage_target(entry_price, self.config.target_intraday_pct)
+                    target_details = {"mode": "two_stage_percentage", "target_pct": str(self.config.target_intraday_pct)}
+                else:
+                    target = solve_minimum_exit_price(
+                        entry_price=entry_price,
+                        quantity=quantity,
+                        target_net_pnl=self.config.target_net_pnl,
+                        tick_size=self.config.tick_size,
+                        schedule=schedule,
+                        friction=self.friction,
+                    )
+                    target_price = target.exit_price
+                    target_details = target.__dict__
                 raw_stop = entry_price * (Decimal("1") - self.config.stop_loss_pct / Decimal("100"))
                 stop_ticks = (raw_stop / self.config.tick_size).to_integral_value(rounding=ROUND_FLOOR)
                 stop = stop_ticks * self.config.tick_size
@@ -254,10 +277,10 @@ class BacktestEngine:
                     entry_ts=bar.event_ts,
                     entry_price=entry_price,
                     quantity=quantity,
-                    target_price=target.exit_price,
+                    target_price=target_price,
                     stop_price=stop,
                     entry_cost=entry_cost,
-                    metadata={"target_solution": target.__dict__},
+                    metadata={"target_solution": target_details, "target_stage": "intraday" if self.config.target_intraday_pct is not None else "fixed"},
                 )
                 cash -= entry_price * quantity + entry_cost
                 positions[symbol] = position

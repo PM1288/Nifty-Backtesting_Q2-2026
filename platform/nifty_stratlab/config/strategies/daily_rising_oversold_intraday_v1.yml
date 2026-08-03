@@ -11,7 +11,8 @@ parameters:
   minute_willr_below: -80
   entry_start: "09:30:00"
   entry_end: "12:00:00"
-  target_exit_pct: 1.25
+  target_intraday_pct: 0.3
+  target_swing_pct: 1.0
 assumptions:
   daily_setup: "previous completed day RSI(14) is greater than the immediately preceding daily RSI(14)"
   opening_gap: "current session open must be above previous completed session close"
@@ -19,7 +20,7 @@ assumptions:
   execution: next_1m_bar_open
   exit: "target only; target is calculated from the actual buy price and simulator target profile"
   timezone: Asia/Kolkata
-  target_exit_pct: 1.25
+  target_policy: "0.3% same-day target; 1.0% swing target after session close, both measured from original buy price"
   order_authority: false
 owner: backtest-core
 status: reference

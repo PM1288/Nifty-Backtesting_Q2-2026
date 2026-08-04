@@ -540,3 +540,10 @@ failures (`DABUR`, `HEROMOTOCO`, `ICICIPRULI`, `INDUSINDBK`, `MM`, `SWIGGY`,
 `TATAMOTORS -> TMPV-EQ`. A repair run for those seven files is active as of
 2026-08-04; its progress is visible in `catalog.csv_minute_import` and its
 report is `outputs/csv_minute_import_failed_repair_20250804.json`.
+
+## 2026-08-04 Batch backtest
+
+Created `tools/run_daily_rising_oversold_batch.py`: discovers CSV symbols, excludes TMPV, runs the established target-only RSI/Bollinger strategy with two subprocess workers, writes per-symbol artifacts and a consolidated JSON report.
+
+Command launched:
+`nohup .venv/bin/python tools/run_daily_rising_oversold_batch.py --csv-dir /home/novius2/data/nifty-50-minute-data/aaditya555/NIFTY50 --output-dir outputs/daily_rising_oversold_batch_20260804 --start 2015-02-02 --end 2025-08-06 --workers 2 --exclude TMPV --report outputs/daily_rising_oversold_batch_20260804/batch_summary.json`

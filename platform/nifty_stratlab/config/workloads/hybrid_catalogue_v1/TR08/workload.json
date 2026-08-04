@@ -168,7 +168,13 @@
       "TMPV"
     ],
     "timezone": "Asia/Kolkata",
-    "require_complete_qualified_sessions": true
+    "require_complete_qualified_sessions": true,
+    "nifty50_minute_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/NIFTY 50_minute.csv",
+    "nifty50_daily_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/NIFTY 50_day.csv",
+    "india_vix_minute_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/INDIA VIX_minute.csv",
+    "india_vix_daily_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/INDIA VIX_day.csv",
+    "sector_map_table": "public.index_constituents",
+    "breadth_source": "computed point-in-time per minute from available 100-symbol CSV panel"
   },
   "portfolio_scenarios": [
     {
@@ -194,8 +200,10 @@
   },
   "implementation": {
     "reference_manifest": null,
-    "dependency_state": "REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT",
-    "entry_detector_status": "DETECTOR_REQUIRED",
+    "dependency_state": "AVAILABLE_WITH_NIFTY_VIX_AND_SECTOR_PROXY_ASSUMPTIONS",
+    "entry_detector_status": "ASSUMPTION_ENGINE_V1",
+    "assumption_version": "hybrid_narrative_assumptions_v1",
+    "assumption_policy": "Use frozen objective proxies for narrative terms; static current-universe and sector membership are explicitly survivorship-biased.",
     "full_run_authorized": false,
     "probability": "NOT_CALIBRATED"
   }

@@ -4,6 +4,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+from nifty_stratlab.strategies.hybrid_assumption_engine import ASSUMPTION_VERSION, compile_rule
+
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "tools" / "setup_hybrid_catalogue.py"
@@ -33,3 +35,12 @@ def test_every_workload_has_operator_approved_target_only_exit():
         assert exit_contract["indicator_exit"] is None
         assert exit_contract["stop_loss"] is None
         assert "TMPV" not in workload["data"]["symbols"]
+
+
+def test_every_catalogue_strategy_compiles_to_a_versioned_assumption_rule():
+    catalogue = json.loads((ROOT / "config/catalogues/nifty_hybrid_strategy_catalogue_v1.json").read_text())
+    compiled = [compile_rule(strategy) for strategy in catalogue["strategies"]]
+    assert ASSUMPTION_VERSION == "hybrid_narrative_assumptions_v1"
+    assert len(compiled) == 96
+    assert all(rule.assumptions for rule in compiled)
+    assert len({rule.strategy_id for rule in compiled}) == 96

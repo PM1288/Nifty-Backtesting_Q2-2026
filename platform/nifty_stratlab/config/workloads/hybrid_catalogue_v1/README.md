@@ -10,4 +10,6 @@
 
 `workload_index.csv` is the operator index. Every strategy folder contains its immutable `workload.json`. `validation.json` checks catalogue integrity; `smoke_validation.json` checks all generated contracts and the RELIANCE source file.
 
-Important: setup validation is not a completed strategy backtest. Only strategies with a fully implemented point-in-time detector and qualified dependencies may be launched. D2 and D3 strategies require aligned market/sector/VIX or cross-sectional inputs and must fail closed when those inputs are unavailable.
+The operator-authorized assumption engine is `hybrid_narrative_assumptions_v1`. It uses the available NIFTY 50 and India VIX files, static database sector classifications and the current 100-symbol CSV panel. These assumptions are reproducible but introduce survivorship and proxy bias.
+
+Run the real one-symbol smoke with `scripts/strategy_catalogue.sh smoke-run RELIANCE`. The full command requires the explicit `CONFIRM_FULL_HYBRID_RUN=YES` environment gate and must not be invoked until the operator gives the go-ahead.

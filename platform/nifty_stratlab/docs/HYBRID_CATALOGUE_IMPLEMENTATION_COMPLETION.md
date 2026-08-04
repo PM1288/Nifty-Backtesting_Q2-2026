@@ -13,11 +13,15 @@ Date: 2026-08-04
 - Added catalogue hashes, per-strategy hashes, CSV/JSON/HTML/PostgreSQL output requirements and resumable runtime settings.
 - Passed catalogue validation, all 96 RELIANCE source/contract smoke checks, nine existing golden signal/fill fixtures, and the full Strategy Lab test suite.
 
-## Not yet authorized for the ten-year run
+## Assumption-backed execution layer
 
-The source catalogue is descriptive, not a complete executable rule grammar. Only nine strategies currently have reference declarative manifests. The remaining entry detectors must be implemented objectively. D2 strategies require qualified aligned NIFTY, sector and India VIX history; D3 strategies additionally require a synchronized point-in-time cross-sectional panel. The catalogue's stop conditions require these workloads to fail closed rather than substitute guessed rules or future-aware data.
+The source catalogue is descriptive, not a complete executable rule grammar. With operator authorization to make assumptions, `hybrid_narrative_assumptions_v1` converts recognized phrases into frozen objective feature rules. Stock history comes from the 100 CSV files; NIFTY 50 and India VIX history come from the Debashis index files; sectors come from `public.index_constituents`; D3 breadth is computed from the available 100-symbol panel.
 
-Consequently, the 96 worksets are prepared and syntax/contract checked, but `full_run_authorized` remains false. No misleading 96-strategy historical P&L has been generated.
+The assumptions explicitly accept survivorship bias from using the available/current 100-symbol panel, static sector classification, beta=1 residual-return fallback and NIFTY as a missing sector-index proxy. Results from this layer must be labelled assumption-backed and cannot be presented as an unbiased point-in-time constituent study.
+
+The real RELIANCE smoke for 2024-01-01 through 2024-03-31 processed 22,980 bars for all 96 strategies. All detectors and the common target simulator completed successfully; 87 strategies generated at least one signal. Reports exist under `outputs/hybrid_catalogue_v1_reliance_smoke`, one consolidated folder per strategy. Nine strategies generated no RELIANCE signal in the smoke window, which is valid and is not changed after observing the result.
+
+The full runner is ready but retains an explicit operator go-ahead gate. No ten-year/all-symbol job has been started.
 
 ## Commands
 
@@ -26,7 +30,8 @@ cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
 ./scripts/strategy_catalogue.sh validate
 ./scripts/strategy_catalogue.sh setup
 ./scripts/strategy_catalogue.sh smoke RELIANCE
+./scripts/strategy_catalogue.sh smoke-run RELIANCE
 ./scripts/strategy_catalogue.sh status
 ```
 
-The `full` command deliberately exits with status 2 until detector and data gates pass.
+After explicit approval, launch with `CONFIRM_FULL_HYBRID_RUN=YES ./scripts/strategy_catalogue.sh full`.

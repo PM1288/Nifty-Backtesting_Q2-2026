@@ -1,6 +1,6 @@
 {
   "status": "PASS",
-  "validated_at": "2026-08-04T18:00:34.978126+00:00",
+  "validated_at": "2026-08-04T18:22:01.747192+00:00",
   "catalogue_sha256": "10ee48c6f76861653a6b000ec094f0e3029663761afd05f4832ab7d9772c9b56",
   "strategy_count": 96,
   "symbol_count": 100,
@@ -11,5 +11,6 @@
   "date_end": "2025-08-06",
   "common_exit": "0.3% same-session target; if unfilled, 1.0% swing target from original buy price; target-only",
   "reference_manifest_count": 9,
+  "assumption_detector_count": 96,
   "full_run_authorized": false
 }

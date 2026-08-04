@@ -606,3 +606,30 @@ cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
 ```
 
 Results: 96/96 workload contracts passed; RELIANCE source exists for all 96; nine existing reference manifests passed golden next-bar signal/fill checks; full test suite passed 35 tests. The full ten-year run was not launched. Only nine catalogue strategies currently map to existing reference manifests, and D2/D3 strategies require aligned point-in-time market/sector/VIX/cross-sectional inputs. `full_run_authorized` remains false to comply with the source package's fail-closed stop conditions. See `docs/HYBRID_CATALOGUE_IMPLEMENTATION_COMPLETION.md` and `docs/HYBRID_WAVE1_LIMITATIONS.md`.
+
+### Assumption-backed completion after trading-stack review
+
+The operator authorized explicit assumptions for missing/ambiguous rules. Reviewed the authoritative trading-stack source-of-truth, backtesting architecture, intraday intelligence contract, recommendation-engine feature contract, StratLab handoff and live database schema. Located historical files:
+
+- `/home/novius2/data/nifty-50-minute-data/debashis74017/NIFTY 50_minute.csv` — 1,048,738 data rows, 2015-01-09 onward;
+- `/home/novius2/data/nifty-50-minute-data/debashis74017/INDIA VIX_minute.csv` — 1,048,338 data rows, 2015-01-09 onward;
+- daily NIFTY 50 and India VIX histories in the same directory;
+- `public.index_constituents` — 100 rows/99 tokens/17 sectors at inspection;
+- 100 stock CSV files for the synchronized panel.
+
+Added `hybrid_narrative_assumptions_v1`, a deterministic feature builder and narrative-rule compiler. Frozen assumptions include current-panel survivorship bias, static sectors, beta=1 residual proxy, NIFTY proxy for unavailable sector indexes, first signal per symbol/session, 8 bps estimated round-trip same-day costs and 22 bps swing costs. Added the consolidated runner `tools/run_hybrid_catalogue.py`.
+
+Real smoke command:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+./scripts/strategy_catalogue.sh smoke-run RELIANCE
+```
+
+Result: SUCCESS; 22,980 RELIANCE bars, 96/96 detectors executed, 87 produced signals, 96 per-strategy report folders, 1,763 closed smoke trades and 73 open positions across the 96 independent strategy studies. Actual NIFTY 50 and India VIX minute history are aligned into the smoke features. These aggregate trade counts must not be interpreted as one portfolio. Full tests: 36 passed. Shell/Python syntax passed. Full-run gate correctly exits 2 without approval.
+
+Operator-approved full launch command (do not run before explicit go-ahead):
+
+```bash
+CONFIRM_FULL_HYBRID_RUN=YES ./scripts/strategy_catalogue.sh full
+```

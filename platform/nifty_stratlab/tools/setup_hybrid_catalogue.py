@@ -86,9 +86,9 @@ def workload_for(strategy: dict[str, Any], catalogue_hash: str, symbols: list[st
     ref = REFERENCE_MANIFESTS.get(sid)
     tier = strategy["data_tier"]
     dependency_state = {
-        "D1": "STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR",
-        "D2": "REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT",
-        "D3": "REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL",
+        "D1": "AVAILABLE_STOCK_CSV",
+        "D2": "AVAILABLE_WITH_NIFTY_VIX_AND_SECTOR_PROXY_ASSUMPTIONS",
+        "D3": "AVAILABLE_WITH_CURRENT_100_SYMBOL_PANEL_ASSUMPTION",
     }[tier]
     return {
         "workload_schema_version": 1,
@@ -118,6 +118,12 @@ def workload_for(strategy: dict[str, Any], catalogue_hash: str, symbols: list[st
             "excluded_symbols": sorted({x.upper() for x in args.exclude}),
             "timezone": "Asia/Kolkata",
             "require_complete_qualified_sessions": True,
+            "nifty50_minute_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/NIFTY 50_minute.csv",
+            "nifty50_daily_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/NIFTY 50_day.csv",
+            "india_vix_minute_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/INDIA VIX_minute.csv",
+            "india_vix_daily_csv": "/home/novius2/data/nifty-50-minute-data/debashis74017/INDIA VIX_day.csv",
+            "sector_map_table": "public.index_constituents",
+            "breadth_source": "computed point-in-time per minute from available 100-symbol CSV panel",
         },
         "portfolio_scenarios": [
             {"id": "finite_16l_8x2l", "initial_cash_inr": 1_600_000, "ticket_size_inr": 200_000, "max_open_positions": 8},
@@ -127,7 +133,9 @@ def workload_for(strategy: dict[str, Any], catalogue_hash: str, symbols: list[st
         "implementation": {
             "reference_manifest": f"config/strategies/{ref}" if ref else None,
             "dependency_state": dependency_state,
-            "entry_detector_status": "REFERENCE_MANIFEST_AVAILABLE" if ref else "DETECTOR_REQUIRED",
+            "entry_detector_status": "ASSUMPTION_ENGINE_V1",
+            "assumption_version": "hybrid_narrative_assumptions_v1",
+            "assumption_policy": "Use frozen objective proxies for narrative terms; static current-universe and sector membership are explicitly survivorship-biased.",
             "full_run_authorized": False,
             "probability": "NOT_CALIBRATED",
         },
@@ -176,7 +184,8 @@ def write_outputs(catalogue: dict[str, Any], catalogue_path: Path, waves_path: P
         "symbol_count": len(symbols), "excluded_symbols": sorted(excluded),
         "date_start": args.start, "date_end": args.end,
         "common_exit": "0.3% same-session target; if unfilled, 1.0% swing target from original buy price; target-only",
-        "reference_manifest_count": sum(x["entry_detector_status"] == "REFERENCE_MANIFEST_AVAILABLE" for x in index_rows),
+        "reference_manifest_count": len(REFERENCE_MANIFESTS),
+        "assumption_detector_count": sum(x["entry_detector_status"] == "ASSUMPTION_ENGINE_V1" for x in index_rows),
         "full_run_authorized": False,
     }
     (args.output_dir / "validation.json").write_text(json.dumps(validation, indent=2), encoding="utf-8")

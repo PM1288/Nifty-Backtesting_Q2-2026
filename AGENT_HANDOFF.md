@@ -532,3 +532,11 @@ regular-session rows, 658 rejected out-of-session rows, 0 invalid OHLCV rows,
 and 0 duplicate timestamps. Accepted coverage was `2015-02-02 09:15 IST`
 through `2025-08-06 15:29 IST`. Special NSE weekend sessions are deliberately
 retained rather than rejected by weekday.
+
+The initial all-symbol run completed 92 full files and recorded 7 token lookup
+failures (`DABUR`, `HEROMOTOCO`, `ICICIPRULI`, `INDUSINDBK`, `MM`, `SWIGGY`,
+`TATAMOTORS`). The importer was then updated to fall back to
+`public.instruments`, with explicit historical aliases `MM -> M&M-EQ` and
+`TATAMOTORS -> TMPV-EQ`. A repair run for those seven files is active as of
+2026-08-04; its progress is visible in `catalog.csv_minute_import` and its
+report is `outputs/csv_minute_import_failed_repair_20250804.json`.

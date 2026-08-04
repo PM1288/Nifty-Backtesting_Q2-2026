@@ -18,6 +18,7 @@ from nifty_stratlab.features.technical import attach_daily_oversold_setup, compu
 IST = "Asia/Kolkata"
 UTC = "UTC"
 REQUIRED = {"date", "open", "high", "low", "close", "volume"}
+SYMBOL_ALIASES = {"MM": "M&M", "TATAMOTORS": "TMPV"}
 
 
 def arguments() -> argparse.Namespace:
@@ -95,6 +96,7 @@ def load_and_qualify(path: Path, symbol: str, start: date | None, end: date | No
 
 
 def resolve_token(cur, symbol: str) -> str:
+    lookup_symbol = SYMBOL_ALIASES.get(symbol, symbol)
     cur.execute(
         """
         SELECT symbol_token
@@ -104,11 +106,24 @@ def resolve_token(cur, symbol: str) -> str:
         ORDER BY (active_to IS NULL) DESC, active_from DESC NULLS LAST, symbol_token
         LIMIT 1
         """,
-        (symbol,),
+        (lookup_symbol,),
     )
     row = cur.fetchone()
     if not row:
-        raise ValueError(f"no NSE instrument token for {symbol}")
+        cur.execute(
+            """
+            SELECT symbol_token
+            FROM public.instruments
+            WHERE exchange='NSE'
+              AND UPPER(REGEXP_REPLACE(TRIM(tradingsymbol), '-EQ$', ''))=%s
+            ORDER BY updated_at DESC NULLS LAST, symbol_token
+            LIMIT 1
+            """,
+            (lookup_symbol,),
+        )
+        row = cur.fetchone()
+    if not row:
+        raise ValueError(f"no NSE instrument token for {symbol} (lookup={lookup_symbol})")
     return str(row[0])
 
 

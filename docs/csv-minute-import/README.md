@@ -56,6 +56,12 @@ The full command processes files sequentially and resumes by source SHA-256 plus
 requested date range. `--force` recalculates derived rows but still cannot
 overwrite existing raw bars. Each run writes a JSON report under `outputs/`.
 
+Token resolution first uses the active NSE universe and then falls back to
+`public.instruments`, which is required for historical names no longer present
+in the current universe. The explicit compatibility aliases are `MM` to
+`M&M-EQ` and `TATAMOTORS` to `TMPV-EQ`; review those mappings before treating
+post-demerger history as a single economic instrument.
+
 ## Verification
 
 ```sql

@@ -547,3 +547,21 @@ Created `tools/run_daily_rising_oversold_batch.py`: discovers CSV symbols, exclu
 
 Command launched:
 `nohup .venv/bin/python tools/run_daily_rising_oversold_batch.py --csv-dir /home/novius2/data/nifty-50-minute-data/aaditya555/NIFTY50 --output-dir outputs/daily_rising_oversold_batch_20260804 --start 2015-02-02 --end 2025-08-06 --workers 2 --exclude TMPV --report outputs/daily_rising_oversold_batch_20260804/batch_summary.json`
+
+## 2026-08-04 Host PostgreSQL conflict resolved
+
+The host PostgreSQL 16 cluster was listening on port 5432 and conflicted with the Docker stack. It was stopped and disabled (data/package preserved):
+
+```bash
+systemctl stop postgresql@16-main.service postgresql.service
+systemctl disable postgresql@16-main.service postgresql.service
+```
+
+Docker PostgreSQL remains healthy and verified with:
+
+```bash
+docker exec -e PGPASSWORD=CHANGE_ME_POSTGRES_PASSWORD trading-stack-novius2-postgres-1 \
+  psql -U trader -d tradingdb -c 'select current_user,current_database();'
+```
+
+Docker database endpoint: `172.25.0.21:5432` (container network); hostname `postgres` is valid only from the Docker network.

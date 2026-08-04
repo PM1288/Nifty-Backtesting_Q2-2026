@@ -31,7 +31,7 @@ case "$COMMAND" in
     exec "$PYTHON" "$ROOT/tools/run_hybrid_catalogue.py" \
       --catalogue "$CATALOGUE" --csv-dir "$CSV_DIR" \
       --output-dir "$ROOT/outputs/hybrid_catalogue_v1_full" \
-      --start 2015-02-02 --end 2025-08-06 --workers 2 --exclude TMPV
+      --start 2015-02-02 --end 2025-08-06 --workers 4 --exclude TMPV
     ;;
   *)
     echo "Usage: $0 {validate|setup|smoke [SYMBOL]|smoke-run [SYMBOL]|status|full}" >&2

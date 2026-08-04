@@ -633,3 +633,14 @@ Operator-approved full launch command (do not run before explicit go-ahead):
 ```bash
 CONFIRM_FULL_HYBRID_RUN=YES ./scripts/strategy_catalogue.sh full
 ```
+
+## 2026-08-04 — Full 96-strategy run started
+
+Operator gave the go-ahead. Started the full 100-symbol run with four parallel symbol workers; each worker evaluates all 96 strategies sequentially for its symbol:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+CONFIRM_FULL_HYBRID_RUN=YES ./scripts/strategy_catalogue.sh full
+```
+
+Run range is 2015-02-02 through 2025-08-06, excluding TMPV. First two completed symbols were `ADANIGREEN` and `ADANIENSOL`, both with return code 0 and no errors. The process remains active in the terminal session; final consolidated reports are written after all symbols complete under `outputs/hybrid_catalogue_v1_full`.

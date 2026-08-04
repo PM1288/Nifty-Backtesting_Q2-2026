@@ -1,0 +1,4106 @@
+{
+  "catalogue_id": "nifty_hybrid_technical_strategy_catalogue_v1",
+  "version": "1.0",
+  "generated_on": "2026-08-03",
+  "scope": {
+    "market": "NSE cash equities, primarily point-in-time NIFTY 50 constituents",
+    "direction": "Long-only",
+    "horizons": [
+      "intraday",
+      "1-20 sessions"
+    ],
+    "allowed_inputs": [
+      "OHLCV",
+      "technical indicators",
+      "time-of-day/session patterns",
+      "candlestick/price patterns",
+      "NIFTY/sector/VIX-derived technical context"
+    ],
+    "excluded_inputs": [
+      "fundamental forecasts",
+      "broker recommendations",
+      "news sentiment",
+      "opaque machine-learning probability",
+      "unavailable future data"
+    ]
+  },
+  "interpretation": "The catalogue is a pre-registered research library of distinct practical hypotheses. It is not a claim that any strategy is profitable. Numerical permutations are deliberately bounded to reduce data-snooping risk.",
+  "universal_execution_invariants": [
+    "Completed-bar decisions only; no same-bar look-ahead fills.",
+    "Daily context uses the previous completed session unless a true intraday daily feature is explicitly defined.",
+    "Exact effective-dated costs, slippage and impact are included in net P&L.",
+    "Finite-capital portfolio acceptance is separate from theoretical signal generation.",
+    "All runs persist source, code, strategy, feature, universe, calendar, fee and execution hashes.",
+    "Probability remains NOT_CALIBRATED until chronological out-of-sample calibration is accepted.",
+    "Partial/failed data sessions fail closed or are explicitly excluded and reported."
+  ],
+  "noise_guards": {
+    "NG01": {
+      "name": "Data completeness and session integrity",
+      "rule": "No signal when the symbol-session has missing mandatory bars, conflicting duplicates, invalid OHLC, unqualified corporate-action treatment, or a failed source checksum.",
+      "pdiagram": "Data/system noise"
+    },
+    "NG02": {
+      "name": "Point-in-time and warm-up integrity",
+      "rule": "Every daily feature is through D-1; every intraday feature is from completed bars only; multi-timeframe features must be available before the decision and have declared warm-up.",
+      "pdiagram": "Data/system noise"
+    },
+    "NG03": {
+      "name": "Liquidity, cost and capacity hurdle",
+      "rule": "Reject when estimated round-trip charges, slippage and impact consume the configured fraction of expected gross edge, or when volume/turnover cannot support the ticket size.",
+      "pdiagram": "Execution/economics noise"
+    },
+    "NG04": {
+      "name": "Volatility shock and VIX state",
+      "rule": "Use a versioned VIX/ATR shock rule. Mean-reversion entries wait for stabilisation; breakout entries require broader confirmation rather than a single shock bar.",
+      "pdiagram": "External market noise"
+    },
+    "NG05": {
+      "name": "Market regime and breadth alignment",
+      "rule": "Use NIFTY direction, breadth, participation, dispersion and above-VWAP ratios to distinguish trend, range, panic and narrow-leadership states.",
+      "pdiagram": "External market noise"
+    },
+    "NG06": {
+      "name": "Sector alignment",
+      "rule": "Require the stock setup not to conflict materially with its sector trend unless the strategy is explicitly a sector-relative reversal.",
+      "pdiagram": "External market noise"
+    },
+    "NG07": {
+      "name": "Abnormal participation or operator-shock guard",
+      "rule": "When volume, bar range and beta-adjusted residual movement are extreme but market/sector participation is narrow, do not immediately chase or fade; require a stabilisation or retest sequence.",
+      "pdiagram": "Instrument/noise interaction"
+    },
+    "NG08": {
+      "name": "Gap, event and corporate-action guard",
+      "rule": "Classify opening gap magnitude and scheduled/corporate-action context. Treat unadjusted ex-date gaps or unexplained discontinuities as non-tradable data.",
+      "pdiagram": "External/instrument noise"
+    },
+    "NG09": {
+      "name": "Time remaining and forced-exit risk",
+      "rule": "Reject entries that do not leave enough time for the strategy’s historical target-time distribution; use family-specific latest-entry and maximum-hold rules.",
+      "pdiagram": "Time/usage noise"
+    },
+    "NG10": {
+      "name": "Overextension and chase guard",
+      "rule": "Avoid entries after excessive distance from VWAP/EMA/ATR or after multiple same-direction wide-range bars unless the strategy explicitly tests continuation after a retest.",
+      "pdiagram": "Instrument variation"
+    },
+    "NG11": {
+      "name": "Portfolio concentration and correlated exposure",
+      "rule": "Apply total cash, maximum positions, sector limits, correlated-signal limits and deterministic signal ranking before a theoretical signal becomes an accepted trade.",
+      "pdiagram": "Control factor / position risk"
+    },
+    "NG12": {
+      "name": "Indicator redundancy and disagreement",
+      "rule": "Do not count several oscillators derived from the same price path as independent evidence. Require at least one orthogonal confirmation such as volume, level, time or market state.",
+      "pdiagram": "Model/system noise"
+    },
+    "NG13": {
+      "name": "Intrabar ambiguity and fill feasibility",
+      "rule": "Where stop and target coexist inside one bar, use tick data or conservative stop-first handling; record target touch separately from executable fill.",
+      "pdiagram": "Execution/economics noise"
+    },
+    "NG14": {
+      "name": "Historical/live feature parity",
+      "rule": "The same feature version must produce equivalent values in batch replay and online calculation within declared tolerance.",
+      "pdiagram": "System noise"
+    }
+  },
+  "exit_packages": {
+    "EX01": {
+      "name": "Indicator reversal + ATR stop + time stop",
+      "rule": "Exit on the strategy’s reversal condition, initial stop 0.75–1.25 ATR, maximum hold 90/120/135 minutes, and mandatory intraday close."
+    },
+    "EX02": {
+      "name": "Executable net target + signal failure",
+      "rule": "Exit at first executable price meeting the configured net target, or on setup failure, ATR stop, maximum hold, or mandatory close. Preserve target-touch and target-fill separately."
+    },
+    "EX03": {
+      "name": "Breakout failure + ATR trail",
+      "rule": "Exit on close back inside the broken range or below VWAP, plus initial ATR stop and optional chandelier/ATR trail; mandatory intraday close."
+    },
+    "EX04": {
+      "name": "VWAP/EMA loss + time stop",
+      "rule": "Exit when price loses the controlling VWAP/EMA on a completed bar, or at ATR stop, maximum hold, or mandatory close."
+    },
+    "EX05": {
+      "name": "Swing ATR trail + time horizon",
+      "rule": "Exit on 2–3 ATR trailing stop, trend failure, target multiple, or maximum 5/10/20-session holding horizon; calculate delivery costs and overnight gap risk."
+    },
+    "EX06": {
+      "name": "Time-pattern close",
+      "rule": "Enter only in the specified session window and exit at the defined later window or earlier risk failure. No overnight carry unless a separate swing version exists."
+    }
+  },
+  "data_tiers": {
+    "D1": "Qualified stock OHLCV only; generally ten-year compatible after source qualification.",
+    "D2": "Stock plus aligned NIFTY/sector/VIX OHLCV; ten-year compatible subject to timestamp and constituent mapping.",
+    "D3": "Synchronized cross-sectional panel/breadth/volume-profile features; requires full panel assembly and point-in-time universe."
+  },
+  "evidence_grades": {
+    "A1": "Directly aligned with a well-established empirical research family; transfer to Indian intraday equities still requires validation.",
+    "A2": "Uses research-supported components or market-microstructure findings in a practical hybrid.",
+    "B1": "Widely used practitioner rule with plausible mechanics and some/mixed empirical support.",
+    "C1": "Candlestick or geometric pattern with mixed evidence; never test or deploy as a standalone signal.",
+    "CONTROL": "Engine/economic control, not an alpha claim."
+  },
+  "recommended_test_design": {
+    "wave_1": "24 high-priority controls and strategies; synthetic/golden -> five-stock pilot -> one-year point-in-time universe.",
+    "wave_2": "36 additional mature strategies after Wave 1 engine, comparison and UI acceptance.",
+    "wave_3": "36 extended or more geometry/pattern-sensitive strategies after walk-forward governance is proven.",
+    "three_views_per_strategy": [
+      "Common-exit signal study for comparable entry quality",
+      "Native strategy exit study",
+      "Finite-capital portfolio replay"
+    ]
+  },
+  "strategies": [
+    {
+      "strategy_id": "CTL01",
+      "display_name": "Fixed-Time 10:00–15:00 Control",
+      "family": "Control",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "CONTROL",
+      "data_tier": "D1",
+      "context_filter": "Qualified symbol-session; no alpha filter.",
+      "setup_and_trigger": "Generate one buy intent at the first completed bar ending at 10:00.",
+      "confirmation": "None; this is an execution and cost control.",
+      "entry_window": "10:00 only",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX06",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG09",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "entry_time": [
+          "10:00"
+        ],
+        "exit_time": [
+          "15:00"
+        ]
+      },
+      "primary_error_state": "Execution or accounting mismatch",
+      "test_wave": 1,
+      "implementation_notes": "Never promote as an alpha strategy; always include in comparisons."
+    },
+    {
+      "strategy_id": "CTL02",
+      "display_name": "Open-to-Close Long Control",
+      "family": "Control",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "CONTROL",
+      "data_tier": "D1",
+      "context_filter": "Qualified symbol-session and point-in-time universe membership.",
+      "setup_and_trigger": "Enter at the first executable bar after the opening bar; exit at the standard close decision.",
+      "confirmation": "None; measures ordinary open-to-close drift and costs.",
+      "entry_window": "09:16–09:20",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX06",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG08",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "entry_time": [
+          "09:16",
+          "09:20"
+        ],
+        "exit_time": [
+          "15:15"
+        ]
+      },
+      "primary_error_state": "Market drift mistaken for strategy alpha",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CTL03",
+      "display_name": "Simple VWAP Reclaim Baseline",
+      "family": "Control",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "No daily trend filter; qualified data only.",
+      "setup_and_trigger": "Buy when close crosses from below to above session VWAP.",
+      "confirmation": "One green bar; no volume or market filter.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "latest_entry": [
+          "12:30",
+          "13:30"
+        ],
+        "stop_atr": [
+          0.75,
+          1.0
+        ]
+      },
+      "primary_error_state": "Repeated VWAP whipsaw",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CTL04",
+      "display_name": "RSI15 / Previous Daily RSI40 Baseline",
+      "family": "Control",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Previous completed daily RSI(14) > 40.",
+      "setup_and_trigger": "First completed 1-minute RSI(14) < 15.",
+      "confirmation": "No candle, volume or market confirmation.",
+      "entry_window": "09:15–14:45",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG09",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "entry_rsi": [
+          15
+        ],
+        "exit_rsi": [
+          70
+        ],
+        "latest_entry": [
+          "14:45"
+        ]
+      },
+      "primary_error_state": "Unresolved oversold trade forced out late",
+      "test_wave": 1,
+      "implementation_notes": "Regression baseline from the existing platform; retain unchanged."
+    },
+    {
+      "strategy_id": "CTL05",
+      "display_name": "Simple EMA9/21 Cross Baseline",
+      "family": "Control",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Qualified symbol-session only.",
+      "setup_and_trigger": "EMA9 crosses above EMA21 on a completed 1-minute bar.",
+      "confirmation": "None; no VWAP, volume or market filter.",
+      "entry_window": "09:30–14:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "fast_ema": [
+          9
+        ],
+        "slow_ema": [
+          21
+        ],
+        "latest_entry": [
+          "13:00",
+          "14:00"
+        ]
+      },
+      "primary_error_state": "Whipsaw in range regime",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CTL06",
+      "display_name": "Simple 15-Minute Opening-Range Breakout Baseline",
+      "family": "Control",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Qualified complete opening range from 09:15 through 09:29.",
+      "setup_and_trigger": "Buy first completed bar closing above opening-range high.",
+      "confirmation": "None; no volume, breadth or VWAP confirmation.",
+      "entry_window": "09:30–14:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "opening_range_minutes": [
+          15
+        ],
+        "buffer_bps": [
+          0,
+          5
+        ]
+      },
+      "primary_error_state": "False breakout and immediate range re-entry",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR01",
+      "display_name": "Deep RSI Reversal with Early-Time Gate",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Previous daily RSI > 40 and price above daily EMA50; no new entry after midday.",
+      "setup_and_trigger": "1-minute RSI falls below deep threshold and then closes higher than previous bar.",
+      "confirmation": "Lower wick >= body and volume not collapsing.",
+      "entry_window": "09:20–12:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "rsi_threshold": [
+          5,
+          7.5,
+          10,
+          12.5
+        ],
+        "latest_entry": [
+          "10:00",
+          "11:00",
+          "12:00"
+        ],
+        "max_hold_min": [
+          90,
+          120,
+          135
+        ]
+      },
+      "primary_error_state": "Catching a persistent sell-off rather than exhaustion",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR02",
+      "display_name": "RSI + Williams %R Recovery",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Previous daily trend non-bearish; ADX below trend threshold or falling.",
+      "setup_and_trigger": "RSI crosses above 30 after being below 30 AND Williams %R crosses above -80.",
+      "confirmation": "Current candle closes green and above prior close.",
+      "entry_window": "09:30–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "rsi_reclaim": [
+          25,
+          30
+        ],
+        "willr_reclaim": [
+          -85,
+          -80
+        ],
+        "adx_max": [
+          20,
+          25
+        ]
+      },
+      "primary_error_state": "Late confirmation after most rebound is exhausted",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR03",
+      "display_name": "Lower Bollinger Re-entry + RSI",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Daily price not below a falling EMA50; intraday volatility not in panic state.",
+      "setup_and_trigger": "Price closes below lower Bollinger Band then closes back inside while RSI < 35.",
+      "confirmation": "Re-entry candle closes in upper half of its range.",
+      "entry_window": "09:30–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "bb_period": [
+          20
+        ],
+        "bb_std": [
+          2.0,
+          2.5
+        ],
+        "rsi_max": [
+          30,
+          35
+        ]
+      },
+      "primary_error_state": "Band walk during a strong downtrend",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR04",
+      "display_name": "Stochastic Recovery in Low-ADX Regime",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "ADX(14) < 20/25 and price inside previous day range.",
+      "setup_and_trigger": "%K crosses above %D while both are below 20; price remains near lower session quartile.",
+      "confirmation": "No fresh session low on confirmation bar.",
+      "entry_window": "09:30–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG09",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "stoch_period": [
+          14
+        ],
+        "smooth": [
+          3
+        ],
+        "adx_max": [
+          20,
+          25
+        ]
+      },
+      "primary_error_state": "Oscillator remains oversold in a trend day",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR05",
+      "display_name": "CCI Extreme + VWAP Reclaim",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Market breadth stable or improving; stock not under event/corporate-action discontinuity.",
+      "setup_and_trigger": "CCI(20) was below -150/-200 and crosses above -100 while price reclaims VWAP.",
+      "confirmation": "Volume ratio >= 0.8 and bar close-location >= 60%.",
+      "entry_window": "09:45–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG07",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "cci_extreme": [
+          -150,
+          -200
+        ],
+        "cci_reclaim": [
+          -100
+        ],
+        "volume_ratio_min": [
+          0.8,
+          1.0
+        ]
+      },
+      "primary_error_state": "VWAP reclaim fails under persistent distribution",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR06",
+      "display_name": "Opening Flush + Hammer + Volume Climax",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Opening decline exceeds 1 ATR fraction but NIFTY/sector decline is materially smaller.",
+      "setup_and_trigger": "A hammer/pin bar forms near the first 30-minute low after volume climax.",
+      "confirmation": "Next completed bar breaks hammer high; residual return stops making new lows.",
+      "entry_window": "09:20–10:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG08",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "flush_atr": [
+          0.75,
+          1.0,
+          1.25
+        ],
+        "volume_ratio_min": [
+          2.0,
+          3.0
+        ],
+        "wick_body_min": [
+          2.0,
+          3.0
+        ]
+      },
+      "primary_error_state": "Operator shock continues after the first reversal candle",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR07",
+      "display_name": "Gap-Down Fade with Opening-Range Reclaim",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Opening gap down is 0.5–2.0 ATR, not caused by unadjusted corporate action; market not in broad panic.",
+      "setup_and_trigger": "Price reclaims opening-range low and then VWAP after failing to extend the gap.",
+      "confirmation": "Bullish close and improving sector relative return.",
+      "entry_window": "09:30–11:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG06",
+        "NG08",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "gap_atr_min": [
+          0.5
+        ],
+        "gap_atr_max": [
+          1.5,
+          2.0
+        ],
+        "opening_range_minutes": [
+          15,
+          30
+        ]
+      },
+      "primary_error_state": "Gap reflects genuine information and never mean-reverts",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR08",
+      "display_name": "Previous-Day Low Sweep and Reclaim",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Previous day low is valid and adjusted; daily trend flat-to-up.",
+      "setup_and_trigger": "Intraday low trades below previous-day low, but completed bar closes back above it.",
+      "confirmation": "Lower wick/body >= 2 and RSI turns upward from below 35.",
+      "entry_window": "09:30–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG08",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "sweep_buffer_bps": [
+          0,
+          10,
+          20
+        ],
+        "rsi_max": [
+          30,
+          35
+        ],
+        "wick_body_min": [
+          2,
+          3
+        ]
+      },
+      "primary_error_state": "True breakdown misclassified as a liquidity sweep",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR09",
+      "display_name": "20-Day Low False Breakdown + Engulfing",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Daily close is within 3% of prior 20-day low; no corporate-action distortion.",
+      "setup_and_trigger": "Price undercuts the prior 20-day low intraday and closes back above it with bullish engulfing.",
+      "confirmation": "Volume >= 1.5x 20-day average or delivery/turnover confirmation where available.",
+      "entry_window": "Daily close / next session open",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG08",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "lookback_days": [
+          20,
+          50
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ],
+        "max_hold_days": [
+          5,
+          10
+        ]
+      },
+      "primary_error_state": "Structural deterioration near a genuine breakdown",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR10",
+      "display_name": "Beta-Adjusted Residual Shock Reversion",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "NIFTY and sector are stable; stock has sufficient beta observations.",
+      "setup_and_trigger": "15-minute residual return falls below -2/-3 rolling standard deviations, then stops making new lows.",
+      "confirmation": "VWAP deviation narrows and volume shock decays for two bars.",
+      "entry_window": "09:45–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "residual_z": [
+          -2,
+          -2.5,
+          -3
+        ],
+        "stabilisation_bars": [
+          2,
+          3
+        ],
+        "latest_entry": [
+          "12:00",
+          "13:00"
+        ]
+      },
+      "primary_error_state": "Idiosyncratic news drives a permanent repricing",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR11",
+      "display_name": "Sector-Relative Oversold Reversal",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Sector index remains above VWAP or flat while the stock materially underperforms.",
+      "setup_and_trigger": "Stock RSI < 20 and residual return versus sector reaches extreme, followed by bullish reversal bar.",
+      "confirmation": "Stock reclaims short EMA or VWAP; sector does not deteriorate.",
+      "entry_window": "09:45–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "rsi_max": [
+          15,
+          20
+        ],
+        "sector_residual_z": [
+          -2,
+          -2.5
+        ],
+        "reclaim": [
+          "EMA9",
+          "VWAP"
+        ]
+      },
+      "primary_error_state": "Stock-specific adverse information overwhelms sector support",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR12",
+      "display_name": "Consecutive Red Bars + Volume Exhaustion",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "No broad-market panic; price is not more than 2 ATR below VWAP.",
+      "setup_and_trigger": "Three to five consecutive red bars occur while volume stops increasing; then a bullish bar closes above prior high.",
+      "confirmation": "RSI divergence or rising close-location quality.",
+      "entry_window": "09:30–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "red_bars": [
+          3,
+          4,
+          5
+        ],
+        "volume_pattern": [
+          "DECLINING",
+          "CLIMAX_THEN_DECAY"
+        ],
+        "rsi_divergence": [
+          false,
+          true
+        ]
+      },
+      "primary_error_state": "Continuation sell-off after a deceptive pause",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR13",
+      "display_name": "Intraday Double Bottom + RSI Divergence",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Two lows separated by 10–90 minutes; second low within 0.25 ATR of first.",
+      "setup_and_trigger": "Second price low is equal/lower while RSI low is higher; buy on neckline break.",
+      "confirmation": "Volume on second low <= first-low volume or strong neckline breakout volume.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "low_tolerance_atr": [
+          0.15,
+          0.25,
+          0.35
+        ],
+        "separation_min": [
+          10,
+          20
+        ],
+        "max_separation_min": [
+          60,
+          90
+        ]
+      },
+      "primary_error_state": "Subjective or noisy double-bottom detection",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "MR14",
+      "display_name": "Failed Opening-Range Breakdown + VWAP Reclaim",
+      "family": "Mean reversion",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Opening range complete; market breadth not collapsing.",
+      "setup_and_trigger": "Price closes below opening-range low, returns inside range within three bars, then reclaims VWAP.",
+      "confirmation": "Volume spike on failure followed by improving close location.",
+      "entry_window": "09:30–12:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG07",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "opening_range_minutes": [
+          15,
+          30
+        ],
+        "failure_bars_max": [
+          2,
+          3
+        ],
+        "volume_ratio_min": [
+          1.5,
+          2.0
+        ]
+      },
+      "primary_error_state": "Breakdown resumes after a temporary short-covering bounce",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR01",
+      "display_name": "EMA9/21 Cross + VWAP + Volume",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Previous daily close above EMA20/50; market not in panic reversal.",
+      "setup_and_trigger": "EMA9 crosses above EMA21 and close is above VWAP.",
+      "confirmation": "Minute volume ratio >= 1.0/1.5 and bar close-location >= 60%.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "fast_ema": [
+          9,
+          12
+        ],
+        "slow_ema": [
+          21,
+          26
+        ],
+        "volume_ratio_min": [
+          1.0,
+          1.5
+        ]
+      },
+      "primary_error_state": "Whipsaw after late trend signal",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR02",
+      "display_name": "EMA20 Pullback + Hammer in Daily Uptrend",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "D-1 close > EMA20 > EMA50 and EMA20 slope positive.",
+      "setup_and_trigger": "Intraday pullback touches EMA20 or VWAP without breaking session structure; hammer/pin bar forms.",
+      "confirmation": "Buy on break of reversal candle high; RSI between 40 and 60.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG09",
+        "NG10",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "touch_tolerance_bps": [
+          5,
+          10,
+          20
+        ],
+        "rsi_band": [
+          [
+            40,
+            60
+          ],
+          [
+            45,
+            65
+          ]
+        ],
+        "latest_entry": [
+          "13:00",
+          "13:30"
+        ]
+      },
+      "primary_error_state": "Pullback becomes trend reversal",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR03",
+      "display_name": "MACD Histogram Zero Cross + VWAP + Market",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "Daily EMA20 > EMA50; NIFTY 15-minute return non-negative.",
+      "setup_and_trigger": "MACD histogram crosses above zero while close > VWAP.",
+      "confirmation": "Sector return non-negative and volume ratio >= 1.0.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG09",
+        "NG12",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "macd_fast": [
+          12
+        ],
+        "macd_slow": [
+          26
+        ],
+        "macd_signal": [
+          9
+        ],
+        "market_return_min": [
+          0
+        ]
+      },
+      "primary_error_state": "Market or sector reversal invalidates stock momentum",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR04",
+      "display_name": "ADX/DI Trend Ignition + High Close Location",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "ADX has been below 20 and begins rising; no extreme gap chase.",
+      "setup_and_trigger": "+DI crosses above -DI with ADX crossing above 20/25.",
+      "confirmation": "Close above VWAP and bar close-location >= 75%.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG09",
+        "NG10",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "adx_trigger": [
+          20,
+          25
+        ],
+        "close_location_min": [
+          70,
+          80
+        ],
+        "atr_stop": [
+          1.0,
+          1.25
+        ]
+      },
+      "primary_error_state": "False ADX expansion during a one-bar shock",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR05",
+      "display_name": "ATR Supertrend Flip + Daily Trend Filter",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "D-1 close above EMA50 and daily ATR not extreme.",
+      "setup_and_trigger": "Versioned Supertrend flips bullish on completed bar.",
+      "confirmation": "Close > VWAP and no overextension above 1.5 ATR from VWAP.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG09",
+        "NG10",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "atr_period": [
+          10,
+          14
+        ],
+        "multiplier": [
+          2,
+          3
+        ],
+        "max_vwap_distance_atr": [
+          1.0,
+          1.5
+        ]
+      },
+      "primary_error_state": "Repeated flip in noisy range",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR06",
+      "display_name": "EMA Ribbon Compression and Expansion",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "EMA9/13/21 ribbon width is in lowest rolling percentile.",
+      "setup_and_trigger": "Ribbon expands upward with ordered EMAs and price closes above compression high.",
+      "confirmation": "Volume ratio >= 1.3 and VWAP below price.",
+      "entry_window": "09:45–14:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "emas": [
+          [
+            9,
+            13,
+            21
+          ],
+          [
+            8,
+            21,
+            34
+          ]
+        ],
+        "compression_percentile": [
+          10,
+          20
+        ],
+        "volume_ratio_min": [
+          1.3,
+          1.5
+        ]
+      },
+      "primary_error_state": "Compression resolves without follow-through",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR07",
+      "display_name": "VWAP Pullback Continuation + Residual Strength",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "D-1 EMA20 > EMA50; stock has positive 15-minute beta-adjusted residual return.",
+      "setup_and_trigger": "Price pulls below/touches VWAP and closes back above it.",
+      "confirmation": "Residual return remains positive; volume ratio >= 1; sector aligned.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG09",
+        "NG10",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "residual_min_pct": [
+          0,
+          0.2,
+          0.3
+        ],
+        "volume_ratio_min": [
+          1.0,
+          1.3
+        ],
+        "reclaim_bars_max": [
+          1,
+          2
+        ]
+      },
+      "primary_error_state": "VWAP reclaim is only a temporary bounce",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR08",
+      "display_name": "First Pullback after Opening-Range Breakout",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Valid ORB breakout with volume and breadth confirmation already occurred.",
+      "setup_and_trigger": "First pullback holds OR high or VWAP and forms higher low.",
+      "confirmation": "Bullish candle breaks pullback high; no more than one prior failed retest.",
+      "entry_window": "09:40–12:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "opening_range_minutes": [
+          15,
+          30
+        ],
+        "retest_tolerance_bps": [
+          5,
+          15
+        ],
+        "max_retests": [
+          1
+        ]
+      },
+      "primary_error_state": "Breakout exhaustion after first push",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR09",
+      "display_name": "Three-Bar Higher-High/Higher-Low + Volume",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Price above VWAP and EMA21; not overextended.",
+      "setup_and_trigger": "Three consecutive bars form higher highs and higher lows.",
+      "confirmation": "Cumulative volume vs profile >= 1 and final bar close-location >= 70%.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10"
+      ],
+      "parameter_grid": {
+        "bars": [
+          3,
+          4
+        ],
+        "close_location_min": [
+          70,
+          80
+        ],
+        "max_vwap_distance_atr": [
+          1,
+          1.5
+        ]
+      },
+      "primary_error_state": "Late chase after short-term exhaustion",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR10",
+      "display_name": "15-Minute Trend + 1-Minute Pullback Trigger",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "15-minute EMA9 > EMA21, MACD histogram positive and price above 15-minute VWAP proxy.",
+      "setup_and_trigger": "On 1-minute bars RSI resets to 40–50 and then crosses upward.",
+      "confirmation": "1-minute close reclaims EMA9 with green candle.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG09",
+        "NG10",
+        "NG12",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "confirm_interval": [
+          "15m"
+        ],
+        "rsi_reset_band": [
+          [
+            35,
+            50
+          ],
+          [
+            40,
+            55
+          ]
+        ],
+        "trigger_ema": [
+          9
+        ]
+      },
+      "primary_error_state": "Multi-timeframe lag causes late entry",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR11",
+      "display_name": "Daily Trend + Intraday Stochastic Reset",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "D-1 close > EMA20 > EMA50; daily RSI 50–70.",
+      "setup_and_trigger": "Intraday stochastic falls below 30 and crosses upward while price remains above VWAP.",
+      "confirmation": "No break of opening-range low; sector positive.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX01",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG09",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "stoch_reset_max": [
+          20,
+          30
+        ],
+        "daily_rsi_band": [
+          [
+            50,
+            70
+          ]
+        ],
+        "latest_entry": [
+          "13:00",
+          "13:30"
+        ]
+      },
+      "primary_error_state": "Reset becomes full trend failure",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR12",
+      "display_name": "Session-Anchored VWAP Reclaim + Trend",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Morning trend produced a higher high; price later trades below anchored VWAP from session open or breakout bar.",
+      "setup_and_trigger": "Price crosses back above anchored VWAP.",
+      "confirmation": "EMA9 > EMA21 and volume returns above profile.",
+      "entry_window": "10:00–14:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "anchor": [
+          "SESSION_OPEN",
+          "BREAKOUT_BAR"
+        ],
+        "volume_ratio_min": [
+          1,
+          1.3
+        ]
+      },
+      "primary_error_state": "Anchor selection creates look-ahead or discretionary bias",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR13",
+      "display_name": "Relative-Strength Persistence + Low VWAP Cross Count",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "Relative-strength persistence score high and stock spends >= 70% of time above VWAP.",
+      "setup_and_trigger": "Fresh 15-minute residual return high with no more than two VWAP crosses.",
+      "confirmation": "Break of recent 15-minute high on acceptable volume.",
+      "entry_window": "10:00–14:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "rs_persistence_min": [
+          60,
+          70,
+          80
+        ],
+        "time_above_vwap_min": [
+          60,
+          70,
+          80
+        ],
+        "vwap_cross_max": [
+          1,
+          2
+        ]
+      },
+      "primary_error_state": "Narrow leadership reverses abruptly",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TR14",
+      "display_name": "Inside-Bar Continuation in Established Trend",
+      "family": "Trend continuation",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "EMA20 > EMA50 and parent bar closes above VWAP/daily midpoint.",
+      "setup_and_trigger": "Inside bar forms after a directional move; buy above inside-bar high.",
+      "confirmation": "Volume contracts inside and expands on breakout.",
+      "entry_window": "Intraday 09:45–14:00 or next-day open",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "inside_bar_count": [
+          1,
+          2
+        ],
+        "breakout_buffer_bps": [
+          0,
+          5,
+          10
+        ],
+        "volume_expansion_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Inside-bar breakout fails in exhausted trend",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO01",
+      "display_name": "15-Minute ORB + Volume + VWAP",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Complete 09:15–09:29 opening range; range width not extreme.",
+      "setup_and_trigger": "Close crosses above OR high and remains above VWAP.",
+      "confirmation": "Minute volume ratio >= 1.5 and close-location >= 70%.",
+      "entry_window": "09:30–12:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "opening_range_minutes": [
+          15
+        ],
+        "volume_ratio_min": [
+          1.3,
+          1.5,
+          2.0
+        ],
+        "buffer_bps": [
+          0,
+          5,
+          10
+        ]
+      },
+      "primary_error_state": "False breakout in a range day",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO02",
+      "display_name": "30-Minute ORB + Breadth Confirmation",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D3",
+      "context_filter": "Complete 30-minute range; NIFTY breadth above VWAP >= 55%.",
+      "setup_and_trigger": "Stock closes above OR high.",
+      "confirmation": "Sector positive, weighted participation broad and top-10 concentration not excessive.",
+      "entry_window": "09:45–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "opening_range_minutes": [
+          30
+        ],
+        "breadth_min": [
+          50,
+          55,
+          60
+        ],
+        "participation_min": [
+          50,
+          60
+        ]
+      },
+      "primary_error_state": "Index headline strength driven by narrow leadership",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO03",
+      "display_name": "Previous-Day High Breakout + VWAP",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "D-1 range and high adjusted; current open not more than 1 ATR above prior close.",
+      "setup_and_trigger": "Close crosses above previous-day high.",
+      "confirmation": "Price above VWAP and volume ratio >= 1.3.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG08",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "buffer_bps": [
+          0,
+          5,
+          10
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ],
+        "gap_atr_max": [
+          1.0
+        ]
+      },
+      "primary_error_state": "Breakout is already priced in by opening gap",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO04",
+      "display_name": "First-Hour High Breakout + Volume-Curve Surprise",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D3",
+      "context_filter": "First hour complete and range width below 1.5 ATR.",
+      "setup_and_trigger": "Price closes above first-hour high.",
+      "confirmation": "Cumulative volume vs profile and volume-curve surprise positive; breadth supportive.",
+      "entry_window": "10:15–14:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG07",
+        "NG09",
+        "NG10"
+      ],
+      "parameter_grid": {
+        "range_minutes": [
+          60
+        ],
+        "cum_volume_profile_min": [
+          1.0,
+          1.2
+        ],
+        "volume_surprise_min": [
+          0,
+          0.5
+        ]
+      },
+      "primary_error_state": "Late breakout after morning inventory exhaustion",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO05",
+      "display_name": "NR7 Daily Compression + Intraday Breakout",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "D-1 is narrowest daily range of prior seven sessions; no unadjusted event gap.",
+      "setup_and_trigger": "Current price breaks D-1 high or first 30-minute high.",
+      "confirmation": "Volume >= 1.5x profile and close-location >= 75%.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG08",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "nr_lookback": [
+          4,
+          7
+        ],
+        "break_level": [
+          "D1_HIGH",
+          "OR30_HIGH"
+        ],
+        "volume_ratio_min": [
+          1.3,
+          1.5
+        ]
+      },
+      "primary_error_state": "Compression resolves downward after false upside break",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO06",
+      "display_name": "Inside-Day High Breakout",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "D-1 high < D-2 high and D-1 low > D-2 low; broader trend non-bearish.",
+      "setup_and_trigger": "Break above inside-day high.",
+      "confirmation": "Volume expansion and daily/sector trend alignment.",
+      "entry_window": "Intraday or next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG08",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "breakout_buffer_bps": [
+          0,
+          10,
+          20
+        ],
+        "trend_filter": [
+          "EMA20_GT_EMA50",
+          "CLOSE_GT_EMA50"
+        ]
+      },
+      "primary_error_state": "Inside-day noise without true expansion",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO07",
+      "display_name": "Bollinger Squeeze + Upper-Band Breakout",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Bollinger bandwidth in lowest 10–20th percentile of lookback.",
+      "setup_and_trigger": "Close above upper band and compression high.",
+      "confirmation": "Volume expansion and ADX rising from low base.",
+      "entry_window": "09:45–14:00 or daily close",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "bb_period": [
+          20
+        ],
+        "bandwidth_percentile": [
+          10,
+          20
+        ],
+        "adx_rise": [
+          true
+        ],
+        "volume_ratio_min": [
+          1.3,
+          1.5
+        ]
+      },
+      "primary_error_state": "Volatility expansion is a one-bar spike",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO08",
+      "display_name": "Bollinger-inside-Keltner Squeeze Release",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Bollinger Bands lie inside Keltner Channels for configured bars.",
+      "setup_and_trigger": "Close breaks squeeze high with momentum above zero.",
+      "confirmation": "Volume expansion and market/sector alignment.",
+      "entry_window": "09:45–14:00 or daily close",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG10",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "squeeze_bars": [
+          3,
+          5,
+          8
+        ],
+        "bb_std": [
+          2.0
+        ],
+        "kc_atr_mult": [
+          1.5,
+          2.0
+        ]
+      },
+      "primary_error_state": "Indicator parameter overlap creates overfit squeeze",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO09",
+      "display_name": "Donchian 20-Day High Breakout",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "A1",
+      "data_tier": "D1",
+      "context_filter": "Qualified adjusted daily bars; price within 5% of prior 20-day high.",
+      "setup_and_trigger": "Close exceeds prior 20-day high; enter next session.",
+      "confirmation": "Volume >= 1.2x 20-day average and sector trend positive.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG08",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "lookback_days": [
+          20,
+          55
+        ],
+        "volume_ratio_min": [
+          1.0,
+          1.2,
+          1.5
+        ],
+        "atr_trail": [
+          2,
+          3
+        ]
+      },
+      "primary_error_state": "Breakout reverses after crowding",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO10",
+      "display_name": "52-Week High Breakout + Volume",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "A1",
+      "data_tier": "D1",
+      "context_filter": "Price is within 2–5% of adjusted 52-week high and medium-term trend positive.",
+      "setup_and_trigger": "Close exceeds adjusted 52-week high.",
+      "confirmation": "Volume/turnover expansion and sector momentum positive.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG08",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "proximity_pct": [
+          2,
+          5
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ],
+        "max_hold_days": [
+          10,
+          20
+        ]
+      },
+      "primary_error_state": "Breakout from a euphoric late-stage move",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO11",
+      "display_name": "Three-Day Volatility Contraction + Wide-Range Break",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Daily true range contracts for three sessions and volume does not expand.",
+      "setup_and_trigger": "Current bar breaks contraction high with range > 1.5x recent median.",
+      "confirmation": "Strong close location and volume expansion.",
+      "entry_window": "Daily or intraday trigger",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "contraction_days": [
+          3,
+          4,
+          5
+        ],
+        "range_expansion_mult": [
+          1.5,
+          2.0
+        ],
+        "volume_ratio_min": [
+          1.3,
+          1.5
+        ]
+      },
+      "primary_error_state": "Wide-range bar is exhaustion rather than initiation",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO12",
+      "display_name": "Weekly High Breakout + Sector Alignment",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "Weekly trend positive and sector index at/above its 20-day high.",
+      "setup_and_trigger": "Stock closes above prior 5/10-session high.",
+      "confirmation": "Relative-strength rank top quartile and volume expansion.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG08",
+        "NG11",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "lookback_days": [
+          5,
+          10,
+          20
+        ],
+        "rs_rank_percentile": [
+          70,
+          80
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Sector breakout fails and drags stock lower",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO13",
+      "display_name": "Bull Flag Breakout + Volume Dry-Up/Expansion",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Prior impulse >= 1.5 ATR followed by 3–8 bars of shallow downward/sideways flag.",
+      "setup_and_trigger": "Break above flag upper boundary.",
+      "confirmation": "Flag volume contracts; breakout volume expands >= 1.5x.",
+      "entry_window": "09:45–14:00 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "impulse_atr_min": [
+          1.5,
+          2.0
+        ],
+        "flag_bars": [
+          3,
+          5,
+          8
+        ],
+        "retracement_max": [
+          0.38,
+          0.5
+        ]
+      },
+      "primary_error_state": "Pattern detector fits arbitrary trend lines",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "BO14",
+      "display_name": "Ascending Triangle Breakout",
+      "family": "Breakout",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "At least two resistance touches within tolerance and rising swing lows.",
+      "setup_and_trigger": "Close above horizontal resistance.",
+      "confirmation": "Volume expands and breakout closes in upper quartile.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG10",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "touches_min": [
+          2,
+          3
+        ],
+        "resistance_tolerance_pct": [
+          0.3,
+          0.5
+        ],
+        "lookback_days": [
+          20,
+          40
+        ]
+      },
+      "primary_error_state": "Subjective geometry and false horizontal level",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD01",
+      "display_name": "First-Half-Hour to Last-Half-Hour Momentum",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A1",
+      "data_tier": "D2",
+      "context_filter": "First 30-minute NIFTY return has stable sign and market breadth agrees.",
+      "setup_and_trigger": "At 14:45, buy stocks with same-direction residual strength and price above VWAP when morning return was positive.",
+      "confirmation": "Last pre-close 30-minute return not already overextended; liquidity adequate.",
+      "entry_window": "14:45–15:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX06",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG06",
+        "NG09",
+        "NG10",
+        "NG13",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "morning_window_min": [
+          30
+        ],
+        "late_entry": [
+          "14:45"
+        ],
+        "morning_return_min_pct": [
+          0.2,
+          0.3
+        ]
+      },
+      "primary_error_state": "Morning information reverses before close",
+      "test_wave": 1,
+      "implementation_notes": "Research family documented in market-level intraday momentum; India transfer requires independent validation."
+    },
+    {
+      "strategy_id": "TD02",
+      "display_name": "Opening Drive Continuation",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "First 15/30 minutes show directional move, broad breadth and above-profile volume.",
+      "setup_and_trigger": "Stock breaks opening-drive high after a shallow pause.",
+      "confirmation": "VWAP hold, sector alignment and no isolated operator spike.",
+      "entry_window": "09:30–10:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG08",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "drive_window_min": [
+          15,
+          30
+        ],
+        "pause_bars": [
+          1,
+          2,
+          3
+        ],
+        "volume_ratio_min": [
+          1.5,
+          2.0
+        ]
+      },
+      "primary_error_state": "Opening information is rapidly reversed",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD03",
+      "display_name": "Opening Drive Failure Reversal",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Initial up/down drive exceeds 0.75 ATR but breadth/sector fails to confirm.",
+      "setup_and_trigger": "Price crosses back through opening midpoint and VWAP.",
+      "confirmation": "Failure candle closes opposite the drive with high close-location.",
+      "entry_window": "09:30–10:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG08",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "drive_atr_min": [
+          0.75,
+          1.0
+        ],
+        "failure_window_bars": [
+          2,
+          3,
+          5
+        ],
+        "breadth_divergence_min": [
+          15,
+          25
+        ]
+      },
+      "primary_error_state": "Contrarian trade enters before failure is confirmed",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD04",
+      "display_name": "Small Gap-Up Continuation",
+      "family": "Gap pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Gap up 0.1–0.5 ATR; NIFTY/sector positive; not near extreme resistance.",
+      "setup_and_trigger": "Opening range breaks upward after holding above prior close.",
+      "confirmation": "VWAP hold and volume >= profile.",
+      "entry_window": "09:30–11:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG08",
+        "NG09",
+        "NG10"
+      ],
+      "parameter_grid": {
+        "gap_atr_min": [
+          0.1
+        ],
+        "gap_atr_max": [
+          0.5,
+          0.75
+        ],
+        "opening_range_minutes": [
+          15,
+          30
+        ]
+      },
+      "primary_error_state": "Small gap is filled before continuation",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD05",
+      "display_name": "Large Gap-Up Pullback and Reclaim",
+      "family": "Gap pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Gap up 0.75–1.5 ATR; broad confirmation and no corporate action.",
+      "setup_and_trigger": "Wait for pullback to VWAP/OR high and bullish reclaim; never buy opening spike.",
+      "confirmation": "Volume contracts on pullback and expands on reclaim.",
+      "entry_window": "09:45–12:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG08",
+        "NG09",
+        "NG10"
+      ],
+      "parameter_grid": {
+        "gap_atr_min": [
+          0.75
+        ],
+        "gap_atr_max": [
+          1.5,
+          2.0
+        ],
+        "reclaim_level": [
+          "VWAP",
+          "OR_HIGH"
+        ]
+      },
+      "primary_error_state": "Gap is an exhaustion gap",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD06",
+      "display_name": "Gap-Down Exhaustion Fade",
+      "family": "Gap pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Gap down 0.5–1.5 ATR; market not in broad panic; no unadjusted corporate action.",
+      "setup_and_trigger": "Price fails to make a new low for 3–5 bars and reclaims opening midpoint.",
+      "confirmation": "Bullish reversal candle and volume shock decay.",
+      "entry_window": "09:30–11:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG07",
+        "NG08",
+        "NG09"
+      ],
+      "parameter_grid": {
+        "gap_atr_min": [
+          0.5
+        ],
+        "gap_atr_max": [
+          1.5
+        ],
+        "stabilisation_bars": [
+          3,
+          5
+        ]
+      },
+      "primary_error_state": "Information-driven gap continues lower",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD07",
+      "display_name": "First-15-Minute Range Mean Reversion",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Opening range narrow and ADX/breadth indicate range day.",
+      "setup_and_trigger": "Fade first test beyond OR high/low only after close returns inside range.",
+      "confirmation": "Target VWAP/range midpoint; no trade on strong volume breakout.",
+      "entry_window": "09:30–11:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG07",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "range_width_atr_max": [
+          0.4,
+          0.6
+        ],
+        "adx_max": [
+          20,
+          25
+        ],
+        "failure_bars_max": [
+          1,
+          2
+        ]
+      },
+      "primary_error_state": "Range day changes into trend day",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD08",
+      "display_name": "Lunch Compression Breakout",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "From 12:00–13:15 range and volume contract while morning trend remains intact.",
+      "setup_and_trigger": "Break above lunch range high in direction of morning/sector trend.",
+      "confirmation": "Volume returns above profile; price above VWAP.",
+      "entry_window": "13:15–14:15",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG10"
+      ],
+      "parameter_grid": {
+        "compression_window": [
+          "12:00-13:15",
+          "12:15-13:30"
+        ],
+        "range_percentile": [
+          10,
+          20
+        ]
+      },
+      "primary_error_state": "Late breakout lacks time and liquidity to follow through",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD09",
+      "display_name": "Afternoon VWAP Reclaim",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Morning trend positive, midday pullback below VWAP, sector remains positive.",
+      "setup_and_trigger": "Price reclaims VWAP after 13:00 with higher low.",
+      "confirmation": "Volume and residual strength improve; sufficient time to target.",
+      "entry_window": "13:00–14:15",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG09",
+        "NG10",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "entry_start": [
+          "13:00",
+          "13:30"
+        ],
+        "latest_entry": [
+          "14:00",
+          "14:15"
+        ],
+        "higher_low_bars": [
+          2,
+          3
+        ]
+      },
+      "primary_error_state": "Afternoon reclaim fails into closing sell pressure",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD10",
+      "display_name": "Late-Day Trend Continuation",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "Stock above VWAP most of day, low VWAP cross count, broad market trend aligned.",
+      "setup_and_trigger": "Break of 14:15–14:30 consolidation high.",
+      "confirmation": "First-half-hour direction or persistent residual strength agrees.",
+      "entry_window": "14:30–14:55",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX06",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "consolidation_min": [
+          15,
+          30
+        ],
+        "latest_entry": [
+          "14:45",
+          "14:55"
+        ],
+        "time_above_vwap_min": [
+          70,
+          80
+        ]
+      },
+      "primary_error_state": "Closing reversal or insufficient gross edge after costs",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD11",
+      "display_name": "Last-Hour Range Fade to VWAP",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D2",
+      "context_filter": "Low ADX/range regime; price repeatedly crosses VWAP; no broad closing imbalance.",
+      "setup_and_trigger": "At 14:30–14:50, fade a failed test of session extreme back toward VWAP.",
+      "confirmation": "Reversal candle and declining volume at extreme.",
+      "entry_window": "14:30–14:50",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX06",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG07",
+        "NG09",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "vwap_cross_min": [
+          4,
+          6
+        ],
+        "adx_max": [
+          20,
+          25
+        ],
+        "entry_end": [
+          "14:45",
+          "14:50"
+        ]
+      },
+      "primary_error_state": "A range day turns into closing trend",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "TD12",
+      "display_name": "Same-Time-Slot Continuation Across Days",
+      "family": "Time pattern",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A1",
+      "data_tier": "D3",
+      "context_filter": "For each 30-minute slot, estimate prior 20–40 day same-slot return tendency without future data.",
+      "setup_and_trigger": "Trade only when current slot direction and historical same-slot tendency agree.",
+      "confirmation": "Volume/liquidity pattern and market direction agree.",
+      "entry_window": "Configured half-hour slot",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX06",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG09",
+        "NG12",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "slot_minutes": [
+          30
+        ],
+        "lookback_days": [
+          20,
+          40
+        ],
+        "min_same_sign_ratio": [
+          0.55,
+          0.6
+        ]
+      },
+      "primary_error_state": "Seasonality decays or is data-snooped",
+      "test_wave": 3,
+      "implementation_notes": "Research family based on recurring intraday return patterns; must use strict walk-forward estimation."
+    },
+    {
+      "strategy_id": "CS01",
+      "display_name": "Hammer at Lower Band + RSI",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Down move into lower Bollinger Band or prior support; RSI below 30/35.",
+      "setup_and_trigger": "Hammer with lower wick >= 2x body and close in upper third.",
+      "confirmation": "Buy only on next-bar break of hammer high; volume not below minimum.",
+      "entry_window": "09:30–13:00 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG07",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "wick_body_min": [
+          2,
+          3
+        ],
+        "rsi_max": [
+          30,
+          35
+        ],
+        "support": [
+          "LOWER_BB",
+          "PRIOR_LOW"
+        ]
+      },
+      "primary_error_state": "Single candle is not genuine reversal",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS02",
+      "display_name": "Bullish Engulfing at Support + Volume",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Price at VWAP/lower band/prior low after at least two down bars.",
+      "setup_and_trigger": "Bullish real body engulfs prior bearish real body.",
+      "confirmation": "Volume ratio >= 1.3 and close above support.",
+      "entry_window": "09:30–13:00 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "support": [
+          "VWAP",
+          "LOWER_BB",
+          "PRIOR_LOW"
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Engulfing bar is short covering within downtrend",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS03",
+      "display_name": "Piercing Line + RSI Reclaim",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Established short downtrend; prior candle bearish and sufficiently large.",
+      "setup_and_trigger": "Current candle opens lower and closes above midpoint of prior real body.",
+      "confirmation": "RSI turns up from below 35 and volume expands.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG08",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "prior_body_atr_min": [
+          0.5,
+          0.75
+        ],
+        "close_penetration_min": [
+          0.5,
+          0.6
+        ],
+        "rsi_max": [
+          35
+        ]
+      },
+      "primary_error_state": "Pattern occurs without meaningful preceding downtrend",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS04",
+      "display_name": "Morning Star near 20-Day Low",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Price near adjusted 20-day low after decline.",
+      "setup_and_trigger": "Three-candle morning-star sequence with small middle body and strong third close.",
+      "confirmation": "Third candle volume >= average and closes above first candle midpoint.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG08",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "near_low_pct": [
+          1,
+          2,
+          3
+        ],
+        "middle_body_max_atr": [
+          0.25,
+          0.4
+        ],
+        "third_volume_ratio_min": [
+          1.0,
+          1.3
+        ]
+      },
+      "primary_error_state": "Loose pattern definition creates false positives",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS05",
+      "display_name": "Three White Soldiers after Base",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "At least five-day base or downtrend exhaustion; not already overextended.",
+      "setup_and_trigger": "Three bullish candles with higher closes and limited upper wicks.",
+      "confirmation": "Volume stable/rising and ADX rising from low level.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG10",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "soldier_count": [
+          3
+        ],
+        "upper_wick_body_max": [
+          0.5
+        ],
+        "base_days_min": [
+          5,
+          10
+        ]
+      },
+      "primary_error_state": "Pattern enters after three-day exhaustion",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS06",
+      "display_name": "Tweezer Bottom + Prior-Low Sweep",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Two adjacent lows within tolerance around support.",
+      "setup_and_trigger": "Second candle rejects the low and closes bullish.",
+      "confirmation": "RSI divergence or reduced selling volume on second test.",
+      "entry_window": "09:30–13:00 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "low_tolerance_atr": [
+          0.05,
+          0.1,
+          0.2
+        ],
+        "volume_second_vs_first_max": [
+          1.0,
+          0.8
+        ]
+      },
+      "primary_error_state": "Coincidental equal lows in noisy data",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS07",
+      "display_name": "Dragonfly Doji at VWAP/Lower Band",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Price at VWAP, lower Bollinger Band or session low in non-panic regime.",
+      "setup_and_trigger": "Open and close near bar high with long lower shadow and tiny body.",
+      "confirmation": "Next bar closes above doji high; volume confirms.",
+      "entry_window": "09:30–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG07",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "body_range_max": [
+          0.1,
+          0.15
+        ],
+        "lower_wick_range_min": [
+          0.6,
+          0.7
+        ],
+        "confirm_next_bar": [
+          true
+        ]
+      },
+      "primary_error_state": "Doji classification unstable at small tick sizes",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS08",
+      "display_name": "Bullish Harami + RSI Divergence",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Prior bearish candle large; price near support; RSI bullish divergence present.",
+      "setup_and_trigger": "Small bullish body lies inside prior real body.",
+      "confirmation": "Buy only above prior candle midpoint or harami high.",
+      "entry_window": "09:30–13:00 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX02",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG09",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "prior_body_atr_min": [
+          0.5,
+          0.75
+        ],
+        "harami_body_ratio_max": [
+          0.5,
+          0.6
+        ],
+        "confirmation": [
+          "HARAMI_HIGH",
+          "PRIOR_MID"
+        ]
+      },
+      "primary_error_state": "Harami is merely a pause in downtrend",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS09",
+      "display_name": "Inverted Hammer + Next-Bar Confirmation",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Downtrend and proximity to support.",
+      "setup_and_trigger": "Small body near low with upper wick >= 2x body.",
+      "confirmation": "Next candle closes above inverted-hammer high on higher volume.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG08",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "upper_wick_body_min": [
+          2,
+          3
+        ],
+        "confirmation_volume_ratio_min": [
+          1.0,
+          1.3
+        ]
+      },
+      "primary_error_state": "Upper wick reflects failed buying rather than reversal",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS10",
+      "display_name": "Three Inside Up + Trend Filter",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Downtrend or pullback into EMA20/support.",
+      "setup_and_trigger": "Bearish candle, bullish harami, then close above first candle high/midpoint.",
+      "confirmation": "Daily RSI rising and volume non-declining.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG08",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "confirmation_level": [
+          "FIRST_HIGH",
+          "FIRST_MID"
+        ],
+        "support": [
+          "EMA20",
+          "PRIOR_LOW"
+        ]
+      },
+      "primary_error_state": "Three-candle sequence too rare or loosely defined",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS11",
+      "display_name": "Three Outside Up + Support",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Price near support after pullback.",
+      "setup_and_trigger": "Bullish engulfing followed by higher close.",
+      "confirmation": "Volume on engulfing/confirmation >= average.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG08",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "support": [
+          "EMA20",
+          "20D_LOW",
+          "PRIOR_LOW"
+        ],
+        "volume_ratio_min": [
+          1.0,
+          1.3
+        ]
+      },
+      "primary_error_state": "Follow-through candle is gap-driven and unfillable",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS12",
+      "display_name": "Bullish Marubozu Breakout + Volume",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Price below/at established resistance or compression high.",
+      "setup_and_trigger": "Wide bullish body, total wick <= 15% of range, close above resistance.",
+      "confirmation": "Volume >= 1.5x and not >2 ATR overextended from VWAP/EMA.",
+      "entry_window": "09:30–13:30 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG10",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "wick_range_max": [
+          0.1,
+          0.15
+        ],
+        "body_atr_min": [
+          0.75,
+          1.0
+        ],
+        "volume_ratio_min": [
+          1.5,
+          2.0
+        ]
+      },
+      "primary_error_state": "Marubozu is exhaustion or operator spike",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS13",
+      "display_name": "Inside-Bar Breakout in Uptrend",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "EMA20 > EMA50, parent bar closes above VWAP/EMA20.",
+      "setup_and_trigger": "Inside bar forms; buy above inside-bar high.",
+      "confirmation": "Volume contracts inside and expands on break.",
+      "entry_window": "09:45–14:00 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "inside_count": [
+          1,
+          2
+        ],
+        "volume_contract_max": [
+          0.8,
+          1.0
+        ],
+        "break_volume_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Breakout after an exhausted parent bar",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS14",
+      "display_name": "Bullish Outside Bar above VWAP",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Price in pullback but above daily trend support.",
+      "setup_and_trigger": "Current high > prior high, low < prior low, and close > prior high or upper quartile.",
+      "confirmation": "Close above VWAP with volume expansion.",
+      "entry_window": "09:30–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "close_requirement": [
+          "ABOVE_PRIOR_HIGH",
+          "UPPER_QUARTILE"
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Wide outside bar has poor next-bar entry economics",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS15",
+      "display_name": "Rising Three Methods Continuation",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "Established uptrend.",
+      "setup_and_trigger": "Large bullish candle, three small pullback candles contained within its range, then breakout close.",
+      "confirmation": "Pullback volume contracts; breakout volume expands.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG10",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "pullback_bars": [
+          2,
+          3,
+          4
+        ],
+        "containment_tolerance_pct": [
+          0,
+          0.2
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Pattern detector overfits bar count and containment",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "CS16",
+      "display_name": "NR7 Pin-Bar Breakout",
+      "family": "Candlestick hybrid",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday/Swing",
+      "evidence_grade": "C1",
+      "data_tier": "D1",
+      "context_filter": "NR7 compression at support or in uptrend pullback.",
+      "setup_and_trigger": "Pin bar forms; enter on break of pin-bar high.",
+      "confirmation": "Volume expands on breakout and market/sector aligned.",
+      "entry_window": "09:30–13:30 or daily",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "nr_lookback": [
+          4,
+          7
+        ],
+        "wick_body_min": [
+          2,
+          3
+        ],
+        "break_volume_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Combination too restrictive or data-mined",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS01",
+      "display_name": "Stock Residual Strength + Sector + VWAP",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A1",
+      "data_tier": "D2",
+      "context_filter": "NIFTY and sector 15-minute returns non-negative.",
+      "setup_and_trigger": "Stock beta-adjusted residual return >= 0.3% and close > VWAP.",
+      "confirmation": "Volume ratio >= 1.5 and RS persistence positive.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG10",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "residual_min_pct": [
+          0.2,
+          0.3,
+          0.5
+        ],
+        "volume_ratio_min": [
+          1.3,
+          1.5
+        ],
+        "rs_persistence_min": [
+          60,
+          70
+        ]
+      },
+      "primary_error_state": "Idiosyncratic spike reverses",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS02",
+      "display_name": "Sector Leader Pullback Continuation",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "Sector top quartile by 20/60-minute return; stock top quartile within sector.",
+      "setup_and_trigger": "Stock pulls to VWAP/EMA9 and reclaims it.",
+      "confirmation": "Sector remains above VWAP and breadth stable.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX04",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG09",
+        "NG10",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "sector_rank_pct": [
+          70,
+          80
+        ],
+        "stock_rank_pct": [
+          70,
+          80
+        ],
+        "reclaim": [
+          "VWAP",
+          "EMA9"
+        ]
+      },
+      "primary_error_state": "Leadership rotation away from sector",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS03",
+      "display_name": "Stock Strength while NIFTY Weak, then Market Stabilises",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "NIFTY negative early; stock residual return positive and above VWAP.",
+      "setup_and_trigger": "Enter when NIFTY stops making lows or reclaims short VWAP/EMA while stock breaks local high.",
+      "confirmation": "Sector not deteriorating and volume supportive.",
+      "entry_window": "10:00–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09"
+      ],
+      "parameter_grid": {
+        "nifty_early_return_max": [
+          -0.2,
+          -0.5
+        ],
+        "stock_residual_min": [
+          0.3,
+          0.5
+        ],
+        "market_stabilisation_bars": [
+          2,
+          3
+        ]
+      },
+      "primary_error_state": "Market sell-off resumes and overwhelms relative strength",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS04",
+      "display_name": "Broad-Participation Momentum + High RS",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D3",
+      "context_filter": "Breadth above VWAP >= 60%, weighted participation broad, dispersion controlled.",
+      "setup_and_trigger": "Stock RS rank top decile and breaks local high.",
+      "confirmation": "Sector positive and volume ratio >= 1.3.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "breadth_min": [
+          55,
+          60,
+          65
+        ],
+        "rs_rank_pct": [
+          80,
+          90
+        ],
+        "dispersion_max_pct": [
+          1.5,
+          2.0
+        ]
+      },
+      "primary_error_state": "Broad participation deteriorates after entry",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS05",
+      "display_name": "Narrow-Leadership Avoidance + Best-of-Sector Only",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "B1",
+      "data_tier": "D3",
+      "context_filter": "Top-10 concentration high or breadth weak; trade only strongest stock in strongest sector, otherwise no trade.",
+      "setup_and_trigger": "Selected stock maintains VWAP and breaks high with residual strength.",
+      "confirmation": "Strict single-position allocation and volume confirmation.",
+      "entry_window": "09:45–13:00",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "top10_concentration_min": [
+          50,
+          60
+        ],
+        "positions_max": [
+          1
+        ],
+        "rs_rank_pct": [
+          95
+        ]
+      },
+      "primary_error_state": "Narrow leader reverses sharply",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS06",
+      "display_name": "Beta-Adjusted Breakout + Market Breadth",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A2",
+      "data_tier": "D3",
+      "context_filter": "Stock beta profile valid; market breadth >= 55%.",
+      "setup_and_trigger": "Residual 15-minute return positive and price breaks OR/previous high.",
+      "confirmation": "Volume surprise positive and sector aligned.",
+      "entry_window": "09:45–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "residual_min_pct": [
+          0.2,
+          0.4
+        ],
+        "breadth_min": [
+          50,
+          55,
+          60
+        ],
+        "break_level": [
+          "OR_HIGH",
+          "PREV_HIGH"
+        ]
+      },
+      "primary_error_state": "Beta estimate unstable or stale",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS07",
+      "display_name": "Cross-Sectional Top-Decile + Intraday Trigger",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Intraday",
+      "evidence_grade": "A1",
+      "data_tier": "D3",
+      "context_filter": "At each time, rank point-in-time universe by 20/60-minute residual return without future data.",
+      "setup_and_trigger": "Top-decile stock enters on VWAP hold or local high break.",
+      "confirmation": "Sector and volume confirmation; finite-capital rank allocation.",
+      "entry_window": "10:00–13:30",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX03",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG05",
+        "NG06",
+        "NG07",
+        "NG09",
+        "NG11",
+        "NG14"
+      ],
+      "parameter_grid": {
+        "rank_percentile": [
+          80,
+          90
+        ],
+        "lookback_min": [
+          20,
+          60
+        ],
+        "positions_max": [
+          3,
+          5
+        ]
+      },
+      "primary_error_state": "Turnover and crowding erase cross-sectional edge",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "RS08",
+      "display_name": "52-Week-High Rank + Sector Momentum",
+      "family": "Relative strength",
+      "direction": "LONG_ONLY",
+      "horizon": "Swing",
+      "evidence_grade": "A1",
+      "data_tier": "D2",
+      "context_filter": "Rank stocks by distance to adjusted 52-week high; sector 20-day momentum positive.",
+      "setup_and_trigger": "Top-ranked stock breaks 20-day/52-week high or retests successfully.",
+      "confirmation": "Volume and weekly trend confirm.",
+      "entry_window": "Daily close / next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG08",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "distance_rank_pct": [
+          80,
+          90
+        ],
+        "break_level": [
+          "20D_HIGH",
+          "52W_HIGH"
+        ],
+        "max_hold_days": [
+          10,
+          20
+        ]
+      },
+      "primary_error_state": "Momentum crash after market rebound",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW01",
+      "display_name": "Weekly Uptrend + Daily RSI Pullback + Hammer",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "1–10 sessions",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Weekly close > weekly EMA20; daily EMA20 > EMA50.",
+      "setup_and_trigger": "Daily RSI falls to 35–45 and hammer forms near EMA20.",
+      "confirmation": "Enter above hammer high; volume not abnormally weak.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG08",
+        "NG10",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "daily_rsi_band": [
+          [
+            35,
+            45
+          ],
+          [
+            40,
+            50
+          ]
+        ],
+        "weekly_ema": [
+          20
+        ],
+        "max_hold_days": [
+          5,
+          10
+        ]
+      },
+      "primary_error_state": "Pullback becomes weekly trend reversal",
+      "test_wave": 1,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW02",
+      "display_name": "Daily EMA20/50 Trend + Two-Day Pullback + Inside Bar",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "2–10 sessions",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "EMA20 > EMA50 and both slopes positive.",
+      "setup_and_trigger": "Two down/inside days hold above EMA20; buy above inside-bar high.",
+      "confirmation": "Volume contracts on pullback and sector trend positive.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG08",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "pullback_days": [
+          2,
+          3
+        ],
+        "inside_bar_required": [
+          true
+        ],
+        "max_hold_days": [
+          5,
+          10
+        ]
+      },
+      "primary_error_state": "Trend pullback deepens after entry",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW03",
+      "display_name": "Weekly MACD Positive + Daily MACD Cross",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "5–20 sessions",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Weekly MACD histogram > 0 and weekly close above EMA20.",
+      "setup_and_trigger": "Daily MACD line crosses above signal.",
+      "confirmation": "Daily RSI 50–70 and close above EMA20.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG10",
+        "NG11",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "weekly_filter": [
+          true
+        ],
+        "daily_rsi_band": [
+          [
+            50,
+            70
+          ]
+        ],
+        "max_hold_days": [
+          10,
+          20
+        ]
+      },
+      "primary_error_state": "MACD lag enters near intermediate top",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW04",
+      "display_name": "52-Week High Breakout + Medium-Term Momentum",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "5–20 sessions",
+      "evidence_grade": "A1",
+      "data_tier": "D1",
+      "context_filter": "Six-month return positive; price within 3% of adjusted 52-week high.",
+      "setup_and_trigger": "Close above 52-week high.",
+      "confirmation": "Volume expansion and market/sector trend non-negative.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG06",
+        "NG08",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "proximity_pct": [
+          1,
+          3,
+          5
+        ],
+        "momentum_months": [
+          3,
+          6
+        ],
+        "max_hold_days": [
+          10,
+          20
+        ]
+      },
+      "primary_error_state": "Momentum crash or failed breakout",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW05",
+      "display_name": "52-Week High Retest + Bullish Candle",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "3–15 sessions",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Recent 52-week breakout occurred within prior 20 sessions.",
+      "setup_and_trigger": "Price retests breakout level and forms hammer/engulfing/inside breakout.",
+      "confirmation": "Volume contracts on retest and expands on confirmation.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG08",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "retest_days_max": [
+          10,
+          20
+        ],
+        "level_tolerance_pct": [
+          0.5,
+          1.0
+        ],
+        "candle": [
+          "HAMMER",
+          "ENGULFING",
+          "INSIDE_BREAK"
+        ]
+      },
+      "primary_error_state": "Breakout level fails after apparent retest",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW06",
+      "display_name": "Donchian Breakout + ATR Trail",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "5–20 sessions",
+      "evidence_grade": "A1",
+      "data_tier": "D1",
+      "context_filter": "Adjusted daily data and sufficient liquidity.",
+      "setup_and_trigger": "Close above prior 20/55-day high.",
+      "confirmation": "Volume and sector confirmation; volatility-scaled position sizing.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG06",
+        "NG08",
+        "NG11",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "donchian_days": [
+          20,
+          55
+        ],
+        "atr_trail": [
+          2,
+          3
+        ],
+        "risk_per_trade_pct": [
+          0.25,
+          0.5
+        ]
+      },
+      "primary_error_state": "Large gap through ATR stop",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW07",
+      "display_name": "Daily Bollinger Squeeze + Weekly Trend",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "5–20 sessions",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Weekly EMA20 rising; daily bandwidth lowest 10–20 percentile.",
+      "setup_and_trigger": "Daily close breaks squeeze high/upper band.",
+      "confirmation": "Volume expansion and ADX rising.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG07",
+        "NG10",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "bandwidth_percentile": [
+          10,
+          20
+        ],
+        "squeeze_days": [
+          3,
+          5
+        ],
+        "max_hold_days": [
+          10,
+          20
+        ]
+      },
+      "primary_error_state": "Volatility expansion occurs opposite weekly trend",
+      "test_wave": 2,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW08",
+      "display_name": "Three-Day Reversal after Five-Day Decline",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "2–10 sessions",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "At least four of prior five daily closes lower; not below structural support without confirmation.",
+      "setup_and_trigger": "Three-day reversal sequence culminates in close above prior two-day high.",
+      "confirmation": "Volume climax/decay and RSI divergence.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG04",
+        "NG07",
+        "NG08",
+        "NG12"
+      ],
+      "parameter_grid": {
+        "decline_days": [
+          4,
+          5
+        ],
+        "reversal_break_days": [
+          2,
+          3
+        ],
+        "rsi_divergence": [
+          false,
+          true
+        ]
+      },
+      "primary_error_state": "Short-term bounce in structural downtrend",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW09",
+      "display_name": "Daily Double Bottom + Neckline Break",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "5–20 sessions",
+      "evidence_grade": "A2",
+      "data_tier": "D1",
+      "context_filter": "Two daily lows within 0.5–1 ATR and separated by 5–40 sessions.",
+      "setup_and_trigger": "Close above intervening neckline.",
+      "confirmation": "Second low shows RSI divergence or lower volume; breakout volume expands.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG08",
+        "NG10",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "low_tolerance_atr": [
+          0.5,
+          1.0
+        ],
+        "separation_days": [
+          5,
+          20,
+          40
+        ],
+        "volume_ratio_min": [
+          1.2,
+          1.5
+        ]
+      },
+      "primary_error_state": "Pattern geometry subjective or neckline too distant",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW10",
+      "display_name": "Daily Ascending Triangle + Sector Breakout",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "5–20 sessions",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "Rising swing lows under horizontal resistance; sector index trend positive.",
+      "setup_and_trigger": "Close above resistance.",
+      "confirmation": "Volume expansion and stock RS rank high.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG07",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "lookback_days": [
+          20,
+          40,
+          60
+        ],
+        "touches_min": [
+          2,
+          3
+        ],
+        "rs_rank_pct": [
+          70,
+          80
+        ]
+      },
+      "primary_error_state": "Sector reversal invalidates stock breakout",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW11",
+      "display_name": "Volatility Contraction Pattern + Volume Dry-Up",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "5–20 sessions",
+      "evidence_grade": "B1",
+      "data_tier": "D1",
+      "context_filter": "Series of progressively smaller pullbacks/ranges after prior advance.",
+      "setup_and_trigger": "Close breaks final contraction high.",
+      "confirmation": "Volume dries up during contraction and expands on breakout.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG07",
+        "NG10",
+        "NG12",
+        "NG13"
+      ],
+      "parameter_grid": {
+        "contractions_min": [
+          2,
+          3
+        ],
+        "range_shrink_ratio": [
+          0.7,
+          0.8
+        ],
+        "volume_dryup_ratio": [
+          0.5,
+          0.7
+        ]
+      },
+      "primary_error_state": "Pattern fitting and survivorship bias",
+      "test_wave": 3,
+      "implementation_notes": ""
+    },
+    {
+      "strategy_id": "SW12",
+      "display_name": "Sector Breakout + Stock Pullback Reclaim",
+      "family": "Swing",
+      "direction": "LONG_ONLY",
+      "horizon": "3–15 sessions",
+      "evidence_grade": "A2",
+      "data_tier": "D2",
+      "context_filter": "Sector closes above 20-day high; stock remains above EMA50 and ranks high within sector.",
+      "setup_and_trigger": "Stock pulls to EMA20/previous breakout and forms bullish reversal.",
+      "confirmation": "Volume contracts on pullback and recovers on entry.",
+      "entry_window": "Next session",
+      "execution": "Evaluate completed bars only; place the simulated market/limit order no earlier than the next bar using the versioned fill model.",
+      "exit_package": "EX05",
+      "noise_guards": [
+        "NG01",
+        "NG02",
+        "NG03",
+        "NG06",
+        "NG07",
+        "NG08",
+        "NG10",
+        "NG11"
+      ],
+      "parameter_grid": {
+        "sector_break_days": [
+          20,
+          50
+        ],
+        "stock_reclaim": [
+          "EMA20",
+          "BREAKOUT_LEVEL"
+        ],
+        "max_hold_days": [
+          5,
+          10,
+          15
+        ]
+      },
+      "primary_error_state": "Sector breakout fails or stock is a laggard",
+      "test_wave": 2,
+      "implementation_notes": ""
+    }
+  ]
+}

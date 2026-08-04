@@ -1,0 +1,97 @@
+strategy_id,display_name,family,wave,data_tier,entry_detector_status,dependency_state,workload
+CTL01,Fixed-Time 10:00–15:00 Control,Control,1,D1,REFERENCE_MANIFEST_AVAILABLE,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CTL01/workload.json
+CTL02,Open-to-Close Long Control,Control,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CTL02/workload.json
+CTL03,Simple VWAP Reclaim Baseline,Control,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CTL03/workload.json
+CTL04,RSI15 / Previous Daily RSI40 Baseline,Control,1,D1,REFERENCE_MANIFEST_AVAILABLE,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CTL04/workload.json
+CTL05,Simple EMA9/21 Cross Baseline,Control,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CTL05/workload.json
+CTL06,Simple 15-Minute Opening-Range Breakout Baseline,Control,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CTL06/workload.json
+MR01,Deep RSI Reversal with Early-Time Gate,Mean reversion,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR01/workload.json
+MR02,RSI + Williams %R Recovery,Mean reversion,1,D1,REFERENCE_MANIFEST_AVAILABLE,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR02/workload.json
+MR03,Lower Bollinger Re-entry + RSI,Mean reversion,1,D1,REFERENCE_MANIFEST_AVAILABLE,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR03/workload.json
+MR04,Stochastic Recovery in Low-ADX Regime,Mean reversion,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR04/workload.json
+MR05,CCI Extreme + VWAP Reclaim,Mean reversion,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR05/workload.json
+MR06,Opening Flush + Hammer + Volume Climax,Mean reversion,1,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,MR06/workload.json
+MR07,Gap-Down Fade with Opening-Range Reclaim,Mean reversion,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,MR07/workload.json
+MR08,Previous-Day Low Sweep and Reclaim,Mean reversion,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR08/workload.json
+MR09,20-Day Low False Breakdown + Engulfing,Mean reversion,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR09/workload.json
+MR10,Beta-Adjusted Residual Shock Reversion,Mean reversion,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,MR10/workload.json
+MR11,Sector-Relative Oversold Reversal,Mean reversion,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,MR11/workload.json
+MR12,Consecutive Red Bars + Volume Exhaustion,Mean reversion,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR12/workload.json
+MR13,Intraday Double Bottom + RSI Divergence,Mean reversion,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,MR13/workload.json
+MR14,Failed Opening-Range Breakdown + VWAP Reclaim,Mean reversion,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,MR14/workload.json
+TR01,EMA9/21 Cross + VWAP + Volume,Trend continuation,1,D1,REFERENCE_MANIFEST_AVAILABLE,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR01/workload.json
+TR02,EMA20 Pullback + Hammer in Daily Uptrend,Trend continuation,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR02/workload.json
+TR03,MACD Histogram Zero Cross + VWAP + Market,Trend continuation,1,D2,REFERENCE_MANIFEST_AVAILABLE,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TR03/workload.json
+TR04,ADX/DI Trend Ignition + High Close Location,Trend continuation,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR04/workload.json
+TR05,ATR Supertrend Flip + Daily Trend Filter,Trend continuation,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR05/workload.json
+TR06,EMA Ribbon Compression and Expansion,Trend continuation,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR06/workload.json
+TR07,VWAP Pullback Continuation + Residual Strength,Trend continuation,1,D2,REFERENCE_MANIFEST_AVAILABLE,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TR07/workload.json
+TR08,First Pullback after Opening-Range Breakout,Trend continuation,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TR08/workload.json
+TR09,Three-Bar Higher-High/Higher-Low + Volume,Trend continuation,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR09/workload.json
+TR10,15-Minute Trend + 1-Minute Pullback Trigger,Trend continuation,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR10/workload.json
+TR11,Daily Trend + Intraday Stochastic Reset,Trend continuation,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR11/workload.json
+TR12,Session-Anchored VWAP Reclaim + Trend,Trend continuation,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR12/workload.json
+TR13,Relative-Strength Persistence + Low VWAP Cross Count,Trend continuation,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TR13/workload.json
+TR14,Inside-Bar Continuation in Established Trend,Trend continuation,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TR14/workload.json
+BO01,15-Minute ORB + Volume + VWAP,Breakout,1,D1,REFERENCE_MANIFEST_AVAILABLE,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO01/workload.json
+BO02,30-Minute ORB + Breadth Confirmation,Breakout,2,D3,DETECTOR_REQUIRED,REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL,BO02/workload.json
+BO03,Previous-Day High Breakout + VWAP,Breakout,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO03/workload.json
+BO04,First-Hour High Breakout + Volume-Curve Surprise,Breakout,2,D3,DETECTOR_REQUIRED,REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL,BO04/workload.json
+BO05,NR7 Daily Compression + Intraday Breakout,Breakout,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO05/workload.json
+BO06,Inside-Day High Breakout,Breakout,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO06/workload.json
+BO07,Bollinger Squeeze + Upper-Band Breakout,Breakout,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO07/workload.json
+BO08,Bollinger-inside-Keltner Squeeze Release,Breakout,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO08/workload.json
+BO09,Donchian 20-Day High Breakout,Breakout,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO09/workload.json
+BO10,52-Week High Breakout + Volume,Breakout,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO10/workload.json
+BO11,Three-Day Volatility Contraction + Wide-Range Break,Breakout,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO11/workload.json
+BO12,Weekly High Breakout + Sector Alignment,Breakout,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,BO12/workload.json
+BO13,Bull Flag Breakout + Volume Dry-Up/Expansion,Breakout,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO13/workload.json
+BO14,Ascending Triangle Breakout,Breakout,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,BO14/workload.json
+TD01,First-Half-Hour to Last-Half-Hour Momentum,Time pattern,1,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD01/workload.json
+TD02,Opening Drive Continuation,Time pattern,1,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD02/workload.json
+TD03,Opening Drive Failure Reversal,Time pattern,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD03/workload.json
+TD04,Small Gap-Up Continuation,Gap pattern,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD04/workload.json
+TD05,Large Gap-Up Pullback and Reclaim,Gap pattern,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD05/workload.json
+TD06,Gap-Down Exhaustion Fade,Gap pattern,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD06/workload.json
+TD07,First-15-Minute Range Mean Reversion,Time pattern,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,TD07/workload.json
+TD08,Lunch Compression Breakout,Time pattern,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD08/workload.json
+TD09,Afternoon VWAP Reclaim,Time pattern,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD09/workload.json
+TD10,Late-Day Trend Continuation,Time pattern,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD10/workload.json
+TD11,Last-Hour Range Fade to VWAP,Time pattern,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,TD11/workload.json
+TD12,Same-Time-Slot Continuation Across Days,Time pattern,3,D3,DETECTOR_REQUIRED,REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL,TD12/workload.json
+CS01,Hammer at Lower Band + RSI,Candlestick hybrid,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS01/workload.json
+CS02,Bullish Engulfing at Support + Volume,Candlestick hybrid,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS02/workload.json
+CS03,Piercing Line + RSI Reclaim,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS03/workload.json
+CS04,Morning Star near 20-Day Low,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS04/workload.json
+CS05,Three White Soldiers after Base,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS05/workload.json
+CS06,Tweezer Bottom + Prior-Low Sweep,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS06/workload.json
+CS07,Dragonfly Doji at VWAP/Lower Band,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS07/workload.json
+CS08,Bullish Harami + RSI Divergence,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS08/workload.json
+CS09,Inverted Hammer + Next-Bar Confirmation,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS09/workload.json
+CS10,Three Inside Up + Trend Filter,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS10/workload.json
+CS11,Three Outside Up + Support,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS11/workload.json
+CS12,Bullish Marubozu Breakout + Volume,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS12/workload.json
+CS13,Inside-Bar Breakout in Uptrend,Candlestick hybrid,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS13/workload.json
+CS14,Bullish Outside Bar above VWAP,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS14/workload.json
+CS15,Rising Three Methods Continuation,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS15/workload.json
+CS16,NR7 Pin-Bar Breakout,Candlestick hybrid,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,CS16/workload.json
+RS01,Stock Residual Strength + Sector + VWAP,Relative strength,1,D2,REFERENCE_MANIFEST_AVAILABLE,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,RS01/workload.json
+RS02,Sector Leader Pullback Continuation,Relative strength,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,RS02/workload.json
+RS03,"Stock Strength while NIFTY Weak, then Market Stabilises",Relative strength,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,RS03/workload.json
+RS04,Broad-Participation Momentum + High RS,Relative strength,2,D3,DETECTOR_REQUIRED,REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL,RS04/workload.json
+RS05,Narrow-Leadership Avoidance + Best-of-Sector Only,Relative strength,3,D3,DETECTOR_REQUIRED,REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL,RS05/workload.json
+RS06,Beta-Adjusted Breakout + Market Breadth,Relative strength,2,D3,DETECTOR_REQUIRED,REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL,RS06/workload.json
+RS07,Cross-Sectional Top-Decile + Intraday Trigger,Relative strength,2,D3,DETECTOR_REQUIRED,REQUIRES_POINT_IN_TIME_CROSS_SECTIONAL_PANEL,RS07/workload.json
+RS08,52-Week-High Rank + Sector Momentum,Relative strength,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,RS08/workload.json
+SW01,Weekly Uptrend + Daily RSI Pullback + Hammer,Swing,1,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW01/workload.json
+SW02,Daily EMA20/50 Trend + Two-Day Pullback + Inside Bar,Swing,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW02/workload.json
+SW03,Weekly MACD Positive + Daily MACD Cross,Swing,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW03/workload.json
+SW04,52-Week High Breakout + Medium-Term Momentum,Swing,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW04/workload.json
+SW05,52-Week High Retest + Bullish Candle,Swing,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW05/workload.json
+SW06,Donchian Breakout + ATR Trail,Swing,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW06/workload.json
+SW07,Daily Bollinger Squeeze + Weekly Trend,Swing,2,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW07/workload.json
+SW08,Three-Day Reversal after Five-Day Decline,Swing,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW08/workload.json
+SW09,Daily Double Bottom + Neckline Break,Swing,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW09/workload.json
+SW10,Daily Ascending Triangle + Sector Breakout,Swing,3,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,SW10/workload.json
+SW11,Volatility Contraction Pattern + Volume Dry-Up,Swing,3,D1,DETECTOR_REQUIRED,STOCK_OHLCV_AVAILABLE_NEEDS_DETECTOR,SW11/workload.json
+SW12,Sector Breakout + Stock Pullback Reclaim,Swing,2,D2,DETECTOR_REQUIRED,REQUIRES_ALIGNED_NIFTY_SECTOR_VIX_AUDIT,SW12/workload.json

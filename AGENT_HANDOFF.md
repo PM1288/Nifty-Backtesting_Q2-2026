@@ -565,3 +565,44 @@ docker exec -e PGPASSWORD=CHANGE_ME_POSTGRES_PASSWORD trading-stack-novius2-post
 ```
 
 Docker database endpoint: `172.25.0.21:5432` (container network); hostname `postgres` is valid only from the Docker network.
+
+## 2026-08-04 pgAdmin Tailscale access
+
+Postgres is published only on the Tailscale interface using `trading-stack/compose/compose.base.yml`:
+`100.86.108.108:5432:5432`. Verified from the host with `psql -h 100.86.108.108`.
+
+pgAdmin fields:
+- Host: `100.86.108.108`
+- Port: `5432`
+- Maintenance database: `tradingdb`
+- Username: `trader`
+- Password: `CHANGE_ME_POSTGRES_PASSWORD`
+- SSL mode: `Prefer` (or `Disable` for initial LAN/Tailscale test)
+
+## 2026-08-04 — 96-strategy hybrid catalogue setup
+
+Reviewed all supplied artifacts in `/home/novius2/NIFTY50/TEST-STRAt_ALL`, including the MD guidance, DOCX text, machine JSON/CSV and ZIP members. The catalogue contains 96 strategies: Wave 1 = 24, Wave 2 = 36, Wave 3 = 36.
+
+Implemented `platform/nifty_stratlab/tools/setup_hybrid_catalogue.py` and `scripts/strategy_catalogue.sh`. Generated one isolated workset per strategy under `config/workloads/hybrid_catalogue_v1/<STRATEGY_ID>/workload.json`. Every workset uses:
+
+- 2015-02-02 through 2025-08-06;
+- all 100 available CSV symbols, with TMPV explicitly excluded if present;
+- two workers;
+- target-only exit: 0.3% during the entry session, then 1.0% swing target from the original buy price;
+- ₹16 lakh/eight concurrent ₹2 lakh positions and unlimited-capital scenarios;
+- CSV, JSON, HTML and PostgreSQL reporting requirements.
+
+Commands executed:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+.venv/bin/pip install -e '.[postgres,dev]'
+./scripts/strategy_catalogue.sh validate
+./scripts/strategy_catalogue.sh setup
+./scripts/strategy_catalogue.sh smoke RELIANCE
+.venv/bin/python scripts/baseline_comparison_v1/reference_golden_suite.py
+.venv/bin/python scripts/baseline_comparison_v1/validate_suite.py
+.venv/bin/pytest -q tests
+```
+
+Results: 96/96 workload contracts passed; RELIANCE source exists for all 96; nine existing reference manifests passed golden next-bar signal/fill checks; full test suite passed 35 tests. The full ten-year run was not launched. Only nine catalogue strategies currently map to existing reference manifests, and D2/D3 strategies require aligned point-in-time market/sector/VIX/cross-sectional inputs. `full_run_authorized` remains false to comply with the source package's fail-closed stop conditions. See `docs/HYBRID_CATALOGUE_IMPLEMENTATION_COMPLETION.md` and `docs/HYBRID_WAVE1_LIMITATIONS.md`.

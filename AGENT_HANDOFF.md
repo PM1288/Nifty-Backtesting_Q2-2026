@@ -644,3 +644,9 @@ CONFIRM_FULL_HYBRID_RUN=YES ./scripts/strategy_catalogue.sh full
 ```
 
 Run range is 2015-02-02 through 2025-08-06, excluding TMPV. First two completed symbols were `ADANIGREEN` and `ADANIENSOL`, both with return code 0 and no errors. The process remains active in the terminal session; final consolidated reports are written after all symbols complete under `outputs/hybrid_catalogue_v1_full`.
+
+### Full run completion
+
+The run completed at `2026-08-04T21:06:34Z` with `SUCCESS`: 100 symbols, 96 strategies, four workers, requested period 2015-02-02 through 2025-08-06, and TMPV excluded. All 96 strategy report folders were produced. Across independent strategy studies there were 2,107,930 total trade rows, 2,100,150 closed trades and 7,780 open swing positions. The sum of independent-study net P&L was ₹856,501,092.34 and the sum after the 35% positive-profit tax assumption was ₹556,725,646.97.
+
+These sums are not a single investable portfolio: each strategy was evaluated independently and the run intentionally has no cross-strategy capital netting. Use each strategy's `summary.json`, `trades.csv` and `symbol_summary.csv` for review; finite-capital portfolio replay and dashboard publication remain separate reconciliation work.

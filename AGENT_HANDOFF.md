@@ -650,3 +650,24 @@ Run range is 2015-02-02 through 2025-08-06, excluding TMPV. First two completed 
 The run completed at `2026-08-04T21:06:34Z` with `SUCCESS`: 100 symbols, 96 strategies, four workers, requested period 2015-02-02 through 2025-08-06, and TMPV excluded. All 96 strategy report folders were produced. Across independent strategy studies there were 2,107,930 total trade rows, 2,100,150 closed trades and 7,780 open swing positions. The sum of independent-study net P&L was ₹856,501,092.34 and the sum after the 35% positive-profit tax assumption was ₹556,725,646.97.
 
 These sums are not a single investable portfolio: each strategy was evaluated independently and the run intentionally has no cross-strategy capital netting. Use each strategy's `summary.json`, `trades.csv` and `symbol_summary.csv` for review; finite-capital portfolio replay and dashboard publication remain separate reconciliation work.
+
+## 2026-08-05 — Analysis ZIP
+
+Packaged the complete full-run output into:
+
+`/home/novius2/NIFTY50/hybrid_catalogue_v1_full_20260804.zip`
+
+Archive verification passed (`unzip -tq`). It contains 386 files and 309,168,233 uncompressed bytes. ZIP size is approximately 61 MB. SHA-256:
+
+`6a16bf06b79825041d418c960b042e81993a4297266d7e314b958bff0aa52032`
+
+Recreate/verify commands:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+apt-get update -qq && apt-get install -y -qq zip
+zip -r -q /home/novius2/NIFTY50/hybrid_catalogue_v1_full_20260804.zip \
+  platform/nifty_stratlab/outputs/hybrid_catalogue_v1_full
+sha256sum /home/novius2/NIFTY50/hybrid_catalogue_v1_full_20260804.zip
+unzip -tq /home/novius2/NIFTY50/hybrid_catalogue_v1_full_20260804.zip
+```

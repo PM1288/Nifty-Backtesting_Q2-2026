@@ -12,10 +12,16 @@ long-equity exit mandate used to compare those entries:
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from decimal import ROUND_CEILING, Decimal
 from typing import Iterable
+
+from nifty_stratlab.evaluation.full_path_ladder import (
+    FullPathPolicy, LadderBar, evaluate_full_path,
+)
+from nifty_stratlab.simulation.execution_scenarios import i030_else_s100_v1
 
 
 @dataclass(frozen=True)
@@ -84,6 +90,7 @@ def evaluate_long_target_only(
     quantity: int,
     bars: Iterable[PathBar],
     policy: CommonExitPolicy | None = None,
+    run_namespace: str = "standalone",
 ) -> dict:
     """Evaluate one accepted long entry under the shared exit mandate.
 
@@ -102,78 +109,51 @@ def evaluate_long_target_only(
     entry_session = path[0].session
     intraday_target = _target(entry_price, policy.intraday_target_pct, policy.tick_size)
     swing_target = _target(entry_price, policy.swing_target_pct, policy.tick_size)
-    exit_bar: PathBar | None = None
-    exit_price: Decimal | None = None
-    exit_reason: str | None = None
-
-    for bar in path:
-        target = intraday_target if bar.session == entry_session else swing_target
-        if bar.open >= target:
-            exit_bar, exit_price = bar, bar.open
-            exit_reason = "TARGET_INTRADAY_0_3_GAP" if bar.session == entry_session else "TARGET_SWING_1_0_GAP"
-            break
-        if bar.high >= target:
-            exit_bar, exit_price = bar, target
-            exit_reason = "TARGET_INTRADAY_0_3" if bar.session == entry_session else "TARGET_SWING_1_0"
-            break
-
-    observed_path = path[: path.index(exit_bar) + 1] if exit_bar else path
-    intraday_bars = [bar for bar in observed_path if bar.session == entry_session]
-    swing_bars = [bar for bar in observed_path if bar.session != entry_session]
-    target_events: list[dict] = []
-    for pct in policy.intraday_ladder_pct:
-        level = _target(entry_price, pct, policy.tick_size)
-        touched = next((bar for bar in intraday_bars if bar.open >= level or bar.high >= level), None)
-        target_events.append(_event(f"I{int(pct * 100):03d}", pct, level, touched))
-    for pct in policy.swing_ladder_pct:
-        level = _target(entry_price, pct, policy.tick_size)
-        touched = next((bar for bar in swing_bars if bar.open >= level or bar.high >= level), None)
-        target_events.append(_event(f"S{int(pct * 100):03d}", pct, level, touched))
-
-    adverse_events: list[dict] = []
-    for pct in policy.adverse_ladder_pct:
-        level = entry_price * (Decimal("1") + pct / Decimal("100"))
-        touched = next((bar for bar in observed_path if bar.low <= level), None)
-        adverse_events.append({
-            "threshold_id": f"A{abs(int(pct * 100)):03d}",
-            "threshold_pct": float(pct),
-            "threshold_price": float(level),
-            "touched": touched is not None,
-            "first_touch_ts": touched.ts.isoformat() if touched else None,
-            "first_touch_session": touched.session.isoformat() if touched else None,
-            "exit_triggered": False,
-        })
-
-    maximum = max(bar.high for bar in observed_path)
-    minimum = min(bar.low for bar in observed_path)
-    mfe_pct = (maximum / entry_price - Decimal("1")) * Decimal("100")
-    mae_pct = (minimum / entry_price - Decimal("1")) * Decimal("100")
-    sessions = len({bar.session for bar in observed_path})
+    entry_path_id = hashlib.sha256(
+        f"{run_namespace}|{symbol}|{signal_date}|{path[0].ts.isoformat()}|{entry_price}|{quantity}".encode()
+    ).hexdigest()
+    full_path = evaluate_full_path(
+        entry_path_id=entry_path_id, symbol=symbol, entry_price=entry_price,
+        quantity=quantity,
+        bars=[LadderBar(bar.ts, bar.session, bar.open, bar.high, bar.low, bar.close) for bar in path],
+        policy=FullPathPolicy(tick_size=policy.tick_size),
+    )
+    execution = i030_else_s100_v1(
+        full_path, entry_price=entry_price, quantity=quantity,
+        intraday_cost_bps=policy.intraday_round_trip_cost_bps,
+        swing_cost_bps=policy.swing_round_trip_cost_bps,
+        positive_profit_tax_rate=policy.positive_profit_tax_rate,
+    )
+    sessions = full_path["sessions_evaluated"]
     entry_notional = entry_price * quantity
-
-    if exit_bar and exit_price is not None:
-        cost_bps = policy.intraday_round_trip_cost_bps if exit_bar.session == entry_session else policy.swing_round_trip_cost_bps
-        costs = entry_notional * cost_bps / Decimal("10000")
-        gross = (exit_price - entry_price) * quantity
-        pre_tax = gross - costs
-        tax = max(pre_tax, Decimal("0")) * policy.positive_profit_tax_rate
-        after_tax = pre_tax - tax
+    if execution["status"] == "CLOSED":
         status = "CLOSED"
+        exit_ts = datetime.fromisoformat(execution["exit_ts"])
+        exit_price = Decimal(str(execution["exit_price"]))
+        exit_date = exit_ts.date()
+        gross = Decimal(str(execution["realised_gross_pnl"]))
+        costs = Decimal(str(execution["costs"]))
+        tax = Decimal(str(execution["tax_reserve"]))
+        after_tax = Decimal(str(execution["after_tax_pnl"]))
         mark_price = exit_price
+        unrealized_net = Decimal("0")
     else:
-        # No synthetic sale is created.  This is a net-liquidation estimate for
-        # risk/equity reporting only and does not release capital.
-        mark_price = observed_path[-1].close
+        status = "OPEN_AS_OF_DATA_BOUNDARY"
+        exit_ts = None
+        exit_date = None
+        exit_price = None
+        mark_price = Decimal(str(full_path["extended_capital_lock"]["data_boundary_close"]))
         costs = entry_notional * policy.swing_round_trip_cost_bps / Decimal("10000")
         gross = Decimal("0")
-        pre_tax = Decimal("0")
         tax = Decimal("0")
         after_tax = Decimal("0")
-        status = "OPEN_AS_OF_END"
-
-    unrealized_net = (mark_price - entry_price) * quantity - costs if status == "OPEN_AS_OF_END" else Decimal("0")
+        unrealized_net = (mark_price - entry_price) * quantity - costs
     return {
         "policy_id": policy.policy_id,
+        "evaluation_policy_id": full_path["evaluation_policy_id"],
+        "execution_scenario_id": execution["execution_scenario_id"],
+        "entry_path_id": entry_path_id,
+        "path_evidence_hash": full_path["path_evidence_hash"],
         "symbol": symbol,
         "signal_date": signal_date,
         "entry_ts": path[0].ts,
@@ -183,10 +163,10 @@ def evaluate_long_target_only(
         "intraday_target_price": round(float(intraday_target), 6),
         "swing_target_price": round(float(swing_target), 6),
         "status": status,
-        "exit_ts": exit_bar.ts if exit_bar else None,
-        "exit_date": exit_bar.session if exit_bar else None,
+        "exit_ts": exit_ts,
+        "exit_date": exit_date,
         "exit_price": round(float(exit_price), 6) if exit_price is not None else None,
-        "exit_reason": exit_reason or "OPEN_TARGET_NOT_REACHED",
+        "exit_reason": execution.get("exit_reason", "OPEN_TARGET_NOT_REACHED_AT_DATA_BOUNDARY"),
         "gross_pnl": round(float(gross), 4),
         "costs": round(float(costs), 4),
         "tax_reserve": round(float(tax), 4),
@@ -194,13 +174,19 @@ def evaluate_long_target_only(
         "unrealized_net_liquidation_pnl": round(float(unrealized_net), 4),
         "mark_price": round(float(mark_price), 6),
         "holding_sessions": sessions,
-        "mfe_pct": round(float(mfe_pct), 4),
-        "mae_pct": round(float(mae_pct), 4),
+        "mfe_pct": round(float(full_path["mfe_d5_pct"]), 4),
+        "mae_pct": round(float(full_path["mae_d5_pct"]), 4),
         "stop_price": None,
         "stop_exit_enabled": False,
         "timeout_exit_enabled": False,
         "capital_released": status == "CLOSED",
-        "target_events": target_events,
-        "adverse_events": adverse_events,
+        "target_events": full_path["reward_events"],
+        "adverse_events": full_path["adverse_events"],
+        "path_checkpoints": full_path["checkpoints"],
+        "coverage_status": full_path["coverage_status"],
+        "invariant_checks": full_path["invariant_checks"],
+        "best_intraday_target_id": full_path["best_intraday_target_id"],
+        "best_d5_target_id": full_path["best_d5_target_id"],
+        "deepest_adverse_level_id": full_path["deepest_adverse_level_id"],
         "policy": asdict(policy),
     }

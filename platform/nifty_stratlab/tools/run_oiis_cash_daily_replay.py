@@ -31,11 +31,12 @@ from nifty_stratlab.evaluation.common_exit import (  # noqa: E402
 
 
 STRATEGY_ID = "oiis_cash_daily_research_v1"
-FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.1"
+FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.3"
 POLICY_VERSION = "NIFTY-SEROE-V1.0"
 EXCLUDED_SYMBOLS = {"TMPV"}
 DEFAULT_CONFIG = PROJECT_ROOT / "config/oiis/formulas/oiis_cash_daily_research_v1.json"
 DEFAULT_SCHEMA = MONOREPO_ROOT / "db/sql/021_oiis_research.sql"
+DEFAULT_FULL_PATH_SCHEMA = MONOREPO_ROOT / "db/sql/022_full_path_ladder_v2.sql"
 LIMITATIONS = [
     "Current-panel Nifty 100 universe introduces survivorship bias.",
     "Public OHLCV and delivery are participation proxies, not confirmed institutional flow.",
@@ -223,7 +224,7 @@ def _minute_frame(path: Path, start: date, end: date) -> pd.DataFrame:
 
 def simulate_trades(
     decisions: list[dict[str, Any]], prices: pd.DataFrame, config: dict[str, Any],
-    minute_csv_dir: Path, end: date,
+    minute_csv_dir: Path, end: date, run_namespace: str,
 ) -> list[dict[str, Any]]:
     simulate_trades.missing_minute_symbols = []
     execution = config["execution"]
@@ -288,7 +289,7 @@ def simulate_trades(
         ) for row in path_frame.itertuples(index=False)]
         outcome = evaluate_long_target_only(
             symbol=symbol, signal_date=decision["trade_date"], entry_price=entry,
-            quantity=quantity, bars=path, policy=policy,
+            quantity=quantity, bars=path, policy=policy, run_namespace=run_namespace,
         )
         outcome["decision_hash"] = decision["decision_hash"]
         outcome["minute_source_sha256"] = minute_checksums[symbol]
@@ -354,12 +355,22 @@ def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]]
     output_dir.mkdir(parents=True, exist_ok=True)
     decision_export = [{key: json.dumps(value, default=jsonable, sort_keys=True) if key in {"hard_gates", "evidence"} else value for key, value in row.items()} for row in decisions]
     pd.DataFrame(decision_export).to_csv(output_dir / "decisions.csv", index=False, lineterminator="\n")
-    trade_export = [{key: value for key, value in row.items() if key not in {"target_events", "adverse_events", "policy"}} for row in trades]
+    trade_export = [{key: value for key, value in row.items() if key not in {"target_events", "adverse_events", "path_checkpoints", "invariant_checks", "policy"}} for row in trades]
     target_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["target_events"]]
     adverse_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["adverse_events"]]
+    checkpoint_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **checkpoint} for row in trades for checkpoint in row["path_checkpoints"]]
+    path_export = [{
+        "decision_hash": row["decision_hash"], "entry_path_id": row["entry_path_id"], "symbol": row["symbol"],
+        "evaluation_policy_id": row["evaluation_policy_id"], "path_evidence_hash": row["path_evidence_hash"],
+        "coverage_status": row["coverage_status"], "best_intraday_target_id": row["best_intraday_target_id"],
+        "best_d5_target_id": row["best_d5_target_id"], "deepest_adverse_level_id": row["deepest_adverse_level_id"],
+        "mfe_d5_pct": row["mfe_pct"], "mae_d5_pct": row["mae_pct"],
+    } for row in trades]
     pd.DataFrame(trade_export).to_csv(output_dir / "trades.csv", index=False, lineterminator="\n")
     pd.DataFrame(target_export).to_csv(output_dir / "target_events.csv", index=False, lineterminator="\n")
     pd.DataFrame(adverse_export).to_csv(output_dir / "adverse_events.csv", index=False, lineterminator="\n")
+    pd.DataFrame(checkpoint_export).to_csv(output_dir / "path_checkpoints.csv", index=False, lineterminator="\n")
+    pd.DataFrame(path_export).to_csv(output_dir / "entry_path_evaluations.csv", index=False, lineterminator="\n")
     pd.DataFrame({"symbol": missing_minute_symbols}).to_csv(output_dir / "missing_minute_symbols.csv", index=False, lineterminator="\n")
     pd.DataFrame(buckets).to_csv(output_dir / "regime_performance.csv", index=False, lineterminator="\n")
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True, default=jsonable) + "\n", encoding="utf-8")
@@ -382,6 +393,7 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--schema-sql", type=Path, default=DEFAULT_SCHEMA)
+    parser.add_argument("--full-path-schema-sql", type=Path, default=DEFAULT_FULL_PATH_SCHEMA)
     parser.add_argument("--minute-csv-dir", type=Path, default=DEFAULT_MINUTE_CSV_DIR,
                         help="IST one-minute OHLCV directory used by the common exit evaluator")
     parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "oiis_cash_daily_research_v1")
@@ -403,6 +415,7 @@ def main() -> None:
     with psycopg.connect(args.database_url, row_factory=dict_row) as conn:
         with conn.cursor() as cur:
             cur.execute(args.schema_sql.read_text(encoding="utf-8"))
+            cur.execute(args.full_path_schema_sql.read_text(encoding="utf-8"))
             cur.execute("INSERT INTO oiis.formula_version (formula_version,strategy_id,status,config_json,config_sha256) VALUES (%s,%s,%s,%s::jsonb,%s) ON CONFLICT (formula_version) DO NOTHING", (FORMULA_VERSION, STRATEGY_ID, config["status"], json.dumps(config), config_hash))
             cur.execute("INSERT INTO oiis.replay_run (replay_run_id,strategy_id,formula_version,universe_name,membership_mode,requested_start,requested_end,symbol_filter,status,run_hash,limitations_json) VALUES (%s,%s,%s,'nifty100_equity','CURRENT_PANEL_RESEARCH_ONLY',%s,%s,%s,'RUNNING',%s,%s::jsonb)", (run_id, STRATEGY_ID, FORMULA_VERSION, args.start, args.end, symbol, run_hash, json.dumps(LIMITATIONS)))
         conn.commit()
@@ -413,13 +426,22 @@ def main() -> None:
             with ThreadPoolExecutor(max_workers=max(1, min(args.workers, len(groups)))) as pool:
                 nested = list(pool.map(lambda item: evaluate_symbol(item, args.start, args.end), groups))
             decisions = [row for rows in nested for row in rows]
-            trades = simulate_trades(decisions, features, config, args.minute_csv_dir, args.end)
+            trades = simulate_trades(decisions, features, config, args.minute_csv_dir, args.end, run_id)
             missing_minute_symbols = list(getattr(simulate_trades, "missing_minute_symbols", []))
             buckets = performance(decisions, trades)
             closed_trades = [row for row in trades if row["status"] == "CLOSED"]
             open_positions = [row for row in trades if row["status"] != "CLOSED"]
             minute_sources = {row["symbol"]: row["minute_source_sha256"] for row in trades}
             run_hash = digest_bytes(json.dumps({"base_run_hash": run_hash, "minute_sources": minute_sources}, sort_keys=True).encode())
+            reward_level_counts = {
+                level: sum(any(event["level_id"] == level and event["hit_flag"] for event in row["target_events"]) for row in trades)
+                for level in ("I030", "I050", "I070", "S100", "S200", "S500")
+            }
+            adverse_level_counts = {
+                level: sum(any(event["level_id"] == level and event["hit_flag"] for event in row["adverse_events"]) for row in trades)
+                for level in ("A050", "A100", "A200", "A500", "A1000", "A_GT1000")
+            }
+            invariant_status = "PASS" if all(all(row["invariant_checks"].values()) for row in trades) else "FAIL"
             summary = {
                 "replay_run_id": run_id, "strategy_id": STRATEGY_ID, "formula_version": FORMULA_VERSION,
                 "requested_start": args.start, "requested_end": args.end,
@@ -435,8 +457,14 @@ def main() -> None:
                 "win_rate_pct": round(100 * sum(row["after_tax_net_pnl"] > 0 for row in closed_trades) / len(closed_trades), 4) if closed_trades else None,
                 "config_sha256": config_hash, "run_hash": run_hash, "status": "SUCCEEDED", "limitations": LIMITATIONS,
                 "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
+                "execution_scenario_id": "EXEC-I030-ELSE-S100-NO-TIMEOUT-V2",
                 "missing_minute_symbols": missing_minute_symbols,
                 "data_completeness_status": "WARN" if missing_minute_symbols else "PASS",
+                "evaluation_policy_id": "FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2",
+                "reward_level_hit_counts": reward_level_counts,
+                "adverse_level_hit_counts": adverse_level_counts,
+                "ladder_invariant_status": invariant_status,
+                "path_checkpoint_count": sum(len(row["path_checkpoints"]) for row in trades),
                 "result_type": "OPPORTUNITY_SCAN", "rankability_status": "NOT_RANKABLE", "rating": "NR",
             }
             files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary, missing_minute_symbols)
@@ -460,7 +488,44 @@ def main() -> None:
                             exit_reason,gross_pnl,costs,tax_reserve,after_tax_net_pnl,return_pct,holding_sessions,mfe_pct,mae_pct,outcome_json,
                             position_status,unrealized_net_liquidation_pnl,capital_released)
                           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s)
-                        """, (decision_ids[row["decision_hash"]],row["entry_date"],row["exit_date"],row["entry_price"],row["exit_price"],row["stop_price"],row["target_price"],row["quantity"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["return_pct"],row["holding_sessions"],row["mfe_pct"],row["mae_pct"],json.dumps({"policy_id":row["policy_id"],"target_events":row["target_events"],"adverse_events":row["adverse_events"],"entry_ts":row["entry_ts"],"exit_ts":row["exit_ts"],"mark_price":row["mark_price"],"minute_source_sha256":row["minute_source_sha256"],"stop_exit_enabled":False,"timeout_exit_enabled":False},default=jsonable),row["status"],row["unrealized_net_liquidation_pnl"],row["capital_released"]))
+                        """, (decision_ids[row["decision_hash"]],row["entry_date"],row["exit_date"],row["entry_price"],row["exit_price"],row["stop_price"],row["target_price"],row["quantity"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["return_pct"],row["holding_sessions"],row["mfe_pct"],row["mae_pct"],json.dumps({"policy_id":row["policy_id"],"evaluation_policy_id":row["evaluation_policy_id"],"execution_scenario_id":row["execution_scenario_id"],"entry_path_id":row["entry_path_id"],"path_evidence_hash":row["path_evidence_hash"],"target_events":row["target_events"],"adverse_events":row["adverse_events"],"path_checkpoints":row["path_checkpoints"],"entry_ts":row["entry_ts"],"exit_ts":row["exit_ts"],"mark_price":row["mark_price"],"minute_source_sha256":row["minute_source_sha256"],"stop_exit_enabled":False,"timeout_exit_enabled":False},default=jsonable),row["status"],row["unrealized_net_liquidation_pnl"],row["capital_released"]))
+                        cur.execute("""
+                          INSERT INTO strategy_eval.entry_path_evaluation
+                            (entry_path_id,run_id,strategy_version_id,symbol,entry_fill_ts,entry_price,quantity,
+                             evaluation_policy_id,path_evidence_hash,coverage_status,evaluated_through_stage,
+                             best_intraday_target_id,best_d5_target_id,deepest_adverse_level_id,mfe_d5_pct,mae_d5_pct,data_snapshot_hash)
+                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        """, (row["entry_path_id"],run_id,FORMULA_VERSION,row["symbol"],row["entry_ts"],row["entry_price"],row["quantity"],
+                              row["evaluation_policy_id"],row["path_evidence_hash"],row["coverage_status"],row["path_checkpoints"][-1]["stage"],
+                              row["best_intraday_target_id"],row["best_d5_target_id"],row["deepest_adverse_level_id"],row["mfe_pct"],row["mae_pct"],row["minute_source_sha256"]))
+                        for event in row["target_events"] + row["adverse_events"]:
+                            cur.execute("""
+                              INSERT INTO strategy_eval.ladder_event
+                                (entry_path_id,evaluation_policy_id,level_id,level_kind,window_id,level_pct,raw_price,tick_price,
+                                 hit_flag,first_touch_ts,first_touch_stage,first_touch_kind,opportunity_price,
+                                 same_bar_order_ambiguous,sequence,hit_on_d0,hit_after_d0,evidence_json)
+                              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                            """, (row["entry_path_id"],row["evaluation_policy_id"],event["level_id"],event["level_kind"],event["window_id"],
+                                  event["level_pct"],event["raw_price"],event.get("tick_price"),event["hit_flag"],event.get("first_touch_ts"),
+                                  event.get("first_touch_stage"),event.get("first_touch_kind"),event.get("opportunity_price"),
+                                  event.get("same_bar_order_ambiguous",False),event.get("sequence"),event.get("hit_on_d0",False),
+                                  event.get("hit_after_d0",False),json.dumps(event,default=jsonable)))
+                        for checkpoint in row["path_checkpoints"]:
+                            cur.execute("""
+                              INSERT INTO strategy_eval.path_checkpoint
+                                (entry_path_id,evaluation_policy_id,stage,checkpoint_ts,close_price,return_pct,mfe_pct,mae_pct,
+                                 highest_reward_level,worst_adverse_level,capital_locked_flag)
+                              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                            """, (row["entry_path_id"],row["evaluation_policy_id"],checkpoint["stage"],checkpoint["checkpoint_ts"],checkpoint["close_price"],
+                                  checkpoint["return_pct"],checkpoint["mfe_pct"],checkpoint["mae_pct"],checkpoint.get("highest_reward_level"),
+                                  checkpoint.get("worst_adverse_level"),checkpoint["capital_locked_flag"]))
+                        cur.execute("""
+                          INSERT INTO strategy_eval.execution_scenario_result
+                            (entry_path_id,execution_scenario_id,run_id,path_evidence_hash,status,exit_ts,exit_price,exit_reason,
+                             realised_gross_pnl,costs,tax_reserve,after_tax_pnl,capital_released)
+                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        """, (row["entry_path_id"],row["execution_scenario_id"],run_id,row["path_evidence_hash"],row["status"],row["exit_ts"],
+                              row["exit_price"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["capital_released"]))
                     for row in buckets:
                         cur.execute("INSERT INTO oiis.performance_bucket (replay_run_id,bucket_type,bucket_key,decision_count,trade_count,win_rate_pct,avg_return_pct,median_return_pct,after_tax_net_pnl,metrics_json) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)", (run_id,row["bucket_type"],row["bucket_key"],row["decision_count"],row["trade_count"],row["win_rate_pct"],row["avg_return_pct"],row["median_return_pct"],row["after_tax_net_pnl"],json.dumps({"open_position_count":row["open_position_count"],"open_unrealized_net_liquidation_pnl":row["open_unrealized_net_liquidation_pnl"]})))
                     cur.execute("UPDATE oiis.replay_run SET actual_start=%s,actual_end=%s,symbol_count=%s,decision_count=%s,enterable_count=%s,trade_count=%s,status='SUCCEEDED',result_type=%s,rankability_status=%s,rating=%s,run_hash=%s,metrics_json=%s::jsonb,finished_at=NOW() WHERE replay_run_id=%s", (summary["actual_start"],summary["actual_end"],summary["symbol_count"],summary["decision_count"],summary["enterable_count"],summary["trade_count"],summary["result_type"],summary["rankability_status"],summary["rating"],summary["run_hash"],json.dumps(summary,default=jsonable),run_id))

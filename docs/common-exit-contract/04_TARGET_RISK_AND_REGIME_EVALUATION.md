@@ -7,12 +7,16 @@ Every accepted entry must produce evidence even when it never closes.
 For I030, I050, I070, S100, S200 and S500 record the raw and tick-rounded target,
 first touch time, first executable opportunity, fill status, elapsed minutes,
 elapsed sessions, MFE/MAE before the event and path ambiguity. I-levels are
-restricted to the entry session. S-levels begin on the next trading session.
+restricted to the entry session. For path-quality research, S-levels are
+evaluated from the fill through D+5 and carry `hit_on_d0` and `hit_after_d0`.
+Only the selected I030-else-S100 execution scenario restricts its swing sale to
+after D0.
 
 Report resolution checkpoints at intraday close and D+1 through D+5. D+5
 unresolved is a serious target-time and capital-lock failure, but it is not an
-exit under the approved mandate. Continue observing the position until S100 or
-the data boundary.
+exit under the approved mandate and later observations cannot rewrite D+5
+labels. Continue the separate execution observation until S100 or the data
+boundary.
 
 ## Risk evidence without stop exits
 

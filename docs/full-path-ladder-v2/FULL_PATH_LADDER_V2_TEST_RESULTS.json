@@ -1,0 +1,13 @@
+{
+  "pytest": {"status": "PASS", "tests_passed": 63, "tests_failed": 0},
+  "golden_cases": 12,
+  "additional_contract_cases": ["run_namespaced_path_identity", "D6_execution_does_not_rewrite_D5"],
+  "migration_022_disposable_apply": "PASS",
+  "migration_022_idempotent_reapply": "PASS",
+  "real_reliance_acceptance_run": "26803207-5b90-4cdd-8ca9-f59601245291",
+  "real_vedl_late_exit_acceptance_run": "3dc1de20-9d49-4a1b-bef9-91f85f06a137",
+  "five_symbol_pilot": "PASS",
+  "full_artifact_checksums": "PASS",
+  "full_database_cardinality": "18 paths; 216 ladder rows; 108 checkpoints",
+  "ladder_invariants": "PASS"
+}

@@ -1,11 +1,11 @@
 # Common Backtest Exit Contract
 
-This folder is the canonical handoff for the exit and evaluation rules applied
+This folder is the canonical handoff for the execution rules applied
 to every long-equity entry strategy in NIFTY Strategy Lab. A strategy defines
 only whether and when an entry is eligible. It does not silently replace the
 shared exit mandate.
 
-The frozen V1 mandate is:
+The frozen V1 execution mandate is:
 
 1. Buy at the entry price produced by the declared point-in-time execution
    model.
@@ -33,6 +33,9 @@ Read the files in numerical order:
 - `07_RERUN_INVALIDATION_AND_OPERATIONS.md`
 - `08_LIMITATIONS_AND_OPEN_WORK.md`
 
-The implementation authority is
-`platform/nifty_stratlab/src/nifty_stratlab/evaluation/common_exit.py`. Any new
-strategy runner must call this module or prove equivalent deterministic output.
+Full-path ladder evaluation is now a separate V2 concern. Read
+`docs/full-path-ladder-v2/README.md`: reaching I030/S100 may select an execution
+fill, but never truncates I050/I070/S200/S500, adverse events, or D0-D+5
+checkpoints. The implementation authorities are `evaluation/full_path_ladder.py`
+for immutable research evidence and `simulation/execution_scenarios.py` for
+scenario-specific capital release. `common_exit.py` is compatibility only.

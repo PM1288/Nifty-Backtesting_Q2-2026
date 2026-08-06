@@ -1,8 +1,10 @@
 {
-  "workload_version": "OIIS-CASH-DAILY-WORKLOAD-V1.1",
+  "workload_version": "OIIS-CASH-DAILY-WORKLOAD-V1.3",
   "strategy_id": "oiis_cash_daily_research_v1",
-  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.1",
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.3",
   "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
+  "execution_scenario_id": "EXEC-I030-ELSE-S100-NO-TIMEOUT-V2",
+  "evaluation_policy_id": "FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2",
   "universe": "nifty100_equity",
   "membership_mode": "CURRENT_PANEL_RESEARCH_ONLY",
   "requested_start": "2023-08-06",

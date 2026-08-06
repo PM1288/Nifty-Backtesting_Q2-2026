@@ -1035,3 +1035,96 @@ complete all-source claim. No daily fallback or synthetic exit was used.
 
 Artifacts:
 `platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/37409597-ffd7-499c-b56f-885ec4d748bd/`
+# 2026-08-06 — Full-path ladder V2 correction
+
+The complete correction requested in `/home/novius2/NIFTY50/Fix-strategy`
+is documented under `docs/full-path-ladder-v2/`. Start with its `README.md` and
+source review. The important architecture rule is: the entry-path evaluator
+scans all reward and adverse ladders through D+5 without early termination;
+the separately named execution scenario may sell and release capital without
+changing that evidence.
+
+Canonical implementations:
+
+- `evaluation/full_path_ladder.py`: six reward rows, six adverse rows and six
+  checkpoints per accepted entry; no P&L or exit authority.
+- `simulation/execution_scenarios.py`: no-stop/no-timeout I030-else-S100
+  execution economics.
+- `evaluation/common_exit.py`: compatibility facade only.
+- migrations 022 and 023: normalized evidence plus old-run governance.
+
+Commands executed from repository root:
+
+```bash
+git rev-parse --show-toplevel
+git status --short
+git branch --show-current
+git remote -v
+
+platform/nifty_stratlab/.venv/bin/python -m pytest \
+  platform/nifty_stratlab/tests/phase3/test_full_path_ladder_v2.py \
+  platform/nifty_stratlab/tests/phase3/test_common_exit_contract.py -q
+platform/nifty_stratlab/.venv/bin/python -m pytest platform/nifty_stratlab/tests -q
+./scripts/oiis.sh validate-config
+
+# Migration 022 was applied twice to a disposable database, its four tables
+# were inspected, and the disposable database was dropped. Production changes
+# were then applied only after that check.
+docker exec -i trading-stack-novius2-postgres-1 \
+  psql -U trader -d tradingdb -v ON_ERROR_STOP=1 \
+  < db/sql/023_full_path_ladder_run_governance.sql
+
+# For local replay, read only the three PostgreSQL keys from the stack .env,
+# strip CRLF, and build a libpq conninfo string. Do not source the whole file:
+# its unquoted browser user-agent line is not shell syntax.
+db_user="$(sed -n 's/^POSTGRES_USER=//p' /home/novius2/trading-stack/.env | head -1 | tr -d '\r')"
+db_password="$(sed -n 's/^POSTGRES_PASSWORD=//p' /home/novius2/trading-stack/.env | head -1 | tr -d '\r')"
+db_name="$(sed -n 's/^POSTGRES_DB=//p' /home/novius2/trading-stack/.env | head -1 | tr -d '\r')"
+export DATABASE_URL="host=100.86.108.108 port=5432 dbname=$db_name user=$db_user password=$db_password"
+
+./scripts/oiis.sh replay --symbol RELIANCE --start 2023-08-06 --end 2026-08-05 --workers 1
+./scripts/oiis.sh replay --symbol VEDL --start 2023-08-06 --end 2026-08-05 --workers 1
+
+CONFIRM_FULL_OIIS_REPLAY=YES ./scripts/oiis.sh replay \
+  --start 2023-08-06 --end 2026-08-05 --workers 4
+
+./scripts/oiis.sh verify \
+  platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/53b5bb32-6a33-470f-9884-8613fa18ad21
+```
+
+Acceptance sequence:
+
+- 63 repository tests passed, including 12 required synthetic ladder cases.
+- RELIANCE V1.3 acceptance: `26803207-5b90-4cdd-8ca9-f59601245291`.
+  Its one entry reached all I030/I050/I070/S100/S200/S500 rungs even though
+  the selected execution sold at I030.
+- VEDL V1.3 late-exit acceptance: `3dc1de20-9d49-4a1b-bef9-91f85f06a137`.
+  It reached no S target by D+5 but later sold at S100. This proves D+6 does
+  not rewrite D+5 evidence and D+5 is not a hidden execution sale/timeout.
+- Five-symbol V1.2 path pilot passed for RELIANCE, VEDL, PFC, WIPRO and HAL;
+  V1.2 execution economics are nevertheless superseded because that adapter
+  incorrectly ended at D+5.
+- Canonical full V1.3 run: `53b5bb32-6a33-470f-9884-8613fa18ad21`.
+  It has 99 symbols, 68,743 decisions, 23 enterable signals, 18 accepted
+  positions, 108 reward rows, 108 adverse rows and 108 D0-D+5 checkpoints.
+  All 18 paths passed coverage and monotonic invariants. Fifteen executions
+  sold at I030 and three at later S100; realised after-tax P&L is ₹7,406.4913.
+
+Correct full-run reach counts:
+
+```text
+Reward:  I030=15 I050=12 I070=10 S100=15 S200=11 S500=6
+Adverse: A050=18 A100=17 A200=14 A500=6 A1000=1 A_GT1000=1
+```
+
+The old full V1.1 run `37409597-ffd7-499c-b56f-885ec4d748bd` and every other
+V1.1 replay are now marked
+`SUPERSEDED_EARLY_EXIT_TRUNCATED_LADDER / NOT_COMPARABLE_WITH_FULL_PATH_V2`.
+V1.2 runs are marked as having valid V2 path labels where successful but
+non-comparable D+5-truncated execution economics. V1.3 succeeded runs are
+`CANONICAL_FULL_PATH_V2`.
+
+Known data warning: minute CSV evidence is absent for `M&M` and `MAXHEALTH`.
+The runner skipped their five enterable signals instead of fabricating paths.
+The canonical result remains `OPPORTUNITY_SCAN / NOT_RANKABLE / NR`; it is not
+a finite-capital portfolio result, a profitability claim, or order authority.

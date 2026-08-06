@@ -56,7 +56,7 @@ def test_adverse_thresholds_record_risk_but_never_exit() -> None:
 
 def test_unresolved_position_remains_open_and_capital_is_not_released() -> None:
     result = evaluate([bar(0, DAY, "100", "100.2", "80", "90")])
-    assert result["status"] == "OPEN_AS_OF_END"
+    assert result["status"] == "OPEN_AS_OF_DATA_BOUNDARY"
     assert result["exit_date"] is None
     assert result["after_tax_net_pnl"] == 0.0
     assert result["unrealized_net_liquidation_pnl"] < 0
@@ -67,3 +67,27 @@ def test_long_target_tick_rounds_up_not_below_declared_percentage() -> None:
     result = evaluate([bar(0, DAY, "100", "100.35", "100", "100.3")])
     i030 = next(event for event in result["target_events"] if event["target_id"] == "I030")
     assert i030["target_price"] == 100.3
+
+
+def test_entry_path_identity_is_unique_per_replay_run() -> None:
+    bars = [bar(0, DAY, "100", "100.35", "100", "100.3")]
+    first = evaluate_long_target_only(
+        symbol="AAA", signal_date=DAY - timedelta(days=1), entry_price=Decimal("100"),
+        quantity=2000, bars=bars, run_namespace="run-one",
+    )
+    second = evaluate_long_target_only(
+        symbol="AAA", signal_date=DAY - timedelta(days=1), entry_price=Decimal("100"),
+        quantity=2000, bars=bars, run_namespace="run-two",
+    )
+    assert first["entry_path_id"] != second["entry_path_id"]
+
+
+def test_d6_swing_target_closes_execution_without_rewriting_d5_ladder() -> None:
+    bars = [bar(0, DAY + timedelta(days=i), "99", "100", "98", "99") for i in range(6)]
+    bars.append(bar(0, DAY + timedelta(days=6), "99", "101.2", "98", "101"))
+    result = evaluate(bars)
+    s100 = next(event for event in result["target_events"] if event["target_id"] == "S100")
+    assert s100["touched"] is False
+    assert result["status"] == "CLOSED"
+    assert result["exit_reason"] == "TARGET_SWING_1_0"
+    assert result["exit_date"] == DAY + timedelta(days=6)

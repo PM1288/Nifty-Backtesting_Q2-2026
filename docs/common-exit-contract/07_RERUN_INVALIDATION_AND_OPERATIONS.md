@@ -11,6 +11,13 @@ Any other run is incompatible if it contains `STOP`, `TIMEOUT`, indicator,
 forced-session or run-end liquidation as a normal exit. Do not silently edit
 old output; rerun under the new policy and link old/new run identities.
 
+All V1.1 runs are additionally
+`SUPERSEDED_EARLY_EXIT_TRUNCATED_LADDER / NOT_COMPARABLE_WITH_FULL_PATH_V2`.
+Their selected I030/S100 exit truncated higher reward and later adverse facts.
+V1.2 fixed the D+5 path but incorrectly ended execution at D+5, so its economics
+are also non-comparable. The canonical full V1.3 run is
+`53b5bb32-6a33-470f-9884-8613fa18ad21`.
+
 ## Validation commands
 
 ```bash
@@ -58,13 +65,15 @@ with `--minute-csv-dir`. TMPV remains excluded.
 - realised and unrealised P&L are separate;
 - target/adverse event files exist and checksums pass;
 - database and CSV counts reconcile;
-- formula version and exit-policy ID are V1.1/V1;
+- formula version is V1.3, evaluation policy is full-path V2 and execution
+  scenario is `EXEC-I030-ELSE-S100-NO-TIMEOUT-V2`;
 - old V1.0 results are excluded from compatible comparison.
 
-The first corrected full replay completed as run
-`37409597-ffd7-499c-b56f-885ec4d748bd`: 99 symbols, 68,743 decisions, 23
+The canonical corrected full replay completed as run
+`53b5bb32-6a33-470f-9884-8613fa18ad21`: 99 symbols, 68,743 decisions, 23
 enterable decisions and 18 target-closed positions. Fifteen closed at I030 and
 three at S100. After-tax realised P&L was ₹7,406.4913. No stop or timeout exits
-occurred. M&M and MAXHEALTH had five eligible decisions between them but no
+occurred. Full-path reward hits were 15/12/10/15/11/6 and adverse hits were
+18/17/14/6/1/1 in ladder order. M&M and MAXHEALTH had five eligible decisions between them but no
 minute CSV, so they are listed in `missing_minute_symbols.csv` and the run is
 `data_completeness_status=WARN`.

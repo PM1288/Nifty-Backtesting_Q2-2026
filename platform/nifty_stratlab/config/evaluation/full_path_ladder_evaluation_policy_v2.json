@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "policy_id": "FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2",
+  "version": 2,
+  "mode": "ENTRY_PATH_LADDER_EVALUATION",
+  "direction": "LONG",
+  "stop_on_first_target": false,
+  "stop_on_first_adverse_level": false,
+  "entry_price_anchor": "ORIGINAL_EXECUTED_ENTRY_PRICE",
+  "intraday_window": {
+    "start": "ENTRY_FILL_TIMESTAMP",
+    "end": "ENTRY_SESSION_CLOSE",
+    "levels": [{"id": "I030", "pct": 0.3}, {"id": "I050", "pct": 0.5}, {"id": "I070", "pct": 0.7}]
+  },
+  "d5_window": {
+    "start": "ENTRY_FILL_TIMESTAMP",
+    "end": "CLOSE_OF_FIFTH_SUBSEQUENT_TRADING_SESSION",
+    "record_first_touch_stage": true,
+    "levels": [{"id": "S100", "pct": 1.0}, {"id": "S200", "pct": 2.0}, {"id": "S500", "pct": 5.0}]
+  },
+  "adverse_window": {
+    "start": "ENTRY_FILL_TIMESTAMP",
+    "end": "CLOSE_OF_FIFTH_SUBSEQUENT_TRADING_SESSION",
+    "levels": [
+      {"id": "A050", "pct": -0.5}, {"id": "A100", "pct": -1.0},
+      {"id": "A200", "pct": -2.0}, {"id": "A500", "pct": -5.0},
+      {"id": "A1000", "pct": -10.0}, {"id": "A_GT1000", "predicate": "RETURN_PCT < -10.0"}
+    ]
+  },
+  "execution_order": {
+    "target": "BAR_OPEN_IF_ABOVE_TARGET_ELSE_TARGET_ON_HIGH_TOUCH",
+    "adverse": "BAR_OPEN_IF_BELOW_LEVEL_ELSE_LEVEL_ON_LOW_TOUCH",
+    "same_bar_opposite_events": "RECORD_BOTH_AND_MARK_ORDER_UNKNOWN"
+  },
+  "extended_capital_lock_observation": {
+    "enabled": true,
+    "starts_after": "D5_CLOSE",
+    "does_not_change_d5_labels": true,
+    "ends": "RECOVERY_OR_DATA_BOUNDARY"
+  },
+  "execution_scenarios_are_separate": true
+}

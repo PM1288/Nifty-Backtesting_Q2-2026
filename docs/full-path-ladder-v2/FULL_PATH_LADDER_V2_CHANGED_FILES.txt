@@ -1,0 +1,17 @@
+db/sql/022_full_path_ladder_v2.sql
+db/sql/023_full_path_ladder_run_governance.sql
+scripts/db_migrate_all.sh
+platform/nifty_stratlab/config/evaluation/full_path_ladder_evaluation_policy_v2.json
+platform/nifty_stratlab/config/oiis/formulas/oiis_cash_daily_research_v1.json
+platform/nifty_stratlab/config/workloads/oiis_cash_daily_research_v1.json
+platform/nifty_stratlab/src/nifty_stratlab/evaluation/full_path_ladder.py
+platform/nifty_stratlab/src/nifty_stratlab/evaluation/common_exit.py
+platform/nifty_stratlab/src/nifty_stratlab/simulation/execution_scenarios.py
+platform/nifty_stratlab/tests/phase3/test_full_path_ladder_v2.py
+platform/nifty_stratlab/tests/phase3/test_common_exit_contract.py
+platform/nifty_stratlab/tools/run_oiis_cash_daily_replay.py
+platform/nifty_stratlab/tools/validate_oiis_config.py
+platform/nifty_stratlab/tools/verify_oiis_replay.py
+docs/full-path-ladder-v2/*
+docs/common-exit-contract/README.md
+AGENT_HANDOFF.md

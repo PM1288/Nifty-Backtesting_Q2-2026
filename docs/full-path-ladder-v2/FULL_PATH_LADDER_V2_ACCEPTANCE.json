@@ -1,0 +1,19 @@
+{
+  "status": "PASS_WITH_DOCUMENTED_LIMITATIONS",
+  "canonical_run_id": "53b5bb32-6a33-470f-9884-8613fa18ad21",
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.3",
+  "evaluation_policy_id": "FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2",
+  "execution_scenario_id": "EXEC-I030-ELSE-S100-NO-TIMEOUT-V2",
+  "accepted_paths": 18,
+  "reward_rows": 108,
+  "adverse_rows": 108,
+  "checkpoint_rows": 108,
+  "coverage_pass_paths": 18,
+  "invariants": "PASS",
+  "reward_hits": {"I030": 15, "I050": 12, "I070": 10, "S100": 15, "S200": 11, "S500": 6},
+  "adverse_hits": {"A050": 18, "A100": 17, "A200": 14, "A500": 6, "A1000": 1, "A_GT1000": 1},
+  "execution_exits": {"TARGET_INTRADAY_0_3": 15, "TARGET_SWING_1_0": 3},
+  "after_tax_net_pnl_rupees": 7406.4913,
+  "artifact_checksum_verification": "PASS",
+  "rankability_status": "NOT_RANKABLE"
+}

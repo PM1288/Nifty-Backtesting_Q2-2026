@@ -1012,6 +1012,26 @@ All seven checksummed artifacts pass. The result remains
 `OPPORTUNITY_SCAN / NOT_RANKABLE / NR` and is pipeline evidence only.
 Its evidence-bound run hash includes the exact minute CSV SHA-256.
 
-The corrected 99-symbol V1.1 replay has not been run. Use the guarded command in
-`docs/common-exit-contract/07_RERUN_INVALIDATION_AND_OPERATIONS.md` only after
-reviewing this one-stock evidence.
+The corrected 99-symbol V1.1 replay is documented below. It completed with a
+data warning for two symbols without minute CSV evidence.
+
+## 2026-08-06 — Corrected full-universe replay
+
+The corrected full run completed as
+`37409597-ffd7-499c-b56f-885ec4d748bd` using formula V1.1 and the common
+target-only exit. It evaluated 99 eligible symbols and 68,743 decisions. There
+were 23 enterable decisions and 18 accepted positions with available minute
+data; 15 closed at I030 and 3 closed at S100. All 18 closed positions released
+capital only after target fill. After-tax realised P&L was ₹7,406.4913, gross
+P&L ₹15,104.90, proxy costs ₹3,710.30 and tax reserve ₹3,988.11. No stop-loss,
+timeout, indicator or forced-close exit occurred.
+
+The best realised trade was VEDL at ₹1,020.5044 after tax. The lowest realised
+winner was HAL at ₹281.4240. The worst observed path risk was VEDL MAE of
+-22.3906%; that drawdown was recorded and did not trigger an exit. M&M and
+MAXHEALTH lacked minute CSV evidence, accounting for five enterable decisions
+not accepted. The run is therefore `SUCCEEDED_WITH_DATA_WARNINGS`, not a
+complete all-source claim. No daily fallback or synthetic exit was used.
+
+Artifacts:
+`platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/37409597-ffd7-499c-b56f-885ec4d748bd/`

@@ -60,3 +60,11 @@ with `--minute-csv-dir`. TMPV remains excluded.
 - database and CSV counts reconcile;
 - formula version and exit-policy ID are V1.1/V1;
 - old V1.0 results are excluded from compatible comparison.
+
+The first corrected full replay completed as run
+`37409597-ffd7-499c-b56f-885ec4d748bd`: 99 symbols, 68,743 decisions, 23
+enterable decisions and 18 target-closed positions. Fifteen closed at I030 and
+three at S100. After-tax realised P&L was ₹7,406.4913. No stop or timeout exits
+occurred. M&M and MAXHEALTH had five eligible decisions between them but no
+minute CSV, so they are listed in `missing_minute_symbols.csv` and the run is
+`data_completeness_status=WARN`.

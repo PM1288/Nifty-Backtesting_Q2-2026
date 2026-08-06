@@ -1,0 +1,42 @@
+{
+  "accepted_position_count": 18,
+  "actual_end": "2026-08-05",
+  "actual_start": "2023-08-07",
+  "after_tax_net_pnl": 7406.4913,
+  "config_sha256": "44e0a942c7f117d3fb46ced2bd147b0535d8825f8afd47dce02a03da78fb8e85",
+  "data_completeness_status": "WARN",
+  "decision_count": 68743,
+  "enterable_count": 23,
+  "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.1",
+  "limitations": [
+    "Current-panel Nifty 100 universe introduces survivorship bias.",
+    "Public OHLCV and delivery are participation proxies, not confirmed institutional flow.",
+    "OIIS determines entry eligibility only; every accepted entry uses the common target-only exit contract.",
+    "Cash replay executes LONG decisions only; SHORT decisions remain signal studies.",
+    "Options, futures, live orders, calibrated probabilities and unapproved risk limits are blocked.",
+    "Event/catalyst history is not yet complete enough to create positive catalyst scores.",
+    "Outcomes are isolated per symbol; a finite-capital cross-symbol portfolio replay is a separate required evaluation.",
+    "There is no stop-loss, strategy, timeout, forced-close, or run-end exit; adverse paths are recorded as risk evidence."
+  ],
+  "missing_minute_symbols": [
+    "M&M",
+    "MAXHEALTH"
+  ],
+  "open_position_count": 0,
+  "open_unrealized_net_liquidation_pnl": 0,
+  "rankability_status": "NOT_RANKABLE",
+  "rating": "NR",
+  "replay_run_id": "37409597-ffd7-499c-b56f-885ec4d748bd",
+  "requested_end": "2026-08-05",
+  "requested_start": "2023-08-06",
+  "result_type": "OPPORTUNITY_SCAN",
+  "run_hash": "f32ee4835c09db36c43d5cbeecfaac8e1ad7914bcaa250c45d298e981bd03929",
+  "status": "SUCCEEDED",
+  "strategy_id": "oiis_cash_daily_research_v1",
+  "symbol_count": 99,
+  "symbol_filter": null,
+  "total_net_liquidation_pnl": 7406.4913,
+  "trade_count": 18,
+  "win_rate_pct": 100.0
+}

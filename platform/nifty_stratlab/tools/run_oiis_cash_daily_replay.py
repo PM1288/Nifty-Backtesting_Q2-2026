@@ -225,6 +225,7 @@ def simulate_trades(
     decisions: list[dict[str, Any]], prices: pd.DataFrame, config: dict[str, Any],
     minute_csv_dir: Path, end: date,
 ) -> list[dict[str, Any]]:
+    simulate_trades.missing_minute_symbols = []
     execution = config["execution"]
     policy = CommonExitPolicy(
         intraday_target_pct=Decimal(str(execution["intraday_target_pct_from_buy_price"])),
@@ -239,6 +240,7 @@ def simulate_trades(
     busy_until: dict[str, date] = {}
     minute_cache: dict[str, pd.DataFrame] = {}
     minute_checksums: dict[str, str] = {}
+    missing_minute_symbols: set[str] = set()
     for decision in sorted(decisions, key=lambda row: (row["trade_date"], row["symbol"])):
         if decision["decision_code"] not in {"ENTERABLE_TIER_A", "ENTERABLE_TIER_B"} or decision["selected_direction"] != "LONG":
             continue
@@ -254,6 +256,9 @@ def simulate_trades(
         entry_date = pd.Timestamp(entry_row.trade_date).date()
         if symbol not in minute_cache:
             minute_path = minute_csv_dir / f"{symbol}.csv"
+            if not minute_path.is_file():
+                missing_minute_symbols.add(symbol)
+                continue
             minute_cache[symbol] = _minute_frame(minute_path, entry_date, end)
             minute_checksums[symbol] = digest_file(minute_path)
         minute = minute_cache[symbol]
@@ -302,6 +307,10 @@ def simulate_trades(
             # An unresolved target-only position occupies the symbol and its
             # capital through the end of the evaluation; later entries cannot occur.
             busy_until[symbol] = end
+    # The attribute is consumed by the caller without changing the stable
+    # trade-row contract. Missing minute evidence is a data warning, never a
+    # fabricated daily fallback or a synthetic exit.
+    simulate_trades.missing_minute_symbols = sorted(missing_minute_symbols)
     return trades
 
 
@@ -341,7 +350,7 @@ def jsonable(value: Any) -> Any:
     raise TypeError(type(value).__name__)
 
 
-def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]], trades: list[dict[str, Any]], buckets: list[dict[str, Any]], summary: dict[str, Any]) -> list[Path]:
+def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]], trades: list[dict[str, Any]], buckets: list[dict[str, Any]], summary: dict[str, Any], missing_minute_symbols: list[str]) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     decision_export = [{key: json.dumps(value, default=jsonable, sort_keys=True) if key in {"hard_gates", "evidence"} else value for key, value in row.items()} for row in decisions]
     pd.DataFrame(decision_export).to_csv(output_dir / "decisions.csv", index=False, lineterminator="\n")
@@ -351,6 +360,7 @@ def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]]
     pd.DataFrame(trade_export).to_csv(output_dir / "trades.csv", index=False, lineterminator="\n")
     pd.DataFrame(target_export).to_csv(output_dir / "target_events.csv", index=False, lineterminator="\n")
     pd.DataFrame(adverse_export).to_csv(output_dir / "adverse_events.csv", index=False, lineterminator="\n")
+    pd.DataFrame({"symbol": missing_minute_symbols}).to_csv(output_dir / "missing_minute_symbols.csv", index=False, lineterminator="\n")
     pd.DataFrame(buckets).to_csv(output_dir / "regime_performance.csv", index=False, lineterminator="\n")
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True, default=jsonable) + "\n", encoding="utf-8")
     (output_dir / "summary.md").write_text(
@@ -404,6 +414,7 @@ def main() -> None:
                 nested = list(pool.map(lambda item: evaluate_symbol(item, args.start, args.end), groups))
             decisions = [row for rows in nested for row in rows]
             trades = simulate_trades(decisions, features, config, args.minute_csv_dir, args.end)
+            missing_minute_symbols = list(getattr(simulate_trades, "missing_minute_symbols", []))
             buckets = performance(decisions, trades)
             closed_trades = [row for row in trades if row["status"] == "CLOSED"]
             open_positions = [row for row in trades if row["status"] != "CLOSED"]
@@ -424,9 +435,11 @@ def main() -> None:
                 "win_rate_pct": round(100 * sum(row["after_tax_net_pnl"] > 0 for row in closed_trades) / len(closed_trades), 4) if closed_trades else None,
                 "config_sha256": config_hash, "run_hash": run_hash, "status": "SUCCEEDED", "limitations": LIMITATIONS,
                 "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
+                "missing_minute_symbols": missing_minute_symbols,
+                "data_completeness_status": "WARN" if missing_minute_symbols else "PASS",
                 "result_type": "OPPORTUNITY_SCAN", "rankability_status": "NOT_RANKABLE", "rating": "NR",
             }
-            files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary)
+            files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary, missing_minute_symbols)
             if args.dry_run:
                 conn.rollback()
             else:

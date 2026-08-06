@@ -55,19 +55,23 @@ Run the migration/bootstrap layers in this order:
    - Command source: `db/sql/020_strategy_evaluation_roe.sql`.
    - Creates the additive `strategy_eval` policy, event/regime, validation, path, scoring, suitability and artifact evidence schema.
    - Must run after the analytics worker because it references canonical `nse_app.backtest_run` and `nse_app.backtest_trade_log` facts.
-15. Node API operational bootstrap
+15. OIIS research decision evidence
+   - Source: `db/sql/021_oiis_research.sql`
+   - Creates additive immutable formula, replay, decision, outcome, regime-performance and artifact tables in `oiis`.
+   - Must run after Rules-of-Engagement because OIIS decisions consume its stock/index/VIX regime layer.
+16. Node API operational bootstrap
    - Command source: `node apps/api/dist/scripts/bootstrapDatabase.js`
    - Creates/updates the transitional API-owned dashboard snapshot table only.
-16. Option-chain watcher schema
+17. Option-chain watcher schema
    - Command source: `node dist/cli.js migrate`
    - Creates/updates option-chain capture tables.
-17. Orchestration exports SQL
+18. Orchestration exports SQL
    - Command source: `python -m nse_orchestration_exports.manual_jobs install-sql`
    - Creates `nse_ops` daily/export structures.
-18. Intraday intelligence SQL
+19. Intraday intelligence SQL
    - Command source: `python -m nse_intraday_intelligence.manual_jobs install-sql`
    - Creates `nse_intraday.*` and intraday-owned `nse_ops.*` tables/views.
-19. Recommendation overlay SQL
+20. Recommendation overlay SQL
    - Command source: `python scripts/install_sql.py --database-url "$DATABASE_URL"`
    - Creates `nse_reco.*`, `nse_reco_ops.*`, and `nse_exports.*`.
 

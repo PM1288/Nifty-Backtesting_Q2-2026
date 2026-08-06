@@ -1,0 +1,65 @@
+{
+  "strategy_id": "oiis_cash_daily_research_v1",
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.0",
+  "status": "RESEARCH_DRAFT_PENDING_OWNER_AND_QUANT_APPROVAL",
+  "mode": "historical_replay",
+  "instrument": "cash_equity_long_only",
+  "horizon": "H2_H4_PROXY_MAX_10_SESSIONS",
+  "evidence_years": 3,
+  "ofactor_weights": {
+    "market_regime_support": 8,
+    "sector_industry_support": 14,
+    "trend_quality": 18,
+    "relative_strength": 10,
+    "money_flow_participation": 18,
+    "momentum_quality": 12,
+    "institutional_confirmation": 10,
+    "liquidity_tradability": 6,
+    "catalyst_context": 4
+  },
+  "xfactor_weights": {
+    "setup_integrity": 18,
+    "entry_location_quality": 20,
+    "trigger_confirmation": 16,
+    "stop_invalidation_quality": 14,
+    "reward_path_quality": 14,
+    "market_sector_synchronisation": 6,
+    "liquidity_slippage_quality": 6,
+    "timing_session_quality": 3,
+    "instrument_quality": 3
+  },
+  "thresholds": {
+    "dq_full": 85,
+    "dq_provisional": 70,
+    "ofactor_qualified": 74,
+    "ofactor_tier_a": 82,
+    "xfactor_tier_a": 84,
+    "xfactor_tier_b": 76,
+    "xfactor_conditional": 68,
+    "directional_conflict_min_scores": 74,
+    "directional_edge_min": 8,
+    "max_extension_atr": 1.5,
+    "max_stop_atr": 2.5,
+    "minimum_reward_risk": 1.5,
+    "minimum_volume_ratio": 0.75,
+    "minimum_turnover_percentile": 0.1
+  },
+  "execution": {
+    "entry": "next_session_open",
+    "same_bar_conflict": "stop_first",
+    "target_r_multiple": 2.0,
+    "max_hold_sessions": 10,
+    "round_trip_cost_bps": 22,
+    "positive_profit_tax_rate": 0.35,
+    "ticket_rupees": 200000,
+    "initial_capital_rupees": 1600000,
+    "maximum_concurrent_positions": 8
+  },
+  "blocked_capabilities": [
+    "live_broker_orders",
+    "options_without_point_in_time_chain_and_greeks",
+    "futures_without_effective_dated_margin",
+    "calibrated_probability_claims",
+    "confirmed_institutional_flow_claims"
+  ]
+}

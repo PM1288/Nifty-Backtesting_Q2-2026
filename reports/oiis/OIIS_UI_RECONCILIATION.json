@@ -1,0 +1,6 @@
+{
+  "status": "NOT_IMPLEMENTED_PHASE_B",
+  "reason": "The requested delivery prepares the Phase-A three-year replay. Dedicated OIIS API, UI and P-Diagram pages remain a documented Phase-B dependency.",
+  "database_csv_reconciliation": "PASS_FOR_SINGLE_STOCK_ACCEPTANCE",
+  "live_order_authority": false
+}

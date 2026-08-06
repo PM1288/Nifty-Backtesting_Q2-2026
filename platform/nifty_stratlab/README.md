@@ -16,6 +16,13 @@ as opportunity scans, computes independent stock/NIFTY/India-VIX context,
 persists evaluation evidence in `strategy_eval`, and exports a standard
 24-sheet workbook plus CSV and checksum artifacts.
 
+The OIIS Phase-A cash-daily research implementation is documented in
+`../../docs/oiis/README.md`. Use `../../scripts/oiis.sh` to validate, preflight,
+run one-symbol acceptance, verify artifacts, and—with an explicit confirmation
+gate—run the full current-panel Nifty 100 three-year workload. It persists every
+decision, controlled outcome and stock/NIFTY/Bank-NIFTY/VIX performance bucket
+without enabling broker orders.
+
 ## Local verification
 
 ```bash

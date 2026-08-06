@@ -1,0 +1,2 @@
+symbol,signal_date,entry_date,exit_date,entry_price,exit_price,stop_price,target_price,quantity,exit_reason,gross_pnl,costs,tax_reserve,after_tax_net_pnl,return_pct,holding_sessions,mfe_pct,mae_pct,decision_hash
+RELIANCE,2024-01-24,2024-01-25,2024-01-29,2685.9,2762.0,2647.85,2762.0,74,TARGET,5631.4,437.2645,1817.9474,3376.1881,1.6987,2,8.1574,-0.5771,7ed13a93e673cd88d23f8d19b944de8ea8589736fa95a344dc041f5a156f1814

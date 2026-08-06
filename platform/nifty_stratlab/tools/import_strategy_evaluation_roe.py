@@ -240,9 +240,19 @@ def calculate_regimes(cur, policy: dict[str, Any]) -> int:
     latest_batch = cur.fetchone()[0]
     stock_df = fetch_frame(
         cur,
-        "SELECT trade_date,symbol,close_price::double precision FROM nse_app.backtest_feature_daily WHERE batch_run_id=%s ORDER BY symbol,trade_date",
-        (latest_batch,),
-    )
+        """
+        WITH universe AS (
+          SELECT DISTINCT UPPER(REGEXP_REPLACE(TRIM(tradingsymbol),'-EQ$','')) AS symbol
+          FROM public.instrument_universe
+          WHERE exchange='NSE' AND universe_name='nifty100_equity' AND active_to IS NULL
+        )
+        SELECT DISTINCT ON (e.trade_date,UPPER(TRIM(e.symbol)))
+          e.trade_date,UPPER(TRIM(e.symbol)) AS symbol,e.close_price::double precision AS close_price
+        FROM nse.fact_eod_prices e JOIN universe u ON u.symbol=UPPER(TRIM(e.symbol))
+        WHERE COALESCE(e.series,'EQ')='EQ'
+        ORDER BY e.trade_date,UPPER(TRIM(e.symbol)),e.loaded_at DESC
+        """,
+    ).sort_values(["symbol", "trade_date"])
     index_df["instrument_type"] = "INDEX"
     stock_df["instrument_type"] = "STOCK"
     all_prices = pd.concat([index_df, stock_df], ignore_index=True)

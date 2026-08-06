@@ -28,6 +28,13 @@ DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
   --symbol RELIANCE --capital-mode capital_16l
 ```
 
+`run_oiis_cash_daily_replay.py` implements the guarded OIIS Phase-A stored
+session replay. Use `../../scripts/oiis.sh`; it validates the canonical formula,
+checks PostgreSQL, runs one symbol by default, persists immutable decisions and
+outcomes, and writes consolidated decision/trade/regime CSVs with JSON,
+Markdown and checksums. The full current-panel Nifty 100 run requires
+`CONFIRM_FULL_OIIS_REPLAY=YES`.
+
 `qualify_sources.py` requires explicit source paths. It intentionally has no default
 root scan, preventing an accidental full-estate run.
 

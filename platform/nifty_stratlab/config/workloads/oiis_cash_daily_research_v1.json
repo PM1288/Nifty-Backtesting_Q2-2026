@@ -1,0 +1,26 @@
+{
+  "workload_version": "OIIS-CASH-DAILY-WORKLOAD-V1.0",
+  "strategy_id": "oiis_cash_daily_research_v1",
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.0",
+  "universe": "nifty100_equity",
+  "membership_mode": "CURRENT_PANEL_RESEARCH_ONLY",
+  "requested_start": "2023-08-06",
+  "requested_end": "2026-08-05",
+  "symbol_count_expected": 100,
+  "exclude_symbols": ["TMPV"],
+  "workers_for_full_run": 4,
+  "database_persistence": true,
+  "consolidated_reports": true,
+  "regime_dimensions": [
+    "stock_primary_trend",
+    "stock_market_zone",
+    "nifty_primary_trend",
+    "nifty_market_zone",
+    "bank_nifty_primary_trend",
+    "bank_nifty_market_zone",
+    "vix_regime",
+    "stock_nifty_matrix",
+    "sector"
+  ],
+  "full_run_requires": "CONFIRM_FULL_OIIS_REPLAY=YES"
+}

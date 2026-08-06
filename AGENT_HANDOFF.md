@@ -868,3 +868,100 @@ Compose defaults for the N50 API processes were raised to eight connections and
 a 15-second pool timeout. The live dashboard was force-recreated with those
 values and produced no further pool-timeout messages during the post-deploy
 monitoring window. No database restart was required.
+
+## 2026-08-06 — OIIS Phase-A three-year replay implementation
+
+Reviewed every file in `/home/novius2/NIFTY50/TEST-OISS`: 951-line integration
+prompt, 995 non-empty DOCX paragraphs/tables, database-mapping CSV, both PNG
+diagrams, all ZIP entries, canonicalisation JSON and QA/readme files. The ZIP
+passed `unzip -tq`; duplicate DOCX, Markdown and CSV copies are byte-identical
+to the standalone files.
+
+Critical interpretation: OIIS is a multi-engine framework, not a plug-and-play
+single indicator. Six source conflicts remain owner/quant approval items. For
+research only, `OIIS-CASH-DAILY-RESEARCH-V1.0` freezes the detailed documents'
+nine-component OFactor and XFactor definitions. Live orders, options, futures,
+probabilities and unapproved risk claims remain blocked.
+
+Implemented:
+
+- `platform/nifty_stratlab/src/nifty_stratlab/oiis/engine.py`: numeric DQ,
+  independent LONG/SHORT OFactor, daily setup state, XFactor, structural
+  penalties and hard-gate-first decisions;
+- `platform/nifty_stratlab/config/oiis/formulas/oiis_cash_daily_research_v1.json`;
+- guarded three-year workload
+  `config/workloads/oiis_cash_daily_research_v1.json`;
+- `db/sql/021_oiis_research.sql`: immutable `oiis` formula/run/decision/outcome/
+  performance/artifact schema;
+- `tools/run_oiis_cash_daily_replay.py`: current-panel Nifty 100 EOD feature
+  construction, four-worker-ready replay, next-open controlled LONG outcomes,
+  PostgreSQL persistence and consolidated reports;
+- `scripts/oiis.sh`: no-agent validate, preflight, replay and verify commands;
+- deterministic golden tests and full documentation under `docs/oiis`.
+
+The Rules-of-Engagement regime importer was corrected to source current-panel
+stock closes from `nse.fact_eod_prices` instead of the short latest backtest
+feature batch. Committed live coverage is now 125,429 calculated rows: 121,484
+stock rows for 100 symbols plus 3,945 index rows for NIFTY 50, Bank NIFTY and
+India VIX. Stock coverage begins 2021-03-08 and covers the requested three-year
+window.
+
+Commands executed:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+chmod +x scripts/oiis.sh platform/nifty_stratlab/tools/{run_oiis_cash_daily_replay.py,validate_oiis_config.py,verify_oiis_replay.py}
+bash -n scripts/oiis.sh
+./scripts/oiis.sh validate-config
+platform/nifty_stratlab/.venv/bin/pytest -q platform/nifty_stratlab/tests/phase3/test_oiis_cash_daily.py
+
+cd platform/nifty_stratlab
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/import_strategy_evaluation_roe.py \
+  --workbook /home/novius2/NIFTY50/Rules-of-engegemnt/Nifty_50_Event_Regime_Analysis_Master_2016_2026.xlsx \
+  --rules /home/novius2/NIFTY50/Rules-of-engegemnt/CODEX_IMPLEMENT_STRATEGY_EVALUATION_RULES_OF_ENGAGEMENT_V1.0.md \
+  --evaluation-strategy-id rsi_reclaim30_willr_reclaim80_greenclose_tp200_sl200_max10 \
+  --evaluation-scenario single_stock:capital_16l:RELIANCE
+
+cd ../..
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' ./scripts/oiis.sh preflight
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  ./scripts/oiis.sh replay --symbol RELIANCE --start 2023-08-06 --end 2026-08-05 --workers 1
+./scripts/oiis.sh verify platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/04374697-c11e-4568-b0af-082eeeed5120
+```
+
+Acceptance run `07f2f31f-17d3-4f2e-8204-6fafe5bb3412` succeeded for RELIANCE:
+718 daily decisions from 2023-08-07 through 2026-08-05, one enterable decision,
+one target exit, ₹3,376.1881 after-tax net P&L and 100% win rate. This single
+trade proves the pipeline only; it is not statistical evidence that OIIS works.
+All 718 decisions have non-null stock, NIFTY 50, Bank NIFTY and VIX regimes.
+Observed classes include four stock, four NIFTY, four Bank NIFTY trends and
+three VIX regimes. Five artifact checksums passed.
+
+OIIS replay runs are explicitly stored as
+`TRUE_BACKTEST_ISOLATED / NOT_RANKABLE / NR`. The future all-symbol output is a
+collection of isolated stock studies, not a disguised ₹16L/max-eight portfolio;
+finite-capital cross-symbol replay remains a separate evaluation.
+
+Two failed replay attempts remain in `oiis.replay_run` as deliberate audit
+evidence. The first exposed an untyped nullable PostgreSQL filter; the second
+exposed NaN JSON. Both were fixed. A final missing exact-date index session was
+fixed with a backward-only, maximum-seven-day as-of join, never future data.
+
+Acceptance artifacts:
+
+`platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/07f2f31f-17d3-4f2e-8204-6fafe5bb3412/`
+
+Full replay is prepared but was not started. After reviewing the one-symbol
+evidence, run:
+
+```bash
+CONFIRM_FULL_OIIS_REPLAY=YES \
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  ./scripts/oiis.sh replay --start 2023-08-06 --end 2026-08-05 --workers 4
+```
+
+Every result is consolidated by run and includes symbol columns; the runner
+does not create hundreds of per-stock folders. Dedicated OIIS API/UI/P-Diagram
+pages remain Phase B and are explicitly recorded as not implemented in
+`reports/oiis/OIIS_UI_RECONCILIATION.json`.

@@ -1128,3 +1128,20 @@ Known data warning: minute CSV evidence is absent for `M&M` and `MAXHEALTH`.
 The runner skipped their five enterable signals instead of fabricating paths.
 The canonical result remains `OPPORTUNITY_SCAN / NOT_RANKABLE / NR`; it is not
 a finite-capital portfolio result, a profitability claim, or order authority.
+# Low trade-count diagnostic workbook
+
+The all-stock V1.3 run had 68,743 daily decisions, 23 enterable signals and
+18 accepted paths. This is expected from the strict OFactor/XFactor, setup,
+reward-risk, liquidity and minute-data gates. Generate the review workbook with:
+
+```bash
+platform/nifty_stratlab/.venv/bin/python \
+  platform/nifty_stratlab/tools/create_oiis_diagnostic_workbook.py \
+  platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/bc8b50e8-a3b5-4424-bea0-8bb06cbcf6be
+```
+
+The workbook is `oiis_diagnostic_review.xlsx` in that run folder. It includes
+decision/gate counts, near-threshold rows, per-symbol frequency, all trades,
+all reward/adverse ladder rows, regime slices and the two missing minute-data
+symbols (`M&M`, `MAXHEALTH`). Do not relax thresholds based only on trade count;
+review the `NearThreshold` and `GateFailures` sheets first.

@@ -1,0 +1,12 @@
+{
+  "committed": true,
+  "evaluated_runs": 15,
+  "event_windows": 208,
+  "events": 52,
+  "policy_version": "NIFTY-SEROE-V1.0",
+  "regime_rows": 19730,
+  "rules_sha256": "24f3b2a7504fbb05e15917f6abda5ad56c9c1e77c595c9c1eaf2830e14eefdbf",
+  "source_sheets": 9,
+  "sources": 30,
+  "workbook_sha256": "1ea6a94fab4977d8eb6ea26e25a0396643a1a89ff859036ee8bac470ba857bf7"
+}

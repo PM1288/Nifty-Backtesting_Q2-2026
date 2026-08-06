@@ -11,6 +11,8 @@ The Backtesting module adds a native `Backtesting` workspace to the N50 shell fo
 - FD benchmark comparison
 - regime-aware comparison
 - stock suitability analysis
+- fail-closed Rules-of-Engagement classification and rankability
+- independent stock, NIFTY 50 and India VIX suitability slices
 
 Execution is stock-only. Index instruments such as Nifty, Bank Nifty, and India VIX are context inputs only.
 
@@ -78,6 +80,8 @@ Backend:
 5. The API reads only the latest published batch.
 6. The API caches shaped responses through `nse_app.dashboard_snapshots`.
 7. The frontend reads cached, pre-shaped snapshot payloads.
+8. `strategy_eval.run_evaluation` adds governed result type, validation gates,
+   suitability and evidence lineage without mutating canonical backtest facts.
 
 ## Adding a new strategy
 

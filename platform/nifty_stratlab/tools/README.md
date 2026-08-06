@@ -4,6 +4,16 @@ The tools provide phase smoke tests, schema/golden-vector generation, and bounde
 workbook inspection. `inspect_workbook.py` samples only the configured number of
 rows per sheet and does not process the full workbook.
 
+`import_strategy_evaluation_roe.py` validates and ingests the controlled event
+workbook, calculates shifted stock/index regime labels, and applies independent
+rankability gates to the latest published portfolio runs. Use `--dry-run` first;
+the command is transactional and idempotent.
+
+`export_strategy_evaluation_pack.py` exports one evaluated strategy/scenario to
+the exact 24-sheet governed workbook, CSV evidence, Markdown/JSON summaries and
+SHA-256 checksums. It also records each artifact in
+`strategy_eval.artifact_manifest`.
+
 `qualify_sources.py` requires explicit source paths. It intentionally has no default
 root scan, preventing an accidental full-estate run.
 

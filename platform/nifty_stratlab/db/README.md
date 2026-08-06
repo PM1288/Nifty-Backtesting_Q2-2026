@@ -7,3 +7,8 @@ the only production migration path. Test them with
 
 Package migration 006 mirrors root migration 019 and adds runtime idempotency plus
 the V2 acceptance-evidence register.
+
+The additive Rules-of-Engagement schema is centrally owned by root migration
+`db/sql/020_strategy_evaluation_roe.sql`. It intentionally runs after the
+analytics-worker migrations because its evidence rows reference canonical
+`nse_app` backtest facts.

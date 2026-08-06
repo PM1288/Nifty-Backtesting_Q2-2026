@@ -51,19 +51,23 @@ Run the migration/bootstrap layers in this order:
    - Command source: `db/sql/019_nifty_stratlab_runtime_hardening.sql`.
    - Adds idempotent skipped-signal identity and the V2 acceptance-evidence register.
    - Validate all six files on first application and idempotent reapplication using `scripts/nifty_stratlab_migrate_test.sh`.
-14. Node API operational bootstrap
+14. Strategy evaluation Rules of Engagement
+   - Command source: `db/sql/020_strategy_evaluation_roe.sql`.
+   - Creates the additive `strategy_eval` policy, event/regime, validation, path, scoring, suitability and artifact evidence schema.
+   - Must run after the analytics worker because it references canonical `nse_app.backtest_run` and `nse_app.backtest_trade_log` facts.
+15. Node API operational bootstrap
    - Command source: `node apps/api/dist/scripts/bootstrapDatabase.js`
    - Creates/updates the transitional API-owned dashboard snapshot table only.
-15. Option-chain watcher schema
+16. Option-chain watcher schema
    - Command source: `node dist/cli.js migrate`
    - Creates/updates option-chain capture tables.
-16. Orchestration exports SQL
+17. Orchestration exports SQL
    - Command source: `python -m nse_orchestration_exports.manual_jobs install-sql`
    - Creates `nse_ops` daily/export structures.
-17. Intraday intelligence SQL
+18. Intraday intelligence SQL
    - Command source: `python -m nse_intraday_intelligence.manual_jobs install-sql`
    - Creates `nse_intraday.*` and intraday-owned `nse_ops.*` tables/views.
-18. Recommendation overlay SQL
+19. Recommendation overlay SQL
    - Command source: `python scripts/install_sql.py --database-url "$DATABASE_URL"`
    - Creates `nse_reco.*`, `nse_reco_ops.*`, and `nse_exports.*`.
 

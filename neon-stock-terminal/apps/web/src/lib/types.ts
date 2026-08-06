@@ -1874,6 +1874,21 @@ export type BacktestingStrategyDetailResponse = {
   version: BacktestingStrategyVersion;
   latestRuns: BacktestingRunRow[];
   chargesModel: Record<string, number>;
+  evaluation: {
+    policyVersion: string;
+    resultType: "OPPORTUNITY_SCAN" | "SIGNAL_STUDY" | "TRUE_BACKTEST_ISOLATED" | "TRUE_BACKTEST_PORTFOLIO" | "WALK_FORWARD_VALIDATION" | "PAPER_SHADOW_FORWARD";
+    rankabilityStatus: "RANKABLE" | "NOT_RANKABLE";
+    rating: "A" | "B" | "C" | "D" | "E" | "NR";
+    qualityScore: number | null;
+    revenueCapacityScore: number | null;
+    validationStatus: "PASS" | "WARN" | "FAIL" | "NOT_ASSESSED";
+    validations: Record<string, { status: "PASS" | "WARN" | "FAIL" | "NOT_ASSESSED"; reason: string }>;
+    goodWhen: Array<{ context: string; value: string; sample_size: number; metrics: Record<string, number | null> }>;
+    avoidWhen: Array<{ context: string; value: string; sample_size: number; metrics: Record<string, number | null> }>;
+    watch: Array<{ context: string; value: string; sample_size: number; metrics: Record<string, number | null> }>;
+    limitations: string[];
+    evaluatedAt: string;
+  } | null;
   filters: BacktestingFilterModel;
   defaultScenarioKey: string;
   scenarioOptions: BacktestingScenarioOption[];

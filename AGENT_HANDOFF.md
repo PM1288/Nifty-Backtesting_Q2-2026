@@ -671,3 +671,150 @@ zip -r -q /home/novius2/NIFTY50/hybrid_catalogue_v1_full_20260804.zip \
 sha256sum /home/novius2/NIFTY50/hybrid_catalogue_v1_full_20260804.zip
 unzip -tq /home/novius2/NIFTY50/hybrid_catalogue_v1_full_20260804.zip
 ```
+
+## 2026-08-06 — Strategy Evaluation Rules of Engagement v1.0
+
+### What was reviewed
+
+Reviewed every artifact in `/home/novius2/NIFTY50/Rules-of-engegemnt`:
+
+- `CODEX_IMPLEMENT_STRATEGY_EVALUATION_RULES_OF_ENGAGEMENT_V1.0.md` — 1,471 lines;
+- `NIFTY_STRATEGY_EVALUATION_RULES_OF_ENGAGEMENT_V1.0.docx` — 1,468 extracted paragraphs;
+- `Nifty_50_Event_Regime_Analysis_Master_2016_2026.xlsx` — all nine sheets;
+- `NIFTY_STRATEGY_EVALUATION_RULES_AND_CODEX_IMPLEMENTATION_V1.0.zip` — integrity tested and every member reviewed.
+
+The ZIP Markdown and DOCX are byte-identical to the standalone copies. The workbook contains 52 events, 208 event-window records and 30 registered sources. The source workbook has nine sheets; the Rules document's 24 sheets are the mandatory generated strategy evidence workbook.
+
+Integrity commands:
+
+```bash
+cd /home/novius2/NIFTY50
+unzip -t Rules-of-engegemnt/NIFTY_STRATEGY_EVALUATION_RULES_AND_CODEX_IMPLEMENTATION_V1.0.zip
+sha256sum Rules-of-engegemnt/*
+```
+
+Source hashes used by the live policy:
+
+- Rules Markdown: `24f3b2a7504fbb05e15917f6abda5ad56c9c1e77c595c9c1eaf2830e14eefdbf`
+- Event workbook: `1ea6a94fab4977d8eb6ea26e25a0396643a1a89ff859036ee8bac470ba857bf7`
+
+### Critical interpretation
+
+The prior 96-strategy target-only run must not be described as a true or rankable backtest. Under `NIFTY-SEROE-V1.0`, no loss exit plus no timeout means `OPPORTUNITY_SCAN`, `NOT_RANKABLE`, rating `NR`, regardless of eventual target hits or aggregate P&L. This correction is implemented in code and UI.
+
+All validation dimensions remain independent. Any failed hard gate blocks a score. Current published runs fail one or more of point-in-time universe, complete MFE/MAE path evidence, effective-dated cost certification, untouched out-of-sample evidence or independent reproduction. Therefore no current run receives an A-E quality rating.
+
+### Code and schema added
+
+- `db/sql/020_strategy_evaluation_roe.sql` — additive `strategy_eval` schema with 17 tables plus latest-evaluation view;
+- `platform/nifty_stratlab/config/evaluation/strategy_evaluation_roe_v1.json` — versioned thresholds, ladders, capital/tax mandate and weights;
+- `platform/nifty_stratlab/src/nifty_stratlab/evaluation/roe.py` — pure result taxonomy, trend and rankability rules;
+- `platform/nifty_stratlab/tools/import_strategy_evaluation_roe.py` — transactional workbook/regime/evaluation importer;
+- `platform/nifty_stratlab/tools/export_strategy_evaluation_pack.py` — exact 24-sheet workbook and CSV/MD/JSON/checksum exporter;
+- `platform/nifty_stratlab/docs/STRATEGY_EVALUATION_RULES_INTEGRATION.md` — architecture, formulas, limits and operations;
+- API response enrichment in `neon-stock-terminal/apps/api/src/lib/backtestingPublished.ts`;
+- strategy-detail UI evidence banner, gate grid and suitability story;
+- migration ownership/order and per-section README/runbook updates.
+
+### Regime semantics and live coverage
+
+Stock and NIFTY are classified independently from returns available through that date. Primary trend uses 21 sessions, falling back to 5 then 1 only during warm-up. The classifications are `UPWARD`, `DOWNWARD`, `SIDEWAYS`, `TRANSITION`, or `INSUFFICIENT_DATA`. Realized 20-session volatility plus same-date India VIX create the market zone.
+
+Live committed rows:
+
+- 19,730 `strategy_eval.market_regime_daily` rows;
+- index coverage: NIFTY 50, Bank NIFTY and India VIX, `2021-03-08` to `2026-08-05`;
+- stock coverage: 100 symbols, `2025-11-10` to `2026-08-05`, from latest published batch 255;
+- event coverage: `2016-02-29` to `2026-08-04`.
+
+All 52 historical events currently have `point_in_time_eligible=false`. This is intentional: workbook event outcomes and inferred post-event regimes are retrospective and the source review status does not certify them as trading-time features.
+
+### Import and evaluation commands
+
+Always test rollback first:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/import_strategy_evaluation_roe.py \
+  --workbook /home/novius2/NIFTY50/Rules-of-engegemnt/Nifty_50_Event_Regime_Analysis_Master_2016_2026.xlsx \
+  --rules /home/novius2/NIFTY50/Rules-of-engegemnt/CODEX_IMPLEMENT_STRATEGY_EVALUATION_RULES_OF_ENGAGEMENT_V1.0.md \
+  --dry-run
+```
+
+Committed execution is the same command without `--dry-run`. The verified result was:
+
+```text
+events=52 event_windows=208 sources=30 regime_rows=19730 evaluated_runs=15 committed=true
+```
+
+Current evaluation counts:
+
+```text
+OPPORTUNITY_SCAN / NOT_RANKABLE / NR = 5
+TRUE_BACKTEST_ISOLATED / NOT_RANKABLE / NR = 2
+TRUE_BACKTEST_PORTFOLIO / NOT_RANKABLE / NR = 8
+```
+
+Opportunity-scan regime slices are always `UNKNOWN`, never `GOOD` or `AVOID`, because a target-only close set is mechanically winner-only evidence.
+
+### Evidence pack
+
+Generated default portfolio pack:
+
+`platform/nifty_stratlab/outputs/evaluation_packs/rsi30_willr80_closegtprev_tp125/nifty_100_capital_16l`
+
+It contains seven files: `strategy_evaluation.xlsx` with all 24 mandatory sheets, `trades.csv`, `slice_metrics.csv`, `stock_performance.csv`, Markdown/JSON summaries and `checksums.sha256`. The workbook ZIP structure passed `unzip -tq`. Every file is registered in `strategy_eval.artifact_manifest`.
+
+Recreate:
+
+```bash
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/export_strategy_evaluation_pack.py \
+  --strategy-id rsi30_willr80_closegtprev_tp125 \
+  --scenario nifty_100:capital_16l \
+  --output-dir outputs/evaluation_packs/rsi30_willr80_closegtprev_tp125/nifty_100_capital_16l
+```
+
+### Tests completed
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+.venv/bin/python -m py_compile tools/import_strategy_evaluation_roe.py tools/export_strategy_evaluation_pack.py src/nifty_stratlab/evaluation/roe.py
+.venv/bin/pytest tests/phase1 tests/phase2 tests/phase3/test_rules_of_engagement.py
+# 24 passed
+
+cd ../../neon-stock-terminal
+npm ci --no-audit --no-fund
+npm run prisma:generate --workspace=apps/api
+npm run build --workspace=apps/api
+npm run build --workspace=apps/web
+# both production builds passed
+```
+
+The image build reported 13 npm audit findings in the pruned dependency tree (8 moderate, 3 high, 2 critical). These were not auto-fixed because dependency-major changes are outside this feature and require a separate compatibility/security change.
+
+### Docker deployment and smoke proof
+
+Runtime source was mirrored to `/home/novius2/trading-stack`, and only the dashboard image/service was rebuilt:
+
+```bash
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 build n50-dashboard
+docker compose -p trading-stack-novius2 up -d --no-deps --force-recreate n50-dashboard
+docker compose -p trading-stack-novius2 ps n50-dashboard
+```
+
+During the first replace, Docker encountered a transient temporary-container ID/name race. Rerunning the scoped `--force-recreate` command resolved it. No database or other service was stopped.
+
+Smoke endpoint:
+
+```bash
+curl -fsS 'http://127.0.0.1:19090/n50/v1/backtesting/strategies/rsi30_willr80_closegtprev_tp125?scenario=nifty_100%3Acapital_16l'
+```
+
+Verified response: `OPPORTUNITY_SCAN`, `NOT_RANKABLE`, `NR`, `FAIL`, zero `goodWhen`, zero `avoidWhen`, and 20 `watch` slices. Confirmed Oversold Recovery correctly returns `TRUE_BACKTEST_PORTFOLIO`, still `NOT_RANKABLE / NR`, with controlled-backtest suitability slices.
+
+The strategy page is available at:
+
+`http://100.86.108.108:19090/n50/backtesting/strategies/rsi30_willr80_closegtprev_tp125?scenario=nifty_100%3Acapital_16l`

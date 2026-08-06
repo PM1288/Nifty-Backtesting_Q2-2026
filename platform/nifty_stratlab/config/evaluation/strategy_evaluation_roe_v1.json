@@ -1,0 +1,54 @@
+{
+  "policy_version": "NIFTY-SEROE-V1.0",
+  "policy_name": "NIFTY Strategy Evaluation Rules of Engagement",
+  "document_reference": "NIFTY-SEROE-V1.0",
+  "effective_from": "2026-08-05",
+  "timezone": "Asia/Kolkata",
+  "result_taxonomy": [
+    "OPPORTUNITY_SCAN",
+    "SIGNAL_STUDY",
+    "TRUE_BACKTEST_ISOLATED",
+    "TRUE_BACKTEST_PORTFOLIO",
+    "WALK_FORWARD_VALIDATION",
+    "PAPER_SHADOW_FORWARD"
+  ],
+  "target_ladders_pct": {
+    "intraday": [0.3, 0.5, 0.7],
+    "swing_d1_to_d5": [1.0, 2.0, 5.0]
+  },
+  "adverse_ladder_pct": [-0.5, -1.0, -2.0, -5.0, -10.0],
+  "recovery_bands": {
+    "clean": "MAE >= -0.5%",
+    "managed": "-1.0% <= MAE < -0.5%",
+    "stressed": "-2.0% <= MAE < -1.0%",
+    "deep_recovery": "MAE < -2.0%"
+  },
+  "capital_mandate": {
+    "starting_capital_inr": 1600000,
+    "ticket_size_inr": 200000,
+    "maximum_simultaneous_positions": 8,
+    "profit_tax_reserve_rate": 0.35
+  },
+  "score_weights_pct": {
+    "reward_quality": 18,
+    "target_speed": 17,
+    "downside_tail_risk": 20,
+    "capital_efficiency": 15,
+    "consistency": 12,
+    "regime_suitability": 10,
+    "execution_robustness": 8
+  },
+  "trend_thresholds_pct": {
+    "1d": {"bullish": 1.0, "bearish": -1.0, "sideways_abs": 0.5},
+    "5d": {"bullish": 2.5, "bearish": -2.5, "sideways_abs": 1.25},
+    "21d": {"bullish": 5.0, "bearish": -5.0, "sideways_abs": 2.5},
+    "63d": {"bullish": 10.0, "bearish": -10.0, "sideways_abs": 5.0}
+  },
+  "vix_level_bands": {
+    "low_max": 15.0,
+    "normal_max": 20.0,
+    "high_max": 30.0
+  },
+  "hard_gate_policy": "Any failed hard gate makes the evaluation NOT_RANKABLE and rating NR.",
+  "retrospective_event_policy": "Event outcomes and inferred post-event regimes are post-trade slices only unless point_in_time_eligible is true."
+}

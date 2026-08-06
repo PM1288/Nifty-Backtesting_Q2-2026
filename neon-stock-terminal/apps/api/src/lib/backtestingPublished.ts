@@ -45,6 +45,7 @@ type VersionRow = {
 };
 
 type RunRow = {
+  backtest_run_id: bigint | number;
   strategy_version_id: string;
   scenario_key: string;
   scenario_label: string;
@@ -58,6 +59,22 @@ type RunRow = {
   warnings_count: number;
   errors_count: number;
   summary_json: Prisma.JsonValue;
+};
+
+type EvaluationRow = {
+  policy_version: string;
+  result_type: string;
+  rankability_status: string;
+  rating: string;
+  quality_score: unknown;
+  revenue_capacity_score: unknown;
+  validation_status: string;
+  validation_json: Prisma.JsonValue;
+  good_when_json: Prisma.JsonValue;
+  avoid_when_json: Prisma.JsonValue;
+  watch_json: Prisma.JsonValue;
+  limitation_json: Prisma.JsonValue;
+  evaluated_at: Date | string;
 };
 
 type DailyEquityRow = {
@@ -228,6 +245,10 @@ function asJsonObject(value: Prisma.JsonValue): Record<string, unknown> {
   return {};
 }
 
+function asJsonArray(value: Prisma.JsonValue): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
 function humanizeCapitalMode(value: string) {
   return {
     no_capital_limit: "No Capital Limit",
@@ -389,7 +410,7 @@ async function loadActiveStrategyContext(prisma: PrismaClient, strategyId: strin
 
 async function loadRunsForVersion(prisma: PrismaClient, batchRunId: number, strategyVersionId: string) {
   return prisma.$queryRaw<RunRow[]>(Prisma.sql`
-    SELECT strategy_version_id, scenario_key, scenario_label, universe_mode, capital_mode, stock_symbol, as_of_date, generated_at, status, rows_processed, warnings_count, errors_count, summary_json
+    SELECT backtest_run_id, strategy_version_id, scenario_key, scenario_label, universe_mode, capital_mode, stock_symbol, as_of_date, generated_at, status, rows_processed, warnings_count, errors_count, summary_json
     FROM nse_app.backtest_run
     WHERE batch_run_id = ${batchRunId}
       AND strategy_version_id = ${strategyVersionId}
@@ -784,7 +805,19 @@ export async function loadPublishedBacktestingStrategyDetail(prisma: PrismaClien
   const runs = await loadRunsForVersion(prisma, batchRunId, context.version.strategy_version_id);
   const selectedRun = chooseScenario(runs, scenarioKey);
   if (!selectedRun) return null;
-  const scenario = await buildPublishedScenario(prisma, batchRunId, selectedRun);
+  const [scenario, evaluationRows] = await Promise.all([
+    buildPublishedScenario(prisma, batchRunId, selectedRun),
+    prisma.$queryRaw<EvaluationRow[]>(Prisma.sql`
+      SELECT policy_version, result_type, rankability_status, rating, quality_score,
+             revenue_capacity_score, validation_status, validation_json, good_when_json,
+             avoid_when_json, watch_json, limitation_json, evaluated_at
+      FROM strategy_eval.run_evaluation
+      WHERE backtest_run_id = ${selectedRun.backtest_run_id}
+      ORDER BY evaluated_at DESC
+      LIMIT 1
+    `)
+  ]);
+  const evaluation = evaluationRows[0] ?? null;
   const scenarioOptions = [...runs]
     .sort((left, right) => {
       const [leftUniverse, leftCapital, leftStock] = scenarioSortRank(left);
@@ -842,6 +875,21 @@ export async function loadPublishedBacktestingStrategyDetail(prisma: PrismaClien
       errorsCount: run.errors_count
     })),
     chargesModel: CHARGES_MODEL,
+    evaluation: evaluation ? {
+      policyVersion: evaluation.policy_version,
+      resultType: evaluation.result_type,
+      rankabilityStatus: evaluation.rankability_status,
+      rating: evaluation.rating,
+      qualityScore: evaluation.quality_score == null ? null : toNumber(evaluation.quality_score),
+      revenueCapacityScore: evaluation.revenue_capacity_score == null ? null : toNumber(evaluation.revenue_capacity_score),
+      validationStatus: evaluation.validation_status,
+      validations: asJsonObject(evaluation.validation_json),
+      goodWhen: asJsonArray(evaluation.good_when_json),
+      avoidWhen: asJsonArray(evaluation.avoid_when_json),
+      watch: asJsonArray(evaluation.watch_json),
+      limitations: asJsonArray(evaluation.limitation_json).map(String),
+      evaluatedAt: toIsoDateTime(evaluation.evaluated_at)
+    } : null,
     filters: {
       strategies: allStrategies.map((item: StrategyRow) => ({ value: item.strategy_id, label: item.display_name })),
       versions: [{ value: context.version.strategy_version_id, label: `v${context.version.version_number}` }],

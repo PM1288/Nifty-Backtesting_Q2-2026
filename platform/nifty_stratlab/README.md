@@ -10,6 +10,12 @@ The code provides:
 4. leakage-controlled opportunity discovery, walk-forward splits, trial logging and probability calibration;
 5. buying-only option simulation using actual premium bars, Greek calculations, historical/live replay parity and reproducible research ZIP packs.
 
+The governed Strategy Evaluation Rules of Engagement layer is documented in
+`docs/STRATEGY_EVALUATION_RULES_INTEGRATION.md`. It classifies target-only runs
+as opportunity scans, computes independent stock/NIFTY/India-VIX context,
+persists evaluation evidence in `strategy_eval`, and exports a standard
+24-sheet workbook plus CSV and checksum artifacts.
+
 ## Local verification
 
 ```bash

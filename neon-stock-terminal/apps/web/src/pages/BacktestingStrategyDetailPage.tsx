@@ -142,6 +142,9 @@ export function BacktestingStrategyDetailPage() {
     scenario.capitalMode === "no_capital_limit"
       ? tr("No Capital Limit")
       : scenario.capitalMode.replace("capital_", "").toUpperCase();
+  const evaluation = detail.data.evaluation;
+  const contextLabel = (item: { context: string; value: string; sample_size: number }) =>
+    `${item.context.replaceAll("_", " ")}: ${item.value.replaceAll("_", " ")} (${formatNumberIN(item.sample_size)} trades)`;
 
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
@@ -160,6 +163,57 @@ export function BacktestingStrategyDetailPage() {
         capital={scenario.capitalMode}
         benchmark={scenario.summary.benchmarkLabel ?? "NIFTY 50 price index"}
       />
+
+      {evaluation ? (
+        <section className={styles.evaluationWorkspace} aria-label={tr("Rules of engagement evaluation")}>
+          <article className={styles.evaluationBanner} data-rankable={evaluation.rankabilityStatus === "RANKABLE" ? "yes" : "no"}>
+            <div>
+              <span>{tr("Research classification")} • {evaluation.policyVersion}</span>
+              <strong>{tr(evaluation.resultType.replaceAll("_", " "))}</strong>
+              <p>
+                {evaluation.rankabilityStatus === "RANKABLE"
+                  ? tr("This run passed the mandatory evidence gates and may enter governed comparison.")
+                  : tr("This run is evidence, but it must not be ranked as a deployable strategy until every mandatory gate passes.")}
+              </p>
+            </div>
+            <div className={styles.evaluationBadges}>
+              <span>{tr(evaluation.rankabilityStatus.replaceAll("_", " "))}</span>
+              <span>{tr("Rating")} {evaluation.rating}</span>
+              <span>{tr("Validation")} {evaluation.validationStatus}</span>
+            </div>
+          </article>
+
+          <div className={styles.evaluationGrid}>
+            <article className={styles.evaluationPanel}>
+              <h3>{tr("Mandatory evidence gates")}</h3>
+              <div className={styles.evaluationGateList}>
+                {Object.entries(evaluation.validations).map(([name, gate]) => (
+                  <div key={name} className={styles.evaluationGate} data-status={gate.status.toLowerCase()}>
+                    <span>{tr(name.replaceAll("_", " "))}</span>
+                    <strong>{tr(gate.status)}</strong>
+                    <p>{tr(gate.reason)}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className={styles.evaluationPanel}>
+              <h3>{tr("Market and stock suitability")}</h3>
+              <div className={styles.suitabilityColumns}>
+                <div data-tone="good"><strong>{tr("GOOD WHEN")}</strong>{evaluation.goodWhen.slice(0, 6).map((item) => <span key={`good-${item.context}-${item.value}`}>{tr(contextLabel(item))}</span>)}{evaluation.goodWhen.length === 0 ? <span>{tr("No sufficiently supported positive slice yet.")}</span> : null}</div>
+                <div data-tone="avoid"><strong>{tr("AVOID WHEN")}</strong>{evaluation.avoidWhen.slice(0, 6).map((item) => <span key={`avoid-${item.context}-${item.value}`}>{tr(contextLabel(item))}</span>)}{evaluation.avoidWhen.length === 0 ? <span>{tr("No sufficiently supported negative slice yet.")}</span> : null}</div>
+                <div data-tone="watch"><strong>{tr("WATCH / UNKNOWN")}</strong>{evaluation.watch.slice(0, 6).map((item) => <span key={`watch-${item.context}-${item.value}`}>{tr(contextLabel(item))}</span>)}{evaluation.watch.length === 0 ? <span>{tr("No low-sample slice warnings.")}</span> : null}</div>
+              </div>
+              <p className={styles.evaluationFootnote}>{tr("Stock and NIFTY conditions are classified independently from shifted historical prices. Event outcomes remain retrospective slices unless they were verifiably known at entry time.")}</p>
+            </article>
+          </div>
+        </section>
+      ) : (
+        <section className={styles.evaluationMissing}>
+          <strong>{tr("Rules-of-engagement evaluation pending")}</strong>
+          <span>{tr("This scenario has not yet been processed by the governed evaluator and must be treated as not rankable.")}</span>
+        </section>
+      )}
 
       <section ref={summaryRef} data-analytics-section="backtesting_detail_summary">
         <BacktestingDecisionBrief summary={scenario.summary} closedTrades={scenario.trades.length} title="Strategy verdict" />

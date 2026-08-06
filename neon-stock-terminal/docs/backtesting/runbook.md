@@ -27,6 +27,36 @@ Backtesting API routes should only serve the latest published batch in normal op
 9. validate all layers
 10. publish atomically by flipping the `batch_run_audit.published_flag`
 11. preserve last known good if validation fails
+12. run the Rules-of-Engagement evaluator; never convert a failed validation into a score
+13. export the governed 24-sheet evidence workbook plus CSV evidence and checksums
+
+## Rules-of-Engagement classification
+
+- A target-only or no-timeout simulation is always `OPPORTUNITY_SCAN` and `NOT_RANKABLE`.
+- A stop-and-timeout simulation may be a true isolated or portfolio backtest, but remains `NOT_RANKABLE` while point-in-time universe, complete MFE/MAE paths, effective-dated costs, independent reproduction or out-of-sample evidence fail.
+- Rating and composite score must remain `NR` / null while any hard gate fails.
+- Stock and NIFTY regimes are independent classifications. Never substitute one for the other.
+- Historical event outcomes and inferred post-event regimes are retrospective slices. They may be trading-time inputs only when `strategy_eval.market_event.point_in_time_eligible` is true.
+
+Ingest/evaluate:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/import_strategy_evaluation_roe.py \
+  --workbook /home/novius2/NIFTY50/Rules-of-engegemnt/Nifty_50_Event_Regime_Analysis_Master_2016_2026.xlsx \
+  --rules /home/novius2/NIFTY50/Rules-of-engegemnt/CODEX_IMPLEMENT_STRATEGY_EVALUATION_RULES_OF_ENGAGEMENT_V1.0.md
+```
+
+Generate a review pack:
+
+```bash
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/export_strategy_evaluation_pack.py \
+  --strategy-id rsi30_willr80_closegtprev_tp125 \
+  --scenario nifty_100:capital_16l \
+  --output-dir outputs/evaluation_packs/rsi30_willr80_closegtprev_tp125/nifty_100_capital_16l
+```
 
 ## Entry points
 

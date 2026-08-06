@@ -1,0 +1,125 @@
+{
+  "checks": [
+    {
+      "details": {
+        "as_of_date": "2026-08-05",
+        "backtest_run_id": 90786,
+        "batch_run_id": 255,
+        "batch_status": "published",
+        "batch_validation_status": "passed",
+        "closed_trades": 1,
+        "evaluation_id": 32,
+        "open_positions": 0,
+        "rankability_status": "NOT_RANKABLE",
+        "rating": "NR",
+        "result_type": "TRUE_BACKTEST_ISOLATED",
+        "scenario_key": "single_stock:capital_16l:RELIANCE",
+        "validation_status": "FAIL"
+      },
+      "name": "published_backtest_and_governed_evaluation",
+      "passed": true
+    },
+    {
+      "details": {
+        "complete_bank_nifty": 1,
+        "complete_nifty": 1,
+        "complete_stock": 1,
+        "complete_vix": 1,
+        "context_rows": 1,
+        "trade_rows": 1
+      },
+      "name": "all_trade_regimes_persisted",
+      "passed": true
+    },
+    {
+      "details": [
+        {
+          "instrument_type": "INDEX",
+          "max_date": "2026-08-05",
+          "min_date": "2021-03-08",
+          "row_count": 1314,
+          "symbol": "BANK NIFTY",
+          "trend_classes": 5,
+          "zone_classes": 9
+        },
+        {
+          "instrument_type": "INDEX",
+          "max_date": "2026-08-05",
+          "min_date": "2021-03-08",
+          "row_count": 1314,
+          "symbol": "INDIA VIX",
+          "trend_classes": 5,
+          "zone_classes": 6
+        },
+        {
+          "instrument_type": "INDEX",
+          "max_date": "2026-08-05",
+          "min_date": "2021-03-08",
+          "row_count": 1314,
+          "symbol": "NIFTY 50",
+          "trend_classes": 5,
+          "zone_classes": 9
+        },
+        {
+          "instrument_type": "STOCK",
+          "max_date": "2026-08-05",
+          "min_date": "2025-11-10",
+          "row_count": 158,
+          "symbol": "RELIANCE",
+          "trend_classes": 5,
+          "zone_classes": 9
+        }
+      ],
+      "name": "regime_history_coverage",
+      "passed": true
+    },
+    {
+      "details": {
+        "required": [
+          "BANK_NIFTY_TREND",
+          "BANK_NIFTY_ZONE",
+          "NIFTY_TREND",
+          "NIFTY_ZONE",
+          "STOCK_NIFTY_MATRIX",
+          "STOCK_TREND",
+          "STOCK_ZONE",
+          "VIX_REGIME"
+        ],
+        "saved": [
+          "BANK_NIFTY_TREND",
+          "BANK_NIFTY_ZONE",
+          "NIFTY_TREND",
+          "NIFTY_ZONE",
+          "STOCK_NIFTY_MATRIX",
+          "STOCK_TREND",
+          "STOCK_ZONE",
+          "VIX_REGIME"
+        ]
+      },
+      "name": "all_required_regime_slices_saved",
+      "passed": true
+    },
+    {
+      "details": {
+        "files": [
+          "checksums.sha256",
+          "slice_metrics.csv",
+          "stock_performance.csv",
+          "strategy_evaluation.xlsx",
+          "strategy_summary.json",
+          "strategy_summary.md",
+          "trades.csv"
+        ],
+        "output_dir": "/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab/outputs/acceptance/rsi_reclaim30_willr_reclaim80_greenclose_tp200_sl200_max10/RELIANCE_capital_16l"
+      },
+      "name": "review_artifacts_saved",
+      "passed": true
+    }
+  ],
+  "generated_at": "2026-08-06T03:32:38.010514+00:00",
+  "note": "Pipeline acceptance is independent of strategy rankability or profitability.",
+  "scenario": "single_stock:capital_16l:RELIANCE",
+  "status": "PASS",
+  "strategy_id": "rsi_reclaim30_willr_reclaim80_greenclose_tp200_sl200_max10",
+  "symbol": "RELIANCE"
+}

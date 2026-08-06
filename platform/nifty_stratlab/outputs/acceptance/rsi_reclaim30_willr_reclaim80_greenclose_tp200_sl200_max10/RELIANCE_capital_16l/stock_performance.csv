@@ -1,0 +1,2 @@
+symbol,security_name,sector,signal_count,accepted_trades,skipped_trades,win_rate_pct,avg_return_pct,median_return_pct,max_gain_pct,max_loss_pct,avg_hold_days,max_hold_days,realized_pnl,unrealized_pnl,charges,open_position_flag
+RELIANCE,RELIANCE INDUSTRIES LTD,Oil Gas & Consumable Fuels,1,1,0,0,-2.2255,-2.2255,-2.2255,-2.2255,1,1,-4433.46,0,453.93,False

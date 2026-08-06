@@ -14,6 +14,20 @@ the exact 24-sheet governed workbook, CSV evidence, Markdown/JSON summaries and
 SHA-256 checksums. It also records each artifact in
 `strategy_eval.artifact_manifest`.
 
+`accept_strategy_single_stock.py` is the release gate for a new or changed
+strategy. It selects one exact single-stock scenario from the latest validated
+published backtest, refreshes its governed evaluation, exports the evidence
+pack, and fails unless stock, NIFTY 50, Bank NIFTY and India VIX regimes and all
+eight regime slices are persisted. It never replaces the full production batch
+with a partial test.
+
+```bash
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/accept_strategy_single_stock.py \
+  --strategy-id rsi_reclaim30_willr_reclaim80_greenclose_tp200_sl200_max10 \
+  --symbol RELIANCE --capital-mode capital_16l
+```
+
 `qualify_sources.py` requires explicit source paths. It intentionally has no default
 root scan, preventing an accidental full-estate run.
 

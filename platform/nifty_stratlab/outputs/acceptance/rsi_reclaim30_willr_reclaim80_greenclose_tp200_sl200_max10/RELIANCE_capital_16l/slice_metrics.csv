@@ -1,0 +1,9 @@
+slice_type,slice_key,sample_size,suitability,metrics_json
+BANK_NIFTY_TREND,SIDEWAYS,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"
+BANK_NIFTY_ZONE,SIDEWAYS_LOW_NORMAL_VOL,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"
+NIFTY_TREND,SIDEWAYS,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"
+NIFTY_ZONE,SIDEWAYS_LOW_NORMAL_VOL,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"
+STOCK_NIFTY_MATRIX,DOWNWARD / SIDEWAYS,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"
+STOCK_TREND,DOWNWARD,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"
+STOCK_ZONE,DOWNWARD_HIGH_VOL,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"
+VIX_REGIME,LOW,1,UNKNOWN,"{""win_rate_pct"": 0.0, ""avg_return_pct"": -2.2255, ""after_tax_net_pnl"": -4433.46, ""median_return_pct"": -2.2255}"

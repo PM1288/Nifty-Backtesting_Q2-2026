@@ -322,10 +322,28 @@ def calculate_regimes(cur, policy: dict[str, Any]) -> int:
     return len(rows)
 
 
-def evaluate_latest_runs(cur) -> int:
+def evaluate_latest_runs(
+    cur,
+    *,
+    strategy_id: str | None = None,
+    scenario_key: str | None = None,
+) -> int:
+    filters = ["1=1"]
+    params: list[Any] = []
+    if strategy_id:
+        filters.append("s.strategy_id=%s")
+        params.append(strategy_id)
+    if scenario_key:
+        filters.append("r.scenario_key=%s")
+        params.append(scenario_key)
+    elif not strategy_id:
+        # Preserve the historical default: the scheduled governance refresh
+        # evaluates comparable Nifty-100 scenarios, while acceptance runs can
+        # explicitly select a single-stock scenario.
+        filters.append("r.universe_mode='nifty_100'")
     runs = fetch_frame(
         cur,
-        """
+        f"""
         WITH latest AS (
           SELECT batch_run_id FROM nse_app.batch_run_audit
           WHERE batch_name='backtesting_precompute' AND published_flag
@@ -335,10 +353,15 @@ def evaluate_latest_runs(cur) -> int:
                v.config_json,v.assumptions_json
         FROM nse_app.backtest_run r JOIN latest USING(batch_run_id)
         JOIN nse_app.backtest_strategy_version v USING(strategy_version_id)
-        WHERE r.universe_mode='nifty_100'
+        JOIN nse_app.backtest_strategy s USING(strategy_id)
+        WHERE {" AND ".join(filters)}
         ORDER BY r.backtest_run_id
         """,
+        tuple(params),
     )
+    if runs.empty:
+        requested = f"strategy={strategy_id or '*'} scenario={scenario_key or 'nifty_100:*'}"
+        raise RuntimeError(f"No latest published backtest run matched {requested}")
     for row in runs.itertuples(index=False):
         summary = row.summary_json if isinstance(row.summary_json, dict) else json.loads(row.summary_json)
         config = row.config_json if isinstance(row.config_json, dict) else json.loads(row.config_json)
@@ -367,11 +390,22 @@ def evaluate_latest_runs(cur) -> int:
         """
         INSERT INTO strategy_eval.trade_context_snapshot (
           trade_log_id,stock_regime_date,stock_primary_trend,stock_market_zone,nifty_primary_trend,
-          nifty_market_zone,india_vix,vix_regime,event_ids,context_json)
+          nifty_market_zone,india_vix,vix_regime,event_ids,context_json,
+          stock_persistence_class,stock_volatility_regime,nifty_persistence_class,nifty_volatility_regime,
+          bank_nifty_primary_trend,bank_nifty_persistence_class,bank_nifty_volatility_regime,bank_nifty_market_zone)
         SELECT t.trade_log_id,t.entry_date,s.primary_trend,s.market_zone,n.primary_trend,n.market_zone,
                n.india_vix,n.vix_regime,
                COALESCE((SELECT jsonb_agg(e.event_id ORDER BY e.event_id) FROM strategy_eval.market_event e WHERE e.anchor_session=t.entry_date),'[]'::jsonb),
-               jsonb_build_object('policy_version',%s::text,'retrospective_events_not_entry_features',true)
+               jsonb_build_object(
+                 'policy_version',%s::text,
+                 'retrospective_events_not_entry_features',true,
+                 'stock_regime',to_jsonb(s),
+                 'nifty_regime',to_jsonb(n),
+                 'bank_nifty_regime',to_jsonb(b),
+                 'india_vix_regime',to_jsonb(v)
+               ),
+               s.persistence_class,s.volatility_regime,n.persistence_class,n.volatility_regime,
+               b.primary_trend,b.persistence_class,b.volatility_regime,b.market_zone
         FROM nse_app.backtest_trade_log t
         JOIN strategy_eval.run_evaluation re ON re.policy_version=%s
         JOIN nse_app.backtest_run r ON r.backtest_run_id=re.backtest_run_id
@@ -380,12 +414,24 @@ def evaluate_latest_runs(cur) -> int:
           AND s.symbol=t.symbol AND s.policy_version=%s
         LEFT JOIN strategy_eval.market_regime_daily n ON n.trade_date=t.entry_date AND n.instrument_type='INDEX'
           AND n.symbol='NIFTY 50' AND n.policy_version=%s
+        LEFT JOIN strategy_eval.market_regime_daily b ON b.trade_date=t.entry_date AND b.instrument_type='INDEX'
+          AND b.symbol='BANK NIFTY' AND b.policy_version=%s
+        LEFT JOIN strategy_eval.market_regime_daily v ON v.trade_date=t.entry_date AND v.instrument_type='INDEX'
+          AND v.symbol='INDIA VIX' AND v.policy_version=%s
         ON CONFLICT (trade_log_id) DO UPDATE SET
           stock_regime_date=EXCLUDED.stock_regime_date,stock_primary_trend=EXCLUDED.stock_primary_trend,
           stock_market_zone=EXCLUDED.stock_market_zone,nifty_primary_trend=EXCLUDED.nifty_primary_trend,
           nifty_market_zone=EXCLUDED.nifty_market_zone,india_vix=EXCLUDED.india_vix,
-          vix_regime=EXCLUDED.vix_regime,event_ids=EXCLUDED.event_ids,context_json=EXCLUDED.context_json
-        """, (POLICY_VERSION, POLICY_VERSION, POLICY_VERSION, POLICY_VERSION),
+          vix_regime=EXCLUDED.vix_regime,event_ids=EXCLUDED.event_ids,context_json=EXCLUDED.context_json,
+          stock_persistence_class=EXCLUDED.stock_persistence_class,
+          stock_volatility_regime=EXCLUDED.stock_volatility_regime,
+          nifty_persistence_class=EXCLUDED.nifty_persistence_class,
+          nifty_volatility_regime=EXCLUDED.nifty_volatility_regime,
+          bank_nifty_primary_trend=EXCLUDED.bank_nifty_primary_trend,
+          bank_nifty_persistence_class=EXCLUDED.bank_nifty_persistence_class,
+          bank_nifty_volatility_regime=EXCLUDED.bank_nifty_volatility_regime,
+          bank_nifty_market_zone=EXCLUDED.bank_nifty_market_zone
+        """, (POLICY_VERSION, POLICY_VERSION, POLICY_VERSION, POLICY_VERSION, POLICY_VERSION, POLICY_VERSION),
     )
     cur.execute("DELETE FROM strategy_eval.slice_metric WHERE evaluation_id IN (SELECT evaluation_id FROM strategy_eval.run_evaluation WHERE policy_version=%s)", (POLICY_VERSION,))
     cur.execute(
@@ -404,7 +450,11 @@ def evaluate_latest_runs(cur) -> int:
         JOIN strategy_eval.trade_context_snapshot c ON c.trade_log_id=t.trade_log_id
         CROSS JOIN LATERAL (VALUES
           ('NIFTY_TREND',COALESCE(c.nifty_primary_trend,'UNKNOWN')),
+          ('NIFTY_ZONE',COALESCE(c.nifty_market_zone,'UNKNOWN')),
+          ('BANK_NIFTY_TREND',COALESCE(c.bank_nifty_primary_trend,'UNKNOWN')),
+          ('BANK_NIFTY_ZONE',COALESCE(c.bank_nifty_market_zone,'UNKNOWN')),
           ('STOCK_TREND',COALESCE(c.stock_primary_trend,'UNKNOWN')),
+          ('STOCK_ZONE',COALESCE(c.stock_market_zone,'UNKNOWN')),
           ('STOCK_NIFTY_MATRIX',COALESCE(c.stock_primary_trend,'UNKNOWN')||' / '||COALESCE(c.nifty_primary_trend,'UNKNOWN')),
           ('VIX_REGIME',COALESCE(c.vix_regime,'UNKNOWN'))
         ) x(slice_type,slice_key)
@@ -431,6 +481,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rules", type=Path, required=True)
     parser.add_argument("--policy", type=Path, default=PROJECT_ROOT / "config/evaluation/strategy_evaluation_roe_v1.json")
     parser.add_argument("--schema-sql", type=Path, default=MONOREPO_ROOT / "db/sql/020_strategy_evaluation_roe.sql")
+    parser.add_argument("--evaluation-strategy-id", help="Evaluate only this strategy in the latest published batch")
+    parser.add_argument("--evaluation-scenario", help="Evaluate only this exact scenario key; enables single-stock acceptance")
     parser.add_argument("--dry-run", action="store_true")
     return parser
 
@@ -448,7 +500,11 @@ def main() -> None:
             policy = insert_policy(cur, args.policy, args.rules)
             metrics = ingest_workbook(cur, args.workbook)
             metrics["regime_rows"] = calculate_regimes(cur, policy)
-            metrics["evaluated_runs"] = evaluate_latest_runs(cur)
+            metrics["evaluated_runs"] = evaluate_latest_runs(
+                cur,
+                strategy_id=args.evaluation_strategy_id,
+                scenario_key=args.evaluation_scenario,
+            )
             metrics["policy_version"] = POLICY_VERSION
             metrics["workbook_sha256"] = sha256(args.workbook)
             metrics["rules_sha256"] = sha256(args.rules)

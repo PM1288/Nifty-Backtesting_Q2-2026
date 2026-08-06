@@ -58,6 +58,33 @@ DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
   --output-dir outputs/evaluation_packs/rsi30_willr80_closegtprev_tp125/nifty_100_capital_16l
 ```
 
+## Mandatory single-stock acceptance for new strategies
+
+Before a new strategy is promoted, its latest published batch must contain at
+least one trade for the chosen acceptance symbol. Run the governed acceptance
+command below. A passing pipeline gate is not a claim that the strategy is
+profitable or rankable.
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/accept_strategy_single_stock.py \
+  --strategy-id <strategy-id> --symbol <NSE-symbol> --capital-mode capital_16l
+```
+
+The command returns non-zero unless:
+
+- the exact scenario belongs to the latest validated published batch;
+- at least one persisted trade exists;
+- every trade has stock, NIFTY 50, Bank NIFTY and India VIX context;
+- trend, persistence, volatility and market-zone fields are populated;
+- all eight governed regime slices are saved; and
+- the 24-sheet workbook and CSV/JSON/Markdown artifacts are saved and registered.
+
+Outputs are consolidated under
+`platform/nifty_stratlab/outputs/acceptance/<strategy>/<symbol>_<capital-mode>/`.
+Never publish a partial acceptance batch over the full dashboard batch.
+
 ## Entry points
 
 - worker implementation: `services/nse_analytics_worker/app/backtesting.py`

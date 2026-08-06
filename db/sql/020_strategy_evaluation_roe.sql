@@ -177,6 +177,19 @@ CREATE TABLE IF NOT EXISTS strategy_eval.trade_context_snapshot (
     context_json JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
+-- Additive context columns keep deployments from older revisions upgrade-safe.
+-- They intentionally duplicate the most frequently filtered values from
+-- context_json so regime analysis remains cheap and explicit.
+ALTER TABLE strategy_eval.trade_context_snapshot
+    ADD COLUMN IF NOT EXISTS stock_persistence_class TEXT,
+    ADD COLUMN IF NOT EXISTS stock_volatility_regime TEXT,
+    ADD COLUMN IF NOT EXISTS nifty_persistence_class TEXT,
+    ADD COLUMN IF NOT EXISTS nifty_volatility_regime TEXT,
+    ADD COLUMN IF NOT EXISTS bank_nifty_primary_trend TEXT,
+    ADD COLUMN IF NOT EXISTS bank_nifty_persistence_class TEXT,
+    ADD COLUMN IF NOT EXISTS bank_nifty_volatility_regime TEXT,
+    ADD COLUMN IF NOT EXISTS bank_nifty_market_zone TEXT;
+
 CREATE TABLE IF NOT EXISTS strategy_eval.period_metric (
     evaluation_id BIGINT NOT NULL REFERENCES strategy_eval.run_evaluation(evaluation_id) ON DELETE CASCADE,
     period_type TEXT NOT NULL,

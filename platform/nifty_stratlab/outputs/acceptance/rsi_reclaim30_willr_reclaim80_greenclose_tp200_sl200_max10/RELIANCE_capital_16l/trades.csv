@@ -1,0 +1,2 @@
+symbol,sector,signal_date,entry_date,exit_date,exit_reason,regime_on_entry,entry_price,exit_price,quantity,total_charges,net_pnl,profit_tax_amount,after_tax_net_pnl,return_pct,holding_days,trade_status
+RELIANCE,Oil Gas & Consumable Fuels,2026-02-02,2026-02-03,2026-02-03,stop_intraday_hit,Falling,1473.9,1444.422,135,453.93,-4433.46,0,-4433.46,-2.2255,1,closed

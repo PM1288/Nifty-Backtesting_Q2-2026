@@ -818,3 +818,53 @@ Verified response: `OPPORTUNITY_SCAN`, `NOT_RANKABLE`, `NR`, `FAIL`, zero `goodW
 The strategy page is available at:
 
 `http://100.86.108.108:19090/n50/backtesting/strategies/rsi30_willr80_closegtprev_tp125?scenario=nifty_100%3Acapital_16l`
+
+## 2026-08-06 — Single-stock governed acceptance and complete regime context
+
+The requested one-strategy/one-stock acceptance used Confirmed Oversold
+Recovery on RELIANCE, scenario `single_stock:capital_16l:RELIANCE`, from the
+latest validated published batch `255` (backtest run `90786`). The partial test
+did not replace the full production dashboard batch.
+
+The audit found and fixed two gaps: exact single-stock scenarios could not be
+selected by the evaluator, and per-trade context omitted Bank NIFTY. Migration
+`db/sql/020_strategy_evaluation_roe.sql` now additively stores stock/NIFTY
+persistence and volatility plus Bank NIFTY trend, persistence, volatility and
+market zone. Full regime records are retained in `context_json`. Eight slices
+are produced: stock trend/zone, NIFTY trend/zone, Bank NIFTY trend/zone,
+stock/NIFTY matrix and VIX regime.
+
+Reusable command:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab
+DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
+  .venv/bin/python tools/accept_strategy_single_stock.py \
+  --strategy-id rsi_reclaim30_willr_reclaim80_greenclose_tp200_sl200_max10 \
+  --symbol RELIANCE --capital-mode capital_16l
+```
+
+Acceptance result: `PASS` across all five gates. The run has one closed trade,
+zero open positions and complete stock, NIFTY 50, Bank NIFTY and India VIX
+context. Regime coverage was RELIANCE 158 rows (2025-11-10 to 2026-08-05), and
+1,314 rows each for NIFTY 50, Bank NIFTY and India VIX (2021-03-08 to
+2026-08-05).
+
+The strategy verdict remains `TRUE_BACKTEST_ISOLATED / NOT_RANKABLE / NR` because
+Rules-of-Engagement evidence gates fail. Pipeline acceptance does not override
+strategy-quality governance.
+
+Artifacts are under:
+
+`platform/nifty_stratlab/outputs/acceptance/rsi_reclaim30_willr_reclaim80_greenclose_tp200_sl200_max10/RELIANCE_capital_16l/`
+
+This folder contains the 24-sheet workbook, three CSVs, strategy and acceptance
+JSON/Markdown, and checksums. All files are registered in
+`strategy_eval.artifact_manifest`.
+
+During deployment verification the dashboard background scheduler showed Prisma
+pool timeouts with the old default of two connections and five seconds. The
+Compose defaults for the N50 API processes were raised to eight connections and
+a 15-second pool timeout. The live dashboard was force-recreated with those
+values and produced no further pool-timeout messages during the post-deploy
+monitoring window. No database restart was required.

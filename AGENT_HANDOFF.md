@@ -1145,3 +1145,20 @@ decision/gate counts, near-threshold rows, per-symbol frequency, all trades,
 all reward/adverse ladder rows, regime slices and the two missing minute-data
 symbols (`M&M`, `MAXHEALTH`). Do not relax thresholds based only on trade count;
 review the `NearThreshold` and `GateFailures` sheets first.
+# 30-session swing potential analysis
+
+For each of the 18 accepted paths in run
+`bc8b50e8-a3b5-4424-bea0-8bb06cbcf6be`, the maximum minute high over the next 30
+available trading sessions was calculated. The result is
+`swing_30_session_potential.csv` and the `Swing30DayPotential` sheet in
+`oiis_diagnostic_review.xlsx`.
+
+The first exploratory calculation was rejected because duplicate rows in
+`nse.fact_eod_prices` can select a wrong instrument for a symbol/date and create
+impossible prices. The final calculation uses the continuous minute series
+anchored to the actual entry price; it is a hindsight potential measure, not a
+guaranteed executable profit.
+
+Final range: best ADANIPOWER +44.96% (gross position potential ₹89,745.55;
+2024-06-03); lowest maximum-upside path VEDL +1.61% (₹3,214.78; 2024-07-05).
+Median maximum upside was +13.245% across 18 entries.

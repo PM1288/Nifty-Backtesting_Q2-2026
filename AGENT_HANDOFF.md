@@ -952,14 +952,28 @@ Acceptance artifacts:
 
 `platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/07f2f31f-17d3-4f2e-8204-6fafe5bb3412/`
 
-Full replay is prepared but was not started. After reviewing the one-symbol
-evidence, run:
+The guarded full replay was subsequently run and completed successfully:
 
 ```bash
 CONFIRM_FULL_OIIS_REPLAY=YES \
 DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
   ./scripts/oiis.sh replay --start 2023-08-06 --end 2026-08-05 --workers 4
 ```
+
+Full replay evidence (`e0c2ceab-7d88-47a2-9ea9-9a876fd58d16`) covers 99 eligible
+current-panel symbols (TMPV excluded), 68,743 daily decisions and 23 isolated
+LONG trades from 2023-08-07 through 2026-08-05. After-tax net P&L is
+₹-50,181.8842 and win rate is 39.1304%. All persisted decisions have stock,
+NIFTY, Bank NIFTY and India VIX regime context (zero missing values). Five
+artifact checksums pass. The run is deliberately classified
+`TRUE_BACKTEST_ISOLATED / NOT_RANKABLE / NR`: each stock is evaluated
+independently, without ₹16L/max-eight finite-capital netting, and the result is
+not evidence of profitability. The consolidated artifacts are at
+`platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/e0c2ceab-7d88-47a2-9ea9-9a876fd58d16/`.
+
+During the requested monitoring window the replay process was active at high
+CPU with `oiis.replay_run` still `RUNNING` and no error; it then completed and
+atomically persisted the database rows and reports. No restart was required.
 
 The full query enforces the workload's TMPV demerger exclusion; the expected
 eligible current-panel count is 99, not 100.

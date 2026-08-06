@@ -1,0 +1,31 @@
+{
+  "actual_end": "2026-08-05",
+  "actual_start": "2023-08-07",
+  "after_tax_net_pnl": -50181.8842,
+  "config_sha256": "04dfe070812d2d7cfd35bfd4b49f643d59e80ea929f523af1e4d296075af292f",
+  "decision_count": 68743,
+  "enterable_count": 23,
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.0",
+  "limitations": [
+    "Current-panel Nifty 100 universe introduces survivorship bias.",
+    "Public OHLCV and delivery are participation proxies, not confirmed institutional flow.",
+    "Daily stored-session replay is a Phase-A H2-H4 proxy, not intraday OIIS LIVE.",
+    "Cash replay executes LONG decisions only; SHORT decisions remain signal studies.",
+    "Options, futures, live orders, calibrated probabilities and unapproved risk limits are blocked.",
+    "Event/catalyst history is not yet complete enough to create positive catalyst scores.",
+    "Outcomes are isolated per symbol; a finite-capital cross-symbol portfolio replay is a separate required evaluation."
+  ],
+  "rankability_status": "NOT_RANKABLE",
+  "rating": "NR",
+  "replay_run_id": "e0c2ceab-7d88-47a2-9ea9-9a876fd58d16",
+  "requested_end": "2026-08-05",
+  "requested_start": "2023-08-06",
+  "result_type": "TRUE_BACKTEST_ISOLATED",
+  "run_hash": "835e9a7e52173f7ef60ad3f9a6fd6c1088c27eff231d716500f23bbffdb527a2",
+  "status": "SUCCEEDED",
+  "strategy_id": "oiis_cash_daily_research_v1",
+  "symbol_count": 99,
+  "symbol_filter": null,
+  "trade_count": 23,
+  "win_rate_pct": 39.1304
+}

@@ -31,6 +31,26 @@
     "missing_vix_regimes": 0,
     "artifact_checksum_validation": "PASS"
   },
+  "full_replay": {
+    "status": "PASS_WITH_RESEARCH_LIMITATIONS",
+    "replay_run_id": "e0c2ceab-7d88-47a2-9ea9-9a876fd58d16",
+    "requested_period": ["2023-08-06", "2026-08-05"],
+    "actual_period": ["2023-08-07", "2026-08-05"],
+    "symbol_count": 99,
+    "tmpv_excluded": true,
+    "decision_count": 68743,
+    "enterable_count": 23,
+    "trade_count": 23,
+    "after_tax_net_pnl": -50181.8842,
+    "win_rate_pct": 39.1304,
+    "missing_stock_regimes": 0,
+    "missing_nifty_regimes": 0,
+    "missing_bank_nifty_regimes": 0,
+    "missing_vix_regimes": 0,
+    "artifact_checksum_validation": "PASS",
+    "artifact_dir": "platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/e0c2ceab-7d88-47a2-9ea9-9a876fd58d16",
+    "interpretation": "Isolated per-symbol research replay; not a finite-capital portfolio result and not rankable."
+  },
   "failed_attempts_retained": 2,
   "failed_attempt_causes": [
     "PostgreSQL could not infer the nullable optional symbol-filter parameter type.",

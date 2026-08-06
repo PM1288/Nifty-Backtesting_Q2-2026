@@ -1,8 +1,9 @@
 {
   "status": "PASS_WITH_RESEARCH_LIMITATIONS",
   "tested_at": "2026-08-06T03:55:44Z",
-  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.0",
-  "unit_tests": {"passed": 5, "failed": 0},
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.1",
+  "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
+  "unit_tests": {"phase2_phase3_passed": 31, "failed": 0},
   "config_validation": "PASS",
   "full_run_guard": "PASS",
   "source_preflight": {"status": "PASS", "recent_eod_symbols": 4044},
@@ -16,23 +17,33 @@
   },
   "single_stock_acceptance": {
     "status": "PASS",
-    "replay_run_id": "07f2f31f-17d3-4f2e-8204-6fafe5bb3412",
+    "replay_run_id": "51140c91-82f6-4437-92ad-555279108f74",
+    "run_hash": "5e1c03506cde9cc1b0458a1fe3a9f346bc0b5d3682b0d4b6f67357efaa3fc378",
     "symbol": "RELIANCE",
     "requested_period": ["2023-08-06", "2026-08-05"],
     "actual_period": ["2023-08-07", "2026-08-05"],
     "decision_count": 718,
     "enterable_count": 1,
     "trade_count": 1,
-    "after_tax_net_pnl": 3376.1881,
+    "after_tax_net_pnl": 286.2566,
     "win_rate_pct": 100.0,
     "missing_stock_regimes": 0,
     "missing_nifty_regimes": 0,
     "missing_bank_nifty_regimes": 0,
     "missing_vix_regimes": 0,
-    "artifact_checksum_validation": "PASS"
+    "artifact_checksum_validation": "PASS",
+    "artifact_count": 7,
+    "entry_price": 2685.9,
+    "exit_price": 2694.0,
+    "exit_reason": "TARGET_INTRADAY_0_3",
+    "stop_price": null,
+    "stop_exit_enabled": false,
+    "timeout_exit_enabled": false,
+    "mae_pct": -0.3463,
+    "mfe_pct": 0.3351
   },
   "full_replay": {
-    "status": "PASS_WITH_RESEARCH_LIMITATIONS",
+    "status": "SUPERSEDED_EXIT_POLICY",
     "replay_run_id": "e0c2ceab-7d88-47a2-9ea9-9a876fd58d16",
     "requested_period": ["2023-08-06", "2026-08-05"],
     "actual_period": ["2023-08-07", "2026-08-05"],
@@ -49,7 +60,8 @@
     "missing_vix_regimes": 0,
     "artifact_checksum_validation": "PASS",
     "artifact_dir": "platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/e0c2ceab-7d88-47a2-9ea9-9a876fd58d16",
-    "interpretation": "Isolated per-symbol research replay; not a finite-capital portfolio result and not rankable."
+    "interpretation": "Invalid for current comparison: V1.0 used structural stops, a 2R target and ten-session timeout. Retained as immutable audit evidence only.",
+    "superseded_by_formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.1"
   },
   "failed_attempts_retained": 2,
   "failed_attempt_causes": [
@@ -61,5 +73,5 @@
     "Regime values are normalized to null-safe strings.",
     "Index calendar gaps use a backward-only seven-day as-of join; no future regime is used."
   ],
-  "interpretation": "One profitable trade is pipeline evidence only and is not a profitability or rankability claim."
+  "interpretation": "Strategies define entry only. Actual exits use I030 on the entry session and S100 thereafter from original buy price, with no stop or timeout. One profitable trade is pipeline evidence only and is not a profitability or rankability claim."
 }

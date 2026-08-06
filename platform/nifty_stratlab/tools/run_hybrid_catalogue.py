@@ -8,11 +8,13 @@ import math
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+from decimal import Decimal
 from typing import Any
 
 import pandas as pd
 
 from nifty_stratlab.strategies.hybrid_assumption_engine import ASSUMPTION_VERSION, build_feature_frame, evaluate_strategy
+from nifty_stratlab.evaluation.common_exit import PathBar, evaluate_long_target_only
 
 
 def _simulate(symbol: str, strategy: dict[str, Any], f: pd.DataFrame, signals: pd.Series) -> tuple[list[dict], dict]:
@@ -29,20 +31,22 @@ def _simulate(symbol: str, strategy: dict[str, Any], f: pd.DataFrame, signals: p
         if not math.isfinite(entry) or entry <= 0: rejected+=1; continue
         quantity=math.floor(200000/entry)
         if quantity<=0: rejected+=1; continue
-        exit_i=None; stage=None; exit_price=None
-        for i in range(entry_i+1,len(f)):
-            same=f.at[i,"session"]==entry_session; target=entry*(1.003 if same else 1.01)
-            if float(f.at[i,"high"])>=target:
-                exit_i=i; stage="INTRADAY_0_3" if same else "SWING_1_0"; exit_price=target; break
-        if exit_i is None:
-            trades.append({"strategy_id":strategy["strategy_id"],"symbol":symbol,"signal_ts":f.at[signal_i,"date"].isoformat(),"entry_ts":f.at[entry_i,"date"].isoformat(),"exit_ts":"","entry_price":entry,"exit_price":"","quantity":quantity,"target_stage":"OPEN_SWING_1_0","gross_pnl":"","estimated_charges":"","net_pnl":"","tax_35_pct":"","after_tax_pnl":"","status":"OPEN"})
+        path = [PathBar(
+            ts=pd.Timestamp(f.at[i,"date"]).to_pydatetime(), session=f.at[i,"session"],
+            open=Decimal(str(f.at[i,"open"])), high=Decimal(str(f.at[i,"high"])),
+            low=Decimal(str(f.at[i,"low"])), close=Decimal(str(f.at[i,"close"])),
+        ) for i in range(entry_i, len(f))]
+        outcome = evaluate_long_target_only(
+            symbol=symbol, signal_date=f.at[signal_i,"session"], entry_price=Decimal(str(entry)),
+            quantity=quantity, bars=path,
+        )
+        if outcome["status"] != "CLOSED":
+            trades.append({"strategy_id":strategy["strategy_id"],"symbol":symbol,"signal_ts":f.at[signal_i,"date"].isoformat(),"entry_ts":f.at[entry_i,"date"].isoformat(),"exit_ts":"","entry_price":entry,"exit_price":"","quantity":quantity,"target_stage":"OPEN_SWING_1_0","gross_pnl":0.0,"estimated_charges":outcome["costs"],"net_pnl":0.0,"tax_35_pct":0.0,"after_tax_pnl":0.0,"unrealized_net_liquidation_pnl":outcome["unrealized_net_liquidation_pnl"],"status":"OPEN_AS_OF_END","mfe_pct":outcome["mfe_pct"],"mae_pct":outcome["mae_pct"],"stop_exit_enabled":False,"capital_released":False})
             break
-        gross=(exit_price-entry)*quantity
-        # Explicit v1 research proxy: 8 bps round-trip intraday, 22 bps swing/delivery.
-        charge_rate=.0008 if stage=="INTRADAY_0_3" else .0022
-        charges=(entry+exit_price)*quantity*charge_rate
-        net=gross-charges; tax=max(net,0)*.35; after_tax=net-tax
-        trades.append({"strategy_id":strategy["strategy_id"],"symbol":symbol,"signal_ts":f.at[signal_i,"date"].isoformat(),"entry_ts":f.at[entry_i,"date"].isoformat(),"exit_ts":f.at[exit_i,"date"].isoformat(),"entry_price":round(entry,6),"exit_price":round(exit_price,6),"quantity":quantity,"target_stage":stage,"gross_pnl":round(gross,2),"estimated_charges":round(charges,2),"net_pnl":round(net,2),"tax_35_pct":round(tax,2),"after_tax_pnl":round(after_tax,2),"status":"CLOSED"})
+        exit_ts=pd.Timestamp(outcome["exit_ts"]); exit_i=int(f.index[f.date.eq(exit_ts)][0])
+        stage="INTRADAY_0_3" if outcome["exit_reason"].startswith("TARGET_INTRADAY") else "SWING_1_0"
+        net=float(outcome["gross_pnl"])-float(outcome["costs"])
+        trades.append({"strategy_id":strategy["strategy_id"],"symbol":symbol,"signal_ts":f.at[signal_i,"date"].isoformat(),"entry_ts":f.at[entry_i,"date"].isoformat(),"exit_ts":exit_ts.isoformat(),"entry_price":outcome["entry_price"],"exit_price":outcome["exit_price"],"quantity":quantity,"target_stage":stage,"gross_pnl":outcome["gross_pnl"],"estimated_charges":outcome["costs"],"net_pnl":round(net,2),"tax_35_pct":outcome["tax_reserve"],"after_tax_pnl":outcome["after_tax_net_pnl"],"unrealized_net_liquidation_pnl":0.0,"status":"CLOSED","mfe_pct":outcome["mfe_pct"],"mae_pct":outcome["mae_pct"],"stop_exit_enabled":False,"capital_released":True})
         next_free=exit_i+1
     closed=[t for t in trades if t["status"]=="CLOSED"]
     summary={"strategy_id":strategy["strategy_id"],"symbol":symbol,"raw_signals":int(signals.sum()),"daily_candidates":len(first),"accepted_trades":len(trades),"closed_trades":len(closed),"open_trades":len(trades)-len(closed),"rejected_while_position_open":rejected,"net_pnl":round(sum(float(t["net_pnl"]) for t in closed),2),"after_tax_pnl":round(sum(float(t["after_tax_pnl"]) for t in closed),2)}

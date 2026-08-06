@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
-from decimal import ROUND_FLOOR, ROUND_HALF_UP, Decimal
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, Decimal
 from typing import Iterable
 
 from nifty_stratlab.contracts import ProductType, Side, TradeResult
@@ -89,7 +89,7 @@ class BacktestEngine:
 
     def _percentage_target(self, entry_price: Decimal, percentage: Decimal) -> Decimal:
         raw = entry_price * (Decimal("1") + percentage / Decimal("100"))
-        ticks = (raw / self.config.tick_size).to_integral_value(rounding=ROUND_FLOOR)
+        ticks = (raw / self.config.tick_size).to_integral_value(rounding=ROUND_CEILING)
         return ticks * self.config.tick_size
 
     def _exit_trade(
@@ -143,10 +143,10 @@ class BacktestEngine:
         low = Decimal(str(bar.low))
         if self.config.enable_target_exit and open_price >= position.target_price:
             return open_price, "target_gap_open", False
-        if self.config.enable_stop_exit and open_price <= position.stop_price:
+        if self.config.enable_stop_exit and position.stop_price is not None and open_price <= position.stop_price:
             return open_price, "stop_gap_open", False
         hit_target = self.config.enable_target_exit and high >= position.target_price
-        hit_stop = self.config.enable_stop_exit and low <= position.stop_price
+        hit_stop = self.config.enable_stop_exit and position.stop_price is not None and low <= position.stop_price
         if hit_target and hit_stop:
             if self.config.path_policy == PathPolicy.STOP_FIRST:
                 return position.stop_price, "stop_intrabar_conflict_conservative", True
@@ -257,9 +257,11 @@ class BacktestEngine:
                     )
                     target_price = target.exit_price
                     target_details = target.__dict__
-                raw_stop = entry_price * (Decimal("1") - self.config.stop_loss_pct / Decimal("100"))
-                stop_ticks = (raw_stop / self.config.tick_size).to_integral_value(rounding=ROUND_FLOOR)
-                stop = stop_ticks * self.config.tick_size
+                stop = None
+                if self.config.enable_stop_exit:
+                    raw_stop = entry_price * (Decimal("1") - self.config.stop_loss_pct / Decimal("100"))
+                    stop_ticks = (raw_stop / self.config.tick_size).to_integral_value(rounding=ROUND_FLOOR)
+                    stop = stop_ticks * self.config.tick_size
                 position = PositionState(
                     position_id=stable_id(
                         "pos",
@@ -335,7 +337,7 @@ class BacktestEngine:
                             )
                         else:
                             pending_entries[symbol] = signal
-                    elif signal.intent_type == "exit" and symbol in positions:
+                    elif signal.intent_type == "exit" and symbol in positions and not self.config.target_only_exit_contract:
                         positions[symbol].scheduled_exit_reason = (
                             "forced_session_exit_next_open"
                             if "forced_session_exit" in signal.reason_codes
@@ -347,7 +349,8 @@ class BacktestEngine:
             for symbol, position in positions.items():
                 if symbol in current_bars:
                     position.bars_held += 1
-                    if position.bars_held >= self.config.max_hold_bars and position.scheduled_exit_reason is None:
+                    if (not self.config.target_only_exit_contract and position.bars_held >= self.config.max_hold_bars
+                            and position.scheduled_exit_reason is None):
                         position.scheduled_exit_reason = "max_hold_timeout_next_open"
 
             # 6. Mark the portfolio. Net liquidation includes estimated sell costs.

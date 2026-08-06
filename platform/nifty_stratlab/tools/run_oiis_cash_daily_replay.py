@@ -11,6 +11,7 @@ import sys
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -24,10 +25,13 @@ MONOREPO_ROOT = PROJECT_ROOT.parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from nifty_stratlab.oiis import OIISFeature, evaluate_feature  # noqa: E402
+from nifty_stratlab.evaluation.common_exit import (  # noqa: E402
+    CommonExitPolicy, PathBar, evaluate_long_target_only,
+)
 
 
 STRATEGY_ID = "oiis_cash_daily_research_v1"
-FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.0"
+FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.1"
 POLICY_VERSION = "NIFTY-SEROE-V1.0"
 EXCLUDED_SYMBOLS = {"TMPV"}
 DEFAULT_CONFIG = PROJECT_ROOT / "config/oiis/formulas/oiis_cash_daily_research_v1.json"
@@ -35,12 +39,15 @@ DEFAULT_SCHEMA = MONOREPO_ROOT / "db/sql/021_oiis_research.sql"
 LIMITATIONS = [
     "Current-panel Nifty 100 universe introduces survivorship bias.",
     "Public OHLCV and delivery are participation proxies, not confirmed institutional flow.",
-    "Daily stored-session replay is a Phase-A H2-H4 proxy, not intraday OIIS LIVE.",
+    "OIIS determines entry eligibility only; every accepted entry uses the common target-only exit contract.",
     "Cash replay executes LONG decisions only; SHORT decisions remain signal studies.",
     "Options, futures, live orders, calibrated probabilities and unapproved risk limits are blocked.",
     "Event/catalyst history is not yet complete enough to create positive catalyst scores.",
     "Outcomes are isolated per symbol; a finite-capital cross-symbol portfolio replay is a separate required evaluation.",
+    "There is no stop-loss, strategy, timeout, forced-close, or run-end exit; adverse paths are recorded as risk evidence.",
 ]
+
+DEFAULT_MINUTE_CSV_DIR = Path("/home/novius2/data/nifty-50-minute-data/aaditya555/NIFTY50")
 
 
 def digest_bytes(value: bytes) -> str:
@@ -199,12 +206,39 @@ def evaluate_symbol(item: tuple[str, pd.DataFrame], start: date, end: date) -> l
     return output
 
 
-def simulate_trades(decisions: list[dict[str, Any]], prices: pd.DataFrame, config: dict[str, Any]) -> list[dict[str, Any]]:
+def _minute_frame(path: Path, start: date, end: date) -> pd.DataFrame:
+    if not path.is_file():
+        raise FileNotFoundError(f"minute CSV is required for exact common-exit evaluation: {path}")
+    frame = pd.read_csv(path, usecols=["date", "open", "high", "low", "close"])
+    frame = frame[(frame["date"] >= f"{start} 00:00:00") & (frame["date"] <= f"{end} 23:59:59")].copy()
+    frame["ts"] = pd.to_datetime(frame.pop("date"), errors="coerce")
+    if frame["ts"].dt.tz is None:
+        frame["ts"] = frame["ts"].dt.tz_localize("Asia/Kolkata", ambiguous="raise", nonexistent="raise")
+    for column in ("open", "high", "low", "close"):
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    frame = frame.dropna().sort_values("ts").reset_index(drop=True)
+    frame["session"] = frame["ts"].dt.date
+    return frame
+
+
+def simulate_trades(
+    decisions: list[dict[str, Any]], prices: pd.DataFrame, config: dict[str, Any],
+    minute_csv_dir: Path, end: date,
+) -> list[dict[str, Any]]:
     execution = config["execution"]
+    policy = CommonExitPolicy(
+        intraday_target_pct=Decimal(str(execution["intraday_target_pct_from_buy_price"])),
+        swing_target_pct=Decimal(str(execution["swing_target_pct_from_original_buy_price"])),
+        intraday_round_trip_cost_bps=Decimal(str(execution["intraday_round_trip_cost_bps"])),
+        swing_round_trip_cost_bps=Decimal(str(execution["swing_round_trip_cost_bps"])),
+        positive_profit_tax_rate=Decimal(str(execution["positive_profit_tax_rate"])),
+    )
     by_symbol = {symbol: group.sort_values("trade_date").reset_index(drop=True) for symbol, group in prices.groupby("symbol")}
     index_by_symbol = {symbol: {pd.Timestamp(value).date(): idx for idx, value in enumerate(group["trade_date"])} for symbol, group in by_symbol.items()}
     trades: list[dict[str, Any]] = []
     busy_until: dict[str, date] = {}
+    minute_cache: dict[str, pd.DataFrame] = {}
+    minute_checksums: dict[str, str] = {}
     for decision in sorted(decisions, key=lambda row: (row["trade_date"], row["symbol"])):
         if decision["decision_code"] not in {"ENTERABLE_TIER_A", "ENTERABLE_TIER_B"} or decision["selected_direction"] != "LONG":
             continue
@@ -217,40 +251,57 @@ def simulate_trades(decisions: list[dict[str, Any]], prices: pd.DataFrame, confi
             continue
         entry_index = signal_index + 1
         entry_row = group.iloc[entry_index]
-        entry = float(entry_row.open_price)
-        stop = float(decision["evidence"]["xfactor"]["structural_stop"])
-        if stop <= 0 or entry <= stop:
+        entry_date = pd.Timestamp(entry_row.trade_date).date()
+        if symbol not in minute_cache:
+            minute_path = minute_csv_dir / f"{symbol}.csv"
+            minute_cache[symbol] = _minute_frame(minute_path, entry_date, end)
+            minute_checksums[symbol] = digest_file(minute_path)
+        minute = minute_cache[symbol]
+        path_frame = minute[minute["session"] >= entry_date].copy()
+        if path_frame.empty or path_frame.iloc[0]["session"] != entry_date:
             continue
-        target = entry + float(execution["target_r_multiple"]) * (entry - stop)
-        exit_price, exit_reason, exit_index = float(group.iloc[min(entry_index + int(execution["max_hold_sessions"]) - 1, len(group) - 1)].close_price), "TIMEOUT", min(entry_index + int(execution["max_hold_sessions"]) - 1, len(group) - 1)
-        window = group.iloc[entry_index:exit_index + 1]
-        for idx, bar in window.iterrows():
-            if float(bar.low_price) <= stop:
-                exit_price, exit_reason, exit_index = stop, "STOP", int(idx)
-                break
-            if float(bar.high_price) >= target:
-                exit_price, exit_reason, exit_index = target, "TARGET", int(idx)
-                break
-        quantity = max(int(float(execution["ticket_rupees"]) // entry), 1)
-        gross = (exit_price - entry) * quantity
-        costs = entry * quantity * float(execution["round_trip_cost_bps"]) / 10000.0
-        pre_tax = gross - costs
-        tax = max(pre_tax, 0.0) * float(execution["positive_profit_tax_rate"])
-        net = pre_tax - tax
-        path = group.iloc[entry_index:exit_index + 1]
-        mfe = (float(path.high_price.max()) / entry - 1.0) * 100.0
-        mae = (float(path.low_price.min()) / entry - 1.0) * 100.0
-        exit_date = pd.Timestamp(group.iloc[exit_index].trade_date).date()
-        busy_until[symbol] = exit_date
-        trades.append({
-            "symbol": symbol, "signal_date": decision["trade_date"], "entry_date": pd.Timestamp(entry_row.trade_date).date(),
-            "exit_date": exit_date, "entry_price": round(entry, 4), "exit_price": round(exit_price, 4),
-            "stop_price": round(stop, 4), "target_price": round(target, 4), "quantity": quantity,
-            "exit_reason": exit_reason, "gross_pnl": round(gross, 4), "costs": round(costs, 4),
-            "tax_reserve": round(tax, 4), "after_tax_net_pnl": round(net, 4),
-            "return_pct": round(100.0 * net / (entry * quantity), 4), "holding_sessions": exit_index - entry_index + 1,
-            "mfe_pct": round(mfe, 4), "mae_pct": round(mae, 4), "decision_hash": decision["decision_hash"],
-        })
+        # The CSV estate is retrospectively corporate-action adjusted whereas
+        # canonical EOD facts retain their session price basis.  Normalize each
+        # minute session to that session's canonical EOD open before evaluating
+        # targets; this prevents future bonus/split adjustments from changing a
+        # historical ₹2 lakh position size.
+        eod_open = {pd.Timestamp(row.trade_date).date(): float(row.open_price) for row in group.itertuples(index=False)}
+        csv_open = path_frame.groupby("session", sort=False)["open"].first().to_dict()
+        factors = {session: eod_open[session] / value for session, value in csv_open.items() if session in eod_open and value > 0}
+        path_frame = path_frame[path_frame["session"].isin(factors)].copy()
+        if path_frame.empty or entry_date not in factors:
+            continue
+        for column in ("open", "high", "low", "close"):
+            path_frame[column] = path_frame[column] * path_frame["session"].map(factors)
+        first = path_frame.iloc[0]
+        entry = Decimal(str(first.open))
+        quantity = max(int(Decimal(str(execution["ticket_rupees"])) // entry), 1)
+        path = [PathBar(
+            ts=pd.Timestamp(row.ts).to_pydatetime(), session=row.session,
+            open=Decimal(str(row.open)), high=Decimal(str(row.high)),
+            low=Decimal(str(row.low)), close=Decimal(str(row.close)),
+        ) for row in path_frame.itertuples(index=False)]
+        outcome = evaluate_long_target_only(
+            symbol=symbol, signal_date=decision["trade_date"], entry_price=entry,
+            quantity=quantity, bars=path, policy=policy,
+        )
+        outcome["decision_hash"] = decision["decision_hash"]
+        outcome["minute_source_sha256"] = minute_checksums[symbol]
+        outcome["minute_to_eod_entry_basis_factor"] = round(float(factors[entry_date]), 8)
+        outcome["target_price"] = (
+            outcome["intraday_target_price"] if str(outcome["exit_reason"]).startswith("TARGET_INTRADAY")
+            else outcome["swing_target_price"]
+        )
+        notional = float(entry) * quantity
+        economic_pnl = outcome["after_tax_net_pnl"] if outcome["status"] == "CLOSED" else outcome["unrealized_net_liquidation_pnl"]
+        outcome["return_pct"] = round(100.0 * float(economic_pnl) / notional, 4)
+        trades.append(outcome)
+        if outcome["status"] == "CLOSED":
+            busy_until[symbol] = outcome["exit_date"]
+        else:
+            # An unresolved target-only position occupies the symbol and its
+            # capital through the end of the evaluation; later entries cannot occur.
+            busy_until[symbol] = end
     return trades
 
 
@@ -268,19 +319,23 @@ def performance(decisions: list[dict[str, Any]], trades: list[dict[str, Any]]) -
         for value in values:
             selected = [row for row in decisions if str(row.get(field) or "UNKNOWN") == value]
             selected_trades = [trade_map[row["decision_hash"]] for row in selected if row["decision_hash"] in trade_map]
-            returns = [row["return_pct"] for row in selected_trades]
+            closed_trades = [row for row in selected_trades if row["status"] == "CLOSED"]
+            returns = [row["return_pct"] for row in closed_trades]
             rows.append({
-                "bucket_type": bucket_type, "bucket_key": value, "decision_count": len(selected), "trade_count": len(selected_trades),
+                "bucket_type": bucket_type, "bucket_key": value, "decision_count": len(selected), "trade_count": len(closed_trades),
                 "win_rate_pct": round(100 * sum(value > 0 for value in returns) / len(returns), 4) if returns else None,
                 "avg_return_pct": round(float(np.mean(returns)), 4) if returns else None,
                 "median_return_pct": round(float(np.median(returns)), 4) if returns else None,
-                "after_tax_net_pnl": round(sum(row["after_tax_net_pnl"] for row in selected_trades), 4),
+                "after_tax_net_pnl": round(sum(row["after_tax_net_pnl"] for row in closed_trades), 4),
+                "open_position_count": len(selected_trades) - len(closed_trades),
+                "open_unrealized_net_liquidation_pnl": round(sum(row["unrealized_net_liquidation_pnl"] for row in selected_trades if row["status"] != "CLOSED"), 4),
             })
     return rows
 
 
 def jsonable(value: Any) -> Any:
     if isinstance(value, (date, datetime, pd.Timestamp)): return value.isoformat()
+    if isinstance(value, Decimal): return float(value)
     if isinstance(value, (np.integer,)): return int(value)
     if isinstance(value, (np.floating,)): return None if np.isnan(value) else float(value)
     raise TypeError(type(value).__name__)
@@ -290,7 +345,12 @@ def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]]
     output_dir.mkdir(parents=True, exist_ok=True)
     decision_export = [{key: json.dumps(value, default=jsonable, sort_keys=True) if key in {"hard_gates", "evidence"} else value for key, value in row.items()} for row in decisions]
     pd.DataFrame(decision_export).to_csv(output_dir / "decisions.csv", index=False, lineterminator="\n")
-    pd.DataFrame(trades).to_csv(output_dir / "trades.csv", index=False, lineterminator="\n")
+    trade_export = [{key: value for key, value in row.items() if key not in {"target_events", "adverse_events", "policy"}} for row in trades]
+    target_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["target_events"]]
+    adverse_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["adverse_events"]]
+    pd.DataFrame(trade_export).to_csv(output_dir / "trades.csv", index=False, lineterminator="\n")
+    pd.DataFrame(target_export).to_csv(output_dir / "target_events.csv", index=False, lineterminator="\n")
+    pd.DataFrame(adverse_export).to_csv(output_dir / "adverse_events.csv", index=False, lineterminator="\n")
     pd.DataFrame(buckets).to_csv(output_dir / "regime_performance.csv", index=False, lineterminator="\n")
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True, default=jsonable) + "\n", encoding="utf-8")
     (output_dir / "summary.md").write_text(
@@ -312,6 +372,8 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--schema-sql", type=Path, default=DEFAULT_SCHEMA)
+    parser.add_argument("--minute-csv-dir", type=Path, default=DEFAULT_MINUTE_CSV_DIR,
+                        help="IST one-minute OHLCV directory used by the common exit evaluator")
     parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "oiis_cash_daily_research_v1")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -341,8 +403,12 @@ def main() -> None:
             with ThreadPoolExecutor(max_workers=max(1, min(args.workers, len(groups)))) as pool:
                 nested = list(pool.map(lambda item: evaluate_symbol(item, args.start, args.end), groups))
             decisions = [row for rows in nested for row in rows]
-            trades = simulate_trades(decisions, features, config)
+            trades = simulate_trades(decisions, features, config, args.minute_csv_dir, args.end)
             buckets = performance(decisions, trades)
+            closed_trades = [row for row in trades if row["status"] == "CLOSED"]
+            open_positions = [row for row in trades if row["status"] != "CLOSED"]
+            minute_sources = {row["symbol"]: row["minute_source_sha256"] for row in trades}
+            run_hash = digest_bytes(json.dumps({"base_run_hash": run_hash, "minute_sources": minute_sources}, sort_keys=True).encode())
             summary = {
                 "replay_run_id": run_id, "strategy_id": STRATEGY_ID, "formula_version": FORMULA_VERSION,
                 "requested_start": args.start, "requested_end": args.end,
@@ -350,10 +416,15 @@ def main() -> None:
                 "actual_end": max((row["trade_date"] for row in decisions), default=None),
                 "symbol_filter": symbol, "symbol_count": len(groups), "decision_count": len(decisions),
                 "enterable_count": sum(row["decision_code"] in {"ENTERABLE_TIER_A", "ENTERABLE_TIER_B"} for row in decisions),
-                "trade_count": len(trades), "after_tax_net_pnl": round(sum(row["after_tax_net_pnl"] for row in trades), 4),
-                "win_rate_pct": round(100 * sum(row["after_tax_net_pnl"] > 0 for row in trades) / len(trades), 4) if trades else None,
+                "accepted_position_count": len(trades), "trade_count": len(closed_trades),
+                "open_position_count": len(open_positions),
+                "after_tax_net_pnl": round(sum(row["after_tax_net_pnl"] for row in closed_trades), 4),
+                "open_unrealized_net_liquidation_pnl": round(sum(row["unrealized_net_liquidation_pnl"] for row in open_positions), 4),
+                "total_net_liquidation_pnl": round(sum(row["after_tax_net_pnl"] for row in closed_trades) + sum(row["unrealized_net_liquidation_pnl"] for row in open_positions), 4),
+                "win_rate_pct": round(100 * sum(row["after_tax_net_pnl"] > 0 for row in closed_trades) / len(closed_trades), 4) if closed_trades else None,
                 "config_sha256": config_hash, "run_hash": run_hash, "status": "SUCCEEDED", "limitations": LIMITATIONS,
-                "result_type": "TRUE_BACKTEST_ISOLATED", "rankability_status": "NOT_RANKABLE", "rating": "NR",
+                "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
+                "result_type": "OPPORTUNITY_SCAN", "rankability_status": "NOT_RANKABLE", "rating": "NR",
             }
             files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary)
             if args.dry_run:
@@ -373,12 +444,13 @@ def main() -> None:
                     for row in trades:
                         cur.execute("""
                           INSERT INTO oiis.trade_outcome (decision_id,entry_date,exit_date,entry_price,exit_price,stop_price,target_price,quantity,
-                            exit_reason,gross_pnl,costs,tax_reserve,after_tax_net_pnl,return_pct,holding_sessions,mfe_pct,mae_pct,outcome_json)
-                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'{}')
-                        """, (decision_ids[row["decision_hash"]],row["entry_date"],row["exit_date"],row["entry_price"],row["exit_price"],row["stop_price"],row["target_price"],row["quantity"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["return_pct"],row["holding_sessions"],row["mfe_pct"],row["mae_pct"]))
+                            exit_reason,gross_pnl,costs,tax_reserve,after_tax_net_pnl,return_pct,holding_sessions,mfe_pct,mae_pct,outcome_json,
+                            position_status,unrealized_net_liquidation_pnl,capital_released)
+                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s)
+                        """, (decision_ids[row["decision_hash"]],row["entry_date"],row["exit_date"],row["entry_price"],row["exit_price"],row["stop_price"],row["target_price"],row["quantity"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["return_pct"],row["holding_sessions"],row["mfe_pct"],row["mae_pct"],json.dumps({"policy_id":row["policy_id"],"target_events":row["target_events"],"adverse_events":row["adverse_events"],"entry_ts":row["entry_ts"],"exit_ts":row["exit_ts"],"mark_price":row["mark_price"],"minute_source_sha256":row["minute_source_sha256"],"stop_exit_enabled":False,"timeout_exit_enabled":False},default=jsonable),row["status"],row["unrealized_net_liquidation_pnl"],row["capital_released"]))
                     for row in buckets:
-                        cur.execute("INSERT INTO oiis.performance_bucket (replay_run_id,bucket_type,bucket_key,decision_count,trade_count,win_rate_pct,avg_return_pct,median_return_pct,after_tax_net_pnl) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", (run_id,row["bucket_type"],row["bucket_key"],row["decision_count"],row["trade_count"],row["win_rate_pct"],row["avg_return_pct"],row["median_return_pct"],row["after_tax_net_pnl"]))
-                    cur.execute("UPDATE oiis.replay_run SET actual_start=%s,actual_end=%s,symbol_count=%s,decision_count=%s,enterable_count=%s,trade_count=%s,status='SUCCEEDED',metrics_json=%s::jsonb,finished_at=NOW() WHERE replay_run_id=%s", (summary["actual_start"],summary["actual_end"],summary["symbol_count"],summary["decision_count"],summary["enterable_count"],summary["trade_count"],json.dumps(summary,default=jsonable),run_id))
+                        cur.execute("INSERT INTO oiis.performance_bucket (replay_run_id,bucket_type,bucket_key,decision_count,trade_count,win_rate_pct,avg_return_pct,median_return_pct,after_tax_net_pnl,metrics_json) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)", (run_id,row["bucket_type"],row["bucket_key"],row["decision_count"],row["trade_count"],row["win_rate_pct"],row["avg_return_pct"],row["median_return_pct"],row["after_tax_net_pnl"],json.dumps({"open_position_count":row["open_position_count"],"open_unrealized_net_liquidation_pnl":row["open_unrealized_net_liquidation_pnl"]})))
+                    cur.execute("UPDATE oiis.replay_run SET actual_start=%s,actual_end=%s,symbol_count=%s,decision_count=%s,enterable_count=%s,trade_count=%s,status='SUCCEEDED',result_type=%s,rankability_status=%s,rating=%s,run_hash=%s,metrics_json=%s::jsonb,finished_at=NOW() WHERE replay_run_id=%s", (summary["actual_start"],summary["actual_end"],summary["symbol_count"],summary["decision_count"],summary["enterable_count"],summary["trade_count"],summary["result_type"],summary["rankability_status"],summary["rating"],summary["run_hash"],json.dumps(summary,default=jsonable),run_id))
                     for path in files:
                         cur.execute("INSERT INTO oiis.artifact_manifest (replay_run_id,artifact_type,artifact_path,sha256,size_bytes) VALUES (%s,%s,%s,%s,%s)", (run_id,path.suffix.lstrip(".") or "file",str(path.resolve()),digest_file(path),path.stat().st_size))
                 conn.commit()

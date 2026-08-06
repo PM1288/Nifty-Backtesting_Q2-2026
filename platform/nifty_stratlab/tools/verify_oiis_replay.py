@@ -19,7 +19,7 @@ for line in manifest.read_text(encoding="utf-8").splitlines():
     if actual != digest:
         raise SystemExit(f"Checksum mismatch: {name}")
     checked += 1
-required = {"decisions.csv", "trades.csv", "regime_performance.csv", "summary.json", "summary.md"}
+required = {"decisions.csv", "trades.csv", "target_events.csv", "adverse_events.csv", "regime_performance.csv", "summary.json", "summary.md"}
 missing = required - {path.name for path in args.output_dir.iterdir()}
 if missing:
     raise SystemExit(f"Missing required artifacts: {sorted(missing)}")

@@ -1,0 +1,6 @@
+decision_hash,symbol,threshold_id,threshold_pct,threshold_price,touched,first_touch_ts,first_touch_session,exit_triggered
+7ed13a93e673cd88d23f8d19b944de8ea8589736fa95a344dc041f5a156f1814,RELIANCE,A050,-0.5,2672.4705,False,,,False
+7ed13a93e673cd88d23f8d19b944de8ea8589736fa95a344dc041f5a156f1814,RELIANCE,A100,-1.0,2659.041,False,,,False
+7ed13a93e673cd88d23f8d19b944de8ea8589736fa95a344dc041f5a156f1814,RELIANCE,A200,-2.0,2632.182,False,,,False
+7ed13a93e673cd88d23f8d19b944de8ea8589736fa95a344dc041f5a156f1814,RELIANCE,A500,-5.0,2551.605,False,,,False
+7ed13a93e673cd88d23f8d19b944de8ea8589736fa95a344dc041f5a156f1814,RELIANCE,A1000,-10.0,2417.31,False,,,False

@@ -1,7 +1,8 @@
 {
-  "workload_version": "OIIS-CASH-DAILY-WORKLOAD-V1.0",
+  "workload_version": "OIIS-CASH-DAILY-WORKLOAD-V1.1",
   "strategy_id": "oiis_cash_daily_research_v1",
-  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.0",
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.1",
+  "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
   "universe": "nifty100_equity",
   "membership_mode": "CURRENT_PANEL_RESEARCH_ONLY",
   "requested_start": "2023-08-06",

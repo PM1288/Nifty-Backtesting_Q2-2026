@@ -41,9 +41,10 @@ def main() -> int:
         config=SimulationConfig(
             initial_cash=Decimal("1600000"), ticket_size=Decimal("200000"), max_open_positions=1,
             product=ProductType.EQUITY_DELIVERY, target_net_pnl=Decimal("0"),
-            stop_loss_pct=Decimal("99"), max_hold_bars=1_000_000,
+            stop_loss_pct=Decimal("0"), max_hold_bars=1_000_000,
             enable_target_exit=True, enable_stop_exit=False,
             target_intraday_pct=Decimal("0.3"), target_swing_pct=Decimal("1.0"),
+            target_only_exit_contract=True,
         ),
         fee_registry=demo_fee_registry(ProductType.EQUITY_DELIVERY),
     ).run(bars)

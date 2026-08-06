@@ -31,6 +31,7 @@ class SimulationConfig:
     enable_stop_exit: bool = True
     target_intraday_pct: Decimal | None = None
     target_swing_pct: Decimal | None = None
+    target_only_exit_contract: bool = False
 
     def validate(self) -> None:
         if self.initial_cash <= 0 or self.ticket_size <= 0:
@@ -39,7 +40,7 @@ class SimulationConfig:
             raise ValueError("max_open_positions must be positive")
         if self.target_net_pnl < 0:
             raise ValueError("target_net_pnl cannot be negative")
-        if self.stop_loss_pct <= 0:
+        if self.stop_loss_pct <= 0 and not self.target_only_exit_contract:
             raise ValueError("stop_loss_pct must be positive")
         if self.max_hold_bars <= 0:
             raise ValueError("max_hold_bars must be positive")
@@ -51,6 +52,11 @@ class SimulationConfig:
             raise ValueError("target_swing_pct must be positive")
         if self.target_intraday_pct is not None and self.target_swing_pct is None:
             raise ValueError("target_swing_pct is required with target_intraday_pct")
+        if self.target_only_exit_contract:
+            if self.target_intraday_pct is None or self.target_swing_pct is None:
+                raise ValueError("target-only contract requires intraday and swing targets")
+            if self.enable_stop_exit:
+                raise ValueError("target-only contract forbids stop exits")
 
 
 @dataclass
@@ -64,7 +70,7 @@ class PositionState:
     entry_price: Decimal
     quantity: int
     target_price: Decimal
-    stop_price: Decimal
+    stop_price: Decimal | None
     entry_cost: Decimal
     bars_held: int = 0
     scheduled_exit_reason: str | None = None

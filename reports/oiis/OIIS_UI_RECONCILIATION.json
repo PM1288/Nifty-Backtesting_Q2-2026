@@ -1,6 +1,8 @@
 {
   "status": "NOT_IMPLEMENTED_PHASE_B",
   "reason": "The requested delivery prepares the Phase-A three-year replay. Dedicated OIIS API, UI and P-Diagram pages remain a documented Phase-B dependency.",
-  "database_csv_reconciliation": "PASS_FOR_SINGLE_STOCK_ACCEPTANCE",
+  "database_csv_reconciliation": "PASS_FOR_V1_1_SINGLE_STOCK_ACCEPTANCE",
+  "required_comparison_filter": "Only compare matching exit_policy_id; OIIS V1.0 is SUPERSEDED_EXIT_POLICY",
+  "pnl_display_requirement": "Show realised after-tax P&L separately from open net-liquidation P&L",
   "live_order_authority": false
 }

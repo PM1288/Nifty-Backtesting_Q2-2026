@@ -15,4 +15,12 @@ assert sum(config["ofactor_weights"].values()) == 100, "OFactor weights must tot
 assert sum(config["xfactor_weights"].values()) == 100, "XFactor weights must total 100"
 assert config["status"] == "RESEARCH_DRAFT_PENDING_OWNER_AND_QUANT_APPROVAL"
 assert "live_broker_orders" in config["blocked_capabilities"]
+execution = config["execution"]
+assert execution["exit_policy_id"] == "COMMON-TARGET-ONLY-0.3-1.0-V1"
+assert execution["intraday_target_pct_from_buy_price"] == 0.3
+assert execution["swing_target_pct_from_original_buy_price"] == 1.0
+assert execution["stop_loss_exit"] is None
+assert execution["strategy_exit"] is None
+assert execution["timeout_exit"] is None
+assert execution["run_end_exit"] is None
 print(json.dumps({"status": "PASS", "formula_version": config["formula_version"], "live_orders": "BLOCKED"}, indent=2))

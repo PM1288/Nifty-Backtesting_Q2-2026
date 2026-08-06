@@ -982,3 +982,36 @@ Every result is consolidated by run and includes symbol columns; the runner
 does not create hundreds of per-stock folders. Dedicated OIIS API/UI/P-Diagram
 pages remain Phase B and are explicitly recorded as not implemented in
 `reports/oiis/OIIS_UI_RECONCILIATION.json`.
+
+## 2026-08-06 — Common target-only exit correction
+
+The preceding OIIS V1.0 result is superseded for comparison. It incorrectly
+allowed OIIS to replace the programme's shared exit mandate with a structural
+stop, 2R target and ten-session timeout. Database run
+`e0c2ceab-7d88-47a2-9ea9-9a876fd58d16` is retained but its governance JSON now
+contains `comparison_status=SUPERSEDED_EXIT_POLICY`.
+
+The governing interpretation is now frozen in `docs/common-exit-contract/`.
+Every long-equity strategy defines entry only. The actual exit is +0.30% during
+the entry session; if not filled, the position becomes swing and exits only at
++1.00% from the original buy price. There is no stop-loss, indicator exit,
+timeout, forced close or run-end sale. Adverse ladders, MAE and marked
+liquidation value record risk without releasing capital.
+
+Implemented formula `OIIS-CASH-DAILY-RESEARCH-V1.1`, shared evaluator
+`evaluation/common_exit.py`, OIIS/hybrid integration, upward tick rounding,
+entry-bar target evaluation, open-position accounting, target/adverse CSVs and
+nullable/open outcome persistence. Phase 2 and Phase 3 tests pass 31/31.
+
+Persisted RELIANCE acceptance run `51140c91-82f6-4437-92ad-555279108f74`
+evaluated 718 decisions and one enterable position. It entered at ₹2,685.90 and
+filled I030 at ₹2,694.00 at 09:28 IST on 2024-01-25. Quantity 74 produced
+₹599.40 gross, ₹159.0053 proxy costs, ₹154.1382 tax reserve and ₹286.2566
+after-tax realised P&L. MAE was -0.3463%; no stop or timeout field is populated.
+All seven checksummed artifacts pass. The result remains
+`OPPORTUNITY_SCAN / NOT_RANKABLE / NR` and is pipeline evidence only.
+Its evidence-bound run hash includes the exact minute CSV SHA-256.
+
+The corrected 99-symbol V1.1 replay has not been run. Use the guarded command in
+`docs/common-exit-contract/07_RERUN_INVALIDATION_AND_OPERATIONS.md` only after
+reviewing this one-stock evidence.

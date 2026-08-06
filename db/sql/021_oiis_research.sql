@@ -80,10 +80,10 @@ CREATE TABLE IF NOT EXISTS oiis.trade_outcome (
     outcome_id BIGSERIAL PRIMARY KEY,
     decision_id BIGINT NOT NULL REFERENCES oiis.decision_snapshot(decision_id) ON DELETE CASCADE,
     entry_date DATE NOT NULL,
-    exit_date DATE NOT NULL,
+    exit_date DATE,
     entry_price NUMERIC NOT NULL,
-    exit_price NUMERIC NOT NULL,
-    stop_price NUMERIC NOT NULL,
+    exit_price NUMERIC,
+    stop_price NUMERIC,
     target_price NUMERIC NOT NULL,
     quantity INTEGER NOT NULL,
     exit_reason TEXT NOT NULL,
@@ -98,6 +98,14 @@ CREATE TABLE IF NOT EXISTS oiis.trade_outcome (
     outcome_json JSONB NOT NULL DEFAULT '{}'::jsonb,
     UNIQUE (decision_id)
 );
+
+ALTER TABLE oiis.trade_outcome
+    ALTER COLUMN exit_date DROP NOT NULL,
+    ALTER COLUMN exit_price DROP NOT NULL,
+    ALTER COLUMN stop_price DROP NOT NULL,
+    ADD COLUMN IF NOT EXISTS position_status TEXT NOT NULL DEFAULT 'CLOSED',
+    ADD COLUMN IF NOT EXISTS unrealized_net_liquidation_pnl NUMERIC NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS capital_released BOOLEAN NOT NULL DEFAULT TRUE;
 
 CREATE TABLE IF NOT EXISTS oiis.performance_bucket (
     replay_run_id UUID NOT NULL REFERENCES oiis.replay_run(replay_run_id) ON DELETE CASCADE,

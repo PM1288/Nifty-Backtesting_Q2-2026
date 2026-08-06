@@ -29,6 +29,7 @@ from nifty_stratlab.oiis import OIISFeature, evaluate_feature  # noqa: E402
 STRATEGY_ID = "oiis_cash_daily_research_v1"
 FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.0"
 POLICY_VERSION = "NIFTY-SEROE-V1.0"
+EXCLUDED_SYMBOLS = {"TMPV"}
 DEFAULT_CONFIG = PROJECT_ROOT / "config/oiis/formulas/oiis_cash_daily_research_v1.json"
 DEFAULT_SCHEMA = MONOREPO_ROOT / "db/sql/021_oiis_research.sql"
 LIMITATIONS = [
@@ -79,7 +80,8 @@ def load_source(conn, start: date, end: date, symbol: str | None) -> tuple[pd.Da
             e.turnover_lacs::double precision turnover_lacs,e.deliverable_pct::double precision deliverable_pct
           FROM nse.fact_eod_prices e JOIN universe u ON u.symbol=UPPER(TRIM(e.symbol))
           LEFT JOIN sectors s ON s.symbol=u.symbol
-          WHERE e.trade_date BETWEEN %s AND %s AND COALESCE(e.series,'EQ')='EQ' {symbol_clause}
+          WHERE e.trade_date BETWEEN %s AND %s AND COALESCE(e.series,'EQ')='EQ'
+            AND UPPER(TRIM(e.symbol)) <> 'TMPV' {symbol_clause}
           ORDER BY e.trade_date,UPPER(TRIM(e.symbol)),e.loaded_at DESC
         """, params)
         regime_symbol_clause = "AND (instrument_type='INDEX' OR symbol=%s)" if symbol else ""
@@ -320,6 +322,8 @@ def main() -> None:
     config = json.loads(args.config.read_text(encoding="utf-8"))
     config_hash = digest_file(args.config)
     symbol = args.symbol.strip().upper() if args.symbol else None
+    if symbol in EXCLUDED_SYMBOLS:
+        raise SystemExit(f"{symbol} is excluded because its demerger breaks comparable historical continuity")
     run_id = str(uuid.uuid4())
     run_hash = digest_bytes(json.dumps({"config": config_hash, "start": str(args.start), "end": str(args.end), "symbol": symbol}, sort_keys=True).encode())
     output_dir = args.output_root / run_id

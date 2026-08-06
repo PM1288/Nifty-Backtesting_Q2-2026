@@ -961,6 +961,9 @@ DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
   ./scripts/oiis.sh replay --start 2023-08-06 --end 2026-08-05 --workers 4
 ```
 
+The full query enforces the workload's TMPV demerger exclusion; the expected
+eligible current-panel count is 99, not 100.
+
 Every result is consolidated by run and includes symbol columns; the runner
 does not create hundreds of per-stock folders. Dedicated OIIS API/UI/P-Diagram
 pages remain Phase B and are explicitly recorded as not implemented in

@@ -27,6 +27,8 @@ DATABASE_URL='postgresql://trader:<password>@100.86.108.108:5432/tradingdb' \
 ```
 
 The full-run guard exits non-zero without the exact confirmation variable.
+TMPV is excluded in both configuration and query logic because its demerger
+breaks comparable price-history continuity; the expected eligible count is 99.
 Outputs are one consolidated folder per run, with stock names as columns/rows—not
 one folder per stock. PostgreSQL is authoritative; CSV/JSON/Markdown and
 checksums support separate review.

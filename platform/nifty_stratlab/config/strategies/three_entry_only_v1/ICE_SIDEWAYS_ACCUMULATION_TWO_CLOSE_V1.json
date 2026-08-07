@@ -1,0 +1,109 @@
+{
+  "schema_version": "ENTRY_STRATEGY_V1.0",
+  "strategy_id": "ICE_SIDEWAYS_ACCUMULATION_TWO_CLOSE",
+  "strategy_version_id": "ICE_SIDEWAYS_ACCUMULATION_TWO_CLOSE_V1",
+  "version": 1,
+  "display_name": "ICE Sideways Accumulation after High-Volume Drop",
+  "description": "User-defined ICE entry detector: identify a large bearish price drop on abnormal volume, require more than 15 completed sideways sessions with accumulation evidence, then require two consecutive higher closes above the frozen sideways median.",
+  "family": "ACCUMULATION_BREAKOUT",
+  "direction": "LONG_ONLY",
+  "entry_only": true,
+  "signal_timeframe": "DAILY",
+  "universe_policy_ref": "POINT_IN_TIME_NIFTY50_OR_APPROVED_RESEARCH_UNIVERSE",
+  "entry_execution": {
+    "signal_availability": "AFTER_COMPLETED_SIGNAL_BAR",
+    "fill_timing": "NEXT_TRADING_SESSION_OPEN",
+    "fill_price_source": "FIRST_VALID_ONE_MINUTE_OPEN",
+    "fallback_price_source": "CANONICAL_DAILY_OPEN",
+    "allow_same_bar_fill": false
+  },
+  "entry_rule": {
+    "algorithm_id": "ICE_SIDEWAYS_ACCUMULATION_V1",
+    "parameters": {
+      "shock_price_return_pct_max": -3.0,
+      "shock_volume_ratio_20d_min": 1.5,
+      "shock_candle_must_be_red": true,
+      "sideways_min_completed_sessions": 16,
+      "sideways_range_width_pct_max": 8.0,
+      "sideways_efficiency_ratio_max": 0.30,
+      "accumulation_up_down_volume_ratio_min": 1.10,
+      "accumulation_obv_change_min": 0.0,
+      "confirmation_closes_required": 2,
+      "confirmation_both_above_frozen_median": true,
+      "confirmation_second_close_above_first": true,
+      "base_median_excludes_confirmation_bars": true,
+      "reset_on_new_qualifying_shock": true
+    },
+    "deterministic_steps": [
+      "Identify a shock session E where close-to-close return is at or below -3.0%, volume is at least 1.5 times the preceding 20-session median volume, and Close is below Open.",
+      "After E, observe a base of at least 16 completed sessions before confirmation can begin.",
+      "Freeze the base immediately before the two confirmation bars; the base excludes the confirmation bars.",
+      "Require base range width (maximum High minus minimum Low divided by median Close) to be no more than 8.0%.",
+      "Require the base close-price efficiency ratio to be no more than 0.30.",
+      "Require accumulation evidence: up-day volume divided by down-day volume at least 1.10 and OBV at base end not below OBV at base start.",
+      "Calculate the frozen sideways median as the median Close across the base.",
+      "Require confirmation day C1 to close above the frozen median and above the immediately preceding close.",
+      "Require confirmation day C2 to close above the frozen median and above C1 Close.",
+      "Emit one long entry intent after C2 closes; fill at the next trading session open under the shared execution model."
+    ]
+  },
+  "feature_versions": [
+    "DAILY_RETURN_V1",
+    "VOLUME_RATIO_MEDIAN_20D_V1",
+    "EFFICIENCY_RATIO_V1",
+    "OBV_V1",
+    "SIDEWAYS_BASE_MEDIAN_V1",
+    "NSE_TRADING_CALENDAR_EFFECTIVE_DATED_V1"
+  ],
+  "policy_references": {
+    "evaluation_policy_ref": "ROE_FULL_PATH_LADDER_V2",
+    "exit_execution_policy_ref": "ROE_CANONICAL_SHARED_EXIT",
+    "portfolio_policy_ref": "ROE_FINITE_CAPITAL_POLICY_ACTIVE",
+    "strategy_exit_override_allowed": false
+  },
+  "context_capture": [
+    "NIFTY_REGIME",
+    "SECTOR_REGIME",
+    "INDIA_VIX_STATE",
+    "EVENT_ZONE",
+    "CORPORATE_ACTION_STATUS",
+    "SHOCK_RETURN_Z_SCORE",
+    "SHOCK_VOLUME_RATIO",
+    "BASE_RANGE_WIDTH_PCT",
+    "BASE_EFFICIENCY_RATIO",
+    "UP_DOWN_VOLUME_RATIO",
+    "OBV_CHANGE",
+    "DATA_QUALITY"
+  ],
+  "assumptions": [
+    "ICE is treated as a custom user-defined composite because no governing ICE formula was supplied in the project sources.",
+    "The phrase 'big volume drop' is interpreted as a large bearish price drop occurring on abnormal volume, not merely a decline in volume itself.",
+    "More than 15 days is implemented as at least 16 completed trading sessions.",
+    "The sideways median value is the median daily Close of the frozen base, excluding the two confirmation bars.",
+    "No exit, stop, timeout or carry rule is owned by this strategy."
+  ],
+  "provisional_parameters": [
+    "shock_price_return_pct_max",
+    "shock_volume_ratio_20d_min",
+    "sideways_range_width_pct_max",
+    "sideways_efficiency_ratio_max",
+    "accumulation_up_down_volume_ratio_min"
+  ],
+  "expected_failure_modes": [
+    "FALSE_ACCUMULATION",
+    "DISTRIBUTION_MISCLASSIFIED_AS_ACCUMULATION",
+    "EVENT_OR_CORPORATE_ACTION_SHOCK",
+    "BASE_BREAKDOWN_AFTER_CONFIRMATION",
+    "LOW_LIQUIDITY_VOLUME_DISTORTION",
+    "PARAMETER_SENSITIVITY"
+  ],
+  "no_trade_conditions": [
+    "MANDATORY_DATA_MISSING_OR_STALE",
+    "INSUFFICIENT_VOLUME_LOOKBACK",
+    "CORPORATE_ACTION_NOT_ADJUSTED",
+    "BASE_NOT_SIDEWAYS",
+    "ACCUMULATION_NOT_CONFIRMED",
+    "NEXT_SESSION_OPEN_NOT_AVAILABLE",
+    "PORTFOLIO_POLICY_REJECTED"
+  ]
+}

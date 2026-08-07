@@ -1,0 +1,93 @@
+{
+  "schema_version": "ENTRY_STRATEGY_V1.0",
+  "strategy_id": "MONTHLY_TWO_RED_ONE_GREEN_WEEKLY_GREEN",
+  "strategy_version_id": "MONTHLY_TWO_RED_ONE_GREEN_WEEKLY_GREEN_V1",
+  "version": 1,
+  "display_name": "Two Red Months, One Green Month, Current Green Week",
+  "description": "Long multi-timeframe entry selection after two consecutive completed red monthly candles, followed by one completed green month and the first completed green weekly candle in the current month.",
+  "family": "MULTI_TIMEFRAME_REVERSAL",
+  "direction": "LONG_ONLY",
+  "entry_only": true,
+  "signal_timeframe": "MONTHLY_WEEKLY",
+  "universe_policy_ref": "POINT_IN_TIME_NIFTY50_OR_APPROVED_RESEARCH_UNIVERSE",
+  "entry_execution": {
+    "signal_availability": "AFTER_COMPLETED_SIGNAL_BAR",
+    "fill_timing": "NEXT_TRADING_SESSION_OPEN",
+    "fill_price_source": "FIRST_VALID_ONE_MINUTE_OPEN",
+    "fallback_price_source": "CANONICAL_DAILY_OPEN",
+    "allow_same_bar_fill": false
+  },
+  "entry_rule": {
+    "algorithm_id": "MONTHLY_2RED_1GREEN_WEEKLY_CONFIRM_V1",
+    "parameters": {
+      "monthly_red_definition": "CLOSE < OPEN",
+      "monthly_green_definition": "CLOSE > OPEN",
+      "required_red_months": 2,
+      "required_green_months_after_red": 1,
+      "weekly_green_definition": "CLOSE > OPEN",
+      "weekly_candle_must_be_completed": true,
+      "weekly_aggregation": "NSE_TRADING_WEEK_CLIPPED_TO_CALENDAR_MONTH",
+      "first_qualifying_week_only": true,
+      "maximum_signals_per_symbol_per_month": 1,
+      "doji_treatment": "DOES_NOT_QUALIFY_AS_RED_OR_GREEN"
+    },
+    "deterministic_steps": [
+      "At the end of every completed trading week in current calendar month M(n), use only daily bars available by that week close.",
+      "Build completed monthly candles from corporate-action-adjusted daily OHLC data.",
+      "Require M(n-3) Close below Open.",
+      "Require M(n-2) Close below Open.",
+      "Require M(n-1) Close above Open.",
+      "Build the completed current-month weekly candle using only trading sessions of that week that fall inside M(n).",
+      "Require the completed weekly candle Close above Open.",
+      "Emit only the first qualifying long entry intent for the symbol in M(n).",
+      "Fill at the next trading session open under the shared execution model."
+    ]
+  },
+  "feature_versions": [
+    "MONTHLY_OHLC_FROM_ADJUSTED_DAILY_V1",
+    "MONTH_CLIPPED_TRADING_WEEK_OHLC_V1",
+    "NSE_TRADING_CALENDAR_EFFECTIVE_DATED_V1"
+  ],
+  "policy_references": {
+    "evaluation_policy_ref": "ROE_FULL_PATH_LADDER_V2",
+    "exit_execution_policy_ref": "ROE_CANONICAL_SHARED_EXIT",
+    "portfolio_policy_ref": "ROE_FINITE_CAPITAL_POLICY_ACTIVE",
+    "strategy_exit_override_allowed": false
+  },
+  "context_capture": [
+    "NIFTY_MONTHLY_TREND",
+    "NIFTY_WEEKLY_TREND",
+    "SECTOR_MONTHLY_TREND",
+    "SECTOR_WEEKLY_TREND",
+    "INDIA_VIX_STATE",
+    "EVENT_ZONE",
+    "CURRENT_MONTH_WEEK_NUMBER",
+    "MONTHLY_BODY_RATIOS",
+    "WEEKLY_BODY_RATIO",
+    "DATA_QUALITY"
+  ],
+  "assumptions": [
+    "Only completed monthly candles M(n-3), M(n-2) and M(n-1) are used; the incomplete current monthly candle is never used.",
+    "A weekly candle is considered only after the final trading session of that calendar trading week.",
+    "The first and last partial weeks of a month are clipped to sessions inside the month so that the current-month confirmation does not use prior-month days.",
+    "Doji monthly or weekly candles do not satisfy red or green requirements.",
+    "No exit, stop, timeout or carry rule is owned by this strategy."
+  ],
+  "provisional_parameters": [],
+  "expected_failure_modes": [
+    "WEAK_GREEN_MONTH_WITHOUT_REVERSAL",
+    "GREEN_WEEK_FALSE_START",
+    "GAP_AT_NEXT_OPEN",
+    "MONTHLY_AGGREGATION_BOUNDARY_ERROR",
+    "CORPORATE_ACTION_DISTORTION",
+    "LOW_SIGNAL_FREQUENCY"
+  ],
+  "no_trade_conditions": [
+    "MANDATORY_DATA_MISSING_OR_STALE",
+    "INSUFFICIENT_THREE_COMPLETED_MONTHS",
+    "CURRENT_WEEK_NOT_COMPLETED",
+    "CORPORATE_ACTION_NOT_ADJUSTED",
+    "NEXT_SESSION_OPEN_NOT_AVAILABLE",
+    "PORTFOLIO_POLICY_REJECTED"
+  ]
+}

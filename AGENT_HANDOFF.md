@@ -1272,3 +1272,6 @@ thresholds that are currently enforced by the engine.
 ## Numeric OIIS decision flow
 
 The detailed indicator definitions, threshold sequence, actual full-run funnel counts, accepted-signal medians, execution coverage, and ladder/exit interpretation are documented in [OIIS_DECISION_FLOW_NUMERIC_2026-08-07.md](docs/oiis/OIIS_DECISION_FLOW_NUMERIC_2026-08-07.md).
+## Three entry-only strategy integration
+
+The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strategies are integrated through `platform/nifty_stratlab/tools/run_three_entry_only_replay.py`. Their rules, shared exit mapping, smoke result, and full-run command are documented in [THREE_ENTRY_ONLY_STRATEGIES_INTEGRATION.md](docs/strategies/THREE_ENTRY_ONLY_STRATEGIES_INTEGRATION.md).

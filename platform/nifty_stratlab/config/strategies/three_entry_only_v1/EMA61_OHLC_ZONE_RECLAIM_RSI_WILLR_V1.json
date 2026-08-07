@@ -1,0 +1,98 @@
+{
+  "schema_version": "ENTRY_STRATEGY_V1.0",
+  "strategy_id": "EMA61_OHLC_ZONE_RECLAIM_RSI_WILLR",
+  "strategy_version_id": "EMA61_OHLC_ZONE_RECLAIM_RSI_WILLR_V1",
+  "version": 1,
+  "display_name": "EMA61 OHLC Zone Reclaim with RSI and Williams %R",
+  "description": "Long entry after a prolonged period below a 61-session OHLC EMA zone, followed by two completed closes above the zone while daily RSI and Williams %R remain oversold.",
+  "family": "TREND_RECLAIM",
+  "direction": "LONG_ONLY",
+  "entry_only": true,
+  "signal_timeframe": "DAILY",
+  "universe_policy_ref": "POINT_IN_TIME_NIFTY50_OR_APPROVED_RESEARCH_UNIVERSE",
+  "entry_execution": {
+    "signal_availability": "AFTER_COMPLETED_SIGNAL_BAR",
+    "fill_timing": "NEXT_TRADING_SESSION_OPEN",
+    "fill_price_source": "FIRST_VALID_ONE_MINUTE_OPEN",
+    "fallback_price_source": "CANONICAL_DAILY_OPEN",
+    "allow_same_bar_fill": false
+  },
+  "entry_rule": {
+    "algorithm_id": "EMA61_OHLC_ZONE_RECLAIM_V1",
+    "parameters": {
+      "ema_period": 61,
+      "ema_price_fields": ["open", "high", "low", "close"],
+      "ema_alpha_method": "STANDARD_SPAN_2_OVER_N_PLUS_1",
+      "ema_adjust": false,
+      "ema_min_periods": 61,
+      "base_closes_below_zone_required": 10,
+      "confirmation_closes_above_zone_required": 2,
+      "rsi_period": 14,
+      "rsi_method": "WILDER",
+      "rsi_upper_bound_exclusive": 30.0,
+      "williams_r_period": 14,
+      "williams_r_upper_bound_exclusive": -80.0,
+      "zone_lower_formula": "MIN(EMA61_OPEN, EMA61_HIGH, EMA61_LOW, EMA61_CLOSE)",
+      "zone_upper_formula": "MAX(EMA61_OPEN, EMA61_HIGH, EMA61_LOW, EMA61_CLOSE)",
+      "base_below_test": "CLOSE < ZONE_LOWER",
+      "confirmation_above_test": "CLOSE > ZONE_UPPER",
+      "oscillator_observation_bar": "LATEST_COMPLETED_CONFIRMATION_BAR"
+    },
+    "deterministic_steps": [
+      "For each completed daily session calculate EMA61 independently on Open, High, Low and Close.",
+      "Define the daily EMA zone lower boundary as the minimum of the four EMA values and the upper boundary as the maximum.",
+      "For signal day S, require the ten completed sessions S-11 through S-2 to each close below their own EMA-zone lower boundary.",
+      "Require S-1 and S to each close above their own EMA-zone upper boundary.",
+      "Require daily Wilder RSI(14) on S to be strictly below 30.",
+      "Require daily Williams %R(14) on S to be strictly below -80.",
+      "Emit one long entry intent after S closes; fill at the next trading session open under the shared execution model."
+    ]
+  },
+  "feature_versions": [
+    "EMA_OHLC_STANDARD_V1",
+    "RSI_WILDER_V1",
+    "WILLIAMS_R_V1",
+    "NSE_TRADING_CALENDAR_EFFECTIVE_DATED_V1"
+  ],
+  "policy_references": {
+    "evaluation_policy_ref": "ROE_FULL_PATH_LADDER_V2",
+    "exit_execution_policy_ref": "ROE_CANONICAL_SHARED_EXIT",
+    "portfolio_policy_ref": "ROE_FINITE_CAPITAL_POLICY_ACTIVE",
+    "strategy_exit_override_allowed": false
+  },
+  "context_capture": [
+    "NIFTY_REGIME",
+    "SECTOR_REGIME",
+    "INDIA_VIX_STATE",
+    "MARKET_STOCK_DIRECTION_MATRIX",
+    "EVENT_ZONE",
+    "DATA_QUALITY",
+    "GAP_AT_ENTRY",
+    "VOLUME_RATIO_20D",
+    "DISTANCE_FROM_EMA_ZONE_AT_FILL"
+  ],
+  "assumptions": [
+    "The phrase 'Williams %R less than 80' is interpreted as Williams %R below -80 under the conventional negative scale.",
+    "The ten below-zone closes are the ten sessions immediately before the two confirmation closes.",
+    "Both confirmation closes must be above the complete EMA zone, not merely above one of the four EMA lines.",
+    "RSI and Williams %R are evaluated on the latest completed confirmation bar.",
+    "No exit, stop, timeout or carry rule is owned by this strategy."
+  ],
+  "provisional_parameters": [
+    "OSCILLATOR_OBSERVATION_BAR may require a new version if the intended bar was the last below-zone candle rather than the latest confirmation candle."
+  ],
+  "expected_failure_modes": [
+    "FALSE_RECLAIM",
+    "RARE_SIGNAL_DUE_TO_OVERSOLD_CONFIRMATION_CONFLICT",
+    "CORPORATE_ACTION_DISTORTION",
+    "GAP_CHASE_AT_NEXT_OPEN",
+    "SIDEWAYS_EMA_WHIPSAW"
+  ],
+  "no_trade_conditions": [
+    "MANDATORY_DATA_MISSING_OR_STALE",
+    "INSUFFICIENT_61_SESSION_WARMUP",
+    "CORPORATE_ACTION_NOT_ADJUSTED",
+    "NEXT_SESSION_OPEN_NOT_AVAILABLE",
+    "PORTFOLIO_POLICY_REJECTED"
+  ]
+}

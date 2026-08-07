@@ -1264,3 +1264,8 @@ usable minute coverage: M&M and MAXHEALTH have no file, while PFC,
 SHRIRAMFIN and VEDL signals are after the 2025-08-06 minute-file endpoint.
 The generated workbook is `oiis_diagnostic_review.xlsx` in the completed run
 folder.
+
+Exact live entry criteria, formulas, thresholds, and decision precedence are
+documented in `docs/oiis/OIIS_ENTRY_GATE_CRITERIA.md`. It also records the
+important distinction between thresholds present in the JSON configuration and
+thresholds that are currently enforced by the engine.

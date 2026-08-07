@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "policy_id": "FULL-PATH-LADDER-PLUS-H30T-MAX-CLOSE-OPPORTUNITY-V3",
+  "version": 3,
+  "mode": "ENTRY_PATH_MULTI_HORIZON_EVALUATION",
+  "direction": "LONG",
+  "inherits_policy": "FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2",
+  "entry_price_anchor": "ORIGINAL_EXECUTED_ENTRY_PRICE",
+  "execution_scenarios_are_separate": true,
+  "stop_on_first_target": false,
+  "stop_on_first_adverse_level": false,
+  "intraday_window": {
+    "start": "ENTRY_FILL_TIMESTAMP",
+    "end": "ENTRY_SESSION_CLOSE",
+    "levels": [
+      {
+        "id": "I030",
+        "pct": 0.3
+      },
+      {
+        "id": "I050",
+        "pct": 0.5
+      },
+      {
+        "id": "I070",
+        "pct": 0.7
+      }
+    ]
+  },
+  "d5_window": {
+    "start": "ENTRY_FILL_TIMESTAMP",
+    "end": "CLOSE_OF_FIFTH_SUBSEQUENT_TRADING_SESSION",
+    "levels": [
+      {
+        "id": "S100",
+        "pct": 1.0
+      },
+      {
+        "id": "S200",
+        "pct": 2.0
+      },
+      {
+        "id": "S500",
+        "pct": 5.0
+      }
+    ]
+  },
+  "adverse_window": {
+    "start": "ENTRY_FILL_TIMESTAMP",
+    "end": "CLOSE_OF_FIFTH_SUBSEQUENT_TRADING_SESSION",
+    "levels": [
+      {
+        "id": "A050",
+        "pct": -0.5
+      },
+      {
+        "id": "A100",
+        "pct": -1.0
+      },
+      {
+        "id": "A200",
+        "pct": -2.0
+      },
+      {
+        "id": "A500",
+        "pct": -5.0
+      },
+      {
+        "id": "A1000",
+        "pct": -10.0
+      },
+      {
+        "id": "A_GT1000",
+        "predicate": "RETURN_PCT < -10.0"
+      }
+    ]
+  },
+  "long_horizon_window": {
+    "horizon_id": "H30T_MAX_CLOSE",
+    "unit": "ELIGIBLE_TRADING_SESSION",
+    "session_count": 30,
+    "include_entry_session": true,
+    "start": "ENTRY_SESSION_D0",
+    "end": "CLOSE_OF_SESSION_D_PLUS_29",
+    "primary_price_field": "CANONICAL_OFFICIAL_DAILY_CLOSE",
+    "maximum_tie_rule": "EARLIEST_SESSION",
+    "continue_after_execution_scenario_exit": true,
+    "full_coverage_required_for_ranking": true,
+    "no_forward_fill": true,
+    "store_post_d0_variant": true,
+    "store_d5_max_close": true,
+    "opportunity_bands_net_pct": [
+      1.0,
+      2.0,
+      5.0,
+      10.0,
+      15.0,
+      20.0
+    ]
+  },
+  "economics": {
+    "cost_engine": "CANONICAL_EFFECTIVE_DATED_CASH_EQUITY_COST_ENGINE",
+    "d0_product": "INTRADAY",
+    "d1_plus_product": "DELIVERY",
+    "tax_policy": "CONFIGURABLE_POSITIVE_PROFIT_RESERVE",
+    "reference_tax_reserve_rate_pct": 35.0,
+    "reference_intraday_round_trip_cost_bps": 8.0,
+    "reference_delivery_round_trip_cost_bps": 22.0,
+    "reference_values_certification": "NON_CERTIFIED_PROXY",
+    "hindsight_economics_label": "HYPOTHETICAL_OPPORTUNITY_NOT_REALISED_PNL"
+  },
+  "coverage_statuses": [
+    "MATURE_H30_COMPLETE",
+    "PENDING_H30",
+    "RIGHT_CENSORED",
+    "DATA_GAP_H30",
+    "CORPORATE_ACTION_BLOCKED",
+    "NOT_APPLICABLE"
+  ],
+  "benchmark_requirements": {
+    "nifty_50": true,
+    "sector_index": true,
+    "stock_excess_at_stock_max_date": true,
+    "benchmark_max_close_within_window": true,
+    "missing_benchmark_blocks_final_rank": true
+  },
+  "ranking_leagues": [
+    "INTRADAY_ENTRY_QUALITY",
+    "D5_SWING_ENTRY_QUALITY",
+    "H30_MAX_CLOSE_OPPORTUNITY",
+    "H30_PRACTICALITY",
+    "COMPOSITE_VERSATILITY",
+    "REALISED_EXECUTION_PNL"
+  ],
+  "h30_ranking_default_weights": {
+    "upside_depth": 0.25,
+    "hit_breadth": 0.2,
+    "speed": 0.15,
+    "downside_efficiency": 0.2,
+    "consistency": 0.1,
+    "benchmark_alpha": 0.1
+  },
+  "charts": {
+    "entry_month_axis": "MONTH_OF_YEAR_1_TO_12",
+    "density_method": "MONTH_BY_Y_BIN_LOCAL_COUNT",
+    "deterministic_jitter": true,
+    "required_outputs": [
+      "INTRADAY_MONTH_DENSITY_PNG",
+      "INTRADAY_MONTH_DENSITY_SVG",
+      "SWING_LONG_MONTH_DENSITY_PNG",
+      "SWING_LONG_MONTH_DENSITY_SVG",
+      "MONTH_DENSITY_SOURCE_CSV"
+    ]
+  },
+  "prohibited_behaviour": [
+    "STOP_H30_ON_ANY_TARGET",
+    "STOP_H30_ON_EXECUTION_SCENARIO_EXIT",
+    "USE_INTRADAY_HIGH_AS_MAXIMUM_CLOSE",
+    "TREAT_PARTIAL_H30_AS_MATURE",
+    "FORWARD_FILL_MISSING_CLOSE_WITHOUT_POLICY",
+    "PRESENT_H30_MAX_CLOSE_AS_REALISED_PNL",
+    "LEAK_H30_OUTCOME_INTO_ENTRY_FEATURES",
+    "MIX_H30_ORACLE_RANK_WITH_EXECUTION_PNL_RANK"
+  ]
+}

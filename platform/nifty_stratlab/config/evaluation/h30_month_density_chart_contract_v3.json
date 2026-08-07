@@ -1,0 +1,32 @@
+{
+  "chart_contract_id": "H30-MONTH-DENSITY-CHARTS-V3",
+  "per_strategy_outputs": [
+    {
+      "id": "INTRADAY_MONTH_DENSITY",
+      "x": "entry_month_of_year",
+      "y": "intraday_max_net_upside_pct",
+      "series": ["INTRADAY"],
+      "bubble_size": "local_month_by_y_bin_density_count"
+    },
+    {
+      "id": "SWING_LONG_MONTH_DENSITY",
+      "x": "entry_month_of_year",
+      "y": "after_tax_reserve_max_close_upside_pct",
+      "series": ["D5_SWING_MAX_CLOSE", "H30_MAX_CLOSE"],
+      "bubble_size": "local_month_by_y_bin_density_count"
+    }
+  ],
+  "requirements": {
+    "matplotlib_only": true,
+    "one_figure_per_chart": true,
+    "deterministic_jitter": true,
+    "show_monthly_median": true,
+    "show_zero_line": true,
+    "show_sample_and_censor_counts": true,
+    "no_silent_outlier_removal": true,
+    "write_source_csv": true,
+    "formats": ["png", "svg"],
+    "minimum_png_dpi": 180
+  },
+  "disclaimer": "Opportunity evidence, not realised P&L or calibrated probability."
+}

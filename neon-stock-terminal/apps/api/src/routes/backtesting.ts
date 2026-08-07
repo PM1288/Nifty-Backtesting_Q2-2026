@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
+import path from "node:path";
 import { serveSnapshotRoute } from "../lib/dashboardSnapshots";
 import {
   loadPublishedBacktestingCompare,
@@ -688,6 +689,44 @@ export async function getBacktestingRuns(prisma: PrismaClient) {
 }
 
 export function registerBacktesting(app: Express, prisma: PrismaClient) {
+  app.get("/v1/backtesting/h30/latest", async (req, res) => {
+    const requestedRun = typeof req.query.runId === "string" ? req.query.runId : null;
+    const runRows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+      SELECT r.run_id::text AS "runId",r.strategy_version_id AS "strategyVersionId",r.status,
+             r.diagnostic_score::double precision AS "diagnosticScore",r.final_score::double precision AS "finalScore",
+             r.blockers_json AS blockers,r.ranking_json AS ranking,r.created_at AS "generatedAt"
+      FROM strategy_eval.strategy_horizon_ranking r
+      WHERE ($1::uuid IS NULL OR r.run_id=$1::uuid)
+      ORDER BY r.created_at DESC LIMIT 1`, requestedRun);
+    if (!runRows.length) return res.status(404).json({ code: "H30_RESULT_NOT_FOUND", message: "No H30 evaluation has been persisted yet." });
+    const run = runRows[0];
+    const observations = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+      SELECT symbol,entry_date AS "entryDate",coverage_status AS "coverageStatus",sessions_observed AS "sessionsObserved",
+             max_close_price::double precision AS "maxClosePrice",max_close_date AS "maxCloseDate",
+             max_close_session_index AS "sessionsToMax",after_tax_max_close_upside_pct::double precision AS "afterTaxUpsidePct",
+             mae_before_max_close_pct::double precision AS "maeBeforeMaxPct",rankable_flag AS "rankable"
+      FROM strategy_eval.long_horizon_observation WHERE run_id=$1::uuid ORDER BY entry_date,symbol LIMIT 1000`, run.runId);
+    const charts = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+      SELECT chart_id AS "chartId",format FROM strategy_eval.chart_artifact
+      WHERE run_id=$1::uuid AND format IN ('png','svg') ORDER BY chart_id,format`, run.runId);
+    res.setHeader("Cache-Control", "private, max-age=60");
+    return res.json({ ...run, observations, charts: charts.map((row) => ({ ...row, url: `/v1/backtesting/h30/artifacts/${encodeURIComponent(String(row.chartId))}?runId=${run.runId}` })) });
+  });
+
+  app.get("/v1/backtesting/h30/artifacts/:chartId", async (req, res) => {
+    const runId = typeof req.query.runId === "string" ? req.query.runId : null;
+    if (!runId) return res.status(400).json({ code: "RUN_ID_REQUIRED" });
+    const rows = await prisma.$queryRawUnsafe<Array<{ artifactPath: string }>>(`
+      SELECT artifact_path AS "artifactPath" FROM strategy_eval.chart_artifact
+      WHERE run_id=$1::uuid AND chart_id=$2 AND format='png' LIMIT 1`, runId, req.params.chartId);
+    if (!rows.length) return res.status(404).json({ code: "CHART_NOT_FOUND" });
+    const mountedRoot = process.env.H30_ARTIFACT_ROOT;
+    const artifactPath = mountedRoot
+      ? path.join(mountedRoot, runId, path.basename(rows[0].artifactPath))
+      : rows[0].artifactPath;
+    return res.sendFile(artifactPath);
+  });
+
   app.get("/v1/backtesting/overview", async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "backtesting-overview",

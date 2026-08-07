@@ -25,6 +25,18 @@ summary = json.loads((args.output_dir / "summary.json").read_text(encoding="utf-
 formula_version = str(summary.get("formula_version", ""))
 if formula_version.endswith(("V1.2", "V1.3")):
     required |= {"entry_path_evaluations.csv", "path_checkpoints.csv"}
+if "V1.4-H30" in formula_version:
+    required |= {
+        "entry_path_evaluations.csv", "path_checkpoints.csv",
+        "h30_observations.csv", "h30_observations.parquet",
+        "h30_checkpoints.csv", "h30_checkpoints.parquet",
+        "h30_ranking.json", "h30_summary.md", "strategy_evaluation.xlsx",
+        "strategy_oiis_cash_daily_research_v1_01_intraday_month_density.png",
+        "strategy_oiis_cash_daily_research_v1_01_intraday_month_density.svg",
+        "strategy_oiis_cash_daily_research_v1_02_swing_long_month_density.png",
+        "strategy_oiis_cash_daily_research_v1_02_swing_long_month_density.svg",
+        "strategy_oiis_cash_daily_research_v1_month_density_data.csv",
+    }
 missing = required - {path.name for path in args.output_dir.iterdir()}
 if missing:
     raise SystemExit(f"Missing required artifacts: {sorted(missing)}")

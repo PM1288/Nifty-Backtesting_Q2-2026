@@ -33,7 +33,8 @@ export const BACKTESTING_SECTION_TABS = [
   { label: "Stocks", to: "/backtesting/stocks", badge: "Stock" },
   { label: "Daily", to: "/backtesting/daily-summary", badge: "Day" },
   { label: "Compare", to: "/backtesting/compare", badge: "Cmp" },
-  { label: "Runs", to: "/backtesting/runs", badge: "Audit" }
+  { label: "Runs", to: "/backtesting/runs", badge: "Audit" },
+  { label: "30-day", to: "/backtesting/h30", badge: "H30" }
 ] as const;
 
 export function fmtCurrency(value: number | null | undefined) {

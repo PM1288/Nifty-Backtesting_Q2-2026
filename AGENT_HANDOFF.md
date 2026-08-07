@@ -1162,3 +1162,51 @@ guaranteed executable profit.
 Final range: best ADANIPOWER +44.96% (gross position potential ₹89,745.55;
 2024-06-03); lowest maximum-upside path VEDL +1.61% (₹3,214.78; 2024-07-05).
 Median maximum upside was +13.245% across 18 entries.
+
+# H30 V3 formal 30-session opportunity extension (2026-08-07)
+
+The exploratory minute-high calculation above is retained as history but is
+superseded for governed comparison by H30 V3, which uses canonical official
+daily close. Begin at `docs/h30-v3/README.md`; the contract, code map, exact
+commands and acceptance evidence are split into four low-context documents.
+
+Implemented evaluator/ranking/report/database/API/UI and upgraded the OIIS
+adapter to `OIIS-CASH-DAILY-RESEARCH-V1.4-H30`. The H30 evaluator is separate
+from execution, receives no exit input, and always scans D0..D+29 when mature.
+It cannot release capital or rewrite the D0/D+5 path.
+
+Commands executed:
+
+```bash
+platform/nifty_stratlab/.venv/bin/pip install -e 'platform/nifty_stratlab[postgres,dev]'
+platform/nifty_stratlab/.venv/bin/pytest \
+  platform/nifty_stratlab/tests/phase3/test_h30_opportunity_v3.py \
+  platform/nifty_stratlab/tests/phase3/test_full_path_ladder_v2.py \
+  platform/nifty_stratlab/tests/phase3/test_common_exit_contract.py -q
+npm --prefix neon-stock-terminal run --workspace @app/api typecheck
+npm --prefix neon-stock-terminal run --workspace @app/web typecheck
+npm --prefix neon-stock-terminal run --workspace @app/api build
+npm --prefix neon-stock-terminal run --workspace @app/web build
+docker exec -i trading-stack-novius2-postgres-1 psql -U trader -d tradingdb \
+  -v ON_ERROR_STOP=1 < db/sql/024_h30_opportunity_v3.sql
+./scripts/oiis.sh verify \
+  platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/91992dfe-b09b-4c65-b409-d0a2c13fbece
+```
+
+Migration 024 was applied twice successfully. Final one-stock acceptance run
+`91992dfe-b09b-4c65-b409-d0a2c13fbece` succeeded with one mature H30
+observation and exactly 30 checkpoints. Its actual execution sold at I030 on
+D0, while H30 continued to its maximum official close on D+27. All six reward
+rungs remained true and the inherited ladder invariant remained PASS.
+
+Artifacts are under:
+`platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/91992dfe-b09b-4c65-b409-d0a2c13fbece`.
+The UI route is `/backtesting/h30`; API is
+`/v1/backtesting/h30/latest`. A one-stock result must remain
+`PROVISIONAL_BLOCKED`, never final-ranked.
+
+Validation: 69/69 Python tests passed; Node API/web typechecks and production
+builds passed; OIIS verifier reconciled 22 checksummed files. The unrelated
+full Node API suite is 56/57 because its `analyticsEventContext` test has a
+calendar fixture that treats April 2026 as upcoming even though current date is
+August 2026. This existing time-sensitive fixture was documented, not hidden.

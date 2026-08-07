@@ -1,0 +1,29 @@
+{
+  "ranking_config_id": "H30-PRACTICALITY-GEOMETRIC-V1",
+  "league": "H30_PRACTICALITY",
+  "score_range": [0, 100],
+  "aggregation": "WEIGHTED_GEOMETRIC_MEAN_AFTER_HARD_GATES",
+  "dimensions": [
+    {"id": "upside_depth", "weight": 0.25},
+    {"id": "hit_breadth", "weight": 0.20},
+    {"id": "speed", "weight": 0.15},
+    {"id": "downside_efficiency", "weight": 0.20},
+    {"id": "consistency", "weight": 0.10},
+    {"id": "benchmark_alpha", "weight": 0.10}
+  ],
+  "hard_gates": {
+    "minimum_mature_entries": 100,
+    "minimum_mature_coverage_pct": 90.0,
+    "corporate_action_status": "PASS",
+    "benchmark_required": true,
+    "determinism_required": true,
+    "future_label_leakage": false,
+    "compatible_policy_identity_required": true
+  },
+  "concentration_diagnostics": {
+    "max_single_symbol_contribution_pct": 25.0,
+    "max_single_month_contribution_pct": 25.0,
+    "minimum_distinct_years": 2
+  },
+  "status": "GOVERNANCE_DEFAULT_REQUIRES_CALIBRATION"
+}

@@ -72,6 +72,7 @@ const BacktestingStockInsightsPage = lazy(async () => ({ default: (await preload
 const BacktestingDailySummaryPage = lazy(async () => ({ default: (await preloadBacktestingDailySummaryPage()).BacktestingDailySummaryPage }));
 const BacktestingComparePage = lazy(async () => ({ default: (await preloadBacktestingComparePage()).BacktestingComparePage }));
 const BacktestingRunsPage = lazy(async () => ({ default: (await preloadBacktestingRunsPage()).BacktestingRunsPage }));
+const BacktestingH30Page = lazy(async () => ({ default: (await import("./pages/BacktestingH30Page")).BacktestingH30Page }));
 
 function RouteFallback() {
   const { t } = useI18n();
@@ -119,6 +120,7 @@ export default function App() {
           <Route path="/backtesting/daily-summary" element={<BacktestingDailySummaryPage />} />
           <Route path="/backtesting/compare" element={<BacktestingComparePage />} />
           <Route path="/backtesting/runs" element={<BacktestingRunsPage />} />
+          <Route path="/backtesting/h30" element={<BacktestingH30Page />} />
           <Route path="/institutional" element={<Navigate to="/institutional/flow" replace />} />
           <Route path="/institutional/flow" element={<AnalyticsFiiFlowPage />} />
           <Route path="/institutional/reports" element={<AnalyticsFiiReportsPage />} />

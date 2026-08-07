@@ -28,15 +28,21 @@ from nifty_stratlab.oiis import OIISFeature, evaluate_feature  # noqa: E402
 from nifty_stratlab.evaluation.common_exit import (  # noqa: E402
     CommonExitPolicy, PathBar, evaluate_long_target_only,
 )
+from nifty_stratlab.evaluation.long_horizon_opportunity import (  # noqa: E402
+    HorizonDailyBar, HorizonEconomicsPolicy, evaluate_long_horizon,
+)
+from nifty_stratlab.evaluation.horizon_ranking import rank_h30  # noqa: E402
+from nifty_stratlab.reporting.h30_report import write_h30_report  # noqa: E402
 
 
 STRATEGY_ID = "oiis_cash_daily_research_v1"
-FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.3"
+FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.4-H30"
 POLICY_VERSION = "NIFTY-SEROE-V1.0"
 EXCLUDED_SYMBOLS = {"TMPV"}
 DEFAULT_CONFIG = PROJECT_ROOT / "config/oiis/formulas/oiis_cash_daily_research_v1.json"
 DEFAULT_SCHEMA = MONOREPO_ROOT / "db/sql/021_oiis_research.sql"
 DEFAULT_FULL_PATH_SCHEMA = MONOREPO_ROOT / "db/sql/022_full_path_ladder_v2.sql"
+DEFAULT_H30_SCHEMA = MONOREPO_ROOT / "db/sql/024_h30_opportunity_v3.sql"
 LIMITATIONS = [
     "Current-panel Nifty 100 universe introduces survivorship bias.",
     "Public OHLCV and delivery are participation proxies, not confirmed institutional flow.",
@@ -95,7 +101,7 @@ def load_source(conn, start: date, end: date, symbol: str | None) -> tuple[pd.Da
         regime_symbol_clause = "AND (instrument_type='INDEX' OR symbol=%s)" if symbol else ""
         regime_params: tuple[Any, ...] = (POLICY_VERSION, warmup, end, symbol) if symbol else (POLICY_VERSION, warmup, end)
         regimes = frame(cur, f"""
-          SELECT trade_date,instrument_type,symbol,return_21d_pct,primary_trend,market_zone,vix_regime
+          SELECT trade_date,instrument_type,symbol,close_price,return_21d_pct,primary_trend,market_zone,vix_regime
           FROM strategy_eval.market_regime_daily
           WHERE policy_version=%s AND trade_date BETWEEN %s AND %s
             {regime_symbol_clause}
@@ -135,14 +141,20 @@ def derive_features(prices: pd.DataFrame, regimes: pd.DataFrame) -> pd.DataFrame
     prices["close_location"] = ((prices["close_price"] - prices["low_price"]) / spread.replace(0, np.nan)).clip(0, 1)
     prices["turnover_percentile"] = prices.groupby("trade_date")["turnover_lacs"].rank(pct=True, method="average")
     prices["sector_return_21d_pct"] = prices.groupby(["trade_date", "sector"])["return_21d_pct"].transform("mean")
+    # Auditable equal-weight sector proxy until a certified point-in-time sector
+    # index series is available. Its proxy identity is a ranking hard blocker.
+    prices["_daily_return"] = grouped["close_price"].pct_change(fill_method=None).fillna(0.0)
+    sector_daily = prices.groupby(["sector", "trade_date"])["_daily_return"].mean().rename("_sector_daily_return").reset_index()
+    sector_daily["sector_proxy_close"] = sector_daily.groupby("sector")["_sector_daily_return"].transform(lambda s: (1.0 + s).cumprod() * 100.0)
+    prices = prices.merge(sector_daily[["sector", "trade_date", "sector_proxy_close"]], on=["sector", "trade_date"], how="left")
 
     index_regimes = regimes[regimes["instrument_type"] == "INDEX"].copy()
     stock_regimes = regimes[regimes["instrument_type"] == "STOCK"].copy()
     index_regimes["trade_date"] = pd.to_datetime(index_regimes["trade_date"])
     stock_regimes["trade_date"] = pd.to_datetime(stock_regimes["trade_date"])
     for code, prefix in (("NIFTY 50", "nifty"), ("BANK NIFTY", "bank_nifty"), ("INDIA VIX", "vix")):
-        subset = index_regimes[index_regimes["symbol"] == code][["trade_date", "return_21d_pct", "primary_trend", "market_zone", "vix_regime"]].rename(columns={
-            "return_21d_pct": f"{prefix}_return_21d_pct", "primary_trend": f"{prefix}_trend", "market_zone": f"{prefix}_zone", "vix_regime": f"{prefix}_regime"
+        subset = index_regimes[index_regimes["symbol"] == code][["trade_date", "close_price", "return_21d_pct", "primary_trend", "market_zone", "vix_regime"]].rename(columns={
+            "close_price": f"{prefix}_close", "return_21d_pct": f"{prefix}_return_21d_pct", "primary_trend": f"{prefix}_trend", "market_zone": f"{prefix}_zone", "vix_regime": f"{prefix}_regime"
         }).sort_values("trade_date")
         # Index files occasionally omit a session present in the stock bhavcopy.
         # Carry only the latest already-available regime, capped at seven days;
@@ -301,6 +313,34 @@ def simulate_trades(
         notional = float(entry) * quantity
         economic_pnl = outcome["after_tax_net_pnl"] if outcome["status"] == "CLOSED" else outcome["unrealized_net_liquidation_pnl"]
         outcome["return_pct"] = round(100.0 * float(economic_pnl) / notional, 4)
+        h30_rows = group.iloc[entry_index:entry_index + 30]
+        h30_bars: list[HorizonDailyBar] = []
+        previous_close: float | None = None
+        for session_index, daily in enumerate(h30_rows.itertuples(index=False)):
+            close_value = float(daily.close_price)
+            ca_ok = previous_close is None or abs(close_value / previous_close - 1.0) <= 0.35
+            h30_bars.append(HorizonDailyBar(
+                session_index=session_index, trade_date=pd.Timestamp(daily.trade_date).date(),
+                open=Decimal(str(daily.open_price)), high=Decimal(str(daily.high_price)),
+                low=Decimal(str(daily.low_price)), close=Decimal(str(close_value)),
+                nifty_close=Decimal(str(daily.nifty_close)) if number(getattr(daily, "nifty_close", None)) is not None else None,
+                sector_close=Decimal(str(daily.sector_proxy_close)) if number(getattr(daily, "sector_proxy_close", None)) is not None else None,
+                data_quality_ok=all(number(getattr(daily, key, None)) is not None for key in ("open_price", "high_price", "low_price", "close_price")),
+                corporate_action_ok=ca_ok,
+            ))
+            previous_close = close_value
+        h30_snapshot = digest_bytes(json.dumps([(b.trade_date.isoformat(), str(b.open), str(b.high), str(b.low), str(b.close), str(b.nifty_close), str(b.sector_close)) for b in h30_bars]).encode())
+        outcome["h30_observation"] = evaluate_long_horizon(
+            entry_path_id=outcome["entry_path_id"], run_id=run_namespace,
+            strategy_version_id=FORMULA_VERSION, symbol=symbol, sector=str(entry_row.sector),
+            entry_price=entry, entry_date=entry_date, daily_bars=h30_bars, quantity=quantity,
+            economics_policy=HorizonEconomicsPolicy(
+                ticket_limit=Decimal(str(execution["ticket_rupees"])),
+                intraday_round_trip_cost_bps=Decimal(str(execution["intraday_round_trip_cost_bps"])),
+                delivery_round_trip_cost_bps=Decimal(str(execution["swing_round_trip_cost_bps"])),
+                tax_reserve_rate=Decimal(str(execution["positive_profit_tax_rate"])),
+            ), data_snapshot_hash=h30_snapshot,
+        )
         trades.append(outcome)
         if outcome["status"] == "CLOSED":
             busy_until[symbol] = outcome["exit_date"]
@@ -351,11 +391,11 @@ def jsonable(value: Any) -> Any:
     raise TypeError(type(value).__name__)
 
 
-def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]], trades: list[dict[str, Any]], buckets: list[dict[str, Any]], summary: dict[str, Any], missing_minute_symbols: list[str]) -> list[Path]:
+def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]], trades: list[dict[str, Any]], buckets: list[dict[str, Any]], summary: dict[str, Any], missing_minute_symbols: list[str], h30_ranking: dict[str, Any]) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     decision_export = [{key: json.dumps(value, default=jsonable, sort_keys=True) if key in {"hard_gates", "evidence"} else value for key, value in row.items()} for row in decisions]
     pd.DataFrame(decision_export).to_csv(output_dir / "decisions.csv", index=False, lineterminator="\n")
-    trade_export = [{key: value for key, value in row.items() if key not in {"target_events", "adverse_events", "path_checkpoints", "invariant_checks", "policy"}} for row in trades]
+    trade_export = [{key: value for key, value in row.items() if key not in {"target_events", "adverse_events", "path_checkpoints", "invariant_checks", "policy", "h30_observation"}} for row in trades]
     target_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["target_events"]]
     adverse_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["adverse_events"]]
     checkpoint_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **checkpoint} for row in trades for checkpoint in row["path_checkpoints"]]
@@ -378,6 +418,7 @@ def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]]
         "# OIIS cash-daily replay\n\n" + "\n".join(f"- {key}: `{value}`" for key, value in summary.items() if not isinstance(value, (dict, list)))
         + "\n\nThis is a research replay, not live-order authority or a profitability claim.\n", encoding="utf-8"
     )
+    write_h30_report(output_dir, STRATEGY_ID, trades, h30_ranking)
     files = sorted(path for path in output_dir.iterdir() if path.is_file())
     checksums = "\n".join(f"{digest_file(path)}  {path.name}" for path in files) + "\n"
     (output_dir / "checksums.sha256").write_text(checksums, encoding="utf-8")
@@ -394,6 +435,7 @@ def main() -> None:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--schema-sql", type=Path, default=DEFAULT_SCHEMA)
     parser.add_argument("--full-path-schema-sql", type=Path, default=DEFAULT_FULL_PATH_SCHEMA)
+    parser.add_argument("--h30-schema-sql", type=Path, default=DEFAULT_H30_SCHEMA)
     parser.add_argument("--minute-csv-dir", type=Path, default=DEFAULT_MINUTE_CSV_DIR,
                         help="IST one-minute OHLCV directory used by the common exit evaluator")
     parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "oiis_cash_daily_research_v1")
@@ -416,6 +458,7 @@ def main() -> None:
         with conn.cursor() as cur:
             cur.execute(args.schema_sql.read_text(encoding="utf-8"))
             cur.execute(args.full_path_schema_sql.read_text(encoding="utf-8"))
+            cur.execute(args.h30_schema_sql.read_text(encoding="utf-8"))
             cur.execute("INSERT INTO oiis.formula_version (formula_version,strategy_id,status,config_json,config_sha256) VALUES (%s,%s,%s,%s::jsonb,%s) ON CONFLICT (formula_version) DO NOTHING", (FORMULA_VERSION, STRATEGY_ID, config["status"], json.dumps(config), config_hash))
             cur.execute("INSERT INTO oiis.replay_run (replay_run_id,strategy_id,formula_version,universe_name,membership_mode,requested_start,requested_end,symbol_filter,status,run_hash,limitations_json) VALUES (%s,%s,%s,'nifty100_equity','CURRENT_PANEL_RESEARCH_ONLY',%s,%s,%s,'RUNNING',%s,%s::jsonb)", (run_id, STRATEGY_ID, FORMULA_VERSION, args.start, args.end, symbol, run_hash, json.dumps(LIMITATIONS)))
         conn.commit()
@@ -442,6 +485,8 @@ def main() -> None:
                 for level in ("A050", "A100", "A200", "A500", "A1000", "A_GT1000")
             }
             invariant_status = "PASS" if all(all(row["invariant_checks"].values()) for row in trades) else "FAIL"
+            h30_observations = [row["h30_observation"] for row in trades if row.get("h30_observation")]
+            h30_ranking = rank_h30(h30_observations)
             summary = {
                 "replay_run_id": run_id, "strategy_id": STRATEGY_ID, "formula_version": FORMULA_VERSION,
                 "requested_start": args.start, "requested_end": args.end,
@@ -465,9 +510,15 @@ def main() -> None:
                 "adverse_level_hit_counts": adverse_level_counts,
                 "ladder_invariant_status": invariant_status,
                 "path_checkpoint_count": sum(len(row["path_checkpoints"]) for row in trades),
+                "h30_policy_id": "FULL-PATH-LADDER-PLUS-H30T-MAX-CLOSE-OPPORTUNITY-V3",
+                "h30_observation_count": len(h30_observations),
+                "h30_mature_count": h30_ranking["summary"]["mature_entry_count"],
+                "h30_ranking_status": h30_ranking["status"],
+                "h30_diagnostic_score": h30_ranking["diagnostic_score"],
+                "h30_rank_blockers": h30_ranking["hard_gate_blockers"],
                 "result_type": "OPPORTUNITY_SCAN", "rankability_status": "NOT_RANKABLE", "rating": "NR",
             }
-            files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary, missing_minute_symbols)
+            files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary, missing_minute_symbols, h30_ranking)
             if args.dry_run:
                 conn.rollback()
             else:
@@ -498,6 +549,26 @@ def main() -> None:
                         """, (row["entry_path_id"],run_id,FORMULA_VERSION,row["symbol"],row["entry_ts"],row["entry_price"],row["quantity"],
                               row["evaluation_policy_id"],row["path_evidence_hash"],row["coverage_status"],row["path_checkpoints"][-1]["stage"],
                               row["best_intraday_target_id"],row["best_d5_target_id"],row["deepest_adverse_level_id"],row["mfe_pct"],row["mae_pct"],row["minute_source_sha256"]))
+                        h30 = row["h30_observation"]
+                        cur.execute("""
+                          INSERT INTO strategy_eval.long_horizon_observation
+                            (entry_path_id,horizon_policy_id,data_snapshot_hash,run_id,strategy_version_id,symbol,entry_date,entry_price,
+                             sessions_observed,coverage_status,rankable_flag,max_close_price,max_close_date,max_close_session_index,
+                             after_tax_max_close_upside_pct,mae_before_max_close_pct,sessions_to_max_close,outcome_label,observation_hash,observation_json)
+                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                        """, (h30["entry_path_id"],h30["horizon_policy_id"],h30["data_snapshot_hash"],run_id,FORMULA_VERSION,h30["symbol"],h30["entry_date"],h30["entry_price"],
+                              h30["sessions_observed"],h30["coverage_status"],h30["rankable_flag"],h30.get("max_close_price"),h30.get("max_close_date"),h30.get("max_close_session_index"),
+                              (h30.get("max_close_economics") or {}).get("after_tax_upside_pct"),h30.get("mae_before_max_close_pct"),h30.get("sessions_to_max_close"),
+                              h30["outcome_label"],h30["observation_hash"],json.dumps(h30,default=jsonable)))
+                        for checkpoint in h30.get("checkpoints", []):
+                            cur.execute("""
+                              INSERT INTO strategy_eval.long_horizon_checkpoint
+                                (entry_path_id,horizon_policy_id,data_snapshot_hash,session_index,trade_date,close_price,close_return_pct,
+                                 max_close_so_far,min_low_so_far,underwater_flag,checkpoint_hash,checkpoint_json)
+                              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                            """, (h30["entry_path_id"],h30["horizon_policy_id"],h30["data_snapshot_hash"],checkpoint["session_index"],checkpoint["trade_date"],
+                                  checkpoint["close_price"],checkpoint["close_return_pct"],checkpoint["max_close_so_far"],checkpoint["min_low_so_far"],
+                                  checkpoint["underwater_flag"],checkpoint["checkpoint_hash"],json.dumps(checkpoint,default=jsonable)))
                         for event in row["target_events"] + row["adverse_events"]:
                             cur.execute("""
                               INSERT INTO strategy_eval.ladder_event
@@ -528,9 +599,13 @@ def main() -> None:
                               row["exit_price"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["capital_released"]))
                     for row in buckets:
                         cur.execute("INSERT INTO oiis.performance_bucket (replay_run_id,bucket_type,bucket_key,decision_count,trade_count,win_rate_pct,avg_return_pct,median_return_pct,after_tax_net_pnl,metrics_json) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)", (run_id,row["bucket_type"],row["bucket_key"],row["decision_count"],row["trade_count"],row["win_rate_pct"],row["avg_return_pct"],row["median_return_pct"],row["after_tax_net_pnl"],json.dumps({"open_position_count":row["open_position_count"],"open_unrealized_net_liquidation_pnl":row["open_unrealized_net_liquidation_pnl"]})))
+                    cur.execute("INSERT INTO strategy_eval.strategy_horizon_summary (run_id,strategy_version_id,horizon_policy_id,summary_json) VALUES (%s,%s,%s,%s::jsonb)", (run_id,FORMULA_VERSION,summary["h30_policy_id"],json.dumps(h30_ranking["summary"])))
+                    cur.execute("INSERT INTO strategy_eval.strategy_horizon_ranking (run_id,strategy_version_id,league,ranking_config_id,status,final_score,diagnostic_score,blockers_json,ranking_json) VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb)", (run_id,FORMULA_VERSION,h30_ranking["league"],h30_ranking["ranking_config_id"],h30_ranking["status"],h30_ranking["final_score"],h30_ranking["diagnostic_score"],json.dumps(h30_ranking["hard_gate_blockers"]),json.dumps(h30_ranking)))
                     cur.execute("UPDATE oiis.replay_run SET actual_start=%s,actual_end=%s,symbol_count=%s,decision_count=%s,enterable_count=%s,trade_count=%s,status='SUCCEEDED',result_type=%s,rankability_status=%s,rating=%s,run_hash=%s,metrics_json=%s::jsonb,finished_at=NOW() WHERE replay_run_id=%s", (summary["actual_start"],summary["actual_end"],summary["symbol_count"],summary["decision_count"],summary["enterable_count"],summary["trade_count"],summary["result_type"],summary["rankability_status"],summary["rating"],summary["run_hash"],json.dumps(summary,default=jsonable),run_id))
                     for path in files:
                         cur.execute("INSERT INTO oiis.artifact_manifest (replay_run_id,artifact_type,artifact_path,sha256,size_bytes) VALUES (%s,%s,%s,%s,%s)", (run_id,path.suffix.lstrip(".") or "file",str(path.resolve()),digest_file(path),path.stat().st_size))
+                        if path.name.endswith(("month_density.png", "month_density.svg", "month_density_data.csv")):
+                            cur.execute("INSERT INTO strategy_eval.chart_artifact (run_id,strategy_version_id,chart_id,format,artifact_path,sha256,size_bytes) VALUES (%s,%s,%s,%s,%s,%s,%s)", (run_id,FORMULA_VERSION,path.stem,path.suffix.lstrip("."),str(path.resolve()),digest_file(path),path.stat().st_size))
                 conn.commit()
             print(json.dumps({**summary, "output_dir": str(output_dir), "persisted": not args.dry_run}, indent=2, default=jsonable))
         except Exception as exc:

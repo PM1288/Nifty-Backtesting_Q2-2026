@@ -139,6 +139,12 @@ function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
           to: "/backtesting/runs",
           icon: ClipboardList,
           match: (pathname) => pathname.startsWith("/backtesting/runs")
+        },
+        {
+          label: tr("30-day Opportunity"),
+          to: "/backtesting/h30",
+          icon: Gauge,
+          match: (pathname) => pathname.startsWith("/backtesting/h30")
         }
       ]
     },

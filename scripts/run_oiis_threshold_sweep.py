@@ -36,7 +36,7 @@ def run_one(item: tuple[str, dict[str, float]], args: argparse.Namespace) -> dic
     if proc.returncode == 0:
         lines = log.read_text(encoding="utf-8").splitlines()
         payload = json.loads("\n".join(lines[lines.index("{") :])) if "{" in lines else {}
-        result.update({k: payload.get(k) for k in ("output_dir", "enterable_count", "trade_count", "total_after_tax_net_pnl", "h30_diagnostic_score")})
+        result.update({"output_dir": payload.get("output_dir"), "enterable_count": payload.get("enterable_count"), "trade_count": payload.get("trade_count"), "after_tax_net_pnl": payload.get("after_tax_net_pnl"), "win_rate_pct": payload.get("win_rate_pct"), "h30_diagnostic_score": payload.get("h30_diagnostic_score")})
     return result
 
 def main() -> None:

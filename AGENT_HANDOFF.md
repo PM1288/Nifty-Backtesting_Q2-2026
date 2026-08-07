@@ -1210,3 +1210,28 @@ builds passed; OIIS verifier reconciled 22 checksummed files. The unrelated
 full Node API suite is 56/57 because its `analyticsEventContext` test has a
 calendar fixture that treats April 2026 as upcoming even though current date is
 August 2026. This existing time-sensitive fixture was documented, not hidden.
+
+# Full OIIS H30 re-evaluation started (2026-08-07)
+
+The all-symbol updated-rule replay is running as
+`3f6695e6-e55f-4d12-a672-9208039558e9` with four workers, requested range
+`2016-01-01` through `2026-08-05`, and no symbol filter. It was started from
+the repository root with:
+
+```bash
+dashboard_dsn="$(docker inspect trading-stack-novius2-n50-dashboard-1 \
+  --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^DATABASE_URL=//p')"
+host_dsn="${dashboard_dsn/@postgres/@100.86.108.108}"
+host_dsn="${host_dsn%%\?*}"
+CONFIRM_FULL_OIIS_REPLAY=YES \
+  platform/nifty_stratlab/.venv/bin/python \
+  platform/nifty_stratlab/tools/run_oiis_cash_daily_replay.py \
+  --database-url "$host_dsn" --start 2016-01-01 --end 2026-08-05 --workers 4
+```
+
+Initial monitoring confirmed a CPU-active worker and PostgreSQL reads with
+status `RUNNING`; no error was recorded. The runner persists atomically after
+all symbols, so intermediate decision/path counts remain zero until commit.
+When complete, read the printed `output_dir`, run `./scripts/oiis.sh verify
+<output_dir>`, and compare H30 ranking status, coverage, ladder invariants,
+charts and the PostgreSQL summary before promoting any strategy.

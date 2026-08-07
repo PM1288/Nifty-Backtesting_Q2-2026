@@ -1269,3 +1269,6 @@ Exact live entry criteria, formulas, thresholds, and decision precedence are
 documented in `docs/oiis/OIIS_ENTRY_GATE_CRITERIA.md`. It also records the
 important distinction between thresholds present in the JSON configuration and
 thresholds that are currently enforced by the engine.
+## Numeric OIIS decision flow
+
+The detailed indicator definitions, threshold sequence, actual full-run funnel counts, accepted-signal medians, execution coverage, and ladder/exit interpretation are documented in [OIIS_DECISION_FLOW_NUMERIC_2026-08-07.md](docs/oiis/OIIS_DECISION_FLOW_NUMERIC_2026-08-07.md).

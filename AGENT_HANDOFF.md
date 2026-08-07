@@ -1235,3 +1235,19 @@ all symbols, so intermediate decision/path counts remain zero until commit.
 When complete, read the printed `output_dir`, run `./scripts/oiis.sh verify
 <output_dir>`, and compare H30 ranking status, coverage, ladder invariants,
 charts and the PostgreSQL summary before promoting any strategy.
+
+Completion status for run `3f6695e6-e55f-4d12-a672-9208039558e9`:
+
+- `SUCCEEDED`; requested 2016-01-01 through 2026-08-05.
+- 99 symbols, 121,316 daily decisions, 27 accepted paths/trades.
+- 27/27 H30 observations mature with 30 checkpoints each.
+- Full-path ladder invariant `PASS`; after-tax execution P&L ₹13,026.2505.
+- H30 diagnostic score `56.0429`; final rank correctly remains
+  `PROVISIONAL_BLOCKED` because certified cost/sector/corporate-action gates
+  and the 100-mature-entry gate are not met.
+- Missing minute evidence remained limited to `M&M` and `MAXHEALTH`; these
+  symbols were skipped rather than given fabricated execution paths.
+- Output directory:
+  `platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/3f6695e6-e55f-4d12-a672-9208039558e9`
+- `./scripts/oiis.sh verify <output_dir>` passed all 22 checksums and required
+  H30 artifacts.

@@ -1251,3 +1251,16 @@ Completion status for run `3f6695e6-e55f-4d12-a672-9208039558e9`:
   `platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1/3f6695e6-e55f-4d12-a672-9208039558e9`
 - `./scripts/oiis.sh verify <output_dir>` passed all 22 checksums and required
   H30 artifacts.
+
+# OIIS low-trade diagnosis (2026-08-07)
+
+Detailed gate analysis is in
+`docs/oiis/OIIS_LOW_TRADE_DIAGNOSIS_2026-08-07.md`. The key result is 121,316
+decisions → 32 enterable signals → 27 executable paths. The dominant primary
+rejections were `NO_OPPORTUNITY` (104,622; 86.24%) and `DO_NOT_CHASE` (12,136;
+10.00%). Overlapping gate evidence shows `OFACTOR_BELOW_MINIMUM` on 107,295
+rows and `NO_VALID_SETUP` on 101,770 rows. Five enterable signals lacked
+usable minute coverage: M&M and MAXHEALTH have no file, while PFC,
+SHRIRAMFIN and VEDL signals are after the 2025-08-06 minute-file endpoint.
+The generated workbook is `oiis_diagnostic_review.xlsx` in the completed run
+folder.

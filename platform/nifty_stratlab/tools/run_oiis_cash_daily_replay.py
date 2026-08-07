@@ -178,7 +178,7 @@ def text_value(value: Any) -> str | None:
     return None if value is None or pd.isna(value) else str(value)
 
 
-def evaluate_symbol(item: tuple[str, pd.DataFrame], start: date, end: date) -> list[dict[str, Any]]:
+def evaluate_symbol(item: tuple[str, pd.DataFrame], start: date, end: date, thresholds: dict[str, float] | None = None) -> list[dict[str, Any]]:
     symbol, rows = item
     output: list[dict[str, Any]] = []
     for row in rows.itertuples(index=False):
@@ -200,7 +200,7 @@ def evaluate_symbol(item: tuple[str, pd.DataFrame], start: date, end: date) -> l
             bank_nifty_trend=text_value(getattr(row, "bank_nifty_trend", None)), bank_nifty_zone=text_value(getattr(row, "bank_nifty_zone", None)),
             vix_regime=text_value(getattr(row, "vix_regime", None)) or text_value(getattr(row, "nifty_vix_regime", None)),
         )
-        result = evaluate_feature(feature)
+        result = evaluate_feature(feature, thresholds)
         payload = {
             "symbol": symbol, "sector": row.sector, "trade_date": trade_date,
             "data_quality_score": result["dq"]["score"], "data_permission": result["dq"]["permission"],
@@ -439,6 +439,9 @@ def main() -> None:
     parser.add_argument("--minute-csv-dir", type=Path, default=DEFAULT_MINUTE_CSV_DIR,
                         help="IST one-minute OHLCV directory used by the common exit evaluator")
     parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "oiis_cash_daily_research_v1")
+    parser.add_argument("--ofactor-min", type=float, default=74.0)
+    parser.add_argument("--xfactor-tier-a", type=float, default=84.0)
+    parser.add_argument("--xfactor-tier-b", type=float, default=76.0)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     if not args.database_url: raise SystemExit("--database-url or DATABASE_URL is required")
@@ -453,6 +456,7 @@ def main() -> None:
     run_id = str(uuid.uuid4())
     run_hash = digest_bytes(json.dumps({"config": config_hash, "start": str(args.start), "end": str(args.end), "symbol": symbol}, sort_keys=True).encode())
     output_dir = args.output_root / run_id
+    thresholds = {"ofactor_min": args.ofactor_min, "xfactor_a": args.xfactor_tier_a, "xfactor_b": args.xfactor_tier_b}
 
     with psycopg.connect(args.database_url, row_factory=dict_row) as conn:
         with conn.cursor() as cur:
@@ -467,7 +471,7 @@ def main() -> None:
             features = derive_features(prices, regimes)
             groups = list(features.groupby("symbol", sort=True))
             with ThreadPoolExecutor(max_workers=max(1, min(args.workers, len(groups)))) as pool:
-                nested = list(pool.map(lambda item: evaluate_symbol(item, args.start, args.end), groups))
+                nested = list(pool.map(lambda item: evaluate_symbol(item, args.start, args.end, thresholds), groups))
             decisions = [row for rows in nested for row in rows]
             trades = simulate_trades(decisions, features, config, args.minute_csv_dir, args.end, run_id)
             missing_minute_symbols = list(getattr(simulate_trades, "missing_minute_symbols", []))
@@ -501,6 +505,7 @@ def main() -> None:
                 "total_net_liquidation_pnl": round(sum(row["after_tax_net_pnl"] for row in closed_trades) + sum(row["unrealized_net_liquidation_pnl"] for row in open_positions), 4),
                 "win_rate_pct": round(100 * sum(row["after_tax_net_pnl"] > 0 for row in closed_trades) / len(closed_trades), 4) if closed_trades else None,
                 "config_sha256": config_hash, "run_hash": run_hash, "status": "SUCCEEDED", "limitations": LIMITATIONS,
+                "thresholds": thresholds,
                 "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
                 "execution_scenario_id": "EXEC-I030-ELSE-S100-NO-TIMEOUT-V2",
                 "missing_minute_symbols": missing_minute_symbols,

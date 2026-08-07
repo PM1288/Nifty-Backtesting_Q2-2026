@@ -47,7 +47,7 @@ def write_h30_report(output_dir: Path, strategy_id: str, trades: list[dict[str, 
         f"- Hard-gate blockers: `{', '.join(ranking['hard_gate_blockers']) or 'none'}`\n"
     )
     chart = pd.DataFrame({
-        "entry_path_id": flat.get("entry_path_id", pd.Series(dtype=str)), "entry_month": flat.get("entry_month", pd.Series(dtype=float)),
+        "entry_path_id": flat.get("entry_path_id", pd.Series(dtype=str)), "entry_date": flat.get("entry_date", pd.Series(dtype=str)),
         "coverage_status": flat.get("coverage_status", pd.Series(dtype=str)),
         "intraday_max_net_upside_pct": [_intraday_max_net_upside(t) for t in trades if t.get("h30_observation")],
         "swing_d5_max_close_after_tax_upside_pct": flat.get("d5_after_tax_upside_pct", pd.Series(dtype=float)),

@@ -33,23 +33,30 @@ def _plot(data: pd.DataFrame, series: list[tuple[str, str, str]], title: str, yl
     exported = []
     markers = ["o", "^"]
     for index, (column, label, colour) in enumerate(series):
-        subset = data[["entry_path_id", "entry_month", column, "coverage_status"]].copy()
+        subset = data[["entry_path_id", "entry_date", column, "coverage_status"]].copy()
+        subset["entry_period"] = pd.to_datetime(subset["entry_date"], errors="coerce").dt.to_period("M").astype(str)
         censored = int((subset["coverage_status"] != "MATURE_H30_COMPLETE").sum())
         subset[column] = pd.to_numeric(subset[column], errors="coerce")
         subset = subset.dropna(subset=[column])
         if subset.empty: continue
-        m, y = subset.entry_month.to_numpy(float), subset[column].to_numpy(float)
+        periods = sorted(subset["entry_period"].dropna().unique())
+        period_index = {period: index for index, period in enumerate(periods)}
+        m, y = subset["entry_period"].map(period_index).to_numpy(float), subset[column].to_numpy(float)
         sizes, counts = _density(m, y)
         subset["density_count"], subset["bubble_size"] = counts, sizes
         subset["x_jittered"], subset["chart_series"] = m + _jitter(subset.entry_path_id.astype(str) + label), label
         exported.append(subset.rename(columns={column: "upside_pct"}))
         ax.scatter(subset.x_jittered, y, s=sizes, alpha=.45, marker=markers[index], color=colour,
                    label=f"{label} (n={len(subset)}, censored={censored})")
-        med = subset.groupby("entry_month")[column].median().reindex(range(1, 13))
-        ax.plot(range(1, 13), med, marker=markers[index], color=colour, linewidth=1.4)
+        med = subset.groupby("entry_period")[column].median().reindex(periods)
+        ax.plot(range(len(periods)), med, marker=markers[index], color=colour, linewidth=1.4)
     if not exported: ax.text(.5, .5, "No eligible observations", ha="center", transform=ax.transAxes)
-    ax.axhline(0, color="#64748b", linewidth=.8); ax.set_xticks(range(1, 13), MONTHS); ax.set_xlim(.5, 12.5)
-    ax.set_xlabel("Entry month"); ax.set_ylabel(ylabel); ax.set_title(title); ax.grid(alpha=.18)
+    ax.axhline(0, color="#64748b", linewidth=.8)
+    if exported:
+        periods = sorted(pd.concat(exported)["entry_period"].dropna().unique())
+        ax.set_xticks(range(len(periods)), periods, rotation=60, ha="right")
+        ax.set_xlim(-.5, len(periods) - .5)
+    ax.set_xlabel("Entry month (YYYY-MM)"); ax.set_ylabel(ylabel); ax.set_title(title); ax.grid(alpha=.18)
     if exported: ax.legend()
     fig.text(.5, .01, "Opportunity evidence only - not realised P&L or an execution exit.", ha="center", fontsize=8)
     fig.tight_layout(rect=(0, .035, 1, 1)); fig.savefig(stem.with_suffix(".png"), dpi=180); fig.savefig(stem.with_suffix(".svg")); plt.close(fig)

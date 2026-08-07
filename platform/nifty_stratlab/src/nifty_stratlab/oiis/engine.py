@@ -194,7 +194,11 @@ def _detect_setup(feature: OIISFeature, direction: str) -> tuple[str | None, str
     return None, "FORMING"
 
 
-def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], dq: Mapping[str, Any]) -> dict[str, Any]:
+def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], dq: Mapping[str, Any], thresholds: Mapping[str, float] | None = None) -> dict[str, Any]:
+    thresholds = thresholds or {}
+    ofactor_min = float(thresholds.get("ofactor_min", 74.0))
+    xfactor_a = float(thresholds.get("xfactor_a", 84.0))
+    xfactor_b = float(thresholds.get("xfactor_b", 76.0))
     setup_id, setup_state = _detect_setup(feature, direction)
     atr = feature.atr14 or 0.0
     extension_atr = abs(feature.close_price - (feature.sma20 or feature.close_price)) / atr if atr > 0 else None
@@ -225,7 +229,7 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
     score = weighted_score(components, XFACTOR_WEIGHTS)
     gates: list[str] = []
     if dq["permission"] == "DATA_INSUFFICIENT": gates.append("STALE_OR_INSUFFICIENT_MARKET_DATA")
-    if float(ofactor["final_score"]) < 74.0: gates.append("OFACTOR_BELOW_MINIMUM")
+    if float(ofactor["final_score"]) < ofactor_min: gates.append("OFACTOR_BELOW_MINIMUM")
     if setup_id is None: gates.append("NO_VALID_SETUP")
     if setup_state == "ARMED": gates.append("TRIGGER_CONFIRMATION_MISSING")
     if risk <= 0: gates.append("NO_STRUCTURAL_STOP")
@@ -250,9 +254,9 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
         decision = "SETUP_FORMING"
     elif "TRIGGER_CONFIRMATION_MISSING" in gates:
         decision = "WAIT_FOR_TRIGGER"
-    elif score >= 84:
+    elif score >= xfactor_a:
         decision = "ENTERABLE_TIER_A"
-    elif score >= 76:
+    elif score >= xfactor_b:
         decision = "ENTERABLE_TIER_B"
     else:
         decision = "WAIT"
@@ -270,15 +274,17 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
     }
 
 
-def evaluate_feature(feature: OIISFeature) -> dict[str, Any]:
+def evaluate_feature(feature: OIISFeature, thresholds: Mapping[str, float] | None = None) -> dict[str, Any]:
+    thresholds = thresholds or {}
+    ofactor_min = float(thresholds.get("ofactor_min", 74.0))
     dq = data_quality(feature)
     long_score = opportunity(feature, "LONG")
     short_score = opportunity(feature, "SHORT")
     edge = round(float(long_score["final_score"]) - float(short_score["final_score"]), 4)
-    conflict = min(float(long_score["final_score"]), float(short_score["final_score"])) >= 74.0 and abs(edge) < 8.0
+    conflict = min(float(long_score["final_score"]), float(short_score["final_score"])) >= ofactor_min and abs(edge) < 8.0
     direction = "CONFLICT" if conflict else "LONG" if edge >= 8.0 else "SHORT" if edge <= -8.0 else "NEUTRAL"
     selected = long_score if direction in {"LONG", "NEUTRAL", "CONFLICT"} else short_score
-    xfactor = execution(feature, "LONG" if direction in {"NEUTRAL", "CONFLICT"} else direction, selected, dq)
+    xfactor = execution(feature, "LONG" if direction in {"NEUTRAL", "CONFLICT"} else direction, selected, dq, thresholds)
     if conflict:
         xfactor = {**xfactor, "decision": "DIRECTIONAL_CONFLICT", "hard_gates": [*xfactor["hard_gates"], "DIRECTIONAL_CONFLICT"]}
     elif direction == "NEUTRAL":

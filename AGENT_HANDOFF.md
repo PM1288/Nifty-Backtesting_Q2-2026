@@ -1366,3 +1366,35 @@ The corrected OIIS baseline and complete 18-component screening workflow is docu
 - Disposable database: migration `db/sql/030_oiis_doe_v2.sql` applied idempotently to `oiis_doe_test`; export persisted 35 trials, 108 factor-effect rows and 375 artifact catalogue rows.
 
 Commands used are reproduced in the ZIP at `18_RUN_COMMANDS.md`. The latest live logs are under the experiment `logs/` directory. Do not promote, optimise weights, or optimise aggregate O/X thresholds until point-in-time universe and corporate-action blockers are repaired and the study is rerun.
+
+## OIIS all-signal O=0/X=1 diagnostic capture (2026-08-08)
+
+- Purpose: create an uncensored dataset for later OFactor/XFactor threshold and component-sensitivity analysis. `O=0` and `X=1` are diagnostic floors, never a proposed live configuration. FFactor is not defined in the accepted engine, so the user's “F=1” instruction is represented by the execution/XFactor floor.
+- Run ID: `22808cf7-c0b3-4beb-9420-6b9e2b40f7ac`.
+- Output: `platform/nifty_stratlab/outputs/oiis_all_signal_capture_v1/22808cf7-c0b3-4beb-9420-6b9e2b40f7ac`.
+- Requested period: 2023-01-01 through 2026-08-07. Actual signal coverage: 2023-01-02 through 2026-08-06.
+- Universe: 499 eligible stocks from the 500-stock PostgreSQL regime universe. TMPV remains excluded because of the previously governed demerger exception.
+- Source: 536 files/20 GiB at `/home/novius2/data/algo-trading-data-nifty-100-data-with-indicators`; 496/499 symbols resolved to base `_minute.csv` files. CIEINDIA, JSWDULUX and PFOCUS retain daily/H30 evidence but carry `MINUTE_FILE_NOT_FOUND` for minute paths.
+- Result: 388,240 stock-date observations and 242 columns. Minute path status: 353,822 complete, 31,594 absent entry sessions, 1,592 missing minute sources, 733 incomplete entry sessions and 499 no-next-session rows.
+- Master artifacts: `OIIS_ALL_SIGNAL_MASTER.parquet` (274 MiB), `OIIS_ALL_SIGNAL_MASTER.csv.gz` (249 MiB), `OIIS_ALL_SIGNAL_EXECUTIVE_SUMMARY.xlsx` and `OIIS_ALL_SIGNAL_REGIME_SUMMARY.csv`.
+- Indicator fields include RSI14, Williams %R14, EMA61 and close distance, Bollinger 20/2 levels and position, stochastic FastK/SlowK, volume/SMA20/EMA20/EMA60 and ratios, MACD line/signal/histogram, all long/short O and X component values and weighted contributions, gates, Nifty/Bank Nifty/VIX and CRUDE_OIL/DOW_JONES/GOLD/INDIA_VIX/USD_INR context.
+- Outcomes independently retain intraday +0.3/+0.5/+0.7, D0-D5 +1/+2/+5, H30 +1/+2/+5/+10/+20, the full adverse ladder, timing, MFE/MAE, and Nifty-relative returns. These are path diagnostics with no early exit and no realised-P&L claim.
+- PostgreSQL: `oiis_research.all_signal_run`, partitioned parent `oiis_research.all_signal_observation`, 44 monthly `all_signal_observation_YYYYMM` partitions and latest-run view `oiis_research.all_signal_latest`. Exactly 388,240 production research rows reconciled after an 866-row disposable database smoke.
+- Warm-up gaps are not fabricated: RSI14 1,375 nulls; Williams %R14 1,276; EMA61 6,132; MACD 2,464. Use `data_quality_score`/`data_permission` and explicit null checks in analysis.
+- Validation: RELIANCE smoke produced 866 rows/242 columns and 800 complete minute paths. Full uniqueness, observation-hash completeness, target-ladder monotonicity and PostgreSQL reconciliation passed. Entire project suite: 94 passed.
+- Implementation: `platform/nifty_stratlab/tools/run_oiis_all_signal_capture.py`; wrapper `scripts/oiis_all_signal_capture.sh`; migration `db/sql/031_oiis_all_signal_capture.sql`; detailed guide `platform/nifty_stratlab/docs/OIIS_ALL_SIGNAL_CAPTURE_V1.md`; tests `platform/nifty_stratlab/tests/phase3/test_oiis_all_signal_capture.py`.
+
+Exact commands:
+
+```bash
+./scripts/oiis_all_signal_capture.sh init --start 2023-01-01 --end 2026-08-07
+./scripts/oiis_all_signal_capture.sh run --workers 1 --symbol RELIANCE --start 2023-01-01 --end 2026-08-07
+./scripts/oiis_all_signal_capture.sh run --workers 12 --start 2023-01-01 --end 2026-08-07
+./scripts/oiis_all_signal_capture.sh consolidate
+POSTGRES_DB=oiis_doe_test ./scripts/oiis_all_signal_capture.sh load-db
+./scripts/oiis_all_signal_capture.sh load-db
+./scripts/oiis_all_signal_capture.sh status
+platform/nifty_stratlab/.venv/bin/python -m pytest platform/nifty_stratlab/tests -q
+```
+
+The first disposable COPY exposed and then verified fixes for a column-count mismatch and a missing terminal-row hash. The failed COPY transactions rolled back; no partial database evidence survived. Consolidation initially exposed Arrow null/string inference across sparse new-listing fragments; the final typed pandas union corrected it without rerunning or altering source paths.

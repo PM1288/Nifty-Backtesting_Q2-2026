@@ -1298,3 +1298,19 @@ The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strate
 - Instruments: `CRUDE_OIL`, `GOLD`, `USD_INR`, `DOW_JONES`, `INDIA_VIX`.
 - Outputs: `platform/nifty_stratlab/outputs/global_yfinance_regime/`.
 - Detailed ticker/rule reference: `platform/nifty_stratlab/docs/GLOBAL_MARKET_YFINANCE_REGIME_INGESTION.md`.
+
+## Universal Strategy Evaluation V2 (2026-08-08)
+
+- Governing source reviewed completely: `/home/novius2/NIFTY50/Universal-Evalaution/UNIVERSAL_STRATEGY_EVALUATION_MASTER_PROMPT_V2.0.md` and its usage guide.
+- Main evaluator: `platform/nifty_stratlab/tools/evaluate_strategy_universal.py`.
+- Future-run wrapper: `platform/nifty_stratlab/tools/run_with_universal_evaluation.py`; this runs the backtest first and creates the universal artifacts only after a zero exit code.
+- Policy: `platform/nifty_stratlab/config/evaluation/universal_strategy_evaluation_v2.json`.
+- Database migration: `db/sql/028_universal_strategy_evaluation.sql`.
+- Operating guide: `platform/nifty_stratlab/docs/UNIVERSAL_STRATEGY_EVALUATION_V2_IMPLEMENTATION.md`.
+- Default output is one detailed Excel workbook and one consolidated `<STRATEGY>_Trades.csv` for all stocks in the run. Do not create per-stock trade-report folders.
+- Use `--authoritative-exit` only when the supplied `exit_reason` is owned by the versioned strategy. Never use it for entry-only/shared-RoE scenario exits.
+- Smoke command:
+  `platform/nifty_stratlab/.venv/bin/python platform/nifty_stratlab/tools/evaluate_strategy_universal.py --input-dir platform/nifty_stratlab/outputs/OIIS_49_FACTOR_ANALYSIS_BUNDLE_2026-08-07/results/o70_x70 --strategy-name OIIS_O70_X70 --strategy-version 2026-08-07 --archetype ENTRY_ONLY --output-dir platform/nifty_stratlab/outputs/universal_evaluation_v2/OIIS_O70_X70`
+- Validated output: `platform/nifty_stratlab/outputs/universal_evaluation_v2/OIIS_O70_X70/`; 137 trade rows, 25 Excel sheets, DOCX, JSON, CSV, charts, SHA catalogue and ZIP.
+- Correct fail-closed result: `NOT_SCORABLE_METHOD_FAILURE`. Exit authority, finite-capital daily equity and chronological OOS evidence were not supplied, so no numeric score or portfolio-return claim is allowed.
+- Tests: `platform/nifty_stratlab/.venv/bin/python -m pytest platform/nifty_stratlab/tests/phase3/test_universal_evaluation.py platform/nifty_stratlab/tests/phase3/test_full_path_ladder_v2.py platform/nifty_stratlab/tests/phase3/test_h30_opportunity_v3.py platform/nifty_stratlab/tests/phase3/test_rules_of_engagement.py` -> 24 passed.

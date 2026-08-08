@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Replay OIIS from a minute-CSV estate for explicit O/X threshold pairs."""
+from __future__ import annotations
+import argparse, hashlib, json, sys, uuid
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import date
+from pathlib import Path
+import numpy as np, pandas as pd
+ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(ROOT/"src")); sys.path.insert(0,str(ROOT/"tools"))
+from nifty_stratlab.oiis import OIISFeature, evaluate_feature
+import run_oiis_cash_daily_replay as shared
+CONFIG=ROOT/"config/oiis/formulas/oiis_cash_daily_research_v1.json"
+PAIRS={"o45_x84":(45,84,84),"o60_x60":(60,60,60),"o74_x74":(74,74,74),"o84_x84":(84,84,84)}
+
+def load_daily(path:Path,symbol:str,start:date,end:date):
+    m=pd.read_csv(path,usecols=['date','open','high','low','close','volume']); m['date']=pd.to_datetime(m.date,errors='coerce')
+    for c in ['open','high','low','close','volume']: m[c]=pd.to_numeric(m[c],errors='coerce')
+    m=m.dropna(subset=['date','open','high','low','close']); m['session']=m.date.dt.date
+    d=m.groupby('session').agg(open_price=('open','first'),high_price=('high','max'),low_price=('low','min'),close_price=('close','last'),volume=('volume','sum')).reset_index().rename(columns={'session':'trade_date'}); d['trade_date']=pd.to_datetime(d.trade_date); d=d[(d.trade_date.dt.date>=start)&(d.trade_date.dt.date<=end)].copy()
+    good=(d[['open_price','high_price','low_price','close_price']]>0).all(axis=1)&(d.low_price<=d[['open_price','close_price','high_price']].min(axis=1))&(d.high_price>=d[['open_price','close_price','low_price']].max(axis=1)); d=d.loc[good].reset_index(drop=True)
+    d['symbol']=symbol; d['sector']='UNKNOWN'; g=d.close_price; d['return_1d_pct']=g.pct_change()*100; d['return_5d_pct']=g.pct_change(5)*100; d['return_21d_pct']=g.pct_change(21)*100; d['return_63d_pct']=g.pct_change(63)*100; d['nifty_return_21d_pct']=d.return_21d_pct; d['sma20']=g.rolling(20,min_periods=20).mean(); d['sma50']=g.rolling(50,min_periods=50).mean(); prev=g.shift(1); tr=pd.concat([d.high_price-d.low_price,(d.high_price-prev).abs(),(d.low_price-prev).abs()],axis=1).max(axis=1); d['atr14']=tr.rolling(14,min_periods=14).mean(); delta=g.diff(); ag=delta.clip(lower=0).ewm(alpha=1/14,adjust=False,min_periods=14).mean(); al=(-delta.clip(upper=0)).ewm(alpha=1/14,adjust=False,min_periods=14).mean(); d['rsi_14']=(100-100/(1+ag/al.replace(0,np.nan))).fillna(50); d['volume_ratio_20']=d.volume/d.volume.shift(1).rolling(20,min_periods=20).mean(); d['delivery_ratio_20']=None; d['turnover_lacs']=d.close_price*d.volume/100000; d['turnover_percentile']=d.turnover_lacs.rank(pct=True); d['close_location']=(d.close_price-d.low_price)/(d.high_price-d.low_price).replace(0,np.nan); d['prior_high_20']=d.high_price.shift(1).rolling(20,min_periods=20).max(); d['prior_low_20']=d.low_price.shift(1).rolling(20,min_periods=20).min(); d['sector_return_21d_pct']=d.return_21d_pct; return d
+
+def run_one(path:Path,pair:str,start:date,end:date,out_root:Path):
+    symbol=path.name.removesuffix('_minute.csv').upper(); d=load_daily(path,symbol,start,end); o,xb,xa=PAIRS[pair]; decisions=[]
+    for r in d.itertuples(index=False):
+        def n(x): return None if pd.isna(x) else float(x)
+        f=OIISFeature(symbol=symbol,trade_date=r.trade_date.date().isoformat(),open_price=float(r.open_price),high_price=float(r.high_price),low_price=float(r.low_price),close_price=float(r.close_price),prev_close=float(r.close_price if pd.isna(getattr(r,'prev_close',np.nan)) else r.prev_close),volume_ratio_20=n(r.volume_ratio_20),delivery_ratio_20=None,turnover_percentile=n(r.turnover_percentile),close_location=n(r.close_location),return_1d_pct=n(r.return_1d_pct),return_5d_pct=n(r.return_5d_pct),return_21d_pct=n(r.return_21d_pct),return_63d_pct=n(r.return_63d_pct),nifty_return_21d_pct=n(r.nifty_return_21d_pct),sector_return_21d_pct=n(r.sector_return_21d_pct),rsi_14=n(r.rsi_14),sma20=n(r.sma20),sma50=n(r.sma50),atr14=n(r.atr14),prior_high_20=n(r.prior_high_20),prior_low_20=n(r.prior_low_20),stock_trend=None,stock_zone=None,nifty_trend=None,nifty_zone=None,bank_nifty_trend=None,bank_nifty_zone=None,vix_regime=None)
+        res=evaluate_feature(f,{'ofactor_min':o,'xfactor_a':xa,'xfactor_b':xb}); decision=res['xfactor']['decision']; p={'symbol':symbol,'sector':'UNKNOWN','trade_date':r.trade_date.date(),'data_quality_score':res['dq']['score'],'data_permission':res['dq']['permission'],'ofactor_long':res['ofactor_long']['final_score'],'ofactor_short':res['ofactor_short']['final_score'],'directional_edge':res['directional_edge'],'selected_direction':res['direction'],'setup_id':res['xfactor']['setup_id'],'setup_state':res['xfactor']['setup_state'],'xfactor_score':res['xfactor']['score'],'decision_code':decision,'hard_gates':res['xfactor']['hard_gates'],'evidence':res}; p['decision_hash']=hashlib.sha256(json.dumps(p,sort_keys=True,default=str).encode()).hexdigest(); decisions.append(p)
+    prices=d.rename(columns={'trade_date':'trade_date'}); linkdir=path.parent/'.oiis_minute_links'; linkdir.mkdir(exist_ok=True); link=linkdir/(symbol+'.csv');
+    if not link.exists(): link.symlink_to(path)
+    run_id=str(uuid.uuid4()); shared.STRATEGY_ID=f'OIIS_CASH_DAILY_MINUTE_{pair}'; shared.FORMULA_VERSION=f'OIIS-CASH-DAILY-MINUTE-{pair}'; trades=shared.simulate_trades(decisions,prices,json.loads(CONFIG.read_text()),linkdir,end,run_id); missing=list(getattr(shared.simulate_trades,'missing_minute_symbols',[])); buckets=shared.performance(decisions,trades); h30=shared.rank_h30([x['h30_observation'] for x in trades]); closed=[x for x in trades if x['status']=='CLOSED']; summary={'run_id':run_id,'strategy_version_id':shared.STRATEGY_ID,'profile':pair,'thresholds':{'ofactor_min':o,'xfactor_b':xb,'xfactor_a':xa},'symbol_count':1,'decision_count':len(decisions),'signal_count':sum(x['decision_code'].startswith('ENTERABLE') for x in decisions),'trade_count':len(trades),'after_tax_net_pnl':round(sum(x['after_tax_net_pnl'] for x in closed),4),'shared_exit_policy_id':'COMMON-TARGET-ONLY-0.3-1.0-V1','evaluation_policy_id':'FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2','h30_diagnostic_score':h30['diagnostic_score'],'h30_ranking_status':h30['status'],'entry_only':True,'strategy_exit_override':False,'missing_minute_symbols':missing}; out=out_root/pair/symbol/run_id; shared.write_outputs(out,run_id,decisions,trades,buckets,summary,missing,h30); return summary|{'output_dir':str(out)}
+
+def main():
+    p=argparse.ArgumentParser(); p.add_argument('--data-dir',type=Path,required=True); p.add_argument('--symbol'); p.add_argument('--workers',type=int,default=12); p.add_argument('--start',type=date.fromisoformat,default=date(2015,1,1)); p.add_argument('--end',type=date.fromisoformat,default=date(2026,8,5)); p.add_argument('--output-root',type=Path,default=ROOT/'outputs'/'oiis_minute_profiles_v1'); a=p.parse_args(); files=sorted(a.data_dir.glob('*_minute.csv')); files=[f for f in files if not a.symbol or f.name.removesuffix('_minute.csv').upper()==a.symbol.upper()]; jobs=[(f,pair) for pair in PAIRS for f in files];
+    with ProcessPoolExecutor(max_workers=a.workers) as pool: results=[f.result() for f in as_completed([pool.submit(run_one,f,pair,a.start,a.end,a.output_root) for f,pair in jobs])]
+    print(json.dumps({'completed':len(results),'expected':len(jobs),'results':results[:20]},default=str))
+if __name__=='__main__': main()

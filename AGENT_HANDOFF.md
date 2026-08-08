@@ -1283,3 +1283,11 @@ The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strate
 - Excel/CSV outputs: `platform/nifty_stratlab/outputs/nifty50_yfinance_regime/`.
 - Run: set `DATABASE_URL` (or `TRADING_DATABASE_URL`) and execute the script; it is idempotent/upsert-based and never deletes existing rows.
 - Rules and examples: `platform/nifty_stratlab/docs/NIFTY50_YFINANCE_REGIME_INGESTION.md`.
+
+## NIFTY 500 stock daily Yahoo regime ingestion (2026-08-08)
+- Script: `platform/nifty_stratlab/tools/ingest_nifty500_yfinance_regime.py`.
+- PostgreSQL table: `strategy_eval.stock_daily_regime`, keyed by `(stock_name, trade_date)`.
+- The current NSE NIFTY 500 list is fetched from the NSE archive and symbols are mapped to `<SYMBOL>.NS`.
+- Excel is split into `DAILY_1`, `DAILY_2`, etc. because a single Excel sheet cannot exceed 1,048,576 rows.
+- `--csv-input <file>` reloads an existing CSV into PostgreSQL without refetching Yahoo data.
+- Detailed rules: `platform/nifty_stratlab/docs/NIFTY500_YFINANCE_REGIME_INGESTION.md`.

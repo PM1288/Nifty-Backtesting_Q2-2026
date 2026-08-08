@@ -21,7 +21,9 @@ def load_minute(path: Path) -> pd.DataFrame:
 
 def aggregate(path: Path, symbol: str) -> tuple[pd.DataFrame,pd.DataFrame]:
     minute=load_minute(path); minute["session"]=minute.date.dt.date
-    daily=minute.groupby("session",sort=True).agg(open=("open","first"),high=("high","max"),low=("low","min"),close=("close","last"),volume=("volume","sum")).reset_index().rename(columns={"session":"trade_date"}); daily["symbol"]=symbol; daily["sector"]="UNKNOWN"; daily["trade_date"]=pd.to_datetime(daily.trade_date)
+    daily=minute.groupby("session",sort=True).agg(open=("open","first"),high=("high","max"),low=("low","min"),close=("close","last"),volume=("volume","sum")).reset_index().rename(columns={"session":"trade_date"})
+    valid=(daily[["open","high","low","close"]]>0).all(axis=1)&(daily.low<=daily[["open","close","high"]].min(axis=1))&(daily.high>=daily[["open","close","low"]].max(axis=1))
+    daily=daily.loc[valid].copy(); daily["symbol"]=symbol; daily["sector"]="UNKNOWN"; daily["trade_date"]=pd.to_datetime(daily.trade_date)
     return daily,minute
 
 def run_one(path: Path, strategy: str, profile: str, start: date, end: date, out_root: Path) -> dict:

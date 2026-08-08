@@ -1275,3 +1275,11 @@ The detailed indicator definitions, threshold sequence, actual full-run funnel c
 ## Three entry-only strategy integration
 
 The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strategies are integrated through `platform/nifty_stratlab/tools/run_three_entry_only_replay.py`. Their rules, shared exit mapping, smoke result, and full-run command are documented in [THREE_ENTRY_ONLY_STRATEGIES_INTEGRATION.md](docs/strategies/THREE_ENTRY_ONLY_STRATEGIES_INTEGRATION.md).
+
+## NIFTY 50 daily Yahoo regime ingestion (2026-08-08)
+- Script: `platform/nifty_stratlab/tools/ingest_nifty50_yfinance_regime.py`
+- Migration: `db/sql/025_nifty50_yfinance_daily_regime.sql`
+- PostgreSQL table: `strategy_eval.nifty50_daily_regime` (one row per NIFTY trading date).
+- Excel/CSV outputs: `platform/nifty_stratlab/outputs/nifty50_yfinance_regime/`.
+- Run: set `DATABASE_URL` (or `TRADING_DATABASE_URL`) and execute the script; it is idempotent/upsert-based and never deletes existing rows.
+- Rules and examples: `platform/nifty_stratlab/docs/NIFTY50_YFINANCE_REGIME_INGESTION.md`.

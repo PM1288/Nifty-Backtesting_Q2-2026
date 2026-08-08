@@ -559,7 +559,9 @@ def run_component_screening(args) -> None:
     features = feature_snapshot(out); cache: dict = {}; checksums: dict = {}
     summaries = []
     baseline_path = out / "trials/S0_BASELINE_FULL/summary.json"
-    summaries.append(json.loads(baseline_path.read_text()))
+    baseline_summary = complete_trial_identity(out, baseline_trial(), json.loads(baseline_path.read_text()))
+    json_dump(baseline_path, baseline_summary)
+    summaries.append(baseline_summary)
     for trial in component_trials(): summaries.append(run_trial(out, trial, features, args.workers, cache, checksums, force=args.force))
     summary_frame = pd.DataFrame(summaries)
     summary_frame.to_csv(out / "trial_summary.csv", index=False)

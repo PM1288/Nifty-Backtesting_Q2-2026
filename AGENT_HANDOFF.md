@@ -1328,3 +1328,13 @@ The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strate
 - Successful acceptance run: `platform/nifty_stratlab/outputs/oiis_component_doe_v1/5a4494f1-4737-43ec-87fa-989fbb9e1835` for RELIANCE, 2024-01-01 through 2025-12-31, baseline + O_MRS ablation + X_SIS ablation.
 - Acceptance counts: 3 trials, 498 decisions/trial, 40,338 component-event rows, 3 scenario trades; PostgreSQL status `SMOKE_SUCCEEDED`.
 - The test is not factor-ranking evidence: only one accepted trade per treatment. Proceed to Stage 0 multi-stock baseline reconciliation before the 147-trial DOE.
+
+### Full-universe DOE launch (2026-08-08)
+
+- Runner now supports `--all-stocks` (all symbols in `strategy_eval.stock_daily_regime`) and `--all-trials` (all 147 governed matrix rows), with consolidated per-run CSV artifacts rather than per-stock folders.
+- Validation command launched:
+  `pw=$(grep '^POSTGRES_PASSWORD=' /home/novius2/trading-stack/.env | cut -d= -f2- | tr -d '\r'); export DATABASE_URL="postgresql://trader:${pw}@100.86.108.108:5432/tradingdb"; platform/nifty_stratlab/.venv/bin/python platform/nifty_stratlab/tools/run_oiis_component_doe.py --all-stocks --start 2024-01-01 --end 2025-12-31 --max-trials 3`
+- Live validation output folder: `platform/nifty_stratlab/outputs/oiis_component_doe_v1/dfc02ea6-27cc-4ad1-b8fc-0512a5869662`; process is monitored by the active terminal session. It writes consolidated `component_event_scores.csv`, `trades.csv`, target/adverse events, decision component events, trial summary, factor effects and regime performance.
+- Actual minute CSV inventory is 100 files under `/home/novius2/data/nifty-50-minute-data/aaditya555/NIFTY50`; the PostgreSQL daily regime universe is 500 symbols. All 500 receive daily/component DOE evaluation; minute-level path evidence is available only where a matching CSV exists and is never fabricated.
+- After validation completes without errors, launch the full matrix with `--all-stocks --all-trials` using the same command and archive the run folder. Full component-event output is intentionally large.
+- Code commit pushed to `DEV_PM_CODE`: `877d948`.

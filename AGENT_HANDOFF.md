@@ -1348,9 +1348,7 @@ The corrected OIIS baseline and complete 18-component screening workflow is docu
 - Recovery branch: `recovery/pre-oiis-18-component-screening-20260808`.
 - Experiment: `OIIS18_20260808T171037Z`.
 - Output: `platform/nifty_stratlab/outputs/oiis_complete_screening_v2/OIIS18_20260808T171037Z`.
-- Handoff ZIP: `OIIS_COMPLETE_18_COMPONENT_SCREENING_HANDOFF_20260808T190546Z.zip`.
-- ZIP SHA-256: `a981a08e1cef6a5af15cc84778d235ddde648674e129850fb52342c2ebe99948`.
-- ZIP size: 26,055,534 bytes; `unzip -tq` passed.
+- Stable handoff ZIP: `OIIS_COMPLETE_18_COMPONENT_SCREENING_HANDOFF_FINAL.zip` in the experiment output directory. The timestamped authoritative source path, exact size and SHA-256 are stored in `state.json` under `steps.export`; verify again with `sha256sum` and `unzip -tq` after any metadata refresh.
 - Frozen feature evidence: 226,575 stock-date decisions, 497 symbols, 2024-01-01 through 2025-12-31.
 - Minute evidence: 100 files and 89,243,241 rows; 99 admitted and HDFCLIFE rejected under the >=1% malformed-OHLC policy. Admitted-source common range is 2024-11-13 through 2025-08-06.
 - Corrected baseline: deterministic hash `db2c379fefed9e8cb15fb206a15c2e42f1cc7b9496edd9f0cde00392dc26585e`; 28,300 O-qualified, 120 enterable, 22 executed, INR 8,560.9558 total NLV P&L, 40.9091% clean I030-before-A050 and 95.4545% D+5 success.

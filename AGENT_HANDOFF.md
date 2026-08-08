@@ -1338,3 +1338,33 @@ The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strate
 - Actual minute CSV inventory is 100 files under `/home/novius2/data/nifty-50-minute-data/aaditya555/NIFTY50`; the PostgreSQL daily regime universe is 500 symbols. All 500 receive daily/component DOE evaluation; minute-level path evidence is available only where a matching CSV exists and is never fabricated.
 - After validation completes without errors, launch the full matrix with `--all-stocks --all-trials` using the same command and archive the run folder. Full component-event output is intentionally large.
 - Code commit pushed to `DEV_PM_CODE`: `877d948`.
+# Current OIIS DOE milestone
+
+The corrected OIIS baseline and complete 18-component screening workflow is documented in [docs/nifty-stratlab/OIIS_18_COMPONENT_SCREENING_RUNBOOK.md](docs/nifty-stratlab/OIIS_18_COMPONENT_SCREENING_RUNBOOK.md). Use `./scripts/oiis_doe.sh status` before starting or resuming work. Do not optimise weights or O/X aggregate thresholds in this milestone.
+
+## 2026-08-08 completed OIIS screening execution
+
+- Branch: `DEV_PM_CODE`.
+- Recovery branch: `recovery/pre-oiis-18-component-screening-20260808`.
+- Experiment: `OIIS18_20260808T171037Z`.
+- Output: `platform/nifty_stratlab/outputs/oiis_complete_screening_v2/OIIS18_20260808T171037Z`.
+- Handoff ZIP: `OIIS_COMPLETE_18_COMPONENT_SCREENING_HANDOFF_20260808T190546Z.zip`.
+- ZIP SHA-256: `a981a08e1cef6a5af15cc84778d235ddde648674e129850fb52342c2ebe99948`.
+- ZIP size: 26,055,534 bytes; `unzip -tq` passed.
+- Frozen feature evidence: 226,575 stock-date decisions, 497 symbols, 2024-01-01 through 2025-12-31.
+- Minute evidence: 100 files and 89,243,241 rows; 99 admitted and HDFCLIFE rejected under the >=1% malformed-OHLC policy. Admitted-source common range is 2024-11-13 through 2025-08-06.
+- Corrected baseline: deterministic hash `db2c379fefed9e8cb15fb206a15c2e42f1cc7b9496edd9f0cde00392dc26585e`; 28,300 O-qualified, 120 enterable, 22 executed, INR 8,560.9558 total NLV P&L, 40.9091% clean I030-before-A050 and 95.4545% D+5 success.
+- Baseline mode A: INR 8,560.9558 NLV P&L and -2.3280% daily total-NLV maximum drawdown.
+- Baseline mode B: INR 8,560.9558 NLV P&L and -1.4565% daily total-NLV maximum drawdown.
+- D+5 diagnostic portfolio: INR -19,504.3074, clearly separated from the authoritative target-only exit.
+- Completed: 18 primary ablations, 13 material neutral-at-50 sensitivities and 3 focused double-off factorial cells; 35 governed trial rows total.
+- MRS: `RETAIN_PROVISIONALLY`, primary influence 54.7247/100, net benefit 59.7504/100 and evidence confidence only 2.75/100.
+- SIS/TCS: `UNRESOLVED`; their single-ablation economics are identical and the 2x2 interaction has only 15 effective paths.
+- CCS, TSQ and IOQ: `NOT_ESTIMABLE`; each is static in the full 226,575-row component event table.
+- O-LTS/X-LSQ: identical on 100% of decisions with correlation 1.0; redundancy remains a hypothesis, not removal authority.
+- Chronology: zero valid outer folds; one descriptive non-compliant block; final holdout not validly evaluable and prospective 60-session shadow pending.
+- Promotion blockers: one repeated historical constituent panel (`BLOCKED_LEAKAGE`) and corporate-action facts beginning only 2026-02-20 (`BLOCKED_DATA`).
+- Tests: all `platform/nifty_stratlab/tests` passed (91 tests); focused Phase 3 suite passed (58 tests).
+- Disposable database: migration `db/sql/030_oiis_doe_v2.sql` applied idempotently to `oiis_doe_test`; export persisted 35 trials, 108 factor-effect rows and 375 artifact catalogue rows.
+
+Commands used are reproduced in the ZIP at `18_RUN_COMMANDS.md`. The latest live logs are under the experiment `logs/` directory. Do not promote, optimise weights, or optimise aggregate O/X thresholds until point-in-time universe and corporate-action blockers are repaired and the study is rerun.

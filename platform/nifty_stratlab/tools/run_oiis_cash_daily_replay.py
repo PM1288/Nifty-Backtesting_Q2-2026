@@ -231,14 +231,41 @@ def _minute_frame(path: Path, start: date, end: date) -> pd.DataFrame:
         frame["ts"] = frame["ts"].dt.tz_localize("Asia/Kolkata", ambiguous="raise", nonexistent="raise")
     for column in ("open", "high", "low", "close"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    frame = frame.dropna().sort_values("ts").reset_index(drop=True)
+    frame = frame.dropna().sort_values("ts")
+    # Inventory records malformed OHLC rows; execution must never consume
+    # them.  Filtering is deterministic and leaves the immutable CSV intact.
+    frame = frame[
+        (frame["low"] > 0)
+        & (frame["low"] <= frame[["open", "close"]].min(axis=1))
+        & (frame["high"] >= frame[["open", "close"]].max(axis=1))
+        & (frame["high"] >= frame["low"])
+    ]
+    # The source is declared as IST. Off-session and weekend rows are not
+    # executable NSE evidence and must not participate in entry or path tests.
+    local_minutes = frame["ts"].dt.hour * 60 + frame["ts"].dt.minute
+    frame = frame[
+        (frame["ts"].dt.weekday < 5)
+        & (local_minutes >= 9 * 60 + 15)
+        & (local_minutes <= 15 * 60 + 30)
+    ].drop_duplicates(subset=["ts"], keep="last").reset_index(drop=True)
     frame["session"] = frame["ts"].dt.date
     return frame
+
+
+def session_basis_factor(eod_open: float, csv_open: float) -> float:
+    """Map retrospectively adjusted minute prices to the session EOD basis."""
+    if not np.isfinite(eod_open) or not np.isfinite(csv_open) or eod_open <= 0 or csv_open <= 0:
+        raise ValueError("positive finite EOD and minute opens are required")
+    return eod_open / csv_open
 
 
 def simulate_trades(
     decisions: list[dict[str, Any]], prices: pd.DataFrame, config: dict[str, Any],
     minute_csv_dir: Path, end: date, run_namespace: str,
+    symbol_aliases: dict[str, str] | None = None,
+    shared_minute_cache: dict[str, pd.DataFrame] | None = None,
+    shared_minute_checksums: dict[str, str] | None = None,
+    rejected_minute_symbols: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     simulate_trades.missing_minute_symbols = []
     execution = config["execution"]
@@ -253,32 +280,63 @@ def simulate_trades(
     index_by_symbol = {symbol: {pd.Timestamp(value).date(): idx for idx, value in enumerate(group["trade_date"])} for symbol, group in by_symbol.items()}
     trades: list[dict[str, Any]] = []
     busy_until: dict[str, date] = {}
-    minute_cache: dict[str, pd.DataFrame] = {}
-    minute_checksums: dict[str, str] = {}
+    minute_cache = shared_minute_cache if shared_minute_cache is not None else {}
+    minute_checksums = shared_minute_checksums if shared_minute_checksums is not None else {}
     missing_minute_symbols: set[str] = set()
+    skipped_signals: list[dict[str, Any]] = []
+    aliases = {key.upper(): value.upper() for key, value in (symbol_aliases or {}).items()}
+    rejected_sources = {value.upper() for value in (rejected_minute_symbols or set())}
+    def skip(decision: dict[str, Any], reason: str, details: str) -> None:
+        skipped_signals.append({
+            "decision_hash": decision["decision_hash"], "symbol": decision["symbol"],
+            "trade_date": decision["trade_date"], "reason_code": reason, "details": details,
+        })
     for decision in sorted(decisions, key=lambda row: (row["trade_date"], row["symbol"])):
         if decision["decision_code"] not in {"ENTERABLE_TIER_A", "ENTERABLE_TIER_B"} or decision["selected_direction"] != "LONG":
             continue
         symbol = decision["symbol"]
         if busy_until.get(symbol, date.min) >= decision["trade_date"]:
+            skip(decision, "DUPLICATE_SAME_SYMBOL_POSITION", f"existing position occupied through {busy_until[symbol]}")
             continue
         group = by_symbol[symbol]
         signal_index = index_by_symbol[symbol].get(decision["trade_date"])
         if signal_index is None or signal_index + 1 >= len(group):
+            skip(decision, "NO_NEXT_VALID_SESSION", "no canonical next session after signal")
             continue
         entry_index = signal_index + 1
         entry_row = group.iloc[entry_index]
         entry_date = pd.Timestamp(entry_row.trade_date).date()
-        if symbol not in minute_cache:
-            minute_path = minute_csv_dir / f"{symbol}.csv"
+        source_symbol = aliases.get(symbol, symbol)
+        if source_symbol in rejected_sources:
+            skip(decision, "DATA_QUALITY_REJECTED", f"minute source {source_symbol} failed the frozen research-admission policy")
+            continue
+        if source_symbol not in minute_cache:
+            minute_path = minute_csv_dir / f"{source_symbol}.csv"
             if not minute_path.is_file():
                 missing_minute_symbols.add(symbol)
+                reason = "SYMBOL_ALIAS_UNRESOLVED" if any(character in symbol for character in "& ") else "MINUTE_FILE_NOT_FOUND"
+                skip(decision, reason, f"no admitted minute source for {symbol}")
                 continue
-            minute_cache[symbol] = _minute_frame(minute_path, entry_date, end)
-            minute_checksums[symbol] = digest_file(minute_path)
-        minute = minute_cache[symbol]
+            cache_start = pd.Timestamp(prices["trade_date"].min()).date() if shared_minute_cache is not None else entry_date
+            minute_cache[source_symbol] = _minute_frame(minute_path, cache_start, end)
+            minute_checksums[source_symbol] = digest_file(minute_path)
+        minute = minute_cache[source_symbol]
         path_frame = minute[minute["session"] >= entry_date].copy()
+        if minute.empty:
+            skip(decision, "EXECUTION_PRICE_UNAVAILABLE", "minute source contains no admitted market-session rows")
+            continue
+        if entry_date < minute.iloc[0]["session"]:
+            skip(decision, "ENTRY_DATE_BEFORE_SOURCE_START", f"source begins {minute.iloc[0]['session']}")
+            continue
+        if entry_date > minute.iloc[-1]["session"]:
+            skip(decision, "ENTRY_DATE_AFTER_SOURCE_END", f"source ends {minute.iloc[-1]['session']}")
+            continue
         if path_frame.empty or path_frame.iloc[0]["session"] != entry_date:
+            skip(decision, "ENTRY_SESSION_INCOMPLETE", "entry session absent after IST market-session filter")
+            continue
+        entry_session_rows = path_frame[path_frame["session"] == entry_date]
+        if len(entry_session_rows) < 300 or entry_session_rows.iloc[0]["ts"].time().strftime("%H:%M") != "09:15":
+            skip(decision, "ENTRY_SESSION_INCOMPLETE", f"entry session has {len(entry_session_rows)} admitted minutes")
             continue
         # The CSV estate is retrospectively corporate-action adjusted whereas
         # canonical EOD facts retain their session price basis.  Normalize each
@@ -287,9 +345,10 @@ def simulate_trades(
         # historical ₹2 lakh position size.
         eod_open = {pd.Timestamp(row.trade_date).date(): float(row.open_price) for row in group.itertuples(index=False)}
         csv_open = path_frame.groupby("session", sort=False)["open"].first().to_dict()
-        factors = {session: eod_open[session] / value for session, value in csv_open.items() if session in eod_open and value > 0}
+        factors = {session: session_basis_factor(eod_open[session], value) for session, value in csv_open.items() if session in eod_open and value > 0}
         path_frame = path_frame[path_frame["session"].isin(factors)].copy()
         if path_frame.empty or entry_date not in factors:
+            skip(decision, "CORPORATE_ACTION_AMBIGUITY", "minute-to-EOD session basis could not be reconciled")
             continue
         for column in ("open", "high", "low", "close"):
             path_frame[column] = path_frame[column] * path_frame["session"].map(factors)
@@ -306,7 +365,8 @@ def simulate_trades(
             quantity=quantity, bars=path, policy=policy, run_namespace=run_namespace,
         )
         outcome["decision_hash"] = decision["decision_hash"]
-        outcome["minute_source_sha256"] = minute_checksums[symbol]
+        outcome["minute_source_sha256"] = minute_checksums[source_symbol]
+        outcome["minute_source_symbol"] = source_symbol
         outcome["minute_to_eod_entry_basis_factor"] = round(float(factors[entry_date]), 8)
         outcome["target_price"] = (
             outcome["intraday_target_price"] if str(outcome["exit_reason"]).startswith("TARGET_INTRADAY")
@@ -354,6 +414,7 @@ def simulate_trades(
     # trade-row contract. Missing minute evidence is a data warning, never a
     # fabricated daily fallback or a synthetic exit.
     simulate_trades.missing_minute_symbols = sorted(missing_minute_symbols)
+    simulate_trades.skipped_signals = skipped_signals
     return trades
 
 

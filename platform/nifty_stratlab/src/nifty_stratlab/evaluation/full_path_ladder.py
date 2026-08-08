@@ -58,6 +58,25 @@ def _pct(value: Decimal, entry: Decimal) -> Decimal:
     return (value / entry - Decimal("1")) * Decimal("100")
 
 
+def classify_target_adverse_order(target_event: dict, adverse_event: dict) -> str:
+    """Classify two immutable first-touch events without inventing bar order."""
+    target_hit = bool(target_event.get("hit_flag"))
+    adverse_hit = bool(adverse_event.get("hit_flag"))
+    if not target_hit and not adverse_hit:
+        return "NEITHER"
+    if target_hit and not adverse_hit:
+        return "TARGET_ONLY"
+    if adverse_hit and not target_hit:
+        return "ADVERSE_ONLY"
+    target_ts = target_event.get("first_touch_ts")
+    adverse_ts = adverse_event.get("first_touch_ts")
+    if not target_ts or not adverse_ts:
+        return "AMBIGUOUS_MISSING_TIMESTAMP"
+    if target_ts == adverse_ts:
+        return "SAME_TIMESTAMP_AMBIGUOUS"
+    return "TARGET_FIRST" if target_ts < adverse_ts else "ADVERSE_FIRST"
+
+
 def evaluate_full_path(
     *, entry_path_id: str, symbol: str, entry_price: Decimal,
     quantity: int, bars: Iterable[LadderBar], policy: FullPathPolicy | None = None,
@@ -188,6 +207,12 @@ def evaluate_full_path(
 
     reward_events = [rewards[level] for level in highest_order]
     adverse_events = [adverse[level] for level in adverse_order]
+    primary_adverse = adverse["A050"]
+    primary_target = rewards["I030"]
+    for event in reward_events:
+        event["sequence"] = classify_target_adverse_order(event, primary_adverse)
+    for event in adverse_events:
+        event["sequence"] = classify_target_adverse_order(primary_target, event)
     for event in reward_events:
         event.update({
             "target_id": event["level_id"], "target_pct": event["level_pct"],
@@ -220,6 +245,7 @@ def evaluate_full_path(
         "mfe_d5_pct": round(float(_pct(max(bar.high for bar in primary), entry_price)), 6),
         "mae_d5_pct": round(float(_pct(min(bar.low for bar in primary), entry_price)), 6),
         "unresolved_at_d5": not rewards["S100"]["hit_flag"],
+        "i030_vs_a050_ordering": classify_target_adverse_order(rewards["I030"], adverse["A050"]),
         "extended_capital_lock": {
             "bars_evaluated": len(extended),
             "late_recovery_flag": any(bar.high >= entry_price for bar in extended) if extended else False,

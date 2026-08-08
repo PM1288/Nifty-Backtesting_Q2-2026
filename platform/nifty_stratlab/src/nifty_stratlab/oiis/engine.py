@@ -179,6 +179,13 @@ def opportunity(feature: OIISFeature, direction: str, weights: Mapping[str, floa
         "liquidity_tradability": linear(feature.turnover_percentile, 0.05, 0.80),
         "catalyst_context": 0.0 if feature.event_risk else 50.0,
     }
+    neutral_components = set()
+    if isinstance(weights, Mapping) and "__neutral_components__" in weights:
+        neutral_components = {str(value) for value in weights["__neutral_components__"]}
+        weights = {key: value for key, value in weights.items() if key != "__neutral_components__"}
+    for component in neutral_components:
+        if component in components:
+            components[component] = 50.0
     effective_weights = normalise_weights(weights or OFACTOR_WEIGHTS)
     raw = weighted_score(components, effective_weights)
     penalties: dict[str, float] = {}
@@ -190,9 +197,10 @@ def opportunity(feature: OIISFeature, direction: str, weights: Mapping[str, floa
         penalties["event_risk"] = 12.0
     if feature.return_5d_pct is not None and feature.return_21d_pct is not None and sign * feature.return_5d_pct > 0 > sign * feature.return_21d_pct:
         penalties["timeframe_conflict"] = 5.0
-    final = clamp(raw - sum(penalties.values()))
+    penalty_total = round(sum(penalties.values()), 4)
+    final = clamp(raw - penalty_total)
     classification = "EXCEPTIONAL" if final >= 90 else "TIER_A" if final >= 82 else "TIER_B" if final >= 74 else "WATCHLIST" if final >= 65 else "WEAK" if final >= 55 else "REJECT"
-    return {"direction": direction, "raw_score": raw, "final_score": final, "classification": classification, "components": {key: round(value, 4) for key, value in components.items()}, "weights": effective_weights, "weighted_contributions": {key: round(components[key] * effective_weights[key] / 100.0, 4) for key in components}, "penalties": penalties}
+    return {"direction": direction, "raw_score": raw, "final_score": final, "classification": classification, "components": {key: round(value, 4) for key, value in components.items()}, "weights": effective_weights, "weighted_contributions": {key: round(components[key] * effective_weights[key] / 100.0, 4) for key in components}, "penalties": penalties, "penalty_total": penalty_total, "score_reconciliation_residual": round(final - clamp(raw - penalty_total), 8)}
 
 
 def _detect_setup(feature: OIISFeature, direction: str) -> tuple[str | None, str]:
@@ -232,7 +240,9 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
     reward_risk = 2.0 if risk > 0 and (barrier_room is None or barrier_room >= 2.0 * risk) else (barrier_room / risk if risk > 0 and barrier_room is not None else 0.0)
     trigger_confirmed = setup_state == "TRIGGERED"
     ofactor_weights = thresholds.get("ofactor_weights")
-    xfactor_weights = normalise_weights(thresholds.get("xfactor_weights") or XFACTOR_WEIGHTS)
+    raw_xfactor_weights = thresholds.get("xfactor_weights") or XFACTOR_WEIGHTS
+    neutral_components = set(thresholds.get("neutral_components") or [])
+    xfactor_weights = normalise_weights(raw_xfactor_weights)
     opportunity_components = opportunity(feature, direction, ofactor_weights)["components"]
     components = {
         "setup_integrity": 90.0 if setup_id and trigger_confirmed else 72.0 if setup_id else 20.0,
@@ -245,6 +255,9 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
         "timing_session_quality": 80.0,
         "instrument_quality": 100.0,
     }
+    for component in neutral_components:
+        if component in components:
+            components[component] = 50.0
     score = weighted_score(components, xfactor_weights)
     gates: list[str] = []
     if dq["permission"] == "DATA_INSUFFICIENT": gates.append("STALE_OR_INSUFFICIENT_MARKET_DATA")
@@ -285,6 +298,11 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
         "setup_id": setup_id,
         "setup_state": setup_state,
         "score": score,
+        "raw_score": score,
+        "final_score": score,
+        "penalties": {},
+        "penalty_total": 0.0,
+        "score_reconciliation_residual": 0.0,
         "components": {key: round(value, 4) for key, value in components.items()},
         "weights": xfactor_weights,
         "weighted_contributions": {key: round(components[key] * xfactor_weights[key] / 100.0, 4) for key in components},
@@ -302,6 +320,9 @@ def evaluate_feature(feature: OIISFeature, thresholds: Mapping[str, Any] | None 
     ofactor_min = float(thresholds.get("ofactor_min", 74.0))
     dq = data_quality(feature)
     ofactor_weights = thresholds.get("ofactor_weights")
+    neutral_components = set(thresholds.get("neutral_components") or [])
+    if neutral_components:
+        ofactor_weights = {**(ofactor_weights or OFACTOR_WEIGHTS), "__neutral_components__": list(neutral_components)}
     long_score = opportunity(feature, "LONG", ofactor_weights)
     short_score = opportunity(feature, "SHORT", ofactor_weights)
     edge = round(float(long_score["final_score"]) - float(short_score["final_score"]), 4)

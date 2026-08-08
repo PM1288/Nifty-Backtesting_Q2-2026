@@ -124,7 +124,7 @@ def evaluate_long_target_only(
         swing_cost_bps=policy.swing_round_trip_cost_bps,
         positive_profit_tax_rate=policy.positive_profit_tax_rate,
     )
-    sessions = full_path["sessions_evaluated"]
+    evaluation_sessions = full_path["sessions_evaluated"]
     entry_notional = entry_price * quantity
     if execution["status"] == "CLOSED":
         status = "CLOSED"
@@ -148,6 +148,38 @@ def evaluate_long_target_only(
         tax = Decimal("0")
         after_tax = Decimal("0")
         unrealized_net = (mark_price - entry_price) * quantity - costs
+    observation_end_ts = exit_ts or path[-1].ts
+    observed_sessions = list(dict.fromkeys(bar.session for bar in path if bar.ts <= observation_end_ts))
+    actual_holding_minutes = max((observation_end_ts - path[0].ts).total_seconds() / 60.0, 0.0)
+    actual_holding_calendar_days = max((observation_end_ts.date() - entry_session).days, 0)
+    session_closes: list[tuple[date, Decimal]] = []
+    for session in observed_sessions:
+        close = [bar.close for bar in path if bar.session == session and bar.ts <= observation_end_ts][-1]
+        session_closes.append((session, close))
+    underwater = [session for session, close in session_closes if close < entry_price]
+    first_underwater_index = next((index for index, (_, close) in enumerate(session_closes) if close < entry_price), None)
+    recovery_index = None if first_underwater_index is None else next(
+        (index for index, (_, close) in enumerate(session_closes[first_underwater_index + 1:], start=first_underwater_index + 1) if close >= entry_price),
+        None,
+    )
+    capital_day_fraction = max(actual_holding_minutes / 1440.0, 1.0 / 1440.0)
+    i030 = next(event for event in full_path["reward_events"] if event["level_id"] == "I030")
+    s100 = next(event for event in full_path["reward_events"] if event["level_id"] == "S100")
+    roe_d5_success = bool(i030["hit_flag"] or s100["hit_flag"])
+    eventual_s100 = bool(full_path["extended_capital_lock"].get("s100_eventually_hit"))
+    if roe_d5_success:
+        roe_d5_outcome = "ROE_D5_SUCCESS"
+    elif eventual_s100:
+        roe_d5_outcome = "ROE_D5_FAILURE_LATE_RECOVERY"
+    else:
+        roe_d5_outcome = "ROE_D5_FAILURE_STILL_OPEN"
+    d5_checkpoint = full_path["checkpoints"][-1]
+    d5_mark = Decimal(str(d5_checkpoint["close_price"]))
+    d5_gross = (d5_mark - entry_price) * quantity
+    d5_costs = entry_notional * policy.swing_round_trip_cost_bps / Decimal("10000")
+    d5_pre_tax = d5_gross - d5_costs
+    d5_tax = max(d5_pre_tax, Decimal("0")) * policy.positive_profit_tax_rate
+    d5_liquidation = d5_pre_tax - d5_tax
     return {
         "policy_id": policy.policy_id,
         "evaluation_policy_id": full_path["evaluation_policy_id"],
@@ -173,7 +205,21 @@ def evaluate_long_target_only(
         "after_tax_net_pnl": round(float(after_tax), 4),
         "unrealized_net_liquidation_pnl": round(float(unrealized_net), 4),
         "mark_price": round(float(mark_price), 6),
-        "holding_sessions": sessions,
+        "evaluation_sessions": evaluation_sessions,
+        # Compatibility only for existing persistence; new analysis must use
+        # evaluation_sessions or the actual-holding fields below.
+        "holding_sessions": evaluation_sessions,
+        "actual_holding_minutes": round(actual_holding_minutes, 4),
+        "actual_holding_trading_sessions": len(observed_sessions),
+        "actual_holding_calendar_days": actual_holding_calendar_days,
+        "capital_days": round(float(entry_notional) * capital_day_fraction, 4),
+        "time_underwater_sessions": len(underwater),
+        "recovery_sessions": None if recovery_index is None or first_underwater_index is None else recovery_index - first_underwater_index,
+        "roe_d5_outcome": roe_d5_outcome,
+        "roe_d5_evaluation_ts": d5_checkpoint["checkpoint_ts"],
+        "roe_d5_success": roe_d5_success,
+        "roe_d5_mark_to_market_pnl": round(float(d5_gross), 4),
+        "roe_d5_liquidation_diagnostic_pnl": round(float(d5_liquidation), 4),
         "mfe_pct": round(float(full_path["mfe_d5_pct"]), 4),
         "mae_pct": round(float(full_path["mae_d5_pct"]), 4),
         "stop_price": None,

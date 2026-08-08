@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from nifty_stratlab.evaluation.common_exit import PathBar, evaluate_long_target_only
+from nifty_stratlab.evaluation.full_path_ladder import classify_target_adverse_order
 
 
 DAY = date(2026, 1, 5)
@@ -39,7 +40,9 @@ def test_intraday_miss_promotes_to_one_percent_from_original_buy_price() -> None
     ])
     assert result["exit_reason"] == "TARGET_SWING_1_0"
     assert result["exit_price"] == 101.0
-    assert result["holding_sessions"] == 2
+    assert result["evaluation_sessions"] == 2
+    assert result["actual_holding_trading_sessions"] == 2
+    assert result["actual_holding_calendar_days"] == 1
 
 
 def test_adverse_thresholds_record_risk_but_never_exit() -> None:
@@ -91,3 +94,39 @@ def test_d6_swing_target_closes_execution_without_rewriting_d5_ladder() -> None:
     assert result["status"] == "CLOSED"
     assert result["exit_reason"] == "TARGET_SWING_1_0"
     assert result["exit_date"] == DAY + timedelta(days=6)
+    assert result["roe_d5_outcome"] == "ROE_D5_FAILURE_LATE_RECOVERY"
+    assert result["roe_d5_success"] is False
+
+
+def test_d5_success_is_separate_from_late_recovery() -> None:
+    result = evaluate([
+        bar(0, DAY, "100", "100.1", "99.8", "100"),
+        bar(0, DAY + timedelta(days=1), "100", "101.1", "99.9", "101"),
+    ])
+    assert result["roe_d5_outcome"] == "ROE_D5_SUCCESS"
+    assert result["roe_d5_success"] is True
+
+
+def test_actual_holding_and_capital_days_for_intraday_trade() -> None:
+    result = evaluate([
+        bar(0, DAY, "100", "100.1", "99.8", "100"),
+        bar(30, DAY, "100", "100.4", "99.9", "100.3"),
+    ])
+    assert result["actual_holding_minutes"] == 30.0
+    assert result["actual_holding_trading_sessions"] == 1
+    assert result["actual_holding_calendar_days"] == 0
+    assert result["capital_days"] == round(200000 * 30 / 1440, 4)
+
+
+def test_all_target_adverse_order_states() -> None:
+    def event(hit: bool, ts: str | None) -> dict:
+        return {"hit_flag": hit, "first_touch_ts": ts}
+    earlier = "2026-01-05T09:20:00"
+    later = "2026-01-05T09:21:00"
+    assert classify_target_adverse_order(event(True, earlier), event(False, None)) == "TARGET_ONLY"
+    assert classify_target_adverse_order(event(True, earlier), event(True, later)) == "TARGET_FIRST"
+    assert classify_target_adverse_order(event(True, later), event(True, earlier)) == "ADVERSE_FIRST"
+    assert classify_target_adverse_order(event(False, None), event(True, earlier)) == "ADVERSE_ONLY"
+    assert classify_target_adverse_order(event(True, earlier), event(True, earlier)) == "SAME_TIMESTAMP_AMBIGUOUS"
+    assert classify_target_adverse_order(event(True, None), event(True, later)) == "AMBIGUOUS_MISSING_TIMESTAMP"
+    assert classify_target_adverse_order(event(False, None), event(False, None)) == "NEITHER"

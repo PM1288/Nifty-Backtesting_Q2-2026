@@ -46,7 +46,7 @@ def test_reward_then_later_adverse_both_persist() -> None:
 def test_same_bar_reward_and_adverse_is_ambiguous() -> None:
     result = run([b(0, 0, "100.8", "98.8")] + six_days()[1:])
     assert events(result, "reward_events")["I070"]["same_bar_order_ambiguous"]
-    assert events(result, "adverse_events")["A100"]["sequence"] == "SAME_BAR_ORDER_UNKNOWN"
+    assert events(result, "adverse_events")["A100"]["sequence"] == "SAME_TIMESTAMP_AMBIGUOUS"
 
 
 def test_swing_levels_record_d1_d3_d5() -> None:

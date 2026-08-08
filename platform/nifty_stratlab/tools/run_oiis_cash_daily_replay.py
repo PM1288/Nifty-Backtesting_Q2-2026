@@ -71,16 +71,18 @@ def frame(cur, sql: str, params: tuple[Any, ...] = ()) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=[column.name for column in cur.description])
 
 
-def load_source(conn, start: date, end: date, symbol: str | None) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_source(conn, start: date, end: date, symbol: str | None, all_stocks: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     warmup = start - timedelta(days=150)
     symbol_clause = "AND UPPER(TRIM(e.symbol))=%s" if symbol else ""
     params: tuple[Any, ...] = (warmup, end, symbol) if symbol else (warmup, end)
+    all_stock_union = "" if not all_stocks else "UNION SELECT DISTINCT UPPER(REGEXP_REPLACE(TRIM(REGEXP_REPLACE(yahoo_symbol,'\\.NS$','')),'-EQ$','')) FROM strategy_eval.stock_daily_regime"
     with conn.cursor() as cur:
         prices = frame(cur, f"""
           WITH universe AS (
             SELECT DISTINCT UPPER(REGEXP_REPLACE(TRIM(tradingsymbol),'-EQ$','')) symbol
             FROM public.instrument_universe
             WHERE exchange='NSE' AND universe_name='nifty100_equity' AND active_to IS NULL
+            {all_stock_union}
           ), sectors AS (
             SELECT DISTINCT ON (UPPER(TRIM(symbol))) UPPER(TRIM(symbol)) symbol,
               COALESCE(NULLIF(TRIM(sector),''),NULLIF(TRIM(industry),''),NULLIF(TRIM(basic_industry),''),'OTHER') sector

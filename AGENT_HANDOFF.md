@@ -1291,3 +1291,10 @@ The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strate
 - Excel is split into `DAILY_1`, `DAILY_2`, etc. because a single Excel sheet cannot exceed 1,048,576 rows.
 - `--csv-input <file>` reloads an existing CSV into PostgreSQL without refetching Yahoo data.
 - Detailed rules: `platform/nifty_stratlab/docs/NIFTY500_YFINANCE_REGIME_INGESTION.md`.
+
+## Global market daily regimes (2026-08-08)
+- Script: `platform/nifty_stratlab/tools/ingest_global_yfinance_regime.py`.
+- Table: `strategy_eval.global_market_daily_regime`, keyed by `(instrument_name, trade_date)`.
+- Instruments: `CRUDE_OIL`, `GOLD`, `USD_INR`, `DOW_JONES`, `INDIA_VIX`.
+- Outputs: `platform/nifty_stratlab/outputs/global_yfinance_regime/`.
+- Detailed ticker/rule reference: `platform/nifty_stratlab/docs/GLOBAL_MARKET_YFINANCE_REGIME_INGESTION.md`.

@@ -91,7 +91,22 @@ def directional(value: float | None, direction: str, magnitude: float) -> float:
     return linear(signed, -magnitude, magnitude)
 
 
+def normalise_weights(weights: Mapping[str, float]) -> dict[str, float]:
+    """Accept governed mixture weights expressed either as fractions or percentages."""
+    values = {name: float(value) for name, value in weights.items()}
+    total = sum(values.values())
+    if abs(total - 1.0) < 1e-6:
+        values = {name: value * 100.0 for name, value in values.items()}
+        total = 100.0
+    if abs(total - 100.0) > 1e-6:
+        raise ValueError(f"Component weights must sum to 1 or 100, got {total}")
+    return values
+
+
 def weighted_score(components: Mapping[str, float], weights: Mapping[str, float]) -> float:
+    weights = normalise_weights(weights)
+    if set(components) != set(weights):
+        raise ValueError(f"Component/weight keys differ: missing={set(components)-set(weights)}, extra={set(weights)-set(components)}")
     if round(sum(weights.values()), 8) != 100.0:
         raise ValueError("Component weights must sum to 100")
     return clamp(sum(clamp(components[name]) * weight for name, weight in weights.items()) / 100.0)
@@ -145,7 +160,7 @@ def _momentum_component(feature: OIISFeature, direction: str) -> float:
     return (rsi_directional + directional(feature.return_5d_pct, direction, 6.0)) / 2.0
 
 
-def opportunity(feature: OIISFeature, direction: str) -> dict[str, Any]:
+def opportunity(feature: OIISFeature, direction: str, weights: Mapping[str, float] | None = None) -> dict[str, Any]:
     sign = 1.0 if direction == "LONG" else -1.0
     sector_excess = None if feature.sector_return_21d_pct is None or feature.nifty_return_21d_pct is None else feature.sector_return_21d_pct - feature.nifty_return_21d_pct
     stock_excess_market = None if feature.return_21d_pct is None or feature.nifty_return_21d_pct is None else feature.return_21d_pct - feature.nifty_return_21d_pct
@@ -164,7 +179,8 @@ def opportunity(feature: OIISFeature, direction: str) -> dict[str, Any]:
         "liquidity_tradability": linear(feature.turnover_percentile, 0.05, 0.80),
         "catalyst_context": 0.0 if feature.event_risk else 50.0,
     }
-    raw = weighted_score(components, OFACTOR_WEIGHTS)
+    effective_weights = normalise_weights(weights or OFACTOR_WEIGHTS)
+    raw = weighted_score(components, effective_weights)
     penalties: dict[str, float] = {}
     if feature.rsi_14 is not None and ((direction == "LONG" and feature.rsi_14 >= 78) or (direction == "SHORT" and feature.rsi_14 <= 22)):
         penalties["exhaustion"] = 8.0
@@ -176,7 +192,7 @@ def opportunity(feature: OIISFeature, direction: str) -> dict[str, Any]:
         penalties["timeframe_conflict"] = 5.0
     final = clamp(raw - sum(penalties.values()))
     classification = "EXCEPTIONAL" if final >= 90 else "TIER_A" if final >= 82 else "TIER_B" if final >= 74 else "WATCHLIST" if final >= 65 else "WEAK" if final >= 55 else "REJECT"
-    return {"direction": direction, "raw_score": raw, "final_score": final, "classification": classification, "components": {key: round(value, 4) for key, value in components.items()}, "penalties": penalties}
+    return {"direction": direction, "raw_score": raw, "final_score": final, "classification": classification, "components": {key: round(value, 4) for key, value in components.items()}, "weights": effective_weights, "weighted_contributions": {key: round(components[key] * effective_weights[key] / 100.0, 4) for key in components}, "penalties": penalties}
 
 
 def _detect_setup(feature: OIISFeature, direction: str) -> tuple[str | None, str]:
@@ -194,7 +210,7 @@ def _detect_setup(feature: OIISFeature, direction: str) -> tuple[str | None, str
     return None, "FORMING"
 
 
-def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], dq: Mapping[str, Any], thresholds: Mapping[str, float] | None = None) -> dict[str, Any]:
+def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], dq: Mapping[str, Any], thresholds: Mapping[str, Any] | None = None) -> dict[str, Any]:
     thresholds = thresholds or {}
     ofactor_min = float(thresholds.get("ofactor_min", 74.0))
     xfactor_a = float(thresholds.get("xfactor_a", 84.0))
@@ -215,18 +231,21 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
     risk_atr = risk / atr if atr > 0 else None
     reward_risk = 2.0 if risk > 0 and (barrier_room is None or barrier_room >= 2.0 * risk) else (barrier_room / risk if risk > 0 and barrier_room is not None else 0.0)
     trigger_confirmed = setup_state == "TRIGGERED"
+    ofactor_weights = thresholds.get("ofactor_weights")
+    xfactor_weights = normalise_weights(thresholds.get("xfactor_weights") or XFACTOR_WEIGHTS)
+    opportunity_components = opportunity(feature, direction, ofactor_weights)["components"]
     components = {
         "setup_integrity": 90.0 if setup_id and trigger_confirmed else 72.0 if setup_id else 20.0,
         "entry_location_quality": 50.0 if extension_atr is None else linear(1.5 - extension_atr, 0.0, 1.5),
         "trigger_confirmation": 90.0 if trigger_confirmed else 55.0 if setup_state == "ARMED" else 20.0,
         "stop_invalidation_quality": 50.0 if risk_atr is None else linear(2.5 - risk_atr, 0.0, 2.5),
         "reward_path_quality": linear(reward_risk, 0.5, 2.5),
-        "market_sector_synchronisation": (opportunity(feature, direction)["components"]["market_regime_support"] + opportunity(feature, direction)["components"]["sector_industry_support"]) / 2.0,
+        "market_sector_synchronisation": (opportunity_components["market_regime_support"] + opportunity_components["sector_industry_support"]) / 2.0,
         "liquidity_slippage_quality": linear(feature.turnover_percentile, 0.05, 0.8),
         "timing_session_quality": 80.0,
         "instrument_quality": 100.0,
     }
-    score = weighted_score(components, XFACTOR_WEIGHTS)
+    score = weighted_score(components, xfactor_weights)
     gates: list[str] = []
     if dq["permission"] == "DATA_INSUFFICIENT": gates.append("STALE_OR_INSUFFICIENT_MARKET_DATA")
     if float(ofactor["final_score"]) < ofactor_min: gates.append("OFACTOR_BELOW_MINIMUM")
@@ -238,6 +257,8 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
     if extension_atr is not None and extension_atr > 1.5: gates.append("EXCESSIVE_EXTENSION")
     if feature.volume_ratio_20 is None or feature.volume_ratio_20 < 0.75 or feature.turnover_percentile is None or feature.turnover_percentile < 0.10:
         gates.append("INSUFFICIENT_LIQUIDITY")
+    disabled_gates = {str(value) for value in thresholds.get("disabled_gates", [])}
+    gates = [gate for gate in gates if gate not in disabled_gates]
     if "STALE_OR_INSUFFICIENT_MARKET_DATA" in gates:
         decision = "DATA_INSUFFICIENT"
     elif "OFACTOR_BELOW_MINIMUM" in gates:
@@ -265,6 +286,8 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
         "setup_state": setup_state,
         "score": score,
         "components": {key: round(value, 4) for key, value in components.items()},
+        "weights": xfactor_weights,
+        "weighted_contributions": {key: round(components[key] * xfactor_weights[key] / 100.0, 4) for key in components},
         "hard_gates": gates,
         "decision": decision,
         "structural_stop": round(stop, 4),
@@ -274,12 +297,13 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
     }
 
 
-def evaluate_feature(feature: OIISFeature, thresholds: Mapping[str, float] | None = None) -> dict[str, Any]:
+def evaluate_feature(feature: OIISFeature, thresholds: Mapping[str, Any] | None = None) -> dict[str, Any]:
     thresholds = thresholds or {}
     ofactor_min = float(thresholds.get("ofactor_min", 74.0))
     dq = data_quality(feature)
-    long_score = opportunity(feature, "LONG")
-    short_score = opportunity(feature, "SHORT")
+    ofactor_weights = thresholds.get("ofactor_weights")
+    long_score = opportunity(feature, "LONG", ofactor_weights)
+    short_score = opportunity(feature, "SHORT", ofactor_weights)
     edge = round(float(long_score["final_score"]) - float(short_score["final_score"]), 4)
     conflict = min(float(long_score["final_score"]), float(short_score["final_score"])) >= ofactor_min and abs(edge) < 8.0
     direction = "CONFLICT" if conflict else "LONG" if edge >= 8.0 else "SHORT" if edge <= -8.0 else "NEUTRAL"

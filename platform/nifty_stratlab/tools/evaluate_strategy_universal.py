@@ -18,6 +18,26 @@ def sha(p):
 def load(folder,name):
  p=folder/name
  return pd.read_csv(p,low_memory=False) if p.exists() else pd.DataFrame()
+def enrich_regimes(trades,dsn):
+ if not dsn or 'symbol' not in trades or 'entry_date' not in trades or 'stock_yf_trend' in trades:return trades
+ import psycopg
+ from psycopg.rows import dict_row
+ dates=pd.to_datetime(trades.entry_date,errors='coerce'); symbols=sorted(trades.symbol.dropna().astype(str).str.upper().unique()); start=dates.min().date(); end=dates.max().date()
+ def query(conn,sql,params):
+  with conn.cursor() as cur: cur.execute(sql,params); return pd.DataFrame(cur.fetchall())
+ with psycopg.connect(dsn,row_factory=dict_row) as conn:
+  stock=query(conn,"""SELECT trade_date,UPPER(REGEXP_REPLACE(yahoo_symbol,'\\.NS$','')) symbol,primary_trend stock_yf_trend,market_zone stock_yf_zone,return_21d_pct stock_yf_return_21d_pct,rsi14 stock_yf_rsi14,volatility20_pct stock_yf_volatility20_pct,trend_score stock_yf_trend_score,100*(close_price/sma20-1) stock_yf_vs_sma20_pct,100*(close_price/sma50-1) stock_yf_vs_sma50_pct FROM strategy_eval.stock_daily_regime WHERE trade_date BETWEEN %s AND %s AND UPPER(REGEXP_REPLACE(yahoo_symbol,'\\.NS$',''))=ANY(%s)""",(start,end,symbols))
+  nifty=query(conn,"""SELECT trade_date,primary_trend nifty_yf_trend,market_zone nifty_yf_zone,return_21d_pct nifty_yf_return_21d_pct,rsi14 nifty_yf_rsi14,volatility20_pct nifty_yf_volatility20_pct,trend_score nifty_yf_trend_score,100*(close_price/sma20-1) nifty_yf_vs_sma20_pct,100*(close_price/sma50-1) nifty_yf_vs_sma50_pct FROM strategy_eval.nifty50_daily_regime WHERE trade_date BETWEEN %s AND %s""",(start,end))
+  glob=query(conn,"""SELECT trade_date,instrument_name,primary_trend,market_zone,return_21d_pct,rsi14,volatility20_pct,trend_score,100*(close_price/sma20-1) vs_sma20_pct,100*(close_price/sma50-1) vs_sma50_pct FROM strategy_eval.global_market_daily_regime WHERE trade_date BETWEEN %s AND %s""",(start,end))
+ x=trades.copy(); x['_regime_date']=pd.to_datetime(x.entry_date,errors='coerce'); x['symbol']=x.symbol.astype(str).str.upper()
+ if len(stock): stock['trade_date']=pd.to_datetime(stock.trade_date); x=x.merge(stock,left_on=['_regime_date','symbol'],right_on=['trade_date','symbol'],how='left').drop(columns='trade_date')
+ if len(nifty): nifty['trade_date']=pd.to_datetime(nifty.trade_date); x=x.merge(nifty,left_on='_regime_date',right_on='trade_date',how='left').drop(columns='trade_date')
+ if len(glob):
+  glob['trade_date']=pd.to_datetime(glob.trade_date)
+  for instrument,part in glob.groupby('instrument_name'):
+   prefix=instrument.lower(); cols={c:f'{prefix}_{c}' for c in part.columns if c not in ['trade_date','instrument_name']}; x=x.merge(part.drop(columns='instrument_name').rename(columns=cols),left_on='_regime_date',right_on='trade_date',how='left').drop(columns='trade_date')
+ if 'stock_yf_trend' in x and 'nifty_yf_trend' in x:x['nifty_stock_regime']=x.nifty_yf_trend.fillna('UNKNOWN')+' × '+x.stock_yf_trend.fillna('UNKNOWN')
+ return x.drop(columns='_regime_date')
 def number(s): return pd.to_numeric(s,errors='coerce')
 def pct(flag):
  s=pd.Series(flag).dropna(); return round(float(s.astype(bool).mean()*100),4) if len(s) else None
@@ -50,9 +70,11 @@ def main():
  for c in ['mfe_pct','mae_pct','after_tax_net_pnl','unrealized_net_liquidation_pnl','gross_pnl','costs','holding_sessions','return_d29_pct','mae_30t_pct']: 
   if c in trades: trades[c]=number(trades[c])
  if 'entry_date' in trades: trades['entry_date']=pd.to_datetime(trades.entry_date,errors='coerce'); trades['entry_year']=trades.entry_date.dt.year; trades['entry_month']=trades.entry_date.dt.to_period('M').astype(str)
+ trades=enrich_regimes(trades,a.database_url)
  status=trades.get('status',pd.Series('',index=trades.index)).astype(str).str.upper(); trades['is_open']=status.isin(['OPEN','UNRESOLVED_OPEN'])
  trades['net_result']=number(trades.get('after_tax_net_pnl',pd.Series(index=trades.index,dtype=float))).fillna(0)+number(trades.get('unrealized_net_liquidation_pnl',pd.Series(index=trades.index,dtype=float))).fillna(0)
  trades['net_profitable']=trades.net_result>0; trades['persistent_loser']=(number(trades.get('mae_pct',pd.Series(index=trades.index,dtype=float)))<=-5)&(~trades.net_profitable); trades['high_risk_eventual_winner']=(number(trades.get('mae_pct',pd.Series(index=trades.index,dtype=float)))<=-5)&trades.net_profitable
+ alternative_trials='trial_id' in trades and trades.trial_id.nunique()>1
  trade_path=out/f'{a.strategy_name}_Trades.csv'; trades.to_csv(trade_path,index=False)
  gates=gate_rows(a.archetype,trades,h30,targets,cfg,a.authoritative_exit,equity,trials); risks=risk_rows(); scorable=not (gates.status=='FAIL').any(); state='EXPERIMENTAL' if scorable else ('NOT_SCORABLE_DATA_FAILURE' if gates.loc[gates.gate_name=='data_quality','status'].iloc[0]=='FAIL' else 'NOT_SCORABLE_METHOD_FAILURE')
  reward=[]
@@ -61,18 +83,31 @@ def main():
  adverse_summary=pd.DataFrame()
  if len(adverse):
   hit=adverse.get('hit_flag',adverse.get('touched',False)); adverse_summary=adverse.assign(_hit=pd.Series(hit).astype(str).str.lower().isin(['true','1','t','yes'])).groupby(['level_id','level_pct'],dropna=False)._hit.agg(['count','sum']).reset_index(); adverse_summary['breach_rate_pct']=adverse_summary['sum']/adverse_summary['count']*100
- summary=pd.DataFrame([metric('Validation state',state),metric('Overall score','NOT SCORABLE' if not scorable else None,status='BLOCKED' if not scorable else 'PENDING'),metric('Trades',len(trades),'count'),metric('Symbols',trades.symbol.nunique() if 'symbol' in trades else None,'count'),metric('Closed trades',int((~trades.is_open).sum()),'count'),metric('Open positions',int(trades.is_open.sum()),'count'),metric('Net profitable rate',pct(trades.net_profitable),'%'),metric('Median MFE',trades.mfe_pct.median() if 'mfe_pct' in trades else None,'%','DIAGNOSTIC','Not realised P&L'),metric('Median MAE',trades.mae_pct.median() if 'mae_pct' in trades else None,'%'),metric('Net P&L including open MTM',trades.net_result.sum(),'INR','ESTIMATED'),metric('H30 mature rows',int((h30.get('maturity_status',pd.Series(dtype=str)).astype(str)=='MATURE').sum()),'count')])
+ summary=pd.DataFrame([
+  metric('Validation state',state),metric('Overall score','NOT SCORABLE' if not scorable else None,status='BLOCKED' if not scorable else 'PENDING'),
+  metric('Trades',len(trades),'count'),metric('Symbols',trades.symbol.nunique() if 'symbol' in trades else None,'count'),
+  metric('Closed trades',int((~trades.is_open).sum()),'count'),metric('Open positions',int(trades.is_open.sum()),'count'),metric('Net profitable rate',pct(trades.net_profitable),'%'),
+  metric('Median MFE',trades.mfe_pct.median() if 'mfe_pct' in trades else None,'%','DIAGNOSTIC','Not realised P&L'),metric('Median MAE',trades.mae_pct.median() if 'mae_pct' in trades else None,'%'),
+  metric('Trial configurations',trades.trial_id.nunique() if 'trial_id' in trades else 1,'count'),metric('Unique stock-entry opportunities',trades[['symbol','entry_date']].drop_duplicates().shape[0] if all(c in trades for c in ['symbol','entry_date']) else None,'count'),
+  metric('Net P&L including open MTM',None if alternative_trials else trades.net_result.sum(),'INR','NOT ADDITIVE' if alternative_trials else 'ESTIMATED','Alternative DOE configurations are mutually exclusive and must not be summed' if alternative_trials else ''),metric('H30 mature rows',int((h30.get('maturity_status',pd.Series(dtype=str)).astype(str)=='MATURE').sum()),'count'),
+  metric('Stock regime coverage',pct(trades.stock_yf_trend.notna()) if 'stock_yf_trend' in trades else 0,'%'),metric('NIFTY regime coverage',pct(trades.nifty_yf_trend.notna()) if 'nifty_yf_trend' in trades else 0,'%'),metric('India VIX regime coverage',pct(trades.india_vix_primary_trend.notna()) if 'india_vix_primary_trend' in trades else 0,'%')])
  funnel=pd.DataFrame([('Raw decision rows',len(decisions)),('Trade rows',len(trades)),('Closed trades',int((~trades.is_open).sum())),('Open trades',int(trades.is_open.sum()))],columns=['stage','count'])
  def grouped(keys):
   if not all(k in trades for k in keys): return pd.DataFrame({'status':['NOT ESTIMABLE: missing '+','.join(keys)]})
   return trades.groupby(keys,dropna=False).agg(trades=('net_result','size'),net_pnl=('net_result','sum'),median_net=('net_result','median'),profitable_rate_pct=('net_profitable',lambda s:s.mean()*100),open_positions=('is_open','sum'),median_mfe_pct=('mfe_pct','median') if 'mfe_pct' in trades else ('net_result','size'),median_mae_pct=('mae_pct','median') if 'mae_pct' in trades else ('net_result','size')).reset_index()
- annual=grouped(['entry_year']); monthly=grouped(['entry_month']); stocks=grouped(['symbol']); sectors=grouped(['sector'])
+ trial_key=['trial_id'] if alternative_trials else []
+ annual=grouped(trial_key+['entry_year']); monthly=grouped(trial_key+['entry_month']); stocks=grouped(trial_key+['symbol']); sectors=grouped(trial_key+['sector'])
  open_trapped=trades[trades.is_open | trades.persistent_loser].copy(); coverage=pd.DataFrame([{'source_file':p.name,'rows':len(load(a.input_dir,p.name)),'sha256':sha(p)} for p in a.input_dir.glob('*.csv') if p.name in ['trades.csv','target_events.csv','adverse_events.csv','h30_observations.csv','decisions.csv','regime_performance.csv']])
  strategy_map=pd.DataFrame([('strategy_name',a.strategy_name),('strategy_version',a.strategy_version),('archetype',a.archetype),('evaluation_mode',a.evaluation_mode),('entry_authority','Preserved from source run'),('exit_authority','AUTHORITATIVE' if a.authoritative_exit else 'NOT ASSERTED: shared RoE is diagnostic/scenario only'),('policy_id',cfg['policy_id'])],columns=['field','value'])
  pdiag=pd.DataFrame([('INPUT','Signals, OHLCV, instrument, direction, entry anchor'),('SYSTEM','Strategy version, entry engine, exit engine, evaluator, portfolio allocator'),('NOISE','Nifty/stock regime, VIX, gaps, liquidity, events, corporate actions, stale data'),('CONTROL','Thresholds, timing, sizing, targets, carry, data gates, costs'),('ERROR','Wrong direction; target/time; economics/execution; data/risk/portfolio')],columns=['type','detail'])
+ regime_frames=[]
+ for field in ['nifty_stock_regime','stock_yf_trend','nifty_yf_trend','india_vix_primary_trend','dow_jones_primary_trend','gold_primary_trend','crude_oil_primary_trend','usd_inr_primary_trend']:
+  if field in trades:
+   part=grouped(trial_key+[field]).rename(columns={field:'regime'}); part.insert(0,'dimension',field); regime_frames.append(part)
+ joined_regimes=pd.concat(regime_frames,ignore_index=True) if regime_frames else pd.DataFrame()
  assumptions=pd.DataFrame([('Generated UTC',datetime.now(timezone.utc).isoformat()),('Input directory',str(a.input_dir.resolve())),('Policy file',str(POLICY)),('Authoritative exit asserted',a.authoritative_exit),('Realised P&L rule','Only authoritative replay; entry-only shared-RoE results remain scenario estimates'),('Portfolio return rule','Only valid with complete finite-capital chronology'),('Tax','Not treated as universal transaction cost; retain source tax reserve separately')],columns=['item','value'])
  empty=lambda reason:pd.DataFrame({'status':[reason]})
- sheets={SHEETS[0]:summary,SHEETS[1]:strategy_map,SHEETS[2]:gates,SHEETS[3]:funnel,SHEETS[4]:reward if len(reward) else empty('No target_events.csv'),SHEETS[5]:adverse_summary if len(adverse_summary) else empty('No adverse_events.csv'),SHEETS[6]:targets.groupby('sequence',dropna=False).size().reset_index(name='events') if 'sequence' in targets else empty('Sequence not available'),SHEETS[7]:grouped(['net_profitable','persistent_loser','high_risk_eventual_winner']),SHEETS[8]:reward[reward.level_pct.isin([1,2,5])] if len(reward) else empty('D+5 targets unavailable'),SHEETS[9]:h30 if len(h30) else empty('H30 unavailable'),SHEETS[10]:portfolio if len(portfolio) else empty('Use authoritative finite-capital portfolio ledger; not inferred from independent opportunities'),SHEETS[11]:equity if len(equity) else empty('Daily equity not supplied; portfolio drawdown not estimable'),SHEETS[12]:annual,SHEETS[13]:monthly,SHEETS[14]:stocks,SHEETS[15]:sectors,SHEETS[16]:pd.concat([pdiag,regimes.astype(str)],ignore_index=True) if len(regimes) else pdiag,SHEETS[17]:trials if len(trials) else empty('Component importance requires factor values and chronological OOS ablation; parameter sensitivity is separate'),SHEETS[18]:open_trapped,SHEETS[19]:skipped if len(skipped) else empty('Skipped-signal ledger not supplied'),SHEETS[20]:coverage,SHEETS[21]:risks,SHEETS[22]:trades,SHEETS[23]:assumptions,SHEETS[24]:empty('Populated after artifact generation')}
+ sheets={SHEETS[0]:summary,SHEETS[1]:strategy_map,SHEETS[2]:gates,SHEETS[3]:funnel,SHEETS[4]:reward if len(reward) else empty('No target_events.csv'),SHEETS[5]:adverse_summary if len(adverse_summary) else empty('No adverse_events.csv'),SHEETS[6]:targets.groupby('sequence',dropna=False).size().reset_index(name='events') if 'sequence' in targets else empty('Sequence not available'),SHEETS[7]:grouped(['net_profitable','persistent_loser','high_risk_eventual_winner']),SHEETS[8]:reward[reward.level_pct.isin([1,2,5])] if len(reward) else empty('D+5 targets unavailable'),SHEETS[9]:h30 if len(h30) else empty('H30 unavailable'),SHEETS[10]:portfolio if len(portfolio) else empty('Use authoritative finite-capital portfolio ledger; not inferred from independent opportunities'),SHEETS[11]:equity if len(equity) else empty('Daily equity not supplied; portfolio drawdown not estimable'),SHEETS[12]:annual,SHEETS[13]:monthly,SHEETS[14]:stocks,SHEETS[15]:sectors,SHEETS[16]:joined_regimes if len(joined_regimes) else (regimes if len(regimes) else pdiag),SHEETS[17]:trials if len(trials) else empty('Component importance requires factor values and chronological OOS ablation; parameter sensitivity is separate'),SHEETS[18]:open_trapped,SHEETS[19]:skipped if len(skipped) else empty('Skipped-signal ledger not supplied'),SHEETS[20]:coverage,SHEETS[21]:risks,SHEETS[22]:trades,SHEETS[23]:assumptions,SHEETS[24]:empty('Populated after artifact generation')}
  xlsx=out/f'{a.strategy_name}_Evaluation_Results.xlsx'
  with pd.ExcelWriter(xlsx,engine='xlsxwriter') as w:
   for name,df in sheets.items():
@@ -88,11 +123,11 @@ def main():
  report.add_heading('Interpretation controls',level=1); report.add_paragraph('Reward/adverse ladders and MFE are path diagnostics. They are not realised return. Portfolio return is valid only when chronological finite-capital allocation and daily equity evidence exist. Open mark-to-market liabilities remain included.'); report.save(out/f'{a.strategy_name}_Evaluation_Report.docx')
  import matplotlib.pyplot as plt
  if len(annual) and 'entry_year' in annual:
-  fig,ax=plt.subplots(figsize=(10,5)); ax.bar(annual.entry_year.astype(str),annual.net_pnl); ax.set(title='Annual net result including open MTM',xlabel='Entry year',ylabel='INR'); ax.tick_params(axis='x',rotation=45); fig.tight_layout(); fig.savefig(out/f'{a.strategy_name}_Annual_Net_Result.png',dpi=150); plt.close(fig)
+  labels=(annual.trial_id.astype(str)+' / '+annual.entry_year.astype(str)) if alternative_trials else annual.entry_year.astype(str); fig,ax=plt.subplots(figsize=(10,5)); ax.bar(labels,annual.net_pnl); ax.set(title='Annual net result by mutually exclusive configuration' if alternative_trials else 'Annual net result including open MTM',xlabel='Trial / entry year' if alternative_trials else 'Entry year',ylabel='INR'); ax.tick_params(axis='x',rotation=45); fig.tight_layout(); fig.savefig(out/f'{a.strategy_name}_Annual_Net_Result.png',dpi=150); plt.close(fig)
  if 'mfe_pct' in trades and 'mae_pct' in trades:
   fig,ax=plt.subplots(figsize=(8,6)); ax.scatter(trades.mae_pct,trades.mfe_pct,s=16,alpha=.6); ax.axvline(0,color='black',lw=.7); ax.axhline(0,color='black',lw=.7); ax.set(title='Trade path: MFE versus MAE',xlabel='MAE %',ylabel='MFE %'); fig.tight_layout(); fig.savefig(out/f'{a.strategy_name}_MFE_MAE.png',dpi=150); plt.close(fig)
- files=[q for q in out.iterdir() if q.is_file()]; manifest=[{'name':q.name,'path':str(q.resolve()),'sha256':sha(q),'size_bytes':q.stat().st_size} for q in files]; (out/f'{a.strategy_name}_Evidence_Index.json').write_text(json.dumps(manifest,indent=2)); files=[q for q in out.iterdir() if q.is_file()]; sums='\n'.join(f'{sha(q)}  {q.name}' for q in sorted(files))+'\n'; (out/f'{a.strategy_name}_SHA256SUMS.txt').write_text(sums)
  package=out/f'{a.strategy_name}_Evaluation_Package.zip'
+ files=[q for q in out.iterdir() if q.is_file() and q!=package]; manifest=[{'name':q.name,'path':str(q.resolve()),'sha256':sha(q),'size_bytes':q.stat().st_size} for q in files]; (out/f'{a.strategy_name}_Evidence_Index.json').write_text(json.dumps(manifest,indent=2)); files=[q for q in out.iterdir() if q.is_file() and q!=package]; sums='\n'.join(f'{sha(q)}  {q.name}' for q in sorted(files))+'\n'; (out/f'{a.strategy_name}_SHA256SUMS.txt').write_text(sums)
  with zipfile.ZipFile(package,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
   for q in out.iterdir():
    if q.is_file() and q!=package:z.write(q,q.name)

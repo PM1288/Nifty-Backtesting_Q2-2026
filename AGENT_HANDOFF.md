@@ -1314,3 +1314,17 @@ The supplied EMA61 reclaim, ICE accumulation, and monthly/weekly reversal strate
 - Validated output: `platform/nifty_stratlab/outputs/universal_evaluation_v2/OIIS_O70_X70/`; 137 trade rows, 25 Excel sheets, DOCX, JSON, CSV, charts, SHA catalogue and ZIP.
 - Correct fail-closed result: `NOT_SCORABLE_METHOD_FAILURE`. Exit authority, finite-capital daily equity and chronological OOS evidence were not supplied, so no numeric score or portfolio-return claim is allowed.
 - Tests: `platform/nifty_stratlab/.venv/bin/python -m pytest platform/nifty_stratlab/tests/phase3/test_universal_evaluation.py platform/nifty_stratlab/tests/phase3/test_full_path_ladder_v2.py platform/nifty_stratlab/tests/phase3/test_h30_opportunity_v3.py platform/nifty_stratlab/tests/phase3/test_rules_of_engagement.py` -> 24 passed.
+
+## OIIS component DOE and regime integration (2026-08-08)
+
+- Extracted and reviewed `OIIS-DOE/OIIS_FACTOR_DOE_COMPLETE_DELIVERY_V1.0.zip`; archive integrity passed. Governing matrix contains 147 registered trials.
+- Do not call the prior 49 O/X threshold combinations factors. Component DOE covers the nine actual OFactor and nine actual XFactor components. FFactor remains undefined.
+- Engine update: `src/nifty_stratlab/oiis/engine.py` accepts governed fraction/percentage mixture weights and returns component weights plus weighted contributions.
+- Runner: `platform/nifty_stratlab/tools/run_oiis_component_doe.py`.
+- Database migration: `db/sql/029_oiis_component_doe.sql`.
+- Full implementation and runbook: `platform/nifty_stratlab/docs/OIIS_COMPONENT_DOE_V1_IMPLEMENTATION.md`.
+- Regime joins use `strategy_eval.stock_daily_regime`, `strategy_eval.nifty50_daily_regime` and `strategy_eval.global_market_daily_regime`; retained indicator positions include RSI14, volatility, 21-day return, trend score and distance from SMA20/SMA50.
+- Default output remains one consolidated `trades.csv` across stocks/trials, plus `component_event_scores.csv` and one detailed Excel workbook in the same run folder.
+- Successful acceptance run: `platform/nifty_stratlab/outputs/oiis_component_doe_v1/5a4494f1-4737-43ec-87fa-989fbb9e1835` for RELIANCE, 2024-01-01 through 2025-12-31, baseline + O_MRS ablation + X_SIS ablation.
+- Acceptance counts: 3 trials, 498 decisions/trial, 40,338 component-event rows, 3 scenario trades; PostgreSQL status `SMOKE_SUCCEEDED`.
+- The test is not factor-ranking evidence: only one accepted trade per treatment. Proceed to Stage 0 multi-stock baseline reconciliation before the 147-trial DOE.

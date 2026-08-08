@@ -1,4 +1,5 @@
-from nifty_stratlab.oiis.engine import OFACTOR_WEIGHTS, XFACTOR_WEIGHTS, OIISFeature, evaluate_feature
+import pytest
+from nifty_stratlab.oiis.engine import OFACTOR_WEIGHTS, XFACTOR_WEIGHTS, OIISFeature, evaluate_feature, normalise_weights
 
 
 def feature(**changes) -> OIISFeature:
@@ -44,3 +45,22 @@ def test_missing_mandatory_indicator_fails_closed() -> None:
     result = evaluate_feature(feature(rsi_14=None))
     assert result["dq"]["permission"] == "DATA_INSUFFICIENT"
     assert result["xfactor"]["decision"] == "DATA_INSUFFICIENT"
+
+
+def test_component_mixture_weights_are_exposed_and_change_score() -> None:
+    baseline = evaluate_feature(feature())
+    weights = dict(baseline["ofactor_long"]["weights"])
+    weights["momentum_quality"] = 0.0
+    scale = 100.0 / sum(weights.values())
+    weights = {key: value * scale for key, value in weights.items()}
+    treated = evaluate_feature(feature(), {"ofactor_weights": weights})
+    assert treated["ofactor_long"]["weights"]["momentum_quality"] == 0.0
+    assert set(treated["ofactor_long"]["weighted_contributions"]) == set(weights)
+    assert treated["ofactor_long"]["final_score"] != baseline["ofactor_long"]["final_score"]
+
+
+def test_fraction_weights_normalise_and_invalid_mixture_fails() -> None:
+    normalised = normalise_weights({"a": 0.4, "b": 0.6})
+    assert normalised == {"a": 40.0, "b": 60.0}
+    with pytest.raises(ValueError):
+        normalise_weights({"a": 0.4, "b": 0.5})

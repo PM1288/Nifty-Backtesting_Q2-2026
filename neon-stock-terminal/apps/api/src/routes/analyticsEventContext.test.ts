@@ -4,6 +4,9 @@ import express from "express";
 import type { AddressInfo } from "node:net";
 import { registerAnalyticsEventContext } from "./analyticsEventContext";
 
+const futureBoardDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const futureCorporateActionDate = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 async function withServer(
   queryResults: unknown[],
   run: (baseUrl: string, calls: { count: number }) => Promise<void>
@@ -80,7 +83,7 @@ test("analytics event context route returns a catalyst teaching payload", async 
           company_name: "Infosys",
           purpose: "Board Meeting",
           details: "Quarterly results",
-          event_date: "2026-04-07",
+          event_date: futureBoardDate,
           broadcast_datetime: "2026-04-04T12:00:00.000Z",
           attachment: null
         }
@@ -89,7 +92,7 @@ test("analytics event context route returns a catalyst teaching payload", async 
         {
           symbol: "INFY",
           company_name: "Infosys",
-          board_meeting_date: "2026-04-07",
+          board_meeting_date: futureBoardDate,
           reporting_quarter: "Q4 FY26"
         }
       ],
@@ -98,7 +101,7 @@ test("analytics event context route returns a catalyst teaching payload", async 
           symbol: "RELIANCE",
           security_name: "Reliance Industries",
           purpose: "Dividend",
-          ex_date: "2026-04-10",
+          ex_date: futureCorporateActionDate,
           report_date: "2026-04-03",
           record_date: "2026-04-12"
         }

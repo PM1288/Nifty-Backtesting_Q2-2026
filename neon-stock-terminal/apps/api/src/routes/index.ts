@@ -27,7 +27,7 @@ import { registerDisclosures } from "./disclosures";
 import { registerDiscordMarketStream } from "./discordMarketStream";
 import { registerSupportingMetrics } from "./supportingMetrics";
 import { registerWillSurface } from "./willSurface";
-import { registerOiisLive } from "./oiisLive";
+import { registerOiisLive, registerOiisLivePublic } from "./oiisLive";
 
 export function registerRoutes(
   app: Express,
@@ -39,6 +39,7 @@ export function registerRoutes(
   registerInternalRoutes(app, prisma);
   registerAuthRoutes(app, prisma, authRuntime);
   registerFeedbackRoutes(app, prisma, authRuntime);
+  registerOiisLivePublic(app, prisma);
   app.use("/v1", (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     next();

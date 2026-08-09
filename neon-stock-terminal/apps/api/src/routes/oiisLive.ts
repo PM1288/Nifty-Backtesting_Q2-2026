@@ -23,8 +23,9 @@ function actor(req: Request) {
   return text((req as Request & { user?: { email?: string } }).user?.email, 120) || "n50-ui";
 }
 
-export function registerOiisLive(app: Express, prisma: PrismaClient) {
+export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
   app.get("/v1/oiis-live/dashboard", async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
     const requestedDate = text(req.query.tradeDate, 10);
     const dates = await prisma.$queryRawUnsafe<Array<{ trade_date: Date }>>(
       `SELECT DISTINCT trade_date FROM (
@@ -55,7 +56,9 @@ export function registerOiisLive(app: Express, prisma: PrismaClient) {
     ]);
     res.json({ environment: "PAPER", policyId: "OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0", tradeDate, availableDates: dates, watchlist, entries, runs, diagnostics, errors, paper, freshness: (freshness as Array<unknown>)[0], queues: (queues as Array<unknown>)[0] });
   });
+}
 
+export function registerOiisLive(app: Express, prisma: PrismaClient) {
   app.post("/v1/oiis-live/watchlist", async (req, res) => {
     const symbol = text(req.body?.symbol, 32).toUpperCase();
     const tradeDate = text(req.body?.tradeDate, 10);

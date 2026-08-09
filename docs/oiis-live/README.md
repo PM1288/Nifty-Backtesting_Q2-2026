@@ -13,6 +13,12 @@ entry state, paper state, error counts, and durable service heartbeats.  Users
 may add, edit, disable, or remove a row.  Enabling a non-canonical manual row is
 an explicit operator override and is labelled as such in the paper intent.
 
+The read-only dashboard endpoint `GET /v1/oiis-live/dashboard` is intentionally
+available without a session so the page and service diagnostics do not fail
+with `AUTH_REQUIRED`.  Watchlist mutations and operational commands remain
+behind the shared authentication guard because they can change paper-trading
+state.
+
 ## Governed flow
 
 1. At 08:40 Asia/Kolkata on each weekday, or on restart after 08:40, select the

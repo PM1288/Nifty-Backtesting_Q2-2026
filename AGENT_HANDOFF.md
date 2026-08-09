@@ -1556,3 +1556,31 @@ docker compose -p trading-stack-novius2 \
   three application assets above returned HTTP 200 through Cloudflare.
 - Never use a direct production `docker build` for `n50-dashboard`.  An internal
   health check alone cannot detect this client-side base-path failure.
+
+## OIIS dashboard anonymous-read 401 repair (2026-08-09)
+
+- After the asset-path repair, an unauthenticated browser could render the
+  application shell but `GET /n50/v1/oiis-live/dashboard` returned
+  `401 AUTH_REQUIRED`.  The OIIS dashboard route had been registered after the
+  global `/v1` authentication middleware.
+- `registerOiisLivePublic` now registers only the read-only dashboard endpoint
+  before the global guard and explicitly emits `Cache-Control: no-store`.
+- POST/PATCH/DELETE watchlist operations and POST operational commands remain
+  registered after the guard.  Anonymous mutation probes still return 401 and
+  create no database row.
+- Rebuilt and redeployed with `./scripts/deploy_n50_dashboard.sh`.  The
+  following probes all passed through both local nginx and the public
+  Cloudflare hostname:
+
+```bash
+curl -fsS http://127.0.0.1:19090/n50/v1/oiis-live/dashboard
+curl -fsS https://n50.nifty50today.co.in/n50/v1/oiis-live/dashboard
+curl -fsS https://n50.nifty50today.co.in/n50/strategy/oiis-live
+```
+
+- Verified response: HTTP 200 with policy
+  `OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0`.  The dashboard container is
+  `healthy` with zero restarts.
+- API TypeScript type-check and production build passed.  The full API suite
+  passed all 57 tests after replacing a stale hard-coded April 2026 “upcoming”
+  event fixture with deterministic dates relative to test execution.

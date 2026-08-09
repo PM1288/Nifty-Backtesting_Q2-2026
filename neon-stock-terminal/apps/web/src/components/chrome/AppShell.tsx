@@ -99,6 +99,12 @@ function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
           match: (pathname) => pathname === "/backtesting"
         },
         {
+          label: tr("Stock Selection"),
+          to: "/strategy/oiis-live",
+          icon: ClipboardList,
+          match: (pathname) => pathname.startsWith("/strategy/oiis-live")
+        },
+        {
           label: tr("Strategy Leaderboard"),
           to: "/backtesting/strategies",
           icon: LibraryBig,
@@ -542,9 +548,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return query ? `/feedback?${query}` : "/feedback";
   }, [location.pathname, location.search, pageTitle]);
 
+  const workspaceTheme = location.pathname.startsWith("/strategy/oiis-live") ? "light" : "default";
+
   return (
     <div
       className={styles.shell}
+      data-workspace-theme={workspaceTheme}
       data-mobile-nav-open={mobileNavOpen ? "true" : "false"}
       data-sidebar-collapsed={desktopSidebarCollapsed ? "true" : "false"}
     >

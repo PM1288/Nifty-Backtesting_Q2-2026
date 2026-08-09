@@ -178,6 +178,10 @@ export type OiisLiveDashboard = {
   paper: Array<Record<string, any>>;
   freshness: Record<string, any>;
   queues: Record<string, any>;
+  funnel: Record<string, any>;
+  rejectionReasons: Array<{ reason: string; count: number }>;
+  nearMisses: Array<Record<string, any>>;
+  historical: Record<string, any> | null;
 };
 
 export function fetchOiisLiveDashboard(tradeDate?: string): Promise<OiisLiveDashboard> {

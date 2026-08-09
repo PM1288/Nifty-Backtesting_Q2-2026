@@ -7,17 +7,34 @@ editable paper-entry watchlist.  It is intentionally not a broker integration.
 The service runs in `PAPER` mode, uses PostgreSQL for all durable state, and
 submits idempotent intents to the universal paper-trading API.
 
-The UI route is `/strategy/oiis-live`.  It shows daily candidates, O/X/DQ,
-monitor versus entry permission, buy reference, RSI/Williams %R thresholds,
-entry state, paper state, error counts, and durable service heartbeats.  Users
-may add, edit, disable, or remove a row.  Enabling a non-canonical manual row is
-an explicit operator override and is labelled as such in the paper intent.
+The sidebar label is **Backtesting > Stock Selection** and the UI route is
+`/strategy/oiis-live`.  The public production URL is
+`https://n50.nifty50today.co.in/n50/strategy/oiis-live`.  The light decision
+workspace shows the complete daily funnel, top near misses, O/X/DQ, RSI and
+Williams %R, buy/no-chase references, rejection pressure, actionable watchlist,
+historical evaluation context and durable service/data health.  A zero-stock
+day is presented as an explicit `NO TRADE DECISION`, not an empty screen.
+
+Signed-in operators may add, edit, disable, or remove a watchlist row.  The
+same page remains useful in read-only mode without a session; mutation controls
+are visibly disabled and offer sign-in instead of producing a hidden 401.
+Enabling a non-canonical manual row is an explicit operator override and is
+labelled as such in the paper intent.
 
 The read-only dashboard endpoint `GET /v1/oiis-live/dashboard` is intentionally
 available without a session so the page and service diagnostics do not fail
 with `AUTH_REQUIRED`.  Watchlist mutations and operational commands remain
 behind the shared authentication guard because they can change paper-trading
 state.
+
+The dashboard response includes `funnel`, `nearMisses`, `rejectionReasons` and
+the latest completed `historical` run in addition to the governed watchlist.
+Near misses are research context only and never receive trade permission.
+
+The verified 2026-08-10 run evaluated 500 symbols: 500 passed data quality, 40
+reached OFactor 74, 21 reached XFactor 76, zero cleared every hard gate and zero
+were selected.  The UI therefore correctly shows no actionable trade while
+still exposing the evidence behind that decision.
 
 ## Governed flow
 
@@ -101,6 +118,12 @@ server can then appear healthy while browsers fail because its JavaScript and
 CSS URLs incorrectly point to `/assets/` instead of `/n50/assets/`.  The safe
 script builds, deploys only this service, waits for container health, loads the
 routed OIIS page and verifies its entry bundle through nginx.
+
+Matomo is opt-in.  Set both `N50_MATOMO_BASE_URL_PROD` and
+`N50_MATOMO_SITE_ID_PROD` only when a configured Matomo service is actually
+running.  Empty values prevent a broken analytics script from degrading the
+browser console.  Microsoft Clarity and Cloudflare browser telemetry hosts are
+included in the application CSP.
 
 Run or test selection without exposing credentials:
 

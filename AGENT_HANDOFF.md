@@ -1584,3 +1584,53 @@ curl -fsS https://n50.nifty50today.co.in/n50/strategy/oiis-live
 - API TypeScript type-check and production build passed.  The full API suite
   passed all 57 tests after replacing a stale hard-coded April 2026 “upcoming”
   event fixture with deterministic dates relative to test execution.
+
+## Stock Selection decision workspace redesign (2026-08-09)
+
+- The public route is
+  `https://n50.nifty50today.co.in/n50/strategy/oiis-live`; the sidebar route is
+  **Backtesting > Stock Selection**.
+- The old page appeared empty because the endpoint returned only selected
+  watchlist rows.  It now also returns the full selection funnel, the top 15
+  near misses, rejection-reason counts and the latest completed historical run.
+- Current verified decision evidence for trade date 2026-08-10: 500 evaluated,
+  500 data-quality passes, 40 OFactor passes, 21 XFactor passes, zero hard-gate
+  clears and zero selected.  This is a governed `NO TRADE DECISION`, not missing
+  data.
+- The page and its surrounding header/sidebar use a coherent light theme on
+  this route.  It includes the funnel, near-miss table, rejection pressure,
+  actionable watchlist, operator tools, three-year context and system health.
+  Anonymous users see read-only data and a sign-in callout; mutations remain
+  protected.
+- A mobile overflow defect caused by the 900px evidence table was fixed by
+  containing horizontal scrolling inside the table panel.  The final iPhone 12
+  capture is 1170 physical pixels wide rather than the erroneous 2868 pixels.
+- Matomo is disabled unless its base URL and site ID are explicitly configured.
+  Runtime production/stage Matomo variables were cleared because no configured
+  Matomo container is running.  Clarity and Cloudflare telemetry endpoints were
+  added to CSP.  No secret or `.env` content was committed.
+- Verification run:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/neon-stock-terminal
+npm run typecheck --workspace apps/api
+npm run typecheck --workspace apps/web
+npm run build --workspace apps/api
+npm run build --workspace apps/web
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+./scripts/deploy_n50_dashboard.sh
+cd tools/playwright
+PLAYWRIGHT_BASE_URL='https://n50.nifty50today.co.in/n50' \
+PLAYWRIGHT_OUTPUT_DIR='output/playwright/oiis-live-verified' \
+PLAYWRIGHT_ROUTES_JSON='[{"slug":"oiis-live","path":"/strategy/oiis-live"}]' \
+node smoke.mjs
+```
+
+- Final browser audit passed desktop, laptop, tablet and iPhone 12 with zero
+  console warnings/errors.  Screenshots and metadata are under
+  `tools/playwright/output/playwright/oiis-live-verified/` and are local review
+  evidence, not source-control artefacts.  The deployed container is healthy.
+- `npm test --workspace apps/api` passed 57/57.  One preceding invocation added
+  the unsupported Node-test argument `--runInBand`; npm treated it as a file and
+  exited before running tests.  No code or state changed, and the correct
+  command above passed immediately afterwards.

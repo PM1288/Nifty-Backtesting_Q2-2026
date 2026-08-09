@@ -6,9 +6,9 @@
   justify-content: space-between;
   gap: 12px;
   min-height: 28px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(11, 13, 16, 0.94);
+  border-top: 1px solid var(--border-weak);
+  border-bottom: 1px solid var(--border-weak);
+  background: var(--surface-overlay);
   padding: 4px var(--page-padding);
   margin: 0;
 }
@@ -58,8 +58,8 @@
 
 .readMore,
 .closeButton {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-interactive);
   color: var(--text-1);
   cursor: pointer;
   padding: 0 9px;

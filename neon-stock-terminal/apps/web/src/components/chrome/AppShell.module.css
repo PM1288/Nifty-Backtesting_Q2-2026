@@ -8,6 +8,41 @@
   isolation: isolate;
 }
 
+.shell[data-workspace-theme="light"] {
+  --white: #10233f;
+  --green: #087a50;
+  --red: #c2364f;
+  --gold: #9a6900;
+  --bg: #eef3f9;
+  --surface-canvas: #eef3f9;
+  --surface-1: #ffffff;
+  --surface-2: #f7f9fc;
+  --surface-3: #edf2f8;
+  --surface-panel: #ffffff;
+  --surface-panel-strong: #f7f9fc;
+  --surface-overlay: rgba(255, 255, 255, 0.96);
+  --surface-inset: #edf2f8;
+  --surface-interactive: #f7f9fc;
+  --surface-interactive-hover: #eef4fb;
+  --border-weak: #e4eaf2;
+  --border-subtle: #d8e0eb;
+  --border-strong: #c8d3e1;
+  --border-accent: rgba(154, 105, 0, 0.28);
+  --border-accent-strong: rgba(154, 105, 0, 0.48);
+  --text-1: #10233f;
+  --text-2: #334763;
+  --text-3: #62728a;
+  --text-4: #7a889c;
+  --shadow-1: 0 8px 28px rgba(25, 51, 81, 0.08);
+  --shadow-2: 0 14px 40px rgba(25, 51, 81, 0.14);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glow-white: 0 0 0 3px rgba(47, 123, 214, 0.12);
+}
+
+.shell[data-workspace-theme="light"] .ambientBackdrop {
+  opacity: 0;
+}
+
 .chrome {
   position: relative;
   z-index: var(--z-content);
@@ -268,6 +303,10 @@
   overflow: hidden;
 }
 
+.shell[data-workspace-theme="light"] .sidebar {
+  background: #ffffff;
+}
+
 .sidebarNav {
   height: 100%;
   overflow-y: auto;
@@ -332,6 +371,12 @@
   color: var(--white);
   background: rgba(212, 175, 55, 0.08);
   border-color: rgba(212, 175, 55, 0.18);
+}
+
+.shell[data-workspace-theme="light"] .navLink[data-active="true"] {
+  color: #174f91;
+  background: #edf5ff;
+  border-color: #c9def8;
 }
 
 .navLink[data-active="true"]::before {

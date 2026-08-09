@@ -90,6 +90,7 @@ const APP_CONTENT_SECURITY_POLICY = {
       "https://www.google-analytics.com",
       "https://www.clarity.ms",
       "https://scripts.clarity.ms",
+      "https://static.cloudflareinsights.com",
       "https://apis.google.com"
     ],
     "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
@@ -110,6 +111,8 @@ const APP_CONTENT_SECURITY_POLICY = {
       "https://www.clarity.ms",
       "https://scripts.clarity.ms",
       "https://d.clarity.ms",
+      "https://h.clarity.ms",
+      "https://cloudflareinsights.com",
       "https://c.bing.com",
       "https://dc.services.visualstudio.com",
       "https://stats.g.doubleclick.net"

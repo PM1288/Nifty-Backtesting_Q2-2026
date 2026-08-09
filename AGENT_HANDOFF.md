@@ -1422,6 +1422,13 @@ The first disposable COPY exposed and then verified fixes for a column-count mis
 - Benchmark: 187,500 bars for 500 symbols and 562,500 target evaluations completed in 0.7735 seconds on the local CPU (242,420 bars/sec; 727,260 target evaluations/sec; 449,180 KiB maximum RSS). This is a compute benchmark, not a production PostgreSQL soak test.
 - Least-privilege role guidance is in `services/paper_trading/migrations/roles.example.sql`. Review and set passwords out-of-band before applying; do not replace the deployed database role without a coordinated credential rotation.
 
+### n8n activation and replay verification (2026-08-09)
+
+- The production n8n endpoint is now active and accepted a signed paper event with HTTP 200.
+- Replay initially exposed an abandoned-lease/attempt-number defect. `papertrade replay-dead-letters` now preserves delivery history; the webhook worker requeues expired `PROCESSING` leases and chooses the next unused attempt number.
+- After rebuilding the API and webhook worker, all four retained events were reclaimed as attempt 2 and delivered HTTP 200. The live outbox is fully `DELIVERED` with no stuck rows.
+- The service regression gate remains green: 18 PostgreSQL-backed tests, Ruff, mypy and 84% coverage.
+
 ## Deployed trading-stack source reconciliation (2026-08-09)
 
 - `/home/novius2/trading-stack` is the deployed runtime directory and is intentionally not a Git checkout. Its canonical, secret-free source is this repository on branch `DEV_PM_CODE`.

@@ -22,6 +22,11 @@ class WebhookWorker:
 
     def claim(self) -> dict[str, Any] | None:
         with self.db.connection() as conn:
+            # A process can die after claiming a row. Requeue only leases whose
+            # expiry has passed; live workers retain their ownership.
+            conn.execute(
+                f"UPDATE {self.schema}.webhook_outbox SET status='RETRY',lease_owner=NULL,lease_expires_at=NULL,available_at=now() WHERE status='PROCESSING' AND lease_expires_at<now()"
+            )
             return conn.execute(
                 f"""WITH candidate AS (SELECT outbox_id FROM {self.schema}.webhook_outbox WHERE status IN ('PENDING','RETRY') AND available_at<=now() AND (lease_expires_at IS NULL OR lease_expires_at<now()) ORDER BY available_at,created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE {self.schema}.webhook_outbox o SET status='PROCESSING',lease_owner=%s,lease_expires_at=now()+interval '60 seconds' FROM candidate c WHERE o.outbox_id=c.outbox_id RETURNING o.*""",
                 (self.worker_id,),
@@ -45,8 +50,12 @@ class WebhookWorker:
             return False
         started = time.monotonic()
         delivery_id = str(uuid.uuid4())
-        attempt = int(item["attempt_count"]) + 1
         with self.db.connection() as conn:
+            prior = conn.execute(
+                f"SELECT COALESCE(MAX(attempt_number),0) AS n FROM {self.schema}.webhook_delivery_attempts WHERE outbox_id=%s",
+                (item["outbox_id"],),
+            ).fetchone()
+            attempt = max(int(item["attempt_count"]) + 1, int(prior["n"]) + 1)
             event = conn.execute(
                 f"SELECT * FROM {self.schema}.trade_events WHERE event_id=%s", (item["event_id"],)
             ).fetchone()

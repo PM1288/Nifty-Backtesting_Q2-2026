@@ -139,7 +139,7 @@ def replay_dead_letters() -> None:
             f"""
             WITH replayed AS (
                 UPDATE {settings.PAPER_TRADING_SCHEMA}.webhook_outbox
-                   SET status='RETRY', available_at=now(), attempt_count=0,
+                   SET status='RETRY', available_at=now(),
                        lease_owner=NULL, lease_expires_at=NULL, last_error=NULL
                  WHERE status='DEAD'
              RETURNING outbox_id

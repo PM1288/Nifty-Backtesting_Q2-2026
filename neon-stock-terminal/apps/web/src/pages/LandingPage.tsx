@@ -102,7 +102,10 @@ export function LandingPage() {
   const { tr } = useI18n();
   const [helpOpen, setHelpOpen] = useState(false);
   const { user, authReady } = useAuthGate();
-  const { mode } = useAnalyticsExperienceMode();
+  const { mode, setMode } = useAnalyticsExperienceMode();
+  useLayoutEffect(() => {
+    if (mode !== "advanced") setMode("advanced");
+  }, [mode, setMode]);
   const sessionEnabled = authReady && !!user;
   const q = useOverview(authReady);
   const supportingMetricsQuery = useSupportingMetrics(authReady);

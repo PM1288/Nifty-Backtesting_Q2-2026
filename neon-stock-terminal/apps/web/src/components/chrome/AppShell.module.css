@@ -307,7 +307,7 @@
   background: #ffffff;
 }
 
-/* V2 operational workspace. Home intentionally has no trading-v2 scope. */
+/* Universal light operational workspace. */
 .shell[data-ui-generation="trading-v2"] {
   --header-height: 138px;
   --sidebar-expanded-width: 216px;

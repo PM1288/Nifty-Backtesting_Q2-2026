@@ -34,15 +34,18 @@ export function StockPill({
     styleVars["--pill-bg"] = `rgb(0 ${g} ${b})`;
     styleVars["--pill-border"] = `rgb(0 ${Math.min(255, g + 34)} ${Math.min(255, b + 24)})`;
     styleVars["--pill-glow-alpha"] = (0.32 + pctMagnitude * 0.58).toFixed(3);
+    styleVars["--pill-fg"] = g > 180 ? "#052e1d" : "#ffffff";
   } else if (dir === "down") {
     const r = Math.round(94 + pctMagnitude * 156);
     const b = Math.round(16 + pctMagnitude * 58);
     styleVars["--pill-bg"] = `rgb(${r} 0 ${b})`;
     styleVars["--pill-border"] = `rgb(${Math.min(255, r + 20)} 0 ${Math.min(255, b + 24)})`;
     styleVars["--pill-glow-alpha"] = (0.32 + pctMagnitude * 0.58).toFixed(3);
+    styleVars["--pill-fg"] = "#ffffff";
   } else {
     styleVars["--pill-bg"] = "rgb(24 24 24)";
     styleVars["--pill-border"] = "rgb(78 78 78)";
+    styleVars["--pill-fg"] = "#ffffff";
   }
 
   if (glow.intensity > 0) {

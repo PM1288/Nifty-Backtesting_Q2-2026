@@ -11,6 +11,12 @@ The frontend uses the existing Firebase/session bridge. Authentication is user i
 - PAPER is the displayed safe environment in the new workspace.
 - Any future live-trading control must require server-side permission plus explicit operator acknowledgement.
 
-## Target model
+## Current authentication and authorisation
 
-The product specification calls for Google-first identity, a separately governed break-glass administrator and server-enforced roles for viewer, researcher, operator and administrator. That migration is not part of the visual refactor because it requires backend identity and audit contracts. The new components and navigation do not claim those roles are implemented.
+- Normal users sign in and sign up through Firebase email/password authentication.
+- The literal username `admin` is routed to the server-side local administrator login. Its password is supplied only through the untracked runtime environment and is never embedded in the browser bundle or repository.
+- Administrator status is carried in the signed server session. `/v1/workspace/control-plane` independently verifies both the admin role and trusted local-admin identity; hiding the navigation item is not the security boundary.
+- Firebase users receive no administrator role and cannot call the control-plane endpoint.
+- Microsoft Clarity remains enabled through the existing environment-controlled provider. Authentication fields remain masked.
+
+The browser Firebase configuration is intentionally public client configuration. Service credentials, database credentials and the local administrator password must remain server-side.

@@ -870,6 +870,7 @@ services:
           memory: 256m
 
   n50-dashboard-stage:
+    profiles: ["staging-disabled"]
     image: trading-stack-n50-dashboard-stage:latest
     build:
       context: ./neon-stock-terminal
@@ -959,6 +960,7 @@ services:
           memory: 512m
 
   n50-discord-stream-dispatcher-stage:
+    profiles: ["staging-disabled"]
     image: trading-stack-n50-dashboard-stage:latest
     env_file: .env
     environment:
@@ -1128,7 +1130,6 @@ services:
       - option-chain-watcher
       - matomo
       - n50-dashboard
-      - n50-dashboard-stage
       - nse-export-api
       - nse-intraday-api
     ports:

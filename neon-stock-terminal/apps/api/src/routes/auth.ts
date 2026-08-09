@@ -11,7 +11,7 @@ import {
 } from "../lib/runtimeConfig";
 
 const devLoginSchema = z.object({
-  email: z.string().trim().email(),
+  identifier: z.string().trim().min(3).max(120),
   password: z.string().min(8).max(256)
 });
 
@@ -180,7 +180,7 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
     const expectedEmail = getDevLocalAuthEmail();
     const expectedPassword = getDevLocalAuthPassword();
     const displayName = getDevLocalAuthDisplayName() ?? "Local Admin";
-    const providedEmail = parsed.data.email.trim().toLowerCase();
+    const providedIdentifier = parsed.data.identifier.trim().toLowerCase();
 
     if (!expectedEmail || !expectedPassword) {
       return res
@@ -188,16 +188,17 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
         .json({ error: { code: "DEV_AUTH_MISCONFIGURED", message: "Dev local auth is not configured." } });
     }
 
-    if (providedEmail !== expectedEmail.toLowerCase() || parsed.data.password !== expectedPassword) {
-      return res.status(401).json({ error: { code: "INVALID_CREDENTIALS", message: "Invalid email or password." } });
+    if (providedIdentifier !== "admin" || parsed.data.password !== expectedPassword) {
+      return res.status(401).json({ error: { code: "INVALID_CREDENTIALS", message: "Invalid username or password." } });
     }
 
     try {
       const result = await auth.loginWithTrustedUser(req, res, {
-        uid: `dev-local:${expectedEmail.toLowerCase()}`,
+        uid: "local-admin:admin",
         email: expectedEmail,
         emailVerified: true,
-        displayName
+        displayName,
+        role: "admin"
       });
       return res.json({
         authenticated: true,

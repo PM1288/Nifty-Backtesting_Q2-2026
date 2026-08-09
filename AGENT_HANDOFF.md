@@ -1822,3 +1822,27 @@ curl http://127.0.0.1:19090/n50/health
 - Rollback by restoring those source files, rebuilding only the two dashboard
   images and recreating those services with the same Compose project. Do not
   remove volumes or restart PostgreSQL.
+
+## Universal light UI and operational dashboards — 2026-08-09
+
+- The user expanded V2 scope to every route, including Home. `AppShell` now always applies `trading-v2` and the light workspace theme.
+- Removed the global audience/language/digit/feedback/disclaimer clutter. The product header contains navigation, identity, page title, authentication, ticker and feed context only.
+- Added `/paper-trading`, `/futures`, `/market/nifty-500` and `/control-plane` pages. Their read-only APIs are in `apps/api/src/routes/workspace.ts` and use existing PostgreSQL schemas.
+- The local administrator signs in with username `admin`; its password remains only in `/home/novius2/trading-stack/.env`. Normal users continue through Firebase. The control-plane endpoint enforces the trusted admin session server-side.
+- External Cloudflare handling returns 502 for literal `/admin` paths, so the administrator screen deliberately uses `/control-plane`.
+- Production dashboard was rebuilt/recreated under Compose project `trading-stack-novius2`. The staging dashboard container was stopped and removed. PostgreSQL and trading workers were not restarted or modified.
+- Verification commands:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+npm --prefix neon-stock-terminal/apps/web run typecheck
+npm --prefix neon-stock-terminal/apps/api run typecheck
+npm --prefix neon-stock-terminal/apps/api test
+npm --prefix neon-stock-terminal/apps/web run build
+
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 build n50-dashboard
+docker compose -p trading-stack-novius2 up -d --no-deps --force-recreate n50-dashboard
+```
+
+- Never commit `.env` or the administrator password. Never use `--remove-orphans` because paper/OIIS services are currently managed as compatible project services outside the dashboard Compose file.

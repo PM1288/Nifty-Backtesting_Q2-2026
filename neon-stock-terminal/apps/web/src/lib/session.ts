@@ -70,7 +70,7 @@ export async function createServerSession(idToken: string): Promise<{ user: Sess
 }
 
 export async function createDevServerSession(
-  email: string,
+  identifier: string,
   password: string
 ): Promise<{ user: SessionUser; csrfToken: string | null }> {
   const res = await fetch(`${API_BASE_URL}/auth/session/dev-login`, {
@@ -80,7 +80,7 @@ export async function createDevServerSession(
       "Content-Type": "application/json",
       Accept: "application/json"
     },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ identifier, password })
   });
 
   if (!res.ok) {

@@ -94,6 +94,41 @@
   background: var(--v2-surface-muted) !important;
 }
 
+/* Legacy home visualisations are retained for their live data behaviour, but
+   their old terminal chrome is normalised into the light product system. */
+[data-ui-generation="trading-v2"] :where(
+  [class*="_overviewIntro_"], [class*="_storyCard_"], [class*="_storyPoint_"],
+  [class*="_moverRow_"], [class*="_stripItem_"], [class*="_detailsPanel_"],
+  [class*="_detailsCell_"], [class*="_supportingMetricBar_"], [class*="_sectorGroup_"],
+  [class*="_foldSection_"], [class*="_whereNextCard_"]
+) {
+  border-color: var(--v2-border) !important;
+  background: var(--v2-surface) !important;
+  color: var(--v2-text-primary) !important;
+  box-shadow: var(--v2-shadow-panel) !important;
+}
+
+[data-ui-generation="trading-v2"] :where([class*="_overlay_"]) {
+  background: rgba(15, 23, 42, 0.34) !important;
+}
+
+[data-ui-generation="trading-v2"] :where([class*="_modal_"], [class*="_verifyBox_"]) {
+  border-color: var(--v2-border) !important;
+  background: #ffffff !important;
+  color: var(--v2-text-primary) !important;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.18) !important;
+}
+
+[data-ui-generation="trading-v2"] :where([class*="_field_"] input) {
+  border-color: var(--v2-border-strong) !important;
+  background: #ffffff !important;
+  color: var(--v2-text-primary) !important;
+}
+
+[data-ui-generation="trading-v2"] :where([class*="_title_"], [class*="_verifyTitle_"]) {
+  color: var(--v2-text-primary) !important;
+}
+
 @media (max-width: 1199px) {
   [data-ui-generation="trading-v2"] { --v2-page-gutter: 20px; }
 }

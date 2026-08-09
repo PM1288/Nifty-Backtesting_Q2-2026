@@ -77,6 +77,10 @@ const BacktestingComparePage = lazy(async () => ({ default: (await preloadBackte
 const BacktestingRunsPage = lazy(async () => ({ default: (await preloadBacktestingRunsPage()).BacktestingRunsPage }));
 const BacktestingH30Page = lazy(async () => ({ default: (await import("./pages/BacktestingH30Page")).BacktestingH30Page }));
 const OiisLivePage = lazy(async () => ({ default: (await preloadOiisLivePage()).OiisLivePage }));
+const PaperTradingPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).PaperTradingPage }));
+const Nifty500Page = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).Nifty500Page }));
+const FuturesPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).FuturesPage }));
+const AdminPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).AdminPage }));
 
 function RouteFallback() {
   const { t } = useI18n();
@@ -151,6 +155,10 @@ export default function App() {
           <Route path="/strategy" element={<Navigate to="/strategy/evaluation" replace />} />
           <Route path="/strategy/evaluation" element={<AnalyticsStrategyEvaluationPage />} />
           <Route path="/strategy/oiis-live" element={<OiisLivePage />} />
+          <Route path="/paper-trading" element={<PaperTradingPage />} />
+          <Route path="/market/nifty-500" element={<Nifty500Page />} />
+          <Route path="/futures" element={<FuturesPage />} />
+          <Route path="/control-plane" element={<AdminPage />} />
           <Route path="/option-chain" element={<Navigate to="/options/structure" replace />} />
           <Route path="/option-chain/*" element={<Navigate to="/options/structure" replace />} />
           <Route path="/analytics/flows" element={<AnalyticsFlowsPage />} />

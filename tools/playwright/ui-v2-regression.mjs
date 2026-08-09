@@ -5,11 +5,17 @@ import { chromium } from "playwright";
 const baseUrl = (process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4190/n50").replace(/\/$/, "");
 const outputRoot = path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR ?? "output/playwright/ui-v2-regression");
 const routes = [
-  { slug: "home", path: "/", expectsV2: false },
+  { slug: "home", path: "/", expectsV2: true },
   { slug: "market", path: "/analytics", expectsV2: true },
+  { slug: "nifty-500", path: "/market/nifty-500", expectsV2: true },
   { slug: "oiis", path: "/strategy/oiis-live", expectsV2: true },
+  { slug: "paper-trading", path: "/paper-trading", expectsV2: true },
+  { slug: "futures", path: "/futures", expectsV2: true },
+  { slug: "options", path: "/options/structure", expectsV2: true },
   { slug: "strategy-lab", path: "/backtesting/lab", expectsV2: true },
-  { slug: "operations", path: "/analytics/system/map", expectsV2: true }
+  { slug: "operations", path: "/analytics/system/map", expectsV2: true },
+  { slug: "quality", path: "/analytics/system/quality", expectsV2: true },
+  { slug: "control-plane", path: "/control-plane", expectsV2: true, admin: true }
 ];
 const viewports = [
   { name: "mobile-430", width: 430, height: 932 },
@@ -25,6 +31,12 @@ const results = [];
 try {
   for (const viewport of viewports) {
     const context = await browser.newContext({ viewport });
+    if (process.env.PLAYWRIGHT_ADMIN_PASSWORD) {
+      const login = await context.request.post(`${baseUrl}/auth/session/dev-login`, {
+        data: { identifier: "admin", password: process.env.PLAYWRIGHT_ADMIN_PASSWORD }
+      });
+      if (!login.ok()) throw new Error(`Admin browser login failed: ${login.status()}`);
+    }
     for (const route of routes) {
       const page = await context.newPage();
       const consoleErrors = [];
@@ -43,11 +55,13 @@ try {
           viewportWidth: window.innerWidth,
           horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
           mainWidth: document.querySelector("main")?.getBoundingClientRect().width ?? null
+          ,backgroundColor: getComputedStyle(document.querySelector('[data-ui-generation="trading-v2"]') ?? document.body).backgroundColor
         };
       });
       const passed =
         response?.ok() !== false &&
         evidence.hasV2Scope === route.expectsV2 &&
+        !evidence.backgroundColor.startsWith("rgb(0,") &&
         !evidence.horizontalOverflow &&
         (evidence.mainWidth == null || evidence.mainWidth >= viewport.width - 100 || viewport.width >= 980);
       await page.screenshot({

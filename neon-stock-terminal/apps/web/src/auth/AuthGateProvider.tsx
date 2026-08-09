@@ -518,8 +518,13 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       setAuthError(null);
       const cleanEmail = email.trim().toLowerCase();
+      if (cleanEmail === "admin") {
+        const localUser = await createDevServerSession(cleanEmail, password);
+        finalizeAuthSuccess(localUser.user, { isNewUser: false });
+        return;
+      }
       if (!isEmailValid(cleanEmail)) {
-        throw new Error("Please enter a valid email address.");
+        throw new Error("Enter a valid email address or the administrator username.");
       }
 
       if (!isFirebaseAuthConfigured()) {

@@ -13,6 +13,7 @@ export type SessionUser = {
   email: string | null;
   emailVerified: boolean;
   displayName: string | null;
+  role?: "admin" | "user";
 };
 
 export type SessionRecord = {

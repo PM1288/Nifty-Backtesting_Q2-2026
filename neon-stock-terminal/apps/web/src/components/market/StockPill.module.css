@@ -8,7 +8,7 @@
   border-radius: 6px;
   border: 1px solid var(--pill-border, var(--w-12));
   background: var(--pill-bg, rgba(0, 0, 0, 0.3));
-  color: var(--white);
+  color: var(--pill-fg, #ffffff);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
@@ -33,7 +33,7 @@
 .ltp {
   position: relative;
   z-index: 2;
-  color: var(--white);
+  color: var(--pill-fg, #ffffff);
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
@@ -67,7 +67,7 @@
   font-family: var(--font-mono);
   font-weight: 700;
   letter-spacing: 0.01em;
-  color: var(--white);
+  color: var(--pill-fg, #ffffff);
   text-shadow:
     0 0 2px rgba(0, 0, 0, 0.92),
     0 0 1px rgba(255, 255, 255, 0.35);
@@ -113,7 +113,7 @@
 .pill[data-dir="up"] .pctInline,
 .pill[data-dir="up"] .pctValue,
 .pill[data-dir="up"] .pctArrow {
-  color: var(--black);
+  color: var(--pill-fg, #ffffff);
   text-shadow: none;
 }
 
@@ -126,9 +126,11 @@
 }
 
 .pill[data-dir="down"] .pctInline,
+.pill[data-dir="down"] .symbolText,
+.pill[data-dir="down"] .ltp,
 .pill[data-dir="down"] .pctValue,
 .pill[data-dir="down"] .pctArrow {
-  color: var(--white);
+  color: var(--pill-fg, #ffffff);
   text-shadow: 0 0 10px rgba(255, 0, 51, 0.7);
 }
 

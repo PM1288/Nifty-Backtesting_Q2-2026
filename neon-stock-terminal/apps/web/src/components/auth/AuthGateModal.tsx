@@ -171,8 +171,11 @@ export function AuthGateModal() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      if (!isEmailValid(cleanEmail)) {
+      if (mode === "signup" && !isEmailValid(cleanEmail)) {
         throw new Error(tr("Please enter a valid email address."));
+      }
+      if (mode === "login" && cleanEmail !== "admin" && !isEmailValid(cleanEmail)) {
+        throw new Error(tr("Enter a valid email address or the administrator username."));
       }
       if (mode === "signup") {
         if (name.trim().length < 2) {
@@ -346,13 +349,13 @@ export function AuthGateModal() {
               ) : null}
 
               <label className={styles.field}>
-                <span>{tr("Email")}</span>
+                <span>{mode === "login" ? tr("Email or admin username") : tr("Email")}</span>
                 <input
-                  type="email"
+                  type={mode === "login" ? "text" : "email"}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder={tr("you@example.com")}
-                  autoComplete="email"
+                  placeholder={mode === "login" ? tr("you@example.com or admin") : tr("you@example.com")}
+                  autoComplete={mode === "login" ? "username" : "email"}
                   required
                 />
               </label>

@@ -20,8 +20,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuthGate } from "../../auth/AuthGateProvider";
-import { trackModeToggle, trackNavClick } from "../../analytics/events";
-import { trackAnalyticsEvent } from "../../lib/analytics";
+import { trackNavClick } from "../../analytics/events";
 import { useTrackPageViews } from "../../analytics/useTrackPageViews";
 import { useLiveQuotes, useOverview } from "../../lib/hooks";
 import { useDashboardPrefetch } from "../../lib/useDashboardPrefetch";
@@ -29,13 +28,11 @@ import { useI18n } from "../../i18n/LocaleProvider";
 import { resolvePrimarySection, SECTION_META, useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
 import { AuthGateModal } from "../auth/AuthGateModal";
 import { ContextIdentityStrip } from "../../design-system/TradingPrimitives";
-import { ToggleGroup } from "../ui/DashboardPrimitives";
 import { AuthStatus } from "./AuthStatus";
-import { FooterDisclaimer } from "./FooterDisclaimer";
 import { HeaderTicker } from "./HeaderTicker";
 import styles from "./AppShell.module.css";
 
-const SIDEBAR_PREFERENCE_KEY = "n50.shell.sidebarCollapsed";
+const SIDEBAR_PREFERENCE_KEY = "n50.shell.sidebarCollapsed.light-v2";
 
 type NavItem = {
   label: string;
@@ -379,6 +376,7 @@ function buildV2SidebarGroups(tr: (value: string) => string): NavGroup[] {
         { label: tr("Market Overview"), to: "/analytics", icon: LayoutDashboard, match: (pathname) => pathname === "/analytics" },
         { label: tr("Market State"), to: "/analytics/market-state", icon: Activity, match: (pathname) => pathname.startsWith("/analytics/market-state") },
         { label: tr("Regimes"), to: "/analytics/regime", icon: TrendingUp, match: (pathname) => pathname.startsWith("/analytics/regime") },
+        { label: tr("NIFTY 500 Summary"), to: "/market/nifty-500", icon: Globe2, match: (pathname) => pathname.startsWith("/market/nifty-500") },
         { label: tr("Institutional Flow"), to: "/institutional/flow", icon: BarChart3, match: (pathname) => pathname.startsWith("/institutional/") }
       ]
     },
@@ -412,6 +410,14 @@ function buildV2SidebarGroups(tr: (value: string) => string): NavGroup[] {
       ]
     },
     {
+      id: "trading",
+      label: tr("Paper Trading"),
+      items: [
+        { label: tr("Paper Portfolio"), to: "/paper-trading", icon: Gauge, match: (pathname) => pathname.startsWith("/paper-trading") },
+        { label: tr("Futures"), to: "/futures", icon: TrendingUp, match: (pathname) => pathname.startsWith("/futures") }
+      ]
+    },
+    {
       id: "options",
       label: tr("Options"),
       items: [
@@ -433,7 +439,8 @@ function buildV2SidebarGroups(tr: (value: string) => string): NavGroup[] {
       label: tr("Operations"),
       items: [
         { label: tr("System Map"), to: "/analytics/system/map", icon: ClipboardList, match: (pathname) => pathname.startsWith("/analytics/system/map") },
-        { label: tr("Data Quality"), to: "/analytics/system/quality", icon: ShieldCheck, match: (pathname) => pathname.startsWith("/analytics/system/quality") }
+        { label: tr("Data Quality"), to: "/analytics/system/quality", icon: ShieldCheck, match: (pathname) => pathname.startsWith("/analytics/system/quality") },
+        { label: tr("Administration"), to: "/control-plane", icon: ShieldCheck, match: (pathname) => pathname.startsWith("/control-plane") }
       ]
     }
   ];
@@ -491,17 +498,20 @@ function buildAmbientGlowStyle(changePct: number | null | undefined): AmbientGlo
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isProtectedHome = location.pathname === "/";
-  const { language, digits, setLanguage, setDigits, t, tr } = useI18n();
-  const allGroups = useMemo(
-    () => (isProtectedHome ? buildSidebarGroups(tr) : buildV2SidebarGroups(tr)),
-    [isProtectedHome, tr]
-  );
-  const sidebarGroups = useMemo(() => allGroups.filter((group) => !group.hiddenInSidebar), [allGroups]);
+  const { t, tr } = useI18n();
+  const allGroups = useMemo(() => buildV2SidebarGroups(tr), [tr]);
   const currentPage = useMemo(() => findCurrentPage(allGroups, location.pathname), [allGroups, location.pathname]);
 
   const { authReady, user } = useAuthGate();
-  const { mode: analyticsMode, setMode: setAnalyticsMode } = useAnalyticsExperienceMode();
+  const sidebarGroups = useMemo(
+    () => allGroups
+      .filter((group) => !group.hiddenInSidebar)
+      .map((group) => group.id === "operations" && user?.role !== "admin"
+        ? { ...group, items: group.items.filter((item) => item.to !== "/control-plane") }
+        : group),
+    [allGroups, user?.role]
+  );
+  const { mode: analyticsMode } = useAnalyticsExperienceMode();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarPreference, setSidebarPreference] = useState<boolean | null>(() => readStoredSidebarPreference());
 
@@ -586,54 +596,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(SIDEBAR_PREFERENCE_KEY, nextValue ? "collapsed" : "expanded");
   };
 
-  const handleAnalyticsModeChange = (nextMode: typeof analyticsMode) => {
-    if (nextMode === analyticsMode) return;
-    void trackModeToggle({
-      from_mode: analyticsMode,
-      to_mode: nextMode,
-      page_path: location.pathname
-    });
-    void trackAnalyticsEvent("audience_mode_change", {
-      from_mode: analyticsMode,
-      to_mode: nextMode,
-      page_path: location.pathname
-    });
-    setAnalyticsMode(nextMode);
-  };
-
-  const handleLanguageChange = (nextLanguage: typeof language) => {
-    if (nextLanguage === language) return;
-    void trackAnalyticsEvent("locale_language_change", {
-      from_language: language,
-      to_language: nextLanguage,
-      page_path: location.pathname
-    });
-    setLanguage(nextLanguage);
-  };
-
-  const handleDigitChange = (nextDigits: typeof digits) => {
-    if (nextDigits === digits) return;
-    void trackAnalyticsEvent("locale_digits_change", {
-      from_digits: digits,
-      to_digits: nextDigits,
-      page_path: location.pathname
-    });
-    setDigits(nextDigits);
-  };
-
-  const feedbackTarget = useMemo(() => {
-    const params = new URLSearchParams();
-    if (location.pathname && location.pathname !== "/feedback") {
-      params.set("from", `${location.pathname}${location.search}`);
-      if (pageTitle) {
-        params.set("label", pageTitle);
-      }
-    }
-    const query = params.toString();
-    return query ? `/feedback?${query}` : "/feedback";
-  }, [location.pathname, location.search, pageTitle]);
-
-  const workspaceTheme = isProtectedHome ? "default" : "light";
+  const workspaceTheme = "light";
   const feedState = overview.isLoading
     ? "loading"
     : overview.isError
@@ -645,7 +608,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={styles.shell}
-      data-ui-generation={isProtectedHome ? undefined : "trading-v2"}
+      data-ui-generation="trading-v2"
       data-workspace-theme={workspaceTheme}
       data-mobile-nav-open={mobileNavOpen ? "true" : "false"}
       data-sidebar-collapsed={desktopSidebarCollapsed ? "true" : "false"}
@@ -678,8 +641,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onMouseEnter={() => prefetchDashboardRoute("/")}
                 onFocus={() => prefetchDashboardRoute("/")}
               >
-                <span className={styles.brandMark}>Nifty 50</span>
-                <span className={styles.brandWordmark}>{t("brand.storyWordmark", "Market intelligence for today’s Nifty 50 tape")}</span>
+                <span className={styles.brandMark}>NIFTY 50 TRADER</span>
+                <span className={styles.brandWordmark}>{t("brand.storyWordmark", "Research, paper trading and market operations")}</span>
               </Link>
             </div>
 
@@ -688,77 +651,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className={styles.topBarRight}>
-              <div className={styles.preferenceStack}>
-                <div className={styles.audienceWrap}>
-                  <ToggleGroup
-                    label={t("preferences.audienceLabel", "Audience")}
-                    value={analyticsMode}
-                    options={[
-                      { label: t("preferences.audienceOptions.beginner", "Beginner"), value: "beginner" },
-                      { label: t("preferences.audienceOptions.advanced", "Advanced"), value: "advanced" }
-                    ]}
-                    onChange={handleAnalyticsModeChange}
-                  />
-                </div>
-                <div className={styles.localeWrap}>
-                  <ToggleGroup
-                    label={t("preferences.languageLabel", "Language")}
-                    value={language}
-                    options={[
-                      { label: t("preferences.languageOptions.en", "English"), value: "en" },
-                      { label: t("preferences.languageOptions.hi", "हिंदी"), value: "hi" },
-                      { label: t("preferences.languageOptions.mr", "मराठी"), value: "mr" }
-                    ]}
-                    onChange={handleLanguageChange}
-                  />
-                </div>
-                <div className={styles.localeWrap}>
-                  <ToggleGroup
-                    label={t("preferences.digitsLabel", "Digits")}
-                    value={digits}
-                    options={[
-                      { label: t("preferences.digitOptions.latn", "Latin"), value: "latn" },
-                      { label: t("preferences.digitOptions.deva", "देवनागरी"), value: "deva" }
-                    ]}
-                    onChange={handleDigitChange}
-                  />
-                </div>
-              </div>
-              <div className={styles.utilityCluster}>
-                <Link
-                  to={feedbackTarget}
-                  className={styles.feedbackButton}
-                  onClick={() => {
-                    void trackAnalyticsEvent("cta_click", {
-                      cta_name: "feedback_topbar",
-                      page_section: "topbar",
-                      source_page: location.pathname
-                    });
-                  }}
-                >
-                  <MessageSquareMore size={16} />
-                  <span>{tr("Feedback")}</span>
-                </Link>
-                <div className={styles.sessionStatus}>
-                  <AuthStatus />
-                </div>
+              <div className={styles.sessionStatus}>
+                <AuthStatus />
               </div>
             </div>
           </div>
 
-          <FooterDisclaimer />
-
           <div className={styles.tickerRail} data-clarity-unmask="true" data-clarity-region="top_ticker">
             <HeaderTicker items={tickerItems} />
           </div>
-          {!isProtectedHome ? (
-            <ContextIdentityStrip
-              page={pageTitle}
-              dataAsOf={overview.data?.asOf}
-              feedState={feedState}
-              signedIn={sessionEnabled}
-            />
-          ) : null}
+          <ContextIdentityStrip
+            page={pageTitle}
+            dataAsOf={overview.data?.asOf}
+            feedState={feedState}
+            signedIn={sessionEnabled}
+          />
         </header>
 
         <div className={styles.body}>

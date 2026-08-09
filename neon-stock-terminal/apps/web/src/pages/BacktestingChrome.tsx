@@ -27,6 +27,7 @@ import styles from "./AnalyticsPage.module.css";
 
 export const BACKTESTING_SECTION_TABS = [
   { label: "Overview", to: "/backtesting", badge: "Home", end: true },
+  { label: "Test Strategy", to: "/backtesting/lab", badge: "Lab", end: true },
   { label: "Leaderboard", to: "/backtesting/strategies", badge: "Rank", end: true },
   { label: "Results", to: "/backtesting/results", badge: "Port" },
   { label: "Regimes", to: "/backtesting/regimes", badge: "Reg" },

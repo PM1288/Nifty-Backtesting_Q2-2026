@@ -366,6 +366,8 @@ services:
       SNAPSHOT_REFRESH_TIMEOUT_SECONDS: ${N50_SNAPSHOT_REFRESH_TIMEOUT_SECONDS:-120}
       BACKTEST_CSV_EXPORT_ENABLED: ${NSE_BACKTEST_CSV_EXPORT_ENABLED:-1}
       BACKTEST_CSV_EXPORT_DIR: /app/runtime/exports/backtesting
+      TRADING_MODE: paper
+      ALLOW_LIVE_TRADING: "false"
     depends_on:
       postgres:
         condition: service_healthy
@@ -376,6 +378,12 @@ services:
       - ./services/nse_analytics_worker/runtime/exports:/app/runtime/exports
       - ./services/nse_analytics_worker/ops:/app/ops:ro
     entrypoint: ["/bin/bash", "/app/ops/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -m app.cli health --require-strategy-lab"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
     restart: unless-stopped
     logging:
       driver: json-file
@@ -387,6 +395,37 @@ services:
         limits:
           cpus: "0.5"
           memory: 512m
+
+  nse-strategy-lab-worker:
+    build:
+      context: ./services/nse_analytics_worker
+    env_file: .env
+    environment:
+      TZ: Asia/Kolkata
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      STRATEGY_LAB_EXPORT_DIR: /app/runtime/exports/strategy-lab
+      TRADING_MODE: paper
+      ALLOW_LIVE_TRADING: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse-analytics-worker:
+        condition: service_healthy
+    volumes:
+      - ./services/nse_analytics_worker/runtime/exports:/app/runtime/exports
+    entrypoint: []
+    command: ["python", "-m", "app.cli", "strategy-lab-worker", "--output-dir", "/app/runtime/exports/strategy-lab"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
 
   nse-orchestrator:
     build:
@@ -736,8 +775,10 @@ services:
       N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
       N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
       H30_ARTIFACT_ROOT: /var/lib/nifty-stratlab/h30
+      STRATEGY_LAB_ARTIFACT_ROOT: /var/lib/nifty-stratlab/strategy-lab
     volumes:
       - ${NIFTY_STRATLAB_HOST_OUTPUT_ROOT:-/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1}:/var/lib/nifty-stratlab/h30:ro
+      - ./services/nse_analytics_worker/runtime/exports/strategy-lab:/var/lib/nifty-stratlab/strategy-lab:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -889,6 +930,9 @@ services:
       MATOMO_PROXY_BASE_URL: ${N50_MATOMO_PROXY_BASE_URL:-http://matomo:80}
       N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
       N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
+      STRATEGY_LAB_ARTIFACT_ROOT: /var/lib/nifty-stratlab/strategy-lab
+    volumes:
+      - ./services/nse_analytics_worker/runtime/exports/strategy-lab:/var/lib/nifty-stratlab/strategy-lab:ro
     depends_on:
       postgres:
         condition: service_healthy

@@ -1634,3 +1634,121 @@ node smoke.mjs
   the unsupported Node-test argument `--runInBand`; npm treated it as a file and
   exited before running tests.  No code or state changed, and the correct
   command above passed immediately afterwards.
+
+## Interactive strategy-testing lab and preservation proof (2026-08-09)
+
+### Outcome
+
+- New light-theme route: `/n50/backtesting/lab` (stage:
+  `/n50-stage/backtesting/lab`). It is directly below Backtesting Overview in
+  the sidebar and allows an authenticated user to select a governed strategy,
+  edit bounded levels, choose a stock/universe/date/capital scenario, submit a
+  durable run, cancel it, inspect results and download one consolidated CSV.
+- Read-only run evidence is guest-accessible. Create/cancel remains protected by
+  the existing session and CSRF controls. Anonymous POST returns JSON 401 and
+  the frontend does not force the login popup.
+- The worker is research/paper-only. It accepts only three allow-listed existing
+  strategy versions and has no SmartAPI or broker-order path.
+- Execution results remain separate from diagnostic opportunity paths. It
+  evaluates every I030/I050/I070, D+5 S100/S200/S500, adverse and H30 level;
+  no ladder stops after the first target.
+
+### Database safety
+
+- Recovery tag: `pre-modernisation-20260809-143440`.
+- External Git bundle:
+  `/home/novius2/backups/trading-stack-modernisation/pre-modernisation-20260809-143440.bundle`.
+- Verified external database backup:
+  `/home/novius2/backups/postgresql/trading-stack/20260809T144133Z`.
+- `tradingdb.dump` size: 13,039,461,367 bytes.
+- Network-isolated PostgreSQL 16 restore PASS: 519/519 restore-catalogue
+  relations, no ports, correct owner. Deeper comparison reconciled 424/424
+  relations, 352/352 partitions, 43/43 sequences and all monitored objects.
+- Additive migration: `services/nse_analytics_worker/sql/060_strategy_lab.sql`.
+  It was applied twice on disposable PostgreSQL 16 before production.
+- Pre/post live comparison PASS: 424→431 relations (exactly seven lab tables),
+  352 partitions unchanged, no missing relations and no decreased critical
+  exact counts. See `docs/modernisation/data-preservation-comparison.json`.
+
+### Real smoke runs retained for audit
+
+- `473807d7-7735-4f8a-be74-afc1246e461b`: RELIANCE unconstrained diagnostic,
+  one signal/trade and 15 independent ladder rows. This is not a portfolio
+  return.
+- `65600ee3-d5e6-4d21-8fba-135931f506a4`: RELIANCE finite ₹16 lakh scenario,
+  ending ₹16,05,543.4795, +0.3465%, max drawdown -0.5708%, 159 equity rows.
+- Consolidated CSV is under
+  `services/nse_analytics_worker/runtime/exports/strategy-lab/<run-id>/trades.csv`
+  and is served by the API after path-containment and file checks.
+- Actual feature source batch 258 covers 2025-11-10 through 2026-08-06 and 100
+  stocks. The UI reports this actual coverage; it does not claim three years
+  are available from this published feature batch.
+
+### Verification commands
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+
+bash -n scripts/db/*.sh
+docker run --rm --network none \
+  -v "$PWD/compose/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+  nginx:alpine nginx -t
+
+docker run --rm --network host \
+  -e DATABASE_URL="postgresql://..." \
+  -v "$PWD/services/nse_analytics_worker:/app" \
+  trading-stack-nse-analytics-worker:modernisation-test \
+  /opt/venv/bin/python -m pytest -q \
+  tests/test_strategy_lab.py tests/test_backtesting_contracts.py
+
+cd neon-stock-terminal
+npm test --workspace apps/api
+npm run typecheck --workspace apps/api
+npm run typecheck --workspace apps/web
+npm run build --workspace apps/api
+npm run build --workspace apps/web
+
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml config --quiet
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml ps nse-analytics-worker nse-strategy-lab-worker \
+  n50-dashboard n50-dashboard-stage nginx postgres redis
+```
+
+Always pass `-p trading-stack-novius2`. The first stage-only start omitted it,
+failed closed because PostgreSQL/Redis were not resolvable on the isolated new
+network, and was removed without touching any existing service or volume. The
+corrected start reused the deployed project network and passed.
+
+### Safe deploy and rollback
+
+```bash
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml build nse-analytics-worker nse-strategy-lab-worker \
+  n50-dashboard n50-dashboard-stage
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml up -d --no-deps nse-analytics-worker
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml up -d --no-deps nse-strategy-lab-worker \
+  n50-dashboard n50-dashboard-stage
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml up -d --no-deps --force-recreate nginx
+```
+
+Normal rollback is application/image rollback only. Retain the additive lab
+tables; do not downgrade by dropping them and never remove the PostgreSQL
+volume. The runtime source files before this batch are preserved at
+`/home/novius2/backups/trading-stack-runtime/20260809T163000Z/`.
+
+### Known limitations
+
+- Browser HTTP/assets/API smokes passed through Nginx, but Chromium was not
+  installed for a screenshot-based responsive audit in this turn.
+- The full Nifty100/three-year load benchmark was intentionally not run; only
+  bounded one-stock validation was authorised for this implementation step.
+- Nginx reports absent optional `watchlist`, `matomo` and `rsi-willr-monitor`
+  upstreams. N50 production and staging routes are unaffected.
+- NPM reports 13 dependency advisories. Do not run an unreviewed major-version
+  audit fix in this behavioural batch.

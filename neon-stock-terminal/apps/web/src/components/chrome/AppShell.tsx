@@ -99,6 +99,12 @@ function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
           match: (pathname) => pathname === "/backtesting"
         },
         {
+          label: tr("Test Strategy"),
+          to: "/backtesting/lab",
+          icon: Gauge,
+          match: (pathname) => pathname.startsWith("/backtesting/lab")
+        },
+        {
           label: tr("Stock Selection"),
           to: "/strategy/oiis-live",
           icon: ClipboardList,

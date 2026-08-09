@@ -219,12 +219,20 @@ services:
       SNAPSHOT_REFRESH_TOKEN: ${N50_SNAPSHOT_REFRESH_TOKEN:-}
       SNAPSHOT_REFRESH_TIMEOUT_SECONDS: ${N50_SNAPSHOT_REFRESH_TIMEOUT_SECONDS:-120}
       FILE_LOG_ENABLED: "0"
+      TRADING_MODE: paper
+      ALLOW_LIVE_TRADING: "false"
     depends_on:
       postgres:
         condition: service_healthy
       nse_ingestor:
         condition: service_started
     entrypoint: ["/bin/bash", "/app/ops/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -m app.cli health --require-strategy-lab"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
     restart: unless-stopped
     logging:
       driver: json-file
@@ -236,6 +244,39 @@ services:
         limits:
           cpus: "0.5"
           memory: 512m
+
+  nse-strategy-lab-worker:
+    <<: *nse_analytics_worker_image
+    env_file:
+      - ../.env
+      - ./env/core.env
+    environment:
+      TZ: Asia/Kolkata
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      STRATEGY_LAB_EXPORT_DIR: /app/runtime/exports/strategy-lab
+      TRADING_MODE: paper
+      ALLOW_LIVE_TRADING: "false"
+      FILE_LOG_ENABLED: "0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nse-analytics-worker:
+        condition: service_healthy
+    volumes:
+      - nse_analytics_exports:/app/runtime/exports
+    entrypoint: []
+    command: ["python", "-m", "app.cli", "strategy-lab-worker", "--output-dir", "/app/runtime/exports/strategy-lab"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
 
   nse-orchestrator:
     <<: *nse_orchestration_image
@@ -656,6 +697,7 @@ services:
 volumes:
   pgdata:
   redis_data:
+  nse_analytics_exports:
   nse_ingestor_inbound:
   nse_ingestor_staging:
   nse_orchestration_exports:

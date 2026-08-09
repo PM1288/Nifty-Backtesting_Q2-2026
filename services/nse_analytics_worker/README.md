@@ -29,6 +29,26 @@ Run checks only:
 docker compose run --rm nse-analytics-worker python -m app.cli run-checks
 ```
 
+Check migration/readiness for the Strategy Testing Lab:
+
+```bash
+docker compose exec -T nse-analytics-worker \
+  python -m app.cli health --require-strategy-lab
+```
+
+Run one queued Strategy Testing Lab request for diagnosis:
+
+```bash
+docker compose run --rm --no-deps nse-strategy-lab-worker \
+  python -m app.cli strategy-lab-worker --once \
+  --output-dir /app/runtime/exports/strategy-lab
+```
+
+The normal `nse-strategy-lab-worker` service continuously claims bounded runs
+using PostgreSQL leases. It has no SmartAPI or broker-order dependency. One
+consolidated `trades.csv` is written per run; stock, Nifty, India VIX and global
+market regimes plus entry indicators are stored with each trade.
+
 Export the latest published backtesting batch to per-strategy CSV folders without rerunning the backtest:
 
 ```bash

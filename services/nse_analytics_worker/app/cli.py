@@ -13,6 +13,7 @@ from .indicator_strategy import refresh_indicator_strategy_snapshots
 from .logging_setup import configure_logging
 from .refresh import refresh_all_pipeline, determine_refresh_window, refresh_security_features, refresh_signals, refresh_market_summary, refresh_signal_performance, purge_old_analytics
 from .snapshot_refresh import trigger_snapshot_refresh
+from .strategy_lab import run_worker as run_strategy_lab_worker
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("migrate", help="Apply SQL migrations")
+    health = sub.add_parser("health", help="Check database and required analytics schema readiness")
+    health.add_argument("--require-strategy-lab", action="store_true")
 
     sub.add_parser("refresh-all", help="Refresh features, signals, summaries, performance, and purge")
 
@@ -35,6 +38,10 @@ def build_parser() -> argparse.ArgumentParser:
     export_csv.add_argument("--output-dir", type=Path, help="Override the configured CSV export root")
     sub.add_parser("run-checks", help="Run data-quality checks")
     sub.add_parser("purge", help="Purge old analytics rows")
+    strategy_lab = sub.add_parser("strategy-lab-worker", help="Run the bounded interactive backtest worker")
+    strategy_lab.add_argument("--once", action="store_true", help="Claim at most one queued run and exit")
+    strategy_lab.add_argument("--poll-seconds", type=int, default=5)
+    strategy_lab.add_argument("--output-dir", type=Path, default=Path("/app/runtime/exports/strategy-lab"))
 
     return parser
 
@@ -44,10 +51,29 @@ def main() -> None:
     settings = get_settings()
     configure_logging(settings.log_dir, settings.log_level)
     conn = connect(settings.database_url)
-    run_migrations(conn, Path("/app/sql"))
 
     if args.command == "migrate":
+        run_migrations(conn, Path("/app/sql"))
         logger.info("Migrations complete")
+        return
+
+    if args.command == "health":
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+            if args.require_strategy_lab:
+                cur.execute("SELECT to_regclass('research.strategy_lab_run') IS NOT NULL")
+                if not cur.fetchone()[0]:
+                    raise RuntimeError("strategy lab migration is not ready")
+        logger.info("Analytics database health check passed")
+        return
+
+    if args.command == "strategy-lab-worker":
+        run_strategy_lab_worker(
+            conn,
+            output_root=args.output_dir,
+            once=args.once,
+            poll_seconds=max(1, min(args.poll_seconds, 60)),
+        )
         return
 
     if args.command == "export-backtesting-csv":

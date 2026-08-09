@@ -36,6 +36,12 @@ android/local.properties
 node_modules/
 **/node_modules/
 **/dist/
+
+# Python test/runtime caches (source-independent and reproducible)
+**/__pycache__/
+*.py[cod]
+/.hypothesis/
+/.pytest_cache/
 platform/nifty_stratlab/.venv/
 platform/nifty_stratlab/outputs/
 platform/nifty_stratlab/artifacts/
@@ -60,6 +66,7 @@ services/paper_trading/src/*.egg-info/
 /archive/
 /artifacts_*/
 /exports/
+/outputs/
 /tmp/
 /tmp_*
 /temp_*

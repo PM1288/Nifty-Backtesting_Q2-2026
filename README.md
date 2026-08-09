@@ -15,6 +15,7 @@ Use this path:
 7. [`docs/nifty100-disclosures-integration.md`](docs/nifty100-disclosures-integration.md)
 8. [`docs/nse-fii-reports-integration.md`](docs/nse-fii-reports-integration.md)
 9. [`docs/nifty-stratlab/README.md`](docs/nifty-stratlab/README.md)
+10. [`docs/architecture/strategy-testing-workspace.md`](docs/architecture/strategy-testing-workspace.md)
 
 Production-grade, Dockerized Go services that stream NIFTY100 equities + indices and current-month F&O from Angel One SmartAPI, aggregate 1-minute OHLCV(+OI) bars, and run a strategy + paper-trading engine for signal evaluation.
 
@@ -30,6 +31,9 @@ Production-grade, Dockerized Go services that stream NIFTY100 equities + indices
 - Exposes `/healthz` for health checks
 - Runs a strategy engine that emits signals, writes alerts, and tracks paper trades
 - Serves a watchlist alert API + Grafana HTML manager (via Nginx reverse proxy)
+- Provides a governed Strategy Testing Lab at `/n50/backtesting/lab`; runs are
+  durable, paper/research-only and evaluate every diagnostic ladder level
+  independently.
 
 ## Quick start (Docker)
 1) Review config:

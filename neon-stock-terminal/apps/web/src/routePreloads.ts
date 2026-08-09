@@ -21,6 +21,7 @@ export const preloadAnalyticsOptionsStructurePage = () => import("./pages/Analyt
 export const preloadAnalyticsStrategyEvaluationPage = () => import("./pages/AnalyticsStrategyEvaluationPage");
 export const preloadAnalyticsStockPage = () => import("./pages/AnalyticsStockPage");
 export const preloadBacktestingOverviewPage = () => import("./pages/BacktestingOverviewPage");
+export const preloadBacktestingLabPage = () => import("./pages/BacktestingLabPage");
 export const preloadBacktestingStrategyLibraryPage = () => import("./pages/BacktestingStrategyLibraryPage");
 export const preloadBacktestingStrategyDetailPage = () => import("./pages/BacktestingStrategyDetailPage");
 export const preloadBacktestingPortfolioResultsPage = () => import("./pages/BacktestingPortfolioResultsPage");
@@ -65,6 +66,7 @@ export function preloadLearningRoutes() {
 export function preloadBacktestingRoutes() {
   return Promise.allSettled([
     preloadBacktestingOverviewPage(),
+    preloadBacktestingLabPage(),
     preloadBacktestingStrategyLibraryPage(),
     preloadBacktestingPortfolioResultsPage(),
     preloadBacktestingRegimeAnalysisPage(),

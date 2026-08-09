@@ -18,6 +18,7 @@ import { registerIndicatorEducation } from "./indicatorEducation";
 import { registerIndicatorStrategySnapshots } from "./indicatorStrategySnapshots";
 import { registerInternalRoutes } from "./internal";
 import { registerBacktesting } from "./backtesting";
+import { registerBacktestingLab } from "./backtestingLab";
 import { registerFeedbackRoutes } from "./feedback";
 import { registerFiiReports } from "./fiiReports";
 import { registerOverview } from "./overview";
@@ -55,6 +56,7 @@ export function registerRoutes(
   registerAnalyticsOptionsStructure(app, prisma);
   registerAnalyticsStrategyEvaluation(app, prisma);
   registerBacktesting(app, prisma);
+  registerBacktestingLab(app, prisma, authRuntime);
   registerChangeHeatmap(app, prisma);
   registerIndicatorEducation(app, prisma);
   registerIndicatorStrategySnapshots(app, prisma);

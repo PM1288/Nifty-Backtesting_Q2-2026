@@ -45,6 +45,7 @@ import type {
   WatchlistsPayload
 } from "./types";
 import { trackAnalyticsError } from "./analytics";
+import { getSessionCsrfToken, refreshCsrfToken } from "./session";
 
 const FALLBACK_API_BASE = "";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? FALLBACK_API_BASE;
@@ -159,6 +160,138 @@ async function getRootJson<T>(path: string): Promise<T> {
     });
     throw error;
   }
+}
+
+export type BacktestingLabParameterSpec = {
+  type: "number" | "integer" | "boolean";
+  minimum?: number;
+  maximum?: number;
+  step?: number;
+  default: number | boolean;
+  label: string;
+};
+
+export type BacktestingLabCatalogue = {
+  environment: "RESEARCH_ONLY";
+  engineVersion: string;
+  evaluationPolicyVersion: string;
+  strategies: Array<{
+    strategyVersionId: string;
+    strategyId: string;
+    displayName: string;
+    entryKind: string;
+    plainEnglish: string;
+    authoritativeExit: string;
+    parameters: Record<string, BacktestingLabParameterSpec>;
+  }>;
+  sourceBatches: Array<{ batchRunId: number; dataAsOfDate: string; generatedAt: string; dateStart: string; dateEnd: string; symbolCount: number }>;
+  limits: { maximumCalendarDays: number; maximumSymbols: number };
+  ladders: Record<string, Array<number | string>>;
+};
+
+export type BacktestingLabRun = {
+  runId?: string;
+  run_id?: string;
+  strategyVersionId?: string;
+  strategy_version_id?: string;
+  sourceBatchRunId?: number;
+  source_batch_run_id?: number;
+  requestedDateStart?: string;
+  requested_date_start?: string;
+  requestedDateEnd?: string;
+  requested_date_end?: string;
+  actualDateStart?: string | null;
+  actualDateEnd?: string | null;
+  universeMode?: string;
+  symbols: string[];
+  parameters: Record<string, number | boolean>;
+  capital: Record<string, unknown>;
+  status: string;
+  validationStatus?: string;
+  validation_status?: string;
+  totalWorkUnits?: number;
+  completedWorkUnits?: number;
+  heartbeatAt?: string | null;
+  summary: Record<string, number | string | boolean | null>;
+  resultHash?: string | null;
+  errorCode?: string | null;
+  errorDetail?: string | null;
+  error_detail?: string | null;
+  createdAt?: string;
+  created_at?: string;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  events?: Array<Record<string, unknown>>;
+  artifacts?: Array<Record<string, unknown>>;
+};
+
+export type BacktestingLabTrade = Record<string, unknown> & {
+  trade_id: string;
+  symbol: string;
+  sector: string;
+  signal_date: string;
+  entry_date: string;
+  entry_price: string | number;
+  execution_status: string;
+  net_liquidation_pnl: string | number;
+  maximum_favourable_excursion_pct: string | number | null;
+  maximum_adverse_excursion_pct: string | number | null;
+  stock_regime: string | null;
+  nifty_regime: string | null;
+  india_vix_regime: string | null;
+};
+
+export function fetchBacktestingLabCatalogue(): Promise<BacktestingLabCatalogue> {
+  return getJson<BacktestingLabCatalogue>("/v1/backtesting/lab/catalogue");
+}
+
+export function fetchBacktestingLabRuns(): Promise<{ items: BacktestingLabRun[] }> {
+  return getJson<{ items: BacktestingLabRun[] }>("/v1/backtesting/lab/runs?limit=50");
+}
+
+export function fetchBacktestingLabRun(runId: string): Promise<BacktestingLabRun> {
+  return getJson<BacktestingLabRun>(`/v1/backtesting/lab/runs/${encodeURIComponent(runId)}`);
+}
+
+export function fetchBacktestingLabTrades(runId: string): Promise<{ items: BacktestingLabTrade[] }> {
+  return getJson<{ items: BacktestingLabTrade[] }>(`/v1/backtesting/lab/runs/${encodeURIComponent(runId)}/trades?limit=500`);
+}
+
+export function fetchBacktestingLabLadders(runId: string): Promise<{ items: Array<Record<string, unknown>> }> {
+  return getJson<{ items: Array<Record<string, unknown>> }>(`/v1/backtesting/lab/runs/${encodeURIComponent(runId)}/ladders`);
+}
+
+export function fetchBacktestingLabEquity(runId: string): Promise<{ items: Array<Record<string, unknown>> }> {
+  return getJson<{ items: Array<Record<string, unknown>> }>(`/v1/backtesting/lab/runs/${encodeURIComponent(runId)}/equity`);
+}
+
+async function mutateBacktestingLab<T>(path: string, body: unknown, idempotencyKey?: string): Promise<T> {
+  const send = async () => {
+    const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
+    const csrf = getSessionCsrfToken();
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+    if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+    return fetch(`${API_BASE_URL}${resolveApiPath(path)}`, { method: "POST", credentials: "include", headers, body: JSON.stringify(body) });
+  };
+  let response = await send();
+  if (response.status === 403) {
+    await refreshCsrfToken().catch(() => null);
+    response = await send();
+  }
+  if (!response.ok) throw new Error(`API ${response.status}: ${await response.text()}`);
+  return response.json() as Promise<T>;
+}
+
+export function createBacktestingLabRun(payload: Record<string, unknown>, idempotencyKey: string): Promise<BacktestingLabRun> {
+  return mutateBacktestingLab<BacktestingLabRun>("/v1/backtesting/lab/runs", payload, idempotencyKey);
+}
+
+export function cancelBacktestingLabRun(runId: string): Promise<BacktestingLabRun> {
+  return mutateBacktestingLab<BacktestingLabRun>(`/v1/backtesting/lab/runs/${encodeURIComponent(runId)}/cancel`, {});
+}
+
+export function getBacktestingLabCsvUrl(runId: string): string {
+  return `${API_BASE_URL}${resolveApiPath(`/v1/backtesting/lab/runs/${encodeURIComponent(runId)}/trades.csv`)}`;
 }
 
 export function fetchOverview(): Promise<OverviewResponse> {

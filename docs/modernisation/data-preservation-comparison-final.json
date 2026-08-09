@@ -1,0 +1,79 @@
+{
+  "status": "PASS",
+  "comparison_semantics": "additive deployment may add objects and rows but must not remove prior relations, partitions or exact critical rows",
+  "before_generated_at": "2026-08-09T15:23:59.63393+00:00",
+  "after_generated_at": "2026-08-09T16:39:31.405156+00:00",
+  "before_relation_count": 424,
+  "after_relation_count": 431,
+  "added_relations": [
+    "research.strategy_lab_artifact",
+    "research.strategy_lab_event",
+    "research.strategy_lab_run",
+    "research.strategy_lab_signal",
+    "simulation.strategy_lab_equity_point",
+    "simulation.strategy_lab_ladder_result",
+    "simulation.strategy_lab_trade"
+  ],
+  "missing_relations": [],
+  "before_partition_count": 352,
+  "after_partition_count": 352,
+  "added_partitions": [],
+  "missing_partitions": [],
+  "decreased_exact_counts": [],
+  "object_counts_before": {
+    "views": 52,
+    "indexes": 795,
+    "triggers": 2,
+    "functions": 8,
+    "constraints": 784
+  },
+  "object_counts_after": {
+    "views": 52,
+    "indexes": 812,
+    "triggers": 2,
+    "functions": 8,
+    "constraints": 844
+  },
+  "sequence_count_before": 43,
+  "sequence_count_after": 45,
+  "critical_ranges_before": {
+    "bars_1m": {
+      "max_ts": "2026-08-08T01:25:00+00:00",
+      "min_ts": "2026-05-11T01:25:00+00:00"
+    },
+    "backtest_run": {
+      "max_as_of_date": "2026-08-06",
+      "min_as_of_date": "2026-03-10",
+      "max_generated_at": "2026-08-07T02:29:57.261664+00:00",
+      "min_generated_at": "2026-03-11T09:30:01.702498+00:00"
+    },
+    "oiis_selection_run": {
+      "max_signal_date": "2026-08-07",
+      "min_signal_date": "2026-08-07"
+    },
+    "paper_trade_events": {
+      "max_event_time": "2026-08-09T10:30:15.68982+00:00",
+      "min_event_time": "2026-08-09T06:43:45.43011+00:00"
+    }
+  },
+  "critical_ranges_after": {
+    "bars_1m": {
+      "max_ts": "2026-08-08T01:25:00+00:00",
+      "min_ts": "2026-05-11T01:25:00+00:00"
+    },
+    "backtest_run": {
+      "max_as_of_date": "2026-08-06",
+      "min_as_of_date": "2026-03-10",
+      "max_generated_at": "2026-08-07T02:29:57.261664+00:00",
+      "min_generated_at": "2026-03-11T09:30:01.702498+00:00"
+    },
+    "oiis_selection_run": {
+      "max_signal_date": "2026-08-07",
+      "min_signal_date": "2026-08-07"
+    },
+    "paper_trade_events": {
+      "max_event_time": "2026-08-09T10:30:15.68982+00:00",
+      "min_event_time": "2026-08-09T06:43:45.43011+00:00"
+    }
+  }
+}

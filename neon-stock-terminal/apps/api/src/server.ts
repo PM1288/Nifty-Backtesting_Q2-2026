@@ -171,7 +171,7 @@ async function main() {
       },
       credentials: true,
       methods: ["GET", "HEAD", "OPTIONS", "POST"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"]
+      allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Idempotency-Key", "X-Request-Id"]
     })
   );
 

@@ -48,6 +48,11 @@ def _strategy_definitions() -> list[dict[str, Any]]:
                 "capital_modes": shared_capital_modes,
                 "indicator_periods": {"rsi": 14, "willr": 14},
                 "entry_kind": "fast_oversold_rebound",
+                "entry_rules": {
+                    "rsi_max_exclusive": 30.0,
+                    "willr_max_exclusive": -80.0,
+                    "require_close_above_previous": True,
+                },
                 "exit_rules": {"take_profit_pct": 1.25},
                 "priority_rule": [
                     "entry_date_asc",
@@ -84,6 +89,12 @@ def _strategy_definitions() -> list[dict[str, Any]]:
                 "capital_modes": shared_capital_modes,
                 "indicator_periods": {"rsi": 14, "willr": 14},
                 "entry_kind": "confirmed_oversold_recovery",
+                "entry_rules": {
+                    "rsi_reclaim_level": 30.0,
+                    "willr_reclaim_level": -80.0,
+                    "require_green_close": True,
+                    "require_close_above_previous": True,
+                },
                 "exit_rules": {"take_profit_pct": 2.0, "stop_loss_pct": 2.0, "max_hold_days": 10},
                 "priority_rule": [
                     "entry_date_asc",
@@ -119,6 +130,7 @@ def _strategy_definitions() -> list[dict[str, Any]]:
                 "capital_modes": shared_capital_modes,
                 "indicator_periods": {"rsi": 14, "macd_fast": 12, "macd_slow": 26, "macd_signal": 9, "sma20": 20, "sma50": 50},
                 "entry_kind": "macd_trend_continuation",
+                "entry_rules": {"rsi_min_inclusive": 55.0, "rsi_max_inclusive": 70.0},
                 "exit_rules": {"take_profit_pct": 4.0, "stop_loss_pct": 3.0, "max_hold_days": 20},
                 "priority_rule": [
                     "entry_date_asc",
@@ -774,19 +786,23 @@ def _evaluate_signal_candidate(strategy: dict[str, Any], bars: list[SymbolBar], 
         return None
 
     entry_kind = str(strategy["config"].get("entry_kind") or "")
+    entry_rules = dict(strategy["config"].get("entry_rules") or {})
     eligible = False
     rank_inputs: dict[str, Any] = {}
     reason_json: dict[str, Any] = {"entry_kind": entry_kind, "conditions": []}
 
     if entry_kind == "fast_oversold_rebound":
+        rsi_max = float(entry_rules.get("rsi_max_exclusive", 30.0))
+        willr_max = float(entry_rules.get("willr_max_exclusive", -80.0))
+        require_close_above_previous = bool(entry_rules.get("require_close_above_previous", True))
         eligible = bool(
             bar.rsi_14 is not None
             and bar.willr_14 is not None
             and bar.close_price is not None
             and bar.prev_close is not None
-            and bar.rsi_14 < 30
-            and bar.willr_14 < -80
-            and bar.close_price > bar.prev_close
+            and bar.rsi_14 < rsi_max
+            and bar.willr_14 < willr_max
+            and (not require_close_above_previous or bar.close_price > bar.prev_close)
         )
         rank_inputs = {
             "rsi": bar.rsi_14,
@@ -795,21 +811,25 @@ def _evaluate_signal_candidate(strategy: dict[str, Any], bars: list[SymbolBar], 
         }
         reason_json["conditions"] = ["rsi_lt_30", "willr_lt_minus80", "close_gt_prev_close"]
     elif entry_kind == "confirmed_oversold_recovery":
+        rsi_reclaim = float(entry_rules.get("rsi_reclaim_level", 30.0))
+        willr_reclaim = float(entry_rules.get("willr_reclaim_level", -80.0))
+        require_green_close = bool(entry_rules.get("require_green_close", True))
+        require_close_above_previous = bool(entry_rules.get("require_close_above_previous", True))
         eligible = bool(
             prev_bar is not None
             and prev_bar.rsi_14 is not None
             and bar.rsi_14 is not None
             and prev_bar.willr_14 is not None
             and bar.willr_14 is not None
-            and prev_bar.rsi_14 < 30
-            and bar.rsi_14 >= 30
-            and prev_bar.willr_14 < -80
-            and bar.willr_14 >= -80
+            and prev_bar.rsi_14 < rsi_reclaim
+            and bar.rsi_14 >= rsi_reclaim
+            and prev_bar.willr_14 < willr_reclaim
+            and bar.willr_14 >= willr_reclaim
             and bar.close_price is not None
             and bar.prev_close is not None
             and bar.open_price is not None
-            and bar.close_price > bar.prev_close
-            and bar.close_price > bar.open_price
+            and (not require_close_above_previous or bar.close_price > bar.prev_close)
+            and (not require_green_close or bar.close_price > bar.open_price)
         )
         rank_inputs = {
             "rsi": bar.rsi_14,
@@ -818,6 +838,8 @@ def _evaluate_signal_candidate(strategy: dict[str, Any], bars: list[SymbolBar], 
         }
         reason_json["conditions"] = ["rsi_reclaim_30", "willr_reclaim_minus80", "green_close", "close_gt_prev_close"]
     elif entry_kind == "macd_trend_continuation":
+        rsi_min = float(entry_rules.get("rsi_min_inclusive", 55.0))
+        rsi_max = float(entry_rules.get("rsi_max_inclusive", 70.0))
         macd_spread = (
             (bar.macd_line - bar.macd_signal)
             if bar.macd_line is not None and bar.macd_signal is not None
@@ -842,7 +864,7 @@ def _evaluate_signal_candidate(strategy: dict[str, Any], bars: list[SymbolBar], 
             and prev_bar.macd_line <= prev_bar.macd_signal
             and bar.macd_line > bar.macd_signal
             and bar.rsi_14 is not None
-            and 55 <= bar.rsi_14 <= 70
+            and rsi_min <= bar.rsi_14 <= rsi_max
         )
         rank_inputs = {
             "macd_spread": _round_or_none(macd_spread, 4),

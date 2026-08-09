@@ -60,6 +60,9 @@ services:
       MATOMO_PROXY_BASE_URL: ${N50_MATOMO_PROXY_BASE_URL:-http://matomo:80}
       N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
       N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
+      STRATEGY_LAB_ARTIFACT_ROOT: /var/lib/nifty-stratlab/strategy-lab
+    volumes:
+      - nse_analytics_exports:/var/lib/nifty-stratlab:ro
     depends_on:
       postgres:
         condition: service_healthy

@@ -25,6 +25,7 @@ import {
   preloadAnalyticsSimulatorPage,
   preloadBacktestingComparePage,
   preloadBacktestingDailySummaryPage,
+  preloadBacktestingLabPage,
   preloadBacktestingOverviewPage,
   preloadBacktestingPortfolioResultsPage,
   preloadBacktestingRegimeAnalysisPage,
@@ -65,6 +66,7 @@ const AnalyticsOptionsPage = lazy(async () => ({ default: (await preloadAnalytic
 const AnalyticsStrategyEvaluationPage = lazy(async () => ({ default: (await preloadAnalyticsStrategyEvaluationPage()).AnalyticsStrategyEvaluationPage }));
 const FeedbackPage = lazy(async () => ({ default: (await import("./pages/FeedbackPage")).FeedbackPage }));
 const BacktestingOverviewPage = lazy(async () => ({ default: (await preloadBacktestingOverviewPage()).BacktestingOverviewPage }));
+const BacktestingLabPage = lazy(async () => ({ default: (await preloadBacktestingLabPage()).BacktestingLabPage }));
 const BacktestingStrategyLibraryPage = lazy(async () => ({ default: (await preloadBacktestingStrategyLibraryPage()).BacktestingStrategyLibraryPage }));
 const BacktestingStrategyDetailPage = lazy(async () => ({ default: (await preloadBacktestingStrategyDetailPage()).BacktestingStrategyDetailPage }));
 const BacktestingPortfolioResultsPage = lazy(async () => ({ default: (await preloadBacktestingPortfolioResultsPage()).BacktestingPortfolioResultsPage }));
@@ -114,6 +116,7 @@ export default function App() {
           <Route path="/analytics/stock/:symbol" element={<AnalyticsStockPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/backtesting" element={<BacktestingOverviewPage />} />
+          <Route path="/backtesting/lab" element={<BacktestingLabPage />} />
           <Route path="/backtesting/strategies" element={<BacktestingStrategyLibraryPage />} />
           <Route path="/backtesting/strategies/:strategyId" element={<BacktestingStrategyDetailPage />} />
           <Route path="/backtesting/results" element={<BacktestingPortfolioResultsPage />} />

@@ -1,0 +1,55 @@
+{
+  "captured_at": "2026-08-09T14:34:40Z",
+  "repository_root": "/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026",
+  "runtime_root": "/home/novius2/trading-stack",
+  "source_commit": "10fb83e5c5115b2254c6edb9ea45c10f07580851",
+  "tracked_file_count": 1789,
+  "languages": [
+    "Go",
+    "Python",
+    "TypeScript",
+    "React",
+    "SQL",
+    "Shell",
+    "PowerShell"
+  ],
+  "package_managers": {
+    "go": ["go.mod", "go.sum"],
+    "node_authoritative_runtime": [
+      "neon-stock-terminal/package.json",
+      "neon-stock-terminal/package-lock.json"
+    ],
+    "node_conflicting_lock": "neon-stock-terminal/pnpm-lock.yaml",
+    "python": [
+      "platform/nifty_stratlab/pyproject.toml",
+      "services/nse_analytics_worker/requirements.txt",
+      "services/paper_trading/pyproject.toml"
+    ]
+  },
+  "deployment": {
+    "compose_project": "trading-stack-novius2",
+    "running_containers": 25,
+    "base_compose_services": 26,
+    "nginx": "container ingress on 19090; independent host nginx active",
+    "postgres_volume": "trading-stack-novius2_pgdata"
+  },
+  "major_domains": [
+    "cmd and internal Go collector",
+    "neon-stock-terminal Node React dashboard",
+    "services Python and TypeScript operational services",
+    "platform/nifty_stratlab research engine",
+    "db additive deployment migrations",
+    "compose deployment surfaces"
+  ],
+  "generated_local_footprint": {
+    "platform/nifty_stratlab/outputs": "approximately 82 GiB",
+    "platform/nifty_stratlab/.venv": "approximately 721 MiB",
+    "classification": "generated or research evidence; do not delete before manifest and provenance review"
+  },
+  "known_baseline_defects": [
+    "root Node scripts require absent corepack while Docker uses npm",
+    "Compose verification helpers require a source-root .env",
+    "option-chain-watcher image is approximately 3.19 GiB",
+    "two runtime containers are close to configured memory limits"
+  ]
+}

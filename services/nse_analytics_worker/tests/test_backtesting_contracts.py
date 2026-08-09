@@ -8,14 +8,39 @@ import pandas as pd
 from app.backtesting import (
     PROFIT_TAX_RESERVE_RATE,
     ReplayPosition,
+    SymbolBar,
     TradeTemplate,
     _build_regime_map,
     _build_scenarios,
     _close_replay_position,
+    _evaluate_signal_candidate,
+    _strategy_definitions,
 )
 
 
 class BacktestingContractsTest(unittest.TestCase):
+    def test_default_fast_entry_levels_preserve_existing_signal(self) -> None:
+        strategy = next(row for row in _strategy_definitions() if row["config"]["entry_kind"] == "fast_oversold_rebound")
+        bars = [
+            SymbolBar(date(2026, 1, 1), "ABC", "ABC", "TEST", 99, 101, 98, 100, 99, 1.01, rsi_14=29.9, willr_14=-80.1),
+            SymbolBar(date(2026, 1, 2), "ABC", "ABC", "TEST", 101, 102, 100, 101, 100, 1.0),
+        ]
+
+        candidate = _evaluate_signal_candidate(strategy, bars, 0)
+
+        self.assertIsNotNone(candidate)
+        self.assertEqual(candidate["entry_date"], date(2026, 1, 2))
+
+    def test_fast_entry_level_override_changes_only_declared_gate(self) -> None:
+        strategy = next(row for row in _strategy_definitions() if row["config"]["entry_kind"] == "fast_oversold_rebound")
+        strategy = {**strategy, "config": {**strategy["config"], "entry_rules": {**strategy["config"]["entry_rules"], "rsi_max_exclusive": 25.0}}}
+        bars = [
+            SymbolBar(date(2026, 1, 1), "ABC", "ABC", "TEST", 99, 101, 98, 100, 99, 1.01, rsi_14=29.9, willr_14=-80.1),
+            SymbolBar(date(2026, 1, 2), "ABC", "ABC", "TEST", 101, 102, 100, 101, 100, 1.0),
+        ]
+
+        self.assertIsNone(_evaluate_signal_candidate(strategy, bars, 0))
+
     def test_required_capital_scenarios_are_explicit(self) -> None:
         strategy = {
             "strategy_id": "test",

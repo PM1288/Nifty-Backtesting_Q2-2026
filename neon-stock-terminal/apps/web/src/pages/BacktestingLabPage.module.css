@@ -1,0 +1,37 @@
+.lab { min-height: 70vh; }
+.safetyBanner { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 14px 18px; border: 1px solid #f1cf8b; border-radius: 12px; background: #fff8e8; color: #59420f; }
+.safetyBanner strong { border-radius: 999px; background: #9a6100; color: white; padding: 6px 10px; font-size: 11px; letter-spacing: .08em; }
+.safetyBanner span { font-size: 13px; line-height: 1.5; }
+.builderGrid { display: grid; grid-template-columns: 1.3fr 1fr .9fr; gap: 16px; align-items: stretch; }
+.builderCard,.historyPanel,.chartCard { border: 1px solid #dce4ee; border-radius: 14px; background: white; padding: 18px; box-shadow: 0 4px 18px rgba(11,31,58,.055); }
+.builderCard { display: flex; flex-direction: column; gap: 14px; }
+.builderCard label { display: grid; gap: 6px; color: #52637a; font-size: 12px; font-weight: 650; }
+.builderCard input,.builderCard select { min-height: 40px; width: 100%; border: 1px solid #cfd9e6; border-radius: 8px; background: white; color: #0b1f3a; padding: 8px 10px; }
+.builderCard input[type="checkbox"] { min-height: 18px; width: 18px; accent-color: #2563a6; }
+.builderCard p,.chartCard p { margin: 0; color: #617087; font-size: 12px; line-height: 1.55; }
+.stepLabel { color: #2563a6; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.parameterGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.twoColumns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.verifyCard dl { display: grid; gap: 10px; margin: 0; }
+.verifyCard dl div { border-bottom: 1px solid #e5eaf0; padding-bottom: 9px; }
+.verifyCard dt { color: #617087; font-size: 11px; }
+.verifyCard dd { margin: 3px 0 0; color: #0b1f3a; font-size: 12px; font-weight: 650; line-height: 1.4; }
+.primaryButton,.runStrip button { cursor: pointer; border: 0; border-radius: 8px; background: #12315a; color: white; padding: 11px 15px; font-weight: 750; }
+.primaryButton:disabled { cursor: not-allowed; opacity: .55; }
+.inlineError { border-left: 3px solid #c23b3b; background: #fff1f1; color: #8d2525 !important; padding: 9px; }
+.runStrip { display: grid; grid-template-columns: 2fr repeat(3,1fr) auto; align-items: stretch; overflow: hidden; border: 1px solid #dce4ee; border-radius: 12px; background: white; }
+.runStrip div { display: grid; gap: 4px; min-width: 0; border-right: 1px solid #e5eaf0; padding: 12px 14px; }
+.runStrip span { color: #617087; font-size: 10px; text-transform: uppercase; }
+.runStrip strong { overflow: hidden; color: #0b1f3a; font-size: 12px; text-overflow: ellipsis; }
+.runStrip strong[data-tone="good"] { color: #0f8a5f; }.runStrip strong[data-tone="bad"] { color: #c23b3b; }.runStrip strong[data-tone="running"] { color: #b26800; }
+.historyPanel h2,.chartCard h2 { margin: 0 0 12px; color: #0b1f3a; font-size: 16px; }
+.runChips { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.runChips button { min-width: 180px; cursor: pointer; display: grid; gap: 4px; border: 1px solid #dce4ee; border-radius: 10px; background: #f7f9fc; padding: 10px; text-align: left; }
+.runChips button[data-active="true"] { border-color: #2563a6; background: #edf4fb; box-shadow: inset 0 0 0 1px #2563a6; }
+.runChips strong { color: #12315a; font-size: 11px; }.runChips span { color: #40516a; font-size: 11px; }.runChips small { color: #7a8798; }
+.kpiGrid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 10px; }
+.resultActions { display: flex; justify-content: flex-end; }
+.resultActions a { border: 1px solid #bfd0e4; border-radius: 8px; background: #f4f8fc; color: #174f86; padding: 9px 12px; font-size: 12px; font-weight: 750; text-decoration: none; }
+.chartCard { min-height: 360px; }
+@media (max-width: 1100px) { .builderGrid { grid-template-columns: 1fr 1fr; }.verifyCard { grid-column: 1/-1; }.kpiGrid { grid-template-columns: repeat(3,1fr); }.runStrip { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 700px) { .builderGrid,.twoColumns,.parameterGrid { grid-template-columns: 1fr; }.kpiGrid { grid-template-columns: repeat(2,1fr); }.runStrip { grid-template-columns: 1fr; }.safetyBanner { grid-template-columns: 1fr; } }

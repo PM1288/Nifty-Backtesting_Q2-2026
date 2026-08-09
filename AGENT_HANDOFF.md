@@ -1757,3 +1757,68 @@ volume. The runtime source files before this batch are preserved at
   batch.
 - NPM reports 13 dependency advisories. Do not run an unreviewed major-version
   audit fix in this behavioural batch.
+
+## UI/UX V2 redesign handoff — 2026-08-09
+
+### What changed
+
+- Source authority: every document in the untracked user-supplied
+  `UI-REDESIGN/` folder was reviewed. The folder was not edited or staged.
+- Home (`/`) is protected: it uses the original groups/theme and has no
+  `data-ui-generation="trading-v2"` attribute.
+- All active non-home screens now use a scoped light workspace with the supplied
+  V2 palette, a navy 216/72 px navigation rail, compact mobile drawer and a
+  PAPER/page/data/feed/user context strip.
+- Active navigation is grouped by product domain and contains only real routes:
+  Market, OIIS, Stocks, Backtests, Options, Research/DOE and Operations.
+- `/dashboard/*` aliases were added for implemented screens. Paper Trading,
+  Futures and Administration were not faked; they remain documented blockers
+  until governed API/UI vertical slices exist.
+- Shared `StatusPill`, `EnvironmentBadge`, `FeedFreshnessBadge`,
+  `ContextIdentityStrip`, `ValidationGateStrip` and `FailurePanel` primitives
+  were added without adding a dependency.
+- The browser remains a presentation layer. No P&L, strategy, regime, ladder,
+  paper-trade or validation semantics changed.
+
+### Commands executed
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/neon-stock-terminal/apps/web
+npm run typecheck
+npm run lint
+npm run build
+
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/tools/playwright
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:4190/n50 \
+  PLAYWRIGHT_OUTPUT_DIR=output/playwright/ui-v2-regression-local \
+  node ui-v2-regression.mjs
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:19090/n50-stage \
+  PLAYWRIGHT_OUTPUT_DIR=output/playwright/ui-v2-regression-stage \
+  node ui-v2-regression.mjs
+PLAYWRIGHT_BASE_URL=https://n50.nifty50today.co.in/n50 \
+  PLAYWRIGHT_OUTPUT_DIR=output/playwright/ui-v2-regression-production \
+  node ui-v2-regression.mjs
+
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 -f docker-compose.yml build n50-dashboard-stage
+docker compose -p trading-stack-novius2 -f docker-compose.yml up -d --no-deps n50-dashboard-stage
+docker compose -p trading-stack-novius2 -f docker-compose.yml build n50-dashboard
+docker compose -p trading-stack-novius2 -f docker-compose.yml up -d --no-deps n50-dashboard
+curl http://127.0.0.1:19090/n50/health
+```
+
+### Verification and rollback
+
+- TypeScript/build PASS; 2,448 modules built.
+- Browser scope/overflow matrix PASS 20/20 locally, 20/20 on stage and 20/20
+  on public production across 430/1024/1440/1920 px.
+- Health PASS: HTTP 200, `ready=true`, PostgreSQL connected.
+- Public `/n50/backtesting/lab` and
+  `/n50/dashboard/strategy-lab/quick` return HTTP 200.
+- Lint exposed the existing 36 errors/39 warnings in unrelated legacy files.
+  Do not hide them; remediate in a separate compatibility-tested batch.
+- Pre-deploy runtime UI backup:
+  `/home/novius2/backups/ui-v2/20260809T181329Z`.
+- Rollback by restoring those source files, rebuilding only the two dashboard
+  images and recreating those services with the same Compose project. Do not
+  remove volumes or restart PostgreSQL.

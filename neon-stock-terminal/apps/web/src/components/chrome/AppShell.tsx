@@ -28,6 +28,7 @@ import { useDashboardPrefetch } from "../../lib/useDashboardPrefetch";
 import { useI18n } from "../../i18n/LocaleProvider";
 import { resolvePrimarySection, SECTION_META, useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
 import { AuthGateModal } from "../auth/AuthGateModal";
+import { ContextIdentityStrip } from "../../design-system/TradingPrimitives";
 import { ToggleGroup } from "../ui/DashboardPrimitives";
 import { AuthStatus } from "./AuthStatus";
 import { FooterDisclaimer } from "./FooterDisclaimer";
@@ -364,6 +365,80 @@ function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
   ];
 }
 
+function buildV2SidebarGroups(tr: (value: string) => string): NavGroup[] {
+  return [
+    {
+      id: "home",
+      label: tr("Home"),
+      items: [{ label: tr("Home"), to: "/", icon: Home, match: (pathname) => pathname === "/" }]
+    },
+    {
+      id: "market",
+      label: tr("Market"),
+      items: [
+        { label: tr("Market Overview"), to: "/analytics", icon: LayoutDashboard, match: (pathname) => pathname === "/analytics" },
+        { label: tr("Market State"), to: "/analytics/market-state", icon: Activity, match: (pathname) => pathname.startsWith("/analytics/market-state") },
+        { label: tr("Regimes"), to: "/analytics/regime", icon: TrendingUp, match: (pathname) => pathname.startsWith("/analytics/regime") },
+        { label: tr("Institutional Flow"), to: "/institutional/flow", icon: BarChart3, match: (pathname) => pathname.startsWith("/institutional/") }
+      ]
+    },
+    {
+      id: "oiis",
+      label: tr("OIIS"),
+      items: [
+        { label: tr("Live Selection"), to: "/strategy/oiis-live", icon: ClipboardList, match: (pathname) => pathname.startsWith("/strategy/oiis-live") },
+        { label: tr("Strategy Evaluation"), to: "/strategy/evaluation", icon: FlaskConical, match: (pathname) => pathname.startsWith("/strategy/evaluation") }
+      ]
+    },
+    {
+      id: "stocks",
+      label: tr("Stocks"),
+      items: [
+        { label: tr("Leadership"), to: "/analytics/leadership", icon: TrendingUp, match: (pathname) => pathname.startsWith("/analytics/leadership") },
+        { label: tr("Daily Setups"), to: "/analytics/daily-setups", icon: ClipboardList, match: (pathname) => pathname.startsWith("/analytics/daily-setups") },
+        { label: tr("Stock Detail"), to: "/analytics/stock/RELIANCE", icon: Activity, match: (pathname) => pathname.startsWith("/analytics/stock/") }
+      ]
+    },
+    {
+      id: "backtests",
+      label: tr("Backtests"),
+      items: [
+        { label: tr("Overview"), to: "/backtesting", icon: LayoutDashboard, match: (pathname) => pathname === "/backtesting" },
+        { label: tr("Strategy Lab"), to: "/backtesting/lab", icon: FlaskConical, match: (pathname) => pathname.startsWith("/backtesting/lab") },
+        { label: tr("Leaderboard"), to: "/backtesting/strategies", icon: LibraryBig, match: (pathname) => pathname.startsWith("/backtesting/strategies") },
+        { label: tr("Portfolio Results"), to: "/backtesting/results", icon: BarChart3, match: (pathname) => pathname.startsWith("/backtesting/results") },
+        { label: tr("Run Monitor"), to: "/backtesting/runs", icon: ClipboardList, match: (pathname) => pathname.startsWith("/backtesting/runs") },
+        { label: tr("Compare"), to: "/backtesting/compare", icon: Gauge, match: (pathname) => pathname.startsWith("/backtesting/compare") }
+      ]
+    },
+    {
+      id: "options",
+      label: tr("Options"),
+      items: [
+        { label: tr("Options Structure"), to: "/options/structure", icon: Sigma, match: (pathname) => pathname.startsWith("/options/structure") },
+        { label: tr("Option Snapshot"), to: "/options/snapshot", icon: BarChart3, match: (pathname) => pathname.startsWith("/options/snapshot") }
+      ]
+    },
+    {
+      id: "research",
+      label: tr("Research / DOE"),
+      items: [
+        { label: tr("30-day Opportunity"), to: "/backtesting/h30", icon: Gauge, match: (pathname) => pathname.startsWith("/backtesting/h30") },
+        { label: tr("Indicator Research"), to: "/analytics/indicators", icon: Sigma, match: (pathname) => pathname.startsWith("/analytics/indicators") },
+        { label: tr("Heatmaps"), to: "/heatmap/change", icon: BarChart3, match: (pathname) => pathname.startsWith("/heatmap/") }
+      ]
+    },
+    {
+      id: "operations",
+      label: tr("Operations"),
+      items: [
+        { label: tr("System Map"), to: "/analytics/system/map", icon: ClipboardList, match: (pathname) => pathname.startsWith("/analytics/system/map") },
+        { label: tr("Data Quality"), to: "/analytics/system/quality", icon: ShieldCheck, match: (pathname) => pathname.startsWith("/analytics/system/quality") }
+      ]
+    }
+  ];
+}
+
 function findCurrentPage(groups: NavGroup[], pathname: string) {
   for (const group of groups) {
     for (const item of group.items) {
@@ -416,8 +491,12 @@ function buildAmbientGlowStyle(changePct: number | null | undefined): AmbientGlo
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const isProtectedHome = location.pathname === "/";
   const { language, digits, setLanguage, setDigits, t, tr } = useI18n();
-  const allGroups = useMemo(() => buildSidebarGroups(tr), [tr]);
+  const allGroups = useMemo(
+    () => (isProtectedHome ? buildSidebarGroups(tr) : buildV2SidebarGroups(tr)),
+    [isProtectedHome, tr]
+  );
   const sidebarGroups = useMemo(() => allGroups.filter((group) => !group.hiddenInSidebar), [allGroups]);
   const currentPage = useMemo(() => findCurrentPage(allGroups, location.pathname), [allGroups, location.pathname]);
 
@@ -554,11 +633,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return query ? `/feedback?${query}` : "/feedback";
   }, [location.pathname, location.search, pageTitle]);
 
-  const workspaceTheme = location.pathname.startsWith("/strategy/oiis-live") ? "light" : "default";
+  const workspaceTheme = isProtectedHome ? "default" : "light";
+  const feedState = overview.isLoading
+    ? "loading"
+    : overview.isError
+      ? "error"
+      : overview.data
+        ? "current"
+        : "unavailable";
 
   return (
     <div
       className={styles.shell}
+      data-ui-generation={isProtectedHome ? undefined : "trading-v2"}
       data-workspace-theme={workspaceTheme}
       data-mobile-nav-open={mobileNavOpen ? "true" : "false"}
       data-sidebar-collapsed={desktopSidebarCollapsed ? "true" : "false"}
@@ -664,6 +751,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className={styles.tickerRail} data-clarity-unmask="true" data-clarity-region="top_ticker">
             <HeaderTicker items={tickerItems} />
           </div>
+          {!isProtectedHome ? (
+            <ContextIdentityStrip
+              page={pageTitle}
+              dataAsOf={overview.data?.asOf}
+              feedState={feedState}
+              signedIn={sessionEnabled}
+            />
+          ) : null}
         </header>
 
         <div className={styles.body}>

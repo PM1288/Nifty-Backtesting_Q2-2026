@@ -95,6 +95,22 @@ export default function App() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard/home" element={<Navigate to="/" replace />} />
+          <Route path="/dashboard/market" element={<Navigate to="/analytics" replace />} />
+          <Route path="/dashboard/market/state" element={<Navigate to="/analytics/market-state" replace />} />
+          <Route path="/dashboard/market/regimes" element={<Navigate to="/analytics/regime" replace />} />
+          <Route path="/dashboard/oiis" element={<Navigate to="/strategy/oiis-live" replace />} />
+          <Route path="/dashboard/oiis/evaluation" element={<Navigate to="/strategy/evaluation" replace />} />
+          <Route path="/dashboard/stocks" element={<Navigate to="/analytics/leadership" replace />} />
+          <Route path="/dashboard/stocks/:symbol" element={<LegacyStockRedirect />} />
+          <Route path="/dashboard/strategy-lab" element={<Navigate to="/backtesting" replace />} />
+          <Route path="/dashboard/strategy-lab/quick" element={<Navigate to="/backtesting/lab" replace />} />
+          <Route path="/dashboard/strategy-lab/runs" element={<Navigate to="/backtesting/runs" replace />} />
+          <Route path="/dashboard/strategy-lab/compare" element={<Navigate to="/backtesting/compare" replace />} />
+          <Route path="/dashboard/options" element={<Navigate to="/options/structure" replace />} />
+          <Route path="/dashboard/research" element={<Navigate to="/backtesting/h30" replace />} />
+          <Route path="/dashboard/data-quality" element={<Navigate to="/analytics/system/quality" replace />} />
+          <Route path="/dashboard/operations" element={<Navigate to="/analytics/system/map" replace />} />
           <Route path="/analytics" element={<AnalyticsOverviewPage />} />
           <Route path="/analytics/leadership" element={<AnalyticsLeadershipPage />} />
           <Route path="/analytics/daily-setups" element={<AnalyticsSetupsPage />} />

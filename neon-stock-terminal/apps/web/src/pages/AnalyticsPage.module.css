@@ -160,7 +160,7 @@
   color: var(--white);
   border: 1px solid var(--w-12);
   padding: 0 14px;
-  background: rgba(0, 0, 0, 0.78);
+  background: var(--surface-interactive);
 }
 
 .back:hover,
@@ -227,7 +227,7 @@
   color: var(--w-72);
   border: 1px solid var(--w-12);
   padding: 0 14px;
-  background: rgba(0, 0, 0, 0.78);
+  background: var(--surface-interactive);
 }
 
 .routeLink[data-active="true"] {

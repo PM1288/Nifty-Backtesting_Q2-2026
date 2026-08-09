@@ -1,0 +1,18 @@
+{
+  "version": "2.0",
+  "generated_at": "2026-08-09T00:00:00Z",
+  "home_protected": true,
+  "routes": [
+    { "domain": "Home", "canonical": "/", "alias": "/dashboard/home" },
+    { "domain": "Market", "canonical": "/analytics", "alias": "/dashboard/market" },
+    { "domain": "OIIS", "canonical": "/strategy/oiis-live", "alias": "/dashboard/oiis" },
+    { "domain": "Stocks", "canonical": "/analytics/leadership", "alias": "/dashboard/stocks" },
+    { "domain": "Strategies", "canonical": "/strategy/evaluation", "alias": "/dashboard/oiis/evaluation" },
+    { "domain": "Backtests", "canonical": "/backtesting/lab", "alias": "/dashboard/strategy-lab/quick" },
+    { "domain": "Options", "canonical": "/options/structure", "alias": "/dashboard/options" },
+    { "domain": "Research / DOE", "canonical": "/backtesting/h30", "alias": "/dashboard/research" },
+    { "domain": "Data Quality", "canonical": "/analytics/system/quality", "alias": "/dashboard/data-quality" },
+    { "domain": "Operations", "canonical": "/analytics/system/map", "alias": "/dashboard/operations" }
+  ],
+  "deferred_without_placeholder": ["Paper Trading", "Futures", "Administration"]
+}

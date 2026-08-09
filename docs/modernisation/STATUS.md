@@ -100,3 +100,30 @@ Last updated: 2026-08-09 UTC
 - Nifty, stock, India VIX and global-market regime context is retained with
   RSI, Williams %R, moving-average and MACD evidence.
 - The lab worker is paper/research only and contains no broker execution path.
+
+## UI/UX V2 deployment — 2026-08-09
+
+- Reviewed every supplied artefact in `UI-REDESIGN`: the full specification,
+  token JSON, 64-screen catalogue and implementation prompt.
+- Implemented a scoped `[data-ui-generation="trading-v2"]` light operational
+  workspace. Home is deliberately outside the scope and its component/styles
+  were not changed.
+- Added navy product-domain navigation, PAPER/feed/user context, responsive
+  216/72 px rail/drawer, semantic status primitives, reduced-motion handling
+  and governed `/dashboard/*` aliases to real screens only.
+- Added the UI audit, implementation plan, design system, IA, accessibility,
+  failure, auth, performance, screen, source and limitation documents under
+  `docs/ui-ux/` plus `specs/route-map.json`.
+- TypeScript and the production build pass. The Playwright matrix passes 20/20
+  locally, 20/20 through stage Nginx and 20/20 on public production at 430,
+  1024, 1440 and 1920 px. Home isolation and no document overflow are asserted.
+- Repository-wide lint remains blocked by the pre-existing 36 errors/39
+  warnings in unrelated files. It was recorded, not suppressed.
+- Built/recreated only `n50-dashboard-stage` and `n50-dashboard` with
+  `-p trading-stack-novius2`; all market, paper-trading, OIIS, worker,
+  PostgreSQL and Nginx containers remained running.
+- Dashboard health is HTTP 200, ready and PostgreSQL connected. Public Strategy
+  Lab and `/dashboard/strategy-lab/quick` alias both return HTTP 200.
+- No database migration, trading-rule change, SmartAPI change or live order was
+  made. Pre-deploy runtime UI files are backed up at
+  `/home/novius2/backups/ui-v2/20260809T181329Z`.

@@ -1,0 +1,115 @@
+[data-ui-generation="trading-v2"] {
+  --v2-canvas: #f6f8fc;
+  --v2-surface: #ffffff;
+  --v2-surface-muted: #f1f4f8;
+  --v2-text-primary: #0b1220;
+  --v2-text-secondary: #5b6575;
+  --v2-text-muted: #7c8798;
+  --v2-border: #d9e0ea;
+  --v2-border-strong: #c5cfdd;
+  --v2-nav: #0b1f3a;
+  --v2-nav-selected: #12315a;
+  --v2-primary: #1e5eff;
+  --v2-positive: #0a8f5a;
+  --v2-negative: #c9362b;
+  --v2-warning: #9b6514;
+  --v2-options: #6d4aff;
+  --v2-futures: #008aa6;
+  --v2-nifty: #9b720f;
+  --v2-page-gutter: 24px;
+  --v2-radius-sm: 6px;
+  --v2-radius-md: 10px;
+  --v2-radius-lg: 14px;
+  --v2-shadow-panel: 0 1px 2px rgba(11, 18, 32, 0.04), 0 6px 20px rgba(11, 18, 32, 0.05);
+
+  color-scheme: light;
+  background: var(--v2-canvas);
+  color: var(--v2-text-primary);
+
+  /* Compatibility bridge for established page modules. */
+  --white: var(--v2-text-primary);
+  --black: var(--v2-surface);
+  --green: var(--v2-positive);
+  --red: var(--v2-negative);
+  --gold: var(--v2-nifty);
+  --bg: var(--v2-canvas);
+  --surface-canvas: var(--v2-canvas);
+  --surface-1: var(--v2-surface);
+  --surface-2: #f8fafc;
+  --surface-3: var(--v2-surface-muted);
+  --surface-panel: var(--v2-surface);
+  --surface-panel-strong: #f8fafc;
+  --surface-overlay: rgba(255, 255, 255, 0.98);
+  --surface-inset: var(--v2-surface-muted);
+  --surface-interactive: #f8fafc;
+  --surface-interactive-hover: #eef4ff;
+  --border-weak: #e7ebf1;
+  --border-subtle: var(--v2-border);
+  --border-strong: var(--v2-border-strong);
+  --border-accent: rgba(30, 94, 255, 0.24);
+  --border-accent-strong: rgba(30, 94, 255, 0.5);
+  --text-1: var(--v2-text-primary);
+  --text-2: #334155;
+  --text-3: var(--v2-text-secondary);
+  --text-4: var(--v2-text-muted);
+  --muted: var(--v2-text-muted);
+  --w-92: rgba(11, 18, 32, 0.92);
+  --w-72: rgba(11, 18, 32, 0.72);
+  --w-54: rgba(11, 18, 32, 0.56);
+  --w-38: rgba(11, 18, 32, 0.4);
+  --w-18: rgba(11, 18, 32, 0.18);
+  --w-12: rgba(11, 18, 32, 0.12);
+  --w-08: rgba(11, 18, 32, 0.08);
+  --w-04: rgba(11, 18, 32, 0.04);
+  --w-02: rgba(11, 18, 32, 0.02);
+  --shadow-1: var(--v2-shadow-panel);
+  --shadow-2: 0 16px 40px rgba(11, 18, 32, 0.14);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  --glow-white: 0 0 0 3px rgba(30, 94, 255, 0.16);
+}
+
+[data-ui-generation="trading-v2"] :focus-visible {
+  outline: 2px solid var(--v2-primary);
+  outline-offset: 2px;
+}
+
+[data-ui-generation="trading-v2"] :where(button, [role="button"], input, select, textarea) {
+  accent-color: var(--v2-primary);
+}
+
+[data-ui-generation="trading-v2"] :where(table) {
+  font-variant-numeric: tabular-nums;
+}
+
+[data-ui-generation="trading-v2"] [class*="_tableFrame_"] {
+  background: var(--v2-surface) !important;
+}
+
+[data-ui-generation="trading-v2"] [class*="_dataTable_"] thead th {
+  background: var(--v2-surface-muted) !important;
+  color: var(--v2-text-secondary) !important;
+}
+
+[data-ui-generation="trading-v2"] [class*="_dossierPre_"] {
+  background: var(--v2-surface-muted) !important;
+}
+
+@media (max-width: 1199px) {
+  [data-ui-generation="trading-v2"] { --v2-page-gutter: 20px; }
+}
+
+@media (max-width: 760px) {
+  [data-ui-generation="trading-v2"] { --v2-page-gutter: 16px; }
+  [data-ui-generation="trading-v2"] :where(button, [role="button"], select) { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-ui-generation="trading-v2"] *,
+  [data-ui-generation="trading-v2"] *::before,
+  [data-ui-generation="trading-v2"] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

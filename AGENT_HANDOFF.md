@@ -1750,5 +1750,10 @@ volume. The runtime source files before this batch are preserved at
   bounded one-stock validation was authorised for this implementation step.
 - Nginx reports absent optional `watchlist`, `matomo` and `rsi-willr-monitor`
   upstreams. N50 production and staging routes are unaffected.
+- The public production route and catalogue return HTTP 200. The local stage
+  route returns HTTP 200 through Nginx, but the external
+  `stage.nifty50today.co.in` hostname returns Cloudflare 502. The stage tunnel
+  ingress is remotely managed and was not changed in this safe application
+  batch.
 - NPM reports 13 dependency advisories. Do not run an unreviewed major-version
   audit fix in this behavioural batch.

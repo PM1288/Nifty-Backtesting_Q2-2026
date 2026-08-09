@@ -143,6 +143,10 @@ called out in the runbook/handoff.
 - Full Nifty100/three-year performance and concurrency benchmark.
 - Browser automation across desktop/mobile. HTTP, asset and API smokes passed,
   but Chromium is not installed in this execution environment.
+- The public production hostname passes. The public stage hostname currently
+  returns Cloudflare 502 even though the stage container and its local Nginx
+  route pass; correcting the remotely managed tunnel ingress is an external
+  deployment action.
 - Market-session CPU/RAM/latency capture rather than the current idle sample.
 - Failure injection for database interruption and mid-run worker termination.
 - Remediation and regression of the 13 npm dependency advisories.

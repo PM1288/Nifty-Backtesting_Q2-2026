@@ -74,6 +74,9 @@ Last updated: 2026-08-09 UTC
 - Three optional Nginx upstreams are currently absent: `watchlist`, `matomo`
   and `rsi-willr-monitor`. N50 prod/stage routes pass, but this remains an
   all-stack diagnostic warning.
+- `https://n50.nifty50today.co.in/n50/backtesting/lab` passes publicly. The
+  stage app passes via local Nginx but `stage.nifty50today.co.in` currently
+  returns Cloudflare 502; its remotely managed tunnel ingress needs correction.
 - The Node dependency audit reports 13 advisories. Remediation requires a
   separate dependency-upgrade branch and full regression.
 

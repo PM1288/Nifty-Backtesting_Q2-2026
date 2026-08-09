@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "client_event_id": "partial-close-example",
+  "occurred_at": "2026-08-09T06:28:45.679747+00:00",
+  "reason": "STRATEGY_EXIT",
+  "scope": "LEGS",
+  "price_policy": "NEXT_AVAILABLE_BAR_OPEN",
+  "legs": [
+    {
+      "client_leg_id": "leg-1",
+      "quantity": "125"
+    }
+  ],
+  "metadata": {}
+}

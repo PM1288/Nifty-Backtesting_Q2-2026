@@ -1,0 +1,17 @@
+{
+  "specversion": "1.0",
+  "id": "14_rejected.json",
+  "source": "urn:paper-trading-service",
+  "type": "com.papertrading.trade_intent.rejected.v1",
+  "subject": "trade-groups/example",
+  "time": "2026-08-09T06:28:45.681235+00:00",
+  "datacontenttype": "application/json",
+  "dataschema": "urn:papertrading:schema:com.papertrading.trade_intent.rejected.v1:1.0",
+  "correlationid": "correlation-example",
+  "sequence": 1,
+  "data": {
+    "environment": "PAPER",
+    "display_label": "PAPER TRADE",
+    "event_name": "com.papertrading.trade_intent.rejected.v1"
+  }
+}

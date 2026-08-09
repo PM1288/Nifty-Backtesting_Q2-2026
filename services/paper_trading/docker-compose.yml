@@ -1,0 +1,37 @@
+name: paper-trading-dev
+services:
+  postgres:
+    image: postgres:16
+    environment: {POSTGRES_USER: paper, POSTGRES_PASSWORD: paper-test-only, POSTGRES_DB: papertrade}
+    ports: ["127.0.0.1:15432:5432"]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U paper -d papertrade"], interval: 2s, timeout: 2s, retries: 20}
+  mock-n8n:
+    build: {context: ., dockerfile: tests/mock_receiver.Dockerfile}
+    environment: {MOCK_USER: mock-user, MOCK_PASSWORD: mock-password}
+  paper-migrate:
+    build: .
+    command: ["migrate"]
+    env_file: [.env.test]
+    depends_on: {postgres: {condition: service_healthy}}
+  paper-api:
+    build: .
+    command: ["api", "--host", "0.0.0.0", "--port", "8088"]
+    env_file: [.env.test]
+    ports: ["18088:8088"]
+    depends_on: {paper-migrate: {condition: service_completed_successfully}}
+    healthcheck: {test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8088/health/ready')"], interval: 2s, timeout: 2s, retries: 20}
+  paper-monitor-worker:
+    build: .
+    command: ["monitor-worker"]
+    env_file: [.env.test]
+    depends_on: {paper-migrate: {condition: service_completed_successfully}}
+  paper-webhook-worker:
+    build: .
+    command: ["webhook-worker"]
+    env_file: [.env.test]
+    depends_on: {paper-migrate: {condition: service_completed_successfully}, mock-n8n: {condition: service_started}}
+  paper-scheduler:
+    build: .
+    command: ["scheduler"]
+    env_file: [.env.test]
+    depends_on: {paper-migrate: {condition: service_completed_successfully}}

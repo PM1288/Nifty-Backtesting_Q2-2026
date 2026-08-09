@@ -1,0 +1,17 @@
+{
+  "specversion": "1.0",
+  "id": "20_market_data_stale.json",
+  "source": "urn:paper-trading-service",
+  "type": "com.papertrading.market_data.stale.v1",
+  "subject": "trade-groups/example",
+  "time": "2026-08-09T06:28:45.681766+00:00",
+  "datacontenttype": "application/json",
+  "dataschema": "urn:papertrading:schema:com.papertrading.market_data.stale.v1:1.0",
+  "correlationid": "correlation-example",
+  "sequence": 1,
+  "data": {
+    "environment": "PAPER",
+    "display_label": "PAPER TRADE",
+    "event_name": "com.papertrading.market_data.stale.v1"
+  }
+}

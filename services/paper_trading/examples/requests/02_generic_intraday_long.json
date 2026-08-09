@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "client_event_id": "02_generic_intraday_long.json",
+  "account_id": "paper-main",
+  "environment": "PAPER",
+  "source": {
+    "service": "oiis-strategy-service",
+    "instance": "oiis-worker-01"
+  },
+  "strategy": {
+    "strategy_id": "GENERIC_INTRADAY",
+    "strategy_name": "Generic Intraday",
+    "strategy_family": "OIIS",
+    "strategy_version": "1.0.0",
+    "strategy_run_id": "run-demo",
+    "signal_id": "02_generic_intraday_long.json",
+    "tags": [
+      "equity",
+      "intraday"
+    ]
+  },
+  "signal": {
+    "occurred_at": "2026-08-09T06:28:45.628365+00:00",
+    "exchange_timezone": "Asia/Kolkata",
+    "direction": "LONG",
+    "confidence": "0.8400",
+    "reason_codes": [
+      "OFACTOR_QUALIFIED"
+    ],
+    "features": {
+      "ofactor": "81.20",
+      "xfactor": "86.40"
+    }
+  },
+  "trade_group": {
+    "client_group_id": "02_generic_intraday_long.json",
+    "asset_class": "EQUITY",
+    "expected_leg_count": 1,
+    "group_entry_policy": "ATOMIC",
+    "group_close_policy": "ALL_LEGS",
+    "performance_basis": {
+      "type": "ENTRY_NOTIONAL",
+      "amount": null,
+      "currency": "INR"
+    }
+  },
+  "legs": [
+    {
+      "client_leg_id": "leg-1",
+      "role": "PRIMARY",
+      "position_effect": "OPEN",
+      "instrument": {
+        "instrument_id": "NSE:CASH:RELIANCE",
+        "instrument_token": "2885",
+        "exchange": "NSE",
+        "segment": "CASH",
+        "symbol": "RELIANCE",
+        "isin": null,
+        "underlying": "RELIANCE",
+        "expiry": null,
+        "strike": null,
+        "option_type": null,
+        "lot_size": "1",
+        "contract_multiplier": "1",
+        "currency": "INR"
+      },
+      "side": "BUY",
+      "quantity": {
+        "value": "100",
+        "unit": "SHARES"
+      },
+      "entry_order": {
+        "type": "MARKET",
+        "limit_price": null,
+        "stop_price": null,
+        "time_in_force": "DAY",
+        "price_source": "NEXT_AVAILABLE_BAR_OPEN",
+        "explicit_price": null
+      }
+    }
+  ],
+  "execution_policy": {
+    "mode": "EXTERNAL_EXIT",
+    "intraday_square_off": false,
+    "square_off_time": null,
+    "exit_rules": []
+  },
+  "analytics_policy": {
+    "apply_default_ladders": true,
+    "intraday_targets_pct": [
+      "0.003",
+      "0.005",
+      "0.010"
+    ],
+    "swing_targets_pct": [
+      "0.010",
+      "0.030",
+      "0.050"
+    ],
+    "horizons_trading_sessions": [
+      5,
+      30
+    ],
+    "track_after_execution_close": true,
+    "snapshot_cadence": "EVENTS_AND_EOD"
+  },
+  "cost_profile_id": "india-equity-current",
+  "tax_profile_id": "management-profit-tax-35pct",
+  "metadata": {
+    "notes": "PAPER TRADE sample"
+  }
+}

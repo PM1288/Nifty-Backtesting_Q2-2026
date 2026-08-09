@@ -1,0 +1,821 @@
+{
+  "$defs": {
+    "AnalyticsPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "apply_default_ladders": {
+          "default": true,
+          "title": "Apply Default Ladders",
+          "type": "boolean"
+        },
+        "intraday_targets_pct": {
+          "default": [
+            "0.003",
+            "0.005",
+            "0.010"
+          ],
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Intraday Targets Pct",
+          "type": "array"
+        },
+        "swing_targets_pct": {
+          "default": [
+            "0.010",
+            "0.030",
+            "0.050"
+          ],
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Swing Targets Pct",
+          "type": "array"
+        },
+        "horizons_trading_sessions": {
+          "default": [
+            5,
+            30
+          ],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Horizons Trading Sessions",
+          "type": "array"
+        },
+        "track_after_execution_close": {
+          "default": true,
+          "title": "Track After Execution Close",
+          "type": "boolean"
+        },
+        "snapshot_cadence": {
+          "default": "EVENTS_AND_EOD",
+          "enum": [
+            "EVENTS_ONLY",
+            "EVENTS_AND_EOD",
+            "EVERY_BAR"
+          ],
+          "title": "Snapshot Cadence",
+          "type": "string"
+        }
+      },
+      "title": "AnalyticsPolicy",
+      "type": "object"
+    },
+    "EntryOrder": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "MARKET",
+            "LIMIT",
+            "STOP",
+            "STOP_LIMIT"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "limit_price": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit Price"
+        },
+        "stop_price": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stop Price"
+        },
+        "time_in_force": {
+          "default": "DAY",
+          "enum": [
+            "DAY",
+            "GTC"
+          ],
+          "title": "Time In Force",
+          "type": "string"
+        },
+        "price_source": {
+          "default": "NEXT_AVAILABLE_BAR_OPEN",
+          "enum": [
+            "NEXT_AVAILABLE_BAR_OPEN",
+            "LATEST_TRADABLE",
+            "EXPLICIT"
+          ],
+          "title": "Price Source",
+          "type": "string"
+        },
+        "explicit_price": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Explicit Price"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "EntryOrder",
+      "type": "object"
+    },
+    "ExecutionPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "EXTERNAL_EXIT",
+          "enum": [
+            "EXTERNAL_EXIT",
+            "RULES"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "intraday_square_off": {
+          "default": false,
+          "title": "Intraday Square Off",
+          "type": "boolean"
+        },
+        "square_off_time": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Square Off Time"
+        },
+        "exit_rules": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExitRule"
+          },
+          "title": "Exit Rules",
+          "type": "array"
+        }
+      },
+      "title": "ExecutionPolicy",
+      "type": "object"
+    },
+    "ExitRule": {
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "TARGET_PCT",
+            "STOP_PCT",
+            "TRAILING_STOP_PCT",
+            "TIME",
+            "GROUP_NET_PNL"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Value"
+        },
+        "action": {
+          "enum": [
+            "TRACK_ONLY",
+            "PARTIAL_CLOSE",
+            "FULL_CLOSE"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "quantity_pct": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quantity Pct"
+        }
+      },
+      "required": [
+        "rule_id",
+        "kind",
+        "value",
+        "action"
+      ],
+      "title": "ExitRule",
+      "type": "object"
+    },
+    "Instrument": {
+      "additionalProperties": false,
+      "properties": {
+        "instrument_id": {
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Instrument Token"
+        },
+        "exchange": {
+          "title": "Exchange",
+          "type": "string"
+        },
+        "segment": {
+          "enum": [
+            "CASH",
+            "OPT",
+            "FUT"
+          ],
+          "title": "Segment",
+          "type": "string"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "isin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Isin"
+        },
+        "underlying": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Underlying"
+        },
+        "expiry": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expiry"
+        },
+        "strike": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strike"
+        },
+        "option_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "CALL",
+                "PUT"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Option Type"
+        },
+        "lot_size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Lot Size"
+        },
+        "contract_multiplier": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Contract Multiplier"
+        },
+        "currency": {
+          "default": "INR",
+          "title": "Currency",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "exchange",
+        "segment",
+        "symbol",
+        "lot_size",
+        "contract_multiplier"
+      ],
+      "title": "Instrument",
+      "type": "object"
+    },
+    "Leg": {
+      "additionalProperties": false,
+      "properties": {
+        "client_leg_id": {
+          "title": "Client Leg Id",
+          "type": "string"
+        },
+        "role": {
+          "default": "PRIMARY",
+          "title": "Role",
+          "type": "string"
+        },
+        "position_effect": {
+          "const": "OPEN",
+          "default": "OPEN",
+          "title": "Position Effect",
+          "type": "string"
+        },
+        "instrument": {
+          "$ref": "#/$defs/Instrument"
+        },
+        "side": {
+          "enum": [
+            "BUY",
+            "SELL"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "entry_order": {
+          "$ref": "#/$defs/EntryOrder"
+        }
+      },
+      "required": [
+        "client_leg_id",
+        "instrument",
+        "side",
+        "quantity",
+        "entry_order"
+      ],
+      "title": "Leg",
+      "type": "object"
+    },
+    "PerformanceBasis": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "NET_DEBIT",
+            "PREMIUM_PAID",
+            "CAPITAL_AT_RISK",
+            "MARGIN_RESERVED",
+            "ENTRY_NOTIONAL",
+            "ABSOLUTE_BASIS"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Amount"
+        },
+        "currency": {
+          "default": "INR",
+          "title": "Currency",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "PerformanceBasis",
+      "type": "object"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Value"
+        },
+        "unit": {
+          "enum": [
+            "SHARES",
+            "LOTS",
+            "CONTRACT_UNITS"
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "Signal": {
+      "additionalProperties": false,
+      "properties": {
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "exchange_timezone": {
+          "default": "Asia/Kolkata",
+          "title": "Exchange Timezone",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "LONG",
+            "SHORT",
+            "MIXED"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "reason_codes": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reason Codes",
+          "type": "array"
+        },
+        "features": {
+          "additionalProperties": true,
+          "default": {},
+          "title": "Features",
+          "type": "object"
+        }
+      },
+      "required": [
+        "occurred_at",
+        "direction"
+      ],
+      "title": "Signal",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "service": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Service",
+          "type": "string"
+        },
+        "instance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Instance"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Strategy": {
+      "additionalProperties": false,
+      "properties": {
+        "strategy_id": {
+          "title": "Strategy Id",
+          "type": "string"
+        },
+        "strategy_name": {
+          "title": "Strategy Name",
+          "type": "string"
+        },
+        "strategy_family": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strategy Family"
+        },
+        "strategy_version": {
+          "title": "Strategy Version",
+          "type": "string"
+        },
+        "strategy_run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strategy Run Id"
+        },
+        "signal_id": {
+          "title": "Signal Id",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "strategy_id",
+        "strategy_name",
+        "strategy_version",
+        "signal_id"
+      ],
+      "title": "Strategy",
+      "type": "object"
+    },
+    "TradeGroupSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "client_group_id": {
+          "title": "Client Group Id",
+          "type": "string"
+        },
+        "asset_class": {
+          "enum": [
+            "EQUITY",
+            "OPTION",
+            "FUTURE"
+          ],
+          "title": "Asset Class",
+          "type": "string"
+        },
+        "expected_leg_count": {
+          "maximum": 32,
+          "minimum": 1,
+          "title": "Expected Leg Count",
+          "type": "integer"
+        },
+        "group_entry_policy": {
+          "default": "ATOMIC",
+          "enum": [
+            "ATOMIC",
+            "ALL_OR_NONE",
+            "INDEPENDENT"
+          ],
+          "title": "Group Entry Policy",
+          "type": "string"
+        },
+        "group_close_policy": {
+          "default": "ALL_LEGS",
+          "enum": [
+            "ALL_LEGS",
+            "INDEPENDENT",
+            "NET_PNL"
+          ],
+          "title": "Group Close Policy",
+          "type": "string"
+        },
+        "performance_basis": {
+          "$ref": "#/$defs/PerformanceBasis"
+        }
+      },
+      "required": [
+        "client_group_id",
+        "asset_class",
+        "expected_leg_count",
+        "performance_basis"
+      ],
+      "title": "TradeGroupSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "client_event_id": {
+      "title": "Client Event Id",
+      "type": "string"
+    },
+    "account_id": {
+      "title": "Account Id",
+      "type": "string"
+    },
+    "environment": {
+      "const": "PAPER",
+      "title": "Environment",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    },
+    "strategy": {
+      "$ref": "#/$defs/Strategy"
+    },
+    "signal": {
+      "$ref": "#/$defs/Signal"
+    },
+    "trade_group": {
+      "$ref": "#/$defs/TradeGroupSpec"
+    },
+    "legs": {
+      "items": {
+        "$ref": "#/$defs/Leg"
+      },
+      "title": "Legs",
+      "type": "array"
+    },
+    "execution_policy": {
+      "$ref": "#/$defs/ExecutionPolicy"
+    },
+    "analytics_policy": {
+      "$ref": "#/$defs/AnalyticsPolicy"
+    },
+    "cost_profile_id": {
+      "title": "Cost Profile Id",
+      "type": "string"
+    },
+    "tax_profile_id": {
+      "title": "Tax Profile Id",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "default": {},
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "client_event_id",
+    "account_id",
+    "environment",
+    "source",
+    "strategy",
+    "signal",
+    "trade_group",
+    "legs",
+    "execution_policy",
+    "analytics_policy",
+    "cost_profile_id",
+    "tax_profile_id"
+  ],
+  "title": "TradeIntent",
+  "type": "object"
+}

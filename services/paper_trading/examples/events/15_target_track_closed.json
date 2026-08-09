@@ -1,0 +1,17 @@
+{
+  "specversion": "1.0",
+  "id": "15_target_track_closed.json",
+  "source": "urn:paper-trading-service",
+  "type": "com.papertrading.target_track.closed.v1",
+  "subject": "trade-groups/example",
+  "time": "2026-08-09T06:28:45.681331+00:00",
+  "datacontenttype": "application/json",
+  "dataschema": "urn:papertrading:schema:com.papertrading.target_track.closed.v1:1.0",
+  "correlationid": "correlation-example",
+  "sequence": 1,
+  "data": {
+    "environment": "PAPER",
+    "display_label": "PAPER TRADE",
+    "event_name": "com.papertrading.target_track.closed.v1"
+  }
+}

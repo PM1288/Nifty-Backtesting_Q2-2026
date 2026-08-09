@@ -1,0 +1,19 @@
+{
+  "name": "Paper Trading CloudEvents V1",
+  "nodes": [
+    {"parameters":{"httpMethod":"POST","path":"codex-paper-trade","authentication":"basicAuth","responseMode":"onReceived","options":{}},"id":"webhook","name":"Production Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,0]},
+    {"parameters":{"jsCode":"const crypto=require('crypto'); const out=[]; const state=$getWorkflowStaticData('global'); state.eventIds=state.eventIds||[]; for(const item of items){const headers=item.json.headers||{}; const body=item.json.body||item.json; const ts=String(headers['x-paper-signature-timestamp']||''); const sig=String(headers['x-paper-signature-256']||''); if(!ts||Math.abs(Date.now()/1000-Number(ts))>300) throw new Error('stale signature'); const raw=JSON.stringify(body); const expected=crypto.createHmac('sha256',$env.PAPER_WEBHOOK_SIGNING_SECRET).update(ts+'.'+raw).digest('hex'); if(sig.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(sig),Buffer.from(expected))) throw new Error('bad signature'); if(state.eventIds.includes(body.id)) continue; state.eventIds.push(body.id); if(state.eventIds.length>10000) state.eventIds.splice(0,state.eventIds.length-10000); out.push({json:body});} return out;"},"id":"verify","name":"Verify HMAC, Timestamp and Event ID","type":"n8n-nodes-base.code","typeVersion":2,"position":[220,0]},
+    {"parameters":{"rules":{"values":[{"conditions":{"conditions":[{"leftValue":"={{$json.type}}","rightValue":"com.papertrading.summary.daily.v1","operator":{"type":"string","operation":"equals"}}]},"renameOutput":true,"outputKey":"daily"}]},"options":{"fallbackOutput":"extra"}},"id":"route","name":"Route Event Type","type":"n8n-nodes-base.switch","typeVersion":3,"position":[440,0]},
+    {"parameters":{},"id":"email","name":"Email Placeholder","type":"n8n-nodes-base.noOp","typeVersion":1,"position":[680,-240]},
+    {"parameters":{},"id":"whatsapp","name":"WhatsApp Placeholder","type":"n8n-nodes-base.noOp","typeVersion":1,"position":[680,-120]},
+    {"parameters":{},"id":"telegram","name":"Telegram Placeholder","type":"n8n-nodes-base.noOp","typeVersion":1,"position":[680,0]},
+    {"parameters":{},"id":"teams","name":"Teams Placeholder","type":"n8n-nodes-base.noOp","typeVersion":1,"position":[680,120]},
+    {"parameters":{},"id":"slack","name":"Slack Placeholder","type":"n8n-nodes-base.noOp","typeVersion":1,"position":[680,240]},
+    {"parameters":{},"id":"reporting","name":"Reporting Placeholder","type":"n8n-nodes-base.noOp","typeVersion":1,"position":[680,360]}
+  ],
+  "connections":{"Production Webhook":{"main":[[{"node":"Verify HMAC, Timestamp and Event ID","type":"main","index":0}]]},"Verify HMAC, Timestamp and Event ID":{"main":[[{"node":"Route Event Type","type":"main","index":0}]]},"Route Event Type":{"main":[[{"node":"Email Placeholder","type":"main","index":0},{"node":"WhatsApp Placeholder","type":"main","index":0},{"node":"Telegram Placeholder","type":"main","index":0},{"node":"Teams Placeholder","type":"main","index":0},{"node":"Slack Placeholder","type":"main","index":0},{"node":"Reporting Placeholder","type":"main","index":0}]]}},
+  "active": false,
+  "settings":{"executionOrder":"v1"},
+  "meta":{"templateCredsSetupCompleted":false},
+  "tags":[]
+}

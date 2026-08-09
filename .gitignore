@@ -1,5 +1,8 @@
 .env
 .env.*
+!.env.example
+!services/paper_trading/.env.example
+!services/paper_trading/.env.test
 .tmp/
 backups/
 state/
@@ -39,6 +42,14 @@ platform/nifty_stratlab/artifacts/
 platform/nifty_stratlab/src/*.egg-info/
 platform/nifty_stratlab/**/__pycache__/
 platform/nifty_stratlab/.pytest_cache/
+services/paper_trading/.venv/
+services/paper_trading/.coverage
+services/paper_trading/.hypothesis/
+services/paper_trading/.mypy_cache/
+services/paper_trading/.pytest_cache/
+services/paper_trading/.ruff_cache/
+services/paper_trading/**/__pycache__/
+services/paper_trading/src/*.egg-info/
 
 # Host/runtime captures and generated review media
 /.audit-playwright/

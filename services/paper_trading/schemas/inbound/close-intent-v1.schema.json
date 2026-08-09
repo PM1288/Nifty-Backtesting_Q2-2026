@@ -1,0 +1,100 @@
+{
+  "$defs": {
+    "CloseLeg": {
+      "additionalProperties": false,
+      "properties": {
+        "client_leg_id": {
+          "title": "Client Leg Id",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Quantity"
+        }
+      },
+      "required": [
+        "client_leg_id",
+        "quantity"
+      ],
+      "title": "CloseLeg",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "client_event_id": {
+      "title": "Client Event Id",
+      "type": "string"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "reason": {
+      "enum": [
+        "STRATEGY_EXIT",
+        "MANUAL",
+        "TARGET",
+        "STOP",
+        "TIME",
+        "EXPIRY"
+      ],
+      "title": "Reason",
+      "type": "string"
+    },
+    "scope": {
+      "enum": [
+        "GROUP",
+        "LEGS"
+      ],
+      "title": "Scope",
+      "type": "string"
+    },
+    "price_policy": {
+      "enum": [
+        "NEXT_AVAILABLE_BAR_OPEN",
+        "LATEST_TRADABLE"
+      ],
+      "title": "Price Policy",
+      "type": "string"
+    },
+    "legs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CloseLeg"
+      },
+      "title": "Legs",
+      "type": "array"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "default": {},
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "client_event_id",
+    "occurred_at",
+    "reason",
+    "scope",
+    "price_policy"
+  ],
+  "title": "CloseIntent",
+  "type": "object"
+}

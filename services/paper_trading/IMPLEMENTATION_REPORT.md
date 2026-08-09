@@ -1,0 +1,7 @@
+# Implementation report
+
+The service is implemented as an additive PAPER-only application integrated through the existing stack's PostgreSQL and Compose network. It includes the versioned API, normalized schema, actual and analytical lifecycles, cash and multi-leg option support, durable monitor cursors, append-only ledgers, transactional CloudEvents outbox, signed n8n delivery, summaries, reconciliation, Docker deployment, schemas/examples and tests.
+
+Verified on 2026-08-09 against disposable PostgreSQL 16: 18 tests passed with 84% overall meaningful coverage; Ruff and mypy passed; `pip-audit` found no known vulnerabilities. Tests cover API authentication/idempotency, equity and option fills, independent target ladders, execution-target closure, post-close analytical continuation, two-leg group commit, signed Basic-auth webhook delivery, summaries and reconciliation. A five-service Docker build and internal readiness/monitor smoke test passed. The live `paper_trading` migration is at `001_init`, all four long-running services are healthy, and reconciliation reports no invalid closed groups.
+
+The configured n8n URL was reached with the supplied Basic authentication, but n8n returned HTTP 404 stating that `POST codex-paper-trade` is not registered. Events are safely retained as dead letters. Import and activate `n8n/workflows/paper-trading-events-v1.json`, configure its Basic credential and signing secret, then run `papertrade replay-dead-letters`. No broker or live-order path exists.

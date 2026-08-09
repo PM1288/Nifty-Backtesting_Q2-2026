@@ -1,0 +1,62 @@
+x-paper-image: &paper_image
+  image: trading-stack-paper-trading:1.0.0
+  build:
+    context: ./services/paper_trading
+  env_file:
+    - ./.env
+    - ./compose/env/core.env
+    - ./.env.paper-trading
+  environment: &paper_env
+    PAPER_TRADING_ONLY: "true"
+    DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    MARKET_DATA_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    PAPER_TRADING_SCHEMA: paper_trading
+    MARKET_DATA_SCHEMA: ${POSTGRES_SCHEMA:-public}
+    MARKET_DATA_BAR_TABLE: bars_1m
+    MARKET_DATA_INSTRUMENT_TABLE: instruments
+    DEFAULT_ACCOUNT_ID: ${PAPER_DEFAULT_ACCOUNT_ID:-paper-main}
+    STARTING_PAPER_CAPITAL: ${PAPER_STARTING_CAPITAL:-1600000}
+    DEFAULT_INCOME_TAX_RATE: ${PAPER_INCOME_TAX_RATE:-0.35}
+    EXCHANGE_TIMEZONE: Asia/Kolkata
+    SAME_BAR_AMBIGUITY_POLICY: WORST_CASE
+  depends_on:
+    postgres:
+      condition: service_healthy
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "5"}
+
+services:
+  paper-api:
+    <<: *paper_image
+    command: ["api", "--host", "0.0.0.0", "--port", "8088"]
+    ports: ["127.0.0.1:${PAPER_API_PORT:-18088}:8088"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8088/health/ready',timeout=5)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  paper-monitor-worker:
+    <<: *paper_image
+    command: ["monitor-worker"]
+
+  paper-webhook-worker:
+    <<: *paper_image
+    command: ["webhook-worker"]
+
+  paper-scheduler:
+    <<: *paper_image
+    command: ["scheduler"]
+
+  paper-migrate:
+    <<: *paper_image
+    command: ["migrate"]
+    restart: "no"
+    profiles: ["tools"]

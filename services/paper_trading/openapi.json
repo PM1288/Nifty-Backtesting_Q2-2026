@@ -1,0 +1,1831 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Universal Paper Trading API",
+    "description": "PAPER ONLY. No broker or live-order capability exists.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/trade-intents": {
+      "post": {
+        "summary": "Create Trade",
+        "operationId": "create_trade_api_v1_trade_intents_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 200,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Correlation-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TradeIntent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Trade Api V1 Trade Intents Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-intents/{intent_id}": {
+      "get": {
+        "summary": "Get Intent",
+        "operationId": "get_intent_api_v1_trade_intents__intent_id__get",
+        "parameters": [
+          {
+            "name": "intent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Intent Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Intent Api V1 Trade Intents  Intent Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-groups/{group_id}": {
+      "get": {
+        "summary": "Get Group",
+        "operationId": "get_group_api_v1_trade_groups__group_id__get",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Group Api V1 Trade Groups  Group Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-groups": {
+      "get": {
+        "summary": "List Groups",
+        "operationId": "list_groups_api_v1_trade_groups_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Groups Api V1 Trade Groups Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-groups/building": {
+      "post": {
+        "summary": "Create Building Group",
+        "operationId": "create_building_group_api_v1_trade_groups_building_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuildingGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Building Group Api V1 Trade Groups Building Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-groups/{group_id}/close-intents": {
+      "post": {
+        "summary": "Close Group",
+        "operationId": "close_group_api_v1_trade_groups__group_id__close_intents_post",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseIntent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Close Group Api V1 Trade Groups  Group Id  Close Intents Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-groups/{group_id}/cancel": {
+      "post": {
+        "summary": "Cancel",
+        "operationId": "cancel_api_v1_trade_groups__group_id__cancel_post",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Api V1 Trade Groups  Group Id  Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-groups/{group_id}/legs": {
+      "post": {
+        "summary": "Add Leg",
+        "operationId": "add_leg_api_v1_trade_groups__group_id__legs_post",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Leg"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Add Leg Api V1 Trade Groups  Group Id  Legs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trade-groups/{group_id}/commit": {
+      "post": {
+        "summary": "Commit",
+        "operationId": "commit_api_v1_trade_groups__group_id__commit_post",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Commit Api V1 Trade Groups  Group Id  Commit Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{account_id}/summary": {
+      "get": {
+        "summary": "Account Summary",
+        "operationId": "account_summary_api_v1_accounts__account_id__summary_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Account Summary Api V1 Accounts  Account Id  Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/strategies/{strategy_id}/performance": {
+      "get": {
+        "summary": "Strategy Performance",
+        "operationId": "strategy_performance_api_v1_strategies__strategy_id__performance_get",
+        "parameters": [
+          {
+            "name": "strategy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Strategy Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Strategy Performance Api V1 Strategies  Strategy Id  Performance Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "summary": "Live",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Live Health Live Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": "Ready",
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Ready Health Ready Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Metrics",
+        "operationId": "metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalyticsPolicy": {
+        "properties": {
+          "apply_default_ladders": {
+            "type": "boolean",
+            "title": "Apply Default Ladders",
+            "default": true
+          },
+          "intraday_targets_pct": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Intraday Targets Pct",
+            "default": [
+              "0.003",
+              "0.005",
+              "0.010"
+            ]
+          },
+          "swing_targets_pct": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Swing Targets Pct",
+            "default": [
+              "0.010",
+              "0.030",
+              "0.050"
+            ]
+          },
+          "horizons_trading_sessions": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Horizons Trading Sessions",
+            "default": [
+              5,
+              30
+            ]
+          },
+          "track_after_execution_close": {
+            "type": "boolean",
+            "title": "Track After Execution Close",
+            "default": true
+          },
+          "snapshot_cadence": {
+            "type": "string",
+            "enum": [
+              "EVENTS_ONLY",
+              "EVENTS_AND_EOD",
+              "EVERY_BAR"
+            ],
+            "title": "Snapshot Cadence",
+            "default": "EVENTS_AND_EOD"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnalyticsPolicy"
+      },
+      "BuildingGroupRequest": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1.0",
+            "title": "Schema Version"
+          },
+          "client_event_id": {
+            "type": "string",
+            "title": "Client Event Id"
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "environment": {
+            "type": "string",
+            "const": "PAPER",
+            "title": "Environment"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/Strategy"
+          },
+          "signal": {
+            "$ref": "#/components/schemas/Signal"
+          },
+          "trade_group": {
+            "$ref": "#/components/schemas/TradeGroupSpec"
+          },
+          "execution_policy": {
+            "$ref": "#/components/schemas/ExecutionPolicy"
+          },
+          "analytics_policy": {
+            "$ref": "#/components/schemas/AnalyticsPolicy"
+          },
+          "cost_profile_id": {
+            "type": "string",
+            "title": "Cost Profile Id"
+          },
+          "tax_profile_id": {
+            "type": "string",
+            "title": "Tax Profile Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "client_event_id",
+          "account_id",
+          "environment",
+          "source",
+          "strategy",
+          "signal",
+          "trade_group",
+          "execution_policy",
+          "analytics_policy",
+          "cost_profile_id",
+          "tax_profile_id"
+        ],
+        "title": "BuildingGroupRequest"
+      },
+      "CloseIntent": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1.0",
+            "title": "Schema Version"
+          },
+          "client_event_id": {
+            "type": "string",
+            "title": "Client Event Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "STRATEGY_EXIT",
+              "MANUAL",
+              "TARGET",
+              "STOP",
+              "TIME",
+              "EXPIRY"
+            ],
+            "title": "Reason"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "GROUP",
+              "LEGS"
+            ],
+            "title": "Scope"
+          },
+          "price_policy": {
+            "type": "string",
+            "enum": [
+              "NEXT_AVAILABLE_BAR_OPEN",
+              "LATEST_TRADABLE"
+            ],
+            "title": "Price Policy"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/CloseLeg"
+            },
+            "type": "array",
+            "title": "Legs",
+            "default": []
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "client_event_id",
+          "occurred_at",
+          "reason",
+          "scope",
+          "price_policy"
+        ],
+        "title": "CloseIntent"
+      },
+      "CloseLeg": {
+        "properties": {
+          "client_leg_id": {
+            "type": "string",
+            "title": "Client Leg Id"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "client_leg_id",
+          "quantity"
+        ],
+        "title": "CloseLeg"
+      },
+      "EntryOrder": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "MARKET",
+              "LIMIT",
+              "STOP",
+              "STOP_LIMIT"
+            ],
+            "title": "Type"
+          },
+          "limit_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Price"
+          },
+          "stop_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Price"
+          },
+          "time_in_force": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "GTC"
+            ],
+            "title": "Time In Force",
+            "default": "DAY"
+          },
+          "price_source": {
+            "type": "string",
+            "enum": [
+              "NEXT_AVAILABLE_BAR_OPEN",
+              "LATEST_TRADABLE",
+              "EXPLICIT"
+            ],
+            "title": "Price Source",
+            "default": "NEXT_AVAILABLE_BAR_OPEN"
+          },
+          "explicit_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicit Price"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "EntryOrder"
+      },
+      "ExecutionPolicy": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "EXTERNAL_EXIT",
+              "RULES"
+            ],
+            "title": "Mode",
+            "default": "EXTERNAL_EXIT"
+          },
+          "intraday_square_off": {
+            "type": "boolean",
+            "title": "Intraday Square Off",
+            "default": false
+          },
+          "square_off_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Square Off Time"
+          },
+          "exit_rules": {
+            "items": {
+              "$ref": "#/components/schemas/ExitRule"
+            },
+            "type": "array",
+            "title": "Exit Rules",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExecutionPolicy"
+      },
+      "ExitRule": {
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TARGET_PCT",
+              "STOP_PCT",
+              "TRAILING_STOP_PCT",
+              "TIME",
+              "GROUP_NET_PNL"
+            ],
+            "title": "Kind"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "TRACK_ONLY",
+              "PARTIAL_CLOSE",
+              "FULL_CLOSE"
+            ],
+            "title": "Action"
+          },
+          "quantity_pct": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rule_id",
+          "kind",
+          "value",
+          "action"
+        ],
+        "title": "ExitRule"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Instrument": {
+        "properties": {
+          "instrument_id": {
+            "type": "string",
+            "title": "Instrument Id"
+          },
+          "instrument_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instrument Token"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "segment": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "OPT",
+              "FUT"
+            ],
+            "title": "Segment"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "isin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isin"
+          },
+          "underlying": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Underlying"
+          },
+          "expiry": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry"
+          },
+          "strike": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strike"
+          },
+          "option_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "CALL",
+                  "PUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Type"
+          },
+          "lot_size": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Lot Size"
+          },
+          "contract_multiplier": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Contract Multiplier"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "INR"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "instrument_id",
+          "exchange",
+          "segment",
+          "symbol",
+          "lot_size",
+          "contract_multiplier"
+        ],
+        "title": "Instrument"
+      },
+      "Leg": {
+        "properties": {
+          "client_leg_id": {
+            "type": "string",
+            "title": "Client Leg Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "PRIMARY"
+          },
+          "position_effect": {
+            "type": "string",
+            "const": "OPEN",
+            "title": "Position Effect",
+            "default": "OPEN"
+          },
+          "instrument": {
+            "$ref": "#/components/schemas/Instrument"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "BUY",
+              "SELL"
+            ],
+            "title": "Side"
+          },
+          "quantity": {
+            "$ref": "#/components/schemas/Quantity"
+          },
+          "entry_order": {
+            "$ref": "#/components/schemas/EntryOrder"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "client_leg_id",
+          "instrument",
+          "side",
+          "quantity",
+          "entry_order"
+        ],
+        "title": "Leg"
+      },
+      "PerformanceBasis": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "NET_DEBIT",
+              "PREMIUM_PAID",
+              "CAPITAL_AT_RISK",
+              "MARGIN_RESERVED",
+              "ENTRY_NOTIONAL",
+              "ABSOLUTE_BASIS"
+            ],
+            "title": "Type"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "INR"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "PerformanceBasis"
+      },
+      "Quantity": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "SHARES",
+              "LOTS",
+              "CONTRACT_UNITS"
+            ],
+            "title": "Unit"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "value",
+          "unit"
+        ],
+        "title": "Quantity"
+      },
+      "Signal": {
+        "properties": {
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "exchange_timezone": {
+            "type": "string",
+            "title": "Exchange Timezone",
+            "default": "Asia/Kolkata"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "LONG",
+              "SHORT",
+              "MIXED"
+            ],
+            "title": "Direction"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reason Codes",
+            "default": []
+          },
+          "features": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Features",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "occurred_at",
+          "direction"
+        ],
+        "title": "Signal"
+      },
+      "Source": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Service"
+          },
+          "instance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "service"
+        ],
+        "title": "Source"
+      },
+      "Strategy": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "strategy_name": {
+            "type": "string",
+            "title": "Strategy Name"
+          },
+          "strategy_family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Family"
+          },
+          "strategy_version": {
+            "type": "string",
+            "title": "Strategy Version"
+          },
+          "strategy_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Run Id"
+          },
+          "signal_id": {
+            "type": "string",
+            "title": "Signal Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "strategy_name",
+          "strategy_version",
+          "signal_id"
+        ],
+        "title": "Strategy"
+      },
+      "TradeGroupSpec": {
+        "properties": {
+          "client_group_id": {
+            "type": "string",
+            "title": "Client Group Id"
+          },
+          "asset_class": {
+            "type": "string",
+            "enum": [
+              "EQUITY",
+              "OPTION",
+              "FUTURE"
+            ],
+            "title": "Asset Class"
+          },
+          "expected_leg_count": {
+            "type": "integer",
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Expected Leg Count"
+          },
+          "group_entry_policy": {
+            "type": "string",
+            "enum": [
+              "ATOMIC",
+              "ALL_OR_NONE",
+              "INDEPENDENT"
+            ],
+            "title": "Group Entry Policy",
+            "default": "ATOMIC"
+          },
+          "group_close_policy": {
+            "type": "string",
+            "enum": [
+              "ALL_LEGS",
+              "INDEPENDENT",
+              "NET_PNL"
+            ],
+            "title": "Group Close Policy",
+            "default": "ALL_LEGS"
+          },
+          "performance_basis": {
+            "$ref": "#/components/schemas/PerformanceBasis"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "client_group_id",
+          "asset_class",
+          "expected_leg_count",
+          "performance_basis"
+        ],
+        "title": "TradeGroupSpec"
+      },
+      "TradeIntent": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1.0",
+            "title": "Schema Version"
+          },
+          "client_event_id": {
+            "type": "string",
+            "title": "Client Event Id"
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "environment": {
+            "type": "string",
+            "const": "PAPER",
+            "title": "Environment"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/Strategy"
+          },
+          "signal": {
+            "$ref": "#/components/schemas/Signal"
+          },
+          "trade_group": {
+            "$ref": "#/components/schemas/TradeGroupSpec"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/Leg"
+            },
+            "type": "array",
+            "title": "Legs"
+          },
+          "execution_policy": {
+            "$ref": "#/components/schemas/ExecutionPolicy"
+          },
+          "analytics_policy": {
+            "$ref": "#/components/schemas/AnalyticsPolicy"
+          },
+          "cost_profile_id": {
+            "type": "string",
+            "title": "Cost Profile Id"
+          },
+          "tax_profile_id": {
+            "type": "string",
+            "title": "Tax Profile Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "client_event_id",
+          "account_id",
+          "environment",
+          "source",
+          "strategy",
+          "signal",
+          "trade_group",
+          "legs",
+          "execution_policy",
+          "analytics_policy",
+          "cost_profile_id",
+          "tax_profile_id"
+        ],
+        "title": "TradeIntent"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

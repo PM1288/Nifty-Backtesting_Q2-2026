@@ -43,8 +43,8 @@ services:
         condition: service_healthy
     volumes:
       - ./config/config.yaml:/app/config.yaml:ro
-      - ./samples/nifty100.sample.csv:/app/nifty100.csv:ro
-      - ./docs/source/ind_nifty100list.csv:/app/nifty100_constituents.csv:ro
+      - ./samples/nifty250.sample.csv:/app/nifty250.csv:ro
+      - ./docs/source/ind_niftylargemidcap250list.csv:/app/nifty250_constituents.csv:ro
       - ./state:/app/state
     ports:
       - "${COLLECTOR_PORT:-8080}:8080"
@@ -733,6 +733,9 @@ services:
       MATOMO_PROXY_BASE_URL: ${N50_MATOMO_PROXY_BASE_URL:-http://matomo:80}
       N50_API_ALLOW_RUNTIME_DDL: ${N50_API_ALLOW_RUNTIME_DDL:-0}
       N50_API_ALLOW_RUNTIME_PERF_DDL: ${N50_API_ALLOW_RUNTIME_PERF_DDL:-0}
+      H30_ARTIFACT_ROOT: /var/lib/nifty-stratlab/h30
+    volumes:
+      - ${NIFTY_STRATLAB_HOST_OUTPUT_ROOT:-/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1}:/var/lib/nifty-stratlab/h30:ro
     depends_on:
       postgres:
         condition: service_healthy

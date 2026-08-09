@@ -1421,3 +1421,19 @@ The first disposable COPY exposed and then verified fixes for a column-count mis
 - Verified gates: 18 tests passed against PostgreSQL 16, Ruff passed, mypy passed, 84% overall meaningful coverage, dependency audit found no known vulnerabilities, Docker image build passed, internal API readiness passed, monitor-once passed, and live reconciliation found zero invalid closed groups.
 - Benchmark: 187,500 bars for 500 symbols and 562,500 target evaluations completed in 0.7735 seconds on the local CPU (242,420 bars/sec; 727,260 target evaluations/sec; 449,180 KiB maximum RSS). This is a compute benchmark, not a production PostgreSQL soak test.
 - Least-privilege role guidance is in `services/paper_trading/migrations/roles.example.sql`. Review and set passwords out-of-band before applying; do not replace the deployed database role without a coordinated credential rotation.
+
+## Deployed trading-stack source reconciliation (2026-08-09)
+
+- `/home/novius2/trading-stack` is the deployed runtime directory and is intentionally not a Git checkout. Its canonical, secret-free source is this repository on branch `DEV_PM_CODE`.
+- Reconciled the previously runtime-only NIFTY LargeMidcap 250 SmartAPI collector, three-year resumable daily backfill, F&O plan, monthly `YYYY_MM` partitions and consolidated equity webhook forwarder into Git.
+- Never copy runtime `.env`, `.env.collector.runtime`, `.env.paper-trading`, `config/config.yaml`, `state/OpenAPIScripMaster.json`, logs, caches or generated data into Git. Only `config.example.yaml` and documented placeholders are versioned.
+- Universe evidence: 250 active equities and nine indices. Current active subscriptions are 250 EQUITY, 379 FUT, 162 OPTIDX and 2,200 OPTSTK. The latest derivative plan contains 2,953 rows: 2,575 active and 378 capacity-dropped rows retained for REST rotation.
+- Daily-history evidence: 198,852 rows for 259 distinct tokens from 2023-01-09 through 2026-08-07. Backfill resumes per token via `LatestBar1DDate`.
+- Storage evidence: 33 current monthly child relations use readable `_YYYY_MM` names. The migration preserves recovery originals and validates row counts before cutover.
+- Collector webhook is configured only through ignored `STOCK_WEBHOOK_URL` and `STOCK_WEBHOOK_ENABLED`. It sends one symbol-sorted, equity-only JSON batch after a successful primary quote cycle; failures never roll back database persistence.
+- Relevant implementation files: `cmd/collector/stock_webhook.go`, `cmd/collector/tasks.go`, `internal/config/config.go`, `internal/store/partitions.go`, `scripts/update_nifty250_universe.py`, and `scripts/migrate_timeseries_monthly_partitions.sql`.
+- Full operations and evidence: `docs/worklogs/nifty250-smartapi-cash-fno-history.md`, `docs/worklogs/stock-quote-webhook-forwarding.md`, `docs/adr/ADR-013-nifty250-smartapi-cash-fno-history.md`, and `docs/adr/ADR-014-readable-monthly-timeseries-partitions.md`.
+- Verification run: `go test ./...` passed; the universe refresh script compiled; base/core and paper Compose configurations parsed; collector, PostgreSQL and all four paper-trading services were healthy; collector restart count was zero; paper API readiness and migration `001_init` passed.
+- Repeat validation:
+  `cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026 && go test ./... && python3 -m py_compile scripts/update_nifty250_universe.py`
+  and from `/home/novius2/trading-stack`: `docker compose --env-file .env -p trading-stack-novius2 -f compose/compose.base.yml -f compose/compose.core.yml config --quiet`.

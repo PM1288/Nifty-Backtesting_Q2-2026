@@ -151,6 +151,7 @@ func main() {
 		Instruments:    insts,
 		EquityExchange: cfg.Universe.EquitiesExchange,
 		IndexTokens:    cfg.Universe.IndexTokens,
+		IndexExchanges: cfg.Universe.IndexExchanges,
 		Logger:         logger,
 	}
 

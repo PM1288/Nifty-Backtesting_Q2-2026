@@ -17,6 +17,7 @@ type Resolver struct {
 	Instruments    []instruments.Instrument
 	EquityExchange string
 	IndexTokens    map[string]string
+	IndexExchanges map[string]string
 	Logger         *slog.Logger
 }
 
@@ -135,6 +136,10 @@ func (r *Resolver) ResolveIndices(indices []string, mode string) ([]store.Subscr
 	subs := []store.Subscription{}
 	for _, idx := range indices {
 		idxKey := normalizeIndexKey(idx)
+		indexExchange := r.EquityExchange
+		if exchange := strings.TrimSpace(r.IndexExchanges[idxKey]); exchange != "" {
+			indexExchange = strings.ToUpper(exchange)
+		}
 		token := ""
 		if r.IndexTokens != nil {
 			if v, ok := r.IndexTokens[idxKey]; ok {
@@ -145,7 +150,7 @@ func (r *Resolver) ResolveIndices(indices []string, mode string) ([]store.Subscr
 			token = strings.TrimSpace(idx)
 		}
 		if token != "" {
-			inst, ok := findByToken(r.Instruments, r.EquityExchange, token)
+			inst, ok := findByToken(r.Instruments, indexExchange, token)
 			if !ok {
 				if r.Logger != nil {
 					r.Logger.Warn("index token not resolved", "index", idx, "token", token)
@@ -166,7 +171,7 @@ func (r *Resolver) ResolveIndices(indices []string, mode string) ([]store.Subscr
 			continue
 		}
 
-		candidates := findIndexCandidates(r.Instruments, r.EquityExchange, idx)
+		candidates := findIndexCandidates(r.Instruments, indexExchange, idx)
 		if len(candidates) == 0 {
 			if r.Logger != nil {
 				r.Logger.Warn("index not resolved", "index", idx)

@@ -18,7 +18,7 @@ postgres:
   database: "tradingdb"
   sslmode: "disable"
   schema: "public"
-  app_name: "nifty100_collector"
+  app_name: "nifty250_collector"
   connect_timeout_seconds: 10
   max_conns: 10
   min_conns: 2
@@ -37,17 +37,32 @@ runtime:
   trading_start: "09:15"
   trading_end: "15:30"
   weekend_pull_last_working_day: true
+stock_webhook:
+  enabled: false
+  url: "" # prefer STOCK_WEBHOOK_URL from an ignored runtime env file
+  timeout_seconds: 5
+  max_retries: 2
+  retry_backoff_milliseconds: 500
 files:
-  symbols_csv_path: "/app/nifty100.csv"
-  constituents_csv_path: "/app/nifty100_constituents.csv"
+  symbols_csv_path: "/app/nifty250.csv"
+  constituents_csv_path: "/app/nifty250_constituents.csv"
   instrument_cache_path: "/app/state/OpenAPIScripMaster.json"
 universe:
   equities_exchange: "NSE"
   derivatives_exchange: "NFO"
-  include_indices: ["NIFTY50","BANKNIFTY"]
+  include_indices: ["NIFTY50","BANKNIFTY","FINNIFTY","MIDCPNIFTY","NIFTY100","NIFTY200","NIFTY500","INDIAVIX","SENSEX"]
   index_tokens:
     NIFTY50: "99926000"
     BANKNIFTY: "99926009"
+    FINNIFTY: "99926037"
+    MIDCPNIFTY: "99926074"
+    NIFTY100: "99926012"
+    NIFTY200: "99926033"
+    NIFTY500: "99926004"
+    INDIAVIX: "99926017"
+    SENSEX: "99919000"
+  index_exchanges:
+    SENSEX: "BSE"
   fno_current_month_only: true
   futures:
     enable_stock_futures: true
@@ -57,7 +72,7 @@ universe:
     enable_index_options: true
     enable_stock_options: true
     index_underlyings: ["NIFTY50"]
-    stock_underlyings_max: 100
+    stock_underlyings_max: 250
     expiry_rank_index: 0
     expiry_rank_stock: 0
     strikes_each_side: 40
@@ -90,13 +105,15 @@ rest_tasks:
       max_tokens: 20
     - kind: "FUT"
       max_tokens: 80
+    - kind: "OPTSTK_REST"
+      max_tokens: 380
     - kind: "OPTIDX"
       max_tokens: 60
     - kind: "OPTSTK"
-      max_tokens: 40
+      max_tokens: 60
   enable_option_quote_snapshots: true
-  option_quote_snapshot_interval_seconds: 600
-  option_quote_snapshot_rotation_max_tokens: 300
+  option_quote_snapshot_interval_seconds: 60
+  option_quote_snapshot_rotation_max_tokens: 500
   enable_option_greeks: true
   option_greeks_interval_seconds: 60
   option_greeks_underlyings: ["NIFTY50","BANKNIFTY"]

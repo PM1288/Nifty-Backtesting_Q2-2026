@@ -55,6 +55,8 @@ x-nse-fii-reports-image: &nse_fii_reports_image
 services:
   postgres:
     image: postgres:16
+    ports:
+      - "100.86.108.108:5432:5432"
     env_file:
       - ../.env
       - ./env/core.env
@@ -111,8 +113,8 @@ services:
         condition: service_healthy
     volumes:
       - ../config/config.yaml:/app/config.yaml:ro
-      - ../samples/nifty100.sample.csv:/app/nifty100.csv:ro
-      - ../docs/source/ind_nifty100list.csv:/app/nifty100_constituents.csv:ro
+      - ../samples/nifty250.sample.csv:/app/nifty250.csv:ro
+      - ../docs/source/ind_niftylargemidcap250list.csv:/app/nifty250_constituents.csv:ro
       - ../state:/app/state
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m

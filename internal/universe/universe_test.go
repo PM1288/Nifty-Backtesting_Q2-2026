@@ -63,3 +63,25 @@ func TestResolveIndices(t *testing.T) {
 		t.Fatalf("expected 2 subscriptions, got %d", len(subs))
 	}
 }
+
+func TestResolveIndicesHonorsPerIndexExchange(t *testing.T) {
+	instrumentsList := []instruments.Instrument{
+		{Exchange: "NSE", TradingSymbol: "Nifty 50", Name: "NIFTY", SymbolToken: "99926000"},
+		{Exchange: "BSE", TradingSymbol: "SENSEX", Name: "SENSEX", SymbolToken: "99919000"},
+	}
+	r := Resolver{
+		Instruments: instrumentsList, EquityExchange: "NSE",
+		IndexTokens:    map[string]string{"NIFTY50": "99926000", "SENSEX": "99919000"},
+		IndexExchanges: map[string]string{"SENSEX": "BSE"}, Logger: slog.Default(),
+	}
+	subs, err := r.ResolveIndices([]string{"NIFTY50", "SENSEX"}, "LTP")
+	if err != nil {
+		t.Fatalf("resolve indices: %v", err)
+	}
+	if len(subs) != 2 {
+		t.Fatalf("expected 2 subscriptions, got %d", len(subs))
+	}
+	if subs[1].Exchange != "BSE" || subs[1].SymbolToken != "99919000" {
+		t.Fatalf("unexpected Sensex subscription: %+v", subs[1])
+	}
+}

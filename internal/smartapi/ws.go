@@ -320,7 +320,10 @@ func (s *Streamer) readLoop(ctx context.Context, conn *websocket.Conn, out chan<
 			if err != nil {
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 					s.logDebug("ws_read_timeout")
-					continue
+					// Gorilla websocket marks a connection unusable after a read
+					// deadline failure. Return so the manager reconnects instead of
+					// reading the failed connection again (which panics).
+					return err
 				}
 				return err
 			}

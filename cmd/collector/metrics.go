@@ -165,7 +165,7 @@ func universeNameForSub(sub store.Subscription) string {
 	kind := strings.ToUpper(strings.TrimSpace(sub.Kind))
 	switch kind {
 	case "EQUITY":
-		return "nifty100_equity"
+		return "nifty250_equity"
 	case "INDEX":
 		return "indices"
 	case "FUT":

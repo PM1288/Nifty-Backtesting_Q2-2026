@@ -11,7 +11,7 @@ import (
 	"trading-stack/internal/universe"
 )
 
-const defaultIndexName = "NIFTY100"
+const defaultIndexName = "NIFTYLARGEMIDCAP250"
 
 func buildConstituentsFromSymbols(symbols []string) []universe.Constituent {
 	if len(symbols) == 0 {

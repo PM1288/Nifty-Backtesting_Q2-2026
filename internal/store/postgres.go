@@ -713,6 +713,14 @@ func (s *Store) UpsertBars1D(ctx context.Context, bars []Bar1D) error {
 	return s.execBatch(ctx, "upsert_bars_1d", batch)
 }
 
+// LatestBar1DDate is the resume checkpoint for idempotent historical backfill.
+func (s *Store) LatestBar1DDate(ctx context.Context, exchange, symbolToken string) (*time.Time, error) {
+	q := fmt.Sprintf(`SELECT MAX(trade_date) FROM %s.bars_1d WHERE exchange=$1 AND symbol_token=$2`, quoteIdent(s.Schema))
+	var latest *time.Time
+	err := s.Pool.QueryRow(ctx, q, exchange, symbolToken).Scan(&latest)
+	return latest, err
+}
+
 func (s *Store) UpsertQuoteSnapshots(ctx context.Context, snaps []QuoteSnapshot) error {
 	if len(snaps) == 0 {
 		return nil

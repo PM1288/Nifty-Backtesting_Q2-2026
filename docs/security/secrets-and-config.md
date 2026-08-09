@@ -86,6 +86,11 @@ This repo now keeps only placeholder or example-safe values in tracked config. R
   Purpose: local compose/example operator config. Tracked only with placeholder-safe values.
 - `.env.collector.runtime`
   Purpose: ignored collector-only runtime overlay for live SmartAPI credentials and any collector-specific overrides that must not be tracked.
+
+- `STOCK_WEBHOOK_URL`
+  Used by: SmartAPI collector equity quote-batch forwarding.
+  Source: external workflow webhook URL.
+  Storage: `.env.collector.runtime` only; do not commit the live URL.
 - `config/config.yaml`
   Purpose: root Go collector config. Safe placeholders only; secrets should come from env overrides.
 - `config.example.yaml`

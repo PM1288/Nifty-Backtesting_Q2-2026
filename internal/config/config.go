@@ -35,6 +35,17 @@ type Config struct {
 	Portfolio       PortfolioConfig       `yaml:"portfolio"`
 	Digii4Flow      Digii4FlowConfig      `yaml:"digii4_flow"`
 	NiftyWatcher    NiftyWatcherConfig    `yaml:"nifty_watcher"`
+	StockWebhook    StockWebhookConfig    `yaml:"stock_webhook"`
+}
+
+// StockWebhookConfig controls delivery of normalized equity quote batches to
+// an external workflow. Delivery is best-effort and never gates persistence.
+type StockWebhookConfig struct {
+	Enabled                  bool   `yaml:"enabled"`
+	URL                      string `yaml:"url"`
+	TimeoutSeconds           int    `yaml:"timeout_seconds"`
+	MaxRetries               int    `yaml:"max_retries"`
+	RetryBackoffMilliseconds int    `yaml:"retry_backoff_milliseconds"`
 }
 
 type SmartAPIConfig struct {
@@ -93,6 +104,7 @@ type UniverseConfig struct {
 	DerivativesExchange string            `yaml:"derivatives_exchange"`
 	IncludeIndices      []string          `yaml:"include_indices"`
 	IndexTokens         map[string]string `yaml:"index_tokens"`
+	IndexExchanges      map[string]string `yaml:"index_exchanges"`
 	FNOCurrentMonthOnly bool              `yaml:"fno_current_month_only"`
 	Futures             FuturesConfig     `yaml:"futures"`
 	Options             OptionsConfig     `yaml:"options"`
@@ -1781,6 +1793,15 @@ func applyDefaults(cfg *Config) {
 	if cfg.Alerts.MaxPerRun == 0 {
 		cfg.Alerts.MaxPerRun = 5
 	}
+	if cfg.StockWebhook.TimeoutSeconds == 0 {
+		cfg.StockWebhook.TimeoutSeconds = 5
+	}
+	if cfg.StockWebhook.MaxRetries == 0 {
+		cfg.StockWebhook.MaxRetries = 2
+	}
+	if cfg.StockWebhook.RetryBackoffMilliseconds == 0 {
+		cfg.StockWebhook.RetryBackoffMilliseconds = 500
+	}
 }
 
 func applyEnvOverrides(cfg *Config) {
@@ -1919,6 +1940,13 @@ func applyEnvOverrides(cfg *Config) {
 		}
 		cfg.Alerts.WebhookHeaders["Authorization"] = v
 	}
+	if v := os.Getenv("STOCK_WEBHOOK_URL"); v != "" {
+		cfg.StockWebhook.URL = v
+		cfg.StockWebhook.Enabled = true
+	}
+	if v := os.Getenv("STOCK_WEBHOOK_ENABLED"); v != "" {
+		cfg.StockWebhook.Enabled = strings.EqualFold(v, "true") || v == "1"
+	}
 }
 
 func (c *Config) Validate() error {
@@ -2016,6 +2044,20 @@ func (c *Config) Validate() error {
 		}
 		if c.RestTasks.RestFallbackLookbackMinutes < 1 {
 			return errors.New("rest_tasks.rest_fallback_lookback_minutes must be >= 1")
+		}
+	}
+	if c.StockWebhook.Enabled {
+		if !strings.HasPrefix(c.StockWebhook.URL, "https://") && !strings.HasPrefix(c.StockWebhook.URL, "http://") {
+			return errors.New("stock_webhook.url must be an http or https URL when enabled")
+		}
+		if c.StockWebhook.TimeoutSeconds < 1 {
+			return errors.New("stock_webhook.timeout_seconds must be >= 1 when enabled")
+		}
+		if c.StockWebhook.MaxRetries < 0 {
+			return errors.New("stock_webhook.max_retries must be >= 0")
+		}
+		if c.StockWebhook.RetryBackoffMilliseconds < 0 {
+			return errors.New("stock_webhook.retry_backoff_milliseconds must be >= 0")
 		}
 	}
 	if c.History.DailyYears < 1 {

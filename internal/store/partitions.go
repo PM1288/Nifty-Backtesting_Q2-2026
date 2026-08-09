@@ -34,7 +34,7 @@ func (s *Store) EnsureMonthlyPartition(ctx context.Context, table string, monthS
 	}
 	monthStart = time.Date(monthStart.Year(), monthStart.Month(), 1, 0, 0, 0, 0, time.UTC)
 	nextMonth := monthStart.AddDate(0, 1, 0)
-	partitionName := fmt.Sprintf("%s_y%04dm%02d", table, monthStart.Year(), int(monthStart.Month()))
+	partitionName := fmt.Sprintf("%s_%04d_%02d", table, monthStart.Year(), int(monthStart.Month()))
 	target := pgx.Identifier{s.Schema, partitionName}.Sanitize()
 	parent := pgx.Identifier{s.Schema, table}.Sanitize()
 	stmt := fmt.Sprintf(
@@ -93,6 +93,18 @@ WHERE n.nspname = $1 AND p.relname = $2`
 }
 
 func parsePartitionMonth(name string) (time.Time, bool) {
+	// Current readable convention: <table>_YYYY_MM.
+	if len(name) >= 8 {
+		suffix := name[len(name)-7:]
+		if suffix[4] == '_' {
+			year, yearErr := strconv.Atoi(suffix[:4])
+			month, monthErr := strconv.Atoi(suffix[5:])
+			if yearErr == nil && monthErr == nil && month >= 1 && month <= 12 {
+				return time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC), true
+			}
+		}
+	}
+	// Backward compatibility for legacy <table>_yYYYYmMM partitions.
 	idx := strings.LastIndex(name, "_y")
 	if idx < 0 {
 		return time.Time{}, false

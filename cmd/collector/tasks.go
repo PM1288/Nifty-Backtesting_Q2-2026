@@ -244,12 +244,14 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 	defer ticker.Stop()
 	var lastPCR time.Time
 	pcrWarned := false
+	stockWebhook := newStockWebhookClient(cfg.StockWebhook, logger)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
+			var webhookStocks []stockWebhookQuote
 			subs, err := st.ListActiveSubscriptions(ctx)
 			if err != nil {
 				if logger != nil {
@@ -259,6 +261,27 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 				continue
 			}
 			subIndex.Update(subs)
+			// Websocket capacity is finite (3 x 1000 tokens). Keep every selected
+			// stock option observable by adding capacity-dropped plan rows to the
+			// slow REST option rotation; this costs only batched quote calls.
+			plannedByKey := map[string]store.Subscription{}
+			if includeOptions {
+				plan, planErr := st.ListLatestDerivativeTokenPlan(ctx, stockDerivativePlanName)
+				if planErr != nil {
+					if logger != nil {
+						logger.Warn("quote_snapshot_plan_failed", "job", label, "err", planErr)
+					}
+				} else {
+					for _, row := range plan {
+						if row.Active || !strings.HasPrefix(strings.ToUpper(row.ContractKind), "OPT") {
+							continue
+						}
+						sub := store.Subscription{Exchange: row.Exchange, SymbolToken: row.SymbolToken, Mode: row.Mode, Kind: "OPTSTK_REST", TradingSymbol: row.TradingSymbol, Underlying: row.Underlying, Expiry: row.Expiry, Strike: row.Strike, Right: row.Right, InstrumentType: row.InstrumentType, Priority: row.Priority, Active: false, Reason: row.Reason}
+						subs = append(subs, sub)
+						plannedByKey[subKey(sub.Exchange, sub.SymbolToken)] = sub
+					}
+				}
+			}
 			pcrEnabled := cfg.RestTasks.EnablePCRSnapshots && allowPCR && includeOptions
 			if cfg.RestTasks.EnablePCRSnapshots && allowPCR && !includeOptions && !cfg.RestTasks.EnableOptionQuoteSnapshots && !pcrWarned && logger != nil {
 				logger.Warn("pcr_snapshot_disabled", "reason", "options_quotes_disabled", "job", label)
@@ -302,8 +325,16 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 						oiByTable := map[string][]store.OISnapshot{}
 						for _, quote := range quotes {
 							sub, ok := subIndex.Get(quote.Exchange, quote.SymbolToken)
+							if !ok {
+								sub, ok = plannedByKey[subKey(quote.Exchange, quote.SymbolToken)]
+							}
 							if ok && quote.LTP != nil && sub.Underlying != "" && !strings.HasPrefix(strings.ToUpper(sub.Kind), "OPT") {
 								priceCache.Set(sub.Underlying, *quote.LTP)
+							}
+							if ok {
+								if webhookQuote, include := stockWebhookQuoteFromSmartAPI(ts, sub, quote); include {
+									webhookStocks = append(webhookStocks, webhookQuote)
+								}
 							}
 							snapRows = append(snapRows, store.QuoteSnapshot{
 								Ts:            ts,
@@ -444,6 +475,16 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 					}
 					notifyCollector(ctx, "quote_snapshot_failed", "Data Capture", fmt.Sprintf("Quote snapshot failed (%s): %v", label, err))
 					continue
+				}
+			}
+			if stockWebhook != nil && label == "quote_snapshot" && len(webhookStocks) > 0 {
+				payload := stockWebhookPayload{
+					EventType: "stock_quote_snapshot", SchemaVersion: "1.0",
+					RunID: fmt.Sprintf("stock-quotes-%d", ts.UnixNano()), CollectedAt: ts,
+					Source: "smartapi", MarketSession: marketSessionAt(ts, cfg), Stocks: webhookStocks,
+				}
+				if err := stockWebhook.Send(ctx, payload); err != nil && logger != nil {
+					logger.Warn("stock_webhook_failed", "run_id", payload.RunID, "stocks", len(webhookStocks), "err", err)
 				}
 			}
 			if pcrEnabled && time.Since(lastPCR) >= time.Duration(cfg.RestTasks.PCRSnapshotIntervalSeconds)*time.Second {
@@ -918,7 +959,7 @@ func oiTableForKind(kind string) string {
 		return "oi_snapshots_index"
 	case "FUT":
 		return "oi_snapshots_futures"
-	case "OPTIDX", "OPTSTK":
+	case "OPTIDX", "OPTSTK", "OPTSTK_REST":
 		return "oi_snapshots_options"
 	default:
 		return ""
@@ -1255,6 +1296,12 @@ func runRestFallback1m(ctx context.Context, cfg *config.Config, provider smartap
 			return ctx.Err()
 		case <-ticker.C:
 			now := time.Now().In(loc)
+			// REST fallback is a live-session repair path. Replaying the final
+			// minute every minute overnight/weekends wastes the candle quota and
+			// competes with the governed historical backfill.
+			if outsideMarketHours(now, cfg.Runtime.TradingStart, cfg.Runtime.TradingEnd, loc) {
+				continue
+			}
 			referenceDay := now
 			end := now
 			if cfg.Runtime.WeekendPullLastWorkingDay && outsideMarketHours(now, cfg.Runtime.TradingStart, cfg.Runtime.TradingEnd, loc) {
@@ -1449,9 +1496,24 @@ func runDailyHistoryOnce(ctx context.Context, cfg *config.Config, provider smart
 		}
 	}
 	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 0, 0, loc)
-	start := time.Date(end.Year()-cfg.History.DailyYears, end.Month(), end.Day(), 0, 0, 0, 0, loc)
+	defaultStart := time.Date(end.Year()-cfg.History.DailyYears, end.Month(), end.Day(), 0, 0, 0, 0, loc)
 	for _, sub := range subs {
 		if _, ok := trackKinds[strings.ToUpper(sub.Kind)]; !ok {
+			continue
+		}
+		start := defaultStart
+		latest, err := st.LatestBar1DDate(ctx, sub.Exchange, sub.SymbolToken)
+		if err != nil {
+			if logger != nil {
+				logger.Warn("daily_history_checkpoint_failed", "token", sub.SymbolToken, "err", err)
+			}
+		} else if latest != nil {
+			next := time.Date(latest.Year(), latest.Month(), latest.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, 1)
+			if next.After(start) {
+				start = next
+			}
+		}
+		if start.After(end) {
 			continue
 		}
 		chunks := splitDateRange(start, end, cfg.History.DailyChunkDays, loc)

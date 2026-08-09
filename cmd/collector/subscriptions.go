@@ -13,7 +13,7 @@ import (
 	"trading-stack/internal/universe"
 )
 
-const stockDerivativePlanName = "NIFTY100_STOCK_DERIVATIVES"
+const stockDerivativePlanName = "NIFTY250_STOCK_DERIVATIVES"
 
 func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instruments.Instrument, baseSubs []store.Subscription, cfg *config.Config, prices *priceCache, logger *slog.Logger, now time.Time) ([]store.Subscription, error) {
 	equities := filterKinds(baseSubs, "EQUITY")

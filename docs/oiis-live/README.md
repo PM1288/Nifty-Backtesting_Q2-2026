@@ -79,6 +79,7 @@ From the accepted repository:
 
 ```bash
 ./scripts/db_migrate_all.sh
+./scripts/deploy_n50_dashboard.sh
 docker build -t trading-stack-oiis-live:1.0.0 -f services/oiis_live/Dockerfile .
 docker compose -p trading-stack-novius2 \
   -f /home/novius2/trading-stack/docker-compose.yml \
@@ -86,6 +87,14 @@ docker compose -p trading-stack-novius2 \
   -f /home/novius2/trading-stack/compose/compose.oiis-live.yml up -d oiis-live
 ./scripts/oiis_stack_status.sh
 ```
+
+Always deploy the N50 web application with `./scripts/deploy_n50_dashboard.sh`
+or the equivalent `docker compose ... build n50-dashboard` command.  A plain
+`docker build` omits the Compose-provided `VITE_BASE_PATH=/n50/` argument.  The
+server can then appear healthy while browsers fail because its JavaScript and
+CSS URLs incorrectly point to `/assets/` instead of `/n50/assets/`.  The safe
+script builds, deploys only this service, waits for container health, loads the
+routed OIIS page and verifies its entry bundle through nginx.
 
 Run or test selection without exposing credentials:
 

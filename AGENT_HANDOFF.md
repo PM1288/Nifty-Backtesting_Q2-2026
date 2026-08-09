@@ -1524,3 +1524,35 @@ docker exec trading-stack-novius2-oiis-live-1 oiis-live reconcile
 ```
 
 Always pass `-p trading-stack-novius2`. Omitting the project name creates a different Compose identity. One attempted deployment demonstrated this and failed safely on the occupied PostgreSQL port; only its newly created stopped containers were removed. The corrected deployment reused the existing named volume and the database reconciled normally.
+
+## N50 dashboard base-path incident and durable fix (2026-08-09)
+
+- Symptom: `/n50/strategy/oiis-live` returned HTML, but the browser could not
+  start the application because the HTML referenced `/assets/index-*.js`.
+- Root cause: `trading-stack-n50-dashboard:latest` had been rebuilt with a
+  direct `docker build`.  That bypassed the Compose arguments
+  `VITE_BASE_PATH=/n50/`, `VITE_API_BASE_URL=/n50` and `VITE_WS_URL=/n50`.
+- Runtime recovery command:
+
+```bash
+docker compose -p trading-stack-novius2 \
+  --env-file /home/novius2/trading-stack/.env \
+  -f /home/novius2/trading-stack/docker-compose.yml build n50-dashboard
+docker compose -p trading-stack-novius2 \
+  --env-file /home/novius2/trading-stack/.env \
+  -f /home/novius2/trading-stack/docker-compose.yml \
+  up -d --no-deps --no-build n50-dashboard
+```
+
+- Durable command: run `./scripts/deploy_n50_dashboard.sh` from the accepted
+  repository.  It performs the correct Compose build/deploy, waits for health,
+  requires the main asset to use `/n50/assets/`, and fetches that asset through
+  the nginx route before returning success.
+- Post-recovery verification: container health was `healthy`; `/health`
+  reported ready; `/n50/strategy/oiis-live`, the main `index-*.js` bundle, the
+  lazy `OiisLivePage-*.js` chunk and its CSS all returned HTTP 200.
+- The currently verified public route is
+  `https://n50.nifty50today.co.in/n50/strategy/oiis-live`; its HTML and all
+  three application assets above returned HTTP 200 through Cloudflare.
+- Never use a direct production `docker build` for `n50-dashboard`.  An internal
+  health check alone cannot detect this client-side base-path failure.

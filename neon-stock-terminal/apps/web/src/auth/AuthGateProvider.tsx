@@ -36,13 +36,7 @@ import {
 } from "../lib/session";
 import type { SessionUser } from "../lib/types";
 
-const HOME_GATE_DELAY_MS = 5 * 60 * 1000;
-const DETAIL_GATE_DELAY_MS = 30 * 1000;
-const RSI_SURFACE_GATE_DELAY_MS = 60 * 1000;
-// Keep authentication available from the explicit account control, but never
-// interrupt dashboard review with an unsolicited login modal by default.
-const AUTO_AUTH_GATE_ENABLED = import.meta.env.VITE_AUTO_AUTH_GATE === "true";
-const DISMISS_STORAGE_KEY = "nifty50trader.homeGateDismissed";
+const AUTO_AUTH_GATE_ENABLED = true;
 const ACTION_QUEUE_STORAGE_KEY = "nifty50trader.pendingActions";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type GateReason = "home-timeout" | "route-timeout" | "email-verification" | "manual" | null;
@@ -94,22 +88,6 @@ function isEmailValid(email: string) {
   return EMAIL_REGEX.test(email) && email.length <= 254;
 }
 
-function gateDelayForPath(pathname: string): number {
-  if (pathname === "/") return HOME_GATE_DELAY_MS;
-  if (pathname.startsWith("/analytics/simulator")) return 12 * 60 * 60 * 1000;
-  if (
-    pathname === "/rsi-surface" ||
-    pathname === "/will-surface" ||
-    pathname === "/change-heatmap" ||
-    pathname === "/heatmap/rsi" ||
-    pathname === "/heatmap/will" ||
-    pathname === "/heatmap/change"
-  ) {
-    return RSI_SURFACE_GATE_DELAY_MS;
-  }
-  return DETAIL_GATE_DELAY_MS;
-}
-
 function isUserVerifiedForAccess(nextUser: User | null | undefined) {
   if (!nextUser) return false;
   if (!nextUser.email) return true;
@@ -120,11 +98,6 @@ function createAuthCodeError(code: string, message: string) {
   const error = new Error(message) as Error & { code: string };
   error.code = code;
   return error;
-}
-
-function readDismissedFlag() {
-  if (typeof window === "undefined") return false;
-  return window.sessionStorage.getItem(DISMISS_STORAGE_KEY) === "1";
 }
 
 function readQueuedActions(): UserAction[] {
@@ -253,7 +226,6 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   const [gateVisible, setGateVisible] = useState(false);
   const [gateReason, setGateReason] = useState<GateReason>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [homePromptDismissed, setHomePromptDismissed] = useState(readDismissedFlag);
   const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
   const firebaseUserRef = useRef<User | null>(null);
   const sessionUserRef = useRef<SessionUser | null>(null);
@@ -442,11 +414,6 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.sessionStorage.setItem(DISMISS_STORAGE_KEY, homePromptDismissed ? "1" : "0");
-  }, [homePromptDismissed]);
-
-  useEffect(() => {
     if (!user?.uid) return;
     void flushQueuedActions(user.uid);
   }, [user?.uid]);
@@ -467,14 +434,8 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   }, [routeKey, trackAction]);
 
   useEffect(() => {
-    if (!authReady && !user && !verificationEmail) return;
+    if (!authReady) return;
     if (user) {
-      setGateVisible(false);
-      setGateReason(null);
-      return;
-    }
-
-    if (!AUTO_AUTH_GATE_ENABLED) {
       setGateVisible(false);
       setGateReason(null);
       return;
@@ -486,24 +447,9 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const isHome = location.pathname === "/";
-    if (isHome && homePromptDismissed) {
-      setGateVisible(false);
-      setGateReason(null);
-      return;
-    }
-
-    const delay = gateDelayForPath(location.pathname);
-    setGateVisible(false);
-    setGateReason(null);
-
-    const timer = window.setTimeout(() => {
-      setGateReason(isHome ? "home-timeout" : "route-timeout");
-      setGateVisible(true);
-    }, delay);
-
-    return () => window.clearTimeout(timer);
-  }, [authReady, homePromptDismissed, location.pathname, user, verificationEmail]);
+    setGateReason("manual");
+    setGateVisible(true);
+  }, [authReady, user, verificationEmail]);
 
   useEffect(() => {
     if (!gateVisible) return;
@@ -667,13 +613,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     if (gateReason === "email-verification") {
       return;
     }
-    if (gateReason === "home-timeout") {
-      setHomePromptDismissed(true);
-    }
-    setGateVisible(false);
-    setGateReason(null);
-    void trackAction("AUTH_GATE_DISMISS", routeKey, { reason: gateReason ?? "manual" });
-    void trackAnalyticsEvent("auth_gate_dismiss", { page_path: routeKey });
+    return;
   }, [gateReason, routeKey, trackAction]);
 
   const openAuthGate = useCallback(() => {
@@ -699,7 +639,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
       gateVisible,
       gateReason,
       authError,
-      canDismissGate: gateReason === "manual",
+      canDismissGate: false,
       requiresEmailVerification: Boolean(verificationEmail),
       verificationEmail,
       openAuthGate,

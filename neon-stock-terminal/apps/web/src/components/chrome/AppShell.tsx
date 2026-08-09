@@ -516,7 +516,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarPreference, setSidebarPreference] = useState<boolean | null>(() => readStoredSidebarPreference());
 
   const sessionEnabled = authReady && !!user;
-  const overview = useOverview(authReady);
+  const overview = useOverview(sessionEnabled);
   const live = useLiveQuotes(["NIFTY50", "BANKNIFTY", "INDIAVIX"], sessionEnabled);
   const tickerItems = useMemo(() => {
     const items = overview.data?.tickerTape ?? [];
@@ -603,7 +603,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? "error"
       : overview.data
         ? "current"
-        : "unavailable";
+      : "unavailable";
+
+  if (!authReady || !user) {
+    return (
+      <div className={styles.shell} data-ui-generation="trading-v2" data-workspace-theme="light">
+        <AuthGateModal />
+      </div>
+    );
+  }
 
   return (
     <div

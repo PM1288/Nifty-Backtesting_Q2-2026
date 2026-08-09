@@ -26,13 +26,13 @@ html {
   font-optical-sizing: auto;
   font-variant-numeric: lining-nums tabular-nums;
   scroll-padding-bottom: var(--footer-disclaimer-offset, 0px);
-  background: var(--bg);
-  color-scheme: dark;
+  background: #f6f8fc;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: #f6f8fc;
   color: var(--text-1);
   font-family: var(--font-ui);
   font-size: var(--font-size-body);

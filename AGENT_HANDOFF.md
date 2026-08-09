@@ -1846,3 +1846,66 @@ docker compose -p trading-stack-novius2 up -d --no-deps --force-recreate n50-das
 ```
 
 - Never commit `.env` or the administrator password. Never use `--remove-orphans` because paper/OIIS services are currently managed as compatible project services outside the dashboard Compose file.
+
+## Production authentication and light-theme repair — 2026-08-09
+
+### Faults found and corrected
+
+- Reproduced the administrator failure in a real browser. The API rejected the
+  production browser origin with `ORIGIN_MISMATCH` because the Compose default
+  allowed the older `m.nifty50today.co.in` host but not
+  `n50.nifty50today.co.in`. The production and legacy hosts are now both in the
+  default origin allowlist.
+- Authentication is now a hard application boundary. Until a valid local-admin
+  or verified Firebase session exists, `AppShell` renders only the sign-up/log-in
+  modal: no main content, sidebar, dashboard request, or dismiss button exists.
+- The local admin remains server-validated and the normal user path remains
+  Firebase email/password with email verification. The Firebase Web API key is
+  configured only in the runtime `.env`; it is intentionally absent from Git
+  and from this handoff.
+- The page canvas now uses the light colour scheme at `html` and `body` level.
+  The three home index cards and their animated overlay are explicitly white or
+  transparent, removing the residual grey blocks without changing market data.
+- Nifty 500, Paper Trading, and Administration were tested through their real
+  `/n50/...` browser routes after login. Their APIs rendered data without
+  `AUTH_REQUIRED`, `ORIGIN_MISMATCH`, or generic API errors.
+
+### Validation evidence
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+npm --prefix neon-stock-terminal/apps/web run typecheck
+npm --prefix neon-stock-terminal/apps/api run typecheck
+npm --prefix neon-stock-terminal/apps/api test
+
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml build n50-dashboard
+docker compose -p trading-stack-novius2 --env-file .env \
+  -f docker-compose.yml up -d --no-deps --force-recreate n50-dashboard
+```
+
+- Web and API type checks: PASS.
+- API tests: 60/60 PASS.
+- Production health: HTTP 200, `ready=true`, PostgreSQL connected.
+- Anonymous browser checks on Home, Nifty 500, and Paper Trading: modal present;
+  `main=0`, `aside=0`, dismiss button absent.
+- Administrator browser login: PASS using the runtime secret and production
+  origin.
+- Authenticated browser checks: Nifty 500 rendered 30 rows, Paper Trading 3
+  rows, Administration 6 rows; zero relevant failed API responses.
+- Firebase disposable-user sign-up and email-verification gate: PASS. The test
+  Firebase identity, Realtime Database nodes, and matching PostgreSQL signup
+  profile were deleted after validation.
+- Browser-computed home card backgrounds are `rgb(255,255,255)` and page canvas
+  is `rgb(246,248,252)`.
+
+### Runtime notes
+
+- Authoritative URL prefix is `/n50`; direct routes such as
+  `/n50/market/nifty-500` support SPA refresh. Paths without `/n50` are not app
+  routes.
+- Staging remains disabled. No database, paper-trading, OIIS, collector, or
+  Nginx service was restarted. Do not use `--remove-orphans`.
+- Never record the administrator password or Firebase Web API key in Git,
+  screenshots, reports, or command examples.

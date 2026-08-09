@@ -127,3 +127,20 @@ Last updated: 2026-08-09 UTC
 - No database migration, trading-rule change, SmartAPI change or live order was
   made. Pre-deploy runtime UI files are backed up at
   `/home/novius2/backups/ui-v2/20260809T181329Z`.
+
+## Authentication boundary and production UI verification — 2026-08-09
+
+- Corrected the production-origin allowlist and redeployed the dashboard.
+- Made authentication mandatory before any application content or data request
+  is rendered. Local admin and verified Firebase sessions are the two supported
+  routes.
+- Completed Firebase disposable-account verification testing and removed all
+  generated test identity/profile data afterwards.
+- Removed residual grey index overlays and set the document canvas to the
+  universal light palette.
+- Type checks pass and API tests pass 60/60.
+- Production browser validation passes for Home, Nifty 500, Paper Trading and
+  Administration. Anonymous users see only the non-dismissible auth modal;
+  authenticated routes render live database results with no relevant API error.
+- Rebuilt and recreated only `n50-dashboard` under Compose project
+  `trading-stack-novius2`; it is healthy. No data or schema changed.

@@ -129,6 +129,23 @@
   color: var(--v2-text-primary) !important;
 }
 
+[data-ui-generation="trading-v2"] [class*="_stripItem_"][data-dir] {
+  border-color: var(--v2-border) !important;
+  background: #ffffff !important;
+  box-shadow: var(--v2-shadow-panel) !important;
+}
+
+[data-ui-generation="trading-v2"] [class*="_stripItem_"][data-dir] > [class*="_overlay_"] {
+  background: transparent !important;
+}
+
+[data-ui-generation="trading-v2"] :where(
+  [class*="_metricCard_"], [class*="_summaryCard_"], [class*="_chartCard_"],
+  [class*="_panel_"], [class*="_card_"]
+) {
+  border-color: var(--v2-border);
+}
+
 @media (max-width: 1199px) {
   [data-ui-generation="trading-v2"] { --v2-page-gutter: 20px; }
 }

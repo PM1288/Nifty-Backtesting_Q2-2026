@@ -36,20 +36,24 @@ class Database:
 
     def migrate(self) -> None:
         candidates = (
-            Path("/app/migrations/001_init.sql"),
-            Path(__file__).resolve().parents[2] / "migrations" / "001_init.sql",
-            Path.cwd() / "migrations" / "001_init.sql",
+            Path("/app/migrations"),
+            Path(__file__).resolve().parents[2] / "migrations",
+            Path.cwd() / "migrations",
         )
-        migration = next((path for path in candidates if path.exists()), None)
-        if migration is None:
-            raise FileNotFoundError("001_init.sql is not available in the image or source tree")
-        body = migration.read_text(encoding="utf-8").replace("__SCHEMA__", self.settings.PAPER_TRADING_SCHEMA)
+        directory = next((path for path in candidates if (path / "001_init.sql").exists()), None)
+        if directory is None:
+            raise FileNotFoundError("paper-trading SQL migrations are not available")
+        migrations = sorted(directory.glob("[0-9][0-9][0-9]_*.sql"))
         with self.connection() as conn:
             conn.execute(
                 "SELECT pg_advisory_xact_lock(hashtext(%s))",
                 (f"{self.settings.PAPER_TRADING_SCHEMA}:migrate",),
             )
-            conn.execute(body)
+            for migration in migrations:
+                body = migration.read_text(encoding="utf-8").replace(
+                    "__SCHEMA__", self.settings.PAPER_TRADING_SCHEMA
+                )
+                conn.execute(body)
 
     def market_relation(self, table: str) -> sql.Composed:
         return sql.SQL("{}.{}").format(

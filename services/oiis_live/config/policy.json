@@ -1,0 +1,25 @@
+{
+  "policy_id": "OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0",
+  "version": "1.0",
+  "selection_time_ist": "08:40",
+  "monitor_start_ist": "09:15",
+  "monitor_end_ist": "15:30",
+  "entry": {
+    "rsi_period": 14,
+    "rsi_max_exclusive": 30,
+    "willr_period": 14,
+    "willr_max_exclusive": -80,
+    "one_entry_per_symbol_per_trade_date": true,
+    "fill_model": "NEXT_AVAILABLE_BAR_OPEN",
+    "maximum_ticket_inr": 200000
+  },
+  "execution": {
+    "intraday_target_pct": "0.003",
+    "swing_target_pct": "0.010",
+    "intraday_diagnostics": ["0.003", "0.005", "0.007"],
+    "swing_diagnostics": ["0.010", "0.020", "0.050"],
+    "horizons_sessions": [5, 30],
+    "stop_exit": false,
+    "timeout_exit": false
+  }
+}

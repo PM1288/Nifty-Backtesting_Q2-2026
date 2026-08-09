@@ -32,6 +32,7 @@ import {
   preloadBacktestingStockInsightsPage,
   preloadBacktestingStrategyDetailPage,
   preloadBacktestingStrategyLibraryPage,
+  preloadOiisLivePage,
   preloadChangeHeatmapPage,
   preloadRsiSurfacePage,
   preloadWillSurfacePage
@@ -73,6 +74,7 @@ const BacktestingDailySummaryPage = lazy(async () => ({ default: (await preloadB
 const BacktestingComparePage = lazy(async () => ({ default: (await preloadBacktestingComparePage()).BacktestingComparePage }));
 const BacktestingRunsPage = lazy(async () => ({ default: (await preloadBacktestingRunsPage()).BacktestingRunsPage }));
 const BacktestingH30Page = lazy(async () => ({ default: (await import("./pages/BacktestingH30Page")).BacktestingH30Page }));
+const OiisLivePage = lazy(async () => ({ default: (await preloadOiisLivePage()).OiisLivePage }));
 
 function RouteFallback() {
   const { t } = useI18n();
@@ -129,6 +131,7 @@ export default function App() {
           <Route path="/options/snapshot" element={<AnalyticsOptionsPage />} />
           <Route path="/strategy" element={<Navigate to="/strategy/evaluation" replace />} />
           <Route path="/strategy/evaluation" element={<AnalyticsStrategyEvaluationPage />} />
+          <Route path="/strategy/oiis-live" element={<OiisLivePage />} />
           <Route path="/option-chain" element={<Navigate to="/options/structure" replace />} />
           <Route path="/option-chain/*" element={<Navigate to="/options/structure" replace />} />
           <Route path="/analytics/flows" element={<AnalyticsFlowsPage />} />

@@ -118,7 +118,8 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
         statuses = conn.execute(
             "SELECT status,count(*) n FROM paper_trading.target_tracks GROUP BY status"
         ).fetchall()
-        assert {row["status"]: row["n"] for row in statuses} == {"ACTIVE": 2, "CLOSED_AT_TARGET": 4}
+        # Intraday targets are evaluated on D0; swing targets start on D+1.
+        assert {row["status"]: row["n"] for row in statuses} == {"ACTIVE": 3, "CLOSED_AT_TARGET": 3}
         assert (
             conn.execute(
                 "SELECT status FROM paper_trading.trade_groups WHERE trade_group_id=%s", (group_id,)
@@ -139,7 +140,7 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
     )
     service.close_trade(group_id, close, "integration-close-0001")
     monitor.once()
-    second_bar = now + timedelta(minutes=3)
+    second_bar = now + timedelta(days=1, minutes=3)
     with db.connection() as conn:
         conn.execute(
             "INSERT INTO public.bars_1m VALUES (%s,'NSE','TEST1',102,105.50,101.50,105,1000,'TEST')",
@@ -310,6 +311,12 @@ def test_execution_target_closes_only_actual_position_and_higher_analytics_conti
             ).fetchone()["fully_closed"]
             is True
         )
+        conn.execute(
+            "INSERT INTO public.bars_1m VALUES (%s,'NSE','TEST1',101.10,101.50,101.00,101.40,1000,'TEST')",
+            (now + timedelta(days=1, minutes=2),),
+        )
+    monitor.once()
+    with db.connection() as conn:
         assert (
             conn.execute(
                 "SELECT count(*) n FROM paper_trading.target_hits h JOIN paper_trading.target_tracks t USING(target_track_id) JOIN paper_trading.target_definitions d USING(target_definition_id) WHERE d.trade_group_id=%s AND d.target_pct=0.010",

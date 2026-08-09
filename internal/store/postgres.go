@@ -578,6 +578,45 @@ func (s *Store) ListActiveSubscriptions(ctx context.Context) ([]Subscription, er
 	return subs, err
 }
 
+// ListOIISLiveSubscriptions returns active cash-equity watchlist instruments.
+// The to_regclass guard keeps the collector deployable before the optional
+// OIIS migration is installed; the next refresh picks up rows once it exists.
+func (s *Store) ListOIISLiveSubscriptions(ctx context.Context) ([]Subscription, error) {
+	var present bool
+	if err := s.Pool.QueryRow(ctx, "SELECT to_regclass('oiis_live.watchlist_item') IS NOT NULL").Scan(&present); err != nil || !present {
+		return nil, err
+	}
+	q := fmt.Sprintf(`
+    SELECT i.exchange,i.symbol_token,COALESCE(i.tradingsymbol,w.symbol)
+    FROM oiis_live.watchlist_item w
+    JOIN %s.instruments i
+      ON i.exchange='NSE' AND i.symbol_token=w.instrument_token
+    WHERE w.active=true
+      AND w.trade_date BETWEEN (current_date - 1) AND (current_date + 1)
+    ORDER BY w.trade_date,w.rank NULLS LAST,w.symbol
+  `, quoteIdent(s.Schema))
+	rows, err := s.Pool.Query(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var output []Subscription
+	for rows.Next() {
+		var sub Subscription
+		if err := rows.Scan(&sub.Exchange, &sub.SymbolToken, &sub.TradingSymbol); err != nil {
+			return nil, err
+		}
+		sub.Mode = "LTP"
+		sub.Kind = "EQUITY"
+		sub.Active = true
+		sub.Underlying = strings.TrimSuffix(sub.TradingSymbol, "-EQ")
+		sub.Priority = 1000
+		sub.Reason = "oiis_live_watchlist"
+		output = append(output, sub)
+	}
+	return output, rows.Err()
+}
+
 func (s *Store) ListSubscriptionsWithStaleWatermarks(ctx context.Context, cutoff, activeSince time.Time, kinds []string) ([]Subscription, error) {
 	normalizedKinds := make([]string, 0, len(kinds))
 	for _, kind := range kinds {

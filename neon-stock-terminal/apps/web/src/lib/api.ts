@@ -165,6 +165,37 @@ export function fetchOverview(): Promise<OverviewResponse> {
   return getJson<OverviewResponse>("/v1/overview");
 }
 
+export type OiisLiveDashboard = {
+  environment: "PAPER";
+  policyId: string;
+  tradeDate: string | null;
+  availableDates: Array<{ trade_date: string }>;
+  watchlist: Array<Record<string, any>>;
+  entries: Array<Record<string, any>>;
+  runs: Array<Record<string, any>>;
+  diagnostics: Array<Record<string, any>>;
+  errors: Array<Record<string, any>>;
+  paper: Array<Record<string, any>>;
+  freshness: Record<string, any>;
+  queues: Record<string, any>;
+};
+
+export function fetchOiisLiveDashboard(tradeDate?: string): Promise<OiisLiveDashboard> {
+  return getJson<OiisLiveDashboard>(`/v1/oiis-live/dashboard${tradeDate ? `?tradeDate=${encodeURIComponent(tradeDate)}` : ""}`);
+}
+
+export async function mutateOiisLive(path: string, method: "POST" | "PATCH" | "DELETE", body?: unknown) {
+  const resolvedPath = resolveApiPath(`/v1/oiis-live${path}`);
+  const response = await fetch(`${API_BASE_URL}${resolvedPath}`, {
+    method,
+    credentials: "include",
+    headers: body == null ? undefined : { "Content-Type": "application/json" },
+    body: body == null ? undefined : JSON.stringify(body)
+  });
+  if (!response.ok) throw new Error(`API ${response.status}: ${await response.text()}`);
+  return response.status === 204 ? null : response.json();
+}
+
 export function fetchLeaderboard(limit = 25): Promise<LeaderboardResponse> {
   return getJson<LeaderboardResponse>(`/v1/leaderboard?limit=${encodeURIComponent(String(limit))}`);
 }

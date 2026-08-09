@@ -1444,3 +1444,83 @@ The first disposable COPY exposed and then verified fixes for a column-count mis
 - Repeat validation:
   `cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026 && go test ./... && python3 -m py_compile scripts/update_nifty250_universe.py`
   and from `/home/novius2/trading-stack`: `docker compose --env-file .env -p trading-stack-novius2 -f compose/compose.base.yml -f compose/compose.core.yml config --quiet`.
+
+## OIIS Live daily selection, paper entry and dashboard (2026-08-09)
+
+### Authoritative outcome
+
+- Accepted source: `/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026`, branch `DEV_PM_CODE`; deployed mirror: `/home/novius2/trading-stack`.
+- Reviewed every supplied file under `/home/novius2/NIFTY50/OLLS-LIVE`: the implementation prompt, JSON policy, DOCX methodology and XLSX watchlist fixture.
+- Policy ID: `OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0`. HIGH/MEDIUM/LOW is daily screening only. Automatic trade permission additionally requires canonical O>=74 and X>=76.
+- Daily operational admission requires DQ>=85, `FULL` permission and no unresolved hard gate. An initially over-broad implementation omitted the hard-gate check and produced 489 recent candidates. That evidence is superseded, not deleted. The corrected regression exactly reproduces 18 rows for 3–6 August: 1 HIGH, 11 MEDIUM, 6 LOW; INTELLECT and OLAELEC are the two canonical rows.
+- No minute source contains INTELLECT or OLAELEC for those signal dates. Both recent execution paths are explicit `ENTRY_DATE_AFTER_SOURCE_END` skips. Never convert them into assumed entries.
+- Fresh 7 August evaluation covered 500 stocks and selected zero valid daily candidates after the correction. The generated 10 August watchlist is therefore empty. The UI may add a monitor-only row or an explicit paper-only operator override; it must not invent an automatic candidate.
+
+### Entry and exit contract
+
+- The worker runs at/after 08:40 Asia/Kolkata on weekdays and catches up after restart. It chooses the latest completed daily evidence and stores the list for that trade date.
+- The collector merges every active OIIS list symbol into its priority subscription set. Current OIIS subscription count is zero because the corrected 10 August list is empty.
+- A permitted row enters only on the first completed one-minute observation where RSI(14)<30 and Williams %R(14)<-80, filled at the next eligible minute open.
+- `UNIQUE(policy_id,trade_date,symbol)` plus paper API idempotency guarantees one entry per stock per day across restarts/workers. The same stock may open a separate position on a later date.
+- Actual exit remains I030 (+0.30%) on D0; if missed, S100 (+1%) begins on D+1. There is no stop, forced close, D+5 timeout or run-end liquidation.
+- Paper migration `002_target_lifecycle` stores `INTRADAY` versus `SWING` on execution target rules. The monitor filters by lifecycle, so S100 cannot execute on D0.
+- Diagnostic I030/I050/I070, S100/S200/S500, adverse, D+5 and H30 paths remain independent and continue after actual close.
+
+### Data and schema
+
+- Additive migration: `db/sql/032_oiis_live.sql`; runner `scripts/db_migrate_all.sh` now includes SQL 025–032.
+- Durable schema: `oiis_live.policy_version`, `selection_run`, `daily_candidate`, `watchlist_item`, `intraday_evaluation`, `entry_claim`, `command_queue`, `service_heartbeat`, `error_outbox`, `historical_run`, `historical_trade`, plus `v_current_watchlist` and `v_service_diagnostics`.
+- Source coverage verified: `nse.fact_eod_prices` 2021-03-08 through 2026-08-06; `strategy_eval.stock_daily_regime` through 2026-08-07 for 500 stocks; `public.bars_1m` through 2026-08-08.
+- Do not expose a Docker socket to the UI. `/strategy/oiis-live` shows application heartbeats, source watermarks, durable queue counts, paper states and error delivery. Use `./scripts/oiis_stack_status.sh` for privileged container status.
+
+### Three-year corrected review
+
+- Final artifacts: `reports/oiis-live/20260809/full-history/` and `recent-week/`; primary narrative: `reports/oiis-live/20260809/EXECUTIVE_REVIEW.md`.
+- Requested 2023-08-01 through 2026-08-07: 2,485 daily candidates, 130 canonical candidates, 115 triggered paths, 97 traded symbols, 106 I030 actual closes and 9 later S100 closes; no open path at the available end.
+- Current-cost-profile scenario: gross ₹83,142.02; charges ₹33,611.03; net before provision ₹49,530.99; 35% management provision ₹17,335.85; net after provision ₹32,195.14. This is unconstrained path economics, not a finite-capital return.
+- Independent hit rates: I030 92.17%, I050 87.83%, I070 79.13%, D+5 S100 93.91%, S200 84.35%, S500 57.39%.
+- Median H30 MFE 11.13%; maximum 57.86%. Median H30 MAE -6.76%; worst -33.79%. Median actual holding is 10 minutes; maximum is 41 trading sessions. These drawdown/capital-lock findings are essential because the strategy has no stop or timeout.
+- Nifty regimes are present for all 115 trades: 58 SIDEWAYS, 37 TRANSITION and 20 UPWARD. VIX: 88 LOW, 24 NORMAL and 3 HIGH; HIGH is insufficiently sampled. Historical stock-regime mapping is missing for 93 trades, so stock-regime attribution is not estimable and is never fabricated.
+- Final Postgres evidence run: `49657e90-ba0e-4cfa-b295-da96a3d2949b`; 115 rows; result hash `80f588ab1763d2aa666ba75e0f0c8eea1bdcc56ce4a4e8394b2a4a08a8c4f267`.
+- `run_oiis_live_backtest.py --persist-existing` provides restart-safe artifact-to-Postgres persistence after an export succeeds. It normalises missing regimes to JSON null and rejects non-standard NaN JSON.
+
+### UI, collector, paper and alerts
+
+- UI/API: `/strategy/oiis-live`, `/v1/oiis-live/dashboard`, CRUD `/watchlist`, and durable `/commands`. Authentication remains mandatory. A real authenticated create/patch/delete monitor-only smoke returned 201/200/204; the soft-deleted smoke row is hidden from the active list.
+- OIIS container: `services/oiis_live`; Compose overlay `compose/compose.oiis-live.yml`; non-root, read-only filesystem, PAPER-only, separate health check and retrying error outbox.
+- SmartAPI dynamic list: `internal/store/postgres.go` and `cmd/collector/subscriptions.go`. Generated rows and manual active rows are collected even when entry is disabled, so evidence exists before permission changes.
+- Error hook contract is Mattermost-compatible: top-level `text`, structured evidence under `props.oiis_error`. The synthetic `SyntheticVerification` event was durably stored and reached `DELIVERED` in one attempt.
+- The paper API is live/ready with migration `002_target_lifecycle`. Current queue: zero pending paper webhooks and zero pending OIIS errors. Historical paper dead letters from earlier endpoint testing are preserved for audit.
+
+### Verification actually executed
+
+- OIIS unit tests: 7 passed.
+- OLLS supplied regression: exact 18 candidates, exact 1/11/6 level split, exact two canonical symbols.
+- Paper unit regression: 12 passed; disposable PostgreSQL integration: 4 passed. These specifically include independent target ladders and D+1 swing lifecycle.
+- Collector: `go test ./internal/store ./cmd/collector` passed; live collector healthy and its consolidated stock webhook continues returning HTTP 200.
+- API and web TypeScript production build passed. Authenticated dashboard smoke returned 200 with trade date 2026-08-10, freshness and queue payloads. Unauthenticated access returned the expected 401.
+- OIIS image and N50 image builds passed. Live OIIS, collector, PostgreSQL and paper API are healthy; paper monitor/webhook/scheduler are running; N50 `/health` reports `ok=true`, `ready=true`, DB connected.
+- OIIS error delivery passed. Paper reconciliation has no duplicate OIIS entries and no accepted entry without a group.
+- NPM reported 13 dependency advisories (8 moderate, 3 high, 2 critical). Do not run an unreviewed major-version `npm audit fix`; schedule a separate dependency-upgrade branch and full UI regression.
+
+### Exact safe operations
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+./scripts/db_migrate_all.sh
+docker build -t trading-stack-oiis-live:1.0.0 -f services/oiis_live/Dockerfile .
+./scripts/oiis_stack_status.sh
+
+docker compose -p trading-stack-novius2 --env-file /home/novius2/trading-stack/.env \
+  -f /home/novius2/trading-stack/docker-compose.yml \
+  -f /home/novius2/trading-stack/compose/compose.paper-trading.yml \
+  -f /home/novius2/trading-stack/compose/compose.oiis-live.yml \
+  up -d --no-build oiis-live
+
+docker exec trading-stack-novius2-oiis-live-1 \
+  oiis-live select --signal-date 2026-08-07 --trade-date 2026-08-10
+docker exec trading-stack-novius2-oiis-live-1 oiis-live monitor-once --trade-date 2026-08-10 --no-submit
+docker exec trading-stack-novius2-oiis-live-1 oiis-live reconcile
+```
+
+Always pass `-p trading-stack-novius2`. Omitting the project name creates a different Compose identity. One attempted deployment demonstrated this and failed safely on the occupied PostgreSQL port; only its newly created stopped containers were removed. The corrected deployment reused the existing named volume and the database reconciled normally.

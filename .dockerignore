@@ -8,3 +8,10 @@
 !db/**
 !internal/
 !internal/**
+!services/oiis_live/
+!services/oiis_live/**
+!platform/
+!platform/nifty_stratlab/
+!platform/nifty_stratlab/src/
+!platform/nifty_stratlab/src/nifty_stratlab/
+!platform/nifty_stratlab/src/nifty_stratlab/**

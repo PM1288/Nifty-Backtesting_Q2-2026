@@ -1,0 +1,42 @@
+services:
+  oiis-live:
+    image: trading-stack-oiis-live:1.0.0
+    build:
+      context: .
+      dockerfile: services/oiis_live/Dockerfile
+    env_file:
+      - ./.env
+      - ./.env.paper-trading
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PAPER_API_URL: http://paper-api:8088
+      PAPER_TRADING_ONLY: "true"
+      OIIS_POLICY_PATH: /app/config/policy.json
+      OIIS_POLL_SECONDS: ${OIIS_LIVE_POLL_SECONDS:-10}
+      OIIS_ERROR_WEBHOOK_URL: ${OIIS_ERROR_WEBHOOK_URL:-https://chat.an-ai-agent.com/hooks/mgwp88nxp3nxjd6nmtruce5ojh}
+      LOG_LEVEL: ${OIIS_LIVE_LOG_LEVEL:-INFO}
+      TZ: Asia/Kolkata
+    depends_on:
+      postgres:
+        condition: service_healthy
+      paper-api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "oiis-live", "verify-config"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g

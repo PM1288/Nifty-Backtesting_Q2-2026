@@ -174,6 +174,11 @@ export const OPTIONS_SECTION_TABS = [
 
 export const STRATEGY_SECTION_TABS = [
   {
+    label: "OIIS Live",
+    to: "/strategy/oiis-live",
+    badge: "Live"
+  },
+  {
     label: "Strategy Evaluation",
     to: "/strategy/evaluation",
     badge: "Eval"

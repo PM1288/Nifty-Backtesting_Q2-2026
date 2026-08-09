@@ -79,6 +79,37 @@ def test_leg_count_is_exact() -> None:
         TradeIntent.model_validate(value)
 
 
+def test_execution_target_lifecycle_is_explicit_and_target_only() -> None:
+    value = payload()
+    value["execution_policy"] = {
+        "mode": "RULES",
+        "exit_rules": [
+            {
+                "rule_id": "I030",
+                "kind": "TARGET_PCT",
+                "value": "0.003",
+                "action": "FULL_CLOSE",
+                "target_lifecycle": "INTRADAY",
+            },
+            {
+                "rule_id": "S100",
+                "kind": "TARGET_PCT",
+                "value": "0.010",
+                "action": "FULL_CLOSE",
+                "target_lifecycle": "SWING",
+            },
+        ],
+    }
+    parsed = TradeIntent.model_validate(value)
+    assert [rule.target_lifecycle for rule in parsed.execution_policy.exit_rules] == [
+        "INTRADAY",
+        "SWING",
+    ]
+    value["execution_policy"]["exit_rules"][0]["kind"] = "TIME"
+    with pytest.raises(ValueError):
+        TradeIntent.model_validate(value)
+
+
 def test_all_published_samples_validate() -> None:
     root = Path(__file__).resolve().parents[1]
     for path in sorted((root / "examples/requests").glob("*.json")):

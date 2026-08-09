@@ -18,11 +18,16 @@ const stockDerivativePlanName = "NIFTY250_STOCK_DERIVATIVES"
 func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instruments.Instrument, baseSubs []store.Subscription, cfg *config.Config, prices *priceCache, logger *slog.Logger, now time.Time) ([]store.Subscription, error) {
 	equities := filterKinds(baseSubs, "EQUITY")
 	indices := filterKinds(baseSubs, "INDEX")
+	liveSubs, liveErr := st.ListOIISLiveSubscriptions(ctx)
+	if liveErr != nil && logger != nil {
+		logger.Warn("oiis_live_watchlist_load_failed", "err", liveErr)
+	}
 	selection, err := universe.ResolveDerivativeSelection(insts, equities, indices, cfg.Universe, cfg.WS, priceProvider(prices), logger, now)
 	if err != nil {
 		return nil, err
 	}
 	desired := append([]store.Subscription{}, baseSubs...)
+	desired = appendUniqueSubscriptions(desired, liveSubs...)
 	desired = append(desired, selection.Subscriptions...)
 	for i := range desired {
 		desired[i].Active = true
@@ -53,6 +58,7 @@ func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instrume
 	if logger != nil {
 		logger.Info("subscriptions_refreshed",
 			"base", len(baseSubs),
+			"oiis_live", len(liveSubs),
 			"derivatives", len(selection.Subscriptions),
 			"stock_derivative_plan", len(planRows),
 			"active", len(keep),
@@ -61,6 +67,21 @@ func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instrume
 		)
 	}
 	return keep, nil
+}
+
+func appendUniqueSubscriptions(base []store.Subscription, extra ...store.Subscription) []store.Subscription {
+	seen := make(map[string]struct{}, len(base)+len(extra))
+	for _, sub := range base {
+		seen[subscriptionKey(sub)] = struct{}{}
+	}
+	for _, sub := range extra {
+		if _, exists := seen[subscriptionKey(sub)]; exists {
+			continue
+		}
+		base = append(base, sub)
+		seen[subscriptionKey(sub)] = struct{}{}
+	}
+	return base
 }
 
 func diffRemoved(ctx context.Context, st *store.Store, desired []store.Subscription) ([]store.Subscription, error) {

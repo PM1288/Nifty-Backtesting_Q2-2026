@@ -120,6 +120,13 @@ class ExitRule(StrictModel):
     value: Decimal
     action: Literal["TRACK_ONLY", "PARTIAL_CLOSE", "FULL_CLOSE"]
     quantity_pct: Decimal | None = Field(default=None, gt=0, le=1)
+    target_lifecycle: Literal["INTRADAY", "SWING"] | None = None
+
+    @model_validator(mode="after")
+    def lifecycle_only_for_target(self) -> ExitRule:
+        if self.target_lifecycle is not None and self.kind != "TARGET_PCT":
+            raise ValueError("target_lifecycle is valid only for TARGET_PCT rules")
+        return self
 
 
 class ExecutionPolicy(StrictModel):

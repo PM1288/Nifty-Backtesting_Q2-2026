@@ -194,8 +194,8 @@ class PaperService:
                 )
             for rule in intent.execution_policy.exit_rules:
                 conn.execute(
-                    f"INSERT INTO {self.schema}.execution_exit_rules(trade_group_id,client_rule_id,kind,value,action,quantity_pct) VALUES (%s,%s,%s,%s,%s,%s)",
-                    (group_id, rule.rule_id, rule.kind, rule.value, rule.action, rule.quantity_pct),
+                    f"INSERT INTO {self.schema}.execution_exit_rules(trade_group_id,client_rule_id,kind,value,action,quantity_pct,target_lifecycle) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    (group_id, rule.rule_id, rule.kind, rule.value, rule.action, rule.quantity_pct, rule.target_lifecycle),
                 )
                 if (
                     intent.trade_group.asset_class == "EQUITY"
@@ -207,14 +207,15 @@ class PaperService:
                             WHERE target_definition_id=(
                                 SELECT target_definition_id FROM {self.schema}.target_definitions
                                 WHERE trade_group_id=%s AND target_pct=%s
+                                  AND (%s::text IS NULL OR lifecycle=%s::text)
                                 ORDER BY CASE lifecycle WHEN 'INTRADAY' THEN 0 ELSE 1 END LIMIT 1
                             ) RETURNING target_definition_id""",
-                        (rule.action, group_id, rule.value),
+                        (rule.action, group_id, rule.value, rule.target_lifecycle, rule.target_lifecycle),
                     ).fetchone()
                     if not selected:
                         definition_id = conn.execute(
-                            f"INSERT INTO {self.schema}.target_definitions(target_definition_id,trade_group_id,target_code,lifecycle,target_pct,execution_action) VALUES (%s,%s,%s,'SWING',%s,%s) RETURNING target_definition_id",
-                            (str(uuid.uuid4()), group_id, f"EXECUTION_{rule.value}", rule.value, rule.action),
+                            f"INSERT INTO {self.schema}.target_definitions(target_definition_id,trade_group_id,target_code,lifecycle,target_pct,execution_action) VALUES (%s,%s,%s,%s,%s,%s) RETURNING target_definition_id",
+                            (str(uuid.uuid4()), group_id, f"EXECUTION_{rule.target_lifecycle or 'SWING'}_{rule.value}", rule.target_lifecycle or "SWING", rule.value, rule.action),
                         ).fetchone()["target_definition_id"]
                         conn.execute(
                             f"INSERT INTO {self.schema}.target_tracks(target_definition_id,trade_leg_id,status) SELECT %s,trade_leg_id,'PENDING_ENTRY' FROM {self.schema}.trade_legs WHERE trade_group_id=%s",

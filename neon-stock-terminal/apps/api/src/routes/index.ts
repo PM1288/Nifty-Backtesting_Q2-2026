@@ -27,6 +27,7 @@ import { registerDisclosures } from "./disclosures";
 import { registerDiscordMarketStream } from "./discordMarketStream";
 import { registerSupportingMetrics } from "./supportingMetrics";
 import { registerWillSurface } from "./willSurface";
+import { registerOiisLive } from "./oiisLive";
 
 export function registerRoutes(
   app: Express,
@@ -64,4 +65,5 @@ export function registerRoutes(
   registerSupportingMetrics(app, prisma);
   registerWillSurface(app, prisma);
   registerStocks(app, prisma);
+  registerOiisLive(app, prisma);
 }

@@ -29,6 +29,7 @@ export const preloadBacktestingStockInsightsPage = () => import("./pages/Backtes
 export const preloadBacktestingDailySummaryPage = () => import("./pages/BacktestingDailySummaryPage");
 export const preloadBacktestingComparePage = () => import("./pages/BacktestingComparePage");
 export const preloadBacktestingRunsPage = () => import("./pages/BacktestingRunsPage");
+export const preloadOiisLivePage = () => import("./pages/OiisLivePage");
 
 export function preloadCoreDashboardRoutes() {
   return Promise.allSettled([

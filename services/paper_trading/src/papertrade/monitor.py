@@ -429,7 +429,9 @@ class Monitor:
                 f"""SELECT t.*,d.target_code,d.lifecycle,d.execution_action,d.target_pct,
                            (SELECT r.quantity_pct FROM {self.schema}.execution_exit_rules r
                             WHERE r.trade_group_id=d.trade_group_id AND r.kind='TARGET_PCT'
-                              AND r.value=d.target_pct AND r.active LIMIT 1) execution_quantity_pct
+                              AND r.value=d.target_pct
+                              AND (r.target_lifecycle IS NULL OR r.target_lifecycle=d.lifecycle)
+                              AND r.active LIMIT 1) execution_quantity_pct
                     FROM {self.schema}.target_tracks t
                     JOIN {self.schema}.target_definitions d USING(target_definition_id)
                     WHERE t.trade_leg_id=%s AND t.status='ACTIVE'
@@ -443,6 +445,11 @@ class Monitor:
                         f"UPDATE {self.schema}.target_tracks SET status='NOT_HIT_INTRADAY',version=version+1 WHERE target_track_id=%s",
                         (track["target_track_id"],),
                     )
+                    continue
+                # Swing targets begin on the session after entry. This keeps the
+                # authoritative I030-then-S100 lifecycle distinct: an entry-day
+                # 1% move is opportunity evidence, not an S100 execution exit.
+                if track["lifecycle"] == "SWING" and session == leg["entry_session"]:
                     continue
                 if not target_crossed(leg["side"], Decimal(track["target_price"]), high, low):
                     continue

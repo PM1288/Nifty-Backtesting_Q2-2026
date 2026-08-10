@@ -33,8 +33,8 @@ OFACTOR_FORMULAS = {
 
 XFACTOR_FORMULAS = {
     "setup_integrity": "90 if a triggered setup exists; 72 if a setup exists but is not triggered; otherwise 20",
-    "entry_location_quality": "linear score of (1.5 - extension_ATR), from 0 to 1.5",
-    "trigger_confirmation": "90 triggered; 55 armed; 20 forming. This remains a score component, but TRIGGER_CONFIRMATION_MISSING is disabled as a blocking gate in V2",
+    "entry_location_quality": "score of current-session MoveATR and VWAP-distance ATR; no SMA20-distance proxy",
+    "trigger_confirmation": "90 triggered; 55 armed; 20 forming. This remains a score component, but TRIGGER_CONFIRMATION_MISSING is disabled as a blocking gate in V3.2",
     "stop_invalidation_quality": "linear score of (2.5 - risk_ATR), from 0 to 2.5",
     "reward_path_quality": "linear score of reward/risk from 0.5 to 2.5",
     "market_sector_synchronisation": "mean of the selected-direction OFactor market-regime and sector-support components",
@@ -47,7 +47,7 @@ XFACTOR_FORMULAS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--trade-date", type=date.fromisoformat, required=True)
-    parser.add_argument("--run-slot", default="MANUAL_V2_FINAL")
+    parser.add_argument("--run-slot", default="MANUAL_CORRECTED_FINAL")
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
@@ -131,6 +131,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
         ).fetchall()
         run_ledger = conn.execute(
             """SELECT run_id,run_slot,status,signal_date,trade_date,as_of_ts,
+                 decision_as_of,execution_timestamp,requested_universe,universe_counts,
                  requested_symbols,evaluated_symbols,selected_symbols,
                  qualified_symbols,result_hash,started_at,completed_at
                FROM oiis_live.selection_run WHERE trade_date=%s
@@ -157,30 +158,32 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
     lines: list[str] = [
         f"# OIIS Live Complete Calculation and Selection Report — {trade_date.strftime('%d %B %Y')}",
         "",
-        "**Scope:** Complete per-stock calculation evidence for the authoritative OIIS Live V2 selection snapshot.",
+        "**Scope:** Complete per-stock calculation evidence for the corrected OIIS Live V3 directional snapshot.",
         "**Environment:** PAPER ONLY. No live broker order is represented by this report.",
         f"**Run ID:** `{run['run_id']}`",
         f"**Run slot:** `{run['run_slot']}`",
         f"**Policy:** `{run['policy_id']}` version `{run['policy_version']}`",
         f"**Signal/base daily date:** `{run['signal_date']}`",
         f"**Trade date:** `{run['trade_date']}`",
-        f"**Snapshot timestamp:** `{run['as_of_ts'].astimezone(IST).isoformat() if run['as_of_ts'] else 'NOT AVAILABLE'}`",
+        f"**Decision as-of:** `{run['decision_as_of'].astimezone(IST).isoformat() if run.get('decision_as_of') else 'NOT AVAILABLE'}`",
+        f"**Physical execution timestamp:** `{run['execution_timestamp'].astimezone(IST).isoformat() if run.get('execution_timestamp') else 'NOT AVAILABLE'}`",
+        f"**Requested universe:** `{run.get('requested_universe') or 'NOT AVAILABLE'}`",
         f"**Result hash:** `{run['result_hash']}`",
         "",
         "## Executive conclusion",
         "",
-        f"The run evaluated **{len(candidates)}** eligible F&O/NIFTY 50 symbols. "
-        f"**{sum(row['data_permission'] != 'DATA_INSUFFICIENT' for row in candidates)}** had calculable evidence and "
+        f"The run evaluated **{len(candidates)}** symbols in the point-in-time NIFTY 50 and active-F&O intersection. "
+        f"**{sum(row['data_permission'] != 'DATA_INSUFFICIENT' for row in candidates)}** had FULL execution-grade evidence and "
         f"**{sum(row['data_permission'] == 'DATA_INSUFFICIENT' for row in candidates)}** were retained as explicit data-insufficient rows. "
         f"It produced **{sum(bool(row['recommended']) for row in candidates)}** ranked research recommendations, "
         f"**{run['qualified_symbols']}** O/X-qualified rows, and **{run['selected_symbols']}** fully selected rows.",
         "",
-        "A recommendation is not a trade. Recommendation ranking guarantees a reviewable top ten. A stock receives automatic paper-entry permission only when data quality is FULL, OFactor is at least 54, XFactor is at least 76, direction is LONG, and every blocking gate passes. On this snapshot no stock met that complete contract, so **no trade was authorised**.",
+        "A recommendation is not a trade. The full directional scanner keeps LONG and SHORT opportunities visible. Automatic long-pullback paper entry remains a separate policy and requires FULL data, OFactor at least 74, XFactor at least 76, LONG direction and every blocking gate to pass.",
         "",
         "## Time and source interpretation",
         "",
         "1. The most recent completed cash-equity daily inputs were from 7 August 2026.",
-        "2. The final 10 August snapshot overlaid stored SmartAPI one-minute OHLCV through the run timestamp.",
+        "2. Each slot uses its governed point-in-time cutoff: 08:30, 09:30 or 15:00 IST. Physical backfill time is stored separately and never changes the data cutoff.",
         "3. Intraday volume was compared with volume accumulated by the same IST clock time on previous sessions. It was not compared with prior full-day volume.",
         "4. Daily history came from `nse.fact_eod_prices`, with `strategy_eval.stock_daily_regime` only as the governed fallback/regime source.",
         "5. Live partial bars came from `public.bars_1m`; instruments came from `public.instruments`; sector context came from `public.index_constituents`; NIFTY/VIX and stock regimes came from `strategy_eval.market_regime_daily` and `strategy_eval.stock_daily_regime`.",
@@ -188,19 +191,19 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
         "",
         "## Complete decision flow",
         "",
-        "1. Refresh the eligible universe: unexpired SmartAPI `FUTSTK`/`OPTSTK` underlyings union official NSE NIFTY 50 constituents.",
+        "1. Refresh the eligible universe as the intersection of active SmartAPI F&O underlyings and official NSE NIFTY 50 constituents.",
         "2. Load at least 180 calendar days of daily OHLCV and the current partial intraday bar aggregation when available.",
         "3. Calculate returns, SMA20, SMA50, EMA61, ATR14, RSI14, Williams %R14, MACD, volume history, prior 20-session barriers, relative strength and regime joins.",
         "4. Calculate data-quality coverage, freshness, OHLC consistency and source reliability. Require DQ >= 85 and permission FULL.",
         "5. Calculate all nine LONG OFactor components and weighted contributions.",
         "6. Calculate all nine SHORT OFactor components independently. SHORT is never `100 - LONG`.",
         "7. Subtract explicit OFactor penalties from each raw weighted score.",
-        "8. Select LONG when LONG minus SHORT >= 6; select SHORT when SHORT minus LONG >= 6; otherwise direction is NEUTRAL.",
-        "9. Assign OFactor LOW 54–<64, MEDIUM 64–<74, HIGH >=74. Below 54 fails.",
-        "10. Calculate the nine XFactor execution-quality components for the selected direction and their weighted score.",
-        "11. Evaluate every V2 gate independently and store its rule, actual inputs, pass/fail result, blocking status and evidence table.",
-        "12. Rank evaluable stocks by blocking failures, total failures, OFactor, absolute directional edge, data quality and symbol. Mark the first ten as recommendations.",
-        "13. Set `selected=true` only when the direction is LONG, O >=54, X >=76, DQ is FULL and every blocking gate passes.",
+        "8. Calculate daily structural bias and current-session direction independently. A strong session direction controls the actionable direction; disagreement is explicitly labelled counter-trend.",
+        "9. Assign research cohorts LOW 54–<64, MEDIUM 64–<74 and HIGH >=74. Only HIGH satisfies canonical trade permission.",
+        "10. Create one canonical immutable setup result and use it for both XFactor and hard-gate evaluation.",
+        "11. Evaluate every V3.2 gate independently and store its rule, actual inputs, pass/fail result, blocking status and evidence table.",
+        "12. Rank the opportunity leaderboard by OFactor and its quality components. Rank execution readiness separately; failure count never hides a strong opportunity.",
+        "13. Set `selected=true` only for the separate long-pullback execution policy when direction is LONG, O >=74, X >=76, DQ is FULL and every blocking gate passes.",
         "14. Only selected rows may become entry-enabled. Intraday entry subsequently requires RSI14 <30 and Williams %R14 <-80, with one entry per symbol per trade date.",
         "",
         "## Shared scoring functions",
@@ -249,37 +252,37 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
             ],
         ),
         "",
-        "## V2 gates and tiers",
+        "## V3 gates and tiers",
         "",
         *table(
             ["Gate", "Blocking?", "Rule"],
             [
                 ("Data quality", "Yes", "DQ >=85 and permission FULL"),
-                ("OFactor", "Yes", "selected-direction O >=54; LOW 54, MEDIUM 64, HIGH 74"),
+                ("OFactor", "Yes", "canonical permission O >=74; LOW 54 and MEDIUM 64 remain research cohorts"),
                 ("Directional edge", "Yes", "absolute LONG/SHORT difference >=6; LOW 6, MEDIUM 7, HIGH 8"),
                 ("Valid setup", "Yes", "directional breakout/breakdown or SMA20/SMA50 pullback with good volume"),
                 ("Setup volume", "Yes through valid setup", "volume/20D average >=1.2 OR comparable 90-session volume percentile >=30%"),
                 ("Liquidity", "Yes", "primary: volume ratio >=0.75 AND turnover percentile >=10%; fallback when a primary input is missing: volume percentile >=30%"),
                 ("Volume tier", "Recorded", "LOW 20%, MEDIUM 30%, HIGH 50% of comparable 90-session volume"),
-                ("Reward/risk", "Yes", "reward/risk >=1.5 using structural stop risk and available prior-20-session barrier room"),
-                ("Extension", "Yes", "abs(close-SMA20)/ATR14 <=1.5; profile cut-offs 1.2/1.4/1.5"),
-                ("Stop width", "No", "risk per share / ATR14 <=2.5; failure is recorded but does not block in V2"),
+                ("Reward/risk", "Yes", "reward/risk >=1.5 from the canonical setup stop and real opposing barrier; otherwise NOT_CALCULATED"),
+                ("Extension", "Yes", "MoveATR=abs(current-session price-session open)/previous completed ATR <=1.8; VWAP distance stored separately"),
+                ("Stop width", "No", "risk per share / ATR14 <=2.5; failure is recorded but does not block in V3.2"),
                 ("XFactor", "Yes", "XFactor >=76"),
-                ("Trigger confirmation", "Removed", "`TRIGGER_CONFIRMATION_MISSING` is disabled and absent from V2 reasons"),
+                ("Trigger confirmation", "Removed", "`TRIGGER_CONFIRMATION_MISSING` is disabled and absent from V3.2 reasons"),
             ],
         ),
         "",
         "## Run ledger for 10 August",
         "",
         *table(
-            ["Run slot", "Run ID", "Status", "As-of UTC", "Evaluated", "Qualified", "Selected", "Result hash"],
+            ["Run slot", "Run ID", "Status", "Decision as-of", "Executed at", "Evaluated", "Qualified", "Selected", "Result hash"],
             (
-                (row["run_slot"], row["run_id"], row["status"], row["as_of_ts"], row["evaluated_symbols"], row["qualified_symbols"], row["selected_symbols"], row["result_hash"])
+                (row["run_slot"], row["run_id"], row["status"], row["decision_as_of"], row["execution_timestamp"], row["evaluated_symbols"], row["qualified_symbols"], row["selected_symbols"], row["result_hash"])
                 for row in run_ledger
             ),
         ),
         "",
-        "The `MANUAL_V2_FINAL` row is authoritative for the stock-by-stock report below. Earlier scheduled V2 rows were retained as immutable operational evidence and are not silently overwritten.",
+        f"The `{run_slot}` row is authoritative for the stock-by-stock report below. Earlier validation and V2 rows remain immutable operational evidence and are not silently overwritten.",
         "",
         "## Aggregate results",
         "",
@@ -317,15 +320,15 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
         "## All-stock decision table",
         "",
         *table(
-            ["Rank", "Symbol", "F&O", "NIFTY50", "Direction", "O", "O tier", "X", "DQ", "Edge", "Edge tier", "Volume percentile", "Extension ATR", "R:R", "Blocking failures", "All failures", "Recommended", "Selected", "Reasons"],
+            ["Opportunity rank", "Execution rank", "Symbol", "F&O", "NIFTY50", "Structural", "Session", "Resolved", "State", "O", "O tier", "X", "DQ", "Coverage", "MoveATR", "VWAP distance ATR", "R:R", "Blocking failures", "Recommended", "Selected", "Reasons"],
             (
                 (
-                    row["recommendation_rank"], row["symbol"], (row["universe_flags"] or {}).get("is_fno"),
-                    (row["universe_flags"] or {}).get("is_nifty50"), row["direction"], number(row["ofactor"]),
-                    row["ofactor_level"], number(row["xfactor_snapshot"]), number(row["data_quality"]),
-                    number(row["directional_edge"]), row["directional_edge_level"], number(row["volume_percentile_90"]),
-                    number((row["feature_values"] or {}).get("extension_atr")), number((row["feature_values"] or {}).get("reward_risk")),
-                    row["blocking_gate_count"], row["failed_gate_count"], row["recommended"], row["selected"],
+                    row["opportunity_rank"], row["execution_rank"], row["symbol"], (row["universe_flags"] or {}).get("is_fno"),
+                    (row["universe_flags"] or {}).get("is_nifty50"), row["structural_direction"], row["session_direction"],
+                    row["direction"], row["direction_state"], number(row["ofactor"]), row["ofactor_level"],
+                    number(row["xfactor_snapshot"]), number(row["data_quality"]), number(row["data_coverage"]),
+                    number((row["feature_values"] or {}).get("move_atr")), number((row["feature_values"] or {}).get("vwap_distance_atr")),
+                    number((row["feature_values"] or {}).get("reward_risk")), row["blocking_gate_count"], row["recommended"], row["selected"],
                     ", ".join(row["reason_codes"] or []) or "NONE",
                 )
                 for row in candidates
@@ -353,10 +356,16 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
                 *table(
                     ["Decision field", "Actual value"],
                     [
+                        ("Opportunity rank", row["opportunity_rank"]),
+                        ("Execution-readiness rank", row["execution_rank"]),
                         ("Recommendation rank", row["recommendation_rank"]),
                         ("Recommended for review", row["recommended"]),
                         ("Selected / automatic entry permission", row["selected"]),
-                        ("Direction", row["direction"]),
+                        ("Daily structural direction", row["structural_direction"]),
+                        ("Current-session direction", row["session_direction"]),
+                        ("Resolved actionable direction", row["direction"]),
+                        ("Direction state", row["direction_state"]),
+                        ("Session-direction score", number(row["session_direction_score"])),
                         ("OFactor final", number(row["ofactor"])),
                         ("OFactor tier", row["ofactor_level"]),
                         ("LONG OFactor", number(long_o.get("final_score"))),
@@ -365,6 +374,8 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
                         ("Directional-edge tier", row["directional_edge_level"]),
                         ("XFactor final", number(row["xfactor_snapshot"])),
                         ("Data quality / permission", f"{number(row['data_quality'])} / {row['data_permission']}"),
+                        ("Intraday bar coverage", number(row["data_coverage"])),
+                        ("Canonical setup", f"{row['setup_id'] or 'NOT AVAILABLE'} / {row['setup_state'] or 'NOT AVAILABLE'}"),
                         ("Failed gates / blocking gates", f"{row['failed_gate_count']} / {row['blocking_gate_count']}"),
                         ("Canonical status", row["canonical_status"]),
                         ("Daily level", row["daily_level"]),
@@ -418,7 +429,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
                     "",
                     *component_table(xfactor, XFACTOR_FORMULAS),
                     "",
-                    f"XFactor weighted score **{number(xfactor.get('score'))}**. Setup `{compact(xfactor.get('setup_id'))}` / state `{compact(xfactor.get('setup_state'))}`; structural stop `{number(xfactor.get('structural_stop'))}`; risk/share `{number(xfactor.get('risk_per_share'))}`; reward/risk `{number(xfactor.get('reward_risk'))}`; extension ATR `{number(xfactor.get('extension_atr'))}`. Engine decision `{compact(xfactor.get('decision'))}`.",
+                    f"XFactor weighted score **{number(xfactor.get('score'))}**. Setup `{compact(xfactor.get('setup_id'))}` / state `{compact(xfactor.get('setup_state'))}`; structural stop `{number(xfactor.get('structural_stop'))}`; risk/share `{number(xfactor.get('risk_per_share'))}`; reward/risk `{number(xfactor.get('reward_risk'))}`; MoveATR `{number(xfactor.get('extension_atr'))}`; VWAP-distance ATR `{number(xfactor.get('vwap_distance_atr'))}`. Engine decision `{compact(xfactor.get('decision'))}`.",
                     "",
                 ]
             )
@@ -460,7 +471,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
             "```bash",
             "docker exec trading-stack-novius2-oiis-live-1 oiis-live select \\",
             "  --signal-date 2026-08-07 --trade-date 2026-08-10 \\",
-            "  --run-slot MANUAL_V2_FINAL",
+            "  --run-slot MANUAL_CORRECTED_FINAL",
             "",
             "curl -fsS 'http://127.0.0.1:19090/n50/v1/oiis-live/candidates?tradeDate=2026-08-10'",
             "```",

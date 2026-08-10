@@ -2185,3 +2185,71 @@ curl -fsSI http://127.0.0.1:19090/n50/
 The dashboard is healthy and the routed page returns HTTP 200. Never use `--remove-orphans`; the paper-trading and OIIS containers are valid services assembled through separate Compose files. Never use `down -v`.
 
 Known pre-existing failures: the full web lint reports 49 errors/40 warnings in legacy files; API lint cannot start because its existing ESLint config is loaded with the wrong module mode; the image build reports 13 existing npm audit findings (8 moderate, 3 high, 2 critical). These were not hidden or represented as passing, and dependency upgrades require a separately tested compatibility change. Roll back by reverting the UXs3 commit and rebuilding/recreating only `n50-dashboard` and Nginx; no database rollback is involved.
+
+## OIIS Live directional-integrity correction — 2026-08-10
+
+Implemented and deployed policy version 3.3 after verifying the user's diagnosis against the deployed V2 package and PostgreSQL evidence. V2 and short-lived V3 validation runs remain immutable; policy 3.3 is authoritative.
+
+Corrected:
+
+- eligible universe is active NIFTY 50 membership intersected with active F&O eligibility;
+- YFinance fallback is scoped by that same universe at pre-open;
+- scheduled backfills use exact 08:30, 09:30 and 15:00 IST `decision_as_of` cutoffs, separately from physical execution time;
+- minute bars use completed-bar point-in-time cutoffs and semantic completeness checks;
+- zero/missing cumulative volume cannot receive FULL permission; coverage below 95%, freshness beyond two minutes, or non-positive volume fails closed;
+- MoveATR uses session open and previous completed daily ATR, while VWAP-distance ATR is persisted separately;
+- daily structural bias and current-session direction are stored separately and resolved explicitly;
+- one immutable setup object feeds both XFactor and hard gates;
+- SMA20 is no longer a fallback stop and reward/risk is never manufactured as 2.0;
+- O=54/64 remain research cohorts, while canonical permission remains O>=74 and X>=76;
+- opportunity ranking is independent of execution-readiness ranking and no longer sorts primarily by failure count;
+- first 15 opportunities remain on the review surface, while entry permission stays fully governed;
+- API/UI expose structural, session and resolved direction, setup identity, coverage, corrected formula and both ranks.
+
+Additive migration:
+
+`db/sql/034_oiis_live_directional_integrity.sql`
+
+It adds run identity/timing, direction, setup, coverage and rank columns; indexes; and recreates the PostgreSQL latest-candidate/current-watchlist views so additive columns are visible. Pre/post live row counts for existing evidence were `selection_run=6`, `daily_candidate=1486`, `watchlist_item=23`; immediately after migration they were unchanged. Later counts increased only through explicit V3 validation runs and recommendation upserts.
+
+Safety backup before live migration:
+
+`/home/novius2/backups/oiis-live-directional-fix-20260810/`
+
+Both the custom-format schema dump and schema SQL pass their stored SHA-256 verification. The backup is outside Git with mode 0600.
+
+Authoritative V3.3 scheduled run evidence:
+
+| Slot | Cutoff IST | Evaluated | Selected | Result hash |
+|---|---:|---:|---:|---|
+| PREOPEN_0830 | 08:30 | 50 | 0 | `c58628a28e33c4a462b3b13aecd2ce81502f87458e2bb3a5a3adcf940a27c807` |
+| OPEN_0930 | 09:30 | 50 | 0 | `6ad0f98a6378921ca9b8540f70393d96987ee911fd604f42d18d9ffd0cbf130a` |
+| AFTERNOON_1500 | 15:00 | 50 | 0 | `e70f2758c06c429eebd1dc4f2486a385280c979a7c2036fb62a983b24ff61a19` |
+
+The manual 15:00 parity run produced the identical afternoon hash. The final API exposes 50 intersection stocks and 15 opportunity-review rows. Corrected named-symbol outcomes at the available 15:00 cutoff are TITAN LONG, SHRIRAMFIN LONG, GRASIM LONG and SBIN SHORT with `COUNTER_TREND_SHORT`. All four correctly have `DATA_INSUFFICIENT` because the captured minute source is only about 46% complete; none was authorised for entry.
+
+Detailed implementation record:
+
+`docs/worklogs/OIIS_LIVE_DIRECTIONAL_INTEGRITY_FIX_2026-08-10.md`
+
+Corrected 50-stock evidence report:
+
+`docs/reports/OIIS_LIVE_CORRECTED_CALCULATION_REPORT_2026-08-10.md`
+
+Report SHA-256: `2ff8df40f77d38417f65329da6f0db890f38dd40051d86339b66fd84da271988`.
+
+Verification executed:
+
+- migration 032+033+034 on disposable PostgreSQL: PASS;
+- Python compile/AST and `git diff --check`: PASS;
+- OIIS regression/service tests: 24/24 PASS;
+- dashboard API tests: 60/60 PASS;
+- API and web TypeScript checks: PASS;
+- API and Vite production builds: PASS;
+- frontend production bundle: 2,450 modules built;
+- direct dashboard/candidates API smoke: PASS;
+- scheduled/manual result-hash parity: PASS;
+- `oiis-live` and `n50-dashboard` containers: healthy;
+- existing V1/V2 candidate counts remain 500/986.
+
+The build continues to report the pre-existing npm dependency audit findings (8 moderate, 3 high, 2 critical). No live order was placed. No exit policy was changed. No Docker volume or historical evidence was removed.

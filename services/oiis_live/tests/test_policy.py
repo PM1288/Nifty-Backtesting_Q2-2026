@@ -30,8 +30,8 @@ def test_daily_high_is_separate_from_canonical_permission() -> None:
     row["selected_ofactor"] = 60
     result = classify_daily(row)
     assert result.level == "LOW"
-    assert result.canonical_status == "QUALIFIED_FOR_INTRADAY_REVALIDATION"
-    assert result.selected
+    assert result.canonical_status == "SCREENING_COHORT_BELOW_CANONICAL_PERMISSION"
+    assert not result.selected
 
 
 def test_unresolved_daily_hard_gate_blocks_screening() -> None:
@@ -44,8 +44,10 @@ def test_unresolved_daily_hard_gate_blocks_screening() -> None:
 
 def test_canonical_boundaries() -> None:
     assert canonical_status(53.99, 100) == "RESEARCH_ONLY_NO_STANDARD_TRADE"
-    assert canonical_status(54, 75.99) == "WAIT_FOR_XFACTOR"
-    assert canonical_status(54, 76) == "QUALIFIED_FOR_INTRADAY_REVALIDATION"
+    assert canonical_status(54, 76) == "SCREENING_COHORT_BELOW_CANONICAL_PERMISSION"
+    assert canonical_status(73.99, 100) == "SCREENING_COHORT_BELOW_CANONICAL_PERMISSION"
+    assert canonical_status(74, 75.99) == "WAIT_FOR_XFACTOR"
+    assert canonical_status(74, 76) == "QUALIFIED_FOR_INTRADAY_REVALIDATION"
 
 
 def test_requested_tier_boundaries() -> None:

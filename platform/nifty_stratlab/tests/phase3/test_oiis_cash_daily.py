@@ -29,16 +29,69 @@ def test_long_and_short_are_calculated_independently() -> None:
     assert result["ofactor_short"]["final_score"] != 100 - result["ofactor_long"]["final_score"]
 
 
-def test_strong_breakout_can_be_enterable() -> None:
+def test_strong_breakout_uses_one_setup_but_does_not_manufacture_reward_risk() -> None:
     result = evaluate_feature(feature(open_price=103.0, low_price=101.0, sma20=102.0))
     assert result["xfactor"]["setup_id"] == "BREAKOUT_ACCEPTANCE"
-    assert result["xfactor"]["decision"] in {"ENTERABLE_TIER_A", "ENTERABLE_TIER_B"}
+    assert result["xfactor"]["setup_valid"]
+    assert result["xfactor"]["reward_risk"] is None
+    assert "REWARD_RISK_NOT_CALCULATED" in result["xfactor"]["hard_gates"]
 
 
 def test_extension_hard_gate_overrides_score() -> None:
     result = evaluate_feature(feature(close_price=115.0, high_price=116.0, sma20=98.0, atr14=5.0, prior_high_20=110.0))
     assert "EXCESSIVE_EXTENSION" in result["xfactor"]["hard_gates"]
     assert result["xfactor"]["decision"] == "DO_NOT_CHASE"
+
+
+def test_extension_is_session_move_not_sma20_distance() -> None:
+    cases = [
+        ("TITAN",4930.0,5090.0,98.19285714285719,1.6294),
+        ("SHRIRAMFIN",1115.0,1137.8,32.70714285714287,0.6971),
+        ("GRASIM",3324.0,3380.5,74.36428571428574,0.7598),
+        ("SBIN",1108.0,1071.0,21.771428571428544,1.6995),
+    ]
+    for symbol,session_open,close,atr,expected in cases:
+        result = evaluate_feature(feature(
+            symbol=symbol,open_price=session_open,session_open_price=session_open,
+            close_price=close,high_price=max(session_open,close)+1,
+            low_price=min(session_open,close)-1,atr14=atr,is_intraday_snapshot=True,
+            session_volume=1000,session_bar_coverage=1.0,
+            session_latest_bar_age_minutes=0,session_data_status="FULL",
+        ))
+        assert result["xfactor"]["move_atr"] == pytest.approx(expected,abs=0.0001)
+
+
+def test_sbin_separates_bullish_structure_from_bearish_session() -> None:
+    result = evaluate_feature(feature(
+        symbol="SBIN",open_price=1108.0,session_open_price=1108.0,
+        high_price=1113.1,low_price=1071.0,close_price=1071.0,prev_close=1097.2,
+        close_location=0.0,return_1d_pct=-2.388,return_5d_pct=2.0,
+        return_21d_pct=8.0,return_63d_pct=15.0,sma20=1038.705,sma50=1027.69,
+        atr14=21.7714285714,is_intraday_snapshot=True,session_volume=155177,
+        session_bar_coverage=1.0,session_latest_bar_age_minutes=0,
+        session_data_status="FULL",session_vwap=1090.0,
+    ))
+    assert result["structural_direction"] == "LONG"
+    assert result["session_direction"] == "SHORT"
+    assert result["direction"] == "SHORT"
+    assert result["direction_state"] == "COUNTER_TREND_SHORT"
+
+
+def test_incomplete_or_zero_volume_session_fails_data_quality_closed() -> None:
+    result = evaluate_feature(feature(
+        is_intraday_snapshot=True,session_volume=0,session_bar_coverage=0.45,
+        session_latest_bar_age_minutes=185,session_data_status="DATA_INSUFFICIENT",
+    ))
+    assert result["dq"]["permission"] == "DATA_INSUFFICIENT"
+    assert result["dq"]["score"] <= 49
+    assert "SESSION_VOLUME_MISSING_OR_ZERO" in result["dq"]["session_failures"]
+
+
+def test_triggered_setup_cannot_be_rejected_as_no_valid_setup() -> None:
+    result = evaluate_feature(feature(open_price=103.0,low_price=101.0,sma20=102.0))
+    assert result["xfactor"]["setup_state"] == "TRIGGERED"
+    assert result["xfactor"]["setup_valid"]
+    assert "NO_VALID_SETUP" not in result["xfactor"]["hard_gates"]
 
 
 def test_missing_mandatory_indicator_fails_closed() -> None:

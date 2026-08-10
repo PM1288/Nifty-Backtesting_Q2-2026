@@ -71,6 +71,8 @@ def canonical_status(ofactor: float | None, xfactor: float | None) -> str:
         return "WAIT_FOR_DATA"
     if ofactor < OFACTOR_THRESHOLDS["LOW"]:
         return "RESEARCH_ONLY_NO_STANDARD_TRADE"
+    if ofactor < OFACTOR_THRESHOLDS["HIGH"]:
+        return "SCREENING_COHORT_BELOW_CANONICAL_PERMISSION"
     if xfactor < 76:
         return "WAIT_FOR_XFACTOR"
     return "QUALIFIED_FOR_INTRADAY_REVALIDATION"

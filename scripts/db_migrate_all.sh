@@ -97,7 +97,8 @@ for step in \
   "030_oiis_doe_v2.sql:OIIS DOE V2" \
   "031_oiis_all_signal_capture.sql:OIIS all-signal capture" \
   "032_oiis_live.sql:OIIS live watchlist" \
-  "033_oiis_live_tiered_evidence.sql:OIIS live tiered evidence"; do
+  "033_oiis_live_tiered_evidence.sql:OIIS live tiered evidence" \
+  "034_oiis_live_directional_integrity.sql:OIIS live directional integrity"; do
   migration="${step%%:*}"
   label="${step#*:}"
   log "${migration_number}/32 ${label}"

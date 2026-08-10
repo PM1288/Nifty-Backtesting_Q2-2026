@@ -25,7 +25,7 @@ from .selector import evaluate_latest, refresh_universe, result_hash
 LOG = logging.getLogger("oiis-live")
 IST = ZoneInfo("Asia/Kolkata")
 POLICY_ID = "OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0"
-POLICY_VERSION = "2.0"
+POLICY_VERSION = "3.3"
 SELECTION_SLOTS = {
     "PREOPEN_0830": wall_time(8, 30),
     "OPEN_0930": wall_time(9, 30),
@@ -43,6 +43,15 @@ class Runtime:
         self.policy_path = Path(os.getenv("OIIS_POLICY_PATH", "/app/config/policy.json"))
         self.policy = json.loads(self.policy_path.read_text())
         self.pool = ConnectionPool(self.database_url, min_size=1, max_size=4, kwargs={"row_factory": dict_row})
+        config_hash = hashlib.sha256(json.dumps(self.policy,sort_keys=True,separators=(",", ":")).encode()).hexdigest()
+        with self.pool.connection() as conn:
+            conn.execute("""INSERT INTO oiis_live.policy_version(policy_id,version,status,config,config_hash)
+              VALUES (%s,%s,'PAPER',%s::jsonb,%s)
+              ON CONFLICT(policy_id,version) DO NOTHING""",
+              (POLICY_ID,POLICY_VERSION,json.dumps(self.policy),config_hash))
+            stored=conn.execute("SELECT config_hash FROM oiis_live.policy_version WHERE policy_id=%s AND version=%s",(POLICY_ID,POLICY_VERSION)).fetchone()
+            if not stored or stored["config_hash"] != config_hash:
+                raise RuntimeError("immutable OIIS policy version hash mismatch")
 
     def close(self) -> None:
         self.pool.close()
@@ -87,23 +96,40 @@ class Runtime:
                     conn.execute("UPDATE oiis_live.error_outbox SET status=%s,last_error=%s,available_at=now()+make_interval(secs=>%s) WHERE error_id=%s",("DEAD" if dead else "PENDING",str(exc)[:1000],min(3600,30*2**int(row["attempts"])),row["error_id"]))
         return delivered
 
-    def run_selection(self, signal_date: date | None = None, trade_date: date | None = None, run_slot: str | None = None) -> dict[str, Any]:
+    def run_selection(
+        self,
+        signal_date: date | None = None,
+        trade_date: date | None = None,
+        run_slot: str | None = None,
+        decision_as_of: datetime | None = None,
+    ) -> dict[str, Any]:
         with self.pool.connection() as conn:
             universe_counts = refresh_universe(conn)
-            if signal_date is None:
+            if trade_date is None and signal_date is None:
                 row=conn.execute("""SELECT greatest(
                   coalesce((SELECT max(trade_date) FROM nse.fact_eod_prices),date '1900-01-01'),
                   coalesce((SELECT max(trade_date) FROM strategy_eval.stock_daily_regime),date '1900-01-01')) signal_date""").fetchone()
                 signal_date=row["signal_date"]
             trade_date=trade_date or next_session(conn,signal_date)
             run_slot = run_slot or f"MANUAL_{datetime.now(IST).strftime('%H%M%S')}"
-            source=conn.execute("SELECT max(trade_date) eod,(SELECT max(ts) FROM public.bars_1m) minute_ts FROM nse.fact_eod_prices").fetchone()
-            run=conn.execute("""INSERT INTO oiis_live.selection_run(policy_id,policy_version,signal_date,trade_date,run_slot,as_of_ts,status,source_max_eod_date,source_max_minute_ts)
-              VALUES (%s,%s,%s,%s,%s,now(),'RUNNING',%s,%s)
-              ON CONFLICT(policy_id,policy_version,signal_date,trade_date,run_slot) DO UPDATE SET status='RUNNING',as_of_ts=now(),error_detail=NULL,started_at=now(),completed_at=NULL
-              RETURNING run_id""",(POLICY_ID,POLICY_VERSION,signal_date,trade_date,run_slot,source["eod"],source["minute_ts"])).fetchone()
-            as_of_ts = datetime.now(IST) if trade_date == datetime.now(IST).date() else None
-            rows=evaluate_latest(conn,signal_date,as_of_ts)
+            execution_timestamp = datetime.now(IST)
+            decision_as_of = resolve_decision_as_of(trade_date,run_slot,execution_timestamp,decision_as_of)
+            if signal_date is None:
+                signal_date=conn.execute("""SELECT greatest(
+                  coalesce((SELECT max(trade_date) FROM nse.fact_eod_prices WHERE trade_date<%s),date '1900-01-01'),
+                  coalesce((SELECT max(trade_date) FROM strategy_eval.stock_daily_regime WHERE trade_date<%s),date '1900-01-01')) signal_date""",(trade_date,trade_date)).fetchone()["signal_date"]
+            source=conn.execute("""SELECT max(trade_date) FILTER (WHERE trade_date<=%s) eod,
+              (SELECT max(ts) FROM public.bars_1m WHERE ts<=%s) minute_ts
+              FROM nse.fact_eod_prices""",(signal_date,decision_as_of)).fetchone()
+            run=conn.execute("""INSERT INTO oiis_live.selection_run(policy_id,policy_version,signal_date,trade_date,run_slot,as_of_ts,decision_as_of,execution_timestamp,requested_universe,universe_counts,status,source_max_eod_date,source_max_minute_ts)
+              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'NIFTY50_FNO_INTERSECTION',%s::jsonb,'RUNNING',%s,%s)
+              ON CONFLICT(policy_id,policy_version,signal_date,trade_date,run_slot) DO UPDATE SET status='RUNNING',as_of_ts=excluded.as_of_ts,decision_as_of=excluded.decision_as_of,execution_timestamp=excluded.execution_timestamp,requested_universe=excluded.requested_universe,universe_counts=excluded.universe_counts,error_detail=NULL,started_at=now(),completed_at=NULL
+              RETURNING run_id""",(
+                POLICY_ID,POLICY_VERSION,signal_date,trade_date,run_slot,
+                decision_as_of,decision_as_of,execution_timestamp,json.dumps(universe_counts),
+                source["eod"],source["minute_ts"],
+              )).fetchone()
+            rows=evaluate_latest(conn,signal_date,decision_as_of)
             conn.execute("""UPDATE oiis_live.watchlist_item SET active=false,entry_enabled=false,updated_at=now()
               WHERE policy_id=%s AND trade_date=%s AND source='DAILY_SELECTION'
                 AND NOT EXISTS (SELECT 1 FROM oiis_live.entry_claim e WHERE e.watchlist_item_id=oiis_live.watchlist_item.watchlist_item_id)""",(POLICY_ID,trade_date))
@@ -112,11 +138,11 @@ class Runtime:
                 selected+=int(item["selected"]); qualified+=int(item["canonical_status"]=="QUALIFIED_FOR_INTRADAY_REVALIDATION")
                 reference_price = item["reference_price"]
                 no_chase_price = reference_price * 1.01 if reference_price is not None else None
-                candidate=conn.execute("""INSERT INTO oiis_live.daily_candidate(run_id,policy_id,policy_version,signal_date,trade_date,symbol,instrument_token,sector,direction,daily_level,ofactor_level,directional_edge_level,extension_level,volume_level,canonical_status,selected,rank,data_quality,data_permission,ofactor,xfactor_snapshot,directional_edge,rsi14,willr14,ema61,macd_line,atr14,volume_vs_sma20,volume_percentile_90,reference_price,buy_limit,no_chase_price,failed_gate_count,blocking_gate_count,recommended,recommendation_rank,component_scores,market_context,condition_results,reason_codes,feature_values,gate_evidence,universe_flags,evidence,observed_at,available_at)
-                  VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s)
-                  ON CONFLICT(run_id,symbol) DO UPDATE SET selected=excluded.selected,rank=excluded.rank,recommended=excluded.recommended,recommendation_rank=excluded.recommendation_rank,component_scores=excluded.component_scores,condition_results=excluded.condition_results,reason_codes=excluded.reason_codes,feature_values=excluded.feature_values,gate_evidence=excluded.gate_evidence,evidence=excluded.evidence,observed_at=excluded.observed_at,available_at=excluded.available_at
+                candidate=conn.execute("""INSERT INTO oiis_live.daily_candidate(run_id,policy_id,policy_version,signal_date,trade_date,symbol,instrument_token,sector,direction,structural_direction,session_direction,direction_state,session_direction_score,daily_level,ofactor_level,directional_edge_level,extension_level,volume_level,canonical_status,selected,rank,opportunity_rank,execution_rank,data_quality,data_permission,data_coverage,ofactor,xfactor_snapshot,directional_edge,rsi14,willr14,ema61,macd_line,atr14,volume_vs_sma20,volume_percentile_90,reference_price,buy_limit,no_chase_price,failed_gate_count,blocking_gate_count,recommended,recommendation_rank,setup_id,setup_state,component_scores,market_context,condition_results,reason_codes,feature_values,gate_evidence,universe_flags,evidence,observed_at,available_at)
+                  VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s)
+                  ON CONFLICT(run_id,symbol) DO UPDATE SET direction=excluded.direction,structural_direction=excluded.structural_direction,session_direction=excluded.session_direction,direction_state=excluded.direction_state,session_direction_score=excluded.session_direction_score,daily_level=excluded.daily_level,canonical_status=excluded.canonical_status,selected=excluded.selected,rank=excluded.rank,opportunity_rank=excluded.opportunity_rank,execution_rank=excluded.execution_rank,data_quality=excluded.data_quality,data_permission=excluded.data_permission,data_coverage=excluded.data_coverage,ofactor=excluded.ofactor,xfactor_snapshot=excluded.xfactor_snapshot,directional_edge=excluded.directional_edge,recommended=excluded.recommended,recommendation_rank=excluded.recommendation_rank,setup_id=excluded.setup_id,setup_state=excluded.setup_state,component_scores=excluded.component_scores,condition_results=excluded.condition_results,reason_codes=excluded.reason_codes,feature_values=excluded.feature_values,gate_evidence=excluded.gate_evidence,evidence=excluded.evidence,observed_at=excluded.observed_at,available_at=excluded.available_at
                   RETURNING candidate_id""",
-                  (run["run_id"],POLICY_ID,POLICY_VERSION,signal_date,trade_date,item["symbol"],item["instrument_token"],item["sector"],item["direction"],item["daily_level"],item["ofactor_level"],item["directional_edge_level"],item["extension_level"],item["volume_level"],item["canonical_status"],item["selected"],item["rank"],item["data_quality"],item["data_permission"],item["ofactor"],item["xfactor"],item["directional_edge"],item["rsi14"],item["willr14"],item["ema61"],item["macd_line"],item["atr14"],item["volume_vs_sma20"],item["volume_percentile_90"],reference_price,reference_price,no_chase_price,item["failed_gate_count"],item["blocking_gate_count"],item["recommended"],item["recommendation_rank"],json.dumps(item["component_scores"]),json.dumps(item["market_context"]),json.dumps(item["conditions"]),json.dumps(item["reason_codes"]),json.dumps(item["feature_values"]),json.dumps(item["gate_evidence"]),json.dumps(item["universe_flags"],default=str),json.dumps(item["evidence"]),datetime.now(UTC),datetime.now(UTC))).fetchone()
+                  (run["run_id"],POLICY_ID,POLICY_VERSION,signal_date,trade_date,item["symbol"],item["instrument_token"],item["sector"],item["direction"],item["structural_direction"],item["session_direction"],item["direction_state"],item["session_direction_score"],item["daily_level"],item["ofactor_level"],item["directional_edge_level"],item["extension_level"],item["volume_level"],item["canonical_status"],item["selected"],item["rank"],item["opportunity_rank"],item["execution_rank"],item["data_quality"],item["data_permission"],item["data_coverage"],item["ofactor"],item["xfactor"],item["directional_edge"],item["rsi14"],item["willr14"],item["ema61"],item["macd_line"],item["atr14"],item["volume_vs_sma20"],item["volume_percentile_90"],reference_price,reference_price,no_chase_price,item["failed_gate_count"],item["blocking_gate_count"],item["recommended"],item["recommendation_rank"],item["setup_id"],item["setup_state"],json.dumps(item["component_scores"]),json.dumps(item["market_context"]),json.dumps(item["conditions"]),json.dumps(item["reason_codes"]),json.dumps(item["feature_values"],default=str),json.dumps(item["gate_evidence"],default=str),json.dumps(item["universe_flags"],default=str),json.dumps(item["evidence"],default=str),decision_as_of,execution_timestamp)).fetchone()
                 if item["recommended"]:
                     conn.execute("""INSERT INTO oiis_live.watchlist_item(candidate_id,policy_id,trade_date,symbol,instrument_token,source,active,entry_enabled,daily_level,canonical_status,rank,buy_limit,no_chase_price)
                       VALUES (%s,%s,%s,%s,%s,'DAILY_SELECTION',true,%s,%s,%s,%s,%s,%s)
@@ -127,7 +153,7 @@ class Runtime:
                       (candidate["candidate_id"],POLICY_ID,trade_date,item["symbol"],item["instrument_token"],item["selected"],item["daily_level"],item["canonical_status"],item["recommendation_rank"],reference_price,no_chase_price))
             digest=result_hash(rows)
             conn.execute("""UPDATE oiis_live.selection_run SET status='COMPLETED',requested_symbols=%s,evaluated_symbols=%s,selected_symbols=%s,qualified_symbols=%s,completed_at=now(),result_hash=%s WHERE run_id=%s""",(len(rows),len(rows),selected,qualified,digest,run["run_id"]))
-            result={"run_id":str(run["run_id"]),"run_slot":run_slot,"signal_date":str(signal_date),"trade_date":str(trade_date),"universe":universe_counts,"evaluated":len(rows),"selected":selected,"recommended":min(10,len(rows)),"qualified":qualified,"result_hash":digest}
+            result={"run_id":str(run["run_id"]),"run_slot":run_slot,"signal_date":str(signal_date),"trade_date":str(trade_date),"decision_as_of":decision_as_of.isoformat(),"execution_timestamp":execution_timestamp.isoformat(),"requested_universe":"NIFTY50_FNO_INTERSECTION","universe":universe_counts,"evaluated":len(rows),"selected":selected,"recommended":sum(int(item["recommended"]) for item in rows),"qualified":qualified,"result_hash":digest}
             self.heartbeat("oiis-live-selector","OK",result)
             return result
 
@@ -230,6 +256,28 @@ def is_trading_session(conn: Any, value: date) -> bool:
     return bool(row["open"]) if row else value.weekday() < 5
 
 
+def resolve_decision_as_of(
+    trade_date: date,
+    run_slot: str,
+    execution_timestamp: datetime | None = None,
+    requested: datetime | None = None,
+) -> datetime:
+    """Resolve the immutable market-information cutoff independently of execution time."""
+    if requested is not None:
+        value = requested if requested.tzinfo is not None else requested.replace(tzinfo=IST)
+        if value.astimezone(IST).date() != trade_date:
+            raise ValueError("decision_as_of must fall on trade_date in Asia/Kolkata")
+        return value.astimezone(IST)
+    if run_slot in SELECTION_SLOTS:
+        return datetime.combine(trade_date,SELECTION_SLOTS[run_slot],tzinfo=IST)
+    execution_timestamp = (execution_timestamp or datetime.now(IST)).astimezone(IST)
+    if trade_date < execution_timestamp.date():
+        return datetime.combine(trade_date,wall_time(15,30),tzinfo=IST)
+    if trade_date > execution_timestamp.date():
+        return datetime.combine(trade_date,wall_time(8,30),tzinfo=IST)
+    return execution_timestamp
+
+
 def due_selection_slots(now: datetime) -> list[str]:
     return [name for name, scheduled in SELECTION_SLOTS.items() if now.time() >= scheduled]
 
@@ -266,14 +314,14 @@ def run_loop(runtime: Runtime) -> None:
 def main() -> None:
     logging.basicConfig(level=os.getenv("LOG_LEVEL","INFO"),format='%(asctime)s %(levelname)s %(name)s %(message)s')
     parser=argparse.ArgumentParser(); sub=parser.add_subparsers(dest="command",required=True)
-    sub.add_parser("run"); select=sub.add_parser("select"); select.add_argument("--signal-date",type=date.fromisoformat); select.add_argument("--trade-date",type=date.fromisoformat); select.add_argument("--run-slot")
+    sub.add_parser("run"); select=sub.add_parser("select"); select.add_argument("--signal-date",type=date.fromisoformat); select.add_argument("--trade-date",type=date.fromisoformat); select.add_argument("--run-slot"); select.add_argument("--decision-as-of",type=datetime.fromisoformat)
     sub.add_parser("refresh-universe")
     monitor=sub.add_parser("monitor-once"); monitor.add_argument("--trade-date",type=date.fromisoformat); monitor.add_argument("--no-submit",action="store_true")
     sub.add_parser("verify-config"); sub.add_parser("reconcile")
     args=parser.parse_args(); runtime=Runtime()
     try:
         if args.command=="run": run_loop(runtime)
-        elif args.command=="select": print(json.dumps(runtime.run_selection(args.signal_date,args.trade_date,args.run_slot),indent=2,default=str))
+        elif args.command=="select": print(json.dumps(runtime.run_selection(args.signal_date,args.trade_date,args.run_slot,args.decision_as_of),indent=2,default=str))
         elif args.command=="refresh-universe":
             with runtime.pool.connection() as conn: print(json.dumps(refresh_universe(conn),indent=2))
         elif args.command=="monitor-once": print(json.dumps(runtime.monitor_once(args.trade_date,not args.no_submit),indent=2))

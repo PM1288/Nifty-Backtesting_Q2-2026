@@ -24,6 +24,7 @@ from .policy import (
 
 IST = ZoneInfo("Asia/Kolkata")
 NIFTY50_CSV_URL = "https://archives.nseindia.com/content/indices/ind_nifty50list.csv"
+OPPORTUNITY_REVIEW_LIMIT = 15
 
 
 def _frame(conn: Any, query: str, params: tuple[Any, ...] = ()) -> pd.DataFrame:
@@ -34,8 +35,8 @@ def _frame(conn: Any, query: str, params: tuple[Any, ...] = ()) -> pd.DataFrame:
 
 
 def refresh_universe(conn: Any) -> dict[str, int]:
-    """Refresh the current F&O plus NIFTY 50 research universe."""
-    conn.execute("UPDATE oiis_live.universe_member SET is_fno=false, active=is_nifty50 WHERE is_fno")
+    """Refresh and activate only the point-in-time NIFTY 50/F&O intersection."""
+    conn.execute("UPDATE oiis_live.universe_member SET is_fno=false, active=false WHERE is_fno")
     fno = conn.execute("""SELECT DISTINCT UPPER(TRIM(name)) symbol
       FROM public.instruments WHERE exchange='NFO'
         AND instrumenttype IN ('FUTSTK','OPTSTK') AND expiry>=current_date
@@ -43,7 +44,7 @@ def refresh_universe(conn: Any) -> dict[str, int]:
     for row in fno:
         conn.execute("""INSERT INTO oiis_live.universe_member(symbol,is_fno,is_nifty50,active,source,refreshed_at)
           VALUES (%s,true,false,true,'SMARTAPI_INSTRUMENT_MASTER',now())
-          ON CONFLICT(symbol) DO UPDATE SET is_fno=true,active=true,
+          ON CONFLICT(symbol) DO UPDATE SET is_fno=true,
             source=CASE WHEN oiis_live.universe_member.is_nifty50 THEN 'FNO_AND_NIFTY50' ELSE excluded.source END,
             refreshed_at=now()""", (row["symbol"],))
     try:
@@ -54,20 +55,20 @@ def refresh_universe(conn: Any) -> dict[str, int]:
         if not 45 <= len(symbols) <= 55:
             raise ValueError(f"unexpected NIFTY 50 constituent count: {len(symbols)}")
         conn.execute(
-            "UPDATE oiis_live.universe_member SET is_nifty50=false, active=is_fno WHERE is_nifty50"
+            "UPDATE oiis_live.universe_member SET is_nifty50=false, active=false WHERE is_nifty50"
         )
         for symbol in symbols:
             conn.execute("""INSERT INTO oiis_live.universe_member(symbol,is_fno,is_nifty50,active,source,refreshed_at)
               VALUES (%s,false,true,true,'NSE_NIFTY50_CONSTITUENTS',now())
-              ON CONFLICT(symbol) DO UPDATE SET is_nifty50=true,active=true,
+              ON CONFLICT(symbol) DO UPDATE SET is_nifty50=true,
                 source=CASE WHEN oiis_live.universe_member.is_fno THEN 'FNO_AND_NIFTY50' ELSE excluded.source END,
                 refreshed_at=now()""", (symbol,))
     except Exception:
         pass
-    conn.execute("UPDATE oiis_live.universe_member SET active=(is_fno OR is_nifty50)")
-    counts = conn.execute("""SELECT count(*) FILTER (WHERE active AND (is_fno OR is_nifty50)) total,
-      count(*) FILTER (WHERE active AND is_fno) fno,
-      count(*) FILTER (WHERE active AND is_nifty50) nifty50
+    conn.execute("UPDATE oiis_live.universe_member SET active=(is_fno AND is_nifty50)")
+    counts = conn.execute("""SELECT count(*) FILTER (WHERE active) total,
+      count(*) FILTER (WHERE is_fno) fno,
+      count(*) FILTER (WHERE is_nifty50) nifty50
       FROM oiis_live.universe_member""").fetchone()
     return {key: int(counts[key] or 0) for key in ("total", "fno", "nifty50")}
 
@@ -77,7 +78,7 @@ def load_prices(conn: Any, signal_date: date, as_of_ts: datetime | None = None) 
     history = _frame(conn, """
       WITH universe AS (
         SELECT symbol FROM oiis_live.universe_member
-        WHERE active AND (is_fno OR is_nifty50)
+        WHERE active AND is_fno AND is_nifty50
       ), canonical AS (
         SELECT DISTINCT ON (e.trade_date,UPPER(TRIM(e.symbol))) e.trade_date,
           UPPER(TRIM(e.symbol)) symbol,e.open_price::double precision open_price,
@@ -97,6 +98,8 @@ def load_prices(conn: Any, signal_date: date, as_of_ts: datetime | None = None) 
           y.volume::double precision volume,(y.close_price*y.volume/100000.0)::double precision turnover_lacs,
           NULL::double precision deliverable_pct,'YFINANCE_FALLBACK' source
         FROM strategy_eval.stock_daily_regime y
+        JOIN universe u
+          ON u.symbol=UPPER(REGEXP_REPLACE(y.yahoo_symbol,'\\.NS$',''))
         WHERE y.trade_date BETWEEN %s AND %s
           AND NOT EXISTS (SELECT 1 FROM canonical c WHERE c.trade_date=y.trade_date
                           AND c.symbol=UPPER(REGEXP_REPLACE(y.yahoo_symbol,'\\.NS$','')))
@@ -104,23 +107,31 @@ def load_prices(conn: Any, signal_date: date, as_of_ts: datetime | None = None) 
       SELECT * FROM canonical UNION ALL SELECT * FROM fallback
       ORDER BY symbol,trade_date
     """, (warmup, signal_date, warmup, signal_date))
-    if as_of_ts is None or as_of_ts.date() <= signal_date or as_of_ts.time() < datetime.strptime("09:15", "%H:%M").time():
+    if as_of_ts is None or as_of_ts.time() < datetime.strptime("09:15", "%H:%M").time():
         return history
     session_open = datetime.combine(as_of_ts.date(), datetime.strptime("09:15", "%H:%M").time(), tzinfo=IST)
+    session_close = datetime.combine(as_of_ts.date(), datetime.strptime("15:30", "%H:%M").time(), tzinfo=IST)
+    decision_cutoff = min(as_of_ts, session_close)
+    expected_bar_count = max(0, min(375, int((decision_cutoff - session_open).total_seconds() // 60)))
+    if expected_bar_count == 0:
+        return history
     partial = _frame(conn, """WITH inst AS (
-        SELECT DISTINCT ON (symbol_token) symbol_token,
-          UPPER(REGEXP_REPLACE(tradingsymbol,'-EQ$','')) symbol
-        FROM public.instruments WHERE exchange='NSE' ORDER BY symbol_token,updated_at DESC
+        SELECT DISTINCT ON (UPPER(REGEXP_REPLACE(tradingsymbol,'-EQ$','')))
+          symbol_token,UPPER(REGEXP_REPLACE(tradingsymbol,'-EQ$','')) symbol
+        FROM public.instruments WHERE exchange='NSE'
+        ORDER BY UPPER(REGEXP_REPLACE(tradingsymbol,'-EQ$','')),updated_at DESC
       ), scoped AS (
         SELECT b.ts,b.open,b.high,b.low,b.close,b.volume,i.symbol
         FROM public.bars_1m b JOIN inst i USING(symbol_token)
         JOIN oiis_live.universe_member u ON u.symbol=i.symbol AND u.active
-        WHERE b.exchange='NSE' AND b.ts>=%s AND b.ts<=%s
+        WHERE b.exchange='NSE' AND b.ts>=%s AND b.ts<%s
       ), aggregate AS (
         SELECT symbol,(array_agg(open ORDER BY ts))[1]::double precision open_price,
           max(high)::double precision high_price,min(low)::double precision low_price,
           (array_agg(close ORDER BY ts DESC))[1]::double precision close_price,
-          sum(volume)::double precision volume
+          sum(volume)::double precision volume,count(DISTINCT ts)::integer actual_bar_count,
+          min(ts) first_bar_ts,max(ts) latest_bar_ts,
+          CASE WHEN sum(volume)>0 THEN (sum(close*volume)/sum(volume))::double precision END session_vwap
         FROM scoped GROUP BY symbol
       ), historical_daily AS (
         SELECT i.symbol,(b.ts AT TIME ZONE 'Asia/Kolkata')::date trade_date,
@@ -129,7 +140,8 @@ def load_prices(conn: Any, signal_date: date, as_of_ts: datetime | None = None) 
         JOIN oiis_live.universe_member u ON u.symbol=i.symbol AND u.active
         WHERE b.exchange='NSE'
           AND (b.ts AT TIME ZONE 'Asia/Kolkata')::date BETWEEN %s::date-140 AND %s::date-1
-          AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time BETWEEN time '09:15' AND %s::time
+          AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time >= time '09:15'
+          AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time < %s::time
         GROUP BY i.symbol,(b.ts AT TIME ZONE 'Asia/Kolkata')::date
       )
       SELECT %s::date trade_date,a.symbol,a.open_price,a.high_price,a.low_price,a.close_price,
@@ -138,7 +150,8 @@ def load_prices(conn: Any, signal_date: date, as_of_ts: datetime | None = None) 
         NULL::double precision deliverable_pct,'SMARTAPI_INTRADAY_PARTIAL' source,
         h.average_20 intraday_volume_average_20,h.median_90 intraday_volume_median_90,
         h.previous_1d intraday_volume_previous_1d,h.previous_2d intraday_volume_previous_2d,
-        h.percentile_90 intraday_volume_percentile_90
+        h.percentile_90 intraday_volume_percentile_90,a.actual_bar_count,a.first_bar_ts,
+        a.latest_bar_ts,a.session_vwap
       FROM aggregate a LEFT JOIN LATERAL (
         SELECT close_price FROM nse.fact_eod_prices
         WHERE UPPER(TRIM(symbol))=a.symbol AND trade_date<%s
@@ -152,10 +165,27 @@ def load_prices(conn: Any, signal_date: date, as_of_ts: datetime | None = None) 
         FROM (SELECT daily_volume,row_number() OVER (ORDER BY trade_date DESC) rn
           FROM historical_daily WHERE symbol=a.symbol ORDER BY trade_date DESC LIMIT 90) history
       ) h ON true ORDER BY a.symbol""", (
-        session_open, as_of_ts, as_of_ts.date(), as_of_ts.date(), as_of_ts.timetz().replace(tzinfo=None),
+        session_open, decision_cutoff, as_of_ts.date(), as_of_ts.date(), decision_cutoff.timetz().replace(tzinfo=None),
         as_of_ts.date(), as_of_ts.date()
       ))
-    return pd.concat([history, partial], ignore_index=True) if not partial.empty else history
+    if partial.empty:
+        return history
+    latest_expected_bar = decision_cutoff - timedelta(minutes=1)
+    partial["expected_bar_count"] = expected_bar_count
+    partial["session_bar_coverage"] = partial.actual_bar_count / expected_bar_count
+    partial["session_latest_bar_age_minutes"] = partial.latest_bar_ts.apply(
+        lambda value: None if pd.isna(value) else max(0.0, (latest_expected_bar - value).total_seconds() / 60.0)
+    )
+    partial["session_data_status"] = np.where(
+        (partial.actual_bar_count > 0)
+        & (partial.session_bar_coverage >= 0.95)
+        & (partial.session_latest_bar_age_minutes <= 2.0)
+        & (partial.volume > 0),
+        "FULL",
+        "DATA_INSUFFICIENT",
+    )
+    history = history[~((history.symbol.isin(partial.symbol)) & (history.trade_date.astype(str) == str(as_of_ts.date())))]
+    return pd.concat([history, partial], ignore_index=True)
 
 
 def derive_features(conn: Any, prices: pd.DataFrame) -> pd.DataFrame:
@@ -169,6 +199,9 @@ def derive_features(conn: Any, prices: pd.DataFrame) -> pd.DataFrame:
     prices["sma20"] = grouped["close_price"].transform(lambda value: value.rolling(20, min_periods=20).mean())
     prices["sma50"] = grouped["close_price"].transform(lambda value: value.rolling(50, min_periods=50).mean())
     prices["ema61"] = grouped["close_price"].transform(lambda value: value.ewm(span=61, adjust=False, min_periods=61).mean())
+    prices["sma20_previous"] = grouped["close_price"].transform(lambda value: value.shift(1).rolling(20, min_periods=20).mean())
+    prices["sma50_previous"] = grouped["close_price"].transform(lambda value: value.shift(1).rolling(50, min_periods=50).mean())
+    prices["ema61_previous"] = grouped["close_price"].transform(lambda value: value.shift(1).ewm(span=61, adjust=False, min_periods=61).mean())
     ema12 = grouped["close_price"].transform(lambda value: value.ewm(span=12, adjust=False, min_periods=26).mean())
     ema26 = grouped["close_price"].transform(lambda value: value.ewm(span=26, adjust=False, min_periods=26).mean())
     prices["macd_line"] = ema12 - ema26
@@ -178,6 +211,7 @@ def derive_features(conn: Any, prices: pd.DataFrame) -> pd.DataFrame:
     true_range = pd.concat([(prices.high_price-prices.low_price), (prices.high_price-prior).abs(),
                             (prices.low_price-prior).abs()], axis=1).max(axis=1)
     prices["atr14"] = true_range.groupby(prices.symbol).transform(lambda value: value.rolling(14, min_periods=14).mean())
+    prices["atr14_previous"] = true_range.groupby(prices.symbol).transform(lambda value: value.shift(1).rolling(14, min_periods=14).mean())
     delta = grouped["close_price"].diff(); gain = delta.clip(lower=0); loss = -delta.clip(upper=0)
     avg_gain = gain.groupby(prices.symbol).transform(lambda value: value.ewm(alpha=1/14, adjust=False, min_periods=14).mean())
     avg_loss = loss.groupby(prices.symbol).transform(lambda value: value.ewm(alpha=1/14, adjust=False, min_periods=14).mean())
@@ -196,6 +230,15 @@ def derive_features(conn: Any, prices: pd.DataFrame) -> pd.DataFrame:
         )
     )
     partial_mask = prices.source.eq("SMARTAPI_INTRADAY_PARTIAL")
+    for current, previous in (
+        ("sma20", "sma20_previous"),
+        ("sma50", "sma50_previous"),
+        ("ema61", "ema61_previous"),
+        ("atr14", "atr14_previous"),
+    ):
+        prices.loc[partial_mask & prices[previous].notna(), current] = prices.loc[
+            partial_mask & prices[previous].notna(), previous
+        ]
     for target, intraday in (
         ("volume_average_20", "intraday_volume_average_20"),
         ("volume_median_90", "intraday_volume_median_90"),
@@ -205,7 +248,8 @@ def derive_features(conn: Any, prices: pd.DataFrame) -> pd.DataFrame:
     ):
         if intraday in prices:
             prices.loc[partial_mask & prices[intraday].notna(), target] = prices.loc[partial_mask & prices[intraday].notna(), intraday]
-    prices.loc[partial_mask, "volume_ratio_20"] = prices.loc[partial_mask, "volume"] / prices.loc[partial_mask, "volume_average_20"]
+    prices.loc[partial_mask, "volume_ratio_20"] = prices.loc[partial_mask, "volume"] / prices.loc[partial_mask, "volume_average_20"].replace(0, np.nan)
+    prices["volume_ratio_20"] = prices["volume_ratio_20"].replace([np.inf, -np.inf], np.nan)
     prices["delivery_ratio_20"] = prices.deliverable_pct / grouped.deliverable_pct.transform(lambda value: value.shift(1).rolling(20,min_periods=20).mean())
     prices["prior_high_20"] = grouped.high_price.transform(lambda value: value.shift(1).rolling(20,min_periods=20).max())
     prices["prior_low_20"] = grouped.low_price.transform(lambda value: value.shift(1).rolling(20,min_periods=20).min())
@@ -242,6 +286,10 @@ def _number(value: Any) -> float | None:
     return None if value is None or pd.isna(value) else float(value)
 
 
+def _row_number(row: Any, name: str) -> float | None:
+    return _number(getattr(row, name, None))
+
+
 def _gate(passed: bool, blocking: bool, actual: Any, rule: str, fields: list[str], source: str) -> dict[str, Any]:
     return {"passed": bool(passed), "blocking": blocking, "actual": actual, "rule": rule, "fields": fields, "source_table": source}
 
@@ -256,28 +304,25 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
     ).fetchall()}
     output = []
     for row in latest.itertuples(index=False):
-        feature=OIISFeature(symbol=row.symbol,trade_date=feature_date.isoformat(),open_price=float(row.open_price),high_price=float(row.high_price),low_price=float(row.low_price),close_price=float(row.close_price),prev_close=float(row.prev_close or row.open_price),volume_ratio_20=_number(row.volume_ratio_20),delivery_ratio_20=_number(row.delivery_ratio_20),turnover_percentile=_number(row.turnover_percentile),close_location=_number(row.close_location),return_1d_pct=_number(row.return_1d_pct),return_5d_pct=_number(row.return_5d_pct),return_21d_pct=_number(row.return_21d_pct),return_63d_pct=_number(row.return_63d_pct),nifty_return_21d_pct=_number(row.nifty_return_21d_pct),sector_return_21d_pct=_number(row.sector_return_21d_pct),rsi_14=_number(row.rsi_14),sma20=_number(row.sma20),sma50=_number(row.sma50),atr14=_number(row.atr14),prior_high_20=_number(row.prior_high_20),prior_low_20=_number(row.prior_low_20),stock_trend=None if pd.isna(row.stock_trend) else str(row.stock_trend),stock_zone=None if pd.isna(row.stock_zone) else str(row.stock_zone),nifty_trend=None if pd.isna(row.nifty_trend) else str(row.nifty_trend),nifty_zone=None if pd.isna(row.nifty_zone) else str(row.nifty_zone),bank_nifty_trend=None if pd.isna(row.bank_nifty_trend) else str(row.bank_nifty_trend),bank_nifty_zone=None if pd.isna(row.bank_nifty_zone) else str(row.bank_nifty_zone),vix_regime=None if pd.isna(row.vix_regime) else str(row.vix_regime),source_reliability=85.0 if row.source=="YFINANCE_FALLBACK" else 98.0)
+        feature=OIISFeature(symbol=row.symbol,trade_date=feature_date.isoformat(),open_price=float(row.open_price),high_price=float(row.high_price),low_price=float(row.low_price),close_price=float(row.close_price),prev_close=float(row.prev_close or row.open_price),volume_ratio_20=_number(row.volume_ratio_20),delivery_ratio_20=_number(row.delivery_ratio_20),turnover_percentile=_number(row.turnover_percentile),close_location=_number(row.close_location),return_1d_pct=_number(row.return_1d_pct),return_5d_pct=_number(row.return_5d_pct),return_21d_pct=_number(row.return_21d_pct),return_63d_pct=_number(row.return_63d_pct),nifty_return_21d_pct=_number(row.nifty_return_21d_pct),sector_return_21d_pct=_number(row.sector_return_21d_pct),rsi_14=_number(row.rsi_14),sma20=_number(row.sma20),sma50=_number(row.sma50),atr14=_number(row.atr14),prior_high_20=_number(row.prior_high_20),prior_low_20=_number(row.prior_low_20),stock_trend=None if pd.isna(row.stock_trend) else str(row.stock_trend),stock_zone=None if pd.isna(row.stock_zone) else str(row.stock_zone),nifty_trend=None if pd.isna(row.nifty_trend) else str(row.nifty_trend),nifty_zone=None if pd.isna(row.nifty_zone) else str(row.nifty_zone),bank_nifty_trend=None if pd.isna(row.bank_nifty_trend) else str(row.bank_nifty_trend),bank_nifty_zone=None if pd.isna(row.bank_nifty_zone) else str(row.bank_nifty_zone),vix_regime=None if pd.isna(row.vix_regime) else str(row.vix_regime),source_reliability=85.0 if row.source=="YFINANCE_FALLBACK" else 98.0,is_intraday_snapshot=row.source=="SMARTAPI_INTRADAY_PARTIAL",session_open_price=float(row.open_price) if row.source=="SMARTAPI_INTRADAY_PARTIAL" else None,session_vwap=_row_number(row,"session_vwap"),session_volume=float(row.volume) if row.source=="SMARTAPI_INTRADAY_PARTIAL" else None,session_bar_coverage=_row_number(row,"session_bar_coverage"),session_latest_bar_age_minutes=_row_number(row,"session_latest_bar_age_minutes"),session_data_status=None if pd.isna(getattr(row,"session_data_status",None)) else str(row.session_data_status))
         result = evaluate_feature(feature, {
-            "ofactor_min": OFACTOR_THRESHOLDS["LOW"],
+            "ofactor_min": OFACTOR_THRESHOLDS["HIGH"],
             "directional_edge_min": DIRECTIONAL_EDGE_THRESHOLDS["LOW"],
+            "exhaustion_atr_max": 1.8,
             "disabled_gates": ["TRIGGER_CONFIRMATION_MISSING", "STOP_TOO_WIDE"],
         })
         edge = float(result["directional_edge"])
-        direction = "LONG" if edge >= DIRECTIONAL_EDGE_THRESHOLDS["LOW"] else "SHORT" if edge <= -DIRECTIONAL_EDGE_THRESHOLDS["LOW"] else "NEUTRAL"
+        direction = str(result["direction"])
         ofactor = result["ofactor_short"] if direction == "SHORT" else result["ofactor_long"]
         volume_ratio = _number(row.volume_ratio_20)
         turnover_percentile = _number(row.turnover_percentile)
         volume_percentile = _number(row.volume_percentile_90)
-        volume_good = bool((volume_ratio is not None and volume_ratio >= 1.2) or (volume_percentile is not None and volume_percentile >= 0.30))
-        long_breakout = bool(_number(row.prior_high_20) is not None and row.close_price > row.prior_high_20 and volume_good)
-        long_pullback = bool(_number(row.sma20) is not None and _number(row.sma50) is not None and row.low_price <= row.sma20 < row.close_price and row.sma20 > row.sma50 and volume_good)
-        short_breakdown = bool(_number(row.prior_low_20) is not None and row.close_price < row.prior_low_20 and volume_good)
-        short_pullback = bool(_number(row.sma20) is not None and _number(row.sma50) is not None and row.high_price >= row.sma20 > row.close_price and row.sma20 < row.sma50 and volume_good)
-        setup_pass = (long_breakout or long_pullback) if direction != "SHORT" else (short_breakdown or short_pullback)
+        setup = result["xfactor"]["setup_evaluation"]
+        setup_pass = bool(result["xfactor"]["setup_valid"])
         primary_liquidity_available = volume_ratio is not None and turnover_percentile is not None
         primary_liquidity_pass = bool(primary_liquidity_available and volume_ratio >= 0.75 and turnover_percentile >= 0.10)
         fallback_liquidity_pass = bool(volume_percentile is not None and volume_percentile >= VOLUME_PERCENTILE_THRESHOLDS["MEDIUM"])
-        liquidity_pass = primary_liquidity_pass if primary_liquidity_available else fallback_liquidity_pass
+        liquidity_pass = (primary_liquidity_pass if primary_liquidity_available else fallback_liquidity_pass) and result["dq"]["permission"] == "FULL"
         extension_atr = result["xfactor"].get("extension_atr")
         reward_risk = _number(result["xfactor"].get("reward_risk"))
         risk_per_share = _number(result["xfactor"].get("risk_per_share"))
@@ -287,12 +332,13 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
         volume_level = minimum_level(volume_percentile, VOLUME_PERCENTILE_THRESHOLDS)
         extension_band = extension_level(_number(extension_atr))
         gate_evidence = {
-            "OFACTOR_BELOW_MINIMUM": _gate(o_level != "BELOW_MINIMUM", True, {"selected": ofactor["final_score"], "long": result["ofactor_long"]["final_score"], "short": result["ofactor_short"]["final_score"], "level": o_level}, "selected OFactor >= 54; LOW 54, MEDIUM 64, HIGH 74", ["ofactor_long", "ofactor_short", "selected_ofactor"], "oiis_live.daily_candidate.component_scores/evidence"),
+            "OFACTOR_BELOW_MINIMUM": _gate(float(ofactor["final_score"]) >= OFACTOR_THRESHOLDS["HIGH"], True, {"selected": ofactor["final_score"], "long": result["ofactor_long"]["final_score"], "short": result["ofactor_short"]["final_score"], "screening_level": o_level}, "canonical permission requires selected OFactor >= 74; 54/64/74 remain screening cohorts", ["ofactor_long", "ofactor_short", "selected_ofactor"], "oiis_live.daily_candidate.component_scores/evidence"),
             "DIRECTIONAL_EDGE_BELOW_MINIMUM": _gate(edge_level != "BELOW_MINIMUM", True, {"edge": edge, "absolute_edge": abs(edge), "level": edge_level}, "abs(long OFactor - short OFactor) >= 6; LOW 6, MEDIUM 7, HIGH 8", ["ofactor_long", "ofactor_short", "directional_edge"], "oiis_live.daily_candidate"),
-            "NO_VALID_SETUP": _gate(setup_pass, True, {"direction": direction, "long_breakout": long_breakout, "long_pullback": long_pullback, "short_breakdown": short_breakdown, "short_pullback": short_pullback, "volume_good": volume_good}, "directional breakout/breakdown or SMA20/SMA50 pullback with good volume", ["open", "high", "low", "close", "sma20", "sma50", "prior_high_20", "prior_low_20", "volume_ratio_20", "volume_percentile_90"], "nse.fact_eod_prices + derived rolling features"),
+            "NO_VALID_SETUP": _gate(setup_pass, True, setup, "one canonical setup object must contain recognised structure, volume confirmation and a structural invalidation", ["open", "high", "low", "close", "sma20", "sma50", "prior_high_20", "prior_low_20", "volume_ratio_20"], "nse.fact_eod_prices + public.bars_1m + derived rolling features"),
             "INSUFFICIENT_LIQUIDITY": _gate(liquidity_pass, True, {"volume_ratio_20": volume_ratio, "turnover_percentile": turnover_percentile, "volume_percentile_90": volume_percentile, "primary_used": primary_liquidity_available, "volume_level": volume_level}, "primary: volume ratio >= 0.75 and turnover percentile >= 0.10; fallback: 90-day volume percentile >= 0.30", ["volume", "volume_average_20", "turnover_lacs", "volume_percentile_90"], "nse.fact_eod_prices"),
-            "REWARD_RISK_BELOW_MINIMUM": _gate(reward_risk is not None and reward_risk >= 1.5, True, {"reward_risk": reward_risk, "risk_per_share": risk_per_share, "structural_stop": result["xfactor"].get("structural_stop")}, "reward/risk >= 1.5", ["close", "low/high", "sma20", "prior_high_20/prior_low_20", "atr14"], "nse.fact_eod_prices + derived rolling features"),
-            "EXCESSIVE_EXTENSION": _gate(extension_atr is not None and extension_atr <= 1.5, True, {"extension_atr": extension_atr, "level": extension_band, "close": float(row.close_price), "sma20": _number(row.sma20), "atr14": _number(row.atr14)}, "abs(close - SMA20) / ATR14 <= 1.5; profiles 1.2/1.4/1.5", ["close", "sma20", "atr14"], "nse.fact_eod_prices + derived rolling features"),
+            "REWARD_RISK_NOT_CALCULATED": _gate(reward_risk is not None, True, {"reward_risk": reward_risk, "risk_per_share": risk_per_share, "structural_stop": result["xfactor"].get("structural_stop")}, "reward/risk is calculated only from a valid setup stop and a real opposing barrier", ["setup_evaluation", "structural_stop", "opposing_barrier"], "oiis_live.daily_candidate.evidence"),
+            "REWARD_RISK_BELOW_MINIMUM": _gate(reward_risk is None or reward_risk >= 1.5, True, {"reward_risk": reward_risk}, "when estimable, reward/risk >= 1.5", ["reward_risk"], "oiis_live.daily_candidate.evidence"),
+            "EXCESSIVE_EXTENSION": _gate(extension_atr is not None and extension_atr <= 1.8, True, {"move_atr": extension_atr, "vwap_distance_atr": result["xfactor"].get("vwap_distance_atr"), "level": extension_band, "close": float(row.close_price), "session_open": float(row.open_price), "session_vwap": _row_number(row,"session_vwap"), "atr14_previous_completed": _number(row.atr14)}, "abs(current price - session open) / previous completed daily ATR <= 1.8; VWAP distance retained separately", ["close", "session_open", "session_vwap", "atr14_previous_completed"], "public.bars_1m + nse.fact_eod_prices derived features"),
             "STOP_TOO_WIDE": _gate(risk_atr is not None and risk_atr <= 2.5, False, {"risk_atr": risk_atr, "risk_per_share": risk_per_share, "atr14": _number(row.atr14)}, "risk per share / ATR14 <= 2.5; recorded but non-blocking", ["structural_stop", "risk_per_share", "atr14"], "oiis_live.daily_candidate.evidence"),
             "XFACTOR_BELOW_MINIMUM": _gate(float(result["xfactor"]["score"]) >= 76, True, {"xfactor": result["xfactor"]["score"]}, "XFactor >= 76", ["xfactor_snapshot"], "oiis_live.daily_candidate.component_scores/evidence"),
             "DATA_QUALITY_BELOW_MINIMUM": _gate(float(result["dq"]["score"]) >= 85 and result["dq"]["permission"] == "FULL", True, {"score": result["dq"]["score"], "permission": result["dq"]["permission"]}, "data quality >= 85 and permission FULL", ["data_quality", "data_permission"], "oiis_live.daily_candidate"),
@@ -303,11 +349,11 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
         classification=classify_daily(values)
         token=conn.execute("SELECT symbol_token FROM public.instruments WHERE exchange='NSE' AND (tradingsymbol=%s OR tradingsymbol=%s) ORDER BY updated_at DESC LIMIT 1",(row.symbol,row.symbol+'-EQ')).fetchone()
         member = universe.get(row.symbol) or {}
-        feature_values = {"open": float(row.open_price), "high": float(row.high_price), "low": float(row.low_price), "close": float(row.close_price), "previous_close": _number(row.prev_close), "volume_current": _number(row.volume), "volume_previous_1d": _number(row.volume_previous_1d), "volume_previous_2d": _number(row.volume_previous_2d), "volume_average_20": _number(row.volume_average_20), "volume_median_90": _number(row.volume_median_90), "volume_ratio_20": volume_ratio, "volume_percentile_90": volume_percentile, "turnover_lacs": _number(row.turnover_lacs), "turnover_percentile": turnover_percentile, "sma20": _number(row.sma20), "sma50": _number(row.sma50), "ema61": _number(row.ema61), "atr14": _number(row.atr14), "prior_high_20": _number(row.prior_high_20), "prior_low_20": _number(row.prior_low_20), "rsi14": _number(row.rsi_14), "willr14": _number(row.willr_14), "macd_line": _number(row.macd_line), "close_vs_ema61_pct": _number(row.close_vs_ema61_pct), "reward_risk": reward_risk, "extension_atr": extension_atr, "risk_atr": risk_atr}
-        output.append({"symbol":row.symbol,"sector":row.sector,"instrument_token":token["symbol_token"] if token else None,"signal_date":signal_date,"direction":direction,"daily_level":classification.level,"ofactor_level":o_level,"directional_edge_level":edge_level,"extension_level":extension_band,"volume_level":volume_level,"canonical_status":classification.canonical_status,"selected":classification.selected,"data_quality":result["dq"]["score"],"data_permission":result["dq"]["permission"],"ofactor":ofactor["final_score"],"xfactor":result["xfactor"]["score"],"directional_edge":edge,"rsi14":_number(row.rsi_14),"willr14":_number(row.willr_14),"ema61":_number(row.ema61),"macd_line":_number(row.macd_line),"atr14":_number(row.atr14),"volume_vs_sma20":volume_ratio,"volume_percentile_90":volume_percentile,"reference_price":float(row.close_price),"failed_gate_count":len(all_reasons),"blocking_gate_count":len(blocking_reasons),"component_scores":{"ofactor_long":result["ofactor_long"],"ofactor_short":result["ofactor_short"],"xfactor":result["xfactor"]},"market_context":{"nifty_trend":feature.nifty_trend,"stock_trend":feature.stock_trend,"vix_regime":feature.vix_regime,"source":row.source},"conditions":classification.conditions,"reason_codes":all_reasons,"gate_evidence":gate_evidence,"feature_values":feature_values,"universe_flags":{"is_fno":bool(member.get("is_fno")),"is_nifty50":bool(member.get("is_nifty50")),"source":member.get("source")},"evidence":result})
+        feature_values = {"open": float(row.open_price), "high": float(row.high_price), "low": float(row.low_price), "close": float(row.close_price), "previous_close": _number(row.prev_close), "volume_current": _number(row.volume), "volume_previous_1d": _number(row.volume_previous_1d), "volume_previous_2d": _number(row.volume_previous_2d), "volume_average_20": _number(row.volume_average_20), "volume_median_90": _number(row.volume_median_90), "volume_ratio_20": volume_ratio, "volume_percentile_90": volume_percentile, "turnover_lacs": _number(row.turnover_lacs), "turnover_percentile": turnover_percentile, "sma20": _number(row.sma20), "sma50": _number(row.sma50), "ema61": _number(row.ema61), "atr14_previous_completed": _number(row.atr14), "prior_high_20": _number(row.prior_high_20), "prior_low_20": _number(row.prior_low_20), "rsi14": _number(row.rsi_14), "willr14": _number(row.willr_14), "macd_line": _number(row.macd_line), "close_vs_ema61_pct": _number(row.close_vs_ema61_pct), "reward_risk": reward_risk, "move_atr": extension_atr, "vwap_distance_atr": result["xfactor"].get("vwap_distance_atr"), "risk_atr": risk_atr, "session_vwap": _row_number(row,"session_vwap"), "session_bar_coverage": _row_number(row,"session_bar_coverage"), "session_latest_bar_age_minutes": _row_number(row,"session_latest_bar_age_minutes"), "session_data_status": getattr(row,"session_data_status",None)}
+        output.append({"symbol":row.symbol,"sector":row.sector,"instrument_token":token["symbol_token"] if token else None,"signal_date":signal_date,"direction":direction,"structural_direction":result["structural_direction"],"session_direction":result["session_direction"],"direction_state":result["direction_state"],"session_direction_score":result["session_direction_score"],"daily_level":classification.level,"ofactor_level":o_level,"directional_edge_level":edge_level,"extension_level":extension_band,"volume_level":volume_level,"canonical_status":classification.canonical_status,"selected":classification.selected,"data_quality":result["dq"]["score"],"data_permission":result["dq"]["permission"],"data_coverage":_row_number(row,"session_bar_coverage"),"ofactor":ofactor["final_score"],"xfactor":result["xfactor"]["score"],"directional_edge":edge,"rsi14":_number(row.rsi_14),"willr14":_number(row.willr_14),"ema61":_number(row.ema61),"macd_line":_number(row.macd_line),"atr14":_number(row.atr14),"volume_vs_sma20":volume_ratio,"volume_percentile_90":volume_percentile,"reference_price":float(row.close_price),"failed_gate_count":len(all_reasons),"blocking_gate_count":len(blocking_reasons),"setup_id":result["xfactor"]["setup_id"],"setup_state":result["xfactor"]["setup_state"],"component_scores":{"ofactor_long":result["ofactor_long"],"ofactor_short":result["ofactor_short"],"xfactor":result["xfactor"]},"market_context":{"nifty_trend":feature.nifty_trend,"stock_trend":feature.stock_trend,"vix_regime":feature.vix_regime,"source":row.source},"conditions":classification.conditions,"reason_codes":all_reasons,"gate_evidence":gate_evidence,"feature_values":feature_values,"universe_flags":{"is_fno":bool(member.get("is_fno")),"is_nifty50":bool(member.get("is_nifty50")),"source":member.get("source")},"evidence":result})
     evaluated_symbols = {item["symbol"] for item in output}
     for symbol, member in sorted(universe.items()):
-        if symbol in evaluated_symbols or not (member.get("is_fno") or member.get("is_nifty50")):
+        if symbol in evaluated_symbols:
             continue
         token = conn.execute(
             """SELECT symbol_token FROM public.instruments WHERE exchange='NSE'
@@ -332,6 +378,10 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
                 "instrument_token": token["symbol_token"] if token else None,
                 "signal_date": signal_date,
                 "direction": "NEUTRAL",
+                "structural_direction": "NEUTRAL",
+                "session_direction": "NEUTRAL",
+                "direction_state": "DATA_INSUFFICIENT",
+                "session_direction_score": None,
                 "daily_level": "NO_CANDIDATE",
                 "ofactor_level": "NOT_ESTIMABLE",
                 "directional_edge_level": "NOT_ESTIMABLE",
@@ -341,6 +391,7 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
                 "selected": False,
                 "data_quality": 0,
                 "data_permission": "DATA_INSUFFICIENT",
+                "data_coverage": None,
                 "ofactor": 0,
                 "xfactor": 0,
                 "directional_edge": 0,
@@ -354,6 +405,8 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
                 "reference_price": None,
                 "failed_gate_count": 1,
                 "blocking_gate_count": 1,
+                "setup_id": None,
+                "setup_state": "DATA_INSUFFICIENT",
                 "component_scores": {},
                 "market_context": {"source": "DATA_UNAVAILABLE"},
                 "conditions": {"DATA_AVAILABLE": False},
@@ -369,21 +422,36 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
             }
         )
 
-    output.sort(
-        key=lambda item: (
-            item["data_permission"] == "DATA_INSUFFICIENT",
-            item["blocking_gate_count"],
-            item["failed_gate_count"],
-            -item["ofactor"],
-            -abs(item["directional_edge"]),
-            -item["data_quality"],
-            item["symbol"],
-        )
-    )
+    def component_value(item: dict[str, Any], name: str) -> float:
+        side = "ofactor_short" if item["direction"] == "SHORT" else "ofactor_long"
+        return float(item.get("component_scores", {}).get(side, {}).get("components", {}).get(name, 0.0))
+
+    execution_order = sorted(output, key=lambda item: (
+        item["data_permission"] != "FULL",
+        int(item["blocking_gate_count"]),
+        int(item["failed_gate_count"]),
+        -float(item["xfactor"]),
+        -float(item["ofactor"]),
+        item["symbol"],
+    ))
+    for index, item in enumerate(execution_order, start=1):
+        item["execution_rank"] = index
+
+    output.sort(key=lambda item: (
+        -float(item["ofactor"]),
+        -component_value(item, "money_flow_participation"),
+        -component_value(item, "sector_industry_support"),
+        -component_value(item, "trend_quality"),
+        -component_value(item, "relative_strength"),
+        -component_value(item, "liquidity_tradability"),
+        -float(item["data_quality"]),
+        item["symbol"],
+    ))
     selected_rank = 0
     for index, item in enumerate(output, start=1):
-        item["recommended"] = index <= 10
-        item["recommendation_rank"] = index if index <= 10 else None
+        item["opportunity_rank"] = index
+        item["recommended"] = index <= OPPORTUNITY_REVIEW_LIMIT
+        item["recommendation_rank"] = index if index <= OPPORTUNITY_REVIEW_LIMIT else None
         if item["selected"]:
             selected_rank += 1
             item["rank"] = selected_rank

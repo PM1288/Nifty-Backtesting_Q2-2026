@@ -234,7 +234,7 @@ export function OiisLivePage() {
   };
 
   const watch = data?.watchlist ?? [];
-  const nearMisses = data?.nearMisses ?? [];
+  const opportunities = data?.recommendations ?? [];
   const funnel = data?.funnel ?? {};
   const latestRun =
     (data?.runs ?? []).find((row) => dateOnly(row.trade_date) === tradeDate) ??
@@ -652,14 +652,14 @@ export function OiisLivePage() {
               </span>
               <h2>
                 {noTrade
-                  ? `No stock cleared every gate for ${tradeDate}`
+                  ? `${opportunities.length} opportunities ranked; no entry authorised`
                   : selected > 0
                     ? `${selected} stock${selected === 1 ? "" : "s"} selected for ${tradeDate}`
                     : "Selection evidence is loading"}
               </h2>
               <p>
                 {noTrade
-                  ? `${evaluated} stocks were evaluated. The engine rejected weak or structurally unsafe entries instead of forcing a trade.${primaryBlocker ? ` The most common blocker was ${humanise(primaryBlocker.reason)} (${primaryBlocker.count} stocks).` : ""}`
+                  ? `${evaluated} eligible stocks were evaluated for ${tradeDate}. Opportunity direction remains visible even when execution is blocked.${primaryBlocker ? ` The most common blocker was ${humanise(primaryBlocker.reason)} (${primaryBlocker.count} stocks).` : ""}`
                   : "A selected stock is monitored for the first RSI < 30 and Williams %R < −80 trigger, once per stock per day."}
               </p>
             </div>
@@ -775,36 +775,37 @@ export function OiisLivePage() {
             <section className={styles.panel}>
               <div className={styles.sectionHeading}>
                 <div>
-                  <span className={styles.kicker}>Closest opportunities</span>
-                  <h2>Top near-miss candidates</h2>
+                  <span className={styles.kicker}>Directional opportunities</span>
+                  <h2>Current opportunity leaderboard</h2>
                 </div>
                 <span className={styles.note}>
-                  Research context—not trade permission
+                  Latest completed run · research context, not trade permission
                 </span>
               </div>
               <div className={styles.tableWrap}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      <th>Stock</th>
-                      <th>Readiness</th>
+                      <th>Opportunity</th>
+                      <th>Resolved direction</th>
                       <th>O / X / DQ</th>
-                      <th>Daily indicators</th>
-                      <th>Buy reference</th>
-                      <th>Why it failed</th>
+                      <th>Structural / session</th>
+                      <th>Execution rank</th>
+                      <th>Current status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {nearMisses.map((row) => (
+                    {opportunities.map((row) => (
                       <tr key={row.candidate_id}>
                         <td>
-                          <strong>{row.symbol}</strong>
+                          <strong>#{value(row, "opportunity_rank")} {row.symbol}</strong>
                           <small>{value(row, "sector")}</small>
                         </td>
                         <td>
-                          <span className={styles.score}>
-                            {number(row, "readiness_score", 0)}
+                          <span className={styles.pill} data-state={row.direction}>
+                            {value(row, "direction")}
                           </span>
+                          <small>{humanise(row.direction_state)}</small>
                         </td>
                         <td>
                           <span className={styles.metricLine}>
@@ -814,14 +815,15 @@ export function OiisLivePage() {
                           </span>
                         </td>
                         <td>
-                          <small>RSI {number(row, "rsi14", 1)}</small>
-                          <small>WILLR {number(row, "willr14", 1)}</small>
+                          <small>{value(row, "structural_direction")} structure</small>
+                          <small>{value(row, "session_direction")} session</small>
                         </td>
                         <td>
-                          <strong>{money(row.buy_limit)}</strong>
-                          <small>No chase {money(row.no_chase_price)}</small>
+                          <strong>#{value(row, "execution_rank")}</strong>
+                          <small>Separate from opportunity quality</small>
                         </td>
                         <td>
+                          <small>{humanise(row.data_permission)}</small>
                           <div className={styles.reasonList}>
                             {reasons(row).map((reason) => (
                               <span key={reason}>{reason}</span>

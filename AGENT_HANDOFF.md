@@ -2253,3 +2253,9 @@ Verification executed:
 - existing V1/V2 candidate counts remain 500/986.
 
 The build continues to report the pre-existing npm dependency audit findings (8 moderate, 3 high, 2 critical). No live order was placed. No exit policy was changed. No Docker volume or historical evidence was removed.
+
+### Generic opportunity UI follow-up
+
+The summary originally rendered the execution-readiness near-miss table above the actual opportunity list. This could visually hide high-OFactor candidates when their live execution evidence was incomplete. The prominent summary table now renders `dashboard.recommendations` from the latest completed database run, ordered by `opportunity_rank`, and shows resolved/structural/session directions plus the separate execution rank and data status. The hero reports the dynamic opportunity count separately from authorised entries. No symbol is hard-coded.
+
+Headless browser verification through the authenticated Nginx route confirmed 15 dynamic rows, including `#7 TITAN`, `#9 GRASIM` and `#11 SHRIRAMFIN`, with no browser-console errors. The UI remains generic: future runs replace the symbols, counts, directions and ranks from PostgreSQL automatically.

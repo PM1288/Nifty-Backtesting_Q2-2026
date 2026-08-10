@@ -1960,3 +1960,26 @@ docker compose -p trading-stack-novius2 up -d --no-deps --force-recreate n50-das
   72 px at rest and 216 px on hover; no desktop menu button was visible.
 - Do not commit the runtime `.env`, administrator secret, or the untracked
   `UI-REDESIGN/` and extracted `OIIS-DOE/` source-reference directories.
+
+## F&O five-year daily technical dataset — 2026-08-10
+
+- Added the repeatable exporter
+  `platform/nifty_stratlab/tools/export_fno_daily_technical_dataset.py` and its
+  indicator/breadth regression tests.
+- Final external dataset:
+  `/home/novius2/data/fno_daily_technical_5y_20210810_20260810`.
+- Exported 270,353 rows and 81 columns for 219 current stock F&O underlyings,
+  NIFTY 50, India VIX and ten available sector indices from 2021-08-10 through
+  the latest available trading date, 2026-08-07.
+- The folder contains 219 equity CSVs, 12 market CSVs, one consolidated CSV,
+  advances/declines, one consolidated Excel workbook, coverage/universe files,
+  logs, manifest and checksums. Total size is approximately 703 MB.
+- All current F&O symbols exported. Twenty renamed-symbol histories were filled
+  using their current Yahoo ticker and explicitly tagged. TMPV remains
+  post-demerger only. LTIM retains local history and has one non-blocking Yahoo
+  availability warning.
+- Validation passed: zero blocking failures, duplicates or unclassified
+  sectors; breadth totals reconcile; Excel contains all 270,353 rows; the XLSX
+  archive and every SHA-256 checksum validate.
+- Full implementation, data policy, indicator catalogue, limitations and rerun
+  commands are in `docs/worklogs/fno-daily-technical-five-year-export.md`.

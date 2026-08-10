@@ -1909,3 +1909,54 @@ docker compose -p trading-stack-novius2 --env-file .env \
   Nginx service was restarted. Do not use `--remove-orphans`.
 - Never record the administrator password or Firebase Web API key in Git,
   screenshots, reports, or command examples.
+
+## Compact light-dashboard consolidation — 2026-08-10
+
+### What changed
+
+- `AppShell` is now the only application header. It combines product identity,
+  PAPER mode, current route, data age, feed freshness and authenticated-user
+  state; the ticker follows immediately below it.
+- Removed the repeated page header/subtitle/audience/sub-tab band from analytics
+  pages and removed the separate context strip.
+- The desktop navigation rail is 72 px by default and expands to 216 px on
+  pointer hover or keyboard focus. The desktop hamburger is hidden; the mobile
+  drawer remains available at narrow widths.
+- Removed static indicator teaching, threshold glossary, assumptions, next-step
+  panels and other generic instructional widgets from the visible dashboards.
+  Current status, live/database-derived metrics, evidence charts, strategy
+  results and stock tables remain.
+- Normalised strategy evaluation, market state, data quality, run monitor,
+  leaderboard, backtesting lab, RSI/WILLR/change heatmaps, candlesticks,
+  oscilloscopes, ECharts tooltips and home stock tiles to a white/light palette.
+  Market direction is represented with accessible red/green text and borders,
+  not dark filled cards.
+
+### Verification and deployment
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+npm --prefix neon-stock-terminal/apps/web run typecheck
+npm --prefix neon-stock-terminal/apps/web run build
+git diff --check
+
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 build n50-dashboard
+docker compose -p trading-stack-novius2 up -d --no-deps --force-recreate n50-dashboard
+```
+
+- TypeScript type check: PASS.
+- Vite production build: PASS, 2,448 modules transformed.
+- Production dashboard: recreated and healthy under
+  `trading-stack-novius2`; no database, collector, paper-trading or OIIS
+  service was changed.
+- Playwright checked Home, Market State, Strategy Evaluation, Data Quality, RSI
+  heatmap, Strategy Leaderboard, Run Monitor, Indicator RSI, Backtesting Lab,
+  Nifty 500, Paper Trading and Administration.
+- On all 12 routes: zero dark rendered surfaces, zero duplicate page headers,
+  zero duplicate context strips, zero horizontal overflow, zero visible static
+  indicator sections, zero API-error text and zero failed `/n50/` responses.
+- Guest application content remains blocked (`main=0`). Desktop sidebar measured
+  72 px at rest and 216 px on hover; no desktop menu button was visible.
+- Do not commit the runtime `.env`, administrator secret, or the untracked
+  `UI-REDESIGN/` and extracted `OIIS-DOE/` source-reference directories.

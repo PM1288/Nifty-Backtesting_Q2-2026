@@ -251,6 +251,16 @@
   text-align: center;
 }
 
+.headerContext {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--v2-text-secondary);
+  font-size: 11px;
+}
+
 .audienceWrap,
 .localeWrap,
 .sessionStatus {
@@ -309,7 +319,7 @@
 
 /* Universal light operational workspace. */
 .shell[data-ui-generation="trading-v2"] {
-  --header-height: 138px;
+  --header-height: 98px;
   --sidebar-expanded-width: 216px;
   --sidebar-collapsed-width: 72px;
   background: var(--v2-canvas);
@@ -366,31 +376,34 @@
 .shell[data-ui-generation="trading-v2"] .body {
   max-width: 1920px;
   margin-inline: auto;
-  grid-template-columns: var(--sidebar-expanded-width) minmax(0, 1fr);
-  gap: 20px;
-  padding: 20px var(--v2-page-gutter) 32px;
+  grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px var(--v2-page-gutter) 28px;
 }
 
 .shell[data-ui-generation="trading-v2"] .sidebar {
   top: calc(var(--header-height) + 12px);
   height: calc(100vh - var(--header-height) - 24px);
-  border: 0;
+  width: var(--sidebar-collapsed-width);
+  border: 1px solid var(--v2-border);
   border-radius: var(--v2-radius-md);
-  background: var(--v2-nav);
-  box-shadow: 0 10px 28px rgba(11, 31, 58, 0.16);
+  background: #ffffff;
+  box-shadow: var(--v2-shadow-panel);
+  transition: width 160ms ease, box-shadow 160ms ease;
+  z-index: 5;
 }
 
 .shell[data-ui-generation="trading-v2"] .sidebarNav {
   padding: 14px 8px 18px;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .shell[data-ui-generation="trading-v2"] .navSection + .navSection {
-  border-top-color: rgba(255, 255, 255, 0.1);
+  border-top-color: var(--v2-border);
 }
 
 .shell[data-ui-generation="trading-v2"] .groupLabel {
-  color: #9fb0c7;
+  color: var(--v2-text-muted);
   font-size: 10px;
   letter-spacing: 0.1em;
 }
@@ -398,24 +411,24 @@
 .shell[data-ui-generation="trading-v2"] .navLink {
   min-height: 40px;
   border-radius: 7px;
-  color: #c8d4e3;
+  color: var(--v2-text-secondary);
 }
 
 .shell[data-ui-generation="trading-v2"] .navLink:hover,
 .shell[data-ui-generation="trading-v2"] .navLink:focus-visible {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  border-color: #c9def8;
+  background: #edf5ff;
+  color: #174f91;
 }
 
 .shell[data-ui-generation="trading-v2"] .navLink[data-active="true"] {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: var(--v2-nav-selected);
-  color: #ffffff;
+  border-color: #b9d3f3;
+  background: #e6f1ff;
+  color: #174f91;
 }
 
 .shell[data-ui-generation="trading-v2"] .navLink[data-active="true"]::before {
-  background: #6ea0ff;
+  background: var(--v2-primary);
 }
 
 .shell[data-ui-generation="trading-v2"] .contentColumn {
@@ -552,6 +565,39 @@
 }
 
 @media (min-width: 980px) {
+  .shell[data-ui-generation="trading-v2"] .menuButton {
+    display: none;
+  }
+
+  .shell[data-sidebar-collapsed="true"] .sidebar:hover,
+  .shell[data-sidebar-collapsed="true"] .sidebar:focus-within {
+    width: var(--sidebar-expanded-width);
+    box-shadow: 0 16px 36px rgba(11, 31, 58, 0.16);
+  }
+
+  .shell[data-sidebar-collapsed="true"] .sidebar:hover .groupLabel,
+  .shell[data-sidebar-collapsed="true"] .sidebar:focus-within .groupLabel {
+    display: block;
+  }
+
+  .shell[data-sidebar-collapsed="true"] .sidebar:hover .navLink,
+  .shell[data-sidebar-collapsed="true"] .sidebar:focus-within .navLink {
+    grid-template-columns: 16px minmax(0, 1fr);
+    justify-items: stretch;
+    gap: 12px;
+    padding-inline: 12px;
+  }
+
+  .shell[data-sidebar-collapsed="true"] .sidebar:hover .navLabel,
+  .shell[data-sidebar-collapsed="true"] .sidebar:focus-within .navLabel {
+    display: block;
+  }
+
+  .shell[data-sidebar-collapsed="true"] .sidebar:hover .navTooltip,
+  .shell[data-sidebar-collapsed="true"] .sidebar:focus-within .navTooltip {
+    display: none;
+  }
+
   .shell[data-sidebar-collapsed="true"] .body {
     grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
   }
@@ -595,9 +641,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .topBarCenter {
-    display: none;
-  }
+  .topBarCenter { display: flex; }
 
   .topBarRight {
     align-items: flex-start;
@@ -607,7 +651,7 @@
 
 @media (max-width: 979px) {
   .shell {
-    --header-height: 78px;
+    --header-height: 98px;
   }
 
   .topBar {
@@ -663,23 +707,23 @@
 
 @media (max-width: 760px) {
   .shell {
-    --header-height: 108px;
+    --header-height: 98px;
   }
 
   .topBar {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
     padding-block: 6px;
   }
 
   .topBarLeft,
   .topBarRight {
-    width: 100%;
+    width: auto;
   }
 
   .topBarRight {
-    justify-content: flex-start;
-    align-items: stretch;
+    justify-content: flex-end;
+    align-items: center;
   }
 
   .preferenceStack {
@@ -730,7 +774,7 @@
 
 @media (max-width: 540px) {
   .shell {
-    --header-height: 102px;
+    --header-height: 94px;
   }
 
   .topBar {
@@ -832,7 +876,7 @@
 
 @media (max-width: 979px) {
   .shell[data-ui-generation="trading-v2"] {
-    --header-height: 136px;
+    --header-height: 98px;
   }
 
   .shell[data-ui-generation="trading-v2"] .body {
@@ -844,30 +888,49 @@
     top: calc(var(--header-height) + 8px);
     left: var(--v2-page-gutter);
     width: min(286px, calc(100vw - (var(--v2-page-gutter) * 2)));
-    background: var(--v2-nav);
+    width: min(286px, calc(100vw - (var(--v2-page-gutter) * 2)));
+    background: #ffffff;
   }
 }
 
 @media (max-width: 760px) {
   .shell[data-ui-generation="trading-v2"] {
-    --header-height: 136px;
+    --header-height: 98px;
   }
 
   .shell[data-ui-generation="trading-v2"] .topBar {
     min-height: 64px;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     padding-block: 8px;
   }
 
   .shell[data-ui-generation="trading-v2"] .topBarLeft {
-    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .shell[data-ui-generation="trading-v2"] .topBarRight {
     width: auto;
     flex: 0 0 auto;
     align-items: center;
+  }
+
+  .shell[data-ui-generation="trading-v2"] .topBarCenter {
+    min-width: 0;
+  }
+
+  .shell[data-ui-generation="trading-v2"] .headerContext {
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+
+  .shell[data-ui-generation="trading-v2"] .headerContext > :global([class*="_contextItem_"]) {
+    display: none;
+  }
+
+  .shell[data-ui-generation="trading-v2"] .brandMark {
+    white-space: nowrap;
   }
 
   .shell[data-ui-generation="trading-v2"] .preferenceStack,

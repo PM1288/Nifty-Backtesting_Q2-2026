@@ -1,12 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useLocation } from "react-router-dom";
-import { PerformanceDebugPanel } from "../analytics/PerformanceDebugPanel";
 import { useI18n } from "../i18n/LocaleProvider";
-import {
-  ButtonLink,
-  SectionTabs,
-  StatusBadge
-} from "../components/ui/DashboardPrimitives";
 import styles from "./AnalyticsPage.module.css";
 
 export type AnalyticsExperienceMode = "beginner" | "advanced";
@@ -357,69 +350,10 @@ type AnalyticsHeaderProps = {
 };
 
 export function AnalyticsHeader({
-  title,
-  subtitle,
-  meta,
-  learningPrompt,
-  action,
-  sectionTabs
+  action
 }: AnalyticsHeaderProps) {
-  const location = useLocation();
-  const { mode } = useAnalyticsExperienceMode();
-  const { t, tr } = useI18n();
-  const section = resolvePrimarySection(location.pathname);
-  const sectionMeta = SECTION_META[section];
-  const showBreadcrumb =
-    section === "system" ||
-    location.pathname.startsWith("/analytics/stock/") ||
-    location.pathname.startsWith("/stock/");
-
-  return (
-    <header className={styles.analyticsHeader} data-clarity-region="page_header">
-      <div className={styles.topNav}>
-        <div className={styles.meta}>
-          {showBreadcrumb ? (
-            <div className={styles.breadcrumbs} aria-label={tr("Breadcrumb")}>
-              <ButtonLink to="/" variant="secondary" size="s">
-                {tr("Overview")}
-              </ButtonLink>
-              <span className={styles.breadcrumbSeparator}>/</span>
-              <span className={styles.breadcrumbItem}>{tr(sectionMeta.label)}</span>
-              <span className={styles.breadcrumbSeparator}>/</span>
-              <span className={styles.breadcrumbItem}>{tr(title)}</span>
-            </div>
-          ) : (
-            <>
-              <StatusBadge label={tr(`${sectionMeta.label} workspace`)} tone="white" />
-            </>
-          )}
-        </div>
-        <div className={styles.meta}>
-          <span className={styles.pageMeta}>
-            {mode === "beginner"
-              ? t("preferences.audienceOptions.beginner", "Beginner")
-              : t("preferences.audienceOptions.advanced", "Advanced")}{" "}
-            {t("preferences.audienceSuffix", "audience")}
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.pageHeaderBand}>
-        <div className={styles.pageHeaderCopy}>
-          <div className={styles.pageMetaRow}>
-            <span className={styles.pageEyebrow}>{tr(sectionMeta.label)}</span>
-            {meta ? <span className={styles.pageMeta}>{meta}</span> : null}
-          </div>
-          <h1 className={styles.pageTitle}>{tr(title)}</h1>
-          <p className={styles.pageSubtitle}>{tr(subtitle)}</p>
-          {learningPrompt ? <p className={styles.pageQuestion}>{tr(learningPrompt)}</p> : null}
-        </div>
-        {action ? <div className={styles.pageHeaderActions}>{action}</div> : null}
-        {sectionTabs?.length ? <SectionTabs label={`${tr(sectionMeta.label)} ${t("ui.subsections", "subsections")}`} items={sectionTabs} /> : null}
-      </div>
-      <PerformanceDebugPanel />
-    </header>
-  );
+  if (!action) return null;
+  return <header className={styles.compactPageActions}>{action}</header>;
 }
 
 type ExplainThisProps = {

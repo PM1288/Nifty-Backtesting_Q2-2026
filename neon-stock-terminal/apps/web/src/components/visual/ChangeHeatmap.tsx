@@ -154,9 +154,9 @@ export function ChangeHeatmap({ payload, selectedSymbol, onSelectSymbol }: Props
     const headingFont = getCanvasFont(language, digits, 700, 11);
     const bodyFont = getCanvasFont(language, digits, 600, 10);
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+    ctx.fillStyle = "#f1f5f9";
     ctx.fillRect(LABEL_GUTTER_TOTAL, TOP_GUTTER - 8, heatmapWidth, height - TOP_GUTTER);
 
     const labelIndices = [0, 75, 150, 225, 300, payload.timestamps.length - 1].filter(
@@ -165,12 +165,12 @@ export function ChangeHeatmap({ payload, selectedSymbol, onSelectSymbol }: Props
 
     ctx.save();
     ctx.font = getCanvasFont(language, digits, 600, 11);
-    ctx.fillStyle = "rgba(255,255,255,0.78)";
+    ctx.fillStyle = "rgba(15,23,42,0.72)";
     ctx.textAlign = "center";
     for (const idx of labelIndices) {
       const xBase = LABEL_GUTTER_TOTAL + idx * colWidth + colWidth * 0.5;
       ctx.fillText(fmtTimeLabel(payload.timestamps[idx]!), xBase, 18);
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.strokeStyle = "rgba(15,23,42,0.10)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(xBase, TOP_GUTTER - 4);
@@ -179,7 +179,7 @@ export function ChangeHeatmap({ payload, selectedSymbol, onSelectSymbol }: Props
     }
     ctx.restore();
 
-    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.strokeStyle = "rgba(15,23,42,0.16)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(LABEL_GUTTER_TOTAL - 8, TOP_GUTTER - 6);
@@ -188,7 +188,7 @@ export function ChangeHeatmap({ payload, selectedSymbol, onSelectSymbol }: Props
 
     ctx.save();
     ctx.font = headingFont;
-    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.fillStyle = "rgba(15,23,42,0.86)";
     ctx.textAlign = "left";
     ctx.fillText(tr("Stock"), 10, 18);
     ctx.fillText(tr("%Chg"), SYMBOL_COL + 8, 18);
@@ -230,7 +230,7 @@ export function ChangeHeatmap({ payload, selectedSymbol, onSelectSymbol }: Props
         ctx.strokeRect(6, animatedY - 1, width - 14, ROW_HEIGHT);
       }
 
-      ctx.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx.strokeStyle = "rgba(15,23,42,0.06)";
       ctx.beginPath();
       ctx.moveTo(8, animatedY + ROW_HEIGHT);
       ctx.lineTo(width - 8, animatedY + ROW_HEIGHT);

@@ -27,10 +27,7 @@
   padding: 16px;
   border: 1px solid var(--w-08);
   border-radius: 14px;
-  background:
-    radial-gradient(circle at top left, rgba(212, 175, 55, 0.08), transparent 36%),
-    linear-gradient(180deg, rgba(255,255,255,0.03), transparent 55%),
-    rgba(0, 0, 0, 0.78);
+  background: #ffffff;
 }
 
 .verdictHeader {
@@ -79,7 +76,7 @@
   padding: 10px 12px;
   border: 1px solid var(--w-08);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: #f8fafc;
 }
 
 .summaryMetric strong {

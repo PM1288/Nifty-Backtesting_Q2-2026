@@ -202,28 +202,6 @@ export function AnalyticsIndicatorsPage() {
         sectionTabs={[...LEARNING_SECTION_TABS]}
       />
 
-      <IndicatorHero indicator={data} activeSlug={slug} />
-
-      <section className={styles.summaryGrid}>
-        <InterpretationCard
-          title={tr("Why you are here")}
-          items={[
-            t("literals.Use {{name}} to learn one stable interpretation language before you look at the live heatmaps or strategy outcomes.", "Use {{name}} to learn one stable interpretation language before you look at the live heatmaps or strategy outcomes.", { name: data.displayName }),
-            tr("This page should answer what the indicator measures, what its thresholds mean, and what the current evidence has historically implied."),
-            tr("Once the meaning is clear, route back into the live signal surface or forward into simulator-style evidence.")
-          ]}
-        />
-        <PlainLanguageCard
-          title={tr("Question answered today")}
-          body={t("literals.What is {{name}} actually saying right now, and how trustworthy has that message been across the evidence window?", "What is {{name}} actually saying right now, and how trustworthy has that message been across the evidence window?", { name: data.displayName })}
-          secondaryTitle={tr("Go next")}
-          secondaryBody={t("literals.Use {{name}} meaning first, then the {{surface}}, then the strategy evaluator if you still need capital-behavior evidence.", "Use {{name}} meaning first, then the {{surface}}, then the strategy evaluator if you still need capital-behavior evidence.", {
-            name: data.displayName,
-            surface: slug === "rsi" ? "RSI heatmap" : slug === "willr" ? "WILLR heatmap" : tr("live signal surface")
-          })}
-        />
-      </section>
-
       <section ref={sectionRefs.explanation} data-indicator-section="explanation">
         <SectionDivider
           eyebrow={tr("Indicator basics")}

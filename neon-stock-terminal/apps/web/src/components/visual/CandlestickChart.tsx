@@ -112,7 +112,7 @@ function drawLegendItem(
   ctx.restore();
 
   ctx.save();
-  ctx.fillStyle = "rgba(255,255,255,0.72)";
+  ctx.fillStyle = "rgba(15,23,42,0.72)";
   ctx.font = font;
   ctx.fillText(label, x + 24, y + 4);
   ctx.restore();
@@ -166,7 +166,7 @@ export function CandlestickChart({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, width, height);
 
       if (normalizedBars.length < 2) {
@@ -209,7 +209,7 @@ export function CandlestickChart({
       const yFromVolume = (value: number) => volumeBottom - (value / maxVolume) * volumeHeightInner;
 
       ctx.save();
-      ctx.fillStyle = "rgba(255,255,255,0.03)";
+      ctx.fillStyle = "rgba(15,23,42,0.03)";
       ctx.fillRect(left, priceTop, right - left, priceHeight);
       ctx.fillRect(left, volumeTop, right - left, volumeHeightInner);
       ctx.restore();
@@ -223,9 +223,9 @@ export function CandlestickChart({
 
       drawLegendItem(ctx, Math.max(left + 88, 180), 24, tr("Candles"), accent, false, true, legendFont);
       drawLegendItem(ctx, Math.max(left + 198, 290), 24, tr("Middle band"), neutralColor, false, false, legendFont);
-      drawLegendItem(ctx, Math.max(left + 334, 430), 24, tr("Band range"), "rgba(255,255,255,0.48)", true, false, legendFont);
+      drawLegendItem(ctx, Math.max(left + 334, 430), 24, tr("Band range"), "rgba(15,23,42,0.48)", true, false, legendFont);
       if (refs.length) {
-        drawLegendItem(ctx, Math.max(left + 462, 560), 24, tr("Reference"), "rgba(255,255,255,0.38)", true, false, legendFont);
+        drawLegendItem(ctx, Math.max(left + 462, 560), 24, tr("Reference"), "rgba(15,23,42,0.38)", true, false, legendFont);
       }
 
       ctx.save();
@@ -257,8 +257,8 @@ export function CandlestickChart({
 
       ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = "rgba(255,255,255,0.45)";
-      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      ctx.strokeStyle = "rgba(15,23,42,0.45)";
+      ctx.fillStyle = "rgba(15,23,42,0.82)";
       ctx.font = textFont;
       refs.forEach((line) => {
         const y = yFromPrice(line.value);
@@ -293,9 +293,9 @@ export function CandlestickChart({
         ctx.restore();
       };
 
-      drawBand("upper", "rgba(255,255,255,0.48)", 1, [3, 3]);
-      drawBand("middle", "rgba(255,255,255,0.9)", 1.2);
-      drawBand("lower", "rgba(255,255,255,0.48)", 1, [3, 3]);
+      drawBand("upper", "rgba(15,23,42,0.48)", 1, [3, 3]);
+      drawBand("middle", "rgba(15,23,42,0.9)", 1.2);
+      drawBand("lower", "rgba(15,23,42,0.48)", 1, [3, 3]);
 
       ctx.save();
       ctx.lineWidth = 1;

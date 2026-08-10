@@ -2024,3 +2024,9 @@
   .evaluationBadges { justify-content: flex-start; }
   .evaluationGateList, .suitabilityColumns { grid-template-columns: 1fr; }
 }
+.compactPageActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 0 8px;
+}

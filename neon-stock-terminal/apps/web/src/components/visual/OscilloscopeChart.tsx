@@ -117,8 +117,8 @@ export function OscilloscopeChart({
         const wobble = Math.sin(phase) * 0.8;
 
         context.save();
-        context.strokeStyle = "rgba(255,255,255,0.32)";
-        context.fillStyle = "rgba(255,255,255,0.68)";
+        context.strokeStyle = "rgba(15,23,42,0.32)";
+        context.fillStyle = "rgba(15,23,42,0.68)";
         context.lineWidth = 1;
         context.setLineDash([4, 4]);
         context.font = "10px 'Hoover', sans-serif";
@@ -155,7 +155,7 @@ export function OscilloscopeChart({
     }
 
     // Init paint
-    context.fillStyle = "#000000";
+    context.fillStyle = "#ffffff";
     context.fillRect(0, 0, w, h);
     raf = requestAnimationFrame(frame);
 

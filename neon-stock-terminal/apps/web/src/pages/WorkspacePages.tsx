@@ -23,9 +23,8 @@ function useWorkspaceData(path: string) {
   return { data, error };
 }
 
-function Page({ eyebrow, title, description, data, error, children }: { eyebrow: string; title: string; description: string; data: Payload | null; error: string | null; children: ReactNode }) {
+function Page({ eyebrow, data, error, children }: { eyebrow: string; title: string; description: string; data: Payload | null; error: string | null; children: ReactNode }) {
   return <section className={styles.page} data-clarity-region={`workspace_${eyebrow.toLowerCase().replaceAll(" ", "_")}`}>
-    <header className={styles.hero}><div><p className={styles.eyebrow}>{eyebrow}</p><h1>{title}</h1><p>{description}</p></div><span className={styles.freshness}>{data?.asOf ? `Updated ${new Date(data.asOf).toLocaleString("en-IN")}` : "Loading current data…"}</span></header>
     {error ? <div className={styles.error}>{error}</div> : data ? children : <div className={styles.empty}>Loading verified workspace data…</div>}
   </section>;
 }

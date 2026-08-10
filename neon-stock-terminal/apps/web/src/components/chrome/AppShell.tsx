@@ -27,12 +27,10 @@ import { useDashboardPrefetch } from "../../lib/useDashboardPrefetch";
 import { useI18n } from "../../i18n/LocaleProvider";
 import { resolvePrimarySection, SECTION_META, useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
 import { AuthGateModal } from "../auth/AuthGateModal";
-import { ContextIdentityStrip } from "../../design-system/TradingPrimitives";
+import { DataAge, EnvironmentBadge, FeedFreshnessBadge } from "../../design-system/TradingPrimitives";
 import { AuthStatus } from "./AuthStatus";
 import { HeaderTicker } from "./HeaderTicker";
 import styles from "./AppShell.module.css";
-
-const SIDEBAR_PREFERENCE_KEY = "n50.shell.sidebarCollapsed.light-v2";
 
 type NavItem = {
   label: string;
@@ -58,18 +56,6 @@ type AmbientGlowStyle = React.CSSProperties & {
 
 function isMobileViewport() {
   return typeof window !== "undefined" && window.matchMedia("(max-width: 979px)").matches;
-}
-
-function readStoredSidebarPreference() {
-  if (typeof window === "undefined") return null;
-  const stored = window.localStorage.getItem(SIDEBAR_PREFERENCE_KEY);
-  if (stored === "collapsed") return true;
-  if (stored === "expanded") return false;
-  return null;
-}
-
-function defaultCollapsedForPath(pathname: string) {
-  return pathname === "/" || pathname.startsWith("/heatmap/") || pathname === "/change-heatmap" || pathname === "/rsi-surface" || pathname === "/will-surface";
 }
 
 function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
@@ -513,7 +499,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
   const { mode: analyticsMode } = useAnalyticsExperienceMode();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [sidebarPreference, setSidebarPreference] = useState<boolean | null>(() => readStoredSidebarPreference());
 
   const sessionEnabled = authReady && !!user;
   const overview = useOverview(sessionEnabled);
@@ -540,7 +525,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const currentSection = resolvePrimarySection(location.pathname);
   const currentSectionMeta = SECTION_META[currentSection];
-  const desktopSidebarCollapsed = sidebarPreference ?? defaultCollapsedForPath(location.pathname);
+  const desktopSidebarCollapsed = true;
   const pageTitle = currentPage?.label ?? tr(currentSectionMeta.label);
   const authState = authReady && user ? "signed_in" : "guest";
   const prefetchDashboardRoute = useDashboardPrefetch(authReady);
@@ -586,14 +571,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const nextValue = !desktopSidebarCollapsed;
-    void trackNavClick({
-      nav_type: "sidebar_toggle",
-      source_page: location.pathname,
-      next_state: nextValue ? "collapsed" : "expanded"
-    });
-    setSidebarPreference(nextValue);
-    window.localStorage.setItem(SIDEBAR_PREFERENCE_KEY, nextValue ? "collapsed" : "expanded");
+    return;
   };
 
   const workspaceTheme = "light";
@@ -650,12 +628,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onFocus={() => prefetchDashboardRoute("/")}
               >
                 <span className={styles.brandMark}>NIFTY 50 TRADER</span>
-                <span className={styles.brandWordmark}>{t("brand.storyWordmark", "Research, paper trading and market operations")}</span>
               </Link>
             </div>
 
             <div className={styles.topBarCenter}>
-              <span className={styles.pageTitle}>{pageTitle}</span>
+              <div className={styles.headerContext}>
+                <EnvironmentBadge />
+                <span className={styles.pageTitle}>{pageTitle}</span>
+                {overview.data?.asOf ? <DataAge>Data {new Date(overview.data.asOf).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</DataAge> : null}
+                <FeedFreshnessBadge state={feedState} />
+              </div>
             </div>
 
             <div className={styles.topBarRight}>
@@ -668,12 +650,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className={styles.tickerRail} data-clarity-unmask="true" data-clarity-region="top_ticker">
             <HeaderTicker items={tickerItems} />
           </div>
-          <ContextIdentityStrip
-            page={pageTitle}
-            dataAsOf={overview.data?.asOf}
-            feedState={feedState}
-            signedIn={sessionEnabled}
-          />
         </header>
 
         <div className={styles.body}>

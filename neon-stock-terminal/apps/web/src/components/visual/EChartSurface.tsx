@@ -22,9 +22,9 @@ function chartPalette(appearance: ChartAppearance) {
         text: "rgba(11, 31, 58, 0.78)",
         muted: "rgba(11, 31, 58, 0.62)",
         faint: "rgba(11, 31, 58, 0.10)",
-        tooltipBackground: "#0B1F3A",
-        tooltipBorder: "rgba(255, 255, 255, 0.16)",
-        tooltipText: "#ffffff",
+        tooltipBackground: "#ffffff",
+        tooltipBorder: "#cbd5e1",
+        tooltipText: "#0B1F3A",
         title: "#0B1F3A"
       }
     : {
@@ -367,17 +367,17 @@ function normalizeOption(
     },
     tooltip: option.tooltip
       ? {
+        ...option.tooltip,
         backgroundColor: palette.tooltipBackground,
         borderColor: palette.tooltipBorder,
         borderWidth: 1,
         textStyle: {
+          ...((option.tooltip as { textStyle?: Record<string, unknown> } | undefined)?.textStyle ?? {}),
           color: palette.tooltipText,
           fontFamily,
-          fontSize: 11,
-            ...((option.tooltip as { textStyle?: Record<string, unknown> } | undefined)?.textStyle ?? {})
-          },
-          ...option.tooltip
+          fontSize: 11
         }
+      }
       : option.tooltip
   };
 
@@ -449,7 +449,7 @@ export function EChartSurface({
   className,
   option,
   setOptionOpts,
-  appearance = "dark"
+  appearance = "light"
 }: {
   ariaLabel: string;
   className?: string;

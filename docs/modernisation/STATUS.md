@@ -144,3 +144,19 @@ Last updated: 2026-08-09 UTC
   authenticated routes render live database results with no relevant API error.
 - Rebuilt and recreated only `n50-dashboard` under Compose project
   `trading-stack-novius2`; it is healthy. No data or schema changed.
+
+## Compact light-dashboard follow-up — 2026-08-10
+
+- Consolidated page identity, PAPER mode, route, data age, feed state and user
+  state into the single shell header; removed the duplicate context/header bands.
+- Replaced desktop hamburger interaction with a 72 px rail that expands to
+  216 px on hover/focus.
+- Removed visible static teaching and navigation filler from indicator and
+  dashboard surfaces, retaining database/live-derived content.
+- Converted all audited dashboard, chart, heatmap, tooltip and stock-tile
+  surfaces to the light palette.
+- Web typecheck and production build pass. A production Playwright audit of 12
+  critical routes found zero dark surfaces, duplicate headers, context strips,
+  horizontal overflow, visible static indicator sections or API failures.
+- Rebuilt/recreated only the production `n50-dashboard`; container health is
+  `healthy`. No schema, market data, trading logic or worker was modified.

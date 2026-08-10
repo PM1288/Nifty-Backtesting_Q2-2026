@@ -2,9 +2,7 @@
   width: 100%;
   border: 1px solid var(--w-08);
   border-radius: 10px;
-  background:
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent 18%),
-    rgba(0, 0, 0, 0.84);
+  background: #ffffff;
   overflow: hidden;
 }
 

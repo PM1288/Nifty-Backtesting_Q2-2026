@@ -139,11 +139,121 @@
   background: transparent !important;
 }
 
+[data-ui-generation="trading-v2"] [class*="_pill_"] > [class*="_overlay_"] {
+  background: transparent !important;
+}
+
 [data-ui-generation="trading-v2"] :where(
   [class*="_metricCard_"], [class*="_summaryCard_"], [class*="_chartCard_"],
   [class*="_panel_"], [class*="_card_"]
 ) {
   border-color: var(--v2-border);
+}
+
+/* Dense operational layout: the shell owns page identity, so repeated
+   subtitles and instructional routing panels do not consume dashboard space. */
+[data-ui-generation="trading-v2"] :where(
+  [class*="_sectionSubtitle_"], [class*="_pageSubtitle_"], [class*="_pageQuestion_"],
+  [class*="_marketLead_"], [class*="_introAccordion_"], [class*="_guideGrid_"],
+  [class*="_rubricGrid_"], [class*="_explainBox_"], [class*="_takeaway_"]
+) {
+  display: none !important;
+}
+
+[data-ui-generation="trading-v2"] [class*="_foldSection_"]:has([class*="_whereNextGrid_"]) {
+  display: none !important;
+}
+
+/* Indicator dashboards are operational surfaces, not training pages. Keep
+   live status, evidence, strategy results and stock results; remove static
+   teaching, assumptions and navigation filler. */
+[data-ui-generation="trading-v2"] :where(
+  [data-indicator-section="explanation"],
+  [data-indicator-section="threshold_guide"],
+  [data-indicator-section="assumptions"],
+  [data-indicator-section="next_steps"]
+) {
+  display: none !important;
+}
+
+[data-ui-generation="trading-v2"] :where(
+  [class*="_infoRow_"], [class*="_bandRow_"], [class*="_glossaryRow_"],
+  [class*="_metaTile_"]
+) {
+  display: none !important;
+}
+
+/* Universal light surfaces for legacy analytics modules. Semantic heatmap and
+   gain/loss colours remain untouched; only their surrounding chrome changes. */
+[data-ui-generation="trading-v2"] :where(
+  [class*="_searchInput_"], [class*="_infoBar_"], [class*="_detailCard_"],
+  [class*="_detailStat_"], [class*="_detailSpark_"], [class*="_detailLink_"],
+  [class*="_metricChip_"], [class*="_extremesCard_"], [class*="_extremeChip_"],
+  [class*="_calendarSurface_"], [class*="_chartCard_"], [class*="_tableCard_"],
+  [class*="_tableFrame_"], [class*="_chartSurface_"], [class*="_chartSurfaceTall_"],
+  [class*="_noteCard_"], [class*="_guideCard_"], [class*="_heroCard_"],
+  [class*="_summaryCard_"], [class*="_metricCard_"], [class*="_objectiveStory_"],
+  [class*="_objectiveLead_"], [class*="_evaluationBanner_"], [class*="_dossierPre_"],
+  [class*="_verdictCard_"], [class*="_verdictSideCard_"], [class*="_summaryMetric_"],
+  [class*="_setupCard_"], [class*="_moduleCard_"], [class*="_rubricItem_"]
+) {
+  border-color: var(--v2-border) !important;
+  background: #ffffff !important;
+  color: var(--v2-text-primary) !important;
+  box-shadow: var(--v2-shadow-panel) !important;
+}
+
+[data-ui-generation="trading-v2"] :where(
+  [class*="_detailTitleRow_"], [class*="_detailStat_"], [class*="_metricChip_"],
+  [class*="_extremeChip_"], [class*="_tablePurpose_"], [class*="_dateCell_"],
+  [class*="_chartTitle_"], [class*="_cardTitle_"], [class*="_objectiveLead_"],
+  [class*="_setupCard_"], [class*="_moduleCard_"], [class*="_rubricItem_"]
+) :where(strong, h2, h3, span) {
+  color: var(--v2-text-primary) !important;
+  text-shadow: none !important;
+}
+
+[data-ui-generation="trading-v2"] :where(
+  [class*="_sectionText_"], [class*="_smallPrint_"], [class*="_eyebrow_"],
+  [class*="_metricChip_"], [class*="_rubricItem_"],
+  [class*="_chartSubtitle_"], [class*="_chartFooter_"], [class*="_chartMetaText_"],
+  [class*="_caption_"], [class*="_detailText_"], [class*="_attachmentText_"],
+  [class*="_detailSparkCaption_"], [class*="_detailSparkEmpty_"]
+) {
+  color: var(--v2-text-secondary) !important;
+  text-shadow: none !important;
+}
+
+[data-ui-generation="trading-v2"] :where(
+  [class*="_searchInput_"], [class*="_tableFilterInput_"], input, select, textarea
+) {
+  border-color: var(--v2-border-strong) !important;
+  background: #ffffff !important;
+  color: var(--v2-text-primary) !important;
+}
+
+[data-ui-generation="trading-v2"] :where(
+  [class*="_helpButton_"], [class*="_detailsPanelClose_"], [class*="_attachmentLink_"]
+) {
+  border-color: var(--v2-border-strong) !important;
+  background: #ffffff !important;
+  color: var(--v2-primary) !important;
+  box-shadow: none !important;
+}
+
+/* A primary action should read as interactive without becoming a dark card. */
+[data-ui-generation="trading-v2"] :where([class*="_primaryButton_"], [class*="_runStrip_"] button) {
+  border: 1px solid #8eb8df !important;
+  background: #eef6ff !important;
+  color: #174f86 !important;
+  box-shadow: none !important;
+}
+
+[data-ui-generation="trading-v2"] [class*="_navTooltip_"] {
+  border-color: var(--v2-border) !important;
+  background: #ffffff !important;
+  color: var(--v2-text-primary) !important;
+  box-shadow: var(--v2-shadow-panel) !important;
 }
 
 @media (max-width: 1199px) {

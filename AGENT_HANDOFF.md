@@ -2135,3 +2135,53 @@ docker run --rm -u 0 \
   --trade-date 2026-08-10 --run-slot MANUAL_V2_FINAL \
   --output /workspace/docs/reports/OIIS_LIVE_COMPLETE_CALCULATION_REPORT_2026-08-10.md
 ```
+
+## UXs3 research-workstation integration — 2026-08-10
+
+Reviewed both files in `/home/novius2/NIFTY50/UXs3/` completely and implemented the supported product requirements in the accepted React/Vite, API, PostgreSQL, and Nginx stack. The detailed plan is `docs/ui-ux/UXS3_IMPLEMENTATION_PLAN_2026-08-10.md`; the evidence report is `docs/ui-ux/UXS3_IMPLEMENTATION_REPORT_2026-08-10.md`.
+
+The homepage was a protected boundary. Neither `LandingPage.tsx` nor `LandingPage.module.css` changed. The navigation command palette is unavailable on `/`, including its keyboard shortcut.
+
+Implemented:
+
+- five-stage Explore/Research/Backtest/Compare/Paper journey in the strategy lab;
+- input-versus-result currency (`CURRENT`, `STALE`, `NO RESULT`) and input restoration;
+- Overview, Ladders, Trades, and Inputs & audit result views;
+- immutable run provenance, parameters, hashes, validation, and event history;
+- accessible non-home `Ctrl/Cmd+K` route/stock navigation with no order authority;
+- PostgreSQL-backed paper execution, position, P&L, target-track, webhook, mark-freshness, and incident summaries;
+- dynamic state/source strips for Paper, NIFTY 500, Futures, and Admin workspaces;
+- Nginx CSP correction for the existing Google/Clarity browser telemetry endpoints.
+
+No migration, data mutation, strategy change, exit change, or live-order action was performed.
+
+Verification:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+npm --prefix neon-stock-terminal/apps/web run typecheck
+npm --prefix neon-stock-terminal/apps/web run build
+npm --prefix neon-stock-terminal/apps/api run build
+npm --prefix neon-stock-terminal/apps/api test
+git diff --check
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:19090/n50 \
+  PLAYWRIGHT_ADMIN_PASSWORD='<local-admin-password>' \
+  PLAYWRIGHT_OUTPUT_DIR=output/playwright/uxs3-final \
+  node tools/playwright/uxs3-regression.mjs
+```
+
+Results: web typecheck/build PASS; API build PASS; API tests 60/60 PASS; prior route/viewport regression 44/44 PASS; UXs3 mobile/desktop regression 26/26 PASS; final browser console clean; no horizontal overflow on checked home, lab, or paper pages. Visual evidence is reproducible under `output/playwright/uxs3-final/`.
+
+Deployment used the existing project only:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+docker compose -p trading-stack-novius2 build n50-dashboard
+docker compose -p trading-stack-novius2 up -d --no-deps n50-dashboard
+docker compose -p trading-stack-novius2 up -d --no-deps --force-recreate nginx
+curl -fsSI http://127.0.0.1:19090/n50/
+```
+
+The dashboard is healthy and the routed page returns HTTP 200. Never use `--remove-orphans`; the paper-trading and OIIS containers are valid services assembled through separate Compose files. Never use `down -v`.
+
+Known pre-existing failures: the full web lint reports 49 errors/40 warnings in legacy files; API lint cannot start because its existing ESLint config is loaded with the wrong module mode; the image build reports 13 existing npm audit findings (8 moderate, 3 high, 2 critical). These were not hidden or represented as passing, and dependency upgrades require a separately tested compatibility change. Roll back by reverting the UXs3 commit and rebuilding/recreating only `n50-dashboard` and Nginx; no database rollback is involved.

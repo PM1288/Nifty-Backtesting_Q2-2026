@@ -7,27 +7,49 @@ type Row = Record<string, unknown>;
 export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth: RequestAuthenticator) {
   app.get("/v1/workspace/paper-trading", async (_req, res, next) => {
     try {
-      const [summary, statuses, recent] = await Promise.all([
+      const [summary, statuses, recent, targetStatuses, incidents] = await Promise.all([
         prisma.$queryRawUnsafe<Row[]>(`
           select
             (select count(*)::int from paper_trading.trade_groups) as total_groups,
             (select count(*)::int from paper_trading.trade_groups where status in ('OPEN','PARTIALLY_OPEN','PARTIALLY_CLOSED','PENDING_ENTRY')) as active_groups,
+            (select count(*)::int from paper_trading.trade_groups where status='CLOSED') as closed_groups,
+            (select count(*)::int from paper_trading.trade_groups where status='PENDING_ENTRY') as pending_entry_groups,
             (select count(*)::int from paper_trading.positions where remaining_quantity > 0) as open_positions,
             (select coalesce(sum(realised_pnl),0)::text from paper_trading.positions) as realised_pnl,
             (select coalesce(sum(unrealised_pnl),0)::text from paper_trading.positions) as unrealised_pnl,
-            (select count(*)::int from paper_trading.webhook_outbox where status not in ('DELIVERED','CANCELLED')) as pending_webhooks
+            (select max(last_mark_at) from paper_trading.positions) as latest_mark_at,
+            (select count(*)::int from paper_trading.webhook_outbox where status not in ('DELIVERED','CANCELLED')) as pending_webhooks,
+            (select max(delivered_at) from paper_trading.webhook_outbox where status='DELIVERED') as latest_webhook_delivery,
+            (select count(*)::int from paper_trading.target_tracks where status in ('ACTIVE','PENDING_ENTRY')) as active_target_tracks,
+            (select count(*)::int from paper_trading.target_tracks where status in ('HIT','CLOSED_AT_TARGET')) as completed_target_tracks,
+            (select count(*)::int from paper_trading.data_quality_incidents where status not in ('RECOVERED','RESOLVED','CLOSED')) as open_data_incidents
         `),
         prisma.$queryRawUnsafe<Row[]>(`
           select status, count(*)::int as count
           from paper_trading.trade_groups group by status order by count(*) desc, status
         `),
         prisma.$queryRawUnsafe<Row[]>(`
-          select trade_group_id::text, strategy_id, asset_class, status, fully_closed,
-                 opened_at, closed_at, created_at
-          from paper_trading.trade_groups order by created_at desc limit 20
+          select g.trade_group_id::text,g.strategy_id,g.strategy_version,g.asset_class,g.status,g.fully_closed,
+                 g.opened_at,g.closed_at,g.created_at,count(distinct l.trade_leg_id)::int as leg_count,
+                 coalesce(sum(l.remaining_quantity),0)::text as remaining_units,
+                 coalesce(sum(p.realised_pnl),0)::text as realised_pnl,
+                 coalesce(sum(p.unrealised_pnl),0)::text as unrealised_pnl,max(p.last_mark_at) as last_mark_at
+          from paper_trading.trade_groups g
+          left join paper_trading.trade_legs l on l.trade_group_id=g.trade_group_id
+          left join paper_trading.positions p on p.trade_leg_id=l.trade_leg_id
+          group by g.trade_group_id order by g.created_at desc limit 20
+        `),
+        prisma.$queryRawUnsafe<Row[]>(`
+          select status,count(*)::int as count
+          from paper_trading.target_tracks group by status order by count(*) desc,status
+        `),
+        prisma.$queryRawUnsafe<Row[]>(`
+          select incident_type,status,count(*)::int as count,max(detected_at) as latest_detected_at
+          from paper_trading.data_quality_incidents
+          group by incident_type,status order by latest_detected_at desc limit 20
         `)
       ]);
-      res.json({ asOf: new Date().toISOString(), summary: summary[0] ?? {}, statuses, recent });
+      res.json({ asOf: new Date().toISOString(), environment: "PAPER", summary: summary[0] ?? {}, statuses, recent, targetStatuses, incidents });
     } catch (error) { next(error); }
   });
 

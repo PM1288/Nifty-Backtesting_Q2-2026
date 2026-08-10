@@ -29,6 +29,7 @@ import { resolvePrimarySection, SECTION_META, useAnalyticsExperienceMode } from 
 import { AuthGateModal } from "../auth/AuthGateModal";
 import { DataAge, EnvironmentBadge, FeedFreshnessBadge } from "../../design-system/TradingPrimitives";
 import { AuthStatus } from "./AuthStatus";
+import { CommandPalette, type CommandPaletteItem } from "./CommandPalette";
 import { HeaderTicker } from "./HeaderTicker";
 import styles from "./AppShell.module.css";
 
@@ -529,6 +530,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pageTitle = currentPage?.label ?? tr(currentSectionMeta.label);
   const authState = authReady && user ? "signed_in" : "guest";
   const prefetchDashboardRoute = useDashboardPrefetch(authReady);
+  const commandItems = useMemo<CommandPaletteItem[]>(() => {
+    const routes = allGroups.flatMap((group) => group.items.map((item) => ({
+      group: group.label,
+      label: item.label,
+      to: item.to,
+      keywords: [group.id]
+    })));
+    return [
+      ...routes,
+      { group: tr("Stocks"), label: "RELIANCE", to: "/analytics/stock/RELIANCE", keywords: ["stock", "instrument"] },
+      { group: tr("Stocks"), label: "TCS", to: "/analytics/stock/TCS", keywords: ["stock", "instrument"] },
+      { group: tr("Stocks"), label: "HDFCBANK", to: "/analytics/stock/HDFCBANK", keywords: ["stock", "instrument"] },
+      { group: tr("Market"), label: "NIFTY 50", to: "/analytics/market-state", keywords: ["index", "market"] }
+    ];
+  }, [allGroups, tr]);
 
   useTrackPageViews({
     pathname: location.pathname,
@@ -629,6 +645,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <span className={styles.brandMark}>NIFTY 50 TRADER</span>
               </Link>
+              <CommandPalette items={commandItems} showLauncher={location.pathname !== "/"} />
             </div>
 
             <div className={styles.topBarCenter}>

@@ -10,6 +10,8 @@
 !internal/**
 !services/oiis_live/
 !services/oiis_live/**
+!services/fno_volatility/
+!services/fno_volatility/**
 !platform/
 !platform/nifty_stratlab/
 !platform/nifty_stratlab/src/

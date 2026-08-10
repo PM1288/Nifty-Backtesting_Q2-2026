@@ -1,0 +1,59 @@
+{
+  "strategy_id": "FNO_VOLATILITY_TWO_GATE",
+  "version": "1.0.0",
+  "environment": "PAPER",
+  "model_kind": "TRANSPARENT_PERCENTILE_MVP",
+  "universe": {
+    "contract_plan": "NIFTY250_STOCK_DERIVATIVES",
+    "premarket_shortlist_size": 15,
+    "live_shortlist_size": 5,
+    "minimum_history_sessions": 90,
+    "percentile_history_sessions": 252
+  },
+  "schedule": {
+    "timezone": "Asia/Kolkata",
+    "premarket": "08:30",
+    "live_slots": ["09:30", "09:45", "10:00"],
+    "entry_cutoff": "11:00",
+    "exit_time": "15:15"
+  },
+  "market_data": {
+    "maximum_quote_age_seconds": 120,
+    "minimum_opening_bars": 5,
+    "maximum_source_bar_age_seconds": 180,
+    "minimum_two_sided_contracts": 2
+  },
+  "movement_score": {
+    "atr_percentile_weight": 0.30,
+    "bollinger_width_percentile_weight": 0.20,
+    "volume_ratio_percentile_weight": 0.15,
+    "absolute_return_percentile_weight": 0.15,
+    "adx_percentile_weight": 0.10,
+    "market_volatility_percentile_weight": 0.10,
+    "live_pre_score_weight": 0.55,
+    "gap_percentile_weight": 0.20,
+    "opening_range_percentile_weight": 0.15,
+    "volume_pace_percentile_weight": 0.10
+  },
+  "option_gate": {
+    "risk_free_rate": 0.06,
+    "dividend_yield": 0.0,
+    "scenario_count": 5000,
+    "forecast_implied_ratio_min": 1.15,
+    "expected_return_min": 0.05,
+    "probability_profit_min": 0.55,
+    "direction_entropy_min": 0.90,
+    "combined_spread_pct_max": 0.05,
+    "maximum_loss_probability_threshold": -0.20,
+    "charges_and_slippage_fraction": 0.01,
+    "iv_change_model": "REALIZED_IV_MEAN_REVERSION_PROXY_V1"
+  },
+  "execution": {
+    "paper_trading_only": true,
+    "auto_submit": false,
+    "lots": 1,
+    "entry_price_source": "CURRENT_ASK",
+    "exit_price_source": "CURRENT_BID",
+    "fixed_exit_time": "15:15"
+  }
+}

@@ -2259,3 +2259,19 @@ The build continues to report the pre-existing npm dependency audit findings (8 
 The summary originally rendered the execution-readiness near-miss table above the actual opportunity list. This could visually hide high-OFactor candidates when their live execution evidence was incomplete. The prominent summary table now renders `dashboard.recommendations` from the latest completed database run, ordered by `opportunity_rank`, and shows resolved/structural/session directions plus the separate execution rank and data status. The hero reports the dynamic opportunity count separately from authorised entries. No symbol is hard-coded.
 
 Headless browser verification through the authenticated Nginx route confirmed 15 dynamic rows, including `#7 TITAN`, `#9 GRASIM` and `#11 SHRIRAMFIN`, with no browser-console errors. The UI remains generic: future runs replace the symbols, counts, directions and ranks from PostgreSQL automatically.
+
+## F&O two-gate volatility signal service — 2026-08-10
+
+Implemented and deployed the paper-only `FNO_VOLATILITY_TWO_GATE` version 1.0.0 service. It reuses the protected SmartAPI collector and PostgreSQL rather than opening another broker session.
+
+- Stage A snapshots all active stock-option underlyings at 08:30 IST and scores completed-day movement features with no same-day EOD leakage.
+- Stage B runs at 09:30, 09:45 and 10:00 IST before an 11:00 cut-off, calculates opening evidence, generates only actual listed CE/PE structures, derives IV from two-sided quotes, and performs deterministic scenario repricing.
+- Every option-value gate uses CE/PE asks for entry, bids for valuation, exchange-source quote timestamps for freshness and fail-closed semantics.
+- Additive schema `fno_volatility` contains immutable strategy configuration, run identity, complete universe snapshots, movement predictions, option candidates, signals and service heartbeats.
+- UI route: `/n50/options/volatility-signals`; API route: `/v1/fno-volatility/dashboard` behind the existing authentication guard.
+
+10 August evidence: 186 stock-option underlyings, 185 with sufficient daily history, 2,200 active contracts (1,100 CE and 1,100 PE), 15 pre-market candidates and five post-close diagnostic candidates. The result was correctly `NO_TRADE`: zero actionable signals because the exchange session was closed and source quotes were stale. No paper or live order was submitted.
+
+Tests: seven Python financial/model tests pass; Ruff passes; web and API TypeScript checks pass; Vite production build passes; all 60 existing API tests pass; disposable PostgreSQL migration and repeat migration pass; authenticated API returns 200; Playwright route regression passes with 191 rendered rows and no console errors. `fno-volatility` and `n50-dashboard` are healthy under Compose project `trading-stack-novius2`.
+
+Operations and limitations: `docs/fno-volatility/README.md`. Current run report: `docs/fno-volatility/2026-08-10-signal-report.md`. Automatic paper submission remains intentionally disabled pending actual-option walk-forward validation; current movement and IV-change layers are explicitly labelled transparent proxy models, not promoted ML models.

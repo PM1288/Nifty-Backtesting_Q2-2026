@@ -423,6 +423,23 @@ export function fetchAnalyticsOptionsStructure(): Promise<AnalyticsOptionsStruct
   return getJson<AnalyticsOptionsStructureResponse>("/v1/analytics/options-structure");
 }
 
+export type FnoVolatilityDashboard = {
+  environment: "PAPER";
+  strategyId: string;
+  strategyVersion: string;
+  modelKind: string;
+  premarketRun: Record<string, any> | null;
+  liveRun: Record<string, any> | null;
+  universe: Record<string, any> | null;
+  premarket: Array<Record<string, any>>;
+  live: Array<Record<string, any>>;
+  heartbeats: Array<Record<string, any>>;
+};
+
+export function fetchFnoVolatilityDashboard(): Promise<FnoVolatilityDashboard> {
+  return getJson<FnoVolatilityDashboard>("/v1/fno-volatility/dashboard");
+}
+
 export function fetchAnalyticsStrategyEvaluation(): Promise<AnalyticsStrategyEvaluationResponse> {
   return getJson<AnalyticsStrategyEvaluationResponse>("/v1/analytics/strategy-evaluation");
 }

@@ -409,7 +409,8 @@ function buildV2SidebarGroups(tr: (value: string) => string): NavGroup[] {
       label: tr("Options"),
       items: [
         { label: tr("Options Structure"), to: "/options/structure", icon: Sigma, match: (pathname) => pathname.startsWith("/options/structure") },
-        { label: tr("Option Snapshot"), to: "/options/snapshot", icon: BarChart3, match: (pathname) => pathname.startsWith("/options/snapshot") }
+        { label: tr("Option Snapshot"), to: "/options/snapshot", icon: BarChart3, match: (pathname) => pathname.startsWith("/options/snapshot") },
+        { label: tr("Volatility Signals"), to: "/options/volatility-signals", icon: Activity, match: (pathname) => pathname.startsWith("/options/volatility-signals") }
       ]
     },
     {

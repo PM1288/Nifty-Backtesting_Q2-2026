@@ -30,6 +30,7 @@ import { registerSupportingMetrics } from "./supportingMetrics";
 import { registerWillSurface } from "./willSurface";
 import { registerOiisLive, registerOiisLivePublic } from "./oiisLive";
 import { registerWorkspaceRoutes } from "./workspace";
+import { registerFnoVolatility } from "./fnoVolatility";
 
 export function registerRoutes(
   app: Express,
@@ -70,5 +71,6 @@ export function registerRoutes(
   registerWillSurface(app, prisma);
   registerStocks(app, prisma);
   registerOiisLive(app, prisma);
+  registerFnoVolatility(app, prisma);
   registerWorkspaceRoutes(app, prisma, authRuntime);
 }

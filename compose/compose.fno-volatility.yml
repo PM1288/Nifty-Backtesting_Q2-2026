@@ -1,0 +1,52 @@
+services:
+  fno-volatility-migrate:
+    image: trading-stack-fno-volatility:1.0.0
+    build:
+      context: .
+      dockerfile: services/fno_volatility/Dockerfile
+    env_file: ./.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      FNO_VOLATILITY_POLICY_PATH: /app/config/policy.json
+      FNO_VOLATILITY_MIGRATION_PATH: /app/sql/001_fno_volatility.sql
+    command: ["migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  fno-volatility:
+    image: trading-stack-fno-volatility:1.0.0
+    build:
+      context: .
+      dockerfile: services/fno_volatility/Dockerfile
+    env_file: ./.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      FNO_VOLATILITY_POLICY_PATH: /app/config/policy.json
+      FNO_VOLATILITY_POLL_SECONDS: ${FNO_VOLATILITY_POLL_SECONDS:-30}
+      PAPER_TRADING_ONLY: "true"
+      TZ: Asia/Kolkata
+    command: ["scheduler"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "fno-volatility", "verify-config"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768m

@@ -36,7 +36,7 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
       requestedDate || null
     );
     const tradeDate = requestedDate || dates[0]?.trade_date?.toISOString().slice(0, 10) || null;
-    const [watchlist, entries, runs, diagnostics, errors, paper, freshness, queues, funnel, rejectionReasons, nearMisses, historical] = await Promise.all([
+    const [watchlist, entries, runs, diagnostics, errors, paper, freshness, queues, funnel, rejectionReasons, nearMisses, historical, recommendations, failureBuckets, gateBreakdown, universe] = await Promise.all([
       prisma.$queryRawUnsafe(`SELECT * FROM oiis_live.v_current_watchlist WHERE active AND ($1::date IS NULL OR trade_date=$1::date) ORDER BY rank NULLS LAST,symbol`, tradeDate),
       prisma.$queryRawUnsafe(`SELECT * FROM oiis_live.entry_claim WHERE ($1::date IS NULL OR trade_date=$1::date) ORDER BY signal_ts DESC`, tradeDate),
       prisma.$queryRawUnsafe(`SELECT * FROM oiis_live.selection_run ORDER BY started_at DESC LIMIT 20`),
@@ -57,21 +57,20 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
         count(*)::int evaluated,
         count(*) FILTER (WHERE data_permission='FULL')::int data_permitted,
         count(*) FILTER (WHERE data_quality>=85)::int quality_pass,
-        count(*) FILTER (WHERE ofactor>=74)::int ofactor_pass,
+        count(*) FILTER (WHERE ofactor>=54)::int ofactor_pass,
+        count(*) FILTER (WHERE ofactor_level='LOW')::int ofactor_low,
+        count(*) FILTER (WHERE ofactor_level='MEDIUM')::int ofactor_medium,
+        count(*) FILTER (WHERE ofactor_level='HIGH')::int ofactor_high,
         count(*) FILTER (WHERE xfactor_snapshot>=76)::int xfactor_pass,
-        count(*) FILTER (WHERE
-          COALESCE((condition_results#>>'{HIGH,no_unresolved_hard_gate}')::boolean,false)
-          OR COALESCE((condition_results#>>'{MEDIUM,no_unresolved_hard_gate}')::boolean,false)
-          OR COALESCE((condition_results#>>'{LOW,no_unresolved_hard_gate}')::boolean,false)
-        )::int hard_gate_clear,
+        count(*) FILTER (WHERE blocking_gate_count=0)::int hard_gate_clear,
         count(*) FILTER (WHERE daily_level='HIGH')::int high_count,
         count(*) FILTER (WHERE daily_level='MEDIUM')::int medium_count,
         count(*) FILTER (WHERE daily_level='LOW')::int low_count,
         count(*) FILTER (WHERE selected)::int selected
-       FROM oiis_live.daily_candidate
+       FROM oiis_live.v_latest_daily_candidate
        WHERE ($1::date IS NULL OR trade_date=$1::date)`, tradeDate),
       prisma.$queryRawUnsafe(`SELECT reason, count(*)::int count
-       FROM oiis_live.daily_candidate candidate
+       FROM oiis_live.v_latest_daily_candidate candidate
        CROSS JOIN LATERAL jsonb_array_elements_text(candidate.reason_codes) reason
        WHERE ($1::date IS NULL OR candidate.trade_date=$1::date)
        GROUP BY reason ORDER BY count(*) DESC, reason LIMIT 8`, tradeDate),
@@ -79,24 +78,40 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
         ofactor,xfactor_snapshot,data_quality,data_permission,directional_edge,rsi14,willr14,
         reference_price,buy_limit,no_chase_price,reason_codes,condition_results,
         round((
-          LEAST(COALESCE(ofactor,0)/74,1)*35 +
+          LEAST(COALESCE(ofactor,0)/54,1)*35 +
           LEAST(COALESCE(xfactor_snapshot,0)/76,1)*30 +
           LEAST(COALESCE(data_quality,0)/85,1)*15 +
           CASE WHEN data_permission='FULL' THEN 10 ELSE 0 END +
-          CASE WHEN
-            COALESCE((condition_results#>>'{HIGH,no_unresolved_hard_gate}')::boolean,false)
-            OR COALESCE((condition_results#>>'{MEDIUM,no_unresolved_hard_gate}')::boolean,false)
-            OR COALESCE((condition_results#>>'{LOW,no_unresolved_hard_gate}')::boolean,false)
-          THEN 10 ELSE 0 END
+          CASE WHEN blocking_gate_count=0 THEN 10 ELSE 0 END
         )::numeric,2) readiness_score
-       FROM oiis_live.daily_candidate
+       FROM oiis_live.v_latest_daily_candidate
        WHERE ($1::date IS NULL OR trade_date=$1::date) AND NOT selected
        ORDER BY readiness_score DESC,ofactor DESC NULLS LAST,xfactor_snapshot DESC NULLS LAST,symbol
        LIMIT 15`, tradeDate),
       prisma.$queryRawUnsafe(`SELECT historical_run_id,start_date,end_date,status,candidate_count,
         qualified_candidate_count,triggered_trade_count,summary,completed_at
        FROM oiis_live.historical_run WHERE status='COMPLETED'
-       ORDER BY completed_at DESC NULLS LAST,created_at DESC LIMIT 1`)
+       ORDER BY completed_at DESC NULLS LAST,created_at DESC LIMIT 1`),
+      prisma.$queryRawUnsafe(`SELECT candidate_id,symbol,sector,direction,ofactor,ofactor_level,
+        xfactor_snapshot,directional_edge,directional_edge_level,extension_level,volume_level,
+        failed_gate_count,blocking_gate_count,recommendation_rank,selected,reason_codes,
+        feature_values,gate_evidence,universe_flags
+       FROM oiis_live.v_latest_daily_candidate
+       WHERE ($1::date IS NULL OR trade_date=$1::date) AND recommended
+       ORDER BY recommendation_rank`, tradeDate),
+      prisma.$queryRawUnsafe(`SELECT failed_gate_count,count(*)::int count
+       FROM oiis_live.v_latest_daily_candidate
+       WHERE ($1::date IS NULL OR trade_date=$1::date)
+       GROUP BY failed_gate_count ORDER BY failed_gate_count`, tradeDate),
+      prisma.$queryRawUnsafe(`SELECT reason,direction,count(*)::int count
+       FROM oiis_live.v_latest_daily_candidate candidate
+       CROSS JOIN LATERAL jsonb_array_elements_text(candidate.reason_codes) reason
+       WHERE ($1::date IS NULL OR candidate.trade_date=$1::date)
+       GROUP BY reason,direction ORDER BY reason,direction`, tradeDate),
+      prisma.$queryRawUnsafe(`SELECT count(*) FILTER (WHERE active)::int total,
+        count(*) FILTER (WHERE active AND is_fno)::int fno,
+        count(*) FILTER (WHERE active AND is_nifty50)::int nifty50,
+        max(refreshed_at) refreshed_at FROM oiis_live.universe_member`)
     ]);
     res.json({
       environment: "PAPER",
@@ -114,8 +129,35 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
       funnel: (funnel as Array<unknown>)[0],
       rejectionReasons,
       nearMisses,
+      recommendations,
+      failureBuckets,
+      gateBreakdown,
+      universe: (universe as Array<unknown>)[0],
       historical: (historical as Array<unknown>)[0] ?? null
     });
+  });
+
+  app.get("/v1/oiis-live/candidates", async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const tradeDate = text(req.query.tradeDate, 10);
+    const search = text(req.query.search, 32).toUpperCase();
+    const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT candidate_id,run_id,signal_date,trade_date,symbol,sector,direction,
+        daily_level,ofactor_level,directional_edge_level,extension_level,volume_level,
+        canonical_status,selected,rank,recommended,recommendation_rank,data_quality,
+        data_permission,ofactor,xfactor_snapshot,directional_edge,rsi14,willr14,ema61,
+        macd_line,atr14,volume_vs_sma20,volume_percentile_90,reference_price,
+        failed_gate_count,blocking_gate_count,component_scores,market_context,
+        condition_results,reason_codes,feature_values,gate_evidence,universe_flags,
+        observed_at,available_at
+       FROM oiis_live.v_latest_daily_candidate
+       WHERE ($1::date IS NULL OR trade_date=$1::date)
+         AND ($2='' OR symbol ILIKE '%'||$2||'%' OR sector ILIKE '%'||$2||'%')
+       ORDER BY recommended DESC,recommendation_rank NULLS LAST,blocking_gate_count,
+         failed_gate_count,ofactor DESC,symbol`,
+      tradeDate || null, search
+    );
+    res.json({ environment: "PAPER", tradeDate: tradeDate || null, count: rows.length, candidates: rows });
   });
 }
 

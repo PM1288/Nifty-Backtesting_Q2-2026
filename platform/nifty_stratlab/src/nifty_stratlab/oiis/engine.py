@@ -318,6 +318,7 @@ def execution(feature: OIISFeature, direction: str, ofactor: Mapping[str, Any], 
 def evaluate_feature(feature: OIISFeature, thresholds: Mapping[str, Any] | None = None) -> dict[str, Any]:
     thresholds = thresholds or {}
     ofactor_min = float(thresholds.get("ofactor_min", 74.0))
+    directional_edge_min = float(thresholds.get("directional_edge_min", 8.0))
     dq = data_quality(feature)
     ofactor_weights = thresholds.get("ofactor_weights")
     neutral_components = set(thresholds.get("neutral_components") or [])
@@ -326,8 +327,8 @@ def evaluate_feature(feature: OIISFeature, thresholds: Mapping[str, Any] | None 
     long_score = opportunity(feature, "LONG", ofactor_weights)
     short_score = opportunity(feature, "SHORT", ofactor_weights)
     edge = round(float(long_score["final_score"]) - float(short_score["final_score"]), 4)
-    conflict = min(float(long_score["final_score"]), float(short_score["final_score"])) >= ofactor_min and abs(edge) < 8.0
-    direction = "CONFLICT" if conflict else "LONG" if edge >= 8.0 else "SHORT" if edge <= -8.0 else "NEUTRAL"
+    conflict = min(float(long_score["final_score"]), float(short_score["final_score"])) >= ofactor_min and abs(edge) < directional_edge_min
+    direction = "CONFLICT" if conflict else "LONG" if edge >= directional_edge_min else "SHORT" if edge <= -directional_edge_min else "NEUTRAL"
     selected = long_score if direction in {"LONG", "NEUTRAL", "CONFLICT"} else short_score
     xfactor = execution(feature, "LONG" if direction in {"NEUTRAL", "CONFLICT"} else direction, selected, dq, thresholds)
     if conflict:

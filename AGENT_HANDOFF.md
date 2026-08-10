@@ -1983,3 +1983,115 @@ docker compose -p trading-stack-novius2 up -d --no-deps --force-recreate n50-das
   archive and every SHA-256 checksum validate.
 - Full implementation, data policy, indicator catalogue, limitations and rerun
   commands are in `docs/worklogs/fno-daily-technical-five-year-export.md`.
+
+## OIIS live rejection explanations — 2026-08-10
+
+- Added a dynamic `Gate definitions` table to
+  `neon-stock-terminal/apps/web/src/pages/OiisLivePage.tsx`.
+- The table maps each live rejection reason to its meaning, exact threshold or
+  formula, indicator fields and evidence tables. Counts are read from the
+  selected date's `oiis_live.daily_candidate.reason_codes` aggregation.
+- Documented that rejection counts overlap, and that RSI14/WILLR14 are
+  intraday trigger context while daily OIIS setup/liquidity gates run first.
+- Verification: `npm run build` in `neon-stock-terminal/apps/web` passed.
+
+## OIIS Live V2 tiered screening and full evidence — 2026-08-10
+
+### Delivered behaviour
+
+- Universe is now only the refreshed union of unexpired SmartAPI stock F&O
+  underlyings and official NSE NIFTY 50 members. NIFTY 500 membership alone is
+  not sufficient. The verified universe is 208 symbols, including 50 NIFTY 50
+  members.
+- OFactor tiers are LOW 54, MEDIUM 64 and HIGH 74. A LOW result passes the
+  OFactor gate and retains its tier throughout PostgreSQL, API and UI.
+- Absolute directional-edge tiers are LOW 6, MEDIUM 7 and HIGH 8.
+- Comparable 90-session volume-percentile tiers are LOW 20%, MEDIUM 30% and
+  HIGH 50%. During live sessions, partial volume is compared with volume
+  accumulated by the same IST time on prior sessions.
+- Extension/ATR profiles are LOW 1.2, MEDIUM 1.4 and HIGH 1.5; values above
+  1.5 block. Stop width remains recorded but is non-blocking. Trigger
+  confirmation has been removed completely.
+- Every symbol has a detail row. Missing inputs produce an explicit
+  `DATA_INSUFFICIENT` row with null metrics rather than disappearing.
+- The ten best evaluable rows are always recommendations, ordered by blocking
+  gate count, total failed gates, OFactor, directional edge and data quality.
+  Recommendations do not receive paper-entry permission unless all blocking
+  gates pass.
+- The dashboard includes Summary and All stock details views. The detail view
+  expands each stock into raw OHLC, current/D-1/D-2/20-day/90-day volume,
+  volume percentile, SMA20/SMA50/EMA61, ATR14, RSI14, Williams %R, MACD,
+  reward/risk, extension, risk/ATR, complete long/short OFactor components and
+  per-gate formula/actual/source evidence.
+- Selection slots are 08:30, 09:30 and 15:00 Asia/Kolkata on governed trading
+  sessions, with deterministic run-slot identity and restart catch-up.
+
+### Database and API
+
+- Additive migration: `db/sql/033_oiis_live_tiered_evidence.sql`.
+- New table/view: `oiis_live.universe_member` and
+  `oiis_live.v_latest_daily_candidate`.
+- Extended candidate evidence fields include `ofactor_level`,
+  `directional_edge_level`, `extension_level`, `volume_level`,
+  `volume_percentile_90`, failure counts, recommendation fields,
+  `feature_values`, `gate_evidence` and `universe_flags`.
+- Read endpoints:
+  - `GET /n50/v1/oiis-live/dashboard`
+  - `GET /n50/v1/oiis-live/candidates?tradeDate=YYYY-MM-DD`
+
+### Verified final run
+
+```text
+run_id: a6744eb7-af21-4ca0-8ffe-b892801722cf
+run_slot: MANUAL_V2_FINAL
+signal_date: 2026-08-07
+trade_date: 2026-08-10
+evaluated: 208
+evaluable data: 190
+explicit DATA_INSUFFICIENT: 18
+OFactor LOW/MEDIUM/HIGH: 73 / 34 / 7
+OFactor below/not estimable: 76 / 18
+recommendations: 10
+qualified for intraday revalidation: 2
+fully selected/entry-enabled: 0
+TRIGGER_CONFIRMATION_MISSING rows: 0
+volume percentile range: 0.0000 to 0.7941, 21 distinct rounded values
+result_hash: 677ac36993ce7dad485a6fd1c0474a5c4a0088b7b5a86b84bebb652c129027bc
+```
+
+Top recommendations were ASIANPAINT, IRFC, RECLTD, MPHASIS, NAUKRI,
+DRREDDY, BAJFINANCE, MUTHOOTFIN, KALYANKJIL and IDFCFIRSTB. They are research
+recommendations only; none cleared every blocking gate on this snapshot.
+
+### Commands and evidence
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+python3 -m compileall -q services/oiis_live/src platform/nifty_stratlab/src
+npm --prefix neon-stock-terminal/apps/api run build
+npm --prefix neon-stock-terminal/apps/web run build
+docker build -t trading-stack-oiis-live:1.0.0 \
+  -f services/oiis_live/Dockerfile .
+docker run --rm -u 0 --entrypoint sh \
+  -v "$PWD/services/oiis_live/tests:/tests:ro" \
+  trading-stack-oiis-live:1.0.0 \
+  -c 'pip install -q pytest==8.4.1 && pytest /tests -q'
+
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 \
+  -f docker-compose.yml -f compose/compose.paper-trading.yml \
+  -f compose/compose.oiis-live.yml up -d --no-deps --force-recreate oiis-live
+docker compose -p trading-stack-novius2 up -d --no-deps \
+  --force-recreate n50-dashboard
+```
+
+Results: Python service tests 8 passed; API TypeScript build passed; web
+TypeScript/Vite production build passed with 2,448 modules. Migration 033 was
+applied successfully. OIIS and dashboard containers were healthy. The routed
+dashboard API returned 208 candidates and ten recommendations. One accidental
+duplicate dashboard container under the wrong Compose project was immediately
+removed; the production `trading-stack-novius2` container and all database
+volumes remained intact.
+
+Full formulas and evidence-map documentation:
+`docs/worklogs/oiis-live-rejection-gate-definitions-2026-08-10.md`.

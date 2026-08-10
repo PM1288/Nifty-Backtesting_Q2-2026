@@ -314,11 +314,29 @@ export type OiisLiveDashboard = {
   funnel: Record<string, any>;
   rejectionReasons: Array<{ reason: string; count: number }>;
   nearMisses: Array<Record<string, any>>;
+  recommendations: Array<Record<string, any>>;
+  failureBuckets: Array<{ failed_gate_count: number; count: number }>;
+  gateBreakdown: Array<{ reason: string; direction: string; count: number }>;
+  universe: Record<string, any>;
   historical: Record<string, any> | null;
 };
 
 export function fetchOiisLiveDashboard(tradeDate?: string): Promise<OiisLiveDashboard> {
   return getJson<OiisLiveDashboard>(`/v1/oiis-live/dashboard${tradeDate ? `?tradeDate=${encodeURIComponent(tradeDate)}` : ""}`);
+}
+
+export type OiisLiveCandidates = {
+  environment: "PAPER";
+  tradeDate: string | null;
+  count: number;
+  candidates: Array<Record<string, any>>;
+};
+
+export function fetchOiisLiveCandidates(tradeDate?: string, search?: string): Promise<OiisLiveCandidates> {
+  const query = new URLSearchParams();
+  if (tradeDate) query.set("tradeDate", tradeDate);
+  if (search) query.set("search", search);
+  return getJson<OiisLiveCandidates>(`/v1/oiis-live/candidates?${query.toString()}`);
 }
 
 export async function mutateOiisLive(path: string, method: "POST" | "PATCH" | "DELETE", body?: unknown) {

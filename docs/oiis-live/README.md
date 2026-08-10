@@ -31,15 +31,19 @@ The dashboard response includes `funnel`, `nearMisses`, `rejectionReasons` and
 the latest completed `historical` run in addition to the governed watchlist.
 Near misses are research context only and never receive trade permission.
 
-The verified 2026-08-10 run evaluated 500 symbols: 500 passed data quality, 40
-reached OFactor 74, 21 reached XFactor 76, zero cleared every hard gate and zero
-were selected.  The UI therefore correctly shows no actionable trade while
-still exposing the evidence behind that decision.
+The verified 2026-08-10 V2 run evaluated all 208 current F&O/NIFTY 50 universe
+members. 190 had evaluable current features and 18 were retained as explicit
+`DATA_INSUFFICIENT` rows. OFactor tiers were 73 LOW, 34 MEDIUM, 7 HIGH, 76 below
+minimum and 18 not estimable. Ten near-pass recommendations were ranked, two
+rows were qualified for intraday revalidation, zero cleared every blocking
+gate and zero were entry-enabled. The UI therefore correctly shows no
+authorised trade while still exposing every stock and every calculation.
 
 ## Governed flow
 
-1. At 08:40 Asia/Kolkata on each weekday, or on restart after 08:40, select the
-   latest completed daily session for the current trade date.
+1. At 08:30, 09:30 and 15:00 Asia/Kolkata on each governed trading session,
+   select the latest completed daily session and current intraday snapshot.
+   A restart catches up any due slot once.
 2. Admit a HIGH, MEDIUM, or LOW daily candidate only when DQ is at least 85,
    permission is `FULL`, and no daily hard gate is unresolved.
 3. Add the candidate to `oiis_live.watchlist_item`.  Daily selection is
@@ -47,8 +51,10 @@ still exposing the evidence behind that decision.
    rows are retained.
 4. The SmartAPI collector merges all active OIIS watchlist symbols into its
    dynamically prioritised subscription set, before derivative overflow.
-5. Only a canonical row (`O >= 74`, `X >= 76`) is automatically entry-enabled.
-   A daily level is screening context, not trade authorisation.
+5. OFactor passes at 54 and carries LOW (`54–<64`), MEDIUM (`64–<74`) or HIGH
+   (`>=74`). Directional edge similarly carries LOW (`6–<7`), MEDIUM (`7–<8`)
+   or HIGH (`>=8`). These labels do not bypass the remaining gates. A row is
+   entry-enabled only when every blocking gate passes and `X >= 76`.
 6. During the session, process every stored one-minute bar in order.  The first
    completed condition with RSI(14) `< 30` and Williams %R(14) `< -80` claims
    the symbol/date atomically.
@@ -65,9 +71,12 @@ still exposing the evidence behind that decision.
 
 ## PostgreSQL map
 
-The additive migration is `db/sql/032_oiis_live.sql`.  Important objects:
+The base migration is `db/sql/032_oiis_live.sql`; V2 evidence and run-slot
+changes are additive in `db/sql/033_oiis_live_tiered_evidence.sql`. Important
+objects:
 
 - `oiis_live.selection_run`: immutable selection-run identity and counts.
+- `oiis_live.universe_member`: refreshed F&O/NIFTY 50 membership provenance.
 - `oiis_live.daily_candidate`: all evaluated daily evidence and conditions.
 - `oiis_live.watchlist_item`: generated/manual editable trade-date list.
 - `oiis_live.intraday_evaluation`: every evaluated minute and indicator result.
@@ -77,6 +86,7 @@ The additive migration is `db/sql/032_oiis_live.sql`.  Important objects:
 - `oiis_live.error_outbox`: deduplicated retrying error notifications.
 - `oiis_live.historical_run` and `historical_trade`: report provenance.
 - `oiis_live.v_current_watchlist` and `v_service_diagnostics`: UI views.
+- `oiis_live.v_latest_daily_candidate`: one authoritative latest run per date.
 
 Paper execution, fills, lifecycle targets, costs, 35% management tax provision,
 observations and outbound n8n events remain in `paper_trading.*`.

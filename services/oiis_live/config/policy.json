@@ -1,7 +1,21 @@
 {
   "policy_id": "OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0",
-  "version": "1.0",
-  "selection_time_ist": "08:40",
+  "version": "2.0",
+  "selection_times_ist": ["08:30", "09:30", "15:00"],
+  "trading_sessions_only": true,
+  "universe": "CURRENT_FNO_UNION_NIFTY50",
+  "tiers": {
+    "ofactor": {"low": 54, "medium": 64, "high": 74},
+    "directional_edge": {"low": 6, "medium": 7, "high": 8},
+    "extension_atr_max": {"low": 1.2, "medium": 1.4, "high": 1.5},
+    "volume_percentile_90": {"low": 0.2, "medium": 0.3, "high": 0.5}
+  },
+  "gates": {
+    "trigger_confirmation_enabled": false,
+    "stop_too_wide_blocking": false,
+    "stop_too_wide_recorded": true,
+    "minimum_recommendations": 10
+  },
   "monitor_start_ist": "09:15",
   "monitor_end_ist": "15:30",
   "entry": {

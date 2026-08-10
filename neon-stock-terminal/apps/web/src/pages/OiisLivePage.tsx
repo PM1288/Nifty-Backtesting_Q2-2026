@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuthGate } from "../auth/AuthGateProvider";
-import { fetchOiisLiveDashboard, mutateOiisLive, type OiisLiveDashboard } from "../lib/api";
+import { fetchOiisLiveCandidates, fetchOiisLiveDashboard, mutateOiisLive, type OiisLiveDashboard } from "../lib/api";
 import { STRATEGY_SECTION_TABS } from "./AnalyticsChrome";
 import styles from "./OiisLivePage.module.css";
 
@@ -44,6 +44,58 @@ function reasons(row: Record<string, any>) {
   return Array.isArray(row.reason_codes) ? row.reason_codes.map(humanise).slice(0, 2) : [];
 }
 
+const GATE_GUIDE = [
+  {
+    code: "OFACTOR_BELOW_MINIMUM",
+    meaning: "Directional opportunity score is below the governed minimum.",
+    rule: "Selected-direction OFactor must be ≥ 54. LOW 54, MEDIUM 64, HIGH 74; the tier is retained.",
+    fields: "ofactor, directional_edge, condition_results",
+    source: "oiis_live.daily_candidate; component inputs from the OIIS feature snapshot"
+  },
+  {
+    code: "NO_VALID_SETUP",
+    meaning: "No recognised daily price/trend setup exists for the selected direction.",
+    rule: "LONG/SHORT breakout or SMA20/SMA50 pullback structure, with volume_ratio_20 ≥ 1.2 or 90-day volume percentile ≥ 30%.",
+    fields: "open/high/low/close, prior_high_20/prior_low_20, sma20, sma50, volume_ratio_20",
+    source: "oiis_live.daily_candidate.condition_results; daily OHLCV/indicator feature tables"
+  },
+  {
+    code: "INSUFFICIENT_LIQUIDITY",
+    meaning: "The stock may not be tradable at the paper order size without unreliable execution.",
+    rule: "Primary: volume_ratio_20 ≥ 0.75 and turnover percentile ≥ 10%. If unavailable, 90-day volume percentile must be ≥ 30%. Volume tiers 20/30/50% are always recorded.",
+    fields: "volume_ratio_20, turnover_percentile, liquidity_tradability, liquidity_slippage_quality",
+    source: "oiis_live.daily_candidate.condition_results; daily volume/turnover feature tables"
+  },
+  {
+    code: "REWARD_RISK_BELOW_MINIMUM",
+    meaning: "The available price path does not offer enough reward for the structural risk.",
+    rule: "reward_risk must be ≥ 1.5; it is calculated from stop risk and room to the prior 20-day barrier.",
+    fields: "close_price, structural_stop, risk_per_share, prior_high_20/prior_low_20, reward_risk",
+    source: "oiis_live.daily_candidate.condition_results; OIIS daily feature snapshot"
+  },
+  {
+    code: "EXCESSIVE_EXTENSION",
+    meaning: "Price is already too far from its short-term trend to chase safely.",
+    rule: "Fails when extension_atr > 1.5, where extension_atr = abs(close − SMA20) / ATR14.",
+    fields: "close_price, sma20, atr14, extension_atr",
+    source: "oiis_live.daily_candidate.condition_results; daily indicator feature tables"
+  },
+  {
+    code: "DIRECTIONAL_EDGE_BELOW_MINIMUM",
+    meaning: "Long and short opportunity scores are too close; direction is not decisive.",
+    rule: "Absolute long-versus-short OFactor edge must be ≥ 6. LOW 6, MEDIUM 7, HIGH 8.",
+    fields: "long_ofactor, short_ofactor, directional_edge",
+    source: "oiis_live.daily_candidate; OIIS directional score components"
+  },
+  {
+    code: "STOP_TOO_WIDE",
+    meaning: "The structural stop is far away relative to normal volatility; this is currently diagnostic only.",
+    rule: "risk_atr = risk_per_share / ATR14. Values > 2.5 are recorded but do not block selection.",
+    fields: "structural_stop, risk_per_share, atr14, risk_atr",
+    source: "oiis_live.daily_candidate.condition_results; daily OHLCV and ATR14"
+  }
+] as const;
+
 export function OiisLivePage() {
   const { user, authReady, openAuthGate } = useAuthGate();
   const [data, setData] = useState<OiisLiveDashboard | null>(null);
@@ -52,12 +104,17 @@ export function OiisLivePage() {
   const [tradeDate, setTradeDate] = useState("");
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<string | null>(null);
+  const [view, setView] = useState<"summary" | "details">("summary");
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [candidates, setCandidates] = useState<Array<Record<string, any>>>([]);
 
   const load = useCallback(async (date?: string) => {
     try {
       setError("");
       const next = await fetchOiisLiveDashboard(date);
       setData(next);
+      const details = await fetchOiisLiveCandidates(date || next.tradeDate || undefined);
+      setCandidates(details.candidates);
       if (next.tradeDate) setTradeDate(next.tradeDate);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -144,14 +201,73 @@ export function OiisLivePage() {
   const historicalSummary = data?.historical?.summary ?? {};
   const primaryBlocker = data?.rejectionReasons?.[0];
   const noTrade = evaluated > 0 && selected === 0;
+  const filteredCandidates = candidates.filter((row) => {
+    const query = candidateSearch.trim().toUpperCase();
+    return !query || String(row.symbol ?? "").includes(query) || String(row.sector ?? "").toUpperCase().includes(query);
+  });
+  const setupStats = candidates.reduce((totals, row) => {
+    const actual = row.gate_evidence?.NO_VALID_SETUP?.actual ?? {};
+    if (!Object.keys(actual).length) return totals;
+    if (row.direction === "LONG" && !actual.long_breakout) totals.longBreakout += 1;
+    if (row.direction === "LONG" && !actual.long_pullback) totals.longPullback += 1;
+    if (row.direction === "SHORT" && !actual.short_breakdown) totals.shortBreakdown += 1;
+    if (row.direction === "SHORT" && !actual.short_pullback) totals.shortPullback += 1;
+    if (!actual.volume_good) totals.volume += 1;
+    return totals;
+  }, { longBreakout: 0, longPullback: 0, shortBreakdown: 0, shortPullback: 0, volume: 0 });
   const funnelSteps = [
     ["Universe evaluated", evaluated, "All stocks with a completed daily evaluation"],
     ["Data quality ≥ 85", integer(funnel, "quality_pass"), "Reliable enough for the governed screen"],
-    ["OFactor ≥ 74", integer(funnel, "ofactor_pass"), "Directional opportunity passed"],
+    ["OFactor ≥ 54", integer(funnel, "ofactor_pass"), "LOW, MEDIUM or HIGH opportunity passed"],
     ["XFactor ≥ 76", integer(funnel, "xfactor_pass"), "Execution quality passed"],
     ["Hard gates clear", integer(funnel, "hard_gate_clear"), "No unresolved structural blocker"],
     ["Selected", selected, "Added to today’s governed watchlist"]
   ] as const;
+
+  const detailsView = <section className={styles.panel}>
+    <div className={styles.sectionHeading}>
+      <div><span className={styles.kicker}>Full evidence ledger</span><h2>Every F&amp;O or NIFTY 50 stock evaluated</h2></div>
+      <span className={styles.note}>{filteredCandidates.length} of {candidates.length} stocks · latest completed run</span>
+    </div>
+    <div className={styles.detailToolbar}>
+      <input value={candidateSearch} onChange={(event) => setCandidateSearch(event.target.value)} placeholder="Search symbol or sector" aria-label="Search evaluated stocks" />
+      <span>F&amp;O {value(data?.universe ?? {}, "fno")} · NIFTY 50 {value(data?.universe ?? {}, "nifty50")}</span>
+    </div>
+    <div className={styles.tableWrap}>
+      <table className={`${styles.table} ${styles.detailTable}`}>
+        <thead><tr><th>Rank / stock</th><th>Universe</th><th>Direction</th><th>OFactor</th><th>X / DQ</th><th>Directional edge</th><th>Volume</th><th>Extension / R:R</th><th>Failed gates</th><th>Evidence</th></tr></thead>
+        <tbody>{filteredCandidates.map((row) => {
+          const features = row.feature_values ?? {};
+          const gates = row.gate_evidence ?? {};
+          const longComponents = row.component_scores?.ofactor_long?.components ?? {};
+          const shortComponents = row.component_scores?.ofactor_short?.components ?? {};
+          const longWeights = row.component_scores?.ofactor_long?.weights ?? {};
+          const shortWeights = row.component_scores?.ofactor_short?.weights ?? {};
+          const longContributions = row.component_scores?.ofactor_long?.weighted_contributions ?? {};
+          const shortContributions = row.component_scores?.ofactor_short?.weighted_contributions ?? {};
+          return <tr key={row.candidate_id}>
+            <td><strong>{row.recommendation_rank ? `#${row.recommendation_rank} ` : ""}{row.symbol}</strong><small>{value(row, "sector")}</small></td>
+            <td><small>{row.universe_flags?.is_fno ? "F&O" : ""}{row.universe_flags?.is_fno && row.universe_flags?.is_nifty50 ? " + " : ""}{row.universe_flags?.is_nifty50 ? "NIFTY 50" : ""}</small></td>
+            <td><span className={styles.pill} data-state={row.direction}>{value(row, "direction")}</span></td>
+            <td><strong>{number(row, "ofactor", 2)}</strong><small>{value(row, "ofactor_level")} · L54 M64 H74</small></td>
+            <td><strong>{number(row, "xfactor_snapshot", 2)} / {number(row, "data_quality", 2)}</strong><small>X ≥ 76 · DQ ≥ 85</small></td>
+            <td><strong>{number(row, "directional_edge", 2)}</strong><small>{value(row, "directional_edge_level")} · L6 M7 H8</small></td>
+            <td><strong>{number(features, "volume_current", 0)}</strong><small>20D ratio {number(features, "volume_ratio_20", 2)} · 90D pct {number(features, "volume_percentile_90", 2)}</small></td>
+            <td><strong>{number(features, "extension_atr", 2)} / {number(features, "reward_risk", 2)}</strong><small>{value(row, "extension_level")} · R:R ≥ 1.5</small></td>
+            <td><strong>{value(row, "failed_gate_count")}</strong><div className={styles.reasonList}>{reasons(row).map((reason) => <span key={reason}>{reason}</span>)}</div></td>
+            <td><details className={styles.evidence}><summary>Inspect values</summary><div className={styles.evidenceGrid}>
+              <div><b>Price</b><span>O/H/L/C {number(features,"open",2)} / {number(features,"high",2)} / {number(features,"low",2)} / {number(features,"close",2)}</span><span>SMA20 {number(features,"sma20",2)} · SMA50 {number(features,"sma50",2)} · ATR14 {number(features,"atr14",2)}</span><span>20D high {number(features,"prior_high_20",2)} · low {number(features,"prior_low_20",2)}</span></div>
+              <div><b>Volume</b><span>Today {number(features,"volume_current",0)} · D-1 {number(features,"volume_previous_1d",0)} · D-2 {number(features,"volume_previous_2d",0)}</span><span>20D avg {number(features,"volume_average_20",0)} · 90D median {number(features,"volume_median_90",0)}</span><span>Ratio {number(features,"volume_ratio_20",3)} · 90D percentile {number(features,"volume_percentile_90",3)}</span></div>
+              <div><b>Indicators</b><span>RSI14 {number(features,"rsi14",2)} · WILLR14 {number(features,"willr14",2)}</span><span>EMA61 {number(features,"ema61",2)} · MACD {number(features,"macd_line",3)}</span><span>Extension {number(features,"extension_atr",3)} ATR · risk {number(features,"risk_atr",3)} ATR · R:R {number(features,"reward_risk",3)}</span></div>
+              <div><b>LONG OFactor components</b>{Object.entries(longComponents).map(([key, item]) => <span key={key}>{humanise(key)}: score {Number(item).toFixed(2)} · weight {Number(longWeights[key] ?? 0).toFixed(0)}% · contribution {Number(longContributions[key] ?? 0).toFixed(2)}</span>)}</div>
+              <div><b>SHORT OFactor components</b>{Object.entries(shortComponents).map(([key, item]) => <span key={key}>{humanise(key)}: score {Number(item).toFixed(2)} · weight {Number(shortWeights[key] ?? 0).toFixed(0)}% · contribution {Number(shortContributions[key] ?? 0).toFixed(2)}</span>)}</div>
+              <div><b>Gate calculations</b>{Object.entries(gates).map(([key, item]: [string, any]) => <span key={key} data-pass={item.passed ? "true" : "false"}>{humanise(key)}: {item.passed ? "PASS" : item.blocking ? "FAIL" : "RECORDED"} · {item.rule} · actual {JSON.stringify(item.actual)}</span>)}</div>
+            </div></details></td>
+          </tr>;
+        })}</tbody>
+      </table>
+    </div>
+  </section>;
 
   return (
     <div className={styles.page}>
@@ -171,6 +287,13 @@ export function OiisLivePage() {
       </header>
 
       {error && <div className={styles.error}>{error}</div>}
+
+      <div className={styles.viewTabs} role="tablist" aria-label="OIIS selection views">
+        <button className={view === "summary" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("summary")}>Summary</button>
+        <button className={view === "details" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("details")}>All stock details ({candidates.length})</button>
+      </div>
+
+      {view === "details" ? detailsView : <>
 
       <section className={styles.decisionHero} data-state={noTrade ? "no-trade" : selected > 0 ? "selected" : "waiting"}>
         <div>
@@ -200,6 +323,24 @@ export function OiisLivePage() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className={styles.panel}>
+        <div className={styles.sectionHeading}><div><span className={styles.kicker}>Tier and failure distribution</span><h2>What passed, and exactly where setups failed</h2></div><span className={styles.note}>Stop width is recorded but non-blocking; trigger confirmation is removed.</span></div>
+        <div className={styles.summaryTiles}>
+          <div><span>OFactor LOW 54–63.99</span><strong>{integer(funnel,"ofactor_low")}</strong></div>
+          <div><span>OFactor MEDIUM 64–73.99</span><strong>{integer(funnel,"ofactor_medium")}</strong></div>
+          <div><span>OFactor HIGH ≥74</span><strong>{integer(funnel,"ofactor_high")}</strong></div>
+          {(data?.failureBuckets ?? []).map((row) => <div key={row.failed_gate_count}><span>{row.failed_gate_count} failed gate{Number(row.failed_gate_count) === 1 ? "" : "s"}</span><strong>{row.count}</strong></div>)}
+        </div>
+        <div className={styles.setupBreakdown}>
+          <div><span>Long breakout absent</span><strong>{setupStats.longBreakout}</strong></div>
+          <div><span>Long pullback absent</span><strong>{setupStats.longPullback}</strong></div>
+          <div><span>Short breakdown absent</span><strong>{setupStats.shortBreakdown}</strong></div>
+          <div><span>Short pullback absent</span><strong>{setupStats.shortPullback}</strong></div>
+          <div><span>Good-volume confirmation absent</span><strong>{setupStats.volume}</strong></div>
+        </div>
+        <div className={styles.directionBreakdown}>{(data?.gateBreakdown ?? []).map((row) => <span key={`${row.reason}-${row.direction}`}><b>{humanise(row.reason)}</b> · {row.direction} {row.count}</span>)}</div>
       </section>
 
       <div className={styles.analysisGrid}>
@@ -240,7 +381,30 @@ export function OiisLivePage() {
 
       <section className={styles.panel}>
         <div className={styles.sectionHeading}>
-          <div><span className={styles.kicker}>Actionable list</span><h2>Stocks selected for entry monitoring</h2></div>
+          <div><span className={styles.kicker}>Gate definitions</span><h2>How each rejection is calculated</h2></div>
+          <span className={styles.note}>Counts are for {tradeDate || "the selected trade date"}; reasons can overlap.</span>
+        </div>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead><tr><th>Gate / count</th><th>What it means</th><th>Exact rule</th><th>Indicator fields evaluated</th><th>Evidence location</th></tr></thead>
+            <tbody>{GATE_GUIDE.map((gate) => {
+              const count = (data?.rejectionReasons ?? []).find((row) => row.reason === gate.code)?.count ?? 0;
+              return <tr key={gate.code}>
+                <td><strong>{humanise(gate.code)}</strong><small>{count} candidates</small></td>
+                <td>{gate.meaning}</td>
+                <td>{gate.rule}</td>
+                <td><code>{gate.fields}</code></td>
+                <td><small>{gate.source}</small></td>
+              </tr>;
+            })}</tbody>
+          </table>
+        </div>
+        <div className={styles.ruleNote}><strong>How to read the counts</strong><p>A candidate may fail several gates, so these counts are not additive and can exceed the number of evaluated stocks. RSI14 and WILLR14 are shown as intraday entry context; the daily rejection gates above are evaluated first. A rejection means “do not trade today”, not that the stock will necessarily fall.</p></div>
+      </section>
+
+      <section className={styles.panel}>
+        <div className={styles.sectionHeading}>
+          <div><span className={styles.kicker}>Ranked list</span><h2>Top recommendations and entry permissions</h2></div>
           <div className={styles.levelLegend}><span>High {integer(funnel, "high_count")}</span><span>Medium {integer(funnel, "medium_count")}</span><span>Low {integer(funnel, "low_count")}</span></div>
         </div>
         {watch.length ? <div className={styles.tableWrap}><table className={styles.table}>
@@ -269,6 +433,7 @@ export function OiisLivePage() {
         <div className={styles.healthGrid}>{(data?.diagnostics ?? []).map((row) => <div className={styles.healthItem} key={row.service_name}><div><strong>{value(row, "service_name")}</strong><span>Updated {value(row, "age_seconds")}s ago</span></div><span className={styles.pill} data-state={row.status}>{row.status}</span></div>)}</div>
         <div className={styles.freshnessGrid}><div><span>Latest minute bar</span><strong>{value(data?.freshness ?? {}, "latest_minute_bar")}</strong></div><div><span>NSE EOD / stock regime</span><strong>{dateOnly(data?.freshness?.latest_nse_eod)} / {dateOnly(data?.freshness?.latest_stock_regime)}</strong></div><div><span>Paper webhooks pending</span><strong>{value(data?.queues ?? {}, "paper_outbox_pending")}</strong></div><div><span>OIIS errors pending</span><strong>{value(data?.queues ?? {}, "oiis_errors_pending")}</strong></div></div>
       </section>
+      </>}
     </div>
   );
 }

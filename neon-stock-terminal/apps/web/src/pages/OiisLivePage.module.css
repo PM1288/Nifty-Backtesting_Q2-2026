@@ -31,6 +31,9 @@
 .eyebrow,.kicker { color: #2463a6; font-size: .7rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
 
 .tabs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.viewTabs { display: flex; gap: 8px; border-bottom: 1px solid #dce4ee; }
+.viewTab,.viewTabActive { border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; background: transparent; color: #627287; font-size: .76rem; font-weight: 850; cursor: pointer; }
+.viewTabActive { border-bottom-color: #2463a6; color: #174f83; }
 .tab,.tabActive { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #d5dee9; border-radius: 9px; padding: 8px 10px; background: #fff; color: #485970; font-size: .76rem; font-weight: 750; text-decoration: none; transition: .15s ease; }
 .tab span,.tabActive span { border-radius: 5px; padding: 2px 5px; background: #eaf0f7; color: #42617f; font-size: .61rem; }
 .tab:hover { border-color: #9db8d3; color: #123b68; }
@@ -84,6 +87,25 @@
 .table tr:last-child td { border-bottom: 0; }
 .table td strong,.table td small { display: block; }
 .table td small { margin-top: 3px; color: #7a8799; font-size: .66rem; }
+.table td code { display: block; max-width: 260px; color: #36516f; font: 600 .66rem/1.45 "IBM Plex Mono",monospace; white-space: normal; overflow-wrap: anywhere; }
+.detailTable { min-width: 1500px; }
+.detailToolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.detailToolbar input { width: min(360px,100%); min-height: 38px; border: 1px solid #c8d4e0; border-radius: 8px; padding: 8px 10px; background: #fff; color: #1d3048; }
+.detailToolbar span { color: #66768a; font-size: .7rem; }
+.evidence summary { color: #2463a6; font-size: .68rem; font-weight: 800; cursor: pointer; }
+.evidence[open] { position: relative; }
+.evidenceGrid { display: grid; grid-template-columns: repeat(2,minmax(260px,1fr)); gap: 10px; width: min(760px,75vw); margin-top: 8px; border: 1px solid #d9e3ed; border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 12px 28px rgba(31,53,81,.12); }
+.evidenceGrid div { display: grid; gap: 4px; align-content: start; }
+.evidenceGrid b { color: #183552; font-size: .7rem; }
+.evidenceGrid span { color: #63748a; font-size: .64rem; line-height: 1.4; }
+.evidenceGrid span[data-pass="false"] { color: #a23c49; }
+.summaryTiles { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 8px; }
+.summaryTiles div,.setupBreakdown div { display: grid; gap: 5px; border: 1px solid #e0e7ef; border-radius: 10px; padding: 11px; background: #f8fafc; }
+.summaryTiles span,.setupBreakdown span { color: #6e7d90; font-size: .65rem; }
+.summaryTiles strong,.setupBreakdown strong { color: #173b61; font-size: 1.2rem; }
+.setupBreakdown { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+.directionBreakdown { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.directionBreakdown span { border-radius: 999px; padding: 5px 8px; background: #eef3f8; color: #51647c; font-size: .64rem; }
 .score { display: inline-grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #e9f2fb; color: #17568f; font-weight: 850; }
 .metricLine { display: flex; gap: 4px; }
 .metricLine b { min-width: 33px; border-radius: 5px; padding: 4px 5px; background: #eef3f8; color: #36516f; font-size: .68rem; text-align: center; }
@@ -150,6 +172,7 @@
   .funnel { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .funnelCard:nth-child(3)::after { display: none; }
   .analysisGrid,.lowerGrid { grid-template-columns: 1fr; }
+  .setupBreakdown { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .editor { grid-template-columns: repeat(3,minmax(0,1fr)); }
 }
 
@@ -164,6 +187,8 @@
   .funnelCard:nth-child(even)::after,.funnelCard:last-child::after { display: none; }
   .editor { grid-template-columns: 1fr 1fr; }
   .signInCallout { align-items: flex-start; flex-direction: column; }
+  .detailToolbar { align-items: flex-start; flex-direction: column; }
+  .evidenceGrid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 440px) {

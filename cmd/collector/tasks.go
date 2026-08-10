@@ -245,6 +245,10 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 	var lastPCR time.Time
 	pcrWarned := false
 	stockWebhook := newStockWebhookClient(cfg.StockWebhook, logger)
+	marketLocation, err := time.LoadLocation(cfg.Runtime.Timezone)
+	if err != nil {
+		return fmt.Errorf("load market timezone: %w", err)
+	}
 
 	for {
 		select {
@@ -322,8 +326,10 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 						}
 						var snapRows []store.QuoteSnapshot
 						var depthRows []store.Depth5Snapshot
+						var depthMetrics []store.Depth5Metric
 						oiByTable := map[string][]store.OISnapshot{}
 						for _, quote := range quotes {
+							phase := marketSessionPhase(ts, quote.Exchange, quote.ReferenceLimitPrice != nil, marketLocation)
 							sub, ok := subIndex.Get(quote.Exchange, quote.SymbolToken)
 							if !ok {
 								sub, ok = plannedByKey[subKey(quote.Exchange, quote.SymbolToken)]
@@ -337,65 +343,40 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 								}
 							}
 							snapRows = append(snapRows, store.QuoteSnapshot{
-								Ts:            ts,
-								Exchange:      quote.Exchange,
-								SymbolToken:   quote.SymbolToken,
-								LTP:           quote.LTP,
-								Open:          quote.Open,
-								High:          quote.High,
-								Low:           quote.Low,
-								Close:         quote.Close,
-								LastTradeQty:  quote.LastTradeQty,
-								ExchFeedTime:  quote.ExchFeedTime,
-								ExchTradeTime: quote.ExchTradeTime,
-								NetChange:     quote.NetChange,
-								PercentChange: quote.PercentChange,
-								AvgPrice:      quote.AvgPrice,
-								Volume:        quote.Volume,
-								OI:            quote.OI,
-								TotalBuyQty:   quote.TotalBuyQty,
-								TotalSellQty:  quote.TotalSellQty,
-								UpperCircuit:  quote.UpperCircuit,
-								LowerCircuit:  quote.LowerCircuit,
-								Week52High:    quote.Week52High,
-								Week52Low:     quote.Week52Low,
-								Bid:           quote.Bid,
-								Ask:           quote.Ask,
-								BidQty:        quote.BidQty,
-								AskQty:        quote.AskQty,
-								Raw:           quote.Raw,
+								Ts:                  ts,
+								Exchange:            quote.Exchange,
+								SymbolToken:         quote.SymbolToken,
+								LTP:                 quote.LTP,
+								Open:                quote.Open,
+								High:                quote.High,
+								Low:                 quote.Low,
+								Close:               quote.Close,
+								LastTradeQty:        quote.LastTradeQty,
+								ExchFeedTime:        quote.ExchFeedTime,
+								ExchTradeTime:       quote.ExchTradeTime,
+								NetChange:           quote.NetChange,
+								PercentChange:       quote.PercentChange,
+								AvgPrice:            quote.AvgPrice,
+								Volume:              quote.Volume,
+								OI:                  quote.OI,
+								TotalBuyQty:         quote.TotalBuyQty,
+								TotalSellQty:        quote.TotalSellQty,
+								UpperCircuit:        quote.UpperCircuit,
+								LowerCircuit:        quote.LowerCircuit,
+								Week52High:          quote.Week52High,
+								Week52Low:           quote.Week52Low,
+								Bid:                 quote.Bid,
+								Ask:                 quote.Ask,
+								BidQty:              quote.BidQty,
+								AskQty:              quote.AskQty,
+								ReferenceLimitPrice: quote.ReferenceLimitPrice,
+								SessionPhase:        phase,
+								Raw:                 quote.Raw,
 							})
 							if len(quote.DepthBuy) > 0 || len(quote.DepthSell) > 0 {
-								for idx, level := range quote.DepthBuy {
-									price := level.Price
-									qty := level.Quantity
-									orders := level.Orders
-									depthRows = append(depthRows, store.Depth5Snapshot{
-										Ts:          ts,
-										Exchange:    quote.Exchange,
-										SymbolToken: quote.SymbolToken,
-										Side:        "B",
-										Level:       int16(idx + 1),
-										Price:       &price,
-										Quantity:    &qty,
-										Orders:      &orders,
-									})
-								}
-								for idx, level := range quote.DepthSell {
-									price := level.Price
-									qty := level.Quantity
-									orders := level.Orders
-									depthRows = append(depthRows, store.Depth5Snapshot{
-										Ts:          ts,
-										Exchange:    quote.Exchange,
-										SymbolToken: quote.SymbolToken,
-										Side:        "S",
-										Level:       int16(idx + 1),
-										Price:       &price,
-										Quantity:    &qty,
-										Orders:      &orders,
-									})
-								}
+								depthRows = appendDepthRows(depthRows, quote.Exchange, quote.SymbolToken, ts, phase, "B", quote.DepthBuy)
+								depthRows = appendDepthRows(depthRows, quote.Exchange, quote.SymbolToken, ts, phase, "S", quote.DepthSell)
+								depthMetrics = append(depthMetrics, calculateDepthMetric(quote.Exchange, quote.SymbolToken, ts, phase, quote.DepthBuy, quote.DepthSell))
 							}
 							if stateCache != nil {
 								stateCache.Update(store.InstrumentState{
@@ -458,6 +439,9 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 						}
 						if err := st.UpsertDepth5Snapshots(jobCtx, depthRows); err != nil && logger != nil {
 							logger.Warn("depth_snapshot_upsert_failed", "job", label, "err", err)
+						}
+						if err := st.UpsertDepth5Metrics(jobCtx, depthMetrics); err != nil && logger != nil {
+							logger.Warn("depth_metric_upsert_failed", "job", label, "err", err)
 						}
 						if cfg.RestTasks.EnableOISnapshots {
 							for table, rows := range oiByTable {
@@ -994,8 +978,23 @@ func runOptionGreeks(ctx context.Context, cfg *config.Config, provider smartapi.
 					expiryByUnderlying[sub.Underlying] = *sub.Expiry
 				}
 			}
-			for _, underlying := range cfg.RestTasks.OptionGreeksUnderlyings {
+			underlyings := append([]string{}, cfg.RestTasks.OptionGreeksUnderlyings...)
+			if cfg.Archive.Enable && cfg.Archive.DynamicGreeksShortlistSize > 0 {
+				if dynamic, dynamicErr := st.ListLatestVolatilityShortlist(ctx, cfg.Archive.DynamicGreeksShortlistSize); dynamicErr != nil {
+					if logger != nil {
+						logger.Warn("dynamic_greeks_shortlist_failed", "err", dynamicErr)
+					}
+				} else {
+					underlyings = append(underlyings, dynamic...)
+				}
+			}
+			seenUnderlying := map[string]struct{}{}
+			for _, underlying := range underlyings {
 				normalized := universe.NormalizeIndexUnderlying(underlying)
+				if _, exists := seenUnderlying[normalized]; exists {
+					continue
+				}
+				seenUnderlying[normalized] = struct{}{}
 				expiry, ok := expiryByUnderlying[normalized]
 				if !ok {
 					continue

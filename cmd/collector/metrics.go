@@ -400,6 +400,9 @@ func recordAPIRequest(ctx context.Context, cfg *config.Config, st *store.Store, 
 	if entry.Ts.IsZero() {
 		entry.Ts = time.Now().UTC()
 	}
+	if attempt := restAttemptFromContext(ctx); attempt > 1 {
+		entry.RetryCount = attempt - 1
+	}
 	if err := st.InsertAPIRequestLogs(ctx, []store.APIRequestLog{entry}); err != nil && logger != nil {
 		logger.Warn("api_request_log_failed", "endpoint", entry.Endpoint, "err", err)
 	}

@@ -1289,6 +1289,151 @@ CREATE INDEX IF NOT EXISTS option_backtest_trades_trade_date_idx ON %[1]s.option
 CREATE INDEX IF NOT EXISTS option_backtest_trades_exit_idx ON %[1]s.option_backtest_trades (exit_time DESC);
 `, schemaIdent)
 
+	smartAPIArchiveSQL := fmt.Sprintf(`
+ALTER TABLE %[1]s.instruments ADD COLUMN IF NOT EXISTS is_cas_enabled BOOLEAN NULL;
+ALTER TABLE %[1]s.quote_snapshots ADD COLUMN IF NOT EXISTS reference_limit_price NUMERIC NULL;
+ALTER TABLE %[1]s.quote_snapshots ADD COLUMN IF NOT EXISTS session_phase TEXT NULL;
+ALTER TABLE %[1]s.depth_5_snapshots ADD COLUMN IF NOT EXISTS cumulative_quantity BIGINT NULL;
+ALTER TABLE %[1]s.depth_5_snapshots ADD COLUMN IF NOT EXISTS cumulative_notional NUMERIC NULL;
+ALTER TABLE %[1]s.api_request_log ADD COLUMN IF NOT EXISTS retry_count INT NOT NULL DEFAULT 0;
+ALTER TABLE %[1]s.api_request_log ADD COLUMN IF NOT EXISTS cache_hit BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE %[1]s.api_request_log ADD COLUMN IF NOT EXISTS api_error_code TEXT NULL;
+
+CREATE TABLE IF NOT EXISTS %[1]s.instrument_master_snapshot (
+  snapshot_date DATE NOT NULL,
+  captured_at TIMESTAMPTZ NOT NULL,
+  source_hash TEXT NOT NULL,
+  exchange TEXT NOT NULL,
+  symbol_token TEXT NOT NULL,
+  tradingsymbol TEXT NOT NULL,
+  name TEXT NULL,
+  instrumenttype TEXT NULL,
+  expiry DATE NULL,
+  strike NUMERIC NULL,
+  lotsize INT NULL,
+  tick_size NUMERIC NULL,
+  is_cas_enabled BOOLEAN NULL,
+  raw JSONB NOT NULL,
+  PRIMARY KEY (snapshot_date, exchange, symbol_token)
+);
+CREATE INDEX IF NOT EXISTS instrument_master_snapshot_contract_idx
+  ON %[1]s.instrument_master_snapshot (instrumenttype, expiry, snapshot_date DESC);
+
+CREATE TABLE IF NOT EXISTS %[1]s.market_ticks (
+  exchange_ts TIMESTAMPTZ NOT NULL,
+  received_ts TIMESTAMPTZ NOT NULL,
+  connection_id TEXT NOT NULL,
+  sequence_no BIGINT NOT NULL,
+  subscription_mode SMALLINT NOT NULL,
+  exchange TEXT NOT NULL,
+  symbol_token TEXT NOT NULL,
+  session_phase TEXT NOT NULL,
+  ltp NUMERIC NOT NULL,
+  last_trade_qty BIGINT NULL,
+  avg_price NUMERIC NULL,
+  day_volume BIGINT NULL,
+  total_buy_qty BIGINT NULL,
+  total_sell_qty BIGINT NULL,
+  open NUMERIC NULL,
+  high NUMERIC NULL,
+  low NUMERIC NULL,
+  close NUMERIC NULL,
+  last_trade_ts TIMESTAMPTZ NULL,
+  oi BIGINT NULL,
+  oi_change_pct NUMERIC NULL,
+  upper_circuit NUMERIC NULL,
+  lower_circuit NUMERIC NULL,
+  week52_high NUMERIC NULL,
+  week52_low NUMERIC NULL,
+  raw BYTEA NULL,
+  PRIMARY KEY (exchange_ts, received_ts, connection_id, sequence_no, exchange, symbol_token)
+) PARTITION BY RANGE (exchange_ts);
+CREATE INDEX IF NOT EXISTS market_ticks_token_ts_idx ON %[1]s.market_ticks (symbol_token, exchange_ts DESC);
+CREATE INDEX IF NOT EXISTS market_ticks_connection_seq_idx ON %[1]s.market_ticks (connection_id, sequence_no, exchange_ts DESC);
+CREATE INDEX IF NOT EXISTS option_greeks_symbol_ts_idx ON %[1]s.option_greeks (tradingsymbol, ts DESC);
+
+CREATE TABLE IF NOT EXISTS %[1]s.depth_5_metrics (
+  ts TIMESTAMPTZ NOT NULL,
+  exchange TEXT NOT NULL,
+  symbol_token TEXT NOT NULL,
+  best_bid NUMERIC NULL,
+  best_ask NUMERIC NULL,
+  midpoint NUMERIC NULL,
+  spread NUMERIC NULL,
+  spread_pct NUMERIC NULL,
+  bid_notional_5 NUMERIC NULL,
+  ask_notional_5 NUMERIC NULL,
+  depth_imbalance NUMERIC NULL,
+  microprice NUMERIC NULL,
+  session_phase TEXT NOT NULL,
+  PRIMARY KEY (ts, exchange, symbol_token)
+) PARTITION BY RANGE (ts);
+CREATE INDEX IF NOT EXISTS depth_5_metrics_token_ts_idx ON %[1]s.depth_5_metrics (symbol_token, ts DESC);
+
+CREATE TABLE IF NOT EXISTS %[1]s.smartapi_option_chain_snapshots (
+  ts TIMESTAMPTZ NOT NULL,
+  underlying TEXT NOT NULL,
+  expiry DATE NOT NULL,
+  exchange TEXT NOT NULL,
+  symbol_token TEXT NOT NULL,
+  tradingsymbol TEXT NOT NULL,
+  strike NUMERIC NOT NULL,
+  "right" TEXT NOT NULL,
+  lotsize INT NULL,
+  spot_price NUMERIC NULL,
+  futures_price NUMERIC NULL,
+  bid NUMERIC NULL,
+  ask NUMERIC NULL,
+  midpoint NUMERIC NULL,
+  spread NUMERIC NULL,
+  spread_pct NUMERIC NULL,
+  volume BIGINT NULL,
+  oi BIGINT NULL,
+  oi_change_pct NUMERIC NULL,
+  total_buy_qty BIGINT NULL,
+  total_sell_qty BIGINT NULL,
+  depth_imbalance NUMERIC NULL,
+  broker_iv NUMERIC NULL,
+  broker_delta NUMERIC NULL,
+  broker_gamma NUMERIC NULL,
+  broker_theta NUMERIC NULL,
+  broker_vega NUMERIC NULL,
+  local_iv NUMERIC NULL,
+  local_delta NUMERIC NULL,
+  local_gamma NUMERIC NULL,
+  local_theta NUMERIC NULL,
+  local_vega NUMERIC NULL,
+  greek_validation_status TEXT NOT NULL,
+  quote_age_seconds INT NULL,
+  source_quote_ts TIMESTAMPTZ NULL,
+  session_phase TEXT NOT NULL,
+  data_quality_status TEXT NOT NULL,
+  PRIMARY KEY (ts, exchange, symbol_token)
+) PARTITION BY RANGE (ts);
+CREATE INDEX IF NOT EXISTS smartapi_option_chain_underlying_expiry_ts_idx
+  ON %[1]s.smartapi_option_chain_snapshots (underlying, expiry, ts DESC, strike, "right");
+
+CREATE TABLE IF NOT EXISTS %[1]s.websocket_health (
+  ts TIMESTAMPTZ NOT NULL,
+  connection_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  subscriptions_count INT NOT NULL,
+  last_tick_ts TIMESTAMPTZ NULL,
+  ticks_received BIGINT NOT NULL DEFAULT 0,
+  sequence_gaps BIGINT NOT NULL DEFAULT 0,
+  archive_dropped BIGINT NOT NULL DEFAULT 0,
+  stale_token_count INT NOT NULL DEFAULT 0,
+  detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+  PRIMARY KEY (ts, connection_id)
+);
+CREATE INDEX IF NOT EXISTS websocket_health_ts_idx ON %[1]s.websocket_health (ts DESC);
+
+CREATE OR REPLACE VIEW %[1]s.v_latest_option_chain AS
+SELECT DISTINCT ON (exchange, symbol_token) *
+FROM %[1]s.smartapi_option_chain_snapshots
+ORDER BY exchange, symbol_token, ts DESC;
+`, schemaIdent)
+
 	migrations := []migration{
 		newMigration("001_init", initSQL),
 		newMigration("002_aggregates", aggregatesSQL),
@@ -1371,7 +1516,8 @@ BEGIN
     ALTER TABLE %[1]s.derivative_token_plan ADD CONSTRAINT derivative_token_plan_right_chk CHECK ("right" IS NULL OR "right" IN ('CE','PE'));
   END IF;
 END $$;
-  `, schemaIdent)),
+	  `, schemaIdent)),
+		newMigration("025_smartapi_archive", smartAPIArchiveSQL),
 	}
 	return migrations
 }

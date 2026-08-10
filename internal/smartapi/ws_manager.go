@@ -2,6 +2,7 @@ package smartapi
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"sort"
 	"strings"
@@ -51,6 +52,7 @@ func (m *WSManager) Run(ctx context.Context, source SubscriptionSource, out chan
 		ch := make(chan []store.Subscription, 1)
 		updates[i] = ch
 		streamer := NewStreamer(m.cfg, m.wsCfg, m.provider, m.logger)
+		streamer.SetConnectionID(fmt.Sprintf("smartapi-ws-%d", i+1))
 		eg.Go(func() error {
 			return runShard(egCtx, streamer, shardSubs, ch, out, m.logger)
 		})

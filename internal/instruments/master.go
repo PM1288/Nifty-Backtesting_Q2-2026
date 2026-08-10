@@ -23,6 +23,7 @@ type Instrument struct {
 	Strike         *float64
 	LotSize        *int
 	TickSize       *float64
+	IsCASEnabled   *bool
 	Raw            json.RawMessage
 }
 
@@ -36,6 +37,7 @@ type masterRecord struct {
 	InstrumentType string `json:"instrumenttype"`
 	ExchangeSeg    string `json:"exch_seg"`
 	TickSize       string `json:"tick_size"`
+	IsCASEnabled   *bool  `json:"is_cas_enabled"`
 }
 
 func LoadOrDownload(ctx context.Context, cachePath, url string, client *http.Client) ([]Instrument, error) {
@@ -100,6 +102,7 @@ func normalizeRecord(rec masterRecord) (Instrument, error) {
 		TradingSymbol:  strings.TrimSpace(rec.Symbol),
 		Name:           strings.TrimSpace(rec.Name),
 		InstrumentType: strings.TrimSpace(rec.InstrumentType),
+		IsCASEnabled:   rec.IsCASEnabled,
 	}
 	if inst.Exchange == "" || inst.SymbolToken == "" || inst.TradingSymbol == "" {
 		return Instrument{}, fmt.Errorf("missing required fields")

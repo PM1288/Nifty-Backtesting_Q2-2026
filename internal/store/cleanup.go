@@ -18,7 +18,7 @@ func (s *Store) CleanupRetention(ctx context.Context, cfg config.RetentionConfig
 	}
 	lockKey := fmt.Sprintf("%s:cleanup", s.Schema)
 	err := s.withAdvisoryLock(ctx, lockKey, func() error {
-		for _, table := range []string{"bars_1m", "quote_snapshots", "depth_5_snapshots", "option_greeks"} {
+		for _, table := range []string{"bars_1m", "quote_snapshots", "depth_5_snapshots", "option_greeks", "market_ticks", "depth_5_metrics", "smartapi_option_chain_snapshots"} {
 			if err := s.EnsureFuturePartitions(ctx, table, 2); err != nil {
 				return err
 			}

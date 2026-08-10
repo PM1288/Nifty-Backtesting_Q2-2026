@@ -1,5 +1,7 @@
 # SmartAPI NIFTY100 Collector (Phase-2)
 
+The rate-safe SmartAPI market, depth, derivatives, Greeks and internally built option-chain archive is documented in [`docs/SMARTAPI_RATE_SAFE_DATA_ARCHIVE.md`](docs/SMARTAPI_RATE_SAFE_DATA_ARCHIVE.md). It is WebSocket-first and contains no broker order-booking path.
+
 ## Start Here
 
 For the current deployed N50 product shape, do not start from older phase docs.

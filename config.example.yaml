@@ -35,7 +35,7 @@ runtime:
   http_timeout_seconds: 15
   flush_seconds: 2
   trading_start: "09:15"
-  trading_end: "15:30"
+  trading_end: "15:40"
   weekend_pull_last_working_day: true
 stock_webhook:
   enabled: false
@@ -89,10 +89,23 @@ ws:
   insecure_skip_verify: false
   enable_depth_snapshots: true
   depth_snapshot_interval_seconds: 5
-  depth_snapshot_kinds: ["EQUITY","INDEX","FUT"]
+  depth_snapshot_kinds: ["EQUITY","INDEX","FUT","OPTIDX","OPTSTK"]
 health:
   enable_http: true
   listen_addr: "0.0.0.0:8080"
+archive:
+  enable: true
+  enable_market_ticks: true
+  tick_sample_milliseconds: 1000
+  tick_buffer_size: 32768
+  tick_batch_size: 1000
+  enable_instrument_snapshots: true
+  enable_option_chain_snapshots: true
+  option_chain_interval_seconds: 300
+  enable_websocket_health: true
+  websocket_health_interval_seconds: 60
+  dynamic_greeks_shortlist_size: 20
+  local_greek_risk_free_rate: 0.06
 rest_tasks:
   enable_quote_snapshots: true
   quote_snapshot_interval_seconds: 60

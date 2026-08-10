@@ -9,6 +9,13 @@ import (
 	"trading-stack/internal/ratelimit"
 )
 
+type restAttemptContextKey struct{}
+
+func restAttemptFromContext(ctx context.Context) int {
+	attempt, _ := ctx.Value(restAttemptContextKey{}).(int)
+	return attempt
+}
+
 const (
 	restMaxAttempts = 3
 	restBaseBackoff = time.Second
@@ -151,7 +158,8 @@ func (q *restQueue) runJob(ctx context.Context, job restJob) error {
 				}
 			}
 		}
-		err = job.run(ctx)
+		attemptCtx := context.WithValue(ctx, restAttemptContextKey{}, attempt)
+		err = job.run(attemptCtx)
 		if err == nil {
 			if limiter != nil {
 				limiter.Success()

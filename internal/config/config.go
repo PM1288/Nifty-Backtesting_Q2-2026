@@ -24,6 +24,7 @@ type Config struct {
 	Limits          LimitsConfig          `yaml:"limits"`
 	Retention       RetentionConfig       `yaml:"retention"`
 	Metrics         MetricsConfig         `yaml:"metrics"`
+	Archive         ArchiveConfig         `yaml:"archive"`
 	Strategy        StrategyConfig        `yaml:"strategy"`
 	Paper           PaperConfig           `yaml:"paper_trading"`
 	Backtest        BacktestConfig        `yaml:"backtest"`
@@ -231,6 +232,23 @@ type MetricsConfig struct {
 	StateFlushSeconds     int               `yaml:"state_flush_seconds"`
 	EnableAPIRequestLog   bool              `yaml:"enable_api_request_log"`
 	SLA                   []SourceSLAConfig `yaml:"sla"`
+}
+
+// ArchiveConfig controls derived persistence from the existing websocket and
+// REST streams. It never creates a second SmartAPI session or an order path.
+type ArchiveConfig struct {
+	Enable                         bool    `yaml:"enable"`
+	EnableMarketTicks              bool    `yaml:"enable_market_ticks"`
+	TickSampleMilliseconds         int     `yaml:"tick_sample_milliseconds"`
+	TickBufferSize                 int     `yaml:"tick_buffer_size"`
+	TickBatchSize                  int     `yaml:"tick_batch_size"`
+	EnableInstrumentSnapshots      bool    `yaml:"enable_instrument_snapshots"`
+	EnableOptionChainSnapshots     bool    `yaml:"enable_option_chain_snapshots"`
+	OptionChainIntervalSeconds     int     `yaml:"option_chain_interval_seconds"`
+	EnableWebsocketHealth          bool    `yaml:"enable_websocket_health"`
+	WebsocketHealthIntervalSeconds int     `yaml:"websocket_health_interval_seconds"`
+	DynamicGreeksShortlistSize     int     `yaml:"dynamic_greeks_shortlist_size"`
+	LocalGreekRiskFreeRate         float64 `yaml:"local_greek_risk_free_rate"`
 }
 
 type StrategyConfig struct {
@@ -1326,6 +1344,29 @@ func applyDefaults(cfg *Config) {
 	if cfg.Metrics.StateFlushSeconds == 0 {
 		cfg.Metrics.StateFlushSeconds = 5
 	}
+	if cfg.Archive.Enable {
+		if cfg.Archive.TickSampleMilliseconds == 0 {
+			cfg.Archive.TickSampleMilliseconds = 1000
+		}
+		if cfg.Archive.TickBufferSize == 0 {
+			cfg.Archive.TickBufferSize = 32768
+		}
+		if cfg.Archive.TickBatchSize == 0 {
+			cfg.Archive.TickBatchSize = 1000
+		}
+		if cfg.Archive.OptionChainIntervalSeconds == 0 {
+			cfg.Archive.OptionChainIntervalSeconds = 300
+		}
+		if cfg.Archive.WebsocketHealthIntervalSeconds == 0 {
+			cfg.Archive.WebsocketHealthIntervalSeconds = 60
+		}
+		if cfg.Archive.DynamicGreeksShortlistSize == 0 {
+			cfg.Archive.DynamicGreeksShortlistSize = 20
+		}
+		if cfg.Archive.LocalGreekRiskFreeRate == 0 {
+			cfg.Archive.LocalGreekRiskFreeRate = 0.06
+		}
+	}
 	if !cfg.Metrics.Enable && len(cfg.Metrics.SLA) > 0 {
 		cfg.Metrics.Enable = true
 	}
@@ -2124,6 +2165,26 @@ func (c *Config) Validate() error {
 			if strings.EqualFold(sla.Dataset, "bars_1m") && sla.BarLateSeconds < 1 {
 				return errors.New("metrics.sla.bar_late_seconds must be >= 1 for bars_1m")
 			}
+		}
+	}
+	if c.Archive.Enable {
+		if c.Archive.EnableMarketTicks && c.Archive.TickSampleMilliseconds < 0 {
+			return errors.New("archive.tick_sample_milliseconds must be >= 0")
+		}
+		if c.Archive.TickBufferSize < 1 || c.Archive.TickBatchSize < 1 {
+			return errors.New("archive tick buffer and batch sizes must be >= 1")
+		}
+		if c.Archive.EnableOptionChainSnapshots && c.Archive.OptionChainIntervalSeconds < 30 {
+			return errors.New("archive.option_chain_interval_seconds must be >= 30")
+		}
+		if c.Archive.EnableWebsocketHealth && c.Archive.WebsocketHealthIntervalSeconds < 5 {
+			return errors.New("archive.websocket_health_interval_seconds must be >= 5")
+		}
+		if c.Archive.DynamicGreeksShortlistSize < 0 {
+			return errors.New("archive.dynamic_greeks_shortlist_size must be >= 0")
+		}
+		if c.Archive.LocalGreekRiskFreeRate < 0 || c.Archive.LocalGreekRiskFreeRate > 1 {
+			return errors.New("archive.local_greek_risk_free_rate must be between 0 and 1")
 		}
 	}
 	if c.Strategy.Enable {

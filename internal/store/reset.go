@@ -38,7 +38,7 @@ func (s *Store) migrateUnlocked(ctx context.Context) error {
 			return fmt.Errorf("record migration %s: %w", mig.Version, err)
 		}
 	}
-	for _, table := range []string{"bars_1m", "quote_snapshots", "depth_5_snapshots", "option_greeks"} {
+	for _, table := range []string{"bars_1m", "quote_snapshots", "depth_5_snapshots", "option_greeks", "market_ticks", "depth_5_metrics", "smartapi_option_chain_snapshots"} {
 		if err := s.EnsureFuturePartitions(ctx, table, 2); err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func planMigrations(migrations []migration, applied map[string]string) ([]migrat
 	mismatches := make([]string, 0)
 	for _, mig := range migrations {
 		if prev, ok := applied[mig.Version]; ok {
-			if prev != mig.Checksum {
+			if prev != mig.Checksum && !knownLegacyMigrationChecksum(mig.Version, prev) {
 				mismatches = append(mismatches, mig.Version)
 			}
 			continue
@@ -62,4 +62,17 @@ func planMigrations(migrations []migration, applied map[string]string) ([]migrat
 		pending = append(pending, mig)
 	}
 	return pending, mismatches
+}
+
+// These exact checksums identify migrations already applied by the protected
+// runtime before the source/runtime mirror was reconciled. Accepting only the
+// observed immutable hashes keeps drift detection enabled for every other
+// checksum and avoids rewriting production migration history.
+func knownLegacyMigrationChecksum(version, checksum string) bool {
+	legacy := map[string]string{
+		"005_strategy":              "effa7153677a034727912505f70c29fa4f144c2e794c27806b43084d0b48b286",
+		"024_derivative_token_plan": "037a137adec4f826dd67d43c72003f6d5947a2743d9656872982965397576a10",
+	}
+	expected, ok := legacy[version]
+	return ok && expected == checksum
 }

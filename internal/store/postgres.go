@@ -120,44 +120,49 @@ type Bar1D struct {
 }
 
 type QuoteSnapshot struct {
-	Ts            time.Time
-	Exchange      string
-	SymbolToken   string
-	LTP           *float64
-	Open          *float64
-	High          *float64
-	Low           *float64
-	Close         *float64
-	LastTradeQty  *int64
-	ExchFeedTime  *time.Time
-	ExchTradeTime *time.Time
-	NetChange     *float64
-	PercentChange *float64
-	AvgPrice      *float64
-	Volume        *int64
-	OI            *int64
-	TotalBuyQty   *int64
-	TotalSellQty  *int64
-	UpperCircuit  *float64
-	LowerCircuit  *float64
-	Week52High    *float64
-	Week52Low     *float64
-	Bid           *float64
-	Ask           *float64
-	BidQty        *int64
-	AskQty        *int64
-	Raw           []byte
+	Ts                  time.Time
+	Exchange            string
+	SymbolToken         string
+	LTP                 *float64
+	Open                *float64
+	High                *float64
+	Low                 *float64
+	Close               *float64
+	LastTradeQty        *int64
+	ExchFeedTime        *time.Time
+	ExchTradeTime       *time.Time
+	NetChange           *float64
+	PercentChange       *float64
+	AvgPrice            *float64
+	Volume              *int64
+	OI                  *int64
+	TotalBuyQty         *int64
+	TotalSellQty        *int64
+	UpperCircuit        *float64
+	LowerCircuit        *float64
+	Week52High          *float64
+	Week52Low           *float64
+	Bid                 *float64
+	Ask                 *float64
+	BidQty              *int64
+	AskQty              *int64
+	ReferenceLimitPrice *float64
+	SessionPhase        string
+	Raw                 []byte
 }
 
 type Depth5Snapshot struct {
-	Ts          time.Time
-	Exchange    string
-	SymbolToken string
-	Side        string
-	Level       int16
-	Price       *float64
-	Quantity    *int64
-	Orders      *int64
+	Ts                 time.Time
+	Exchange           string
+	SymbolToken        string
+	Side               string
+	Level              int16
+	Price              *float64
+	Quantity           *int64
+	Orders             *int64
+	CumulativeQuantity *int64
+	CumulativeNotional *float64
+	SessionPhase       string
 }
 
 type OISnapshot struct {
@@ -333,6 +338,9 @@ type APIRequestLog struct {
 	SymbolsRequested int
 	SymbolsReturned  int
 	HTTPStatus       *int
+	RetryCount       int
+	CacheHit         bool
+	APIErrorCode     string
 	ErrorMessage     string
 }
 
@@ -450,9 +458,9 @@ func (s *Store) UpsertInstruments(ctx context.Context, instruments []instruments
 	}
 	q := fmt.Sprintf(`
     INSERT INTO %s.instruments
-      (exchange, symbol_token, tradingsymbol, name, instrumenttype, expiry, strike, lotsize, tick_size, raw)
+      (exchange, symbol_token, tradingsymbol, name, instrumenttype, expiry, strike, lotsize, tick_size, is_cas_enabled, raw)
     VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
     ON CONFLICT (exchange, symbol_token) DO UPDATE
       SET tradingsymbol = EXCLUDED.tradingsymbol,
           name = EXCLUDED.name,
@@ -461,6 +469,7 @@ func (s *Store) UpsertInstruments(ctx context.Context, instruments []instruments
           strike = EXCLUDED.strike,
           lotsize = EXCLUDED.lotsize,
           tick_size = EXCLUDED.tick_size,
+          is_cas_enabled = EXCLUDED.is_cas_enabled,
           raw = EXCLUDED.raw,
           updated_at = now()
   `, quoteIdent(s.Schema))
@@ -477,6 +486,7 @@ func (s *Store) UpsertInstruments(ctx context.Context, instruments []instruments
 			inst.Strike,
 			inst.LotSize,
 			inst.TickSize,
+			inst.IsCASEnabled,
 			inst.Raw,
 		)
 	}
@@ -766,8 +776,8 @@ func (s *Store) UpsertQuoteSnapshots(ctx context.Context, snaps []QuoteSnapshot)
 	}
 	q := fmt.Sprintf(`
     INSERT INTO %s.quote_snapshots
-      (ts, exchange, symbol_token, ltp, open, high, low, close, last_trade_qty, exch_feed_time, exch_trade_time, net_change, percent_change, avg_price, volume, oi, total_buy_qty, total_sell_qty, upper_circuit, lower_circuit, week52_high, week52_low, bid, ask, bid_qty, ask_qty, raw)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+      (ts, exchange, symbol_token, ltp, open, high, low, close, last_trade_qty, exch_feed_time, exch_trade_time, net_change, percent_change, avg_price, volume, oi, total_buy_qty, total_sell_qty, upper_circuit, lower_circuit, week52_high, week52_low, bid, ask, bid_qty, ask_qty, reference_limit_price, session_phase, raw)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
     ON CONFLICT (ts, exchange, symbol_token) DO UPDATE
       SET ltp = EXCLUDED.ltp,
           open = EXCLUDED.open,
@@ -792,6 +802,8 @@ func (s *Store) UpsertQuoteSnapshots(ctx context.Context, snaps []QuoteSnapshot)
           ask = EXCLUDED.ask,
           bid_qty = EXCLUDED.bid_qty,
           ask_qty = EXCLUDED.ask_qty,
+          reference_limit_price = EXCLUDED.reference_limit_price,
+          session_phase = EXCLUDED.session_phase,
           raw = EXCLUDED.raw
   `, quoteIdent(s.Schema))
 
@@ -824,6 +836,8 @@ func (s *Store) UpsertQuoteSnapshots(ctx context.Context, snaps []QuoteSnapshot)
 			snap.Ask,
 			snap.BidQty,
 			snap.AskQty,
+			snap.ReferenceLimitPrice,
+			nullableString(snap.SessionPhase),
 			snap.Raw,
 		)
 	}
@@ -836,12 +850,14 @@ func (s *Store) UpsertDepth5Snapshots(ctx context.Context, rows []Depth5Snapshot
 	}
 	q := fmt.Sprintf(`
     INSERT INTO %s.depth_5_snapshots
-      (ts, exchange, symbol_token, side, level, price, quantity, orders)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      (ts, exchange, symbol_token, side, level, price, quantity, orders, cumulative_quantity, cumulative_notional)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
     ON CONFLICT (ts, exchange, symbol_token, side, level) DO UPDATE
       SET price = EXCLUDED.price,
           quantity = EXCLUDED.quantity,
-          orders = EXCLUDED.orders
+          orders = EXCLUDED.orders,
+          cumulative_quantity = EXCLUDED.cumulative_quantity,
+          cumulative_notional = EXCLUDED.cumulative_notional
   `, quoteIdent(s.Schema))
 
 	batch := &pgx.Batch{}
@@ -855,6 +871,8 @@ func (s *Store) UpsertDepth5Snapshots(ctx context.Context, rows []Depth5Snapshot
 			row.Price,
 			row.Quantity,
 			row.Orders,
+			row.CumulativeQuantity,
+			row.CumulativeNotional,
 		)
 	}
 	return s.execBatch(ctx, "upsert_depth_5_snapshots", batch)
@@ -1534,8 +1552,9 @@ func (s *Store) InsertAPIRequestLogs(ctx context.Context, logs []APIRequestLog) 
 	}
 	q := fmt.Sprintf(`
     INSERT INTO %s.api_request_log
-      (ts, endpoint, name, success, throttled, latency_ms, symbols_requested, symbols_returned, http_status, error_message)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      (ts, endpoint, name, success, throttled, latency_ms, symbols_requested, symbols_returned, http_status,
+       retry_count, cache_hit, api_error_code, error_message)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
   `, quoteIdent(s.Schema))
 	batch := &pgx.Batch{}
 	for _, log := range logs {
@@ -1549,6 +1568,9 @@ func (s *Store) InsertAPIRequestLogs(ctx context.Context, logs []APIRequestLog) 
 			log.SymbolsRequested,
 			log.SymbolsReturned,
 			log.HTTPStatus,
+			log.RetryCount,
+			log.CacheHit,
+			nullableString(log.APIErrorCode),
 			nullableString(log.ErrorMessage),
 		)
 	}

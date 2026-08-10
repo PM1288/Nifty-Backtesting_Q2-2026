@@ -15,35 +15,36 @@ import (
 )
 
 type Quote struct {
-	Exchange      string
-	SymbolToken   string
-	TradingSymbol string
-	LTP           *float64
-	Open          *float64
-	High          *float64
-	Low           *float64
-	Close         *float64
-	LastTradeQty  *int64
-	ExchFeedTime  *time.Time
-	ExchTradeTime *time.Time
-	NetChange     *float64
-	PercentChange *float64
-	AvgPrice      *float64
-	Volume        *int64
-	OI            *int64
-	TotalBuyQty   *int64
-	TotalSellQty  *int64
-	UpperCircuit  *float64
-	LowerCircuit  *float64
-	Week52High    *float64
-	Week52Low     *float64
-	Bid           *float64
-	Ask           *float64
-	BidQty        *int64
-	AskQty        *int64
-	DepthBuy      []DepthLevel
-	DepthSell     []DepthLevel
-	Raw           []byte
+	Exchange            string
+	SymbolToken         string
+	TradingSymbol       string
+	LTP                 *float64
+	Open                *float64
+	High                *float64
+	Low                 *float64
+	Close               *float64
+	LastTradeQty        *int64
+	ExchFeedTime        *time.Time
+	ExchTradeTime       *time.Time
+	NetChange           *float64
+	PercentChange       *float64
+	AvgPrice            *float64
+	Volume              *int64
+	OI                  *int64
+	TotalBuyQty         *int64
+	TotalSellQty        *int64
+	UpperCircuit        *float64
+	LowerCircuit        *float64
+	Week52High          *float64
+	Week52Low           *float64
+	ReferenceLimitPrice *float64
+	Bid                 *float64
+	Ask                 *float64
+	BidQty              *int64
+	AskQty              *int64
+	DepthBuy            []DepthLevel
+	DepthSell           []DepthLevel
+	Raw                 []byte
 }
 
 type DepthLevel struct {
@@ -147,6 +148,7 @@ func fetchQuotesOnce(ctx context.Context, cfg config.SmartAPIConfig, tokens Auth
 			q.LowerCircuit = coerceFloatPtr(row, "lowerCircuit", "lower_circuit_limit")
 			q.Week52High = coerceFloatPtr(row, "52WeekHigh", "52_week_high", "fiftyTwoWeekHigh")
 			q.Week52Low = coerceFloatPtr(row, "52WeekLow", "52_week_low", "fiftyTwoWeekLow")
+			q.ReferenceLimitPrice = coerceFloatPtr(row, "referenceLimitPrice", "reference_limit_price")
 			q.Bid = coerceFloatPtr(row, "best_bid_price", "bestBidPrice", "bid")
 			q.Ask = coerceFloatPtr(row, "best_ask_price", "bestAskPrice", "ask")
 			q.BidQty = coerceInt64Ptr(row, "best_bid_qty", "bestBidQty", "bid_qty")

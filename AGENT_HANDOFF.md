@@ -2275,3 +2275,14 @@ Implemented and deployed the paper-only `FNO_VOLATILITY_TWO_GATE` version 1.0.0 
 Tests: seven Python financial/model tests pass; Ruff passes; web and API TypeScript checks pass; Vite production build passes; all 60 existing API tests pass; disposable PostgreSQL migration and repeat migration pass; authenticated API returns 200; Playwright route regression passes with 191 rendered rows and no console errors. `fno-volatility` and `n50-dashboard` are healthy under Compose project `trading-stack-novius2`.
 
 Operations and limitations: `docs/fno-volatility/README.md`. Current run report: `docs/fno-volatility/2026-08-10-signal-report.md`. Automatic paper submission remains intentionally disabled pending actual-option walk-forward validation; current movement and IV-change layers are explicitly labelled transparent proxy models, not promoted ML models.
+# SmartAPI rate-safe archival integration (2026-08-10)
+
+- Added additive migration `025_smartapi_archive`: permanent daily instrument-master snapshots, partitioned sampled WebSocket ticks, derived best-five depth metrics, internally built SmartAPI option-chain snapshots, WebSocket health, CAS fields and API retry metadata.
+- Preserved the existing raw `public.option_chain_snapshots` table by naming the new normalized archive `public.smartapi_option_chain_snapshots` after a production preflight exposed the collision. The first incompatible DDL attempt rolled back; the corrected migration applied successfully.
+- Collector remains the sole SmartAPI session/call gateway. No order submission code was added; deployed `disable_live_orders` remains true.
+- Added independent bounded Black-76 implied-volatility and Greek calculations. Broker and local Greeks are stored separately.
+- Updated the live market close to 15:40 IST for NFO/BFO and added explicit CAS/session-phase storage.
+- Production collector now uses host port 18080 because GLPI owns 127.0.0.1:18081. Runtime `.env` and `.env.collector.runtime` were updated consistently.
+- Verification: `go test ./... -count=1` passed; Docker image built; disposable PostgreSQL migration reached 025 with nine partitions; production migration reached 025; collector healthy as non-root `appuser`; API audit observed 152 quote and 5 aggregate calls over ten minutes with zero throttles.
+- Data preservation check before/after: `bars_1m=24,119,679`, `instruments=450,511`, `option_greeks=18,604`; pre-existing raw option-chain table retained 4,897 rows. Daily instrument snapshot captured 152,044 master rows.
+- Operational contract: `docs/SMARTAPI_RATE_SAFE_DATA_ARCHIVE.md`.

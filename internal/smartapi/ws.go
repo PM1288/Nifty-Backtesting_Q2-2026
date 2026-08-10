@@ -24,42 +24,52 @@ import (
 )
 
 type Tick struct {
-	Exchange    string
-	Token       string
-	LTP         float64
-	LastQty     *int64
-	CumVolume   *int64
-	OI          *int64
-	OIChangePct *float64
-	Timestamp   time.Time
-	AvgPrice    *float64
-	TotalBuy    *int64
-	TotalSell   *int64
-	Open        *float64
-	High        *float64
-	Low         *float64
-	Close       *float64
-	LastTrade   *time.Time
-	UpperCirc   *float64
-	LowerCirc   *float64
-	WeekHigh    *float64
-	WeekLow     *float64
-	DepthBuy    []DepthLevel
-	DepthSell   []DepthLevel
+	ConnectionID string
+	Mode         byte
+	Sequence     int64
+	Exchange     string
+	Token        string
+	LTP          float64
+	LastQty      *int64
+	CumVolume    *int64
+	OI           *int64
+	OIChangePct  *float64
+	Timestamp    time.Time
+	AvgPrice     *float64
+	TotalBuy     *int64
+	TotalSell    *int64
+	Open         *float64
+	High         *float64
+	Low          *float64
+	Close        *float64
+	LastTrade    *time.Time
+	UpperCirc    *float64
+	LowerCirc    *float64
+	WeekHigh     *float64
+	WeekLow      *float64
+	DepthBuy     []DepthLevel
+	DepthSell    []DepthLevel
+	ReceivedAt   time.Time
+	Raw          []byte
 }
 
 type Streamer struct {
-	cfg        config.SmartAPIConfig
-	wsCfg      config.WSConfig
-	provider   TokenProvider
-	logger     *slog.Logger
-	connected  atomic.Bool
-	lastTickNs atomic.Int64
-	writeMu    sync.Mutex
+	cfg          config.SmartAPIConfig
+	wsCfg        config.WSConfig
+	provider     TokenProvider
+	logger       *slog.Logger
+	connected    atomic.Bool
+	lastTickNs   atomic.Int64
+	writeMu      sync.Mutex
+	connectionID string
 }
 
 func NewStreamer(cfg config.SmartAPIConfig, wsCfg config.WSConfig, provider TokenProvider, logger *slog.Logger) *Streamer {
 	return &Streamer{cfg: cfg, wsCfg: wsCfg, provider: provider, logger: logger}
+}
+
+func (s *Streamer) SetConnectionID(value string) {
+	s.connectionID = strings.TrimSpace(value)
 }
 
 func (s *Streamer) Run(ctx context.Context, subs []store.Subscription, out chan<- Tick) error {
@@ -343,6 +353,7 @@ func (s *Streamer) readLoop(ctx context.Context, conn *websocket.Conn, out chan<
 			if !ok {
 				continue
 			}
+			tick.ConnectionID = s.connectionID
 			s.lastTickNs.Store(time.Now().UnixNano())
 			out <- tick
 		}
@@ -354,7 +365,6 @@ func parseBinaryTick(data []byte) (Tick, bool) {
 		return Tick{}, false
 	}
 	mode := data[0]
-	_ = mode
 	exchType := data[1]
 	token := parseToken(data[2:27])
 	if token == "" {
@@ -366,7 +376,16 @@ func parseBinaryTick(data []byte) (Tick, bool) {
 	ltpRaw := readInt64(data[43:51])
 	ltp := normalizePrice(ltpRaw)
 
-	tick := Tick{Exchange: exchange, Token: token, LTP: ltp, Timestamp: ts}
+	tick := Tick{
+		Mode:       mode,
+		Sequence:   readInt64(data[27:35]),
+		Exchange:   exchange,
+		Token:      token,
+		LTP:        ltp,
+		Timestamp:  ts,
+		ReceivedAt: time.Now().UTC(),
+		Raw:        append([]byte(nil), data...),
+	}
 
 	if len(data) >= 59 {
 		qty := readInt64(data[51:59])

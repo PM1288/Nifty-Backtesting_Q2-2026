@@ -133,6 +133,14 @@ func main() {
 		logger.Error("instrument upsert failed", "err", err)
 		os.Exit(1)
 	}
+	if cfg.Archive.Enable && cfg.Archive.EnableInstrumentSnapshots {
+		capturedAt := time.Now().UTC()
+		if err := st.UpsertInstrumentMasterSnapshot(ctx, capturedAt.In(loc), capturedAt, store.InstrumentMasterHash(insts), insts); err != nil {
+			logger.Error("instrument_master_snapshot_failed", "err", err)
+			os.Exit(1)
+		}
+	}
+	casEligibility := buildCASEligibilityIndex(insts)
 
 	symbols, err := universe.ParseSymbolsCSV(cfg.Files.SymbolsCSVPath)
 	if err != nil {
@@ -207,6 +215,7 @@ func main() {
 	subIndex := newSubscriptionIndex()
 	optionStates := newOptionStateIndex()
 	tickTracker := newTickTracker()
+	wsArchiveTracker := newWSHealthTracker()
 	var subsCount atomic.Int64
 	primaryKinds := normalizeKinds(cfg.RestTasks.QuoteSnapshotPrimaryKinds)
 	depthKinds := normalizeKinds(cfg.WS.DepthSnapshotKinds)
@@ -225,6 +234,12 @@ func main() {
 	wsManager := smartapi.NewWSManager(cfg.SmartAPI, cfg.WS, tokenProvider, logger)
 	tickCh := make(chan smartapi.Tick, 4096)
 	barCh := make(chan store.Bar, 4096)
+	var tickArchiveCh chan store.MarketTick
+	var tickArchiveSampler *tickArchiveSampler
+	if cfg.Archive.Enable && cfg.Archive.EnableMarketTicks {
+		tickArchiveCh = make(chan store.MarketTick, cfg.Archive.TickBufferSize)
+		tickArchiveSampler = newTickArchiveSampler(cfg.Archive.TickSampleMilliseconds)
+	}
 	agg := aggregate.New(loc, time.Duration(cfg.Runtime.FlushSeconds)*time.Second)
 
 	eg, egCtx := errgroup.WithContext(ctx)
@@ -247,6 +262,7 @@ func main() {
 				return egCtx.Err()
 			case tick := <-tickCh:
 				tickTracker.Mark(tick.Exchange, tick.Token, tick.Timestamp)
+				wsArchiveTracker.Mark(tick)
 				if tick.OI != nil {
 					oiCache.Set(tick.Exchange, tick.Token, *tick.OI, tick.Timestamp)
 				}
@@ -262,14 +278,23 @@ func main() {
 				var ok bool
 				if sub, ok = subIndex.Get(tick.Exchange, tick.Token); ok {
 					kind := strings.ToUpper(sub.Kind)
+					phase := marketSessionPhase(tick.Timestamp, tick.Exchange, casEligibility[subKey(tick.Exchange, tick.Token)], loc)
+					if tickArchiveCh != nil && tickArchiveSampler.Accept(tick) {
+						row := marketTickFromSmart(tick, phase)
+						select {
+						case tickArchiveCh <- row:
+						default:
+							wsArchiveTracker.Drop()
+						}
+					}
 					if sub.Underlying != "" && !strings.HasPrefix(kind, "OPT") {
 						priceCache.Set(sub.Underlying, tick.LTP)
 					}
 					if cfg.WS.EnableDepthSnapshots && depthCache != nil && (len(tick.DepthBuy) > 0 || len(tick.DepthSell) > 0) {
 						if len(depthKinds) == 0 {
-							depthCache.Update(tick.Exchange, tick.Token, tick.Timestamp, tick.DepthBuy, tick.DepthSell)
+							depthCache.Update(tick.Exchange, tick.Token, tick.Timestamp, phase, tick.DepthBuy, tick.DepthSell)
 						} else if _, ok := depthKinds[kind]; ok {
-							depthCache.Update(tick.Exchange, tick.Token, tick.Timestamp, tick.DepthBuy, tick.DepthSell)
+							depthCache.Update(tick.Exchange, tick.Token, tick.Timestamp, phase, tick.DepthBuy, tick.DepthSell)
 						}
 					}
 				}
@@ -433,6 +458,21 @@ func main() {
 	if cfg.WS.EnableDepthSnapshots {
 		eg.Go(func() error {
 			return runDepthSnapshotFlush(egCtx, cfg, st, depthCache, logger)
+		})
+	}
+	if tickArchiveCh != nil {
+		eg.Go(func() error {
+			return runMarketTickArchive(egCtx, st, tickArchiveCh, cfg.Archive.TickBatchSize, logger)
+		})
+	}
+	if cfg.Archive.Enable && cfg.Archive.EnableWebsocketHealth {
+		eg.Go(func() error {
+			return runWebsocketHealthArchive(egCtx, cfg, st, wsArchiveTracker, &subsCount, logger)
+		})
+	}
+	if cfg.Archive.Enable && cfg.Archive.EnableOptionChainSnapshots {
+		eg.Go(func() error {
+			return runOptionChainArchive(egCtx, cfg, st, loc, logger)
 		})
 	}
 	if cfg.Metrics.Enable {

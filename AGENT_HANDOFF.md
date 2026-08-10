@@ -2095,3 +2095,43 @@ volumes remained intact.
 
 Full formulas and evidence-map documentation:
 `docs/worklogs/oiis-live-rejection-gate-definitions-2026-08-10.md`.
+
+## Complete 10 August per-stock OIIS calculation report — 2026-08-10
+
+- Generated the exhaustive Markdown evidence report at
+  `docs/reports/OIIS_LIVE_COMPLETE_CALCULATION_REPORT_2026-08-10.md`.
+- The report is 40,559 lines / approximately 2.18 MB and contains exactly 208
+  numbered per-stock sections.
+- Each calculable stock contains the exact scoring-engine input vector,
+  additional live/volume inputs, data-quality inputs, all nine LONG OFactor
+  component scores/weights/contributions, all nine SHORT equivalents, applied
+  penalties, raw/final scores, all nine XFactor scores/weights/contributions,
+  setup/stop/risk/reward/extension values, every gate's actual JSON values,
+  rule, fields, source table, blocking flag, condition matrix and final
+  selection explanation.
+- The 18 unavailable-data symbols remain present and are explicitly marked
+  `NOT ESTIMABLE`; the report does not invent their O/X or indicator values.
+- Global sections document the formulas, thresholds, data sources, time
+  semantics, six-run ledger for 10 August, aggregate tier/direction/failure
+  counts, ten-row ranked watchlist and compact all-stock comparison table.
+- Reusable exporter:
+  `services/oiis_live/tools/export_daily_evidence_report.py`.
+- Verification: 208 stock headings, 190 calculable candidates, 18 data-
+  insufficient candidates, and maximum LONG O, SHORT O and X score-
+  reconciliation residuals all equal zero.
+- Report SHA-256:
+  `6c490300007b1703c0e3b1c90ae5b7512631c30bc632879370a3dece57d58ffa`.
+
+Recreate it without exposing the database credential:
+
+```bash
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026
+docker run --rm -u 0 \
+  --network trading-stack-novius2_default \
+  --env-file /home/novius2/trading-stack/.env \
+  -v "$PWD:/workspace" \
+  --entrypoint python trading-stack-oiis-live:1.0.0 \
+  /workspace/services/oiis_live/tools/export_daily_evidence_report.py \
+  --trade-date 2026-08-10 --run-slot MANUAL_V2_FINAL \
+  --output /workspace/docs/reports/OIIS_LIVE_COMPLETE_CALCULATION_REPORT_2026-08-10.md
+```

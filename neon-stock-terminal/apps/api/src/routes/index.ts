@@ -31,6 +31,7 @@ import { registerWillSurface } from "./willSurface";
 import { registerOiisLive, registerOiisLivePublic } from "./oiisLive";
 import { registerWorkspaceRoutes } from "./workspace";
 import { registerFnoVolatility } from "./fnoVolatility";
+import { registerMobileNotifications } from "./mobileNotifications";
 
 export function registerRoutes(
   app: Express,
@@ -72,5 +73,6 @@ export function registerRoutes(
   registerStocks(app, prisma);
   registerOiisLive(app, prisma);
   registerFnoVolatility(app, prisma);
+  registerMobileNotifications(app, prisma);
   registerWorkspaceRoutes(app, prisma, authRuntime);
 }

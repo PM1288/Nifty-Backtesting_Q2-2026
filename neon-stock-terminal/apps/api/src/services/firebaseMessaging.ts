@@ -1,50 +1,40 @@
 import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
 import { getMessaging, type MulticastMessage } from "firebase-admin/messaging";
+import { mobileNotificationEventSchema, type MobileNotificationEvent } from "./notificationSystem";
 
-export type MobileNotificationEvent = {
-  event_id: string;
-  type: "paper_trade_opened" | "paper_target_hit" | "paper_trade_closed" | "day_start_summary" | "day_end_summary" | "live_activity";
-  action: "standard" | "start" | "update" | "complete" | "cancel";
-  activity_id: string;
-  notification_id: string;
-  title: string;
-  body: string;
-  short_text: string;
-  progress: string;
-  stage: string;
-  route: string;
-  event_at: string;
-  data_as_of: string;
-};
+export type { MobileNotificationEvent } from "./notificationSystem";
 
 function messaging() {
   const app = getApps()[0] ?? initializeApp({ credential: applicationDefault() });
   return getMessaging(app);
 }
 
-export async function sendMobileEvent(tokens: string[], event: MobileNotificationEvent) {
-  if (!tokens.length) return { successCount: 0, failureCount: 0, messageIds: [], invalidTokenIndexes: [] };
-  const isStandard = event.action === "standard";
-  const message: MulticastMessage = {
+export function buildMobileMessage(tokens: string[], rawEvent: MobileNotificationEvent): MulticastMessage {
+  const event = mobileNotificationEventSchema.parse(rawEvent);
+  const expiresAt = event.expires_at ? Date.parse(event.expires_at) : Number.NaN;
+  const ttl = Number.isFinite(expiresAt) ? Math.max(0, expiresAt - Date.now()) : undefined;
+  return {
     tokens,
+    // N50 always uses data-only payloads. The React Native background handler
+    // validates the contract and invokes the Kotlin BigText/Inbox/ProgressStyle
+    // renderer, preventing Android from generating a duplicate generic card.
     data: event,
     android: {
-      priority: "high",
-      collapseKey: `${event.activity_id}:${event.action}`,
-      notification: isStandard ? {
-        channelId: event.type === "day_start_summary" || event.type === "day_end_summary" ? "market_updates_v1" : "trade_critical_v1",
-        title: event.title,
-        body: event.body,
-        tag: event.notification_id,
-      } : undefined,
-    },
+      priority: event.priority === "high" || event.action === "start" || event.action === "complete" ? "high" : "normal",
+      collapseKey: event.action === "update" ? event.dedupe_key.slice(0, 64) : undefined,
+      ttl
+    }
   };
-  const result = await messaging().sendEachForMulticast(message);
+}
+
+export async function sendMobileEvent(tokens: string[], event: MobileNotificationEvent) {
+  if (!tokens.length) return { successCount: 0, failureCount: 0, messageIds: [], invalidTokenIndexes: [] };
+  const result = await messaging().sendEachForMulticast(buildMobileMessage(tokens, event));
   return {
     successCount: result.successCount,
     failureCount: result.failureCount,
     messageIds: result.responses.flatMap((response) => response.messageId ? [response.messageId] : []),
     invalidTokenIndexes: result.responses.flatMap((response, index) =>
-      response.error?.code === "messaging/registration-token-not-registered" ? [index] : []),
+      response.error?.code === "messaging/registration-token-not-registered" ? [index] : [])
   };
 }

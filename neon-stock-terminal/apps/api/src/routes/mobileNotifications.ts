@@ -3,6 +3,7 @@ import type { Express, NextFunction, Request, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { sendMobileEvent, type MobileNotificationEvent } from "../services/firebaseMessaging";
+import { mobileNotificationEventSchema } from "../services/notificationSystem";
 
 type Row = Record<string, unknown>;
 
@@ -18,20 +19,17 @@ const deviceSchema = z.object({
   deviceManufacturer: z.string().trim().max(80).optional()
 });
 
-const sendEventSchema = z.object({
-  event_id: z.string().min(1).max(160),
-  type: z.enum(["paper_trade_opened", "paper_target_hit", "paper_trade_closed", "day_start_summary", "day_end_summary", "live_activity"]),
-  action: z.enum(["standard", "start", "update", "complete", "cancel"]),
-  activity_id: z.string().max(160),
-  notification_id: z.string().regex(/^\d+$/),
-  title: z.string().min(1).max(80),
-  body: z.string().min(1).max(240),
-  short_text: z.string().max(16),
-  progress: z.string().regex(/^\d{1,3}$/),
-  stage: z.string().max(80),
-  route: z.string().startsWith("/").max(240),
-  event_at: z.string().datetime({ offset: true }),
-  data_as_of: z.string().datetime({ offset: true })
+const sendEventSchema = mobileNotificationEventSchema;
+
+const preferenceSchema = z.object({
+  enabled: z.boolean(),
+  domains: z.record(z.boolean()).default({}),
+  quietHours: z.object({ enabled: z.boolean(), startMinutes: z.number().int().min(0).max(1439), endMinutes: z.number().int().min(0).max(1439) }),
+  minimumSignificance: z.number().min(0).max(100),
+  maximumAlertsPerHour: z.number().int().min(1).max(60),
+  dailyBudget: z.number().int().min(1).max(500),
+  digestMode: z.boolean(), sound: z.boolean(), vibration: z.boolean(), tts: z.boolean(),
+  showPnlOnLockScreen: z.boolean()
 });
 
 const limitSchema = z.coerce.number().int().min(1).max(100).default(50);
@@ -126,6 +124,30 @@ export function registerMobileNotifications(app: Express, prisma: PrismaClient) 
     } catch (error) { next(error); }
   });
 
+  app.get("/v1/mobile/notification-preferences", async (req, res, next) => {
+    try {
+      const userUid = req.authUser?.uid;
+      if (!userUid) return res.status(401).json({ error: { code: "AUTH_REQUIRED", message: "Authentication is required." } });
+      const rows = await prisma.$queryRawUnsafe<Array<{ enabled: boolean; settings: unknown; updated_at: Date }>>(
+        `select enabled,settings,updated_at from mobile_notifications.preference where user_uid=$1`, userUid);
+      return res.json({ enabled: rows[0]?.enabled ?? true, settings: rows[0]?.settings ?? null, updatedAt: rows[0]?.updated_at ?? null });
+    } catch (error) { next(error); }
+  });
+
+  app.put("/v1/mobile/notification-preferences", async (req, res, next) => {
+    try {
+      const userUid = req.authUser?.uid;
+      if (!userUid) return res.status(401).json({ error: { code: "AUTH_REQUIRED", message: "Authentication is required." } });
+      const settings = preferenceSchema.parse(req.body);
+      const rows = await prisma.$queryRawUnsafe<Array<{ enabled: boolean; settings: unknown; updated_at: Date }>>(`
+        insert into mobile_notifications.preference(user_uid,enabled,settings)
+        values ($1,$2,$3::jsonb)
+        on conflict (user_uid) do update set enabled=excluded.enabled,settings=excluded.settings,updated_at=now()
+        returning enabled,settings,updated_at`, userUid, settings.enabled, JSON.stringify(settings));
+      return res.json({ enabled: rows[0]?.enabled, settings: rows[0]?.settings, updatedAt: rows[0]?.updated_at });
+    } catch (error) { next(error); }
+  });
+
   const devSend = (expectedAction: MobileNotificationEvent["action"]) => async (req: Request, res: Response, next: NextFunction) => {
     try {
       const enabled = process.env.ENABLE_MOBILE_NOTIFICATION_DEV_ENDPOINTS === "true";
@@ -141,6 +163,13 @@ export function registerMobileNotifications(app: Express, prisma: PrismaClient) 
         select device_id::text,push_token from mobile_notifications.device
         where user_uid=$1 and enabled=true order by last_seen_at desc limit 20`, req.authUser.uid);
       const result = await sendMobileEvent(devices.map((device) => device.push_token), event);
+      await prisma.$executeRawUnsafe(`
+        insert into mobile_notifications.delivery_audit
+          (event_id,user_uid,event_type,domain,channel_id,dedupe_key,outcome,reason,firebase_message_id,occurred_at)
+        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::timestamptz)`,
+        event.event_id, req.authUser.uid, event.type, event.domain, event.channel_id, event.dedupe_key,
+        result.failureCount > 0 ? "FAILED" : "SENT", result.failureCount > 0 ? `${result.failureCount} Firebase deliveries failed` : null,
+        result.messageIds[0] ?? null, event.event_at);
       for (const index of result.invalidTokenIndexes) {
         const device = devices[index];
         if (device) await prisma.$executeRawUnsafe(`update mobile_notifications.device set enabled=false,updated_at=now() where device_id=$1::uuid`, device.device_id);

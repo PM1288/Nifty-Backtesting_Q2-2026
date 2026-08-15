@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   favourableMovePercent, MarketCalendarService, MarketLifecycleScheduler,
   NotificationTemplateService, normalisedProgress, targetPrice, TradeNotificationEventService,
+  NotificationSpeechFormatter,
   type ExchangeSession, type TradeNotificationPayload
 } from "./notificationSystem";
 
@@ -40,9 +41,25 @@ test("market lifecycle uses the supplied exchange calendar", () => {
 });
 
 test("template registry covers every configured domain family", () => {
-  assert.equal(NotificationTemplateService.get("market_regime_changed").channelId, "market_regime_v1");
+  assert.equal(NotificationTemplateService.get("market_regime_changed").channelId, "market_reversal_v1");
   assert.equal(NotificationTemplateService.get("brent_threshold").domain, "commodities");
   assert.equal(NotificationTemplateService.get("paper_trade_monitor").style, "progress");
+});
+
+test("paper lifecycle payload contains purpose-built private and financial speech", () => {
+  const now = new Date().toISOString();
+  const target = { targetId: "T1" as const, favourableMovePercent: 0.3, targetPrice: 46639.5, status: "hit" as const, netPnl: 3523.13 };
+  const trade: TradeNotificationPayload = {
+    mode: "paper", instrumentType: "cash", side: "long", symbol: "BOSCHLTD", strategy: "OIIS",
+    quantity: 25, remainingQuantity: 25, entryPrice: 46500, ltp: 46660, openedAt: now,
+    stopLoss: 46250, netPnl: 3523.13, targets: [target]
+  };
+  const event = TradeNotificationEventService.lifecycle({ eventId: "target-1", notificationId: 72001, eventType: "paper_target_hit", tradeId: "paper-1", occurredAt: now, dataAsOf: now, source: "paper trading", trade, target });
+  assert.equal(event.channel_id, "paper_target_hit_v2");
+  assert.match(event.tts_text, /Paper target one reached/);
+  assert.match(event.tts_text, /three thousand five hundred twenty three/);
+  assert.doesNotMatch(event.private_tts_text, /3523|profit/i);
+  assert.equal(NotificationSpeechFormatter.number(1360), "one thousand three hundred sixty");
 });
 
 test("normalised progress keeps entry at 20 and T3 at 100 for shorts", () => {

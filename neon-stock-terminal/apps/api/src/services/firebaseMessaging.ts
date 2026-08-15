@@ -4,6 +4,11 @@ import { mobileNotificationEventSchema, type MobileNotificationEvent } from "./n
 
 export type { MobileNotificationEvent } from "./notificationSystem";
 
+const highPriorityTypes = new Set([
+  "paper_trade_opened", "paper_target_hit", "paper_stop_hit", "paper_trade_closed",
+  "bullish_reversal", "bearish_reversal", "market_regime_changed"
+]);
+
 function messaging() {
   const app = getApps()[0] ?? initializeApp({ credential: applicationDefault() });
   return getMessaging(app);
@@ -20,7 +25,7 @@ export function buildMobileMessage(tokens: string[], rawEvent: MobileNotificatio
     // renderer, preventing Android from generating a duplicate generic card.
     data: event,
     android: {
-      priority: event.priority === "high" || event.action === "start" || event.action === "complete" ? "high" : "normal",
+      priority: event.priority === "high" || highPriorityTypes.has(event.type) ? "high" : "normal",
       collapseKey: event.action === "update" ? event.dedupe_key.slice(0, 64) : undefined,
       ttl
     }

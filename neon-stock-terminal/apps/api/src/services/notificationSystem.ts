@@ -86,12 +86,12 @@ const define = (eventType: string, domain: NotificationDomain, channelId: string
 });
 
 const templateDefinitions = [
-  define("paper_trade_opened", "paper_trade", "paper_trade_live_v2", "big_text", "normal", "event", 3600),
-  define("paper_trade_monitor", "paper_trade", "paper_trade_live_v2", "progress", "normal", "activity", 21600),
-  define("paper_target_hit", "paper_trade", "trade_milestones_v2", "big_text", "high", "event", 7200),
+  define("paper_trade_opened", "paper_trade", "paper_trade_open_v2", "big_text", "high", "event", 3600),
+  define("paper_trade_monitor", "paper_trade", "paper_trade_live_v3", "progress", "normal", "activity", 21600),
+  define("paper_target_hit", "paper_trade", "paper_target_hit_v2", "big_text", "high", "event", 7200),
   define("paper_target_summary", "paper_trade", "daily_summary_v1", "inbox", "low", "event", 86400),
-  define("paper_stop_hit", "paper_trade", "trade_critical_v2", "big_text", "high", "event", 7200),
-  define("paper_trade_closed", "paper_trade", "trade_milestones_v2", "big_text", "high", "event", 86400),
+  define("paper_stop_hit", "paper_trade", "paper_trade_stop_v2", "big_text", "high", "event", 7200),
+  define("paper_trade_closed", "paper_trade", "paper_trade_closed_v1", "big_text", "normal", "event", 86400),
   define("real_trade_opened", "trade", "real_trade_live_v1", "big_text", "high", "event", 3600),
   define("real_trade_monitor", "trade", "real_trade_live_v1", "progress", "normal", "activity", 21600),
   define("real_target_hit", "trade", "trade_milestones_v2", "big_text", "high", "event", 7200),
@@ -99,15 +99,15 @@ const templateDefinitions = [
   define("real_trade_closed", "trade", "trade_critical_v2", "big_text", "high", "event", 86400),
   define("market_preopen_global_cues", "global_markets", "global_markets_v1", "inbox", "normal", "state_change", 3600),
   define("market_preopen_snapshot", "market_lifecycle", "market_lifecycle_v1", "inbox", "normal", "event", 1800),
-  define("market_open", "market_lifecycle", "market_lifecycle_v1", "inbox", "normal", "event", 3600),
+  define("market_open", "market_lifecycle", "market_open_v1", "inbox", "normal", "event", 3600),
   define("market_first_hour", "daily_summary", "daily_summary_v1", "inbox", "normal", "event", 7200),
   define("market_midday", "daily_summary", "daily_summary_v1", "inbox", "normal", "event", 7200),
   define("market_closing_watch", "market_lifecycle", "market_lifecycle_v1", "big_text", "normal", "event", 1800),
-  define("market_closed", "market_lifecycle", "market_lifecycle_v1", "inbox", "normal", "event", 21600),
+  define("market_closed", "market_lifecycle", "market_close_v1", "inbox", "normal", "event", 21600),
   define("market_eod_summary", "daily_summary", "daily_summary_v1", "inbox", "low", "event", 86400),
-  define("market_regime_changed", "market_regime", "market_regime_v1", "big_text", "normal", "state_change", 10800),
-  define("bullish_reversal", "market_regime", "market_regime_v1", "big_text", "high", "state_change", 7200),
-  define("bearish_reversal", "market_regime", "market_regime_v1", "big_text", "high", "state_change", 7200),
+  define("market_regime_changed", "market_regime", "market_reversal_v1", "big_text", "normal", "state_change", 10800),
+  define("bullish_reversal", "market_regime", "market_reversal_v1", "big_text", "high", "state_change", 7200),
+  define("bearish_reversal", "market_regime", "market_reversal_v1", "big_text", "high", "state_change", 7200),
   define("breadth_extreme", "index", "market_regime_v1", "big_text", "normal", "threshold_episode", 3600),
   define("india_vix_spike", "volatility", "commodities_fx_v1", "big_text", "high", "threshold_episode", 3600),
   define("watchlist_threshold", "watchlist", "watchlist_alerts_v1", "big_text", "normal", "threshold_episode", 7200),
@@ -139,7 +139,8 @@ export const mobileNotificationEventSchema = z.record(z.string(), z.string()).an
   notification_id: z.string().regex(/^\d+$/), template_id: z.string().min(1),
   template_style: z.enum(["progress", "big_text", "inbox"]), channel_id: z.string().min(1),
   priority: z.enum(["low", "normal", "high"]), title: z.string().min(1).max(100),
-  body: z.string().min(1).max(900), route: z.string().startsWith("/"),
+  body: z.string().min(1).max(900), tts_text: z.string().max(300).default(""),
+  private_tts_text: z.string().max(180).default(""), route: z.string().startsWith("/"),
   dedupe_key: z.string().min(1), event_at: z.string().datetime({ offset: true }),
   data_as_of: z.string().datetime({ offset: true })
 }));
@@ -163,6 +164,49 @@ export function normalisedProgress(input: Pick<TradeNotificationPayload, "side" 
   return Math.max(20, Math.min(100, 20 + 80 * Math.abs(input.ltp - input.entryPrice) / Math.abs(finalTarget - input.entryPrice)));
 }
 
+const smallNumbers = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+function belowThousand(value: number): string {
+  const parts: string[] = [];
+  if (value >= 100) { parts.push(`${smallNumbers[Math.floor(value / 100)]} hundred`); value %= 100; }
+  if (value >= 20) { parts.push(tens[Math.floor(value / 10)]); value %= 10; }
+  if (value > 0) parts.push(smallNumbers[value]);
+  return parts.join(" ") || "zero";
+}
+
+export class NotificationSpeechFormatter {
+  static number(value: number): string {
+    if (!Number.isFinite(value)) return "unavailable";
+    const sign = value < 0 ? "minus " : "";
+    let whole = Math.floor(Math.abs(value));
+    const parts: string[] = [];
+    const crore = Math.floor(whole / 10_000_000); whole %= 10_000_000;
+    const lakh = Math.floor(whole / 100_000); whole %= 100_000;
+    const thousand = Math.floor(whole / 1_000); whole %= 1_000;
+    if (crore) parts.push(`${belowThousand(crore)} crore`);
+    if (lakh) parts.push(`${belowThousand(lakh)} lakh`);
+    if (thousand) parts.push(`${belowThousand(thousand)} thousand`);
+    if (whole || !parts.length) parts.push(belowThousand(whole));
+    const decimals = Math.round((Math.abs(value) % 1) * 100);
+    return `${sign}${parts.join(" ")}${decimals ? ` point ${String(decimals).padStart(2, "0").split("").map((digit) => smallNumbers[Number(digit)]).join(" ")}` : ""}`;
+  }
+
+  static money(value: number | undefined) { return value == null ? "amount unavailable" : `${this.number(value)} rupees`; }
+  static quantity(value: number) { return `${this.number(value)} quantity`; }
+  static side(value: "long" | "short") { return value; }
+  static target(value: "T1" | "T2" | "T3") { return `target ${smallNumbers[Number(value.slice(1))]}`; }
+
+  static lifecycle(eventType: "paper_trade_opened" | "paper_target_hit" | "paper_stop_hit" | "paper_trade_closed", trade: TradeNotificationPayload, target?: TargetOutcome) {
+    const identity = `${trade.symbol}. ${this.side(trade.side)}.`;
+    if (eventType === "paper_trade_opened") return `Paper trade opened. ${identity} ${this.quantity(trade.quantity)} at ${this.money(trade.entryPrice)}.`;
+    if (eventType === "paper_target_hit") return `Paper ${this.target(target?.targetId ?? "T1")} reached. ${identity} Net paper profit ${this.money(target?.netPnl ?? trade.netPnl)}.`;
+    if (eventType === "paper_stop_hit") return `Attention. Paper trade stop-loss reached. ${identity} The paper position has been closed.`;
+    if (trade.netPnl == null) return `Paper trade closed. ${identity} Net paper result unavailable.`;
+    return `Paper trade closed. ${identity} Net paper ${trade.netPnl < 0 ? "loss" : "profit"} ${this.money(Math.abs(trade.netPnl))}.`;
+  }
+}
+
 export class TradeNotificationEventService {
   static monitor(input: { eventId: string; notificationId: number; action: "start" | "update" | "complete"; tradeId: string; occurredAt: string; dataAsOf: string; source: string; trade: TradeNotificationPayload }): MobileNotificationEvent {
     const { trade } = input;
@@ -179,6 +223,7 @@ export class TradeNotificationEventService {
       template_id: template.templateId, template_style: template.style, channel_id: template.channelId,
       priority: template.priority, title: `${trade.symbol} · ${mode} ${side}`,
       body: `₹${money(trade.ltp)} · ${move >= 0 ? "+" : ""}${move.toFixed(2)}% · Net P&L ${money(trade.netPnl)}`,
+      tts_text: "", private_tts_text: "",
       lines: "", short_text: input.action === "complete" ? "DONE" : `${move >= 0 ? "+" : ""}${move.toFixed(1)}%`,
       progress: String(Math.round(progress)), stage: input.action === "complete" ? "TRADE_CLOSED" : "MONITORING",
       route: `/${trade.mode}-trades/${encodeURIComponent(input.tradeId)}`, dedupe_key: `${trade.mode}:${input.tradeId}:monitor`,
@@ -191,12 +236,39 @@ export class TradeNotificationEventService {
       data_freshness: "Current"
     });
   }
+
+  static lifecycle(input: { eventId: string; notificationId: number; eventType: "paper_trade_opened" | "paper_target_hit" | "paper_stop_hit" | "paper_trade_closed"; tradeId: string; occurredAt: string; dataAsOf: string; source: string; trade: TradeNotificationPayload; target?: TargetOutcome }): MobileNotificationEvent {
+    const { trade } = input;
+    if (trade.mode !== "paper") throw new Error("Paper lifecycle speech requires paper mode");
+    const template = NotificationTemplateService.get(input.eventType);
+    const stage = input.eventType === "paper_target_hit" ? `${input.target?.targetId ?? "T1"}_HIT` : input.eventType.toUpperCase();
+    return mobileNotificationEventSchema.parse({
+      schema_version: "1", event_id: input.eventId, type: input.eventType, domain: template.domain,
+      action: "standard", activity_id: input.tradeId, notification_id: String(input.notificationId),
+      template_id: template.templateId, template_style: template.style, channel_id: template.channelId,
+      priority: template.priority, title: `${trade.symbol} · ${stage.replaceAll("_", " ")}`,
+      body: `${trade.side.toUpperCase()} · Net P&L ${trade.netPnl == null ? "—" : `₹${trade.netPnl.toFixed(2)}`}`,
+      tts_text: NotificationSpeechFormatter.lifecycle(input.eventType, trade, input.target),
+      private_tts_text: `${input.eventType === "paper_target_hit" ? "Paper target reached" : input.eventType.replaceAll("_", " ")}. Open N50 Today for details.`,
+      lines: "", short_text: input.eventType === "paper_target_hit" ? input.target?.targetId ?? "T1" : "PAPER",
+      progress: "0", stage, route: `/paper-trades/${encodeURIComponent(input.tradeId)}`,
+      dedupe_key: `paper:${input.tradeId}:${stage}`, event_at: input.occurredAt, data_as_of: input.dataAsOf,
+      expires_at: "", source: input.source, symbol: trade.symbol, side: trade.side.toUpperCase(), trade_mode: "PAPER",
+      entry: trade.entryPrice.toFixed(2), ltp: trade.ltp.toFixed(2), pnl: trade.netPnl?.toFixed(2) ?? "—",
+      pnl_percent: favourableMovePercent(trade.side, trade.entryPrice, trade.ltp).toFixed(2), gross_pnl: trade.grossPnl?.toFixed(2) ?? "—",
+      charges: trade.charges?.toFixed(2) ?? "—", taxes: trade.taxes?.toFixed(2) ?? "—", quantity: String(trade.quantity),
+      remaining_quantity: String(trade.remainingQuantity), opened_at: trade.openedAt, stop_loss: trade.stopLoss?.toFixed(2) ?? "—",
+      target_1: trade.targets[0]?.targetPrice.toFixed(2) ?? "—", target_2: trade.targets[1]?.targetPrice.toFixed(2) ?? "—",
+      target_3: trade.targets[2]?.targetPrice.toFixed(2) ?? "—", targets_json: JSON.stringify(trade.targets), data_freshness: "Current"
+    });
+  }
 }
 
 export type QualifiedDomainResult = {
   eventId: string; eventType: string; occurredAt: string; dataAsOf: string; source: string;
   title: string; body: string; lines?: string[]; deepLink: string; dedupeKey: string;
   symbol?: string; notificationId: number;
+  ttsText?: string; privateTtsText?: string;
 };
 
 function qualifiedEvent(result: QualifiedDomainResult): MobileNotificationEvent {
@@ -205,7 +277,8 @@ function qualifiedEvent(result: QualifiedDomainResult): MobileNotificationEvent 
     schema_version: "1", event_id: result.eventId, type: result.eventType, domain: template.domain,
     action: "standard", activity_id: result.eventId, notification_id: String(result.notificationId),
     template_id: template.templateId, template_style: template.style, channel_id: template.channelId,
-    priority: template.priority, title: result.title, body: result.body, lines: (result.lines ?? []).join("\n"),
+    priority: template.priority, title: result.title, body: result.body,
+    tts_text: result.ttsText ?? "", private_tts_text: result.privateTtsText ?? "", lines: (result.lines ?? []).join("\n"),
     short_text: "N50", progress: "0", stage: result.eventType.toUpperCase(), route: result.deepLink,
     dedupe_key: result.dedupeKey, event_at: result.occurredAt, data_as_of: result.dataAsOf,
     expires_at: "", source: result.source, symbol: result.symbol ?? "NIFTY", side: "NONE", trade_mode: "NONE",

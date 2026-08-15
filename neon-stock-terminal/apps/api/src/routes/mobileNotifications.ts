@@ -21,6 +21,17 @@ const deviceSchema = z.object({
 
 const sendEventSchema = mobileNotificationEventSchema;
 
+const speechPreferenceSchema = z.object({
+  enabled: z.boolean(), paperTradeOpened: z.boolean(), paperTargetHit: z.boolean(),
+  paperStopHit: z.boolean(), paperTradeClosed: z.boolean(), marketOpen: z.boolean(),
+  marketClose: z.boolean(), marketReversal: z.boolean(), marketInformation: z.boolean(),
+  readWhenLocked: z.boolean(), readFinancialValuesWhenLocked: z.boolean(),
+  quietHoursEnabled: z.boolean(), quietHoursStart: z.number().int().min(0).max(1439),
+  quietHoursEnd: z.number().int().min(0).max(1439), allowStopDuringQuietHours: z.boolean(),
+  allowTargetDuringQuietHours: z.boolean(), speechRate: z.number().min(0.5).max(1.5),
+  languageTag: z.string().min(2).max(35), audioRoute: z.enum(["any", "speaker", "bluetooth_or_headset_only"])
+});
+
 const preferenceSchema = z.object({
   enabled: z.boolean(),
   domains: z.record(z.boolean()).default({}),
@@ -29,7 +40,8 @@ const preferenceSchema = z.object({
   maximumAlertsPerHour: z.number().int().min(1).max(60),
   dailyBudget: z.number().int().min(1).max(500),
   digestMode: z.boolean(), sound: z.boolean(), vibration: z.boolean(), tts: z.boolean(),
-  showPnlOnLockScreen: z.boolean()
+  showPnlOnLockScreen: z.boolean(), includeSymbolWhenLocked: z.boolean().default(false),
+  includeQuantityWhenLocked: z.boolean().default(false), speech: speechPreferenceSchema.optional()
 });
 
 const limitSchema = z.coerce.number().int().min(1).max(100).default(50);

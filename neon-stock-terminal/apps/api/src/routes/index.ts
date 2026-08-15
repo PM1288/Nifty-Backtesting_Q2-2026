@@ -31,6 +31,10 @@ import { registerWillSurface } from "./willSurface";
 import { registerOiisLive, registerOiisLivePublic } from "./oiisLive";
 import { registerWorkspaceRoutes } from "./workspace";
 import { registerFnoVolatility } from "./fnoVolatility";
+import { registerRollingMonthly } from "./rollingMonthly";
+import { registerNseIntelligence } from "./nseIntelligence";
+import { registerLongOptions } from "./longOptions";
+import { registerNiftyWeeklyOptions } from "./niftyWeeklyOptions";
 import { registerMobileNotifications } from "./mobileNotifications";
 
 export function registerRoutes(
@@ -44,6 +48,7 @@ export function registerRoutes(
   registerAuthRoutes(app, prisma, authRuntime);
   registerFeedbackRoutes(app, prisma, authRuntime);
   registerOiisLivePublic(app, prisma);
+  app.use("/api/dev/mobile-notifications", authGuard);
   app.use("/v1", (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     next();
@@ -73,6 +78,10 @@ export function registerRoutes(
   registerStocks(app, prisma);
   registerOiisLive(app, prisma);
   registerFnoVolatility(app, prisma);
+  registerRollingMonthly(app, prisma);
+  registerLongOptions(app, prisma);
+  registerNiftyWeeklyOptions(app, prisma);
+  registerNseIntelligence(app, prisma);
   registerMobileNotifications(app, prisma);
   registerWorkspaceRoutes(app, prisma, authRuntime);
 }

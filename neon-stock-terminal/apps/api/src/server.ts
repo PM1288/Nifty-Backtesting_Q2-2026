@@ -17,6 +17,7 @@ import { recordDbQuery, runWithRequestMetrics, getRequestMetrics } from "./lib/r
 import { startSnapshotScheduler } from "./lib/snapshotRegistry";
 import { validateApiRuntimeEnv } from "./lib/runtimeConfig";
 import { ensureRateLimitStoreReady } from "./security/rateLimit";
+import { startMobileNotificationDispatcher, stopMobileNotificationDispatcher } from "./services/mobileNotificationDispatcher";
 
 const SLOW_QUERY_MS = Number(process.env.SLOW_QUERY_MS ?? 250);
 
@@ -332,6 +333,7 @@ async function main() {
   }
 
   startDiscordMarketStreamScheduler(prisma);
+  startMobileNotificationDispatcher(prisma);
 
   const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     if (res.headersSent) return;
@@ -399,6 +401,7 @@ async function main() {
   const shutdown = async () => {
     server.close();
     stopDiscordMarketStreamScheduler();
+    stopMobileNotificationDispatcher();
     await prisma.$disconnect();
     process.exit(0);
   };

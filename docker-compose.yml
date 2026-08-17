@@ -745,6 +745,9 @@ services:
       DEV_LOCAL_AUTH_PASSWORD: ${DEV_LOCAL_AUTH_PASSWORD:-}
       DEV_LOCAL_AUTH_DISPLAY_NAME: ${DEV_LOCAL_AUTH_DISPLAY_NAME:-Local Admin}
       FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:-}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/n50-firebase-admin.json
+      N50_MOBILE_NOTIFICATION_DISPATCHER_ENABLED: ${N50_MOBILE_NOTIFICATION_DISPATCHER_ENABLED:-1}
+      N50_MOBILE_NOTIFICATION_DISPATCH_INTERVAL_MS: ${N50_MOBILE_NOTIFICATION_DISPATCH_INTERVAL_MS:-5000}
       CORS_ALLOWED_ORIGINS: ${N50_CORS_ALLOWED_ORIGINS:-}
       AUTH_ALLOWED_ORIGINS: ${N50_AUTH_ALLOWED_ORIGINS:-https://n50.nifty50today.co.in,https://m.nifty50today.co.in,http://localhost:19090}
       REDIS_URL: ${N50_PROD_REDIS_URL:-redis://redis:6379/0}
@@ -777,6 +780,7 @@ services:
       H30_ARTIFACT_ROOT: /var/lib/nifty-stratlab/h30
       STRATEGY_LAB_ARTIFACT_ROOT: /var/lib/nifty-stratlab/strategy-lab
     volumes:
+      - ${N50_FIREBASE_ADMIN_CREDENTIALS_HOST_PATH:-/home/novius2/NIFTY50/ANDROID-CRED-FIREBASE/nifty50-2day-firebase-adminsdk-fbsvc-d5ab18eb62.json}:/run/secrets/n50-firebase-admin.json:ro
       - ${NIFTY_STRATLAB_HOST_OUTPUT_ROOT:-/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/platform/nifty_stratlab/outputs/oiis_cash_daily_research_v1}:/var/lib/nifty-stratlab/h30:ro
       - ./services/nse_analytics_worker/runtime/exports/strategy-lab:/var/lib/nifty-stratlab/strategy-lab:ro
     depends_on:

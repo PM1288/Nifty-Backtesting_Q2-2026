@@ -106,6 +106,15 @@ for step in \
   migration_number=$((migration_number + 1))
 done
 
+for migration in \
+  043_mobile_notifications.sql \
+  044_mobile_notification_device_metadata.sql \
+  045_mobile_notification_preferences_audit.sql \
+  047_mobile_notification_event_outbox.sql; do
+  log "mobile notification migration ${migration}"
+  run_compose exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 < "${ROOT_DIR}/db/sql/${migration}"
+done
+
 log "28/32 node api operational bootstrap"
 run_compose build n50-dashboard
 run_compose run --rm --entrypoint node n50-dashboard apps/api/dist/scripts/bootstrapDatabase.js

@@ -2286,3 +2286,99 @@ Operations and limitations: `docs/fno-volatility/README.md`. Current run report:
 - Verification: `go test ./... -count=1` passed; Docker image built; disposable PostgreSQL migration reached 025 with nine partitions; production migration reached 025; collector healthy as non-root `appuser`; API audit observed 152 quote and 5 aggregate calls over ten minutes with zero throttles.
 - Data preservation check before/after: `bars_1m=24,119,679`, `instruments=450,511`, `option_greeks=18,604`; pre-existing raw option-chain table retained 4,897 rows. Daily instrument snapshot captured 152,044 master rows.
 - Operational contract: `docs/SMARTAPI_RATE_SAFE_DATA_ARCHIVE.md`.
+# 2026-08-17 — Production paper-event to Android FCM dispatch
+
+## Outcome
+
+The missing production path between `paper_trading.trade_events` and Firebase
+Cloud Messaging is implemented and deployed. The mobile WebView was not the
+cause: native enrollment continued to run, but live paper events previously had
+no FCM consumer. Migration `047_mobile_notification_event_outbox.sql` now
+enqueues only user-facing events, and `mobileNotificationDispatcher.ts` claims
+them, builds the all-string/data-only mobile contract, sends through Firebase,
+records per-device delivery evidence, retries bounded transient failures, and
+disables only Firebase-confirmed invalid registrations.
+
+Notification copy is derived from structured event data. It does not reuse the
+legacy webhook fact that incorrectly rendered `0 units` for a KEI event whose
+authoritative quantity was `175`. Analytical target economics remain explicitly
+labelled hypothetical and paper trades remain explicitly labelled PAPER.
+
+## Changed files
+
+- `db/sql/047_mobile_notification_event_outbox.sql`
+- `neon-stock-terminal/apps/api/src/services/mobileNotificationDispatcher.ts`
+- `neon-stock-terminal/apps/api/src/services/mobileNotificationDispatcher.test.ts`
+- `neon-stock-terminal/apps/api/src/server.ts`
+- `neon-stock-terminal/package-lock.json`
+- `neon-stock-terminal/Dockerfile`
+- `docker-compose.yml`
+- `scripts/db_migrate_all.sh`
+
+No trading source event, trade economics, or PostgreSQL source table was
+rewritten. The migration is additive and deliberately does not backfill old
+events.
+
+## Executed validation
+
+```bash
+cd /home/novius2/trading-stack/neon-stock-terminal
+source /home/novius2/projects/n50-flutter-app/scripts/linux/android-env.sh
+npm run typecheck --workspace=@app/api
+npm test --workspace=@app/api
+npm run build --workspace=@app/api
+
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 --env-file .env build n50-dashboard
+docker compose -p trading-stack-novius2 --env-file .env up -d --no-deps n50-dashboard
+curl -fsS https://n50.nifty50today.co.in/n50/health
+```
+
+Results: API typecheck passed; API tests passed `101/101`; API and Vite
+production builds passed; the replacement container is `running healthy` on
+`trading-stack-novius2_default`; Node is `v22.23.2`; Redis session storage is
+ready; the public health response is `ok=true, ready=true`; and logs contain
+`mobile_notification_dispatcher_started` with a 5-second interval.
+
+At `2026-08-17T05:47:01Z`, genuine event
+`0d5bf2ad-8d70-48e1-988a-7e203f0c8a61` was automatically inserted into the
+outbox and marked `DELIVERED` at `05:47:04Z`. Delivery audit records
+`paper_target_hit / SENT`; the dispatcher logged `targeted=1, successCount=1,
+failureCount=0`. Android API 36 `dumpsys notification` then showed the app
+notification on `paper_target_hit_v2` with a VIEW TRADE action. A separate
+data-only delivery-repair probe was accepted by Firebase and rendered as
+notification ID `72992` on the emulator.
+
+Firebase rejected five old registrations as `UNREGISTERED`; they were disabled.
+One registration remains enabled. The Firebase client configuration and Admin
+sender both resolve to project `nifty50-2day`, and the Android package is
+`com.n50today.product`. No registration token or credential was logged or added
+to Git.
+
+## Backup and rollback
+
+Pre-change backup:
+`/home/novius2/trading-stack/backups/mobile-fcm-dispatch-20260817T0540Z`
+(directory mode 700; dump files mode 600). The database dump SHA-256 is
+`f47a68249cde317d4ab35a586e8ed6940d936afb17e5fff5f46fe734cfa3e610`;
+the pre-change DDL SHA-256 is
+`04a7013274bf0632bdf65023296f599d164d59b6323eef0a66d617669665016d`.
+The pre-deployment image is tagged
+`trading-stack-n50-dashboard:pre-mobile-fcm-20260817`.
+
+Fast rollback: set `N50_MOBILE_NOTIFICATION_DISPATCHER_ENABLED=0`, recreate only
+`n50-dashboard`, or retag the pre-deployment image and recreate that service.
+Schema rollback, if explicitly required after backup, is limited to dropping
+trigger `enqueue_mobile_notification_event`, function
+`mobile_notifications.enqueue_paper_event()`, view
+`mobile_notifications.v_event_delivery_health`, and table
+`mobile_notifications.event_outbox`. Do not restore the whole database for this
+additive change.
+
+## Remaining physical-device check
+
+The Samsung was not connected to this Ubuntu host during final verification;
+`adb devices -l` showed only `emulator-5554`. Open the current standalone APK on
+Samsung once after any reinstall so Firebase issues a fresh token. Persistent
+login then automatically re-enrols it. Confirm the next real alert on Samsung;
+do not re-enable the five Firebase-invalid registrations manually.

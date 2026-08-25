@@ -1,0 +1,105 @@
+{
+  "name": "NSE-Daily-Ingest-WhatsApp-v1",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "codex-nse-daily-ingest-v1",
+        "authentication": "basicAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "nse-ingest-webhook",
+      "name": "NSE Ingest Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "CONFIGURE_IN_N8N",
+          "name": "NSE Daily Ingest Basic Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json.body ?? $json;\nif (input.schema !== 'nse-daily-ingest-whatsapp.v1' || input.event_type !== 'nse.daily.files.missing.v1' || !input.event_id || !input.trade_date || !input.payload) throw new Error('INVALID_NSE_INGEST_EVENT');\nconst p = input.payload;\nif (!Number.isInteger(p.expected_files) || !Number.isInteger(p.available_files) || !Number.isInteger(p.missing_count) || !Array.isArray(p.missing_files) || p.missing_count < 1) throw new Error('INVALID_NSE_MISSING_FILE_PAYLOAD');\nconst state = $getWorkflowStaticData('global');\nconst cfg = state.deliveryConfig ?? {};\nif (!cfg.gatewayUrl || !cfg.chatId) throw new Error('NSE_INGEST_DELIVERY_CONFIG_MISSING');\nstate.seen = state.seen ?? {};\nconst now = Date.now(); for (const [id, at] of Object.entries(state.seen)) if (now - Number(at) > 172800000) delete state.seen[id];\nif (state.seen[input.event_id]) return [{json:{send:false,event_id:input.event_id,suppression_reason:'DUPLICATE_EVENT'}}];\nconst names = p.missing_files.slice(0, 20).map((item) => '• ' + item.report_id + ' — ' + item.file_name);\nif (p.missing_count > 20) names.push('• +' + (p.missing_count - 20) + ' more files');\nconst lines = ['*NSE DAILY DATA — FILES MISSING*','Trade date *' + input.trade_date + '* · ' + p.available_files + '/' + p.expected_files + ' available','Missing *' + p.missing_count + '*',...names,'Action: ' + (p.action || 'Review and rerun missing reports.'),'Data operations alert · no trade was created'];\nconst message = lines.join('\\n'); if (message.length > 1800) throw new Error('NSE_INGEST_MESSAGE_TOO_LONG');\nreturn [{json:{send:true,event_id:input.event_id,event_type:input.event_type,whatsapp_message:message,gateway_url:cfg.gatewayUrl,chat_id:cfg.chatId}}];"
+      },
+      "id": "validate-format",
+      "name": "Validate and Format Missing Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id": "send", "leftValue": "={{ $json.send }}", "rightValue": true, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "send-if",
+      "name": "Send Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.gateway_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Idempotency-Key", "value": "={{ $json.event_id }}"}, {"name": "X-NSE-Ingest-Event-Type", "value": "={{ $json.event_type }}"}]},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatId", "value": "={{ $json.chat_id }}"},
+            {"name": "message", "value": "={{ $json.whatsapp_message }}"}
+          ]
+        },
+        "options": {"timeout": 10000}
+      },
+      "id": "send-whatsapp",
+      "name": "Send NSE Data Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, -80],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_IN_N8N",
+          "name": "NSE Data WhatsApp Gateway"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const state = $getWorkflowStaticData('global'); state.seen = state.seen ?? {}; state.seen[$json.event_id] = Date.now(); return [{json:{accepted:true,event_id:$json.event_id}}];"
+      },
+      "id": "record",
+      "name": "Record Delivered Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, -80]
+    },
+    {
+      "parameters": {},
+      "id": "suppressed",
+      "name": "Duplicate Suppressed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [720, 120]
+    }
+  ],
+  "connections": {
+    "NSE Ingest Webhook": {"main": [[{"node": "Validate and Format Missing Files", "type": "main", "index": 0}]]},
+    "Validate and Format Missing Files": {"main": [[{"node": "Send Alert?", "type": "main", "index": 0}]]},
+    "Send Alert?": {"main": [[{"node": "Send NSE Data Alert", "type": "main", "index": 0}], [{"node": "Duplicate Suppressed", "type": "main", "index": 0}]]},
+    "Send NSE Data Alert": {"main": [[{"node": "Record Delivered Alert", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

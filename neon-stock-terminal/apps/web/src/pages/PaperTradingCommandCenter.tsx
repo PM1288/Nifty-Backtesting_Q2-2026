@@ -48,6 +48,13 @@ import {
   type PaperParallelAxisId,
 } from "../lib/paperParallelPlot";
 import { downloadStandaloneParallelHtml } from "../lib/paperParallelHtml";
+import {
+  buildPaperSimpleCsv,
+  buildPaperSimpleExcel,
+  buildPaperSimpleRow,
+  paperSimpleIstDateTime,
+  type PaperSimpleRow,
+} from "../lib/paperSimpleView";
 import { matchesStockProfile, type StockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
 import { StockDistribution, StockIdentity, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 
@@ -55,7 +62,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 type AnyRow = Record<string, any>;
 type DrawerTab = "Journey" | "Targets" | "Evidence" | "Economics" | "Comments" | "Audit" | "Calculation Trace";
 type AtlasLens = "Intraday" | "5D" | "30D";
-type PageView = "PORTFOLIO" | "WHAT_GOOD_LOOKS_LIKE";
+type PageView = "PORTFOLIO" | "SIMPLE" | "WHAT_GOOD_LOOKS_LIKE";
 type HeatmapView = "YEAR" | "WEEK" | "INTRADAY";
 type HeatmapMetric = "EOD_PNL" | "MAX_PROFIT" | "MAX_DRAWDOWN" | "TARGET_HITS";
 type IntradayEventFilter = "ALL" | "ENTRY" | "TARGET" | "EOD";
@@ -292,7 +299,11 @@ export function PaperTradingCommandCenter() {
   const [workbenchContext, setWorkbenchContext] = useState<PaperWorkbenchContext>(() => parsePaperWorkbenchContext(routeParams));
   const [calculationTrace, setCalculationTrace] = useState<CalculationTrace | null>(null);
   const [pageView, setPageView] = useState<PageView>(
-    routeParams.get("tab") === "quality" ? "WHAT_GOOD_LOOKS_LIKE" : "PORTFOLIO",
+    routeParams.get("tab") === "quality"
+      ? "WHAT_GOOD_LOOKS_LIKE"
+      : routeParams.get("tab") === "simple"
+        ? "SIMPLE"
+        : "PORTFOLIO",
   );
 
   useEffect(() => {
@@ -316,6 +327,10 @@ export function PaperTradingCommandCenter() {
     if (routeParams.get("action") === "add") setAddOpen(true);
   }, [routeParams]);
   useEffect(() => {
+    const tab = routeParams.get("tab");
+    setPageView(tab === "quality" ? "WHAT_GOOD_LOOKS_LIKE" : tab === "simple" ? "SIMPLE" : "PORTFOLIO");
+  }, [routeParams]);
+  useEffect(() => {
     setFilter(workbenchContext.status);
     setEntryFilter(workbenchContext.strategy);
     if (workbenchContext.horizon !== "Intraday") setLens(workbenchContext.horizon);
@@ -328,6 +343,15 @@ export function PaperTradingCommandCenter() {
     if (key === "status") setFilter(String(value));
     if (key === "strategy") setEntryFilter(String(value));
     if (key === "horizon" && value !== "Intraday") setLens(value as AtlasLens);
+  };
+
+  const changePageView = (view: PageView) => {
+    setPageView(view);
+    const next = new URLSearchParams(routeParams);
+    if (view === "SIMPLE") next.set("tab", "simple");
+    else if (view === "WHAT_GOOD_LOOKS_LIKE") next.set("tab", "quality");
+    else next.delete("tab");
+    setRouteParams(next, { replace: true });
   };
 
   const selectWorkbenchSection = (section: PaperWorkbenchSection) => {
@@ -499,16 +523,19 @@ export function PaperTradingCommandCenter() {
       ) : null}
 
       <nav className={styles.pageTabs} aria-label="Paper Trading views">
-        <button type="button" data-active={pageView === "PORTFOLIO"} onClick={() => setPageView("PORTFOLIO")}>
+        <button type="button" data-active={pageView === "PORTFOLIO"} onClick={() => changePageView("PORTFOLIO")}>
           Portfolio &amp; trades
         </button>
-        <button type="button" data-active={pageView === "WHAT_GOOD_LOOKS_LIKE"} onClick={() => setPageView("WHAT_GOOD_LOOKS_LIKE")}>
+        <button type="button" data-active={pageView === "SIMPLE"} onClick={() => changePageView("SIMPLE")}>
+          Simple view
+        </button>
+        <button type="button" data-active={pageView === "WHAT_GOOD_LOOKS_LIKE"} onClick={() => changePageView("WHAT_GOOD_LOOKS_LIKE")}>
           What good looks like
         </button>
       </nav>
 
-      {pageView === "PORTFOLIO" ? <>
-        <PaperWorkbenchSubnav
+      {pageView !== "WHAT_GOOD_LOOKS_LIKE" ? <>
+        {pageView === "PORTFOLIO" ? <PaperWorkbenchSubnav
           active={workbenchContext.section}
           onSelect={selectWorkbenchSection}
           counts={{
@@ -517,7 +544,7 @@ export function PaperTradingCommandCenter() {
             "reward-pain": `${bad} attention`,
             "methodology-audit": `${number(summary.open_data_incidents)} incidents`,
           }}
-        />
+        /> : null}
         <AnalysisContextBar
           context={workbenchContext}
           strategyOptions={strategyOptions}
@@ -554,6 +581,16 @@ export function PaperTradingCommandCenter() {
           trades={trades}
           canReview={canManageTradeQuality}
           onSaved={query.reload}
+        />
+      ) : pageView === "SIMPLE" ? (
+        <PaperSimpleView
+          trades={filtered}
+          profiles={profiles.bySymbol}
+          search={search}
+          onSearch={setSearch}
+          sort={sort}
+          onSort={setSort}
+          onSelect={openSelectedTrade}
         />
       ) : (
       <>
@@ -784,7 +821,7 @@ export function PaperTradingCommandCenter() {
       </>
       )}
 
-      <div id="methodology-audit" className={styles.workbenchSection}>
+      {pageView !== "SIMPLE" ? <div id="methodology-audit" className={styles.workbenchSection}>
       <header className={styles.workbenchSectionHeader}><span>METHODOLOGY, DATA QUALITY &amp; AUDIT</span><h2>Can this evidence be trusted and reproduced?</h2><p>Definitions, source freshness, versioned formula ownership and direct links to affected evidence are kept together.</p></header>
       <PaperDataQualityPanel data={data} trades={trades} />
       <RelatedJourney
@@ -895,7 +932,7 @@ export function PaperTradingCommandCenter() {
           },
         ]}
       />
-      </div>
+      </div> : null}
 
       {selectedTrade ? (
         <TradeDrawer
@@ -917,6 +954,142 @@ export function PaperTradingCommandCenter() {
       ) : null}
       <CalculationTraceDrawer trace={calculationTrace} onClose={() => setCalculationTrace(null)} />
     </div>
+  );
+}
+
+function downloadPaperSimpleFile(contents: string, mimeType: string, extension: "csv" | "xls") {
+  const prefix = extension === "csv" ? "\uFEFF" : "";
+  const url = URL.createObjectURL(new Blob([prefix, contents], { type: `${mimeType};charset=utf-8` }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `paper-trading-simple-view-${new Date().toISOString().slice(0, 10)}.${extension}`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function simpleMoney(value: number | null) {
+  return value == null ? "—" : money(value);
+}
+
+function simplePercent(value: number | null) {
+  return value == null ? "—" : percent(value);
+}
+
+function simpleFactor(value: number | null) {
+  return value == null ? "—" : value.toFixed(2);
+}
+
+function PaperSimpleView({
+  trades,
+  profiles,
+  search,
+  onSearch,
+  sort,
+  onSort,
+  onSelect,
+}: {
+  trades: AnyRow[];
+  profiles: Map<string, StockProfile>;
+  search: string;
+  onSearch: (value: string) => void;
+  sort: string;
+  onSort: (value: string) => void;
+  onSelect: (trade: AnyRow) => void;
+}) {
+  const rows: PaperSimpleRow[] = trades.map((trade) => {
+    const profile = profiles.get(String(trade.symbol).toUpperCase());
+    return buildPaperSimpleRow(trade, profile?.name);
+  });
+  const downloadCsv = () => downloadPaperSimpleFile(buildPaperSimpleCsv(rows), "text/csv", "csv");
+  const downloadExcel = () => downloadPaperSimpleFile(buildPaperSimpleExcel(rows), "application/vnd.ms-excel", "xls");
+
+  return (
+    <section className={styles.simpleView} aria-labelledby="paper-simple-view-title">
+      <header className={styles.simpleViewHeader}>
+        <div>
+          <span>PAPER TRADING · SIMPLE VIEW</span>
+          <h2 id="paper-simple-view-title">Entry-day price and current P/L</h2>
+          <p>Compact canonical trade data. Select any row to open the unchanged full evidence inspector.</p>
+        </div>
+        <div className={styles.simpleViewActions}>
+          <label>
+            <span>Find</span>
+            <input value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Stock or strategy" />
+          </label>
+          <select aria-label="Sort simple paper trades" value={sort} onChange={(event) => onSort(event.target.value)}>
+            <option value="NEWEST">Newest first</option>
+            <option value="PNL">Highest current P/L</option>
+            <option value="MFE">Highest D0 opportunity</option>
+            <option value="MAE">Deepest drawdown</option>
+            <option value="QUALITY">Quality score</option>
+          </select>
+          <button type="button" onClick={downloadCsv}>Download CSV</button>
+          <button type="button" onClick={downloadExcel}>Download Excel</button>
+        </div>
+      </header>
+      <div className={styles.simpleTableFrame}>
+        <table>
+          <caption>{rows.length} filtered paper trades. Prices and factors remain blank when canonical evidence is unavailable.</caption>
+          <thead>
+            <tr>
+              <th>Stock Name <small>Symbol</small></th>
+              <th>Date bought at <small>IST</small></th>
+              <th>Time bought at <small>IST</small></th>
+              <th>Entry Strike Price</th>
+              <th>O Factor</th>
+              <th>X Factor</th>
+              <th>Max Price <small>High that day</small></th>
+              <th>Low · Max Drawdown <small>That day</small></th>
+              <th>Current Price · P/L</th>
+              <th aria-label="Open trade evidence" />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const opened = paperSimpleIstDateTime(row.openedAt);
+              return (
+                <tr
+                  key={row.tradeId}
+                  tabIndex={0}
+                  onClick={() => onSelect(row.trade as AnyRow)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(row.trade as AnyRow);
+                    }
+                  }}
+                >
+                  <td className={styles.simpleStockCell}>
+                    <StockIdentity symbol={row.symbol} profile={profiles.get(row.symbol.toUpperCase())} />
+                  </td>
+                  <td><strong>{opened.date || "—"}</strong></td>
+                  <td><strong>{opened.time || "—"}</strong></td>
+                  <td className={styles.simpleNumber}><strong>{simpleMoney(row.entryPrice)}</strong></td>
+                  <td className={styles.simpleNumber}><strong>{simpleFactor(row.oFactor)}</strong></td>
+                  <td className={styles.simpleNumber}><strong>{simpleFactor(row.xFactor)}</strong></td>
+                  <td className={styles.simpleNumber}><strong>{simpleMoney(row.dayHigh)}</strong></td>
+                  <td className={styles.simpleNumber}>
+                    <strong>{simpleMoney(row.dayLow)}</strong>
+                    <small data-sign={row.dayMaxDrawdown != null && row.dayMaxDrawdown >= 0 ? "positive" : "negative"}>
+                      {simpleMoney(row.dayMaxDrawdown)} · {simplePercent(row.dayMaxDrawdownPct)}
+                    </small>
+                  </td>
+                  <td className={styles.simpleNumber}>
+                    <strong>{simpleMoney(row.currentPrice)}</strong>
+                    <small data-sign={row.currentPnl != null && row.currentPnl >= 0 ? "positive" : "negative"}>
+                      {simpleMoney(row.currentPnl)} · {simplePercent(row.currentPnlPct)}
+                    </small>
+                    <em>{row.currentPnlBasis === "OPEN_ACTUAL_GROSS" ? "Open actual · gross" : "Current path · hypothetical gross"}</em>
+                  </td>
+                  <td><button type="button" onClick={(event) => { event.stopPropagation(); onSelect(row.trade as AnyRow); }}>View</button></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {!rows.length ? <div className={styles.noResults}>No paper trades match these filters.</div> : null}
+      </div>
+    </section>
   );
 }
 

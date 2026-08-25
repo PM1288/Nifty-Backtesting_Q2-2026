@@ -3084,3 +3084,19 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Authenticated public verification returned 30 stock rows in 78.9 ms, beginning with IDEA,
   PAYTM, ANGELONE, IREDA and ADANIENT. All rows had positive prices and numeric percentage
   changes; NIFTY50, BANKNIFTY and INDIAVIX were absent from `tickerTape` as required.
+
+## 2026-08-25 — Additive Paper Trading Simple View
+
+- Added `/paper-trading?tab=simple` as a third Paper Trading view without replacing Portfolio &
+  trades or What good looks like. It reuses the existing filter context and canonical trade drawer.
+- The fixed-height compact table shows stock identity, IST entry date/time, entry price, O/X
+  factors, D0 high, D0 low and direction-normalised maximum drawdown, plus current price and P/L.
+- Open trades label current P/L as open actual gross. Closed trades label the latest price path as
+  hypothetical gross, preventing current counterfactual evidence from being presented as booked P/L.
+- CSV and Excel-compatible exports contain the visible fields as separate raw columns. Missing
+  evidence remains blank rather than becoming zero.
+- Live ledger validation found 44/44 trades populated for every requested source field. Web
+  typecheck, production build, 50/50 web tests, targeted lint and the canonical source gate passed;
+  the repository-wide lint remains blocked by 193 pre-existing errors outside this change.
+- Browser acceptance is implemented in `tools/playwright/paper-simple-view-regression.mjs`; it checks
+  the additive tab, all requested columns, contained scrolling, canonical drawer and both downloads.

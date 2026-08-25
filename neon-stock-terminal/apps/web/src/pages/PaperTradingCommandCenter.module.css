@@ -1909,3 +1909,81 @@
 .dataQualityWorkbench article small { font-size:10px; line-height:1.35; }
 @media (max-width:900px) { .workbenchSection { scroll-margin-top:100px; } .drawerEconomics > div { grid-template-columns:1fr; } .parallelPanel > header { flex-direction:column; }.parallelStats { width:100%; }.parallelInspector { width:480px; max-width:42%; } }
 @media (max-width:720px) { .dataQualityWorkbench > div { grid-template-columns:1fr; } .entryMarketBook > header { flex-direction:column; }.entryBookMetrics,.entryBookLadders { grid-template-columns:1fr!important; }.parallelPanel { padding:13px; }.parallelToolbar { align-items:stretch; flex-direction:column; }.parallelToolbar label,.parallelToolbar label:nth-child(3) { width:100%; min-width:0; }.parallelStats { grid-template-columns:repeat(3,minmax(0,1fr)); }.parallelInspector { display:none; }.legacyFactorSurface { padding-inline:8px; } }
+
+.simpleView {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #d5e0ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 7px 22px rgba(31, 54, 84, 0.06);
+}
+.simpleViewHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.simpleViewHeader > div:first-child > span { color: #087651; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.simpleViewHeader h2 { margin: 4px 0 2px; font-size: 18px; }
+.simpleViewHeader p { margin: 0; font-size: 12px; }
+.simpleViewActions { display: flex; align-items: flex-end; gap: 7px; }
+.simpleViewActions label { display: grid; gap: 3px; }
+.simpleViewActions label span { color: #60738b; font-size: 10px; font-weight: 700; }
+.simpleViewActions input,
+.simpleViewActions select,
+.simpleViewActions button {
+  min-height: 34px;
+  border: 1px solid #c7d5e5;
+  border-radius: 7px;
+  background: #fff;
+  color: #27415f;
+  font-size: 12px;
+}
+.simpleViewActions input { width: 190px; padding: 0 9px; }
+.simpleViewActions select { padding: 0 28px 0 9px; }
+.simpleViewActions button { padding: 0 11px; color: #175bb3; background: #f4f8ff; font-weight: 750; cursor: pointer; }
+.simpleTableFrame {
+  max-height: min(70dvh, 720px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #dbe5ef;
+  border-radius: 9px;
+}
+.simpleTableFrame table { width: 100%; min-width: 1320px; border-collapse: collapse; font-variant-numeric: tabular-nums lining-nums; }
+.simpleTableFrame caption { padding: 7px 9px; color: #5f7187; background: #f7f9fc; text-align: left; font-size: 10px; }
+.simpleTableFrame thead { position: sticky; top: 0; z-index: 4; background: #edf3f9; box-shadow: 0 1px #c9d6e4; }
+.simpleTableFrame th { height: 40px; padding: 5px 8px; color: #425b79; text-align: left; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.simpleTableFrame th small { display: block; color: #708198; font-size: 9px; font-weight: 500; }
+.simpleTableFrame td { height: 48px; padding: 5px 8px; border-bottom: 1px solid #e7edf4; color: #263d58; font-size: 11px; vertical-align: middle; }
+.simpleTableFrame tbody tr { cursor: pointer; background: #fff; }
+.simpleTableFrame tbody tr:nth-child(even) { background: #f9fbfd; }
+.simpleTableFrame tbody tr:hover,
+.simpleTableFrame tbody tr:focus { outline: 2px solid #8ab8f4; outline-offset: -2px; background: #eef6ff; }
+.simpleTableFrame th:first-child,
+.simpleTableFrame td:first-child { position: sticky; left: 0; z-index: 2; min-width: 230px; background: inherit; box-shadow: 1px 0 #d5e0ec; }
+.simpleTableFrame thead th:first-child { z-index: 5; background: #edf3f9; }
+.simpleTableFrame td strong,
+.simpleTableFrame td small,
+.simpleTableFrame td em { display: block; }
+.simpleTableFrame td small { margin-top: 2px; font-size: 10px; }
+.simpleTableFrame td em { margin-top: 2px; color: #6b7c91; font-size: 9px; font-style: normal; }
+.simpleTableFrame [data-sign="positive"] { color: #087a55; }
+.simpleTableFrame [data-sign="negative"] { color: #bd3048; }
+.simpleNumber { text-align: right; }
+.simpleNumber strong { font-family: Inter, system-ui, sans-serif; font-weight: 650; }
+.simpleStockCell :global([data-stock-identity-symbol]) { min-width: 0; }
+.simpleTableFrame td:last-child button { min-height: 30px; padding: 0 9px; border: 1px solid #bcd0ea; border-radius: 7px; color: #235dbe; background: #f3f7ff; font-size: 10px; font-weight: 750; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .simpleViewHeader { align-items: stretch; flex-direction: column; }
+  .simpleViewActions { flex-wrap: wrap; }
+  .simpleViewActions label { flex: 1 1 210px; }
+  .simpleViewActions input { width: 100%; }
+}
+@media (max-width: 560px) {
+  .pageTabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .simpleView { padding: 9px; }
+  .simpleViewActions button { flex: 1; }
+}

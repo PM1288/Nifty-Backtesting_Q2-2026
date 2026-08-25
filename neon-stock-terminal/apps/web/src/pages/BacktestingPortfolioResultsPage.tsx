@@ -69,7 +69,7 @@ export function BacktestingPortfolioResultsPage() {
         <KpiCard label={tr("Current value")} value={fmtCompactCurrency(scenario.summary.currentValue)} />
         <KpiCard label={tr("Realized P&L")} value={fmtCompactCurrency(scenario.summary.realizedPnl)} tone={scenario.summary.realizedPnl >= 0 ? "green" : "red"} />
         <KpiCard label={tr("Unrealized P&L")} value={fmtCompactCurrency(scenario.summary.unrealizedPnl)} tone={scenario.summary.unrealizedPnl >= 0 ? "green" : "red"} />
-        <KpiCard label={tr("Win rate")} value={fmtPct(scenario.summary.winRatePct)} />
+        <KpiCard label={tr("Closed-trade win rate")} value={fmtPct(scenario.summary.winRatePct)} />
         <KpiCard label={tr("Cash balance")} value={fmtCompactCurrency(scenario.summary.cashBalance)} />
         <KpiCard label={tr("Exposure")} value={fmtPct(scenario.summary.exposurePct)} />
         <KpiCard label={tr("Max open")} value={formatNumber(scenario.summary.maxOpenPositionsReached, { maximumFractionDigits: 0 })} />
@@ -128,7 +128,10 @@ export function BacktestingPortfolioResultsPage() {
           { key: "reason", header: tr("Exit reason"), cell: (row) => tr(row.exitReason) },
           { key: "ret", header: tr("Return"), align: "right", cell: (row) => fmtPct(row.returnPct) },
           { key: "hold", header: tr("Hold"), align: "right", cell: (row) => `${row.holdingDays}d` },
-          { key: "charges", header: tr("Charges"), align: "right", cell: (row) => fmtCompactCurrency(row.charges) }
+          { key: "charges", header: tr("Charges"), align: "right", cell: (row) => fmtCompactCurrency(row.charges) },
+          { key: "quality", header: tr("Trade quality"), align: "right", cell: (row) => row.tradeQuality?.totalScore == null
+            ? `${tr("Not estimable")} · ${row.tradeQuality?.process.coveragePct?.toFixed(0) ?? 0}% process evidence`
+            : `${row.tradeQuality.totalScore.toFixed(2)} · ${tr(row.tradeQuality.label)}` }
         ]}
       />
 

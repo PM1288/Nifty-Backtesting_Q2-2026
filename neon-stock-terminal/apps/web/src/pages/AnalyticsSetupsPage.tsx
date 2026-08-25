@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import type { EChartsOption } from "echarts";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
-import { ChartCard, DataState, DataTable, KpiCard, LoadingSkeletonCard, PageIntroAccordion, SymbolPill } from "../components/ui/DashboardPrimitives";
+import { ChartCard, DataTable, KpiCard, PageIntroAccordion, SymbolPill } from "../components/ui/DashboardPrimitives";
+import { CompactEmptyState, ErrorState, LoadingSkeleton } from "../design-system/WorkspacePrimitives";
 import { EChartSurface } from "../components/visual/EChartSurface";
 import { useAnalyticsDailySetups } from "../lib/hooks";
 import { fmtPrice, formatDateIST, formatNumber, formatPercent } from "../lib/format";
@@ -143,11 +144,15 @@ export function AnalyticsSetupsPage() {
 
   if (loading) {
     if (!showLoading) return null;
-    return <div className={styles.page}><section className={styles.metricGrid}><LoadingSkeletonCard title={tr("Best current setups")} lines={3} compact /><LoadingSkeletonCard title={tr("Weak setups")} lines={3} compact /><LoadingSkeletonCard title={tr("Regime context")} lines={3} compact /><LoadingSkeletonCard title={tr("Signal quality")} lines={3} compact /></section><LoadingSkeletonCard title={tr("Daily setups charts")} lines={8} /></div>;
+    return <div className={styles.page}><LoadingSkeleton label={tr("Loading daily setup shortlist")} rows={5} /></div>;
   }
 
-  if (query.error || !query.data || !query.data.marketContext || !query.data.summary) {
-    return <DataState kind="error" title={tr("The daily setups page is unavailable")} body={tr("The dashboard could not assemble the latest setup, expectancy, and regime context from the EOD stock-analysis tables.")} />;
+  if (query.error) {
+    return <ErrorState title={tr("The daily setups page is unavailable")} detail={tr("The latest setup, expectancy, and regime context could not be loaded. No setup is being inferred from partial data.")} />;
+  }
+
+  if (!query.data || !query.data.marketContext || !query.data.summary) {
+    return <CompactEmptyState kind="NO_DATA" title={tr("No evaluated daily setups are available")} detail={tr("The completed EOD stock-analysis context required for this shortlist has not been published.")} />;
   }
 
   const payload = query.data;

@@ -1,17 +1,18 @@
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import SlotCounter from "react-slot-counter";
 import { trackSelectContent, trackWidgetExpanded } from "../analytics/events";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useWorkspaceEngagement, useWorkspaceSectionViews } from "../analytics/useWorkspaceAnalytics";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
-import { useLiveQuotes, useOverview, useSupportingMetrics } from "../lib/hooks";
+import { useLiveQuotesWithStatus, useOverview, useSupportingMetrics } from "../lib/hooks";
+import { ErrorState, LoadingSkeleton, ModuleStatusStrip } from "../design-system/WorkspacePrimitives";
+import { buildMarketQuoteQuality } from "../design-system/quality";
 import { trackAnalyticsEvent, trackCtaClick } from "../lib/analytics";
 import { directionFromChangePct, type Quote, type SupportingMetricQuote } from "../lib/types";
 import { arrow, formatNumber, formatTime, fmtPct, fmtPrice } from "../lib/format";
 import { IndicatorMarkers } from "../components/market/IndicatorMarkers";
-import { StockPill } from "../components/market/StockPill";
+import { StockPill, type StockLens } from "../components/market/StockPill";
 import { DashboardInfoPopup } from "../components/market/DashboardInfoPopup";
 import { PageIntroAccordion } from "../components/ui/DashboardPrimitives";
 import { useAnalyticsExperienceMode } from "./AnalyticsChrome";
@@ -19,6 +20,8 @@ import styles from "./LandingPage.module.css";
 import { useDeferredBusyState } from "../lib/useDeferredBusyState";
 import { PerformanceDebugPanel } from "../analytics/PerformanceDebugPanel";
 import type { AnalyticsParams } from "../analytics/types";
+import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
+import { StockDistribution, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 
 function mergeQuote<T extends Quote>(
   quote: T,
@@ -98,9 +101,62 @@ function chunkItems<T>(items: T[], chunkCount: number) {
   );
 }
 
+function compactNotional(value: number | null) {
+  if (value == null || !Number.isFinite(value)) return "—";
+  if (Math.abs(value) >= 10_000_000) return `₹${(value / 10_000_000).toFixed(1)}Cr`;
+  if (Math.abs(value) >= 100_000) return `₹${(value / 100_000).toFixed(1)}L`;
+  if (Math.abs(value) >= 1_000) return `₹${(value / 1_000).toFixed(1)}K`;
+  return `₹${Math.round(value)}`;
+}
+
+type TickDirection = "up" | "down" | "flat";
+
+const HOME_LENSES: Array<{ key: StockLens; label: string }> = [
+  { key: "price1d", label: "Price 1D" },
+  { key: "price5d", label: "Price 5D" },
+  { key: "volume", label: "Volume" },
+  { key: "rsi", label: "RSI" },
+  { key: "williams", label: "Williams %R" },
+  { key: "oiis", label: "OIIS" },
+  { key: "opportunity", label: "30D Opportunity" }
+];
+
+function lensLabel(lens: StockLens) {
+  return HOME_LENSES.find((item) => item.key === lens)?.label ?? lens;
+}
+
+function AnimatedIndexPrice({ value, updateKey }: { value: number; updateKey?: string }) {
+  const previousValueRef = useRef<number | null>(null);
+  const [tickDirection, setTickDirection] = useState<TickDirection>("flat");
+
+  useLayoutEffect(() => {
+    const previousValue = previousValueRef.current;
+    const nextDirection: TickDirection =
+      previousValue == null || value === previousValue ? "flat" : value > previousValue ? "up" : "down";
+    previousValueRef.current = value;
+    setTickDirection((current) => (current === nextDirection ? current : nextDirection));
+  }, [updateKey, value]);
+
+  return (
+    <span
+      className={styles.animatedIndexPrice}
+      data-tick-direction={tickDirection}
+      aria-label={`${fmtPrice(value)} ${tickDirection === "flat" ? "unchanged" : tickDirection === "up" ? "rising" : "falling"}`}
+    >
+      <span className={styles.staticIndexPrice} aria-hidden="true">{fmtPrice(value)}</span>
+    </span>
+  );
+}
+
 export function LandingPage() {
   const { tr } = useI18n();
   const [helpOpen, setHelpOpen] = useState(false);
+  const [lens, setLens] = useState<StockLens>("price1d");
+  const [stockSearch, setStockSearch] = useState("");
+  const [sortMode, setSortMode] = useState<"stable" | "strength">("stable");
+  const [calmMode, setCalmMode] = useState(false);
+  const [profileFilters, setProfileFilters] = useState<StockProfileFilters>({ universe: "ALL", capBucket: "ALL", sector: "ALL" });
+  const profiles = useProfileIndex();
   const { user, authReady } = useAuthGate();
   const { mode, setMode } = useAnalyticsExperienceMode();
   useLayoutEffect(() => {
@@ -138,7 +194,8 @@ export function LandingPage() {
     ],
     [sectors]
   );
-  const live = useLiveQuotes(liveSymbols, sessionEnabled);
+  const liveFeed = useLiveQuotesWithStatus(liveSymbols, sessionEnabled);
+  const live = liveFeed.quotes;
 
   const mergedIndices = q.data
     ? {
@@ -150,7 +207,9 @@ export function LandingPage() {
 
   const mergedSectors = q.data
     ? q.data.sectors.map((sec) => {
-        const stocks = sec.stocks.map((s) => mergeQuote(s, live)).sort((a, b) => b.changePct - a.changePct);
+        const stocks = sec.stocks.map((s) => mergeQuote(s, live)).sort((a, b) =>
+          sortMode === "strength" ? b.changePct - a.changePct || a.symbol.localeCompare(b.symbol) : a.symbol.localeCompare(b.symbol)
+        );
         const avgChangePct = stocks.length ? stocks.reduce((sum, s) => sum + s.changePct, 0) / stocks.length : 0;
         return {
           ...sec,
@@ -160,11 +219,19 @@ export function LandingPage() {
         };
       })
     : [];
+  const normalizedSearch = stockSearch.trim().toUpperCase();
+  const displaySectors = useMemo(
+    () => mergedSectors.map((sector) => ({ ...sector, stocks: sector.stocks.filter((stock) =>
+      (!normalizedSearch || stock.symbol.includes(normalizedSearch) || stock.name.toUpperCase().includes(normalizedSearch)) &&
+      matchesStockProfile(profiles.bySymbol.get(stock.symbol), profileFilters)
+    ) })).filter((sector) => sector.stocks.length > 0),
+    [mergedSectors, normalizedSearch, profileFilters, profiles.bySymbol]
+  );
   const rankedSectors = useMemo(
     () => [...mergedSectors].sort((a, b) => b.avgChangePct - a.avgChangePct),
     [mergedSectors]
   );
-  const sectorByName = useMemo(() => new Map(mergedSectors.map((sec) => [sec.sector, sec])), [mergedSectors]);
+  const sectorByName = useMemo(() => new Map(displaySectors.map((sec) => [sec.sector, sec])), [displaySectors]);
   const sectorColumnTemplates = useMemo(
     () => [
       ["Automobile and Auto Components", "Capital Goods"],
@@ -188,12 +255,12 @@ export function LandingPage() {
         .filter((sector): sector is (typeof mergedSectors)[number] => sector !== null)
     );
 
-    const leftovers = mergedSectors.filter((sec) => !used.has(sec.sector));
+    const leftovers = displaySectors.filter((sec) => !used.has(sec.sector));
     if (leftovers.length) {
       arranged[arranged.length - 1] = [...arranged[arranged.length - 1], ...leftovers];
     }
     return arranged;
-  }, [mergedSectors, sectorByName, sectorColumnTemplates]);
+  }, [displaySectors, sectorByName, sectorColumnTemplates]);
   const fitSignature = useMemo(
     () =>
       sectorColumns
@@ -220,6 +287,20 @@ export function LandingPage() {
     const columnCount = Math.min(6, homeSupportingMetrics.length);
     return chunkItems(homeSupportingMetrics, columnCount);
   }, [homeSupportingMetrics]);
+  const anomalyFlashContracts = useMemo(() => {
+    const anomalies = q.data?.derivatives.anomalies ?? [];
+    const priority = [
+      anomalies.find((item) => item.anomalyTypes.includes("BIG_ASK")),
+      anomalies.find((item) => item.anomalyTypes.includes("EXCESS_PRICE_MOVE")),
+      ...anomalies
+    ].filter((item): item is (typeof anomalies)[number] => item != null);
+    const seen = new Set<string>();
+    return priority.filter((item) => {
+      if (seen.has(item.symbolToken)) return false;
+      seen.add(item.symbolToken);
+      return true;
+    }).slice(0, 5);
+  }, [q.data?.derivatives.anomalies]);
 
   useLayoutEffect(() => {
     const viewport = sectorsViewportRef.current;
@@ -337,7 +418,7 @@ export function LandingPage() {
       sector,
       source_surface: sourceSurface
     });
-    navigate(`/analytics/stock/${encodeURIComponent(stock.symbol.toUpperCase())}`);
+    navigate(`/analytics/stock/${encodeURIComponent(stock.symbol.toUpperCase())}?source=${encodeURIComponent(sourceSurface)}&asOf=${encodeURIComponent(q.data?.asOf ?? "")}&returnTo=${encodeURIComponent("/")}`);
   };
 
   const handleStripKeyDown = (event: KeyboardEvent<HTMLDivElement>, stock: Quote, sourceSurface = "home_heatmap") => {
@@ -348,14 +429,15 @@ export function LandingPage() {
 
   if (loading) {
     if (!showLoading) return null;
-    return <div className={styles.state}>{tr("Loading market dashboard…")}</div>;
+    return <LoadingSkeleton label={tr("Loading market canvas")} rows={5} />;
   }
 
   if (q.error || !q.data || !mergedIndices) {
-    return <div className={styles.state}>{tr("Failed to load dashboard. Check API and DB.")}</div>;
+    return <ErrorState title={tr("The market canvas is unavailable")} detail={tr("The canonical overview snapshot could not be loaded. Existing values are not presented as current; retry after the data service recovers.")} />;
   }
 
   const allStocks = mergedSectors.flatMap((sec) => sec.stocks).sort((a, b) => b.changePct - a.changePct);
+  const visibleProfiles = displaySectors.flatMap((sec) => sec.stocks).map((stock) => profiles.bySymbol.get(stock.symbol)).filter((item): item is NonNullable<typeof item> => Boolean(item));
   const topUp = allStocks.slice(0, 5);
   const topDown = [...allStocks].reverse().slice(0, 5);
   const breadthRatio = allStocks.length ? allStocks.filter((stock) => stock.changePct > 0).length / allStocks.length : 0;
@@ -367,6 +449,16 @@ export function LandingPage() {
     ? rankedSectors[Math.floor(rankedSectors.length / 2)]?.avgChangePct ?? 0
     : 0;
   const asOfLabel = q.data.asOf ? formatTime(q.data.asOf) : "—";
+  const newestQuoteTime = Object.values(live).reduce<string | undefined>((latest, quote) => !latest || Date.parse(quote.timestamp) > Date.parse(latest) ? quote.timestamp : latest, undefined);
+  const canvasQuality = buildMarketQuoteQuality({
+    transport: liveFeed.transport,
+    quoteTimestamp: newestQuoteTime,
+    snapshotTimestamp: q.data.asOf,
+    receiveTimestamp: liveFeed.lastReceivedAt,
+    sequence: liveFeed.sequence,
+    gapDetected: liveFeed.gapDetected,
+    snapshotFailed: q.isError
+  });
   const niftyChange = mergedIndices.nifty50.changePct;
   let marketStoryTitle = tr("Rotation");
   let marketStoryBody = tr("The headline index is moving, but leadership is rotating rather than spreading cleanly across the market.");
@@ -384,25 +476,17 @@ export function LandingPage() {
   topUp.forEach((s, i) => rankBadgeBySymbol.set(s.symbol, `▲★${i + 1}`));
   topDown.forEach((s, i) => rankBadgeBySymbol.set(s.symbol, `▼★${i + 1}`));
 
-  const renderAnimatedPrice = (value: number) => (
-    <SlotCounter
-      value={fmtPrice(value)}
-      duration={0.95}
-      speed={0.8}
-      animateUnchanged={false}
-      useMonospaceWidth
-      containerClassName={styles.slotCounter}
-      charClassName={styles.slotCounterChar}
-      separatorClassName={styles.slotCounterSeparator}
-    />
-  );
-
   const renderStablePct = (value: number) => <span className={styles.slotCounterPct}>{fmtPct(value)}</span>;
 
   return (
-    <div className={styles.layout}>
+    <div className={styles.layout} data-calm={calmMode ? "true" : "false"}>
       <DashboardInfoPopup open={helpOpen} onClose={() => setHelpOpen(false)} />
       <PerformanceDebugPanel />
+
+      <ModuleStatusStrip
+        quality={canvasQuality}
+        context={`${allStocks.length} F&O stocks · ${mergedSectors.length} sectors · ${lensLabel(lens)}`}
+      />
 
       <section ref={stripRef} data-analytics-section="home_index_strip" className={styles.strip}>
         <div
@@ -425,7 +509,7 @@ export function LandingPage() {
               <span className={styles.stripArrow}>{arrow(mergedIndices.nifty50.changePct)}</span>
               {mergedIndices.nifty50.name}
             </span>
-            <span className={styles.stripPrice}>{renderAnimatedPrice(mergedIndices.nifty50.last)}</span>
+            <span className={styles.stripPrice}><AnimatedIndexPrice value={mergedIndices.nifty50.last} updateKey={mergedIndices.nifty50.timestamp} /></span>
             <span className={styles.stripPct}>{renderStablePct(mergedIndices.nifty50.changePct)}</span>
           </div>
         </div>
@@ -449,7 +533,7 @@ export function LandingPage() {
               <span className={styles.stripArrow}>{arrow(mergedIndices.bankNifty.changePct)}</span>
               {mergedIndices.bankNifty.name}
             </span>
-            <span className={styles.stripPrice}>{renderAnimatedPrice(mergedIndices.bankNifty.last)}</span>
+            <span className={styles.stripPrice}><AnimatedIndexPrice value={mergedIndices.bankNifty.last} updateKey={mergedIndices.bankNifty.timestamp} /></span>
             <span className={styles.stripPct}>{renderStablePct(mergedIndices.bankNifty.changePct)}</span>
           </div>
         </div>
@@ -473,11 +557,49 @@ export function LandingPage() {
               <span className={styles.stripArrow}>{arrow(mergedIndices.indiaVix.changePct)}</span>
               {mergedIndices.indiaVix.name}
             </span>
-            <span className={styles.stripPrice}>{renderAnimatedPrice(mergedIndices.indiaVix.last)}</span>
+            <span className={styles.stripPrice}><AnimatedIndexPrice value={mergedIndices.indiaVix.last} updateKey={mergedIndices.indiaVix.timestamp} /></span>
             <span className={styles.stripPct}>{renderStablePct(mergedIndices.indiaVix.changePct)}</span>
           </div>
         </div>
       </section>
+
+      {q.data.derivatives.anomalies.length ? (
+        <section className={styles.anomalyFlash} data-analytics-section="home_fno_anomaly_flash" aria-label={tr("Live F&O anomalies")}>
+          <div className={styles.anomalyFlashLead}>
+            <span>{tr("F&O ALERTS")}</span>
+            <strong>{formatNumber(q.data.derivatives.anomalyCount, { maximumFractionDigits: 0 })}</strong>
+            <small>{tr("across all active contracts")}</small>
+          </div>
+          <div className={styles.anomalyFlashItems}>
+            {anomalyFlashContracts.map((contract) => {
+              const kind = contract.anomalyTypes.includes("BIG_ASK")
+                ? "BIG ASK"
+                : contract.anomalyTypes.includes("EXCESS_PRICE_MOVE")
+                    ? "EXCESS MOVE"
+                    : contract.anomalyTypes.includes("BIG_BID")
+                      ? "BIG BID"
+                    : "WIDE SPREAD";
+              return (
+                <button
+                  key={`flash-${contract.symbolToken}`}
+                  type="button"
+                  data-kind={kind.toLowerCase().replace(" ", "-")}
+                  onClick={() => navigate(`/analytics/stock/${encodeURIComponent(contract.underlying)}`)}
+                >
+                  <span>{kind}</span>
+                  <strong>{contract.tradingSymbol}</strong>
+                  <small>
+                    {contract.changePct == null ? "Move —" : `Move ${fmtPct(contract.changePct)}`}
+                    {contract.anomalyTypes.includes("BIG_ASK") ? ` · Ask ${compactNotional(contract.askNotional)}` : ""}
+                    {contract.anomalyTypes.includes("BIG_BID") ? ` · Bid ${compactNotional(contract.bidNotional)}` : ""}
+                  </small>
+                </button>
+              );
+            })}
+          </div>
+          <a href="#fno-contract-radar">{tr("Open radar")}</a>
+        </section>
+      ) : null}
 
       <section ref={sectorHeatmapRef} data-analytics-section="home_sector_heatmap" className={`${styles.sectorBlock} ${styles.sectorHero}`}>
         <div className={styles.sectionToolbar}>
@@ -507,6 +629,43 @@ export function LandingPage() {
             </button>
           </div>
         </div>
+        <div className={styles.canvasControls} aria-label={tr("Market canvas controls")}>
+          <div className={styles.lensControl} role="radiogroup" aria-label={tr("Metric lens")}>
+            {HOME_LENSES.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                role="radio"
+                aria-checked={lens === item.key}
+                className={styles.lensButton}
+                data-active={lens === item.key ? "true" : "false"}
+                onClick={() => setLens(item.key)}
+              >
+                {tr(item.label)}
+              </button>
+            ))}
+          </div>
+          <div className={styles.canvasTools}>
+            <label className={styles.stockSearch}>
+              <span className={styles.srOnly}>{tr("Find stock")}</span>
+              <input
+                value={stockSearch}
+                onChange={(event) => setStockSearch(event.target.value)}
+                placeholder={tr("Find F&O stock")}
+                type="search"
+              />
+            </label>
+            <select aria-label="Sector ordering" className={styles.sortSelect} value={sortMode} onChange={(event) => setSortMode(event.target.value as "stable" | "strength")}>
+              <option value="stable">{tr("Stable sector order")}</option>
+              <option value="strength">{tr("Sort stocks by strength")}</option>
+            </select>
+            <button type="button" className={styles.calmButton} data-active={calmMode ? "true" : "false"} onClick={() => setCalmMode((value) => !value)}>
+              {tr("Calm mode")}
+            </button>
+          </div>
+        </div>
+        <StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={visibleProfiles.length} />
+        <StockDistribution profiles={visibleProfiles} />
         <div className={styles.sectorSummaryStrip}>
           <div className={styles.storyPoint}>
             <span className={styles.storyPointLabel}>{tr("Advancers / decliners")}</span>
@@ -548,6 +707,8 @@ export function LandingPage() {
                             stock={s}
                             rankBadge={rankBadgeBySymbol.get(s.symbol)}
                             compact
+                            lens={lens}
+                            profile={profiles.bySymbol.get(s.symbol)}
                             onSelect={(stock) => handleSelectStock(stock, "home_heatmap")}
                           />
                         ))}
@@ -559,6 +720,75 @@ export function LandingPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section id="fno-contract-radar" className={styles.derivativesRadar} data-analytics-section="home_fno_contract_radar">
+        <div className={styles.sectionToolbar}>
+          <div className={styles.sectionIntro}>
+            <span className={styles.sectionTitle}>{tr("All F&O contract anomaly radar")}</span>
+            <span className={styles.sectionSubtitle}>
+              {tr("Every active NSE F&O contract is evaluated. The largest bid/ask walls, excess moves and wide spreads are promoted here; missing live coverage is never shown as zero.")}
+            </span>
+          </div>
+          <span className={styles.heroTimestamp}>
+            {q.data.derivatives.asOf ? `${tr("Updated")} ${formatTime(q.data.derivatives.asOf)}` : tr("No contract timestamp")}
+          </span>
+        </div>
+        <div className={styles.contractCoverage}>
+          <div><span>{tr("Active contracts")}</span><strong>{formatNumber(q.data.derivatives.contractCount, { maximumFractionDigits: 0 })}</strong></div>
+          <div><span>{tr("F&O underlyings")}</span><strong>{formatNumber(q.data.derivatives.underlyingCount, { maximumFractionDigits: 0 })}</strong></div>
+          <div><span>{tr("Observed today")}</span><strong>{formatNumber(q.data.derivatives.observedTodayCount, { maximumFractionDigits: 0 })}</strong></div>
+          <div data-tone="alert"><span>{tr("Anomalies")}</span><strong>{formatNumber(q.data.derivatives.anomalyCount, { maximumFractionDigits: 0 })}</strong></div>
+          <div data-tone="ask"><span>{tr("Big asks")}</span><strong>{formatNumber(q.data.derivatives.bigAskCount, { maximumFractionDigits: 0 })}</strong></div>
+          <div data-tone="bid"><span>{tr("Big bids")}</span><strong>{formatNumber(q.data.derivatives.bigBidCount, { maximumFractionDigits: 0 })}</strong></div>
+          <div><span>{tr("Excess moves")}</span><strong>{formatNumber(q.data.derivatives.excessPriceMoveCount, { maximumFractionDigits: 0 })}</strong></div>
+          <div><span>{tr("Wide spreads")}</span><strong>{formatNumber(q.data.derivatives.wideSpreadCount, { maximumFractionDigits: 0 })}</strong></div>
+        </div>
+        {q.data.derivatives.anomalies.length ? (
+          <div className={styles.anomalyGrid}>
+            {q.data.derivatives.anomalies.slice(0, 18).map((contract, index) => {
+              const dominant = contract.anomalyTypes.includes("BIG_ASK")
+                ? "BIG ASK"
+                : contract.anomalyTypes.includes("BIG_BID")
+                  ? "BIG BID"
+                  : contract.anomalyTypes.includes("EXCESS_PRICE_MOVE")
+                    ? "EXCESS MOVE"
+                    : "WIDE SPREAD";
+              return (
+                <button
+                  key={`${contract.symbolToken}-${contract.tradingSymbol}`}
+                  type="button"
+                  className={styles.anomalyCard}
+                  data-kind={dominant.toLowerCase().replace(" ", "-")}
+                  data-severity={contract.severityScore >= 3 ? "critical" : contract.severityScore >= 1.75 ? "high" : "medium"}
+                  onClick={() => navigate(`/analytics/stock/${encodeURIComponent(contract.underlying)}`)}
+                >
+                  <span className={styles.anomalyRank}>#{index + 1}</span>
+                  <span className={styles.anomalyType}>{dominant}</span>
+                  <strong className={styles.anomalySymbol}>{contract.tradingSymbol}</strong>
+                  <span className={styles.anomalyUnderlying}>{contract.underlying} · {contract.right} · {contract.expiry}</span>
+                  <div className={styles.anomalyNumbers}>
+                    <span><small>{tr("LTP")}</small><strong>{contract.last == null ? "—" : fmtPrice(contract.last)}</strong></span>
+                    <span><small>{tr("Move")}</small><strong data-dir={(contract.changePct ?? 0) >= 0 ? "up" : "down"}>{contract.changePct == null ? "—" : fmtPct(contract.changePct)}</strong></span>
+                    <span><small>{tr("Bid")}</small><strong>{contract.bid == null ? "—" : fmtPrice(contract.bid)}</strong></span>
+                    <span><small>{tr("Ask")}</small><strong>{contract.ask == null ? "—" : fmtPrice(contract.ask)}</strong></span>
+                  </div>
+                  <div className={styles.wallNotional}>
+                    <span>{tr("Bid wall")} <strong>{compactNotional(contract.bidNotional)}</strong></span>
+                    <span>{tr("Ask wall")} <strong>{compactNotional(contract.askNotional)}</strong></span>
+                    <span>{tr("Spread")} <strong>{contract.spreadPct == null ? "—" : `${contract.spreadPct.toFixed(2)}%`}</strong></span>
+                  </div>
+                  <span className={styles.anomalyTags}>{contract.anomalyTypes.join(" · ").replaceAll("_", " ")}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={styles.noAnomalies}>{tr("No qualifying contract anomaly is available for the current session snapshot.")}</div>
+        )}
+        <p className={styles.coverageNote}>
+          {tr("Observed contracts are those captured by the rate-safe rotating SmartAPI plan. The universe count includes every active contract in today’s instrument master; unobserved contracts remain explicitly uncovered, never fabricated.")}
+        </p>
       </section>
 
       {supportingMetricColumns.length ? (
@@ -676,7 +906,7 @@ export function LandingPage() {
                             symbol: stock.symbol,
                             source_surface: "home_top_gainers"
                           });
-                          navigate(`/analytics/stock/${encodeURIComponent(stock.symbol)}`);
+                          navigate(`/analytics/stock/${encodeURIComponent(stock.symbol)}?source=home_top_gainers&asOf=${encodeURIComponent(q.data.asOf)}`);
                         }}
                       >
                         <span>{stock.symbol}</span>
@@ -696,7 +926,7 @@ export function LandingPage() {
                             symbol: stock.symbol,
                             source_surface: "home_top_losers"
                           });
-                          navigate(`/analytics/stock/${encodeURIComponent(stock.symbol)}`);
+                          navigate(`/analytics/stock/${encodeURIComponent(stock.symbol)}?source=home_top_losers&asOf=${encodeURIComponent(q.data.asOf)}`);
                         }}
                       >
                         <span>{stock.symbol}</span>
@@ -710,7 +940,7 @@ export function LandingPage() {
           </div>
         </details>
 
-        <details className={styles.foldSection} open={mode === "beginner"}>
+        <details className={`${styles.foldSection} ${styles.staticNavigation}`} open={mode === "beginner"}>
           <summary className={styles.foldSummary}>{tr("Where next?")}</summary>
           <div ref={whereNextRef} data-analytics-section="home_where_next" className={styles.foldBody}>
             <div className={styles.whereNextGrid}>

@@ -7,7 +7,7 @@ import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { DataState, DataTable, PageIntroAccordion } from "../components/ui/DashboardPrimitives";
 import { useI18n } from "../i18n/LocaleProvider";
-import { formatDateTime, formatNumber, fmtDecimal, fmtPct, fmtPrice } from "../lib/format";
+import { formatDateTime, formatNumber, formatUiValue, fmtDecimal, fmtPct, fmtPrice } from "../lib/format";
 import { useDeferredBusyState } from "../lib/useDeferredBusyState";
 import {
   useAnalyticsBoardBrief,
@@ -300,7 +300,12 @@ export function AnalyticsOverviewPage() {
 
         <div>
           <h3 className={styles.panelTitle}>{tr("Full stock snapshot")}</h3>
-          <div className={styles.tableWrap}>
+          <div
+            className={styles.tableWrap}
+            role="region"
+            aria-label={tr("Full stock snapshot")}
+            tabIndex={0}
+          >
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -314,7 +319,7 @@ export function AnalyticsOverviewPage() {
                   <tr key={row.symbol}>
                     {brief.fullStockSnapshot.columns.map((column) => (
                       <td key={`${row.symbol}-${column}`}>
-                        {String(row[column as keyof typeof row] ?? "NA")}
+                        {formatUiValue(row[column as keyof typeof row] ?? "NA")}
                       </td>
                     ))}
                   </tr>

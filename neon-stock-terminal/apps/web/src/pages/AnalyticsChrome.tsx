@@ -220,7 +220,7 @@ export const SIGNAL_SECTION_TABS = [
 
 export const LEARNING_SECTION_TABS = [
   {
-    label: "Strategy Lab",
+    label: "OIIS Lab",
     to: "/analytics/learn",
     badge: "Learn"
   },

@@ -15,6 +15,7 @@ import {
 import { EChartSurface } from "../components/visual/EChartSurface";
 import { HeatmapLegend } from "../components/visual/HeatmapLegend";
 import { WillHeatmap } from "../components/visual/WillHeatmap";
+import { HeatmapLensNavigation } from "../components/market/HeatmapLensNavigation";
 import { useI18n } from "../i18n/LocaleProvider";
 import { formatDateIST, formatNumber, formatTime } from "../lib/format";
 import { useWillSurface } from "../lib/hooks";
@@ -211,6 +212,7 @@ export function WillSurfacePage() {
 
   return (
     <div className={styles.page}>
+      <HeatmapLensNavigation coverage={`${payload.rows.length} visible`} />
       <AnalyticsHeader
         title={tr("WILLR Heatmap")}
         meta={`${tr("Rows")} ${formatNumber(payload.rows.length, { maximumFractionDigits: 0 })} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}
@@ -346,7 +348,7 @@ export function WillSurfacePage() {
             <div className={styles.detailLinks}>
               <Link to={`/analytics/stock/${encodeURIComponent(detailEntry.row.symbol)}`} className={styles.detailLink}>{tr("Open stock detail")}</Link>
               <Link to="/analytics/signal/rsi" className={styles.detailLink}>{tr("Compare RSI")}</Link>
-              <Link to="/analytics/learn" className={styles.detailLink}>{tr("Open Strategy Lab")}</Link>
+              <Link to="/analytics/learn" className={styles.detailLink}>{tr("Open OIIS Lab")}</Link>
             </div>
           </section>
         ) : null}

@@ -737,7 +737,7 @@ export function DataTable<T>({
         ) : null}
       </div>
       {displayedRows.length ? (
-        <div className={styles.tableFrame} style={maxHeight ? { maxHeight } : undefined}>
+        <div className={styles.tableFrame} style={maxHeight ? { maxHeight } : undefined} tabIndex={0} role="region" aria-label={`${tr(title)} table`}>
           <table className={styles.dataTable}>
             <thead>
               <tr>

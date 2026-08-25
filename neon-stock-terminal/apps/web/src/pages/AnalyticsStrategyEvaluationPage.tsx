@@ -4,12 +4,11 @@ import { useAuthGate } from "../auth/AuthGateProvider";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import {
   ChartCard,
-  DataState,
   KpiCard,
-  LoadingSkeletonCard,
   PageIntroAccordion,
   SymbolPill
 } from "../components/ui/DashboardPrimitives";
+import { CompactEmptyState, ErrorState, LoadingSkeleton } from "../design-system/WorkspacePrimitives";
 import { EChartSurface } from "../components/visual/EChartSurface";
 import {
   formatCurrencyINR,
@@ -373,27 +372,15 @@ export function AnalyticsStrategyEvaluationPage() {
 
   if (loading) {
     if (!showLoading) return null;
-    return (
-      <div className={styles.page}>
-        <section className={styles.metricGrid}>
-          <LoadingSkeletonCard title={tr("Recommendation summary")} lines={3} compact />
-          <LoadingSkeletonCard title={tr("Historical edge")} lines={3} compact />
-          <LoadingSkeletonCard title={tr("Regime fit")} lines={3} compact />
-          <LoadingSkeletonCard title={tr("Risk penalties")} lines={3} compact />
-        </section>
-        <LoadingSkeletonCard title={tr("Strategy charts")} lines={8} />
-      </div>
-    );
+    return <div className={styles.page}><LoadingSkeleton label={tr("Loading strategy evaluation")} rows={5} /></div>;
   }
 
-  if (query.error || !query.data || !query.data.summary) {
-    return (
-      <DataState
-        kind="error"
-        title={tr("The strategy evaluation page is unavailable")}
-        body={tr("The dashboard could not assemble the recommendation, expectancy, regime, and backtest context required for a useful strategy read.")}
-      />
-    );
+  if (query.error) {
+    return <ErrorState title={tr("The strategy evaluation page is unavailable")} detail={tr("Recommendation, expectancy, regime and backtest context could not be loaded. No recommendation is inferred from the missing evidence.")} />;
+  }
+
+  if (!query.data || !query.data.summary) {
+    return <CompactEmptyState kind="NO_RESULT" title={tr("No governed strategy evaluation is available")} detail={tr("A completed, data-ready evaluation must be published before this workspace can present a result.")} />;
   }
 
   const payload = query.data;

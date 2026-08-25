@@ -15,6 +15,7 @@ import {
 import { EChartSurface } from "../components/visual/EChartSurface";
 import { HeatmapLegend } from "../components/visual/HeatmapLegend";
 import { RsiHeatmap } from "../components/visual/RsiHeatmap";
+import { HeatmapLensNavigation } from "../components/market/HeatmapLensNavigation";
 import { useI18n } from "../i18n/LocaleProvider";
 import { formatDateIST, formatNumber, formatTime } from "../lib/format";
 import { useRsiSurface } from "../lib/hooks";
@@ -211,6 +212,7 @@ export function RsiSurfacePage() {
 
   return (
     <div className={styles.page}>
+      <HeatmapLensNavigation coverage={`${payload.rows.length} visible`} />
       <AnalyticsHeader
         title={tr("RSI Heatmap")}
         meta={`${tr("Rows")} ${formatNumber(payload.rows.length, { maximumFractionDigits: 0 })} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}

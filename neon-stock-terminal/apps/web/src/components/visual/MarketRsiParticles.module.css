@@ -1,0 +1,24 @@
+.canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  contain: strict;
+}
+
+@media (max-width: 720px) {
+  .canvas {
+    opacity: 0.38;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas {
+    display: none;
+  }
+}
+

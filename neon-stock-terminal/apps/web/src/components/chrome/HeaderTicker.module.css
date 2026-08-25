@@ -1,19 +1,33 @@
 .header {
-  height: 40px;
-  display: flex;
+  width: min(100%, 1880px);
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
-  padding: 0 var(--page-padding);
+  margin: 0 auto;
+  padding: 0 clamp(12px, 2vw, 28px);
 }
 
 .tickerWrap {
   min-width: 0;
-  flex: 1;
+  height: 100%;
 }
 
-.rightSlot {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex: 0 0 auto;
+.leadingSlot {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .header {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    padding-inline: 12px;
+  }
+
+  .leadingSlot {
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
 }

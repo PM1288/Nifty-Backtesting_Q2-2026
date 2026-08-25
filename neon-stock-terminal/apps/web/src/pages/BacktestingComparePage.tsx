@@ -6,6 +6,7 @@ import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
 import { formatDateIST, formatNumberIN } from "../lib/format";
 import { useBacktestingCompare } from "../lib/hooks";
+import { passesBacktestAcceptance } from "../lib/backtestingAcceptance";
 import {
   BacktestingCompareScopeBar,
   BacktestingContextStrip,
@@ -35,9 +36,10 @@ export function BacktestingComparePage() {
     .filter((row) => row.capitalMode === capitalMode && row.universeMode === universeMode)
     .sort((left, right) => right.totalNetPnl - left.totalNetPnl);
   const capitalSensitivity = (compareData?.capitalSensitivity ?? []).filter((row) => row.capitalMode !== "no_capital_limit");
-  const bestReturn = useMemo(() => [...rows].sort((left, right) => right.totalReturnPct - left.totalReturnPct)[0], [rows]);
-  const safestRow = useMemo(() => [...rows].sort((left, right) => right.maxDrawdownPct - left.maxDrawdownPct)[0], [rows]);
-  const highestWin = useMemo(() => [...rows].sort((left, right) => right.winRatePct - left.winRatePct)[0], [rows]);
+  const acceptedRows = useMemo(() => rows.filter(passesBacktestAcceptance), [rows]);
+  const bestReturn = useMemo(() => [...acceptedRows].sort((left, right) => right.totalReturnPct - left.totalReturnPct)[0], [acceptedRows]);
+  const safestRow = useMemo(() => [...acceptedRows].sort((left, right) => right.maxDrawdownPct - left.maxDrawdownPct)[0], [acceptedRows]);
+  const highestWin = useMemo(() => [...acceptedRows].sort((left, right) => right.winRatePct - left.winRatePct)[0], [acceptedRows]);
   const [objective, setObjective] = useState<"return" | "drawdown" | "win">("return");
   const objectiveWinner = objective === "drawdown" ? safestRow : objective === "win" ? highestWin : bestReturn;
   const regimeOrder = ["Rising", "Falling", "Volatile", "Shock", "Neutral"];
@@ -84,18 +86,18 @@ export function BacktestingComparePage() {
       />
 
       <section className={styles.compatibilityBanner}>
-        <span className={styles.compatibilityIcon}>✓</span>
+        <span className={styles.compatibilityIcon} aria-hidden="true">≡</span>
         <div className={styles.compatibilityCopy}>
-          <strong>{tr("Comparison is compatible")}</strong>
-          <span>{tr("Rows share the published test date, universe and capital lens shown above. Rankings are exploratory until OOS and stability gates are supplied.")}</span>
+          <strong>{tr("Inputs are comparable; acceptance remains separate")}</strong>
+          <span>{tr("Rows share the published test date, universe and capital lens. A passing label additionally requires positive return and at least 20 closed trades; OOS and stability evidence remain unresolved.")}</span>
         </div>
-        <span className={styles.compatibilityBadge}>{tr("LIKE FOR LIKE")}</span>
+        <span className={styles.compatibilityBadge}>{tr("COMPARABLE")}</span>
       </section>
 
       <section className={styles.objectiveStory}>
         <div className={styles.objectiveLead}>
-          <span>{tr("Winner for selected objective")}</span>
-          <strong>{objectiveWinner ? tr(objectiveWinner.displayName) : "—"}</strong>
+          <span>{tr(objectiveWinner ? "Best passing result for selected objective" : "Acceptance result")}</span>
+          <strong>{objectiveWinner ? tr(objectiveWinner.displayName) : tr("No strategy passed")}</strong>
           <em>{objectiveWinner ? (objective === "return" ? fmtPct(objectiveWinner.totalReturnPct) : objective === "drawdown" ? fmtPct(objectiveWinner.maxDrawdownPct) : fmtPct(objectiveWinner.winRatePct)) : "—"}</em>
         </div>
         <div className={styles.objectiveExplanation}>
@@ -112,9 +114,9 @@ export function BacktestingComparePage() {
       </section>
 
       <section className={styles.systemHealthRow}>
-        <KpiCard label={tr("Net economics leader")} value={bestReturn ? tr(bestReturn.displayName) : "—"} meta={bestReturn ? fmtPct(bestReturn.totalReturnPct) : "—"} tone="green" />
-        <KpiCard label={tr("Closed-trade hit-rate leader")} value={highestWin ? tr(highestWin.displayName) : "—"} meta={highestWin ? fmtPct(highestWin.winRatePct) : "—"} />
-        <KpiCard label={tr("Drawdown leader")} value={safestRow ? tr(safestRow.displayName) : "—"} meta={safestRow ? fmtPct(safestRow.maxDrawdownPct) : "—"} />
+        <KpiCard label={tr("Best passing net economics")} value={bestReturn ? tr(bestReturn.displayName) : tr("No pass")} meta={bestReturn ? `${fmtPct(bestReturn.totalReturnPct)} · ${bestReturn.totalClosedTrades} closed trades` : tr("No row clears return and sample gates")} tone={bestReturn ? "green" : undefined} />
+        <KpiCard label={tr("Best passing closed-trade rate")} value={highestWin ? tr(highestWin.displayName) : tr("No pass")} meta={highestWin ? fmtPct(highestWin.winRatePct) : "—"} />
+        <KpiCard label={tr("Best passing drawdown")} value={safestRow ? tr(safestRow.displayName) : tr("No pass")} meta={safestRow ? fmtPct(safestRow.maxDrawdownPct) : "—"} />
         <KpiCard label={tr("Strategies compared")} value={formatNumberIN(rows.length)} />
       </section>
 

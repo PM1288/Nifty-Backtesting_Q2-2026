@@ -206,8 +206,13 @@ export function RsiHeatmap({ payload, selectedSymbol, onSelectSymbol }: Props) {
       ctx.fillText(formatNumber(latestRsi, { minimumFractionDigits: 1, maximumFractionDigits: 1 }), SYMBOL_COL + 8, animatedY + 8);
 
       for (let col = 0; col < values.length; col += 1) {
-        const prevValue = previous?.values[col] ?? values[col] ?? 50;
-        const nextValue = values[col] ?? 50;
+        const nextValue = values[col];
+        if (nextValue == null || !Number.isFinite(nextValue)) {
+          ctx.fillStyle = "#e2e8f0";
+          ctx.fillRect(LABEL_GUTTER_TOTAL + col * colWidth, animatedY, Math.ceil(colWidth) + 0.5, ROW_HEIGHT - 1);
+          continue;
+        }
+        const prevValue = previous?.values[col] ?? nextValue;
         const animatedValue = mix(prevValue, nextValue, ease);
         ctx.fillStyle = getHeatmapColor("rsi", animatedValue);
         ctx.fillRect(

@@ -1,0 +1,197 @@
+openapi: 3.1.0
+info:
+  title: NIFTY 50 Trader Monthly and Rolling Strategy API
+  version: 1.2.0
+  description: Independent research APIs. These routes do not create paper or live orders.
+servers:
+  - url: /n50
+security:
+  - sessionCookie: []
+paths:
+  /v1/rolling-monthly/dashboard:
+    get:
+      summary: Expiry-anchored monthly research and legacy quality evidence
+      parameters:
+        - in: query
+          name: signalDate
+          schema: { type: string, format: date }
+      responses:
+        '200': { description: Expiry cohorts, current candidates, evidence and heartbeat }
+        '401': { $ref: '#/components/responses/AuthRequired' }
+  /v1/rolling-monthly/absolute-months:
+    get:
+      summary: Calendar-month closure candidates
+      parameters:
+        - $ref: '#/components/parameters/Year'
+        - $ref: '#/components/parameters/Month'
+      responses:
+        '200':
+          description: Calendar-month evidence including informational EMA9 fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  strategyVersion: { type: string }
+                  researchNotionalPerOpportunity: { type: number }
+                  candidates:
+                    type: array
+                    items: { $ref: '#/components/schemas/MonthlyCandidate' }
+                  evaluations:
+                    description: >-
+                      Complete governed-universe evaluation ledger. Includes selected,
+                      rejected and incomplete symbols so the UI can explain every decision.
+                    type: array
+                    items: { $ref: '#/components/schemas/MonthlyEvaluation' }
+        '401': { $ref: '#/components/responses/AuthRequired' }
+  /v1/rolling-monthly/absolute-first-session:
+    get:
+      summary: First-exchange-session entry and gap-fill scenarios
+      parameters:
+        - $ref: '#/components/parameters/Year'
+        - $ref: '#/components/parameters/Month'
+        - in: query
+          name: threshold
+          description: Significant first-session gap-up threshold in percent.
+          schema: { type: number, enum: [0.5, 1.0], default: 0.5 }
+      responses:
+        '200':
+          description: First-session evidence; EMA9 values are informational and not entry gates.
+        '400': { description: Invalid year, month or gap threshold }
+        '401': { $ref: '#/components/responses/AuthRequired' }
+  /v1/rolling-strategy/dashboard:
+    get:
+      summary: Independent rolling 5/30/60-session research
+      description: >-
+        Reads worker-persisted evidence for the union of current NSE F&O and NIFTY LargeMidcap 250 profiles. A signal is the
+        first transition into the seven-condition rolling setup; entry is the next session open
+        and the evidence path ends at session 30 or the latest available session.
+      parameters:
+        - $ref: '#/components/parameters/Year'
+        - $ref: '#/components/parameters/Month'
+      responses:
+        '200':
+          description: Rolling opportunities, target conversion, ₹10k research economics and path evidence.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [strategyFamily, universeRule, refreshCadence, refresh, methodology, summary, rows, evaluations]
+                properties:
+                  strategyFamily: { const: ROLLING_5_30_60 }
+                  universeRule: { type: string }
+                  refreshCadence: { type: string }
+                  refresh:
+                    type: [object, 'null']
+                    properties:
+                      source_end_date: { type: string, format: date }
+                      universe_size: { type: integer }
+                      candidate_count: { type: integer }
+                      refreshed_at: { type: string, format: date-time }
+                  methodology: { type: object, additionalProperties: { type: string } }
+                  summary: { type: object, additionalProperties: true }
+                  rows:
+                    type: array
+                    items: { $ref: '#/components/schemas/RollingCandidate' }
+                  evaluations:
+                    description: >-
+                      Latest all-stock rolling evaluation, including failed conditions and
+                      rejection reasons for every governed-universe symbol.
+                    type: array
+                    items: { $ref: '#/components/schemas/RollingEvaluation' }
+        '400': { description: Invalid year or month }
+        '401': { $ref: '#/components/responses/AuthRequired' }
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: n50_session
+  parameters:
+    Year:
+      in: query
+      name: year
+      schema: { type: string, pattern: '^20\\d{2}$' }
+    Month:
+      in: query
+      name: month
+      schema: { type: string, pattern: '^(0[1-9]|1[0-2])$' }
+  responses:
+    AuthRequired:
+      description: Active authenticated session required
+  schemas:
+    MonthlyCandidate:
+      type: object
+      additionalProperties: true
+      properties:
+        candidate_id: { type: string, format: uuid }
+        symbol: { type: string }
+        entry_date: { type: [string, 'null'], format: date }
+        entry_price: { type: [number, 'null'] }
+        monthly_ema9: { type: [number, 'null'] }
+        monthly_close_above_ema9: { type: [boolean, 'null'] }
+        monthly_candle_above_ema9_pct: { type: [number, 'null'], minimum: 0, maximum: 100 }
+        evaluation_status: { type: string }
+        end_return_pct: { type: [number, 'null'] }
+        max_profit_pct: { type: [number, 'null'] }
+        max_drawdown_pct: { type: [number, 'null'] }
+    MonthlyEvaluation:
+      type: object
+      additionalProperties: true
+      required: [evaluation_id, variant, symbol, comparison_session, selection_status, conditions, rejection_reasons]
+      properties:
+        evaluation_id: { type: string, format: uuid }
+        variant: { const: ABSOLUTE_MONTH }
+        symbol: { type: string }
+        comparison_session: { type: string, format: date }
+        selection_status: { enum: [SELECTED, REJECTED, INCOMPLETE] }
+        selected_candidate_id: { type: [string, 'null'], format: uuid }
+        evaluated_condition_count: { type: integer }
+        passed_condition_count: { type: integer }
+        failed_condition_codes:
+          type: array
+          items: { type: string }
+        conditions: { type: object, additionalProperties: true }
+        rejection_reasons:
+          type: array
+          items: { type: string }
+        data_quality: { type: object, additionalProperties: true }
+    RollingCandidate:
+      type: object
+      additionalProperties: true
+      properties:
+        candidate_id: { type: string }
+        entry_method: { const: ROLLING_5_30_60 }
+        symbol: { type: string }
+        signal_date: { type: string, format: date }
+        entry_date: { type: string, format: date }
+        entry_price: { type: number }
+        observed_sessions: { type: integer, minimum: 1, maximum: 30 }
+        evaluation_status: { enum: [MATURED, DEVELOPING] }
+        hit_1_pct: { type: boolean }
+        hit_3_pct: { type: boolean }
+        hit_5_pct: { type: boolean }
+        pnl_10000: { type: number }
+        conditions: { type: object, additionalProperties: { type: boolean } }
+    RollingEvaluation:
+      type: object
+      additionalProperties: true
+      required: [evaluation_id, strategy_version, symbol, signal_date, selection_status, conditions, rejection_reasons]
+      properties:
+        evaluation_id: { type: string, format: uuid }
+        strategy_version: { type: string }
+        symbol: { type: string }
+        signal_date: { type: string, format: date }
+        selection_status: { enum: [SELECTED, QUALIFIED_CONTINUATION, REJECTED, INCOMPLETE] }
+        selected_candidate_id: { type: [string, 'null'] }
+        evaluated_condition_count: { type: integer, maximum: 7 }
+        passed_condition_count: { type: integer, maximum: 7 }
+        failed_condition_codes:
+          type: array
+          items: { type: string }
+        conditions: { type: object, additionalProperties: true }
+        rejection_reasons:
+          type: array
+          items: { type: string }
+        factor_values: { type: object, additionalProperties: true }
+        data_quality: { type: object, additionalProperties: true }

@@ -26,13 +26,13 @@ html {
   font-optical-sizing: auto;
   font-variant-numeric: lining-nums tabular-nums;
   scroll-padding-bottom: var(--footer-disclaimer-offset, 0px);
-  background: #f6f8fc;
+  background: var(--bg-canvas);
   color-scheme: light;
 }
 
 body {
   margin: 0;
-  background: #f6f8fc;
+  background: var(--bg-canvas);
   color: var(--text-1);
   font-family: var(--font-ui);
   font-size: var(--font-size-body);
@@ -57,12 +57,12 @@ textarea {
 }
 
 ::selection {
-  background: var(--w-12);
-  color: var(--white);
+  background: #cfe0ff;
+  color: var(--text-primary);
 }
 
 :focus-visible {
-  outline: 2px solid rgba(212, 175, 55, 0.34);
+  outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
 }
 
@@ -70,6 +70,29 @@ code,
 pre {
   font-family: var(--font-mono);
   color: var(--w-92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-value: 1ms;
+    --motion-hover: 1ms;
+    --motion-lens: 1ms;
+    --motion-drawer: 1ms;
+    --motion-sheet: 1ms;
+    --motion-threshold: 1ms;
+    --motion-recovery: 1ms;
+  }
+}
+
+:root[data-calm-mode="true"],
+:root[data-pause-motion="true"] {
+  --motion-value: 1ms;
+  --motion-hover: 1ms;
+  --motion-lens: 1ms;
+  --motion-drawer: 1ms;
+  --motion-sheet: 1ms;
+  --motion-threshold: 1ms;
+  --motion-recovery: 1ms;
 }
 
 :where(.mono, .numeric, .price, .percent, .symbol, .ticker, .log-line) {

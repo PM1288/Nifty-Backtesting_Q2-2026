@@ -45,7 +45,7 @@ const HEATMAP_SEMANTICS: Record<HeatmapMetric, HeatmapSemantics> = {
     stops: [
       { value: -2, color: [255, 23, 68] },
       { value: -1, color: [158, 12, 48] },
-      { value: 0, color: [44, 44, 44] },
+      { value: 0, color: [226, 232, 240] },
       { value: 1, color: [0, 155, 88] },
       { value: 2, color: [0, 230, 118] }
     ]
@@ -69,7 +69,7 @@ const HEATMAP_SEMANTICS: Record<HeatmapMetric, HeatmapSemantics> = {
       { label: "80", value: 80 }
     ],
     stops: [
-      { value: 20, color: [0, 0, 0] },
+      { value: 20, color: [100, 116, 139] },
       { value: 30, color: [255, 23, 68] },
       { value: 40, color: [212, 175, 55] },
       { value: 50, color: [0, 255, 102] },
@@ -95,7 +95,7 @@ const HEATMAP_SEMANTICS: Record<HeatmapMetric, HeatmapSemantics> = {
       { label: "0", value: 0 }
     ],
     stops: [
-      { value: -100, color: [0, 0, 0] },
+      { value: -100, color: [100, 116, 139] },
       { value: -80, color: [255, 23, 68] },
       { value: -50, color: [212, 175, 55] },
       { value: -30, color: [0, 255, 102] },

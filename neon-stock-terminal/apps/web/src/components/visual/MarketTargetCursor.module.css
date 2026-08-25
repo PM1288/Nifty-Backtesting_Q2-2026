@@ -1,0 +1,64 @@
+.cursor {
+  --target-colour: #175ec8;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2500;
+  width: 30px;
+  height: 30px;
+  opacity: 0;
+  pointer-events: none;
+  contain: layout style;
+  color: var(--target-colour);
+  filter: drop-shadow(0 2px 5px rgba(15, 23, 42, 0.2));
+  will-change: transform, width, height, opacity;
+}
+
+.cursor[data-market-tone="positive"] { --target-colour: #087a52; }
+.cursor[data-market-tone="neutral"] { --target-colour: #b47700; }
+.cursor[data-market-tone="negative"] { --target-colour: #c2384a; }
+
+.corner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-color: currentColor;
+  border-style: solid;
+  transition: width 140ms ease, height 140ms ease, border-width 140ms ease;
+}
+
+.corner:nth-child(1) { top: 0; left: 0; border-width: 2px 0 0 2px; border-radius: 5px 0 0; }
+.corner:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; border-radius: 0 5px 0 0; }
+.corner:nth-child(3) { right: 0; bottom: 0; border-width: 0 2px 2px 0; border-radius: 0 0 5px; }
+.corner:nth-child(4) { bottom: 0; left: 0; border-width: 0 0 2px 2px; border-radius: 0 0 0 5px; }
+
+.dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+  transform: translate(-50%, -50%);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.cursor[data-snapped="true"] .corner { width: 14px; height: 14px; border-width: 3px; }
+.cursor[data-snapped="true"] .corner:nth-child(1) { border-width: 3px 0 0 3px; }
+.cursor[data-snapped="true"] .corner:nth-child(2) { border-width: 3px 3px 0 0; }
+.cursor[data-snapped="true"] .corner:nth-child(3) { border-width: 0 3px 3px 0; }
+.cursor[data-snapped="true"] .corner:nth-child(4) { border-width: 0 0 3px 3px; }
+.cursor[data-snapped="true"] .dot { opacity: 0; transform: translate(-50%, -50%) scale(0.35); }
+.cursor[data-pressed="true"] { filter: drop-shadow(0 0 8px color-mix(in srgb, currentColor 55%, transparent)); }
+.cursor[data-pressed="true"] .corner { width: 18px; height: 18px; }
+
+:global(html.n50-target-cursor-enabled),
+:global(html.n50-target-cursor-enabled *) {
+  cursor: none !important;
+}
+
+@media (pointer: coarse), (hover: none) {
+  .cursor { display: none; }
+}

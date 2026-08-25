@@ -14,9 +14,11 @@ import { attachStreamServer } from "./ws/stream";
 import { ensureDatabasePerformanceArtifacts } from "./lib/dbPerformance";
 import { startDiscordMarketStreamScheduler, stopDiscordMarketStreamScheduler } from "./lib/discordMarketStream";
 import { recordDbQuery, runWithRequestMetrics, getRequestMetrics } from "./lib/requestMetrics";
+import { databaseUrlWithPool } from "./lib/prismaPoolUrl";
 import { startSnapshotScheduler } from "./lib/snapshotRegistry";
 import { validateApiRuntimeEnv } from "./lib/runtimeConfig";
 import { ensureRateLimitStoreReady } from "./security/rateLimit";
+import { startMobileNotificationDispatcher, stopMobileNotificationDispatcher } from "./services/mobileNotificationDispatcher";
 
 const SLOW_QUERY_MS = Number(process.env.SLOW_QUERY_MS ?? 250);
 
@@ -25,6 +27,21 @@ validateApiRuntimeEnv();
 const prisma = new PrismaClient({
   log: [
     { emit: "event", level: "query" },
+    { emit: "stdout", level: "error" },
+    { emit: "stdout", level: "warn" }
+  ]
+});
+
+const paperConnectionLimit = Number(process.env.N50_PAPER_DB_CONNECTION_LIMIT ?? 3);
+const paperPoolTimeoutSeconds = Number(process.env.N50_PAPER_DB_POOL_TIMEOUT ?? 20);
+const paperDatabaseUrl = process.env.DATABASE_URL
+  ? databaseUrlWithPool(process.env.DATABASE_URL, paperConnectionLimit, paperPoolTimeoutSeconds)
+  : undefined;
+// Paper evaluation is a safety-critical user surface. Its small dedicated pool
+// prevents expensive market-canvas refreshes from starving paper evidence.
+const paperPrisma = new PrismaClient({
+  ...(paperDatabaseUrl ? { datasources: { db: { url: paperDatabaseUrl } } } : {}),
+  log: [
     { emit: "stdout", level: "error" },
     { emit: "stdout", level: "warn" }
   ]
@@ -107,11 +124,13 @@ const APP_CONTENT_SECURITY_POLICY = {
       "https://firebaseinstallations.googleapis.com",
       "https://www.google-analytics.com",
       "https://analytics.google.com",
+      "https://www.google.co.in",
       "https://www.googletagmanager.com",
       "https://www.clarity.ms",
       "https://scripts.clarity.ms",
       "https://d.clarity.ms",
       "https://h.clarity.ms",
+      "https://t.clarity.ms",
       "https://cloudflareinsights.com",
       "https://c.bing.com",
       "https://dc.services.visualstudio.com",
@@ -318,7 +337,7 @@ async function main() {
   });
 
   await ensureDatabasePerformanceArtifacts(prisma);
-  registerRoutes(app, prisma, auth.middleware, auth);
+  registerRoutes(app, prisma, auth.middleware, auth, paperPrisma);
 
   const snapshotSchedulerEnabled = (process.env.DASHBOARD_SNAPSHOT_SCHEDULER_ENABLED ?? "1").trim() !== "0";
   if (snapshotSchedulerEnabled) {
@@ -332,6 +351,7 @@ async function main() {
   }
 
   startDiscordMarketStreamScheduler(prisma);
+  startMobileNotificationDispatcher(prisma);
 
   const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     if (res.headersSent) return;
@@ -399,7 +419,8 @@ async function main() {
   const shutdown = async () => {
     server.close();
     stopDiscordMarketStreamScheduler();
-    await prisma.$disconnect();
+    stopMobileNotificationDispatcher();
+    await Promise.all([prisma.$disconnect(), paperPrisma.$disconnect()]);
     process.exit(0);
   };
 
@@ -410,6 +431,6 @@ async function main() {
 main().catch(async (e) => {
   // eslint-disable-next-line no-console
   console.error(e);
-  await prisma.$disconnect();
+  await Promise.all([prisma.$disconnect(), paperPrisma.$disconnect()]);
   process.exit(1);
 });

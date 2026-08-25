@@ -14,6 +14,7 @@ import {
   DEFAULT_BACKTEST_STRATEGY_ID,
   getBacktestingRegistry
 } from "../lib/backtestingRegistry";
+import { scoreTradeQuality, TRADE_QUALITY_POLICY } from "../lib/tradeQuality";
 
 type ScenarioSeed = {
   key: string;
@@ -571,7 +572,7 @@ export async function getBacktestingStrategies(prisma: PrismaClient) {
 
 async function getBacktestingStrategyDetail(prisma: PrismaClient, strategyId = DEFAULT_BACKTEST_STRATEGY_ID, scenarioKey?: string | null) {
   const published = await loadPublishedBacktestingStrategyDetail(prisma, strategyId, scenarioKey);
-  if (published) return published;
+  if (published) return decorateBacktestingQuality(published);
   if (!seededFallbackEnabled()) {
     throw publishedSnapshotRequiredError();
   }
@@ -586,7 +587,7 @@ async function getBacktestingStrategyDetail(prisma: PrismaClient, strategyId = D
   const latestRuns = registry.runs.filter(
     (run: (typeof registry.runs)[number]) => run.strategyVersionId === version.strategyVersionId
   );
-  return {
+  return decorateBacktestingQuality({
     generatedAt: dataset.generatedAt,
     asOfDate: dataset.asOfDate,
     strategy,
@@ -597,7 +598,47 @@ async function getBacktestingStrategyDetail(prisma: PrismaClient, strategyId = D
     defaultScenarioKey: "nifty_100:capital_16l",
     scenarioOptions: dataset.scenarioOptions,
     scenarios: dataset.scenarios
-  };
+  });
+}
+
+function decorateBacktestingQuality<T extends Record<string, any>>(detail: T): T {
+  const scenarios = Object.fromEntries(Object.entries(detail.scenarios ?? {}).map(([key, scenarioValue]) => {
+    const scenario = scenarioValue as Record<string, any>;
+    const trades = Array.isArray(scenario.trades) ? scenario.trades.map((trade: Record<string, any>) => {
+      const evidence = trade.qualityEvidence && typeof trade.qualityEvidence === "object" ? trade.qualityEvidence : {};
+      const ratings = evidence.ratings && typeof evidence.ratings === "object" ? evidence.ratings : {};
+      const quality = scoreTradeQuality({
+        assetClass: String(trade.assetClass ?? "EQUITY").toUpperCase() === "OPTION" ? "OPTION" : "EQUITY",
+        status: trade.status === "closed" || trade.exitDate ? "CLOSED" : "OPEN",
+        processRatings: ratings,
+        outcomeRatings: ratings,
+        hardFailFlags: Array.isArray(evidence.hardFailFlags) ? evidence.hardFailFlags : [],
+        dataInvalid: evidence.dataValid === false,
+        effectiveRisk: evidence.effectiveRisk,
+        afterTaxPnl: trade.afterTaxPnl,
+        maeR: trade.maeR,
+        mfeR: trade.mfeR,
+        exitCaptureRatio: trade.exitCaptureRatio,
+        drawdownBudgetShare: trade.drawdownBudgetShare,
+        costDragR: trade.costDragR,
+        holdingEfficiencyRatio: trade.holdingEfficiencyRatio
+      });
+      return { ...trade, tradeQuality: quality };
+    }) : [];
+    const complete = trades.filter((trade: Record<string, any>) => trade.tradeQuality?.totalScore != null);
+    return [key, {
+      ...scenario,
+      trades,
+      tradeQualitySummary: {
+        policyVersion: TRADE_QUALITY_POLICY.version,
+        totalTrades: trades.length,
+        completeScores: complete.length,
+        notEstimable: trades.length - complete.length,
+        averageScore: complete.length ? complete.reduce((sum: number, trade: Record<string, any>) => sum + trade.tradeQuality.totalScore, 0) / complete.length : null
+      }
+    }];
+  }));
+  return { ...detail, tradeQualityPolicyVersion: TRADE_QUALITY_POLICY.version, scenarios };
 }
 
 export async function getBacktestingDailySummary(prisma: PrismaClient) {
@@ -721,9 +762,21 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       WHERE run_id=$1::uuid AND chart_id=$2 AND format='png' LIMIT 1`, runId, req.params.chartId);
     if (!rows.length) return res.status(404).json({ code: "CHART_NOT_FOUND" });
     const mountedRoot = process.env.H30_ARTIFACT_ROOT;
-    const artifactPath = mountedRoot
-      ? path.join(mountedRoot, runId, path.basename(rows[0].artifactPath))
-      : rows[0].artifactPath;
+    const sourceRoot = process.env.H30_ARTIFACT_SOURCE_ROOT;
+    let artifactPath = rows[0].artifactPath;
+    if (mountedRoot) {
+      const relativePath = sourceRoot
+        ? path.relative(path.resolve(sourceRoot), path.resolve(artifactPath))
+        : path.join(runId, path.basename(artifactPath));
+      if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+        return res.status(404).json({ code: "CHART_PATH_OUTSIDE_MOUNT" });
+      }
+      artifactPath = path.resolve(mountedRoot, relativePath);
+      const resolvedRoot = `${path.resolve(mountedRoot)}${path.sep}`;
+      if (!artifactPath.startsWith(resolvedRoot)) {
+        return res.status(404).json({ code: "CHART_PATH_OUTSIDE_MOUNT" });
+      }
+    }
     return res.sendFile(artifactPath);
   });
 

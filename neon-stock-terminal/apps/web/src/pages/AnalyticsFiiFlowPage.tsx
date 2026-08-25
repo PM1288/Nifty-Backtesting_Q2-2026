@@ -3,6 +3,7 @@ import type { EChartsOption } from "echarts";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import {
+  ButtonSecondary,
   ChartCard,
   DataState,
   KpiCard,
@@ -14,6 +15,7 @@ import { formatDateIST, formatNumber, formatPercent } from "../lib/format";
 import { useAnalyticsFiiFlow } from "../lib/hooks";
 import type {
   AnalyticsFiiFlowBackdrop,
+  AnalyticsFiiDiiCashPoint,
   AnalyticsFiiFlowChangePoint,
   AnalyticsFiiFlowMatrixRow,
   AnalyticsFiiFlowPercentilePoint,
@@ -26,6 +28,7 @@ import { useDeferredBusyState } from "../lib/useDeferredBusyState";
 import { useI18n } from "../i18n/LocaleProvider";
 import { AnalyticsHeader, INSTITUTIONAL_SECTION_TABS } from "./AnalyticsChrome";
 import styles from "./AnalyticsFiiFlowPage.module.css";
+import { ModuleStatusStrip } from "../design-system/WorkspacePrimitives";
 
 type RubricItem = { label: string; value: string };
 type ChartReading = { id: string; title: string; subtitle: string; option: EChartsOption; rubric: RubricItem[] };
@@ -37,6 +40,20 @@ const ratioPct = (value: number | null | undefined, digits = 1, signed = false) 
   n(value) == null ? "—" : formatPercent((value as number) * 100, digits, signed);
 const num = (value: number | null | undefined, digits = 0) =>
   n(value) == null ? "—" : formatNumber(value as number, { maximumFractionDigits: digits });
+const chartValue = (value: unknown) => {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return "—";
+  const normalized = Math.abs(parsed) < 0.005 ? 0 : parsed;
+  return formatNumber(normalized, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+};
+const chartRound = (value: number | null | undefined) => {
+  if (value == null || !Number.isFinite(value)) return null;
+  const rounded = Math.round(value * 100) / 100;
+  return Object.is(rounded, -0) ? 0 : rounded;
+};
+const axisPct = (value: unknown) => `${chartValue(value)}%`;
+const axisCrore = (value: unknown) => `${chartValue(value)} cr`;
+const axisPpt = (value: unknown) => `${chartValue(value)} ppt`;
 const clean = (value: string | null | undefined) =>
   ((value ?? "").replace(/[_-]+/g, " ").trim() || "Unknown").replace(/\b\w/g, (token) => token.toUpperCase());
 const rubric = (items: Array<[string, string]>) => items.map(([label, value]) => ({ label, value }));
@@ -55,22 +72,22 @@ function buildLongShortMatrixOption(rows: AnalyticsFiiFlowMatrixRow[]): EChartsO
   return {
     animation: false,
     grid: { left: 72, right: 24, top: 30, bottom: 56 },
-    tooltip: { trigger: "item" },
-    xAxis: { type: "category", data: ["Long %", "Short %", "Net %"], axisLabel: { color: "#8b93a7" } },
-    yAxis: { type: "category", data: rows.map((row) => row.clientType), axisLabel: { color: "#8b93a7" } },
-    visualMap: { min: -60, max: 60, orient: "horizontal", left: "center", bottom: 0, textStyle: { color: "#8b93a7" } },
+    tooltip: { trigger: "item", valueFormatter: (value: unknown) => `${chartValue(value)}%` },
+    xAxis: { type: "category", data: ["Long %", "Short %", "Net %"], axisLabel: { color: "#52647a" } },
+    yAxis: { type: "category", data: rows.map((row) => row.clientType), axisLabel: { color: "#52647a" } },
+    visualMap: { min: -60, max: 60, orient: "horizontal", left: "center", bottom: 0, textStyle: { color: "#52647a" } },
     series: [
       {
         type: "heatmap",
         data: rows.flatMap((row, rowIndex) => [
-          [0, rowIndex, row.longSharePct ?? 0],
-          [1, rowIndex, row.shortSharePct ?? 0],
-          [2, rowIndex, row.netPct ?? 0]
+          [0, rowIndex, chartRound(row.longSharePct) ?? 0],
+          [1, rowIndex, chartRound(row.shortSharePct) ?? 0],
+          [2, rowIndex, chartRound(row.netPct) ?? 0]
         ]),
         label: {
           show: true,
           color: "#f5f7fb",
-          formatter: (params: unknown) => `${num(Number(((params as { data?: unknown[] }).data ?? [0, 0, 0])[2]), 1)}`
+          formatter: (params: unknown) => chartValue(Number(((params as { data?: unknown[] }).data ?? [0, 0, 0])[2]))
         }
       }
     ]
@@ -82,17 +99,17 @@ function buildSpreadOption(rows: AnalyticsFiiFlowSpreadPoint[]): EChartsOption {
   return {
     animation: false,
     grid: { left: 50, right: 18, top: 30, bottom: 56 },
-    legend: { top: 0, textStyle: { color: "#98a2b3" } },
-    tooltip: { trigger: "axis" },
-    xAxis: { type: "category", data: data.map((row) => row.tradeDate.slice(5)), axisLabel: { color: "#8b93a7" } },
+    legend: { top: 0, textStyle: { color: "#475569" } },
+    tooltip: { trigger: "axis", valueFormatter: (value: unknown) => `${chartValue(value)}%` },
+    xAxis: { type: "category", data: data.map((row) => row.tradeDate.slice(5)), axisLabel: { color: "#52647a" } },
     yAxis: [
-      { type: "value", axisLabel: { color: "#8b93a7", formatter: "{value}%" }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.05)" } } },
-      { type: "value", axisLabel: { color: "#8b93a7", formatter: "{value}%" } }
+      { type: "value", axisLabel: { color: "#52647a", formatter: axisPct }, splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } } },
+      { type: "value", axisLabel: { color: "#52647a", formatter: axisPct } }
     ],
     series: [
-      { name: "FII net %", type: "line", smooth: true, data: data.map((row) => (row.fiiNetPct ?? 0) * 100), lineStyle: { color: "#7dcfff", width: 2 }, itemStyle: { color: "#7dcfff" } },
-      { name: "Client net %", type: "line", smooth: true, data: data.map((row) => (row.clientNetPct ?? 0) * 100), lineStyle: { color: "#ff9f68", width: 2 }, itemStyle: { color: "#ff9f68" } },
-      { name: "Spread", type: "bar", yAxisIndex: 1, data: data.map((row) => (row.spreadPct ?? 0) * 100), itemStyle: { color: (params: unknown) => (Number((params as { value?: number }).value ?? 0) >= 0 ? "#6de29b" : "#ff7a7a") }, barMaxWidth: 14 }
+      { name: "FII net %", type: "line", smooth: true, data: data.map((row) => chartRound((row.fiiNetPct ?? 0) * 100)), lineStyle: { color: "#7dcfff", width: 2 }, itemStyle: { color: "#7dcfff" } },
+      { name: "Client net %", type: "line", smooth: true, data: data.map((row) => chartRound((row.clientNetPct ?? 0) * 100)), lineStyle: { color: "#ff9f68", width: 2 }, itemStyle: { color: "#ff9f68" } },
+      { name: "Spread", type: "bar", yAxisIndex: 1, data: data.map((row) => chartRound((row.spreadPct ?? 0) * 100)), itemStyle: { color: (params: unknown) => (Number((params as { value?: number }).value ?? 0) >= 0 ? "#6de29b" : "#ff7a7a") }, barMaxWidth: 14 }
     ]
   };
 }
@@ -102,14 +119,14 @@ function buildProductOption(rows: AnalyticsFiiFlowProductPoint[]): EChartsOption
   return {
     animation: false,
     grid: { left: 56, right: 18, top: 30, bottom: 84 },
-    legend: { top: 0, textStyle: { color: "#98a2b3" } },
-    tooltip: { trigger: "axis" },
-    xAxis: { type: "category", data: data.map((row) => clean(row.product)), axisLabel: { color: "#8b93a7", rotate: 18 } },
-    yAxis: { type: "value", axisLabel: { color: "#8b93a7", formatter: "{value} cr" }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.05)" } } },
+    legend: { top: 0, textStyle: { color: "#475569" } },
+    tooltip: { trigger: "axis", valueFormatter: (value: unknown) => axisCrore(value) },
+    xAxis: { type: "category", data: data.map((row) => clean(row.product)), axisLabel: { color: "#52647a", rotate: 18 } },
+    yAxis: { type: "value", axisLabel: { color: "#52647a", formatter: axisCrore }, splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } } },
     series: [
-      { name: "Buy value", type: "bar", data: data.map((row) => row.buyValueCr ?? 0), itemStyle: { color: "#6de29b" }, barMaxWidth: 16 },
-      { name: "Sell value", type: "bar", data: data.map((row) => row.sellValueCr ?? 0), itemStyle: { color: "#ff7a7a" }, barMaxWidth: 16 },
-      { name: "Open interest value", type: "line", smooth: true, data: data.map((row) => row.openInterestValueCr ?? 0), lineStyle: { color: "#f4d35e", width: 2 }, itemStyle: { color: "#f4d35e" } }
+      { name: "Buy value", type: "bar", data: data.map((row) => chartRound(row.buyValueCr) ?? 0), itemStyle: { color: "#6de29b" }, barMaxWidth: 16 },
+      { name: "Sell value", type: "bar", data: data.map((row) => chartRound(row.sellValueCr) ?? 0), itemStyle: { color: "#ff7a7a" }, barMaxWidth: 16 },
+      { name: "Open interest value", type: "line", smooth: true, data: data.map((row) => chartRound(row.openInterestValueCr) ?? 0), lineStyle: { color: "#f4d35e", width: 2 }, itemStyle: { color: "#f4d35e" } }
     ]
   };
 }
@@ -119,10 +136,10 @@ function buildPercentileOption(rows: AnalyticsFiiFlowPercentilePoint[]): ECharts
   return {
     animation: false,
     grid: { left: 56, right: 18, top: 30, bottom: 56 },
-    tooltip: { trigger: "item" },
-    xAxis: { type: "value", min: 0, max: 100, axisLabel: { color: "#8b93a7", formatter: "{value}%" }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.05)" } } },
-    yAxis: { type: "value", axisLabel: { color: "#8b93a7", formatter: "{value}%" }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.05)" } } },
-    series: [{ type: "scatter", symbolSize: 12, data: data.map((row) => ({ value: [(row.percentile ?? 0) * 100, row.nextSessionReturnPct ?? 0], itemStyle: { color: (row.nextSessionReturnPct ?? 0) >= 0 ? "#6de29b" : "#ff7a7a" }, name: row.tradeDate })) }]
+    tooltip: { trigger: "item", valueFormatter: (value: unknown) => Array.isArray(value) ? value.map((entry) => `${chartValue(entry)}%`).join(", ") : `${chartValue(value)}%` },
+    xAxis: { type: "value", min: 0, max: 100, axisLabel: { color: "#52647a", formatter: axisPct }, splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } } },
+    yAxis: { type: "value", axisLabel: { color: "#52647a", formatter: axisPct }, splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } } },
+    series: [{ type: "scatter", symbolSize: 12, data: data.map((row) => ({ value: [chartRound((row.percentile ?? 0) * 100), chartRound(row.nextSessionReturnPct ?? 0)], itemStyle: { color: (row.nextSessionReturnPct ?? 0) >= 0 ? "#6de29b" : "#ff7a7a" }, name: row.tradeDate })) }]
   };
 }
 
@@ -131,16 +148,16 @@ function buildRegimeOverlayOption(rows: AnalyticsFiiFlowRegimePoint[]): EChartsO
   return {
     animation: false,
     grid: { left: 56, right: 18, top: 30, bottom: 56 },
-    legend: { top: 0, textStyle: { color: "#98a2b3" } },
-    tooltip: { trigger: "axis" },
-    xAxis: { type: "category", data: data.map((row) => row.tradeDate.slice(5)), axisLabel: { color: "#8b93a7" } },
+    legend: { top: 0, textStyle: { color: "#475569" } },
+    tooltip: { trigger: "axis", valueFormatter: (value: unknown) => `${chartValue(value)}%` },
+    xAxis: { type: "category", data: data.map((row) => row.tradeDate.slice(5)), axisLabel: { color: "#52647a" } },
     yAxis: [
-      { type: "value", min: 0, max: 100, axisLabel: { color: "#8b93a7", formatter: "{value}%" }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.05)" } } },
-      { type: "value", axisLabel: { color: "#8b93a7", formatter: "{value}%" } }
+      { type: "value", min: 0, max: 100, axisLabel: { color: "#52647a", formatter: axisPct }, splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } } },
+      { type: "value", axisLabel: { color: "#52647a", formatter: axisPct } }
     ],
     series: [
-      { name: "FII percentile", type: "line", smooth: true, data: data.map((row) => (row.percentile ?? 0) * 100), lineStyle: { color: "#7dcfff", width: 2 }, itemStyle: { color: "#7dcfff" } },
-      { name: "Nifty return", type: "bar", yAxisIndex: 1, data: data.map((row) => row.niftyReturnPct ?? 0), itemStyle: { color: (params: unknown) => (Number((params as { value?: number }).value ?? 0) >= 0 ? "#6de29b" : "#ff9f68") }, barMaxWidth: 14 }
+      { name: "FII percentile", type: "line", smooth: true, data: data.map((row) => chartRound((row.percentile ?? 0) * 100)), lineStyle: { color: "#7dcfff", width: 2 }, itemStyle: { color: "#7dcfff" } },
+      { name: "Nifty return", type: "bar", yAxisIndex: 1, data: data.map((row) => chartRound(row.niftyReturnPct ?? 0)), itemStyle: { color: (params: unknown) => (Number((params as { value?: number }).value ?? 0) >= 0 ? "#6de29b" : "#ff9f68") }, barMaxWidth: 14 }
     ]
   };
 }
@@ -153,18 +170,88 @@ function buildChangeOption(rows: AnalyticsFiiFlowChangePoint[]): EChartsOption {
   return {
     animation: false,
     grid: { left: 56, right: 18, top: 30, bottom: 56 },
-    legend: { top: 0, textStyle: { color: "#98a2b3" } },
-    tooltip: { trigger: "axis" },
-    xAxis: { type: "category", data: dates.map((value) => value.slice(5)), axisLabel: { color: "#8b93a7" } },
-    yAxis: { type: "value", axisLabel: { color: "#8b93a7", formatter: "{value} ppt" }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.05)" } } },
+    legend: { top: 0, textStyle: { color: "#475569" } },
+    tooltip: { trigger: "axis", valueFormatter: (value: unknown) => axisPpt(value) },
+    xAxis: { type: "category", data: dates.map((value) => value.slice(5)), axisLabel: { color: "#52647a" } },
+    yAxis: { type: "value", axisLabel: { color: "#52647a", formatter: axisPpt }, splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } } },
     series: clients.map((clientType, index) => ({
       name: clientType,
       type: "line",
       smooth: true,
-      data: dates.map((tradeDate) => data.find((row) => row.tradeDate === tradeDate && row.clientType === clientType)?.dayChangePctPoints ?? null),
+      data: dates.map((tradeDate) => chartRound(data.find((row) => row.tradeDate === tradeDate && row.clientType === clientType)?.dayChangePctPoints)),
       lineStyle: { color: palette[index % palette.length], width: 2 },
       itemStyle: { color: palette[index % palette.length] }
     }))
+  };
+}
+
+function buildCashFlowTrendOption(rows: AnalyticsFiiDiiCashPoint[]): EChartsOption {
+  const data = rows.slice(-60);
+  return {
+    animation: false,
+    grid: { left: 64, right: 68, top: 48, bottom: 68 },
+    legend: { top: 4, textStyle: { color: "#475569" } },
+    tooltip: {
+      trigger: "axis",
+      valueFormatter: (value: unknown) => axisCrore(value)
+    },
+    xAxis: {
+      type: "category",
+      data: data.map((row) => row.tradeDate.slice(5)),
+      axisLabel: { color: "#52647a", hideOverlap: true }
+    },
+    yAxis: [
+      {
+        type: "value",
+        name: "Daily net ₹ cr",
+        axisLabel: { color: "#52647a", formatter: chartValue },
+        splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } }
+      },
+      {
+        type: "value",
+        name: "Cumulative ₹ cr",
+        axisLabel: { color: "#52647a", formatter: chartValue },
+        splitLine: { show: false }
+      }
+    ],
+    dataZoom: data.length > 30 ? [{ type: "inside", start: 40, end: 100 }, { type: "slider", height: 18, bottom: 8 }] : [],
+    series: [
+      {
+        name: "FII/FPI daily net",
+        type: "bar",
+        stack: "daily",
+        data: data.map((row) => chartRound(row.fiiNetCr)),
+        itemStyle: { color: "#175ec8" },
+        barMaxWidth: 14,
+        markLine: { silent: true, symbol: "none", data: [{ yAxis: 0 }], lineStyle: { color: "#64748b", width: 1 } }
+      },
+      {
+        name: "DII daily net",
+        type: "bar",
+        stack: "daily",
+        data: data.map((row) => chartRound(row.diiNetCr)),
+        itemStyle: { color: "#c68a0b" },
+        barMaxWidth: 14
+      },
+      {
+        name: "FII/FPI cumulative",
+        type: "line",
+        yAxisIndex: 1,
+        showSymbol: false,
+        data: data.map((row) => chartRound(row.cumulativeFiiCr)),
+        lineStyle: { color: "#7dcfff", width: 2 },
+        itemStyle: { color: "#7dcfff" }
+      },
+      {
+        name: "DII cumulative",
+        type: "line",
+        yAxisIndex: 1,
+        showSymbol: false,
+        data: data.map((row) => chartRound(row.cumulativeDiiCr)),
+        lineStyle: { color: "#f4d35e", width: 2 },
+        itemStyle: { color: "#f4d35e" }
+      }
+    ]
   };
 }
 
@@ -316,6 +403,8 @@ export function AnalyticsFiiFlowPage() {
   const payload = query.data;
   const charts = useMemo(() => (payload ? buildCharts(payload, tr) : []), [payload, tr]);
   const latestFii = payload?.participants.find((row) => row.clientType === "FII") ?? null;
+  const latestCashPoint = payload?.charts.cashFlowTrend.at(-1) ?? null;
+  const staleSources = payload?.sourceStatus.filter((source) => source.freshness === "STALE" || source.freshness === "MISSING") ?? [];
 
   if (loading) {
     if (!showLoading) return null;
@@ -344,9 +433,30 @@ export function AnalyticsFiiFlowPage() {
 
   return (
     <div className={styles.page}>
+      <ModuleStatusStrip
+        environment="PAPER"
+        context="Institutional report context"
+        quality={{
+          moduleId: "institutional-flow",
+          transport: "CONNECTED",
+          freshness: staleSources.length ? "STALE" : payload.latestCashTradeDate ? "CURRENT" : "UNKNOWN",
+          readiness: staleSources.length ? "DEGRADED" : payload.latestCashTradeDate ? "READY" : "INCOMPLETE",
+          dataThrough: payload.latestCashTradeDate ?? payload.latestTradeDate ?? undefined,
+          ageMs: payload.reportLagDays == null ? undefined : payload.reportLagDays * 86_400_000,
+          source: "NSE and NSDL institutional reports",
+          message: staleSources.length
+            ? `${staleSources.map((source) => source.label).join(", ")} ${staleSources.length === 1 ? "is" : "are"} stale. Current cash data remains available separately.`
+            : "All displayed institutional source families are within their configured publication cadence."
+        }}
+      />
+      <section className={styles.pageHeading}>
+        <span className={styles.eyebrow}>{tr("Markets · Institutional context")}</span>
+        <h1>{tr("FII / DII & Participant Flow")}</h1>
+        <p>{tr("Track official cash-market buying and selling trends, derivatives positioning, source freshness, and missing report dates without presenting post-close reports as live intraday flow.")}</p>
+      </section>
       <AnalyticsHeader
-        title="Participant Flow"
-        meta={`${tr("Latest official date")} ${payload.latestTradeDate ? formatDateIST(payload.latestTradeDate) : "—"}`}
+        title="FII / DII & Participant Flow"
+        meta={`${tr("Cash data")} ${payload.latestCashTradeDate ? formatDateIST(payload.latestCashTradeDate) : "—"} · ${tr("Detailed participant data")} ${payload.latestTradeDate ? formatDateIST(payload.latestTradeDate) : "—"}`}
         subtitle={tr("Read FII, client, DII, and prop positioning as daily institutional context. This page is for framing risk and next-session bias, not for triggering exact intraday entries.")}
         learningPrompt={tr("This page answers one question: does the institutional backdrop support, contradict, stretch, or neutralize the next-session tape?")}
         sectionTabs={[...INSTITUTIONAL_SECTION_TABS]}
@@ -363,10 +473,59 @@ export function AnalyticsFiiFlowPage() {
       />
 
       <section className={styles.metricGrid}>
-        <KpiCard label={tr("Latest report")} value={payload.latestTradeDate ? formatDateIST(payload.latestTradeDate) : "—"} meta={payload.summary.reportLagNote} />
+        <KpiCard label={tr("Latest cash report")} value={payload.latestCashTradeDate ? formatDateIST(payload.latestCashTradeDate) : "—"} meta={tr("Official NSE cash-market FII/FPI and DII activity. It is published daily, not intraday.")} />
         <KpiCard label={tr("Backdrop")} value={clean(payload.backdrop)} tone={backdropTone(payload.backdrop)} meta={payload.summary.text} />
-        <KpiCard label={tr("FII percentile")} value={ratioPct(latestFii?.oiPercentile, 1)} meta={tr("Current FII OI percentile within the stored history window.")} />
-        <KpiCard label={tr("Sample size")} value={num(payload.diagnostics.sampleSize, 0)} meta={tr("Historical participant observations used for percentile and follow-through context.")} />
+        <KpiCard label={tr("Latest FII cash net")} value={latestCashPoint?.fiiNetCr == null ? "—" : `₹${num(latestCashPoint.fiiNetCr, 2)} cr`} meta={tr("Net purchases minus sales on the latest official NSE cash report.")} />
+        <KpiCard label={tr("Recent cash coverage")} value={payload.cashCoverage.coveragePct == null ? "—" : pct(payload.cashCoverage.coveragePct, 1)} meta={`${payload.cashCoverage.availableRecentSessions}/${payload.cashCoverage.expectedRecentSessions} ${tr("recent market sessions available")}.`} />
+      </section>
+
+      <section className={styles.primaryTrend}>
+        <ChartCard
+          title={tr("FII/FPI and DII cash-flow trend")}
+          subtitle={tr("Daily net cash activity is shown as bars; cumulative institutional flow is shown as lines. Values are official NSE-only ₹ crore and must not be read as live intraday flow.")}
+          meta={payload.latestCashTradeDate ? `${tr("Through")} ${formatDateIST(payload.latestCashTradeDate)}` : tr("No cash-flow observations")}
+          action={<ButtonSecondary disabled={query.isFetching} onClick={() => void query.refetch()}>{query.isFetching ? tr("Refreshing…") : tr("Refresh data")}</ButtonSecondary>}
+        >
+          {payload.charts.cashFlowTrend.length ? (
+            <EChartSurface className={styles.chartSurface} ariaLabel={tr("FII and DII daily and cumulative cash-flow trend in rupees crore")} option={buildCashFlowTrendOption(payload.charts.cashFlowTrend)} />
+          ) : (
+            <DataState kind="empty" title={tr("Cash-flow trend unavailable")} body={tr("No normalized NSE FII/DII cash records are available. Refreshing the page rechecks PostgreSQL but does not fabricate missing reports.")} />
+          )}
+          <div className={styles.trendSummary}>
+            <span><strong>{tr("Latest FII/FPI")}</strong>{latestCashPoint?.fiiNetCr == null ? "—" : `${latestCashPoint.fiiNetCr >= 0 ? "+" : ""}₹${num(latestCashPoint.fiiNetCr, 2)} cr`}</span>
+            <span><strong>{tr("Latest DII")}</strong>{latestCashPoint?.diiNetCr == null ? "—" : `${latestCashPoint.diiNetCr >= 0 ? "+" : ""}₹${num(latestCashPoint.diiNetCr, 2)} cr`}</span>
+            <span><strong>{tr("Combined")}</strong>{latestCashPoint?.combinedNetCr == null ? "—" : `${latestCashPoint.combinedNetCr >= 0 ? "+" : ""}₹${num(latestCashPoint.combinedNetCr, 2)} cr`}</span>
+          </div>
+        </ChartCard>
+      </section>
+
+      <section className={styles.sourcePanel} aria-labelledby="institutional-source-status-title">
+        <div className={styles.tableHeader}>
+          <span className={styles.eyebrow}>{tr("Refresh and missing-data status")}</span>
+          <h3 id="institutional-source-status-title">{tr("Institutional source coverage")}</h3>
+          <p>{tr("Each source has its own publication cadence. A connected application does not make a delayed official report current.")}</p>
+        </div>
+        <div className={styles.sourceGrid}>
+          {payload.sourceStatus.map((source) => (
+            <article key={source.sourceId} className={styles.sourceRow} data-freshness={source.freshness}>
+              <div>
+                <strong>{source.label}</strong>
+                <span>{source.cadence === "FORTNIGHTLY" ? tr("Fortnightly official source") : tr("Daily official source")}</span>
+              </div>
+              <span className={styles.freshnessBadge} data-freshness={source.freshness}>{source.freshness}</span>
+              <dl>
+                <div><dt>{tr("Data through")}</dt><dd>{source.latestMarketDate ? formatDateIST(source.latestMarketDate) : "—"}</dd></div>
+                <div><dt>{tr("Lag")}</dt><dd>{source.lagDays == null ? "—" : `${source.lagDays}d`}</dd></div>
+                <div><dt>{tr("Rows")}</dt><dd>{num(source.rowCount, 0)}</dd></div>
+                <div><dt>{tr("Last refresh")}</dt><dd>{source.latestRefreshAt ? formatDateIST(source.latestRefreshAt, { includeTime: true }) : tr("Not recorded")}</dd></div>
+              </dl>
+            </article>
+          ))}
+        </div>
+        <div className={styles.coverageLine} data-complete={payload.cashCoverage.missingTradeDates.length === 0 ? "true" : "false"}>
+          <strong>{tr("Recent cash-session coverage")}: {payload.cashCoverage.availableRecentSessions}/{payload.cashCoverage.expectedRecentSessions}</strong>
+          <span>{payload.cashCoverage.missingTradeDates.length ? `${tr("Missing")}: ${payload.cashCoverage.missingTradeDates.map((value) => formatDateIST(value)).join(", ")}` : tr("No missing dates in the recent comparison window.")}</span>
+        </div>
       </section>
 
       <section className={styles.noteGrid}>
@@ -426,7 +585,7 @@ export function AnalyticsFiiFlowPage() {
       <section className={styles.chartGrid}>
         {charts.map((chart) => (
           <ChartCard key={chart.id} title={chart.title} subtitle={chart.subtitle}>
-            <EChartSurface ariaLabel={chart.title} option={chart.option} />
+            <EChartSurface className={styles.chartSurface} ariaLabel={chart.title} option={chart.option} />
             <div className={styles.rubricList}>
               {chart.rubric.map((item) => (
                 <div key={`${chart.id}-${item.label}`} className={styles.rubricItem}>

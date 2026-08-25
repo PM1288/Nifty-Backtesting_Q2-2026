@@ -12,6 +12,7 @@ type LiveQuote = {
   change: number;
   changePct: number;
   timestamp: string;
+  sequence?: number;
 };
 
 type StackUniverseRow = {
@@ -92,6 +93,7 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
 
     let timer: NodeJS.Timeout | null = null;
     let closed = false;
+    let sequence = 0;
 
     ws.on("close", () => {
       closed = true;
@@ -144,6 +146,7 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
       const tokens = [...tokenToSymbols.keys()];
 
       const tick = async () => {
+        sequence += 1;
         const stateRows = await prisma.$queryRaw<StackStateRow[]>(Prisma.sql`
           SELECT symbol_token, last_price, last_close, net_change, percent_change, last_seen_ts
           FROM instrument_state
@@ -164,7 +167,7 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
             timestamp: toIso(row.last_seen_ts)
           };
           for (const symbol of outboundSymbols) {
-            const payload: LiveQuote = { symbol, ...payloadBase };
+            const payload: LiveQuote = { symbol, ...payloadBase, sequence };
             if (!closed) ws.send(JSON.stringify(payload));
           }
         }
@@ -216,6 +219,7 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
       const prevCloseById = new Map([...dailyById.values()].map((d) => [d.stockId, toNumber(d.prevClose)]));
 
       const tick = async () => {
+        sequence += 1;
         const latestTs = await prisma.intradayBar.groupBy({
           by: ["stockId"],
           where: { stockId: { in: stockIds }, ts: { gte: dayStart } },
@@ -240,7 +244,8 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
             price: last,
             change,
             changePct,
-            timestamp: nowIso
+            timestamp: nowIso,
+            sequence
           };
           if (!closed) ws.send(JSON.stringify(payload));
         }

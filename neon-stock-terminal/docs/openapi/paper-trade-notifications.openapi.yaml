@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: NIFTY 50 Trader Paper Event Notifications API
+  version: 1.0.0
+  description: >-
+    Authenticated, read-only browser feed for the latest durable PAPER entry fills
+    and analytical target-hit events. The endpoint does not create, alter, close,
+    or execute a trade.
+servers:
+  - url: /n50
+    description: Production same-origin gateway base
+paths:
+  /v1/paper/notifications:
+    get:
+      operationId: listPaperTradeNotifications
+      summary: List the latest PAPER entry and target-hit notifications
+      description: >-
+        Reads paper_trading.trade_events and filters to actual paper-leg entry fills
+        and consolidated analytical target hits before applying the limit. Results
+        are ordered by event time and aggregate sequence descending.
+      tags: [Paper Trading]
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Requested result count. The browser feed always caps this at five.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: Latest qualifying durable PAPER events.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaperNotificationResponse"
+        "401":
+          description: No active authenticated session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: The durable event query failed. No value is fabricated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-session
+      description: Secure HttpOnly application session cookie. The development name may differ.
+  schemas:
+    PaperNotificationResponse:
+      type: object
+      required: [asOf, source, items]
+      properties:
+        asOf:
+          type: string
+          format: date-time
+        source:
+          type: string
+          const: paper_trading.trade_events
+        items:
+          type: array
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/PaperNotification"
+    PaperNotification:
+      type: object
+      required: [id, eventType, kind, title, body, symbol, occurredAt, tradeId, deepLink, speechText]
+      properties:
+        id:
+          type: string
+          description: Durable paper event UUID/string identifier used for deduplication.
+        eventType:
+          type: string
+          enum:
+            - com.papertrading.trade_leg.opened.v1
+            - com.papertrading.target_track.closed.v1
+        kind:
+          type: string
+          enum: [ENTRY, TARGET_HIT]
+        title:
+          type: string
+          maxLength: 80
+        body:
+          type: string
+          maxLength: 160
+        symbol:
+          type: string
+          maxLength: 24
+        occurredAt:
+          type: string
+          format: date-time
+        tradeId:
+          type: [string, "null"]
+          maxLength: 80
+        deepLink:
+          type: string
+          pattern: ^/paper-trading
+        speechText:
+          type: string
+          description: Native-browser narration text derived from the durable entry or target event. The API does not synthesize or return audio.
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }

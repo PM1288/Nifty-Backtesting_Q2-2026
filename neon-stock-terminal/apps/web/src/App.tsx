@@ -34,11 +34,17 @@ import {
   preloadBacktestingStrategyDetailPage,
   preloadBacktestingStrategyLibraryPage,
   preloadOiisLivePage,
+  preloadRollingMonthlyPage,
+  preloadMonthlyStrategiesPage,
+  preloadLongOptionsPage,
+  preloadNiftyWeeklyOptionsPage,
+  preloadNseIntelligencePage,
   preloadChangeHeatmapPage,
   preloadRsiSurfacePage,
   preloadWillSurfacePage
 } from "./routePreloads";
 import styles from "./pages/AnalyticsPage.module.css";
+import { ShortcutProvider } from "./interaction/ShortcutRegistry";
 
 const ChangeHeatmapPage = lazy(async () => ({ default: (await preloadChangeHeatmapPage()).ChangeHeatmapPage }));
 const RsiSurfacePage = lazy(async () => ({ default: (await preloadRsiSurfacePage()).RsiSurfacePage }));
@@ -77,8 +83,17 @@ const BacktestingComparePage = lazy(async () => ({ default: (await preloadBackte
 const BacktestingRunsPage = lazy(async () => ({ default: (await preloadBacktestingRunsPage()).BacktestingRunsPage }));
 const BacktestingH30Page = lazy(async () => ({ default: (await import("./pages/BacktestingH30Page")).BacktestingH30Page }));
 const OiisLivePage = lazy(async () => ({ default: (await preloadOiisLivePage()).OiisLivePage }));
+const RollingMonthlyPage = lazy(async () => ({ default: (await preloadRollingMonthlyPage()).RollingMonthlyPage }));
+const MonthlyStrategyPage = lazy(async () => ({ default: (await preloadMonthlyStrategiesPage()).MonthlyStrategyPage }));
+const RollingMonthlyLegacyRouter = lazy(async () => ({ default: (await preloadMonthlyStrategiesPage()).RollingMonthlyLegacyRouter }));
+const TrendlyneSummaryPage = lazy(async () => ({ default: (await import("./pages/TrendlyneSummaryPage")).TrendlyneSummaryPage }));
+const LongOptionsPage = lazy(async () => ({ default: (await preloadLongOptionsPage()).LongOptionsPage }));
+const NiftyWeeklyOptionsPage = lazy(async () => ({ default: (await preloadNiftyWeeklyOptionsPage()).NiftyWeeklyOptionsPage }));
+const NseIntelligencePage = lazy(async () => ({ default: (await preloadNseIntelligencePage()).NseIntelligencePage }));
+const OiisRunHistoryPage = lazy(async () => ({ default: (await import("./pages/OiisRunHistoryPage")).OiisRunHistoryPage }));
 const FnoVolatilityPage = lazy(async () => ({ default: (await import("./pages/FnoVolatilityPage")).FnoVolatilityPage }));
-const PaperTradingPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).PaperTradingPage }));
+const OptionsIntelligencePage = lazy(async () => ({ default: (await import("./pages/OptionsIntelligencePage")).OptionsIntelligencePage }));
+const PaperTradingPage = lazy(async () => ({ default: (await import("./pages/PaperTradingCommandCenter")).PaperTradingCommandCenter }));
 const Nifty500Page = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).Nifty500Page }));
 const FuturesPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).FuturesPage }));
 const AdminPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).AdminPage }));
@@ -96,8 +111,9 @@ function LegacyStockRedirect() {
 
 export default function App() {
   return (
-    <AppShell>
-      <Suspense fallback={<RouteFallback />}>
+    <ShortcutProvider>
+      <AppShell>
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard/home" element={<Navigate to="/" replace />} />
@@ -119,7 +135,7 @@ export default function App() {
           <Route path="/analytics" element={<AnalyticsOverviewPage />} />
           <Route path="/analytics/leadership" element={<AnalyticsLeadershipPage />} />
           <Route path="/analytics/daily-setups" element={<AnalyticsSetupsPage />} />
-          <Route path="/analytics/market-state" element={<AnalyticsMarketStatePage />} />
+          <Route path="/analytics/market-state" element={<Navigate to="/analytics/regime?legacy=market-state" replace />} />
           <Route path="/analytics/strategy-evaluation" element={<Navigate to="/strategy/evaluation" replace />} />
           <Route path="/analytics/events" element={<Navigate to="/catalysts/events" replace />} />
           <Route path="/catalysts" element={<Navigate to="/catalysts/context" replace />} />
@@ -127,7 +143,7 @@ export default function App() {
           <Route path="/catalysts/events" element={<AnalyticsEventsPage />} />
           <Route path="/analytics/fii-reports" element={<Navigate to="/institutional/reports" replace />} />
           <Route path="/analytics/regime" element={<AnalyticsRegimePage />} />
-          <Route path="/analytics/supporting-metrics" element={<AnalyticsSupportingMetricsPage />} />
+          <Route path="/analytics/supporting-metrics" element={<Navigate to="/analytics?view=evidence" replace />} />
           <Route path="/analytics/setups" element={<Navigate to="/analytics/daily-setups" replace />} />
           <Route path="/analytics/risk" element={<AnalyticsRiskPage />} />
           <Route path="/analytics/learn" element={<AnalyticsLearnPage />} />
@@ -150,13 +166,28 @@ export default function App() {
           <Route path="/institutional" element={<Navigate to="/institutional/flow" replace />} />
           <Route path="/institutional/flow" element={<AnalyticsFiiFlowPage />} />
           <Route path="/institutional/reports" element={<AnalyticsFiiReportsPage />} />
+          <Route path="/nse-intelligence" element={<Navigate to="/institutional/nse-intelligence" replace />} />
+          <Route path="/institutional/nse-intelligence" element={<NseIntelligencePage />} />
+          <Route path="/institutional/nse-intelligence/sectors" element={<NseIntelligencePage />} />
+          <Route path="/institutional/nse-intelligence/fno" element={<NseIntelligencePage />} />
+          <Route path="/institutional/nse-intelligence/events" element={<NseIntelligencePage />} />
+          <Route path="/institutional/nse-intelligence/reports" element={<NseIntelligencePage />} />
           <Route path="/options" element={<Navigate to="/options/structure" replace />} />
           <Route path="/options/structure" element={<AnalyticsOptionsStructurePage />} />
           <Route path="/options/snapshot" element={<AnalyticsOptionsPage />} />
           <Route path="/options/volatility-signals" element={<FnoVolatilityPage />} />
+          <Route path="/options/intelligence" element={<OptionsIntelligencePage />} />
           <Route path="/strategy" element={<Navigate to="/strategy/evaluation" replace />} />
-          <Route path="/strategy/evaluation" element={<AnalyticsStrategyEvaluationPage />} />
+          <Route path="/strategy/evaluation" element={<Navigate to="/strategy/oiis-live?tab=strategy-definition" replace />} />
           <Route path="/strategy/oiis-live" element={<OiisLivePage />} />
+          <Route path="/strategy/oiis-live/history" element={<OiisRunHistoryPage />} />
+          <Route path="/strategy/monthly" element={<MonthlyStrategyPage />} />
+          <Route path="/strategy/rolling-monthly" element={<RollingMonthlyLegacyRouter />} />
+          <Route path="/strategy/rolling-monthly/legacy" element={<RollingMonthlyPage />} />
+          <Route path="/strategy/trendlyne-summary" element={<TrendlyneSummaryPage />} />
+          <Route path="/strategy/long-options" element={<LongOptionsPage />} />
+          <Route path="/strategy/nifty-options" element={<NiftyWeeklyOptionsPage />} />
+          <Route path="/strategy/nifty-weekly-options" element={<NiftyWeeklyOptionsPage />} />
           <Route path="/paper-trading" element={<PaperTradingPage />} />
           <Route path="/market/nifty-500" element={<Nifty500Page />} />
           <Route path="/futures" element={<FuturesPage />} />
@@ -178,7 +209,8 @@ export default function App() {
           <Route path="/stock" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </Suspense>
-    </AppShell>
+        </Suspense>
+      </AppShell>
+    </ShortcutProvider>
   );
 }

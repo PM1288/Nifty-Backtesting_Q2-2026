@@ -1507,7 +1507,7 @@ export function AnalyticsSimulatorPage() {
                       <td>{trade.lot_id}</td>
                       <td>{trade.buy_date}</td>
                       <td>{fmtPrice(trade.entry_price)}</td>
-                      <td>{formatNumber(trade.quantity, { maximumFractionDigits: trade.quantity < 1 ? 4 : 0 })}</td>
+                      <td>{formatNumber(trade.quantity, { maximumFractionDigits: trade.quantity < 1 ? 2 : 0 })}</td>
                       <td>{fmtCurrency(trade.buy_outflow)}</td>
                       <td>{trade.sell_date ?? "—"}</td>
                       <td>{trade.sell_price == null ? "—" : fmtPrice(trade.sell_price)}</td>
@@ -1533,12 +1533,12 @@ export function AnalyticsSimulatorPage() {
               <div className={styles.panel}>
               <h2 className={styles.panelTitle}>{tr("Charges model")}</h2>
               <div className={styles.statList}>
-                <div className={styles.statRow}><span>{tr("Brokerage")}</span><strong>{t("simulator.deliveryEquityRate", "{{value}}% delivery equity", { value: simulator.charges_model.brokerage_delivery_equity })}</strong></div>
-                <div className={styles.statRow}><span>{tr("STT")}</span><strong>{t("simulator.buyAndSellRate", "{{value}}% on buy and sell", { value: simulator.charges_model.stt_delivery_rate })}</strong></div>
-                <div className={styles.statRow}><span>{tr("NSE txn")}</span><strong>{simulator.charges_model.transaction_charge_rate_nse_equity_cash}%</strong></div>
-                <div className={styles.statRow}><span>{tr("SEBI")}</span><strong>{t("simulator.perCroreCharge", "₹{{value}} / crore", { value: simulator.charges_model.sebi_charge_per_crore })}</strong></div>
-                <div className={styles.statRow}><span>{tr("GST")}</span><strong>{t("simulator.onChargesRate", "{{value}}% on charges", { value: simulator.charges_model.gst_rate })}</strong></div>
-                <div className={styles.statRow}><span>{tr("Stamp duty")}</span><strong>{t("simulator.buySideRate", "{{value}}% buy-side", { value: simulator.charges_model.stamp_duty_buy_rate_delivery })}</strong></div>
+                <div className={styles.statRow}><span>{tr("Brokerage")}</span><strong>{t("simulator.deliveryEquityRate", "{{value}}% delivery equity", { value: formatNumber(simulator.charges_model.brokerage_delivery_equity) })}</strong></div>
+                <div className={styles.statRow}><span>{tr("STT")}</span><strong>{t("simulator.buyAndSellRate", "{{value}}% on buy and sell", { value: formatNumber(simulator.charges_model.stt_delivery_rate) })}</strong></div>
+                <div className={styles.statRow}><span>{tr("NSE txn")}</span><strong>{formatNumber(simulator.charges_model.transaction_charge_rate_nse_equity_cash)}%</strong></div>
+                <div className={styles.statRow}><span>{tr("SEBI")}</span><strong>{t("simulator.perCroreCharge", "₹{{value}} / crore", { value: formatNumber(simulator.charges_model.sebi_charge_per_crore) })}</strong></div>
+                <div className={styles.statRow}><span>{tr("GST")}</span><strong>{t("simulator.onChargesRate", "{{value}}% on charges", { value: formatNumber(simulator.charges_model.gst_rate) })}</strong></div>
+                <div className={styles.statRow}><span>{tr("Stamp duty")}</span><strong>{t("simulator.buySideRate", "{{value}}% buy-side", { value: formatNumber(simulator.charges_model.stamp_duty_buy_rate_delivery) })}</strong></div>
                 <div className={styles.statRow}><span>{tr("DP charge")}</span><strong>{t("simulator.perSellOrder", "{{value}} per sell order", { value: fmtCurrency(simulator.charges_model.dp_charge_sell_order_total) })}</strong></div>
               </div>
               </div>

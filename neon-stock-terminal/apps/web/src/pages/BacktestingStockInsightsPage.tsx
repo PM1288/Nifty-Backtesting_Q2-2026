@@ -5,6 +5,7 @@ import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
 import { formatDateIST, formatNumberIN } from "../lib/format";
 import { useBacktestingCompare } from "../lib/hooks";
+import { hasQualifiedStockFitSample } from "../lib/backtestingAcceptance";
 import {
   BacktestingCompareScopeBar,
   BacktestingHeader,
@@ -43,9 +44,10 @@ export function BacktestingStockInsightsPage() {
     .filter((row) => row.capitalMode === capitalMode && row.universeMode === universeMode)
     .sort((left, right) => right.totalNetPnl - left.totalNetPnl);
 
-  const top = rows[0];
-  const bottom = [...rows].sort((left, right) => left.totalNetPnl - right.totalNetPnl)[0];
-  const bestWin = [...rows].sort((left, right) => right.winRatePct - left.winRatePct)[0];
+  const sampleQualified = rows.filter((row) => hasQualifiedStockFitSample(row.acceptedTrades));
+  const top = sampleQualified[0];
+  const bottom = [...sampleQualified].sort((left, right) => left.totalNetPnl - right.totalNetPnl)[0];
+  const bestWin = [...sampleQualified].sort((left, right) => right.winRatePct - left.winRatePct)[0];
 
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
@@ -64,9 +66,9 @@ export function BacktestingStockInsightsPage() {
       />
 
       <section className={styles.systemHealthRow}>
-        <KpiCard label={tr("Top stock-strategy fit")} value={top ? `${top.symbol} • ${tr(top.displayName)}` : "—"} meta={top ? fmtCompactCurrency(top.totalNetPnl) : "—"} tone="green" />
+        <KpiCard label={tr("Top sample-qualified fit")} value={top ? `${top.symbol} • ${tr(top.displayName)}` : "Inconclusive"} meta={top ? `${fmtCompactCurrency(top.totalNetPnl)} · ${top.acceptedTrades} trades` : tr("No stock has at least 10 accepted trades")} tone={top && top.totalNetPnl > 0 ? "green" : undefined} />
         <KpiCard label={tr("Weakest fit")} value={bottom ? `${bottom.symbol} • ${tr(bottom.displayName)}` : "—"} meta={bottom ? fmtCompactCurrency(bottom.totalNetPnl) : "—"} tone="red" />
-        <KpiCard label={tr("Best stock win rate")} value={bestWin ? `${bestWin.symbol} • ${tr(bestWin.displayName)}` : "—"} meta={bestWin ? fmtPct(bestWin.winRatePct) : "—"} />
+        <KpiCard label={tr("Best sample-qualified win rate")} value={bestWin ? `${bestWin.symbol} • ${tr(bestWin.displayName)}` : "Inconclusive"} meta={bestWin ? `${fmtPct(bestWin.winRatePct)} · ${bestWin.acceptedTrades} trades` : "—"} />
       </section>
 
       <section className={styles.grid2}>

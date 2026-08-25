@@ -5,6 +5,7 @@ import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
 import { useBacktestingCompare, useBacktestingStrategies } from "../lib/hooks";
 import { formatDateIST, formatNumber } from "../lib/format";
+import { passesBacktestAcceptance } from "../lib/backtestingAcceptance";
 import { BacktestingHeader, fmtCompactCurrency, fmtPct, humanizeArchetype } from "./BacktestingChrome";
 import styles from "./AnalyticsPage.module.css";
 
@@ -55,14 +56,15 @@ export function BacktestingStrategyLibraryPage() {
       ...item
     }));
 
-  const topReturn = leaderboardRows[0] ?? null;
-  const bestWinRate = [...leaderboardRows].sort(
+  const acceptedRows = leaderboardRows.filter((row) => passesBacktestAcceptance(row.performance));
+  const topReturn = acceptedRows[0] ?? null;
+  const bestWinRate = [...acceptedRows].sort(
     (left, right) => right.performance.winRatePct - left.performance.winRatePct
   )[0] ?? null;
-  const safestDrawdown = [...leaderboardRows].sort(
+  const safestDrawdown = [...acceptedRows].sort(
     (left, right) => right.performance.maxDrawdownPct - left.performance.maxDrawdownPct
   )[0] ?? null;
-  const topStockFit = [...leaderboardRows].find((row) => row.performance.topPerformingStock) ?? null;
+  const topStockFit = [...acceptedRows].find((row) => row.performance.topPerformingStock) ?? null;
 
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
@@ -81,19 +83,19 @@ export function BacktestingStrategyLibraryPage() {
 
       <section className={styles.systemHealthRow}>
         <KpiCard
-          label={tr("Top total return")}
-          value={topReturn ? tr(topReturn.displayName) : "—"}
-          meta={topReturn ? fmtPct(topReturn.performance.totalReturnPct) : "—"}
-          tone="green"
+          label={tr("Best passing total return")}
+          value={topReturn ? tr(topReturn.displayName) : tr("No strategy passed")}
+          meta={topReturn ? `${fmtPct(topReturn.performance.totalReturnPct)} · ${topReturn.performance.totalClosedTrades} closed trades` : tr("No row has positive return and at least 20 closed trades")}
+          tone={topReturn ? "green" : undefined}
         />
         <KpiCard
-          label={tr("Best win rate")}
-          value={bestWinRate ? tr(bestWinRate.displayName) : "—"}
+          label={tr("Best passing closed-trade rate")}
+          value={bestWinRate ? tr(bestWinRate.displayName) : tr("No pass")}
           meta={bestWinRate ? fmtPct(bestWinRate.performance.winRatePct) : "—"}
         />
         <KpiCard
           label={tr("Shallowest drawdown")}
-          value={safestDrawdown ? tr(safestDrawdown.displayName) : "—"}
+          value={safestDrawdown ? tr(safestDrawdown.displayName) : tr("No pass")}
           meta={safestDrawdown ? fmtPct(safestDrawdown.performance.maxDrawdownPct) : "—"}
         />
         <KpiCard

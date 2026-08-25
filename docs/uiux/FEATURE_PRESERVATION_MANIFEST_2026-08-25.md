@@ -1,0 +1,50 @@
+# UI feature preservation manifest — 25 August 2026
+
+## Purpose
+
+This manifest prevents additive dashboard work from silently removing shared shell capabilities. The integration tree is the deployed source of truth for this snapshot. Any shell, authentication, navigation or API refactor must run the listed regression checks before cutover.
+
+## Critical shared features
+
+| Feature | Runtime ownership | Required evidence |
+|---|---|---|
+| Paper alert launcher | `PaperTradeNotifier.tsx` mounted once by `AppShell.tsx` | Visible on authenticated desktop and mobile routes |
+| Latest five paper events | `GET /v1/paper/notifications?limit=5` | Authenticated response, durable `paper_trading.trade_events` source, entry/target events only |
+| Automatic event popup | notifier polling and durable event-ID deduplication | A newly intercepted browser response opens the panel; initial history stays silent |
+| Native voice mode | header `Muted`/`Speak` switch and browser `speechSynthesis` | Defaults muted, persists locally, speaks entry/target conditions, mute cancels queued speech |
+| Permanent NIFTY ticker | `HeaderTicker.tsx` and `AppShell.tsx` | Visible on every authenticated workspace and rigidly attached to the header |
+| Strategy destinations | `workspaceRoutes.ts`, route catalogue and responsive navigation | Trendlyne Summary, OIIS Lab, Monthly Strategy, Rolling Strategy, Long Options and NIFTY Options remain reachable |
+| Paper evidence workbench | `/paper-trading` route and `PaperTradingCommandCenter.tsx` | Existing evidence, filters, detail inspector and market-book fields remain present |
+
+## Mandatory regression commands
+
+```bash
+cd /home/novius2/trading-stack/neon-stock-terminal/apps/web
+npm run typecheck
+npm test
+
+cd /home/novius2/trading-stack/neon-stock-terminal/apps/api
+npm run typecheck
+npx tsx --test src/routes/mobileNotifications.paperPopup.test.ts
+
+cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/tools/playwright
+PLAYWRIGHT_ORIGIN=https://n50.nifty50today.co.in \
+PLAYWRIGHT_ADMIN_PASSWORD='<from protected deployment environment>' \
+PLAYWRIGHT_OUTPUT_DIR=/tmp/paper-notifier-regression \
+node paper-event-notifier-regression.mjs
+```
+
+The Playwright script uses browser response interception for the synthetic new-event check. It must not insert, modify or delete a paper trade or durable event.
+
+## Current restoration evidence
+
+- Root cause: the Git-backed delivery tree retained the notifier implementation while the non-Git integration tree had lost its component files, shell mount, voice switch and browser endpoint.
+- Production image rebuilt and only `n50-dashboard` recreated.
+- Authenticated production regression: 18/18 checks passed at 1440×900, 1366×768 and 390×844.
+- API and frontend typechecks passed.
+- Focused notifier unit and API tests passed.
+- Two stale navigation expectations were found and corrected to preserve the current six-destination Strategy navigation and `Rolling Strategy` wording. The application was not reverted to satisfy the obsolete four-item menu expectations.
+
+## Change rule
+
+A new dashboard is additive only when this manifest still passes. Removing a shared feature requires a separately approved product decision, an updated manifest and explicit migration notes; absence from a new page implementation is not permission to remove it from the application shell.

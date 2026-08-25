@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as echarts from "echarts/core";
-import { BarChart, HeatmapChart, LineChart, ScatterChart } from "echarts/charts";
+import { BarChart, CandlestickChart, HeatmapChart, LineChart, ScatterChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import {
   CalendarComponent,
+  DataZoomComponent,
   GridComponent,
   LegendComponent,
   MarkLineComponent,
@@ -13,6 +14,12 @@ import {
 } from "echarts/components";
 import type { EChartsOption, SetOptionOpts } from "echarts";
 import { useI18n, useLocale } from "../../i18n/LocaleProvider";
+import {
+  normalizeChartAxisFormatter,
+  normalizeChartTooltipFormatter,
+  normalizeChartTooltipValueFormatter,
+  roundChartData
+} from "./chartPrecision";
 
 type ChartAppearance = "dark" | "light";
 
@@ -40,10 +47,12 @@ function chartPalette(appearance: ChartAppearance) {
 
 echarts.use([
   BarChart,
+  CandlestickChart,
   HeatmapChart,
   LineChart,
   ScatterChart,
   CalendarComponent,
+  DataZoomComponent,
   GridComponent,
   LegendComponent,
   MarkLineComponent,
@@ -138,6 +147,7 @@ function normalizeVisualMap(visualMap: unknown, translate: (value: string) => st
   const compact = isCompactViewport();
   const palette = chartPalette(appearance);
   return asArray<Record<string, unknown>>(visualMap as Record<string, unknown> | Record<string, unknown>[]).map((item) => ({
+    ...item,
     orient: "horizontal",
     left: "center",
     bottom: maxNumeric(item.bottom, compact ? 8 : 10),
@@ -151,7 +161,7 @@ function normalizeVisualMap(visualMap: unknown, translate: (value: string) => st
       fontSize: compact ? 9 : 10,
       ...(item.textStyle as Record<string, unknown> | undefined)
     },
-    ...item
+    formatter: normalizeChartAxisFormatter(item.formatter)
   }));
 }
 
@@ -193,6 +203,7 @@ function normalizeAxis(
     verticalAlign: isValueAxis ? "bottom" : "middle"
   };
   return asArray<Record<string, unknown>>(axis as Record<string, unknown> | Record<string, unknown>[]).map((item) => ({
+    ...item,
     ...(typeof item.name === "string" ? { name: translate(item.name) } : {}),
     axisLabel: {
       color: palette.muted,
@@ -200,7 +211,10 @@ function normalizeAxis(
       fontSize: compact ? 10 : 11,
       hideOverlap: true,
       margin: compact ? 10 : 12,
-      ...(item.axisLabel as Record<string, unknown> | undefined)
+      ...(item.axisLabel as Record<string, unknown> | undefined),
+      ...(isValueAxis
+        ? { formatter: normalizeChartAxisFormatter((item.axisLabel as Record<string, unknown> | undefined)?.formatter) }
+        : {})
     },
     axisLine: {
       show: !isValueAxis,
@@ -236,8 +250,7 @@ function normalizeAxis(
             maxWidth: compact ? 76 : 112
           }
         }
-      : {}),
-    ...item
+      : {})
   }));
 }
 
@@ -282,6 +295,7 @@ function normalizeSeries(series: unknown, translate: (value: string) => string) 
   return asArray<Record<string, unknown>>(series as Record<string, unknown> | Record<string, unknown>[]).map((item) => {
     const next: Record<string, unknown> = {
       ...item,
+      ...(item.data != null ? { data: roundChartData(item.data) } : {}),
       ...(typeof item.name === "string" ? { name: translate(item.name) } : {})
     };
     const seriesType = typeof item.type === "string" ? item.type : "";
@@ -366,8 +380,10 @@ function normalizeOption(
       ...(option.textStyle as Record<string, unknown> | undefined)
     },
     tooltip: option.tooltip
-      ? {
+      ? ({
         ...option.tooltip,
+        formatter: normalizeChartTooltipFormatter((option.tooltip as { formatter?: unknown }).formatter),
+        valueFormatter: normalizeChartTooltipValueFormatter((option.tooltip as { valueFormatter?: unknown }).valueFormatter),
         backgroundColor: palette.tooltipBackground,
         borderColor: palette.tooltipBorder,
         borderWidth: 1,
@@ -377,7 +393,7 @@ function normalizeOption(
           fontFamily,
           fontSize: 11
         }
-      }
+      } as EChartsOption["tooltip"])
       : option.tooltip
   };
 

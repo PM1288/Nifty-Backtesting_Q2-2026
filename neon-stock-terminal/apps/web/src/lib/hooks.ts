@@ -32,6 +32,7 @@ import {
   fetchExportManifest,
   fetchIntradayAnalyticsStock,
   fetchIntradayAnalyticsSummary,
+  fetchOiisCandidateContext,
   fetchLeaderboard,
   fetchOpsQuality,
   fetchOpsRuns,
@@ -148,6 +149,16 @@ export function useStock(symbol: string, range: "1D" | "5D" | "1M" | "6M" | "1Y"
     queryFn: () => fetchStock(symbol, range),
     enabled: enabled && !!symbol && !!range,
     refetchInterval: range === "1D" ? 10_000 : 30_000
+  });
+}
+
+export function useOiisCandidateContext(symbol: string, enabled = true) {
+  const tokenVersion = useSessionVersion();
+  return useProfiledQuery(`oiis-candidate-context:${symbol}`, {
+    queryKey: ["oiis-candidate-context", symbol, tokenVersion],
+    queryFn: () => fetchOiisCandidateContext(symbol),
+    enabled: enabled && !!symbol,
+    refetchInterval: 30_000
   });
 }
 
@@ -618,8 +629,20 @@ function normalizeIncoming(raw: unknown): LiveQuote | null {
   };
 }
 
-export function useLiveQuotes(symbols: string[], enabled = true) {
+export type LiveQuoteFeedState = {
+  quotes: Record<string, LiveQuote>;
+  transport: "CONNECTED" | "RECONNECTING" | "DISCONNECTED";
+  lastReceivedAt?: string;
+  sequence?: number;
+  gapDetected: boolean;
+};
+
+export function useLiveQuotesWithStatus(symbols: string[], enabled = true): LiveQuoteFeedState {
   const [quotes, setQuotes] = useState<Record<string, LiveQuote>>({});
+  const [transport, setTransport] = useState<LiveQuoteFeedState["transport"]>("DISCONNECTED");
+  const [lastReceivedAt, setLastReceivedAt] = useState<string>();
+  const [sequence, setSequence] = useState<number>();
+  const [gapDetected, setGapDetected] = useState(false);
   const tokenVersion = useSessionVersion();
   const key = useMemo(
     () => [...new Set(symbols.map((s) => s.toUpperCase().trim()).filter(Boolean))].sort().join(","),
@@ -631,38 +654,83 @@ export function useLiveQuotes(symbols: string[], enabled = true) {
 
     let cancelled = false;
     let ws: WebSocket | null = null;
+    let reconnectTimer: number | null = null;
+    let reconnectAttempts = 0;
+    let previousSequence: number | undefined;
+    let recoveringFromGap = false;
 
-    void (async () => {
+    const connect = async () => {
+      setTransport(reconnectAttempts > 0 ? "RECONNECTING" : "DISCONNECTED");
       const sessionResp = await fetch(`${API_BASE_URL}/auth/session`, {
         credentials: "include",
         headers: { Accept: "application/json" }
       }).catch(() => null);
-      if (!sessionResp?.ok) return;
+      if (!sessionResp?.ok || cancelled) return;
       const session = (await sessionResp.json().catch(() => null)) as { authenticated?: boolean } | null;
-      if (!session?.authenticated) return;
+      if (!session?.authenticated || cancelled) return;
 
       const wsBase = getWsBaseUrl();
       const url = `${wsBase}/v1/stream?symbols=${encodeURIComponent(key)}`;
 
       if (cancelled) return;
       ws = new WebSocket(url);
+      ws.onopen = () => {
+        reconnectAttempts = 0;
+        previousSequence = undefined;
+        setTransport("CONNECTED");
+      };
       ws.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data);
+          const envelope = parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : null;
+          const incomingSequence = Number(envelope?.sequence);
+          if (Number.isFinite(incomingSequence)) {
+            if (previousSequence != null && incomingSequence > previousSequence + 1) {
+              recoveringFromGap = true;
+              setGapDetected(true);
+              ws?.close();
+              return;
+            }
+            if (previousSequence == null || incomingSequence >= previousSequence) {
+              previousSequence = incomingSequence;
+              setSequence(incomingSequence);
+            }
+          }
           const live = normalizeIncoming(parsed);
           if (!live) return;
+          if (recoveringFromGap) {
+            recoveringFromGap = false;
+            setGapDetected(false);
+          }
+          setLastReceivedAt(new Date().toISOString());
           setQuotes((prev) => ({ ...prev, [live.symbol]: live }));
         } catch {
           // Ignore malformed messages.
         }
       };
-    })();
+      ws.onclose = () => {
+        if (cancelled) return;
+        reconnectAttempts += 1;
+        setTransport("RECONNECTING");
+        const delay = Math.min(30_000, 1_000 * (2 ** Math.min(reconnectAttempts - 1, 5)));
+        reconnectTimer = window.setTimeout(() => { void connect(); }, delay);
+      };
+      ws.onerror = () => ws?.close();
+    };
+
+    void connect();
 
     return () => {
       cancelled = true;
+      if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
       ws?.close();
+      setTransport("DISCONNECTED");
     };
   }, [enabled, key, tokenVersion]);
 
-  return quotes;
+  return { quotes, transport, lastReceivedAt, sequence, gapDetected };
+}
+
+export function useLiveQuotes(symbols: string[], enabled = true) {
+  return useLiveQuotesWithStatus(symbols, enabled).quotes;
 }

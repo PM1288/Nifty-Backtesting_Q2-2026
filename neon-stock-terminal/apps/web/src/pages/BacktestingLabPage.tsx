@@ -304,7 +304,7 @@ export function BacktestingLabPage() {
           { key: "status", header: "Execution", cell: (row) => row.execution_status },
           { key: "rsi", header: "RSI 14", align: "right", sortable: true, sortValue: (row) => numeric(row.signal_rsi), cell: (row) => formatNumber(numeric(row.signal_rsi), { maximumFractionDigits: 2 }) },
           { key: "willr", header: "Williams %R", align: "right", cell: (row) => formatNumber(numeric(row.signal_willr), { maximumFractionDigits: 2 }) },
-          { key: "macd", header: "MACD", align: "right", cell: (row) => formatNumber(numeric(row.signal_macd_line), { maximumFractionDigits: 4 }) },
+          { key: "macd", header: "MACD", align: "right", cell: (row) => formatNumber(numeric(row.signal_macd_line), { maximumFractionDigits: 2 }) },
           { key: "pnl", header: "Net-liquidation P&L", align: "right", sortable: true, sortValue: (row) => numeric(row.net_liquidation_pnl), cell: (row) => formatCurrencyINR(numeric(row.net_liquidation_pnl), true) },
           { key: "mfe", header: "H30 max upside", align: "right", cell: (row) => formatPercent(numeric(row.maximum_favourable_excursion_pct), 2, true) },
           { key: "mae", header: "H30 max adverse", align: "right", cell: (row) => formatPercent(numeric(row.maximum_adverse_excursion_pct), 2, true) },

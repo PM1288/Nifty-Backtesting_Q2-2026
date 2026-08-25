@@ -703,38 +703,15 @@ export function useDashboardPrefetch(enabled: boolean) {
     if (!prefetchEnabled) return;
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
 
-    const profile = resolvePrefetchProfile(location.pathname);
-    const warmedKey = `${tokenVersion}:${profile}`;
+    const warmedKey = `${tokenVersion}:${normalizePrefetchPath(location.pathname)}`;
     if (warmedProfilesRef.current.has(warmedKey)) return;
     warmedProfilesRef.current.add(warmedKey);
 
-    const stageOneTasks: PrefetchTask[] = [
-      ...createRoutePrefetchTasks("/analytics/indicators", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/institutional/flow", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/options/structure", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/backtesting", tokenVersion, queryClient)
-    ];
-
-    const stageTwoTasks: PrefetchTask[] = [
-      ...createRoutePrefetchTasks("/analytics/simulator", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/analytics/supporting-metrics", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/analytics/system/map", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/analytics/system/quality", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/backtesting/strategies", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/backtesting/compare", tokenVersion, queryClient),
-      ...createRoutePrefetchTasks("/backtesting/runs", tokenVersion, queryClient)
-    ];
-
-    const stageOneDelay = profile === "indicator" ? 600 : profile === "backtesting" ? 500 : 900;
-    const stageTwoDelay = profile === "indicator" ? 1800 : profile === "backtesting" ? 1500 : 2600;
-    const cleanups = [
-      schedulePrefetch(() => runTasks(stageOneTasks), stageOneDelay),
-      schedulePrefetch(() => runTasks(stageTwoTasks), stageTwoDelay)
-    ];
-
-    return () => {
-      cleanups.forEach((cleanup) => cleanup());
-    };
+    // Warm only the active route. The prior implementation eagerly loaded every
+    // heavy workspace after each profile change, creating avoidable API bursts.
+    // Adjacent workspaces remain intent-prefetched on pointer, focus or touch.
+    const activeTasks = createRoutePrefetchTasks(location.pathname, tokenVersion, queryClient);
+    return schedulePrefetch(() => runTasks(activeTasks), 500);
   }, [prefetchEnabled, location.pathname, queryClient, tokenVersion]);
 
   useEffect(() => {

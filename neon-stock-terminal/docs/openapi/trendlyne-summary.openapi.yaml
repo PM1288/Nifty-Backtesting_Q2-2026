@@ -1,0 +1,70 @@
+openapi: 3.0.3
+info:
+  title: NIFTY 50 Trader - Trendlyne Summary API
+  version: 1.0.0
+  description: Six-month third-party research recommendation evidence. Authentication and RBAC use the same /v1 guard as the application.
+paths:
+  /v1/trendlyne-summary/dashboard:
+    get:
+      summary: Get the Trendlyne recommendation evidence dashboard
+      operationId: getTrendlyneSummaryDashboard
+      tags: [Trendlyne Summary]
+      responses:
+        '200':
+          description: Recommendation ledger, KPIs, research-house, stock and monthly summaries, plus scraper run provenance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendlyneSummaryDashboard'
+        '401':
+          description: Active authenticated session required.
+        '500':
+          description: Database or calculation service failure.
+components:
+  schemas:
+    TrendlyneSummaryDashboard:
+      type: object
+      required: [strategyFamily, source, window, methodology, summary, rows, houseSummary, stockSummary, monthlySummary, scraperRuns, warnings]
+      properties:
+        strategyFamily: { type: string, enum: [TRENDLYNE_RESEARCH_SUMMARY] }
+        source: { type: string }
+        window: { type: string, enum: [TRAILING_SIX_MONTHS] }
+        methodology: { type: object, additionalProperties: { type: string } }
+        summary: { type: object, additionalProperties: true }
+        rows:
+          type: array
+          items: { $ref: '#/components/schemas/RecommendationEvaluation' }
+        houseSummary: { type: array, items: { type: object, additionalProperties: true } }
+        stockSummary: { type: array, items: { type: object, additionalProperties: true } }
+        monthlySummary: { type: array, items: { type: object, additionalProperties: true } }
+        scraperRuns: { type: array, items: { type: object, additionalProperties: true } }
+        warnings: { type: array, items: { type: string } }
+    RecommendationEvaluation:
+      type: object
+      required: [report_id, report_date, symbol, stock_name, research_house, recommendation, direction, evaluation_status, data_quality_status]
+      properties:
+        report_id: { type: string }
+        report_date: { type: string, format: date }
+        symbol: { type: string }
+        stock_name: { type: string }
+        research_house: { type: string }
+        recommendation: { type: string, enum: [Buy, Accumulate, Sell, Hold, Neutral] }
+        direction: { type: string, enum: [LONG, SHORT, NONE] }
+        entry_session_date: { type: string, format: date, nullable: true }
+        entry_price: { type: number, nullable: true }
+        target_price: { type: number, nullable: true }
+        target_eligible: { type: boolean }
+        target_hit: { type: boolean, nullable: true }
+        target_hit_date: { type: string, format: date, nullable: true }
+        d5_status: { type: string }
+        d5_end_return_pct: { type: number, nullable: true }
+        d5_max_profit_pct: { type: number, nullable: true }
+        d5_max_drawdown_pct: { type: number, nullable: true }
+        d30_status: { type: string }
+        d30_end_return_pct: { type: number, nullable: true }
+        d30_max_profit_pct: { type: number, nullable: true }
+        d30_max_drawdown_pct: { type: number, nullable: true }
+        current_return_pct: { type: number, nullable: true }
+        evaluation_status: { type: string }
+        data_quality_status: { type: string }
+        data_quality_reasons: { type: array, items: { type: string } }

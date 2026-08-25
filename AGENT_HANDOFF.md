@@ -3033,3 +3033,18 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   hit/open, total target hits and net realised P&L. Existing 09:16 NIFTY and 09:20 movers jobs were
   verified delivered and retained; O/X market-status formatting now uses two decimals.
 - Trendlyne continues its durable new-report-only delivery and now bolds company plus symbol.
+- Release `9a1f1a4` was pushed to canonical `master` and deployed to `paper-webhook-worker`,
+  `paper-scheduler`, and `trendlyne-scraper`. The Paper outbox reconciled at 1,622 delivered and
+  zero pending/retry/processing/dead rows immediately after deployment.
+- A single labelled format test used the latest durable IDEA paper entry without creating or
+  replaying a trade. The gateway accepted media message 6075 (HTTP 200), built from 120 one-minute
+  bars with a 55,037-byte PNG. The live evidence resolved Vodafone Idea Ltd., O/X/RSI to two
+  decimals, 52-week ₹15.34/₹6.46 and 98.99% range position, with no Trendlyne BUY in the prior
+  30 days.
+- The Trendlyne startup incremental run inserted exactly one new report, delivered its new-report
+  WhatsApp alert, refreshed 2,611 recommendation evaluations, and completed successfully.
+- Validation: Paper 23 passed / 6 database-only skipped, Trendlyne 3 passed, market-status 28
+  passed, low-noise policy 16 passed, market workflow tests passed, Ruff and mypy passed, Compose
+  parsed, and the canonical source gate passed. Today's 09:16 market-open and 09:20 movers events
+  were independently confirmed `SENT`; the 16:00 IST Paper scheduler is enabled in the deployed
+  container.

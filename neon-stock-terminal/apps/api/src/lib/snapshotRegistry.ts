@@ -143,6 +143,8 @@ export const SNAPSHOT_DEFINITIONS: SnapshotDefinition<unknown>[] = [
 ];
 
 let schedulerStarted = false;
+let scheduledRefreshQueue: Promise<void> = Promise.resolve();
+const scheduledRefreshPending = new Set<string>();
 
 export async function materializeAllSnapshots(prisma: PrismaClient) {
   for (const definition of SNAPSHOT_DEFINITIONS) {
@@ -162,21 +164,32 @@ export function startSnapshotScheduler(prisma: PrismaClient) {
   if (schedulerStarted) return;
   schedulerStarted = true;
 
+  let scheduledIndex = 0;
   for (const definition of SNAPSHOT_DEFINITIONS) {
     if (definition.scheduled === false) continue;
     const run = () => {
-      void materializeSnapshot(prisma, definition).catch((err) => {
-        console.warn(JSON.stringify({
-          ts: new Date().toISOString(),
-          level: "warn",
-          event: "dashboard_snapshot_scheduler_failed",
-          snapshotKey: definition.key,
-          error: err instanceof Error ? err.message : String(err)
-        }));
-      });
+      if (scheduledRefreshPending.has(definition.key)) return;
+      scheduledRefreshPending.add(definition.key);
+      scheduledRefreshQueue = scheduledRefreshQueue
+        .then(async () => {
+          await materializeSnapshot(prisma, definition);
+        })
+        .catch((err) => {
+          console.warn(JSON.stringify({
+            ts: new Date().toISOString(),
+            level: "warn",
+            event: "dashboard_snapshot_scheduler_failed",
+            snapshotKey: definition.key,
+            error: err instanceof Error ? err.message : String(err)
+          }));
+        })
+        .finally(() => {
+          scheduledRefreshPending.delete(definition.key);
+        });
     };
 
-    setTimeout(run, 1_500);
+    setTimeout(run, 1_500 + scheduledIndex * 250);
     setInterval(run, definition.freshnessMs);
+    scheduledIndex += 1;
   }
 }

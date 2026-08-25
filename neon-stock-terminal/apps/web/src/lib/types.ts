@@ -17,6 +17,56 @@ export type Quote = {
   timestamp?: string;
   rsi?: number | null;
   willr?: number | null;
+  change5d?: number | null;
+  relativeVolume?: number | null;
+  averageVolume20?: number | null;
+  bid?: number | null;
+  ask?: number | null;
+  bidQty?: number | null;
+  askQty?: number | null;
+  spreadPct?: number | null;
+  dayOpen?: number | null;
+  dayHigh?: number | null;
+  dayLow?: number | null;
+  previousClose?: number | null;
+  rangePosition?: number | null;
+  opportunity30d?: number | null;
+  oiisSelected?: boolean;
+  oiisState?: "AUTO_PAPER" | "RECOMMENDED" | "ELIGIBLE" | "WATCH" | null;
+  oiisDirection?: "LONG" | "SHORT" | "NEUTRAL" | null;
+  oiisScore?: number | null;
+  oiisOFactor?: number | null;
+  oiisXFactor?: number | null;
+  oiisDataQuality?: number | null;
+  alert?: {
+    type: "EXCESS_PRICE_MOVE" | "BIG_ASK" | "BIG_BID" | "WIDE_SPREAD";
+    severity: "HIGH" | "MEDIUM";
+    label: string;
+  } | null;
+};
+
+export type FnoContractAnomaly = {
+  symbolToken: string;
+  tradingSymbol: string;
+  underlying: string;
+  instrumentType: string;
+  expiry: string;
+  strike: number | null;
+  right: "CE" | "PE" | "FUT";
+  lotSize: number | null;
+  last: number | null;
+  changePct: number | null;
+  bid: number | null;
+  ask: number | null;
+  bidQty: number | null;
+  askQty: number | null;
+  bidNotional: number | null;
+  askNotional: number | null;
+  spreadPct: number | null;
+  depthImbalance: number | null;
+  lastUpdated: string | null;
+  anomalyTypes: Array<"EXCESS_PRICE_MOVE" | "BIG_ASK" | "BIG_BID" | "WIDE_SPREAD">;
+  severityScore: number;
 };
 
 export type SectorGroup = {
@@ -42,6 +92,20 @@ export type OverviewResponse = {
     losers: Quote[];
   };
   tickerTape: QuoteLite[];
+  derivatives: {
+    universe: "ALL_ACTIVE_NSE_FNO_CONTRACTS";
+    contractCount: number;
+    underlyingCount: number;
+    observedContractCount: number;
+    observedTodayCount: number;
+    anomalyCount: number;
+    bigAskCount: number;
+    bigBidCount: number;
+    excessPriceMoveCount: number;
+    wideSpreadCount: number;
+    asOf: string | null;
+    anomalies: FnoContractAnomaly[];
+  };
 };
 
 export type IntradayBar = {
@@ -843,9 +907,30 @@ export type AnalyticsFiiFlowChangePoint = {
   dayChangePctPoints: number | null;
 };
 
+export type AnalyticsFiiDiiCashPoint = {
+  tradeDate: string;
+  fiiNetCr: number | null;
+  diiNetCr: number | null;
+  combinedNetCr: number | null;
+  cumulativeFiiCr: number | null;
+  cumulativeDiiCr: number | null;
+};
+
+export type AnalyticsInstitutionalSourceStatus = {
+  sourceId: string;
+  label: string;
+  cadence: "DAILY" | "FORTNIGHTLY";
+  latestMarketDate: string | null;
+  latestRefreshAt: string | null;
+  rowCount: number;
+  lagDays: number | null;
+  freshness: "CURRENT" | "DELAYED" | "STALE" | "MISSING";
+};
+
 export type AnalyticsFiiFlowResponse = {
   asOf: string;
   latestTradeDate: string | null;
+  latestCashTradeDate: string | null;
   reportLagDays: number | null;
   contextLayer: string;
   backdrop: AnalyticsFiiFlowBackdrop;
@@ -866,6 +951,13 @@ export type AnalyticsFiiFlowResponse = {
   participants: AnalyticsFiiFlowParticipant[];
   divergences: AnalyticsFiiFlowDivergence[];
   percentileBuckets: AnalyticsFiiFlowPercentileBucket[];
+  cashCoverage: {
+    expectedRecentSessions: number;
+    availableRecentSessions: number;
+    coveragePct: number | null;
+    missingTradeDates: string[];
+  };
+  sourceStatus: AnalyticsInstitutionalSourceStatus[];
   diagnostics: {
     sampleSize: number;
     averageFiiNetPct: number | null;
@@ -879,6 +971,7 @@ export type AnalyticsFiiFlowResponse = {
     positioningPercentile: AnalyticsFiiFlowPercentilePoint[];
     regimeOverlay: AnalyticsFiiFlowRegimePoint[];
     dayOverDayPositioningChange: AnalyticsFiiFlowChangePoint[];
+    cashFlowTrend: AnalyticsFiiDiiCashPoint[];
   };
 };
 
@@ -1731,6 +1824,15 @@ export type BacktestingTrade = {
   holdingDays: number;
   regimeOnEntry: string;
   status: string;
+  tradeQuality?: {
+    policyVersion: string;
+    status: "COMPLETE" | "PARTIAL" | "DEVELOPING" | "DATA_INVALID";
+    totalScore: number | null;
+    label: string;
+    process: { points: number; maximum: number; coveragePct: number; scorePct: number | null };
+    outcome: { points: number; maximum: number; coveragePct: number; scorePct: number | null };
+    hardFailFlags: string[];
+  };
 };
 
 export type BacktestingSkippedSignal = {
@@ -1819,6 +1921,13 @@ export type BacktestingScenario = {
   regimeBreakdown: BacktestingRegimeRow[];
   stockBreakdown: BacktestingStockRow[];
   chargesSummary: BacktestingChargesRow[];
+  tradeQualitySummary?: {
+    policyVersion: string;
+    totalTrades: number;
+    completeScores: number;
+    notEstimable: number;
+    averageScore: number | null;
+  };
 };
 
 export type BacktestingScenarioOption = {

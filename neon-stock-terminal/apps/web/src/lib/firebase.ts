@@ -41,11 +41,10 @@ function getEmailVerificationActionSettings() {
   if (typeof window === "undefined") return null;
 
   const configuredUrl = import.meta.env.VITE_FIREBASE_AUTH_CONTINUE_URL?.trim();
-  const fallbackPath = import.meta.env.BASE_URL || "/";
-  const fallbackUrl = new URL(fallbackPath, window.location.origin).toString();
+  if (!configuredUrl) return null;
 
   return {
-    url: configuredUrl || fallbackUrl,
+    url: configuredUrl,
     handleCodeInApp: false
   };
 }

@@ -31,6 +31,11 @@ export const preloadBacktestingDailySummaryPage = () => import("./pages/Backtest
 export const preloadBacktestingComparePage = () => import("./pages/BacktestingComparePage");
 export const preloadBacktestingRunsPage = () => import("./pages/BacktestingRunsPage");
 export const preloadOiisLivePage = () => import("./pages/OiisLivePage");
+export const preloadRollingMonthlyPage = () => import("./pages/RollingMonthlyPage");
+export const preloadMonthlyStrategiesPage = () => import("./pages/MonthlyStrategiesPage");
+export const preloadLongOptionsPage = () => import("./pages/LongOptionsPage");
+export const preloadNiftyWeeklyOptionsPage = () => import("./pages/NiftyWeeklyOptionsPage");
+export const preloadNseIntelligencePage = () => import("./pages/NseIntelligencePage");
 
 export function preloadCoreDashboardRoutes() {
   return Promise.allSettled([
@@ -59,7 +64,8 @@ export function preloadLearningRoutes() {
     preloadAnalyticsOptionsPage(),
     preloadAnalyticsSupportingMetricsPage(),
     preloadAnalyticsQualityPage(),
-    preloadAnalyticsSystemMapPage()
+    preloadAnalyticsSystemMapPage(),
+    preloadNseIntelligencePage()
   ]);
 }
 

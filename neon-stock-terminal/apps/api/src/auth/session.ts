@@ -140,14 +140,14 @@ export class SessionStore {
   private readonly storeDependency: RedisBackedStoreDependency;
 
   constructor(opts?: Partial<SessionStoreOptions>) {
-    const idleTtlSeconds = Number(process.env.SESSION_IDLE_TIMEOUT_SECONDS ?? 30 * 60);
+    const idleTtlSeconds = Number(process.env.SESSION_IDLE_TIMEOUT_SECONDS ?? 12 * 60 * 60);
     const absoluteTtlSeconds = Number(process.env.SESSION_ABSOLUTE_TIMEOUT_SECONDS ?? 12 * 60 * 60);
     const rawSameSite = String(process.env.SESSION_COOKIE_SAMESITE ?? "Lax")
       .trim()
       .toLowerCase();
     const sameSite: "Lax" | "Strict" = rawSameSite === "strict" ? "Strict" : "Lax";
     this.opts = {
-      idleTtlMs: Number.isFinite(idleTtlSeconds) && idleTtlSeconds > 0 ? Math.trunc(idleTtlSeconds * 1000) : 30 * 60_000,
+      idleTtlMs: Number.isFinite(idleTtlSeconds) && idleTtlSeconds > 0 ? Math.trunc(idleTtlSeconds * 1000) : 12 * 60 * 60_000,
       absoluteTtlMs:
         Number.isFinite(absoluteTtlSeconds) && absoluteTtlSeconds > 0
           ? Math.trunc(absoluteTtlSeconds * 1000)

@@ -6,6 +6,19 @@
   gap: var(--section-gap);
 }
 
+.page p,
+.page small,
+.page .muted {
+  color: #475569;
+}
+
+.stockTechnicalChart {
+  width: 100%;
+  min-height: 620px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
 .analyticsHeader {
   display: flex;
   flex-direction: column;

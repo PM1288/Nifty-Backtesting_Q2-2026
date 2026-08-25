@@ -1,45 +1,81 @@
 :root {
-  /* Base */
-  --black: #050607;
+  /* Canonical light workstation roles. Legacy names below are compatibility
+     aliases and must not be used for new components. */
+  --bg-canvas: #f5f8fc;
+  --bg-surface: #ffffff;
+  --bg-subtle: #eef3f9;
+  --bg-selected: #eaf2ff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #52647a;
+  --border-control: #8ea0b5;
+  --accent-blue: #175ec8;
+  --accent-indigo: #3d55c7;
+  --accent-violet: #6b52cb;
+  --accent-gold: #c68a0b;
+  --positive: #0b7a53;
+  --negative: #c2384a;
+  --warning: #7f4f00;
+  --neutral: #52647a;
+  --missing: #58697f;
+  --shadow-soft: 0 10px 30px rgba(24, 49, 82, 0.09);
+  --shadow-lift: 0 14px 38px rgba(24, 49, 82, 0.13);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* Shared motion contract. */
+  --motion-value: 150ms;
+  --motion-hover: 130ms;
+  --motion-lens: 280ms;
+  --motion-drawer: 320ms;
+  --motion-sheet: 250ms;
+  --motion-threshold: 800ms;
+  --motion-recovery: 600ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Legacy compatibility aliases. */
+  --black: #0f172a;
   --white: #ffffff;
-  --red: #ff0033;
-  --green: #00ff66;
-  --gold: #d4af37;
+  --red: var(--negative);
+  --green: var(--positive);
+  --gold: var(--accent-gold);
 
   /* Opacity whites (grays) */
-  --w-92: rgba(255, 255, 255, 0.92);
-  --w-72: rgba(255, 255, 255, 0.72);
-  --w-54: rgba(255, 255, 255, 0.54);
-  --w-38: rgba(255, 255, 255, 0.38);
-  --w-18: rgba(255, 255, 255, 0.18);
-  --w-12: rgba(255, 255, 255, 0.12);
-  --w-08: rgba(255, 255, 255, 0.08);
-  --w-04: rgba(255, 255, 255, 0.04);
-  --w-02: rgba(255, 255, 255, 0.02);
+  --w-92: rgba(15, 23, 42, 0.92);
+  --w-72: rgba(15, 23, 42, 0.72);
+  --w-54: rgba(15, 23, 42, 0.7);
+  --w-38: rgba(15, 23, 42, 0.64);
+  --w-18: rgba(15, 23, 42, 0.18);
+  --w-12: rgba(15, 23, 42, 0.12);
+  --w-08: rgba(15, 23, 42, 0.08);
+  --w-04: rgba(15, 23, 42, 0.04);
+  --w-02: rgba(15, 23, 42, 0.02);
 
   /* Surface and border semantics */
-  --bg: #07090b;
-  --surface-canvas: #07090b;
-  --surface-1: #0f1318;
-  --surface-2: #0b0d10;
-  --surface-3: #11161b;
-  --surface-panel: rgba(255, 255, 255, 0.04);
-  --surface-panel-strong: rgba(255, 255, 255, 0.06);
-  --surface-overlay: rgba(7, 9, 11, 0.94);
-  --surface-inset: rgba(0, 0, 0, 0.58);
-  --surface-interactive: rgba(255, 255, 255, 0.02);
-  --surface-interactive-hover: rgba(255, 255, 255, 0.05);
-  --border-weak: rgba(255, 255, 255, 0.06);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --border-accent: rgba(212, 175, 55, 0.28);
-  --border-accent-strong: rgba(212, 175, 55, 0.4);
+  --bg: var(--bg-canvas);
+  --surface-canvas: var(--bg-canvas);
+  --surface-1: var(--bg-surface);
+  --surface-2: #f8fafc;
+  --surface-3: var(--bg-subtle);
+  --surface-panel: var(--bg-surface);
+  --surface-panel-strong: #f8fafc;
+  --surface-overlay: rgba(255, 255, 255, 0.98);
+  --surface-inset: var(--bg-subtle);
+  --surface-interactive: #f8fafc;
+  --surface-interactive-hover: var(--bg-selected);
+  --border-weak: #e5ebf2;
+  --border-subtle: #d5dee9;
+  --border-strong: var(--border-control);
+  --border-accent: rgba(23, 94, 200, 0.25);
+  --border-accent-strong: rgba(23, 94, 200, 0.52);
 
   /* Text semantics */
-  --text-1: rgba(255, 255, 255, 0.92);
-  --text-2: rgba(255, 255, 255, 0.78);
-  --text-3: rgba(255, 255, 255, 0.62);
-  --text-4: rgba(255, 255, 255, 0.48);
+  --text-1: var(--text-primary);
+  --text-2: #334155;
+  --text-3: var(--text-secondary);
+  --text-4: var(--text-muted);
   --muted: var(--text-4);
   --pos: var(--green);
   --neg: var(--red);
@@ -47,11 +83,11 @@
   --info: var(--white);
 
   /* Glows */
-  --glow-red: 0 0 12px rgba(255, 0, 51, 0.35);
-  --glow-green: 0 0 12px rgba(0, 255, 102, 0.35);
-  --glow-white: 0 0 10px rgba(255, 255, 255, 0.18);
-  --shadow-1: 0 8px 28px rgba(0, 0, 0, 0.22);
-  --shadow-2: 0 14px 40px rgba(0, 0, 0, 0.3);
+  --glow-red: 0 0 0 3px rgba(194, 56, 74, 0.15);
+  --glow-green: 0 0 0 3px rgba(11, 122, 83, 0.15);
+  --glow-white: 0 0 0 3px rgba(23, 94, 200, 0.16);
+  --shadow-1: var(--shadow-soft);
+  --shadow-2: var(--shadow-lift);
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
   /* Layout scales */

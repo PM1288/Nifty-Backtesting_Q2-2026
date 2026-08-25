@@ -1,7 +1,10 @@
-import { Link, useParams } from "react-router-dom";
+import { useMemo } from "react";
+import type { EChartsOption } from "echarts";
+import { useParams } from "react-router-dom";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import {
+  ChartCard,
   DataState,
   DataTable,
   InterpretationCard,
@@ -11,12 +14,17 @@ import {
   PlainLanguageCard,
   SectionDivider
 } from "../components/ui/DashboardPrimitives";
+import { EChartSurface } from "../components/visual/EChartSurface";
 import { fmtDecimal, fmtPct, fmtPrice, fmtWholeNumber, formatCurrencyINR, formatDateIST, formatTime } from "../lib/format";
-import { useBacktestingCompare, useIntradayAnalyticsStock, useIntradayAnalyticsSummary, useOverview, useStock } from "../lib/hooks";
+import { useBacktestingCompare, useIntradayAnalyticsStock, useIntradayAnalyticsSummary, useOiisCandidateContext, useOverview, useStock } from "../lib/hooks";
+import type { IntradayBar } from "../lib/types";
 import { useI18n } from "../i18n/LocaleProvider";
 import { useDeferredBusyState } from "../lib/useDeferredBusyState";
 import { AnalyticsHeader, num, text, toneFromNumber, useAnalyticsExperienceMode } from "./AnalyticsChrome";
 import styles from "./AnalyticsPage.module.css";
+import { LearnAboutThisAnalysis, RelatedJourney, ReturnToSource } from "../components/navigation/StrategicPrimitives";
+import { useProfileIndex } from "../lib/stockProfiles";
+import { StockIdentity } from "../components/stocks/StockProfileControls";
 
 function signedPct(value: unknown) {
   const parsed = num(value);
@@ -50,6 +58,76 @@ function computeWindowReturnPct(bars: Array<{ c: number }> | undefined) {
   const last = bars[bars.length - 1]?.c;
   if (!Number.isFinite(first) || !Number.isFinite(last) || !first) return null;
   return ((last - first) / first) * 100;
+}
+
+function technicalChartOption(bars: IntradayBar[]): EChartsOption {
+  const rows = bars.slice(-120);
+  const dates = rows.map((row) => row.t.slice(0, 10));
+  const closes = rows.map((row) => row.c);
+  const bollinger = rows.map((_, index) => {
+    if (index < 19) return [null, null, null] as const;
+    const window = closes.slice(index - 19, index + 1);
+    const middle = window.reduce((sum, value) => sum + value, 0) / window.length;
+    const deviation = Math.sqrt(window.reduce((sum, value) => sum + ((value - middle) ** 2), 0) / window.length);
+    return [middle + 2 * deviation, middle, middle - 2 * deviation] as const;
+  });
+  const rsi = rows.map((_, index) => {
+    if (index < 14) return null;
+    let gain = 0;
+    let loss = 0;
+    for (let cursor = index - 13; cursor <= index; cursor += 1) {
+      const change = closes[cursor]! - closes[cursor - 1]!;
+      if (change >= 0) gain += change;
+      else loss -= change;
+    }
+    if (loss === 0) return 100;
+    const rs = (gain / 14) / (loss / 14);
+    return 100 - 100 / (1 + rs);
+  });
+  const pivots = rows.map((_, index) => {
+    if (index === 0) return [null, null, null] as const;
+    const previous = rows[index - 1]!;
+    const pivot = (previous.h + previous.l + previous.c) / 3;
+    return [2 * pivot - previous.l, pivot, 2 * pivot - previous.h] as const;
+  });
+
+  return {
+    animation: false,
+    backgroundColor: "#ffffff",
+    legend: { top: 2, data: ["Price", "BB upper", "BB 20", "BB lower", "R1", "Pivot", "S1", "Volume", "RSI 14"] },
+    tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
+    axisPointer: { link: [{ xAxisIndex: "all" }] },
+    grid: [
+      { left: 58, right: 28, top: 42, height: "52%" },
+      { left: 58, right: 28, top: "64%", height: "13%" },
+      { left: 58, right: 28, top: "81%", height: "13%" },
+    ],
+    xAxis: [0, 1, 2].map((gridIndex) => ({
+      type: "category",
+      gridIndex,
+      data: dates,
+      boundaryGap: true,
+      axisLabel: { show: gridIndex === 2, color: "#64748b", hideOverlap: true },
+      axisLine: { lineStyle: { color: "#cbd5e1" } },
+    })),
+    yAxis: [
+      { scale: true, gridIndex: 0, axisLabel: { color: "#64748b" }, splitLine: { lineStyle: { color: "#edf2f7" } } },
+      { scale: true, gridIndex: 1, axisLabel: { color: "#64748b" }, splitLine: { show: false } },
+      { min: 0, max: 100, gridIndex: 2, axisLabel: { color: "#64748b" }, splitLine: { lineStyle: { color: "#edf2f7" } } },
+    ],
+    dataZoom: [{ type: "inside", xAxisIndex: [0, 1, 2], start: 30, end: 100 }, { type: "slider", xAxisIndex: [0, 1, 2], bottom: 0, height: 18, start: 30, end: 100 }],
+    series: [
+      { name: "Price", type: "candlestick", xAxisIndex: 0, yAxisIndex: 0, data: rows.map((row) => [row.o, row.c, row.l, row.h]), itemStyle: { color: "#15965f", color0: "#d1434b", borderColor: "#15965f", borderColor0: "#d1434b" } },
+      { name: "BB upper", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: bollinger.map((item) => item[0]), lineStyle: { color: "#6d5bd0", width: 1 } },
+      { name: "BB 20", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: bollinger.map((item) => item[1]), lineStyle: { color: "#2563a8", width: 1.5 } },
+      { name: "BB lower", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: bollinger.map((item) => item[2]), lineStyle: { color: "#6d5bd0", width: 1 } },
+      { name: "R1", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: pivots.map((item) => item[0]), lineStyle: { color: "#df6f38", width: 1, type: "dashed" } },
+      { name: "Pivot", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: pivots.map((item) => item[1]), lineStyle: { color: "#8a6b21", width: 1, type: "dashed" } },
+      { name: "S1", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: pivots.map((item) => item[2]), lineStyle: { color: "#26946a", width: 1, type: "dashed" } },
+      { name: "Volume", type: "bar", xAxisIndex: 1, yAxisIndex: 1, data: rows.map((row) => row.v ?? 0), itemStyle: { color: "#9db8d3" } },
+      { name: "RSI 14", type: "line", showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, data: rsi, lineStyle: { color: "#7c3aed", width: 1.5 }, markLine: { silent: true, symbol: "none", data: [{ yAxis: 70 }, { yAxis: 30 }], lineStyle: { color: "#cbd5e1", type: "dashed" } } },
+    ],
+  };
 }
 
 function buildReading(
@@ -105,11 +183,13 @@ export function AnalyticsStockPage() {
   const { t, tr } = useI18n();
   const params = useParams();
   const symbol = (params.symbol ?? "").toUpperCase();
+  const profiles = useProfileIndex();
   const stock = useIntradayAnalyticsStock(symbol, authReady);
   const summary = useIntradayAnalyticsSummary(authReady);
   const overview = useOverview(authReady);
   const monthHistory = useStock(symbol, "1M", authReady);
   const yearHistory = useStock(symbol, "1Y", authReady);
+  const oiisContext = useOiisCandidateContext(symbol, authReady);
   const strategyCompare = useBacktestingCompare(authReady);
   usePageLoadProfile({
     pageName: "analytics_stock",
@@ -119,6 +199,7 @@ export function AnalyticsStockPage() {
       { name: "intraday-analytics-summary", isLoading: summary.isLoading, isError: !!summary.error },
       { name: `stock:${symbol}:1M`, isLoading: monthHistory.isLoading, isError: !!monthHistory.error },
       { name: `stock:${symbol}:1Y`, isLoading: yearHistory.isLoading, isError: !!yearHistory.error },
+      { name: `oiis-candidate-context:${symbol}`, isLoading: oiisContext.isLoading, isError: !!oiisContext.error },
       { name: "overview", isLoading: overview.isLoading, isError: !!overview.error },
       { name: "backtesting-compare", isLoading: strategyCompare.isLoading, isError: !!strategyCompare.error }
     ],
@@ -126,6 +207,8 @@ export function AnalyticsStockPage() {
   });
   const loading = !authReady || stock.isLoading || summary.isLoading;
   const showLoading = useDeferredBusyState(loading);
+  const yearBars = yearHistory.data?.intraday ?? [];
+  const technicalOption = useMemo(() => technicalChartOption(yearBars), [yearBars]);
 
   if (loading) {
     if (!showLoading) return null;
@@ -208,6 +291,19 @@ export function AnalyticsStockPage() {
     )
     .sort((left, right) => right.totalNetPnl - left.totalNetPnl)
     .slice(0, 5);
+  const oiisCandidate = oiisContext.data?.candidate ?? null;
+  const oiisFeatures = (oiisCandidate?.feature_values ?? {}) as Record<string, unknown>;
+  const oiisGates = Object.entries((oiisCandidate?.gate_evidence ?? {}) as Record<string, any>).map(([gate, evidence]) => ({
+    gate: humanizeKey(gate),
+    status: evidence?.passed === true ? "PASS" : evidence?.passed === false ? "FAIL" : text(evidence?.status, "RECORDED"),
+    rule: text(evidence?.rule, "Rule recorded in the OIIS run."),
+    actual: JSON.stringify(evidence?.actual ?? {}),
+  }));
+  const smartapiOptions = oiisContext.data?.smartapi.options ?? [];
+  const previousBar = yearBars.length > 1 ? yearBars[yearBars.length - 2]! : null;
+  const classicPivot = previousBar ? (previousBar.h + previousBar.l + previousBar.c) / 3 : null;
+  const pivotR1 = previousBar && classicPivot != null ? 2 * classicPivot - previousBar.l : null;
+  const pivotS1 = previousBar && classicPivot != null ? 2 * classicPivot - previousBar.h : null;
   const glossaryCards = [
     {
       title: tr("Residual Strength"),
@@ -229,6 +325,8 @@ export function AnalyticsStockPage() {
 
   return (
     <div className={styles.page}>
+      <ReturnToSource fallback="/" />
+      <div aria-label={`${symbol} company identity`}><StockIdentity symbol={symbol} profile={profiles.bySymbol.get(symbol)} /></div>
       <AnalyticsHeader
         title={
           mode === "beginner"
@@ -273,6 +371,96 @@ export function AnalyticsStockPage() {
         <KpiCard label={tr("1Y return")} value={yearReturnPct == null ? "—" : fmtPct(yearReturnPct)} meta={yearClose == null ? tr("Waiting for yearly price context.") : tr("Built from the published 1Y stock history view.")} />
         <KpiCard label={tr("Sector standing")} value={sectorRankLabel} meta={sectorContext ? t("literals.Sector average {{value}}", "Sector average {{value}}", { value: fmtPct(sectorContext.avgChangePct) }) : tr("Sector context unavailable")} />
       </section>
+
+      <SectionDivider
+        eyebrow="OIIS"
+        title={tr("Selection evidence and technical history")}
+        subtitle={tr("The latest all-F&O evaluation, daily price history and SmartAPI derivatives evidence for this symbol. Missing data remains unavailable rather than being replaced with zero.")}
+      />
+
+      {oiisCandidate ? (
+        <>
+          <section className={styles.metricGrid}>
+            <KpiCard label="Direction" value={text(oiisCandidate.direction, "—")} tone={oiisCandidate.direction === "LONG" ? "green" : oiisCandidate.direction === "SHORT" ? "red" : "white"} meta={`${humanizeKey(text(oiisCandidate.direction_state, "unknown"))} · structure ${text(oiisCandidate.structural_direction, "—")} · session ${text(oiisCandidate.session_direction, "—")}`} />
+            <KpiCard label="OFactor" value={fmtMaybe(oiisCandidate.ofactor)} meta={`${text(oiisCandidate.ofactor_level, "—")} opportunity cohort`} />
+            <KpiCard label="XFactor" value={fmtMaybe(oiisCandidate.xfactor_snapshot)} meta={`${humanizeKey(text(oiisCandidate.setup_id, "no setup"))} · ${humanizeKey(text(oiisCandidate.setup_state, "unknown"))}`} />
+            <KpiCard label="Data quality" value={fmtMaybe(oiisCandidate.data_quality)} meta={`${fmtMaybe(oiisCandidate.data_coverage, 1)}% coverage · ${humanizeKey(text(oiisCandidate.data_permission, "unknown"))}`} />
+            <KpiCard label="O + X + DQ" value={fmtMaybe(num(oiisCandidate.ofactor) + num(oiisCandidate.xfactor_snapshot) + num(oiisCandidate.data_quality))} meta="OIIS table sequence score; higher values appear first." />
+            <KpiCard label="Failed gates" value={fmtWholeNumber(num(oiisCandidate.failed_gate_count))} meta={(Array.isArray(oiisCandidate.reason_codes) ? oiisCandidate.reason_codes.map(humanizeKey).join(" · ") : "No recorded failure reasons") || "None"} />
+          </section>
+
+          <section className={styles.grid2}>
+            <DataTable
+              title={tr("Price, volatility and pivot levels")}
+              subtitle={tr("Latest OIIS feature snapshot plus classic pivots calculated from the previous completed daily OHLC bar.")}
+              rows={[
+                { metric: "Open / high / low / close", value: `${fmtMaybe(oiisFeatures.open)} / ${fmtMaybe(oiisFeatures.high)} / ${fmtMaybe(oiisFeatures.low)} / ${fmtMaybe(oiisFeatures.close)}` },
+                { metric: "Session VWAP", value: fmtMaybe(oiisFeatures.session_vwap) },
+                { metric: "EMA61 / SMA20 / SMA50", value: `${fmtMaybe(oiisFeatures.ema61)} / ${fmtMaybe(oiisFeatures.sma20)} / ${fmtMaybe(oiisFeatures.sma50)}` },
+                { metric: "20-day high / low", value: `${fmtMaybe(oiisFeatures.prior_high_20)} / ${fmtMaybe(oiisFeatures.prior_low_20)}` },
+                { metric: "Classic R1 / Pivot / S1", value: `${fmtMaybe(pivotR1)} / ${fmtMaybe(classicPivot)} / ${fmtMaybe(pivotS1)}` },
+                { metric: "ATR14 / MoveATR / VWAP distance ATR", value: `${fmtMaybe(oiisFeatures.atr14_previous_completed)} / ${fmtMaybe(oiisFeatures.move_atr)} / ${fmtMaybe(oiisFeatures.vwap_distance_atr)}` },
+                { metric: "RSI14 / Williams %R / MACD", value: `${fmtMaybe(oiisCandidate.rsi14)} / ${fmtMaybe(oiisCandidate.willr14)} / ${fmtMaybe(oiisCandidate.macd_line)}` },
+                { metric: "Reward:risk", value: fmtMaybe(oiisFeatures.reward_risk) },
+              ]}
+              columns={[{ key: "metric", header: "Indicator / level", cell: (row) => row.metric }, { key: "value", header: "Actual value", align: "right", cell: (row) => row.value }]}
+            />
+            <DataTable
+              title={tr("Liquidity and data completeness")}
+              subtitle={tr("Actual volume, historical baselines, same-session coverage and freshness used by the liquidity gate.")}
+              rows={[
+                { metric: "Current cumulative volume", value: fmtWholeNumber(num(oiisFeatures.volume_current)) },
+                { metric: "20-day average / ratio", value: `${fmtWholeNumber(num(oiisFeatures.volume_average_20))} / ${fmtMaybe(oiisFeatures.volume_ratio_20)}` },
+                { metric: "90-day median / percentile", value: `${fmtWholeNumber(num(oiisFeatures.volume_median_90))} / ${fmtMaybe(oiisFeatures.volume_percentile_90)}` },
+                { metric: "Previous 1D / 2D volume", value: `${fmtWholeNumber(num(oiisFeatures.volume_previous_1d))} / ${fmtWholeNumber(num(oiisFeatures.volume_previous_2d))}` },
+                { metric: "Turnover (₹ lakh) / percentile", value: `${fmtMaybe(oiisFeatures.turnover_lacs)} / ${fmtMaybe(oiisFeatures.turnover_percentile)}` },
+                { metric: "Session bar coverage", value: `${fmtMaybe(num(oiisFeatures.session_bar_coverage) * 100, 1)}%` },
+                { metric: "Latest bar age", value: `${fmtMaybe(oiisFeatures.session_latest_bar_age_minutes)} min` },
+                { metric: "Session data status", value: humanizeKey(text(oiisFeatures.session_data_status, "unavailable")) },
+              ]}
+              columns={[{ key: "metric", header: "Liquidity evidence", cell: (row) => row.metric }, { key: "value", header: "Actual value", align: "right", cell: (row) => row.value }]}
+            />
+          </section>
+
+          <DataTable
+            title={tr("Every OIIS gate for this stock")}
+            subtitle={tr("The exact stored gate result, governed rule and actual input snapshot. Expand the all-F&O ledger for full weighted component evidence.")}
+            rows={oiisGates}
+            emptyTitle="No gate evidence"
+            emptyBody="The latest OIIS candidate did not publish gate evidence."
+            columns={[
+              { key: "gate", header: "Gate", cell: (row) => row.gate },
+              { key: "status", header: "Status", cell: (row) => row.status },
+              { key: "rule", header: "Rule", cell: (row) => row.rule },
+              { key: "actual", header: "Actual stored values", cell: (row) => row.actual },
+            ]}
+          />
+        </>
+      ) : (
+        <DataState kind={oiisContext.isLoading ? "loading" : "empty"} title={oiisContext.isLoading ? "Loading latest OIIS evidence" : "No current OIIS candidate evidence"} body="The stock page remains available, but this symbol is not present in the latest completed all-F&O run." />
+      )}
+
+      <ChartCard title={tr("Historical price, Bollinger bands, pivots, volume and RSI")} subtitle={tr("Up to 120 completed daily bars from PostgreSQL bars_1d. Pivot R1/P/S1 uses the previous completed trading day; Bollinger bands use 20 sessions and two standard deviations.")}>
+        {yearBars.length ? <EChartSurface appearance="light" ariaLabel={`${symbol} daily technical history`} className={styles.stockTechnicalChart} option={technicalOption} /> : <DataState kind="empty" title="Daily history unavailable" body="No completed daily OHLCV bars were returned for this stock." />}
+      </ChartCard>
+
+      <DataTable
+        title={tr("SmartAPI F&O quotes, liquidity and Greeks")}
+        subtitle={oiisContext.data?.smartapi.available ? `Captured ${formatTime(oiisContext.data.smartapi.capturedAt, { hour12: false })} · ${oiisContext.data.smartapi.source} · PAPER analytics only` : "No SmartAPI option snapshot is currently stored for this underlying. No values are fabricated."}
+        rows={smartapiOptions}
+        emptyTitle="SmartAPI F&O snapshot unavailable"
+        emptyBody={oiisContext.data?.smartapi.error || "The collector has not stored a current option-chain snapshot for this stock."}
+        columns={[
+          { key: "contract", header: "Contract", cell: (row) => text(row.tradingsymbol, "—") },
+          { key: "expiry", header: "Expiry", cell: (row) => String(row.expiry ?? "—").slice(0, 10) },
+          { key: "strike", header: "Strike / side", align: "right", cell: (row) => `${fmtMaybe(row.strike)} ${text(row.right, "—")}` },
+          { key: "quote", header: "Bid / ask / spread", align: "right", cell: (row) => `${fmtMaybe(row.bid)} / ${fmtMaybe(row.ask)} / ${fmtMaybe(row.spread_pct)}%` },
+          { key: "depth", header: "Buy / sell / imbalance", align: "right", cell: (row) => `${fmtWholeNumber(num(row.total_buy_qty))} / ${fmtWholeNumber(num(row.total_sell_qty))} / ${fmtMaybe(row.depth_imbalance)}` },
+          { key: "activity", header: "Volume / OI / OI Δ%", align: "right", cell: (row) => `${fmtWholeNumber(num(row.volume))} / ${fmtWholeNumber(num(row.oi))} / ${fmtMaybe(row.oi_change_pct)}%` },
+          { key: "greeks", header: "IV / Δ / Γ / Θ / Vega", align: "right", cell: (row) => `${fmtMaybe(row.broker_iv ?? row.local_iv)} / ${fmtMaybe(row.broker_delta ?? row.local_delta)} / ${fmtMaybe(row.broker_gamma ?? row.local_gamma, 4)} / ${fmtMaybe(row.broker_theta ?? row.local_theta)} / ${fmtMaybe(row.broker_vega ?? row.local_vega)}` },
+          { key: "quality", header: "Quote quality", cell: (row) => `${humanizeKey(text(row.data_quality_status, "unknown"))} · age ${fmtWholeNumber(num(row.quote_age_seconds))}s` },
+        ]}
+      />
 
       <section className={styles.summaryGrid}>
         <PlainLanguageCard
@@ -585,28 +773,20 @@ export function AnalyticsStockPage() {
         </div>
       </section>
 
-      <section className={styles.nextSteps}>
-        <Link to="/analytics/regime" className={styles.nextCard}>
-          <span className={styles.promptLabel}>{tr("Broader tape")}</span>
-          <strong>{tr("Open Market Story")}</strong>
-          <span className={styles.muted}>{tr("Use this when you need to know whether the stock is aligned with broad breadth and regime, not just flashing on its own.")}</span>
-        </Link>
-        <Link to="/analytics/risk" className={styles.nextCard}>
-          <span className={styles.promptLabel}>{tr("Risk context")}</span>
-          <strong>{tr("Review anomalies and signal stress")}</strong>
-          <span className={styles.muted}>{tr("Use this when you want to see whether this stock’s move is confirmed, noisy, or part of a broader anomaly cluster.")}</span>
-        </Link>
-        <Link to="/backtesting/strategies" className={styles.nextCard}>
-          <span className={styles.promptLabel}>{tr("Historical evidence")}</span>
-          <strong>{tr("Open the Strategy Leaderboard")}</strong>
-          <span className={styles.muted}>{tr("Use this if the stock still looks constructive and you want to see which strategy family has the strongest published evidence for it.")}</span>
-        </Link>
-        <Link to="/analytics/system/map" className={styles.nextCard}>
-          <span className={styles.promptLabel}>{tr("Where to go next")}</span>
-          <strong>{tr("Open the System Map")}</strong>
-          <span className={styles.muted}>{tr("Use this when you want the shortest route from this stock read to the next product workspace.")}</span>
-        </Link>
-      </section>
+      <RelatedJourney items={[
+        { id: "oiis", title: "OIIS evidence", detail: `${symbol} current selection, factors and gates`, to: `/strategy/oiis-live?symbol=${encodeURIComponent(symbol)}&source=stock-360`, actionLabel: "Open evidence" },
+        { id: "paper", title: "Paper Trading", detail: `Preview a PAPER-only ${symbol} observation`, to: `/paper-trading?action=add&symbol=${encodeURIComponent(symbol)}&source=stock-360`, actionLabel: "Preview" },
+        { id: "history", title: "Historical evidence", detail: "Strategy fit and similar 30-day outcomes", to: `/backtesting/stocks?symbol=${encodeURIComponent(symbol)}&source=stock-360` },
+        { id: "options", title: "Options", detail: `${symbol} chain, expiry, IV and OI context`, to: `/options/intelligence?symbol=${encodeURIComponent(symbol)}&source=stock-360` },
+      ]} />
+      <LearnAboutThisAnalysis sections={[
+        { id: "read", title: "How to read this page", content: <p>Start with the current quote and price path, then relative performance and drawdown, and only then interpret signals and strategy fit.</p> },
+        { id: "methodology", title: "Methodology and calculation rules", content: <p>Indicators are calculated for the displayed timeframe and preserve the source adjustment policy. Strategy evidence remains separate from a current trade authorisation.</p> },
+        { id: "definitions", title: "Definitions", content: <p>VWAP is the session volume-weighted price. Relative volume compares current activity with the stock’s historical intraday profile. ATR measures recent trading range.</p> },
+        { id: "sources", title: "Data sources and freshness", content: <p>Cash OHLCV, canonical indicators, benchmark and sector series, strategy results, events and available F&amp;O evidence retain their individual timestamps and readiness states.</p> },
+        { id: "limitations", title: "Limitations and assumptions", content: <p>Missing indicators, events or derivatives evidence remain unavailable rather than being converted to zero. Historical relationships do not guarantee a current outcome.</p> },
+        { id: "related", title: "Related dashboards", content: <p>Use the context-aware links immediately above to continue into OIIS, Paper Trading, historical evidence or Options without changing the selected stock.</p> },
+      ]} />
     </div>
   );
 }

@@ -56,6 +56,18 @@
   background: #fff0ef;
 }
 
+.environmentBadge[data-environment="admin"] {
+  color: #5b3aaa;
+  border-color: #cbbcf0;
+  background: #f3efff;
+}
+
+.environmentBadge[data-environment="replay"] {
+  color: #7a5200;
+  border-color: #e2c27e;
+  background: #fff8e5;
+}
+
 .contextStrip {
   min-height: 40px;
   display: flex;

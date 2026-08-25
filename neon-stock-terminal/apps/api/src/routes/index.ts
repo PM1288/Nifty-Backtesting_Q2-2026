@@ -31,18 +31,28 @@ import { registerWillSurface } from "./willSurface";
 import { registerOiisLive, registerOiisLivePublic } from "./oiisLive";
 import { registerWorkspaceRoutes } from "./workspace";
 import { registerFnoVolatility } from "./fnoVolatility";
+import { registerRollingMonthly } from "./rollingMonthly";
+import { registerRollingWindow } from "./rollingWindow";
+import { registerNseIntelligence } from "./nseIntelligence";
+import { registerLongOptions } from "./longOptions";
+import { registerNiftyWeeklyOptions } from "./niftyWeeklyOptions";
+import { registerMobileNotifications } from "./mobileNotifications";
+import { registerStockProfiles } from "./stockProfiles";
+import { registerTrendlyneSummary } from "./trendlyneSummary";
 
 export function registerRoutes(
   app: Express,
   prisma: PrismaClient,
   authGuard: RequestHandler,
-  authRuntime: RequestAuthenticator
+  authRuntime: RequestAuthenticator,
+  paperPrisma: PrismaClient = prisma,
 ) {
   registerHealth(app, prisma, authRuntime);
   registerInternalRoutes(app, prisma);
   registerAuthRoutes(app, prisma, authRuntime);
   registerFeedbackRoutes(app, prisma, authRuntime);
   registerOiisLivePublic(app, prisma);
+  app.use("/api/dev/mobile-notifications", authGuard);
   app.use("/v1", (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     next();
@@ -72,5 +82,13 @@ export function registerRoutes(
   registerStocks(app, prisma);
   registerOiisLive(app, prisma);
   registerFnoVolatility(app, prisma);
-  registerWorkspaceRoutes(app, prisma, authRuntime);
+  registerRollingMonthly(app, prisma);
+  registerRollingWindow(app, prisma);
+  registerLongOptions(app, prisma);
+  registerNiftyWeeklyOptions(app, prisma);
+  registerNseIntelligence(app, prisma);
+  registerMobileNotifications(app, prisma);
+  registerStockProfiles(app, prisma);
+  registerTrendlyneSummary(app, prisma);
+  registerWorkspaceRoutes(app, prisma, authRuntime, paperPrisma);
 }

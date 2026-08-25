@@ -1,16 +1,14 @@
 .wrap {
+  position: relative;
   min-height: 34px;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  padding: 5px 6px 5px 10px;
+  justify-content: flex-end;
+  gap: 6px;
   min-width: 0;
   max-width: 100%;
 }
+.identity{min-height:36px;display:flex;align-items:center;gap:7px;border:1px solid var(--border-subtle);border-radius:10px;background:#fff;color:var(--text-1);padding:4px 9px;cursor:pointer;text-align:left}.identity:hover,.identity:focus-visible{border-color:#9dbce5;outline:3px solid rgba(23,94,200,.12)}
 
 .labels {
   min-width: 0;
@@ -41,7 +39,7 @@
   color: var(--warn);
 }
 
-.action {
+.action,.menu button {
   min-height: 24px;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -69,6 +67,7 @@
   opacity: 0.5;
   cursor: default;
 }
+.menu{position:absolute;top:calc(100% + 6px);right:0;z-index:90;width:220px;padding:7px;border:1px solid var(--border-subtle);border-radius:12px;background:#fff;box-shadow:0 16px 42px rgba(15,23,42,.18)}.menu>div{display:grid;gap:2px;padding:8px 9px;border-bottom:1px solid var(--border-weak)}.menu strong{font-size:13px}.menu span{color:var(--text-3);font-size:11px}.menu button{width:100%;min-height:38px;display:flex;align-items:center;gap:8px;margin-top:5px;text-align:left}
 
 @media (max-width: 760px) {
   .wrap {

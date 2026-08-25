@@ -1,0 +1,59 @@
+openapi: 3.1.0
+info:
+  title: NIFTY 50 Trader Instrument Profiles API
+  version: 2026-08-23
+paths:
+  /v1/instrument-profiles:
+    get:
+      summary: List stock identity, universe and market-cap metadata
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Canonical stock display profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  asOf: { type: [string, 'null'], format: date }
+                  records:
+                    type: array
+                    items: { $ref: '#/components/schemas/InstrumentProfile' }
+        '401': { description: Active session required }
+  /v1/instrument-profiles/{symbol}/logo.svg:
+    get:
+      summary: Return the stored SVG logo for one NSE symbol
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: SVG logo with ETag and one-day private cache
+          content: { image/svg+xml: { schema: { type: string } } }
+        '404': { description: Profile or logo unavailable }
+components:
+  securitySchemes:
+    sessionCookie: { type: apiKey, in: cookie, name: n50_session }
+  schemas:
+    InstrumentProfile:
+      type: object
+      required: [symbol, name, sector, capBucket, nifty50, nifty100, largeMidcap250, fno, logoUrl]
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        isin: { type: [string, 'null'] }
+        sector: { type: string }
+        capBucket: { type: string, enum: [Large Cap, Mid Cap, Small Cap] }
+        nifty50: { type: boolean }
+        nifty100: { type: boolean }
+        nifty200: { type: boolean }
+        largeMidcap250: { type: boolean }
+        nifty500: { type: boolean }
+        fno: { type: boolean }
+        memberships: { type: array, items: { type: string } }
+        sourceAsOf: { type: string, format: date }
+        logoSha256: { type: string }
+        logoUrl: { type: string }

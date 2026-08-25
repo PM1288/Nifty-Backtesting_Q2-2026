@@ -3,8 +3,8 @@
   --v2-surface: #ffffff;
   --v2-surface-muted: #f1f4f8;
   --v2-text-primary: #0b1220;
-  --v2-text-secondary: #5b6575;
-  --v2-text-muted: #7c8798;
+  --v2-text-secondary: #475569;
+  --v2-text-muted: #52647a;
   --v2-border: #d9e0ea;
   --v2-border-strong: #c5cfdd;
   --v2-nav: #0b1f3a;
@@ -55,8 +55,8 @@
   --muted: var(--v2-text-muted);
   --w-92: rgba(11, 18, 32, 0.92);
   --w-72: rgba(11, 18, 32, 0.72);
-  --w-54: rgba(11, 18, 32, 0.56);
-  --w-38: rgba(11, 18, 32, 0.4);
+  --w-54: rgba(11, 18, 32, 0.7);
+  --w-38: rgba(11, 18, 32, 0.64);
   --w-18: rgba(11, 18, 32, 0.18);
   --w-12: rgba(11, 18, 32, 0.12);
   --w-08: rgba(11, 18, 32, 0.08);

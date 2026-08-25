@@ -61,7 +61,7 @@ export function BacktestingDailySummaryPage() {
 
       <section className={styles.grid2}>
         <DataTable
-          title={tr("Today's new entries")}
+          title={tr(`Entries through ${formatDateIST(summary.data.asOfDate)}`)}
           rows={summary.data.latestEntries}
           maxHeight={280}
           columns={[
@@ -71,7 +71,7 @@ export function BacktestingDailySummaryPage() {
           ]}
         />
         <DataTable
-          title={tr("Today's exits")}
+          title={tr(`Exits through ${formatDateIST(summary.data.asOfDate)}`)}
           rows={summary.data.latestExits}
           maxHeight={280}
           columns={[

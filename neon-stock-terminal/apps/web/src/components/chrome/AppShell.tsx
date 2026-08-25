@@ -1,551 +1,191 @@
-import React, { useEffect, useMemo, useState } from "react";
-import type { LucideIcon } from "lucide-react";
-import {
-  Activity,
-  BarChart3,
-  BookOpen,
-  ClipboardList,
-  FlaskConical,
-  Gauge,
-  Globe2,
-  Home,
-  LibraryBig,
-  LayoutDashboard,
-  Menu,
-  MessageSquareMore,
-  ShieldCheck,
-  Sigma,
-  TrendingUp,
-  X
-} from "lucide-react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { AudioLines, VolumeX } from "lucide-react";
 import { useAuthGate } from "../../auth/AuthGateProvider";
-import { trackNavClick } from "../../analytics/events";
 import { useTrackPageViews } from "../../analytics/useTrackPageViews";
-import { useLiveQuotes, useOverview } from "../../lib/hooks";
-import { useDashboardPrefetch } from "../../lib/useDashboardPrefetch";
+import { DataAge, EnvironmentBadge } from "../../design-system/TradingPrimitives";
+import { DataQualityBadge } from "../../design-system/WorkspacePrimitives";
+import { buildMarketQuoteQuality } from "../../design-system/quality";
 import { useI18n } from "../../i18n/LocaleProvider";
-import { resolvePrimarySection, SECTION_META, useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
+import { useLiveQuotesWithStatus, useOverview } from "../../lib/hooks";
+import { useDashboardPrefetch } from "../../lib/useDashboardPrefetch";
+import { arrow, fmtPct, fmtPrice } from "../../lib/format";
+import { useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
 import { AuthGateModal } from "../auth/AuthGateModal";
-import { DataAge, EnvironmentBadge, FeedFreshnessBadge } from "../../design-system/TradingPrimitives";
 import { AuthStatus } from "./AuthStatus";
 import { CommandPalette, type CommandPaletteItem } from "./CommandPalette";
 import { HeaderTicker } from "./HeaderTicker";
+import { ResponsiveWorkspaceNavigation } from "./ResponsiveWorkspaceNavigation";
+import { resolveWorkspaceRoute } from "./workspaceRoutes";
+import { routeCommandItems, type CommandItem } from "../../interaction/routeCatalog";
+import { NavigationStateManager } from "../../interaction/NavigationStateManager";
+import { MarketGradientWaves } from "../visual/MarketGradientWaves";
+import { MarketTargetCursor } from "../visual/MarketTargetCursor";
+import { MarketRsiParticles } from "../visual/MarketRsiParticles";
+import { pctClass } from "../utils/pctClass";
+import { PaperTradeNotifier } from "./PaperTradeNotifier";
 import styles from "./AppShell.module.css";
 
-type NavItem = {
-  label: string;
-  to: string;
-  icon: LucideIcon;
-  external?: boolean;
-  match: (pathname: string) => boolean;
-};
+type WorkspaceLink = { label: string; to: string; match?: (pathname: string) => boolean };
 
-type NavGroup = {
-  id: string;
-  label: string;
-  hiddenInSidebar?: boolean;
-  items: NavItem[];
-};
-
-type AmbientGlowStyle = React.CSSProperties & {
-  "--ambient-primary-rgb"?: string;
-  "--ambient-secondary-rgb"?: string;
-  "--ambient-primary-alpha"?: string;
-  "--ambient-secondary-alpha"?: string;
-};
-
-function isMobileViewport() {
-  return typeof window !== "undefined" && window.matchMedia("(max-width: 979px)").matches;
-}
-
-function buildSidebarGroups(tr: (value: string) => string): NavGroup[] {
-  return [
-    {
-      id: "overview",
-      label: tr("Overview"),
-      items: [
-        {
-          label: tr("Home"),
-          to: "/",
-          icon: Home,
-          match: (pathname) => pathname === "/"
-        }
-      ]
-    },
-    {
-      id: "backtesting",
-      label: tr("Backtesting"),
-      items: [
-        {
-          label: tr("Overview"),
-          to: "/backtesting",
-          icon: FlaskConical,
-          match: (pathname) => pathname === "/backtesting"
-        },
-        {
-          label: tr("Test Strategy"),
-          to: "/backtesting/lab",
-          icon: Gauge,
-          match: (pathname) => pathname.startsWith("/backtesting/lab")
-        },
-        {
-          label: tr("Stock Selection"),
-          to: "/strategy/oiis-live",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/strategy/oiis-live")
-        },
-        {
-          label: tr("Strategy Leaderboard"),
-          to: "/backtesting/strategies",
-          icon: LibraryBig,
-          match: (pathname) => pathname.startsWith("/backtesting/strategies")
-        },
-        {
-          label: tr("Portfolio Results"),
-          to: "/backtesting/results",
-          icon: BarChart3,
-          match: (pathname) => pathname.startsWith("/backtesting/results")
-        },
-        {
-          label: tr("Regime Analysis"),
-          to: "/backtesting/regimes",
-          icon: TrendingUp,
-          match: (pathname) => pathname.startsWith("/backtesting/regimes")
-        },
-        {
-          label: tr("Stock Insights"),
-          to: "/backtesting/stocks",
-          icon: Activity,
-          match: (pathname) => pathname.startsWith("/backtesting/stocks")
-        },
-        {
-          label: tr("Daily Summary"),
-          to: "/backtesting/daily-summary",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/backtesting/daily-summary")
-        },
-        {
-          label: tr("Compare"),
-          to: "/backtesting/compare",
-          icon: LayoutDashboard,
-          match: (pathname) => pathname.startsWith("/backtesting/compare")
-        },
-        {
-          label: tr("Run Monitor"),
-          to: "/backtesting/runs",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/backtesting/runs")
-        },
-        {
-          label: tr("30-day Opportunity"),
-          to: "/backtesting/h30",
-          icon: Gauge,
-          match: (pathname) => pathname.startsWith("/backtesting/h30")
-        }
-      ]
-    },
-    {
-      id: "market",
-      label: tr("Market"),
-      items: [
-        {
-          label: tr("Market Hub"),
-          to: "/analytics",
-          icon: LayoutDashboard,
-          match: (pathname) => pathname === "/analytics"
-        },
-        {
-          label: tr("Market State"),
-          to: "/analytics/market-state",
-          icon: Activity,
-          match: (pathname) => pathname.startsWith("/analytics/market-state")
-        },
-        {
-          label: tr("Market Story"),
-          to: "/analytics/regime",
-          icon: TrendingUp,
-          match: (pathname) => pathname.startsWith("/analytics/regime")
-        },
-        {
-          label: tr("Supporting Metrics"),
-          to: "/analytics/supporting-metrics",
-          icon: Globe2,
-          match: (pathname) => pathname.startsWith("/analytics/supporting-metrics")
-        }
-      ]
-    },
-    {
-      id: "catalysts",
-      label: tr("Catalysts"),
-      items: [
-        {
-          label: tr("Event Context"),
-          to: "/catalysts/context",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/catalysts/context")
-        },
-        {
-          label: tr("Events Calendar"),
-          to: "/catalysts/events",
-          icon: LibraryBig,
-          match: (pathname) => pathname.startsWith("/catalysts/events") || pathname.startsWith("/analytics/events")
-        }
-      ]
-    },
-    {
-      id: "institutional",
-      label: tr("Institutional"),
-      items: [
-        {
-          label: tr("Participant Flow"),
-          to: "/institutional/flow",
-          icon: BarChart3,
-          match: (pathname) => pathname.startsWith("/institutional/flow")
-        },
-        {
-          label: tr("FII Reports"),
-          to: "/institutional/reports",
-          icon: LibraryBig,
-          match: (pathname) =>
-            pathname.startsWith("/institutional/reports") || pathname.startsWith("/analytics/fii-reports")
-        }
-      ]
-    },
-    {
-      id: "options",
-      label: tr("Options"),
-      items: [
-        {
-          label: tr("Options Structure"),
-          to: "/options/structure",
-          icon: Sigma,
-          match: (pathname) => pathname.startsWith("/options/structure") || pathname.startsWith("/option-chain")
-        },
-        {
-          label: tr("Option Snapshot"),
-          to: "/options/snapshot",
-          icon: BarChart3,
-          match: (pathname) => pathname.startsWith("/options/snapshot")
-        }
-      ]
-    },
-    {
-      id: "stocks",
-      label: tr("Stocks"),
-      items: [
-        {
-          label: tr("Stock Leadership"),
-          to: "/analytics/leadership",
-          icon: TrendingUp,
-          match: (pathname) => pathname.startsWith("/analytics/leadership")
-        },
-        {
-          label: tr("Daily Setups"),
-          to: "/analytics/daily-setups",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/analytics/daily-setups") || pathname.startsWith("/analytics/setups")
-        },
-        {
-          label: tr("Stock Detail"),
-          to: "/analytics/stock/RELIANCE",
-          icon: Activity,
-          match: (pathname) => pathname.startsWith("/analytics/stock/") || pathname.startsWith("/stock/")
-        }
-      ]
-    },
-    {
-      id: "strategy",
-      label: tr("Strategy"),
-      items: [
-        {
-          label: tr("Strategy Evaluation"),
-          to: "/strategy/evaluation",
-          icon: FlaskConical,
-          match: (pathname) => pathname.startsWith("/strategy/evaluation") || pathname.startsWith("/analytics/strategy-evaluation")
-        }
-      ]
-    },
-    {
-      id: "heatmaps",
-      label: tr("Heatmaps"),
-      items: [
-        {
-          label: tr("% Change"),
-          to: "/heatmap/change",
-          icon: BarChart3,
-          match: (pathname) => pathname === "/heatmap/change" || pathname === "/change-heatmap"
-        },
-        {
-          label: tr("RSI"),
-          to: "/heatmap/rsi",
-          icon: Activity,
-          match: (pathname) => pathname === "/heatmap/rsi" || pathname === "/rsi-surface"
-        },
-        {
-          label: tr("WILLR"),
-          to: "/heatmap/will",
-          icon: Gauge,
-          match: (pathname) => pathname === "/heatmap/will" || pathname === "/will-surface"
-        }
-      ]
-    },
-    {
-      id: "learning",
-      label: tr("Learning"),
-      items: [
-        {
-          label: tr("Strategy Lab"),
-          to: "/analytics/learn",
-          icon: BookOpen,
-          match: (pathname) => pathname.startsWith("/analytics/learn")
-        },
-        {
-          label: tr("Simulator"),
-          to: "/analytics/simulator",
-          icon: FlaskConical,
-          match: (pathname) => pathname.startsWith("/analytics/simulator")
-        },
-        {
-          label: tr("Indicators"),
-          to: "/analytics/indicators",
-          icon: Sigma,
-          match: (pathname) => pathname.startsWith("/analytics/indicators")
-        }
-      ]
-    },
-    {
-      id: "utility",
-      label: tr("Utilities"),
-      hiddenInSidebar: true,
-      items: [
-        {
-          label: tr("Feedback"),
-          to: "/feedback",
-          icon: MessageSquareMore,
-          match: (pathname) => pathname.startsWith("/feedback")
-        }
-      ]
-    },
-    {
-      id: "system",
-      label: tr("System"),
-      items: [
-        {
-          label: tr("System Map"),
-          to: "/analytics/system/map",
-          icon: ClipboardList,
-          match: (pathname) => pathname.startsWith("/analytics/system/map")
-        },
-        {
-          label: tr("Quality & Freshness"),
-          to: "/analytics/system/quality",
-          icon: ShieldCheck,
-          match: (pathname) =>
-            pathname.startsWith("/analytics/system/quality") || pathname.startsWith("/analytics/quality")
-        }
-      ]
-    }
+function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
+  if (workspace === "markets") return [
+    { label: "Market Story", to: "/analytics", match: (path) => path === "/analytics" },
+    { label: "Regime", to: "/analytics/regime" },
+    { label: "Leadership", to: "/analytics/leadership" },
+    { label: "Risk", to: "/analytics/risk" },
+    { label: "Breadth", to: "/market/nifty-500" },
+    { label: "Heatmaps", to: "/heatmap/change", match: (path) => path.startsWith("/heatmap/") },
+    { label: "Advanced Flows", to: "/analytics/flows" }
   ];
-}
-
-function buildV2SidebarGroups(tr: (value: string) => string): NavGroup[] {
-  return [
-    {
-      id: "home",
-      label: tr("Home"),
-      items: [{ label: tr("Home"), to: "/", icon: Home, match: (pathname) => pathname === "/" }]
-    },
-    {
-      id: "market",
-      label: tr("Market"),
-      items: [
-        { label: tr("Market Overview"), to: "/analytics", icon: LayoutDashboard, match: (pathname) => pathname === "/analytics" },
-        { label: tr("Market State"), to: "/analytics/market-state", icon: Activity, match: (pathname) => pathname.startsWith("/analytics/market-state") },
-        { label: tr("Regimes"), to: "/analytics/regime", icon: TrendingUp, match: (pathname) => pathname.startsWith("/analytics/regime") },
-        { label: tr("NIFTY 500 Summary"), to: "/market/nifty-500", icon: Globe2, match: (pathname) => pathname.startsWith("/market/nifty-500") },
-        { label: tr("Institutional Flow"), to: "/institutional/flow", icon: BarChart3, match: (pathname) => pathname.startsWith("/institutional/") }
-      ]
-    },
-    {
-      id: "oiis",
-      label: tr("OIIS"),
-      items: [
-        { label: tr("Live Selection"), to: "/strategy/oiis-live", icon: ClipboardList, match: (pathname) => pathname.startsWith("/strategy/oiis-live") },
-        { label: tr("Strategy Evaluation"), to: "/strategy/evaluation", icon: FlaskConical, match: (pathname) => pathname.startsWith("/strategy/evaluation") }
-      ]
-    },
-    {
-      id: "stocks",
-      label: tr("Stocks"),
-      items: [
-        { label: tr("Leadership"), to: "/analytics/leadership", icon: TrendingUp, match: (pathname) => pathname.startsWith("/analytics/leadership") },
-        { label: tr("Daily Setups"), to: "/analytics/daily-setups", icon: ClipboardList, match: (pathname) => pathname.startsWith("/analytics/daily-setups") },
-        { label: tr("Stock Detail"), to: "/analytics/stock/RELIANCE", icon: Activity, match: (pathname) => pathname.startsWith("/analytics/stock/") }
-      ]
-    },
-    {
-      id: "backtests",
-      label: tr("Backtests"),
-      items: [
-        { label: tr("Overview"), to: "/backtesting", icon: LayoutDashboard, match: (pathname) => pathname === "/backtesting" },
-        { label: tr("Strategy Lab"), to: "/backtesting/lab", icon: FlaskConical, match: (pathname) => pathname.startsWith("/backtesting/lab") },
-        { label: tr("Leaderboard"), to: "/backtesting/strategies", icon: LibraryBig, match: (pathname) => pathname.startsWith("/backtesting/strategies") },
-        { label: tr("Portfolio Results"), to: "/backtesting/results", icon: BarChart3, match: (pathname) => pathname.startsWith("/backtesting/results") },
-        { label: tr("Run Monitor"), to: "/backtesting/runs", icon: ClipboardList, match: (pathname) => pathname.startsWith("/backtesting/runs") },
-        { label: tr("Compare"), to: "/backtesting/compare", icon: Gauge, match: (pathname) => pathname.startsWith("/backtesting/compare") }
-      ]
-    },
-    {
-      id: "trading",
-      label: tr("Paper Trading"),
-      items: [
-        { label: tr("Paper Portfolio"), to: "/paper-trading", icon: Gauge, match: (pathname) => pathname.startsWith("/paper-trading") },
-        { label: tr("Futures"), to: "/futures", icon: TrendingUp, match: (pathname) => pathname.startsWith("/futures") }
-      ]
-    },
-    {
-      id: "options",
-      label: tr("Options"),
-      items: [
-        { label: tr("Options Structure"), to: "/options/structure", icon: Sigma, match: (pathname) => pathname.startsWith("/options/structure") },
-        { label: tr("Option Snapshot"), to: "/options/snapshot", icon: BarChart3, match: (pathname) => pathname.startsWith("/options/snapshot") },
-        { label: tr("Volatility Signals"), to: "/options/volatility-signals", icon: Activity, match: (pathname) => pathname.startsWith("/options/volatility-signals") }
-      ]
-    },
-    {
-      id: "research",
-      label: tr("Research / DOE"),
-      items: [
-        { label: tr("30-day Opportunity"), to: "/backtesting/h30", icon: Gauge, match: (pathname) => pathname.startsWith("/backtesting/h30") },
-        { label: tr("Indicator Research"), to: "/analytics/indicators", icon: Sigma, match: (pathname) => pathname.startsWith("/analytics/indicators") },
-        { label: tr("Heatmaps"), to: "/heatmap/change", icon: BarChart3, match: (pathname) => pathname.startsWith("/heatmap/") }
-      ]
-    },
-    {
-      id: "operations",
-      label: tr("Operations"),
-      items: [
-        { label: tr("System Map"), to: "/analytics/system/map", icon: ClipboardList, match: (pathname) => pathname.startsWith("/analytics/system/map") },
-        { label: tr("Data Quality"), to: "/analytics/system/quality", icon: ShieldCheck, match: (pathname) => pathname.startsWith("/analytics/system/quality") },
-        { label: tr("Administration"), to: "/control-plane", icon: ShieldCheck, match: (pathname) => pathname.startsWith("/control-plane") }
-      ]
-    }
+  if (workspace === "stocks") return [
+    { label: "Indicator Explorer", to: "/analytics/indicators" },
+    { label: "Stock 360", to: "/analytics/stock/RELIANCE", match: (path) => path.startsWith("/analytics/stock/") },
+    { label: "Signals", to: "/analytics/daily-setups" },
+    { label: "Events", to: "/catalysts/context", match: (path) => path.startsWith("/catalysts/") },
+    { label: "Institutional Context", to: "/institutional/flow" }
   ];
-}
-
-function findCurrentPage(groups: NavGroup[], pathname: string) {
-  for (const group of groups) {
-    for (const item of group.items) {
-      if (item.match(pathname)) return item;
-    }
+  if (workspace === "oiis-lab") return [
+    { label: "Live Selection", to: "/strategy/oiis-live", match: (path) => path === "/strategy/oiis-live" },
+    { label: "Strategy Definition", to: "/backtesting/strategies" },
+    { label: "Backtest Builder", to: "/backtesting/lab" },
+    { label: "Results", to: "/backtesting/results" },
+    { label: "Compare", to: "/backtesting/compare" },
+    {
+      label: "Diagnostics",
+      to: "/backtesting/h30",
+      match: (path) => path.startsWith("/backtesting/h30") || path.startsWith("/backtesting/regimes") || path.startsWith("/backtesting/stocks")
+    },
+    { label: "Runs", to: "/strategy/oiis-live/history" }
+  ];
+  if (workspace === "rolling-monthly") return [
+    { label: "Rolling 5/30/60", to: "/strategy/rolling-monthly" },
+    { label: "Monthly anchors", to: "/strategy/monthly" }
+  ];
+  if (workspace === "monthly-strategy") return [
+    { label: "All entry methods", to: "/strategy/monthly" },
+    { label: "Expiry", to: "/strategy/monthly?entryMethod=EXPIRY" },
+    { label: "Monthly closure", to: "/strategy/monthly?entryMethod=MONTHLY_CLOSURE" },
+    { label: "First session", to: "/strategy/monthly?entryMethod=FIRST_SESSION" },
+    { label: "Rolling 5/30/60", to: "/strategy/rolling-monthly" }
+  ];
+  if (workspace === "trendlyne-summary") return [
+    { label: "Recommendation ledger", to: "/strategy/trendlyne-summary" },
+    { label: "Stock 360", to: "/analytics/stock/RELIANCE" },
+    { label: "Data quality", to: "/analytics/system/quality" }
+  ];
+  if (workspace === "long-options") return [
+    { label: "Router", to: "/strategy/long-options" },
+    { label: "Option Evidence", to: "/options/intelligence" },
+    { label: "Movement Signals", to: "/options/volatility-signals" },
+    { label: "Futures Context", to: "/futures" }
+  ];
+  // This route owns a URL-backed lens bar with the same destinations. Keep
+  // one page-level navigation system instead of rendering duplicate rows.
+  if (workspace === "nifty-weekly-options") return [];
+  if (workspace === "paper-trading") return [];
+  if (workspace === "derivatives") return [
+    { label: "Options Overview", to: "/options/intelligence", match: (path) => path === "/options/intelligence" },
+    { label: "Structure", to: "/options/structure" },
+    { label: "Volatility Signals", to: "/options/volatility-signals" },
+    { label: "Futures", to: "/futures" },
+    { label: "Advanced Data", to: "/options/snapshot" }
+  ];
+  if (workspace === "data-operations") {
+    const links: WorkspaceLink[] = [
+      { label: "Trust & Data Quality", to: "/analytics/system/quality" },
+      { label: "Run Monitor", to: "/backtesting/runs" },
+      { label: "Report Ingestion", to: "/institutional/reports" },
+      { label: "NSE Intelligence", to: "/institutional/nse-intelligence", match: (path) => path.startsWith("/institutional/nse-intelligence") },
+      { label: "Sources & Provenance", to: "/analytics/system/map" }
+    ];
+    if (isAdmin) links.push({ label: "Administration", to: "/control-plane" });
+    return links;
   }
-  return null;
+  return [];
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function buildAmbientGlowStyle(changePct: number | null | undefined): AmbientGlowStyle {
-  const safeChange = Number.isFinite(changePct) ? Number(changePct) : 0;
-  const clamped = clamp(safeChange, -2, 2);
-  const magnitude = Math.abs(clamped) / 2;
-  const easedMagnitude = Math.pow(magnitude, 1.35);
-  const direction = clamped > 0.1 ? "positive" : clamped < -0.1 ? "negative" : "neutral";
-
-  const primaryRgb =
-    direction === "positive"
-      ? "22, 62, 43"
-      : direction === "negative"
-        ? "78, 32, 38"
-        : "52, 58, 66";
-  const secondaryRgb =
-    direction === "positive"
-      ? "14, 38, 28"
-      : direction === "negative"
-        ? "42, 18, 22"
-        : "30, 36, 42";
-
-  const primaryAlpha =
-    direction === "neutral"
-      ? 0.014
-      : 0.014 + easedMagnitude * 0.018;
-  const secondaryAlpha =
-    direction === "neutral"
-      ? 0.008
-      : 0.008 + easedMagnitude * 0.012;
-
-  return {
-    "--ambient-primary-rgb": primaryRgb,
-    "--ambient-secondary-rgb": secondaryRgb,
-    "--ambient-primary-alpha": primaryAlpha.toFixed(3),
-    "--ambient-secondary-alpha": secondaryAlpha.toFixed(3)
-  };
-}
-
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const { t, tr } = useI18n();
-  const allGroups = useMemo(() => buildV2SidebarGroups(tr), [tr]);
-  const currentPage = useMemo(() => findCurrentPage(allGroups, location.pathname), [allGroups, location.pathname]);
-
+  const { tr } = useI18n();
   const { authReady, user } = useAuthGate();
-  const sidebarGroups = useMemo(
-    () => allGroups
-      .filter((group) => !group.hiddenInSidebar)
-      .map((group) => group.id === "operations" && user?.role !== "admin"
-        ? { ...group, items: group.items.filter((item) => item.to !== "/control-plane") }
-        : group),
-    [allGroups, user?.role]
-  );
   const { mode: analyticsMode } = useAnalyticsExperienceMode();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  const sessionEnabled = authReady && !!user;
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [paperVoiceEnabled, setPaperVoiceEnabled] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("n50.paper-alert-voice") === "speak");
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
+  const sessionEnabled = authReady && Boolean(user);
   const overview = useOverview(sessionEnabled);
-  const live = useLiveQuotes(["NIFTY50", "BANKNIFTY", "INDIAVIX"], sessionEnabled);
-  const tickerItems = useMemo(() => {
-    const items = overview.data?.tickerTape ?? [];
-    return items.map((item) => {
-      const quote = live[item.symbol];
-      return quote
-        ? {
-            ...item,
-            last: quote.price,
-            changePct: quote.changePct
-          }
-        : item;
-    });
-  }, [live, overview.data?.tickerTape]);
+  const liveFeed = useLiveQuotesWithStatus(["NIFTY50", "BANKNIFTY", "INDIAVIX"], sessionEnabled);
+  const live = liveFeed.quotes;
+  const tickerItems = useMemo(() => (overview.data?.tickerTape ?? []).map((item) => {
+    const quote = live[item.symbol];
+    return quote ? { ...item, last: quote.price, changePct: quote.changePct } : item;
+  }), [live, overview.data?.tickerTape]);
   const niftyChangePct =
     live.NIFTY50?.changePct ??
     overview.data?.indices?.nifty50?.changePct ??
     tickerItems.find((item) => item.symbol.toUpperCase() === "NIFTY50")?.changePct ??
-    0;
-  const ambientGlowStyle = useMemo(() => buildAmbientGlowStyle(niftyChangePct), [niftyChangePct]);
-
-  const currentSection = resolvePrimarySection(location.pathname);
-  const currentSectionMeta = SECTION_META[currentSection];
-  const desktopSidebarCollapsed = true;
-  const pageTitle = currentPage?.label ?? tr(currentSectionMeta.label);
+    null;
+  const niftyLevel =
+    live.NIFTY50?.price ??
+    overview.data?.indices?.nifty50?.last ??
+    tickerItems.find((item) => item.symbol.toUpperCase() === "NIFTY50")?.last ??
+    null;
+  const niftyRsi = overview.data?.indices?.nifty50?.rsi ?? null;
+  const workspaceRoute = resolveWorkspaceRoute(location.pathname);
+  const workspace = workspaceRoute.id;
+  const isAdminRoute = location.pathname.startsWith("/control-plane");
+  const secondaryLinks = workspaceLinks(workspace, user?.role === "admin");
+  const pageTitle = tr(workspaceRoute.label);
   const authState = authReady && user ? "signed_in" : "guest";
   const prefetchDashboardRoute = useDashboardPrefetch(authReady);
   const commandItems = useMemo<CommandPaletteItem[]>(() => {
-    const routes = allGroups.flatMap((group) => group.items.map((item) => ({
-      group: group.label,
-      label: item.label,
-      to: item.to,
-      keywords: [group.id]
+    const stocks = (overview.data?.sectors ?? []).flatMap((sector) => sector.stocks.map<CommandItem>((stock) => ({
+      id: `stock:${stock.symbol}`,
+      group: "Stocks",
+      label: stock.symbol,
+      description: `${stock.name || stock.symbol} · ${sector.sector}`,
+      context: Number.isFinite(stock.last) ? `₹${Number(stock.last).toLocaleString("en-IN", { maximumFractionDigits: 2 })} · ${Number(stock.changePct) >= 0 ? "+" : ""}${Number(stock.changePct).toFixed(2)}%` : undefined,
+      freshness: stock.timestamp ? `Data ${new Date(stock.timestamp).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}` : undefined,
+      to: `/analytics/stock/${encodeURIComponent(stock.symbol)}?source=command-palette`,
+      keywords: [stock.name, sector.sector, "stock", "instrument"].filter(Boolean) as string[],
+      actionLabel: "Stock 360"
     })));
-    return [
-      ...routes,
-      { group: tr("Stocks"), label: "RELIANCE", to: "/analytics/stock/RELIANCE", keywords: ["stock", "instrument"] },
-      { group: tr("Stocks"), label: "TCS", to: "/analytics/stock/TCS", keywords: ["stock", "instrument"] },
-      { group: tr("Stocks"), label: "HDFCBANK", to: "/analytics/stock/HDFCBANK", keywords: ["stock", "instrument"] },
-      { group: tr("Market"), label: "NIFTY 50", to: "/analytics/market-state", keywords: ["index", "market"] }
-    ];
-  }, [allGroups, tr]);
+    return [...routeCommandItems(user?.role === "admin"), ...stocks];
+  }, [overview.data?.sectors, user?.role]);
+
+  const loadCommandEntities = useCallback(async (): Promise<CommandPaletteItem[]> => {
+    const [paperResponse, runResponse] = await Promise.allSettled([
+      fetch(`${import.meta.env.VITE_API_BASE_URL ?? ""}/v1/workspace/paper-trading`, { credentials: "include", headers: { Accept: "application/json" } }).then(async (response) => response.ok ? response.json() : Promise.reject(new Error(`Paper API ${response.status}`))),
+      fetch(`${import.meta.env.VITE_API_BASE_URL ?? ""}/v1/backtesting/lab/runs?limit=25`, { credentials: "include", headers: { Accept: "application/json" } }).then(async (response) => response.ok ? response.json() : Promise.reject(new Error(`Runs API ${response.status}`)))
+    ]);
+    const dynamic: CommandPaletteItem[] = [];
+    if (paperResponse.status === "fulfilled") {
+      for (const trade of paperResponse.value?.stockTrades ?? []) dynamic.push({
+        id: `paper:${trade.trade_group_id}`,
+        group: "Paper trades",
+        label: `${trade.symbol} paper trade`,
+        description: `${trade.group_status ?? trade.status ?? "Observation"} · ${trade.side ?? ""} · ${trade.strategy_id ?? "Manual"}`,
+        freshness: trade.last_mark_at ? `Marked ${new Date(trade.last_mark_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}` : undefined,
+        to: `/paper-trading?tradeId=${encodeURIComponent(trade.trade_group_id)}&source=command-palette`,
+        keywords: [trade.symbol, trade.strategy_id, trade.group_status, "paper position"].filter(Boolean),
+        actionLabel: "Open journey"
+      });
+    }
+    if (runResponse.status === "fulfilled") {
+      for (const run of runResponse.value?.items ?? []) dynamic.push({
+        id: `run:${run.runId}`,
+        group: "Backtest runs",
+        label: `${run.strategyVersionId ?? "Strategy"} run`,
+        description: `${run.status ?? "UNKNOWN"} · ${run.requestedDateStart ?? "—"} to ${run.requestedDateEnd ?? "—"}`,
+        freshness: run.createdAt ? `Created ${new Date(run.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}` : undefined,
+        to: `/backtesting/lab?runId=${encodeURIComponent(run.runId)}&source=command-palette`,
+        keywords: [run.runId, run.strategyVersionId, run.status, "backtest"].filter(Boolean),
+        actionLabel: "Open run"
+      });
+    }
+    return dynamic;
+  }, []);
 
   useTrackPageViews({
     pathname: location.pathname,
@@ -555,54 +195,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     trackingReady: authReady
   });
 
-  useEffect(() => {
-    setMobileNavOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (!mobileNavOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileNavOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [mobileNavOpen]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onResize = () => {
-      if (!isMobileViewport()) setMobileNavOpen(false);
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  const toggleNavigation = () => {
-    if (isMobileViewport()) {
-      void trackNavClick({
-        nav_type: "mobile_drawer_toggle",
-        source_page: location.pathname,
-        next_state: mobileNavOpen ? "closed" : "open"
-      });
-      setMobileNavOpen((value) => !value);
-      return;
-    }
-
-    return;
-  };
-
-  const workspaceTheme = "light";
-  const feedState = overview.isLoading
-    ? "loading"
-    : overview.isError
-      ? "error"
-      : overview.data
-        ? "current"
-      : "unavailable";
+  const newestQuoteTime = Object.values(live).reduce<string | undefined>((latest, quote) => {
+    if (!latest) return quote.timestamp;
+    return Date.parse(quote.timestamp) > Date.parse(latest) ? quote.timestamp : latest;
+  }, undefined);
+  const feedQuality = buildMarketQuoteQuality({
+    transport: liveFeed.transport,
+    quoteTimestamp: newestQuoteTime,
+    snapshotTimestamp: overview.data?.asOf,
+    receiveTimestamp: liveFeed.lastReceivedAt,
+    sequence: liveFeed.sequence,
+    gapDetected: liveFeed.gapDetected,
+    snapshotFailed: overview.isError
+  });
 
   if (!authReady || !user) {
     return (
       <div className={styles.shell} data-ui-generation="trading-v2" data-workspace-theme="light">
+        <NavigationStateManager />
         <AuthGateModal />
       </div>
     );
@@ -612,160 +222,124 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div
       className={styles.shell}
       data-ui-generation="trading-v2"
-      data-workspace-theme={workspaceTheme}
-      data-mobile-nav-open={mobileNavOpen ? "true" : "false"}
-      data-sidebar-collapsed={desktopSidebarCollapsed ? "true" : "false"}
+      data-workspace-theme="light"
+      data-has-ticker="true"
+      data-admin-shell={isAdminRoute ? "true" : "false"}
+      data-presentation-mode={presentationMode ? "true" : "false"}
     >
-      <div className={styles.ambientBackdrop} style={ambientGlowStyle} aria-hidden="true" />
+      <NavigationStateManager />
+      <MarketGradientWaves changePct={niftyChangePct} rsi={niftyRsi} />
+      <MarketRsiParticles rsi={niftyRsi} />
       <div className={styles.chrome}>
+        <MarketTargetCursor changePct={niftyChangePct} />
         <header className={styles.header}>
           <div className={styles.topBar}>
             <div className={styles.topBarLeft}>
-              <button
-                type="button"
-                className={styles.menuButton}
-                onClick={toggleNavigation}
-                aria-controls="primary-site-sidebar"
-                aria-expanded={mobileNavOpen ? "true" : desktopSidebarCollapsed ? "false" : "true"}
-                aria-label={
-                  mobileNavOpen
-                    ? t("ui.closeNavigation", "Close navigation")
-                    : desktopSidebarCollapsed
-                      ? t("ui.expandNavigation", "Expand navigation")
-                      : t("ui.collapseNavigation", "Collapse navigation")
-                }
-              >
-                {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
-              </button>
-
-              <Link
-                to="/"
-                className={styles.brandLink}
-                onMouseEnter={() => prefetchDashboardRoute("/")}
-                onFocus={() => prefetchDashboardRoute("/")}
-              >
-                <span className={styles.brandMark}>NIFTY 50 TRADER</span>
+              <Link to="/" className={styles.brandLink} onMouseEnter={() => prefetchDashboardRoute("/")} onFocus={() => prefetchDashboardRoute("/")}>
+                <span className={styles.brandMark}>{isAdminRoute ? "NIFTY 50 ADMIN" : "NIFTY 50 TRADER"}</span>
               </Link>
-              <CommandPalette items={commandItems} showLauncher={location.pathname !== "/"} />
+              <CommandPalette items={commandItems} loadItems={loadCommandEntities} />
             </div>
-
             <div className={styles.topBarCenter}>
               <div className={styles.headerContext}>
-                <EnvironmentBadge />
-                <span className={styles.pageTitle}>{pageTitle}</span>
-                {overview.data?.asOf ? <DataAge>Data {new Date(overview.data.asOf).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</DataAge> : null}
-                <FeedFreshnessBadge state={feedState} />
+                <EnvironmentBadge value={isAdminRoute ? "ADMIN" : "PAPER"} />
+                <div
+                  className={styles.niftyHeaderQuote}
+                  data-testid="nifty-header-quote"
+                  data-tone={niftyChangePct == null ? "neutral" : niftyChangePct > 0 ? "positive" : niftyChangePct < 0 ? "negative" : "neutral"}
+                  aria-label={niftyLevel == null || niftyChangePct == null ? "NIFTY 50 data pending" : `NIFTY 50 ${fmtPrice(niftyLevel)}, ${fmtPct(niftyChangePct)}`}
+                >
+                  <span>NIFTY 50</span>
+                  <strong>{niftyLevel == null ? "—" : fmtPrice(niftyLevel)}</strong>
+                  <em className={niftyChangePct == null ? undefined : pctClass(niftyChangePct)}>
+                    {niftyChangePct == null ? "Pending" : `${arrow(niftyChangePct)} ${fmtPct(niftyChangePct)}`}
+                  </em>
+                </div>
+                <span className={styles.marketSession}>{overview.data?.market?.label === "OPEN" ? "Market open" : "Market closed"}</span>
+                {overview.data?.asOf ? (
+                  <DataAge>Data {new Date(overview.data.asOf).toLocaleString("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false
+                  })}</DataAge>
+                ) : null}
+                <DataQualityBadge quality={feedQuality} compact />
               </div>
             </div>
-
             <div className={styles.topBarRight}>
-              <div className={styles.sessionStatus}>
-                <AuthStatus />
-              </div>
+              <button
+                type="button"
+                className={styles.paperVoiceToggle}
+                data-active={paperVoiceEnabled ? "true" : "false"}
+                aria-pressed={paperVoiceEnabled}
+                aria-label={paperVoiceEnabled ? "Mute paper trade voice alerts" : "Speak paper trade entry and exit conditions"}
+                title={speechSupported ? (paperVoiceEnabled ? "Mute paper trade voice alerts" : "Read paper trade entry and exit conditions using this browser") : "Browser speech is unavailable"}
+                disabled={!speechSupported}
+                onClick={() => setPaperVoiceEnabled((current) => {
+                  const next = !current;
+                  window.localStorage.setItem("n50.paper-alert-voice", next ? "speak" : "mute");
+                  if (!next) window.speechSynthesis.cancel();
+                  return next;
+                })}
+              >
+                {paperVoiceEnabled ? <AudioLines size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
+                <span>{paperVoiceEnabled ? "Speak" : "Muted"}</span>
+              </button>
+              <div className={styles.sessionStatus}><AuthStatus /></div>
             </div>
           </div>
-
           <div className={styles.tickerRail} data-clarity-unmask="true" data-clarity-region="top_ticker">
-            <HeaderTicker items={tickerItems} />
+            <HeaderTicker
+              items={tickerItems}
+              leadingSlot={(
+                <div
+                  className={styles.mobileNiftyQuote}
+                  data-testid="nifty-header-quote-mobile"
+                  data-tone={niftyChangePct == null ? "neutral" : niftyChangePct > 0 ? "positive" : niftyChangePct < 0 ? "negative" : "neutral"}
+                  aria-hidden="true"
+                >
+                  <span>N50</span>
+                  <strong>{niftyLevel == null ? "—" : fmtPrice(niftyLevel)}</strong>
+                  <em>{niftyChangePct == null ? "Pending" : `${arrow(niftyChangePct)} ${fmtPct(niftyChangePct)}`}</em>
+                </div>
+              )}
+            />
           </div>
         </header>
 
-        <div className={styles.body}>
-          <button
-            type="button"
-            className={styles.scrim}
-            aria-label={t("ui.closeNavigation", "Close navigation")}
-            tabIndex={mobileNavOpen ? 0 : -1}
-            onClick={() => setMobileNavOpen(false)}
+        {isAdminRoute ? (
+          <nav className={styles.adminNavigation} aria-label="Administration navigation">
+            <Link to="/analytics/system/quality">← Data &amp; Operations</Link>
+            <strong>Authorised administration</strong>
+          </nav>
+        ) : (
+          <ResponsiveWorkspaceNavigation
+            pathname={location.pathname}
+            isAdmin={user.role === "admin"}
+            presentationMode={presentationMode}
+            onPresentationModeChange={setPresentationMode}
+            onPrefetch={prefetchDashboardRoute}
           />
+        )}
 
-          <aside
-            id="primary-site-sidebar"
-            className={styles.sidebar}
-            aria-label={t("ui.primaryNavigation", "Primary site navigation")}
-            data-clarity-region="left_sidebar"
-          >
-            <nav className={styles.sidebarNav} aria-label={t("ui.dashboardSections", "Dashboard sections")}>
-              {sidebarGroups.map((group) => (
-                <section key={group.id} className={styles.navSection} aria-labelledby={`nav-group-${group.id}`}>
-                  <h2 id={`nav-group-${group.id}`} className={styles.groupLabel}>
-                    {group.label}
-                  </h2>
-                  <div className={styles.groupItems}>
-                    {group.items.map((item) => {
-                      const active = item.match(location.pathname);
-                      const Icon = item.icon;
-                      const body = (
-                        <>
-                          <span className={styles.navIcon} aria-hidden="true">
-                            <Icon size={16} strokeWidth={1.8} />
-                          </span>
-                          <span className={styles.navLabel}>{item.label}</span>
-                          <span className={styles.navTooltip} role="tooltip">
-                            {item.label}
-                          </span>
-                        </>
-                      );
-
-                      return item.external ? (
-                        <a
-                          key={item.label}
-                          href={item.to}
-                          className={styles.navLink}
-                          data-active={active ? "true" : "false"}
-                          data-tooltip={item.label}
-                          title={desktopSidebarCollapsed ? item.label : undefined}
-                          onMouseEnter={() => prefetchDashboardRoute(item.to)}
-                          onFocus={() => prefetchDashboardRoute(item.to)}
-                          onClick={() =>
-                            void trackNavClick({
-                              nav_type: "sidebar",
-                              source_page: location.pathname,
-                              target_page: item.to,
-                              target_label: item.label,
-                              app_area: group.id
-                            })
-                          }
-                        >
-                          {body}
-                        </a>
-                      ) : (
-                        <Link
-                          key={item.label}
-                          to={item.to}
-                          className={styles.navLink}
-                          data-active={active ? "true" : "false"}
-                          data-tooltip={item.label}
-                          aria-current={active ? "page" : undefined}
-                          onMouseEnter={() => prefetchDashboardRoute(item.to)}
-                          onFocus={() => prefetchDashboardRoute(item.to)}
-                          onClick={() => {
-                            void trackNavClick({
-                              nav_type: "sidebar",
-                              source_page: location.pathname,
-                              target_page: item.to,
-                              target_label: item.label,
-                              app_area: group.id
-                            });
-                            setMobileNavOpen(false);
-                          }}
-                          title={desktopSidebarCollapsed ? item.label : undefined}
-                        >
-                          {body}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </nav>
-          </aside>
-
+        <div className={styles.body}>
           <div className={styles.contentColumn}>
+            {secondaryLinks.length > 0 && !isAdminRoute ? (
+              <nav className={styles.workspaceTabs} aria-label={`${pageTitle} workspace sections`}>
+                {secondaryLinks.map((item) => {
+                  const active = item.match ? item.match(location.pathname) : location.pathname.startsWith(item.to);
+                  return <Link key={item.to} to={item.to} className={styles.workspaceTab} data-active={active ? "true" : "false"}>{item.label}</Link>;
+                })}
+              </nav>
+            ) : null}
             <main className={styles.main}>{children}</main>
           </div>
         </div>
       </div>
+      <PaperTradeNotifier enabled={sessionEnabled} audible={paperVoiceEnabled} />
       <AuthGateModal />
     </div>
   );

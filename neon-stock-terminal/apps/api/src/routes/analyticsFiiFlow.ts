@@ -33,6 +33,25 @@ type NiftyDailyRow = {
   loaded_at: Date | string | null;
 };
 
+type CashFlowRow = {
+  market_date: Date | string;
+  participant_type: string;
+  buy_value: number | Prisma.Decimal | null;
+  sell_value: number | Prisma.Decimal | null;
+  net_value: number | Prisma.Decimal | null;
+  exchange_scope: string | null;
+  source_dataset: string | null;
+};
+
+type InstitutionalSourceStatusRow = {
+  source_id: string;
+  source_label: string;
+  latest_market_date: Date | string | null;
+  latest_refresh_at: Date | string | null;
+  row_count: bigint | number | Prisma.Decimal | null;
+  cadence: string;
+};
+
 type ParticipantSnapshot = {
   clientType: string;
   oiLongContracts: number;
@@ -153,7 +172,7 @@ function sameDirectionRate(pairs: Array<{ signal: number | null; next: number | 
 }
 
 export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
-  const [oiRows, volumeRows, statRows, niftyRows] = await Promise.all([
+  const [oiRows, volumeRows, statRows, niftyRows, cashFlowRows, sourceStatusRows] = await Promise.all([
     prisma.$queryRaw<ParticipantOiRow[]>(Prisma.sql`
       WITH ranked AS (
         SELECT
@@ -230,8 +249,101 @@ export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
       FROM ranked
       WHERE rn = 1
       ORDER BY trade_date ASC
+    `),
+    prisma.$queryRaw<CashFlowRow[]>(Prisma.sql`
+      SELECT market_date, participant_type, buy_value, sell_value, net_value, exchange_scope, source_dataset
+      FROM institutional_flow.normalized_nse_fii_dii
+      WHERE source_dataset = 'nse_fii_dii_nse_only'
+      ORDER BY market_date ASC, participant_type ASC
+    `),
+    prisma.$queryRaw<InstitutionalSourceStatusRow[]>(Prisma.sql`
+      SELECT 'cash_fii_dii' AS source_id, 'NSE cash FII/DII' AS source_label,
+        max(market_date) AS latest_market_date,
+        (SELECT max(normalized_at) FROM institutional_flow.ingestion_registry
+          WHERE dataset_name = 'nse_fii_dii_nse_only' AND status = 'normalized') AS latest_refresh_at,
+        count(*) AS row_count, 'DAILY' AS cadence
+      FROM institutional_flow.normalized_nse_fii_dii
+      WHERE source_dataset = 'nse_fii_dii_nse_only'
+      UNION ALL
+      SELECT 'participant_oi', 'NSE participant derivatives OI', max(market_date), NULL,
+        count(*), 'DAILY'
+      FROM institutional_flow.normalized_nse_derivatives_participants
+      UNION ALL
+      SELECT 'nsdl_daily', 'NSDL FPI daily trends', max(market_date), NULL,
+        count(*), 'DAILY'
+      FROM institutional_flow.normalized_nsdl_daily_trends
+      UNION ALL
+      SELECT 'nsdl_sector', 'NSDL FPI sector exposure', max(market_date), NULL,
+        count(*), 'FORTNIGHTLY'
+      FROM institutional_flow.normalized_nsdl_fortnightly_sector
+      UNION ALL
+      SELECT 'legacy_participant_detail', 'Detailed participant report used below', max(trade_date), max(loaded_at),
+        count(*), 'DAILY'
+      FROM market_data.nse_fii_participant_open_interest
     `)
   ]);
+
+  const cashByDate = new Map<string, { fii: number | null; dii: number | null }>();
+  for (const row of cashFlowRows) {
+    const tradeDate = toDateKey(row.market_date);
+    if (!tradeDate) continue;
+    const bucket = cashByDate.get(tradeDate) ?? { fii: null, dii: null };
+    const participant = row.participant_type.toUpperCase();
+    const netValue = toNullableNumber(row.net_value);
+    if (participant.includes("FII") || participant.includes("FPI")) bucket.fii = netValue;
+    if (participant.includes("DII")) bucket.dii = netValue;
+    cashByDate.set(tradeDate, bucket);
+  }
+  let cumulativeFii = 0;
+  let cumulativeDii = 0;
+  const cashFlowTrend = Array.from(cashByDate.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([tradeDate, values]) => {
+      if (values.fii != null) cumulativeFii += values.fii;
+      if (values.dii != null) cumulativeDii += values.dii;
+      return {
+        tradeDate,
+        fiiNetCr: round(values.fii, 2),
+        diiNetCr: round(values.dii, 2),
+        combinedNetCr: round((values.fii ?? 0) + (values.dii ?? 0), 2),
+        cumulativeFiiCr: round(cumulativeFii, 2),
+        cumulativeDiiCr: round(cumulativeDii, 2)
+      };
+    });
+  const cashDates = new Set(cashFlowTrend.map((row) => row.tradeDate));
+  const recentExpectedDates = niftyRows
+    .map((row) => toDateKey(row.trade_date))
+    .filter((value): value is string => !!value)
+    .slice(-20);
+  const missingCashDates = recentExpectedDates.filter((tradeDate) => !cashDates.has(tradeDate));
+  const latestCashTradeDate = cashFlowTrend.at(-1)?.tradeDate ?? null;
+  const cashCoveragePct = recentExpectedDates.length
+    ? round(((recentExpectedDates.length - missingCashDates.length) / recentExpectedDates.length) * 100, 1)
+    : null;
+  const sourceStatus = sourceStatusRows.map((row) => {
+    const latestMarketDate = toDateKey(row.latest_market_date);
+    const lagDays = latestMarketDate
+      ? differenceInCalendarDays(new Date().toISOString().slice(0, 10), latestMarketDate)
+      : null;
+    const cadence = row.cadence === "FORTNIGHTLY" ? "FORTNIGHTLY" : "DAILY";
+    const freshness = latestMarketDate == null
+      ? "MISSING"
+      : lagDays != null && lagDays <= (cadence === "FORTNIGHTLY" ? 18 : 2)
+        ? "CURRENT"
+        : lagDays != null && lagDays <= (cadence === "FORTNIGHTLY" ? 35 : 5)
+          ? "DELAYED"
+          : "STALE";
+    return {
+      sourceId: row.source_id,
+      label: row.source_label,
+      cadence,
+      latestMarketDate,
+      latestRefreshAt: toIso(row.latest_refresh_at),
+      rowCount: toNumber(row.row_count),
+      lagDays,
+      freshness
+    };
+  });
 
   const filteredOiRows = oiRows.filter((row) => row.client_type !== "TOTAL");
   if (!filteredOiRows.length) {
@@ -239,6 +351,7 @@ export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
       asOf: new Date().toISOString(),
       latestTradeDate: null,
       reportLagDays: null,
+      latestCashTradeDate,
       contextLayer: "Daily institutional context only. This is not a live entry trigger.",
       backdrop: "neutral",
       marketContext: null,
@@ -246,13 +359,21 @@ export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
       participants: [],
       divergences: [],
       percentileBuckets: [],
+      cashCoverage: {
+        expectedRecentSessions: recentExpectedDates.length,
+        availableRecentSessions: recentExpectedDates.length - missingCashDates.length,
+        coveragePct: cashCoveragePct,
+        missingTradeDates: missingCashDates
+      },
+      sourceStatus,
       charts: {
         clientLongShortMatrix: [],
         fiiVsClientSpread: [],
         productValueByProduct: [],
         positioningPercentile: [],
         regimeOverlay: [],
-        dayOverDayPositioningChange: []
+        dayOverDayPositioningChange: [],
+        cashFlowTrend
       }
     };
   }
@@ -618,6 +739,7 @@ export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
     reportLagDays: latestTradeDate
       ? differenceInCalendarDays(new Date().toISOString().slice(0, 10), latestTradeDate)
       : null,
+    latestCashTradeDate,
     contextLayer: "Daily institutional context only. This is not a live entry trigger.",
     backdrop,
     marketContext: latestTradeDate
@@ -646,6 +768,13 @@ export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
         : [])
     ].slice(0, 5),
     percentileBuckets,
+    cashCoverage: {
+      expectedRecentSessions: recentExpectedDates.length,
+      availableRecentSessions: recentExpectedDates.length - missingCashDates.length,
+      coveragePct: cashCoveragePct,
+      missingTradeDates: missingCashDates
+    },
+    sourceStatus,
     diagnostics: {
       sampleSize: positioningPercentile.length,
       averageFiiNetPct: round(fiiNetPctMean, 4),
@@ -658,7 +787,8 @@ export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
       productValueByProduct,
       positioningPercentile,
       regimeOverlay,
-      dayOverDayPositioningChange
+      dayOverDayPositioningChange,
+      cashFlowTrend
     }
   };
 }

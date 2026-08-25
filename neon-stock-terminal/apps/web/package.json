@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit --pretty false"
+    "typecheck": "tsc --noEmit --pretty false",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.7",

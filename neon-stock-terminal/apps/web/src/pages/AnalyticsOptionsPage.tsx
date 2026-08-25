@@ -1181,7 +1181,7 @@ export function AnalyticsOptionsPage() {
           }}
         >
           <span className={styles.promptLabel}>{tr("Learning next")}</span>
-          <strong>{tr("Open Strategy Lab")}</strong>
+          <strong>{tr("Open OIIS Lab")}</strong>
           <span className={styles.muted}>{tr("Carry the option context into historical evidence before deciding whether this pressure pattern deserves trust.")}</span>
         </Link>
       </section>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import {
   fetchOiisLiveCandidates,
@@ -7,8 +7,13 @@ import {
   mutateOiisLive,
   type OiisLiveDashboard,
 } from "../lib/api";
-import { STRATEGY_SECTION_TABS } from "./AnalyticsChrome";
+import {
+  LearnAboutThisAnalysis,
+  RelatedJourney,
+} from "../components/navigation/StrategicPrimitives";
 import styles from "./OiisLivePage.module.css";
+import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
+import { StockDistribution, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 
 const empty = {
   symbol: "",
@@ -49,6 +54,18 @@ function dateOnly(value: unknown) {
   return typeof value === "string" ? value.slice(0, 10) : "—";
 }
 
+function timeIst(value: unknown) {
+  if (typeof value !== "string" || !value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(parsed);
+}
+
 function humanise(value: unknown) {
   return String(value ?? "Unknown")
     .toLowerCase()
@@ -60,6 +77,21 @@ function reasons(row: Record<string, any>) {
   return Array.isArray(row.reason_codes)
     ? row.reason_codes.map(humanise).slice(0, 2)
     : [];
+}
+
+function qualityScore(row: Record<string, any>) {
+  return [row.ofactor, row.xfactor_snapshot, row.data_quality]
+    .map(Number)
+    .reduce((sum, item) => sum + (Number.isFinite(item) ? item : 0), 0);
+}
+
+function qualityBand(row: Record<string, any>) {
+  const ofactor = Number(row.ofactor);
+  const xfactor = Number(row.xfactor_snapshot);
+  if (ofactor > 70 && xfactor > 70) return "green";
+  if (ofactor > 50 && xfactor > 50) return "yellow";
+  if (ofactor > 40 && xfactor > 40) return "orange";
+  return "grey";
 }
 
 const GATE_GUIDE = [
@@ -137,9 +169,13 @@ export function OiisLivePage() {
   const [tradeDate, setTradeDate] = useState("");
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<string | null>(null);
-  const [view, setView] = useState<"summary" | "details">("summary");
+  const [view, setView] = useState<
+    "overview" | "opportunities" | "execution" | "diagnostics" | "details"
+  >("overview");
   const [candidateSearch, setCandidateSearch] = useState("");
   const [candidates, setCandidates] = useState<Array<Record<string, any>>>([]);
+  const [profileFilters, setProfileFilters] = useState<StockProfileFilters>({ universe: "ALL", capBucket: "ALL", sector: "ALL" });
+  const profiles = useProfileIndex();
 
   const load = useCallback(async (date?: string) => {
     try {
@@ -236,10 +272,7 @@ export function OiisLivePage() {
   const watch = data?.watchlist ?? [];
   const opportunities = data?.recommendations ?? [];
   const funnel = data?.funnel ?? {};
-  const latestRun =
-    (data?.runs ?? []).find((row) => dateOnly(row.trade_date) === tradeDate) ??
-    data?.runs?.[0] ??
-    {};
+  const latestRun = data?.latestRun ?? {};
   const evaluated = integer(funnel, "evaluated");
   const selected = integer(funnel, "selected");
   const accepted = (data?.entries ?? []).filter(
@@ -248,16 +281,24 @@ export function OiisLivePage() {
   const historicalSummary = data?.historical?.summary ?? {};
   const primaryBlocker = data?.rejectionReasons?.[0];
   const noTrade = evaluated > 0 && selected === 0;
-  const filteredCandidates = candidates.filter((row) => {
-    const query = candidateSearch.trim().toUpperCase();
-    return (
-      !query ||
-      String(row.symbol ?? "").includes(query) ||
-      String(row.sector ?? "")
-        .toUpperCase()
-        .includes(query)
-    );
-  });
+  const filteredCandidates = candidates
+    .filter((row) => {
+      const query = candidateSearch.trim().toUpperCase();
+      return matchesStockProfile(profiles.bySymbol.get(String(row.symbol ?? "").toUpperCase()), profileFilters) && (
+        !query ||
+        String(row.symbol ?? "").includes(query) ||
+        String(row.sector ?? "")
+          .toUpperCase()
+          .includes(query)
+      );
+    })
+    .sort((left, right) => qualityScore(right) - qualityScore(left));
+  const opportunityRows = candidates
+    .filter((row) => Number.isFinite(qualityScore(row)))
+    .sort((left, right) => qualityScore(right) - qualityScore(left));
+  const executionRows = candidates
+    .filter((row) => Number.isFinite(qualityScore(row)))
+    .sort((left, right) => qualityScore(right) - qualityScore(left));
   const setupStats = candidates.reduce(
     (totals, row) => {
       const actual = row.gate_evidence?.NO_VALID_SETUP?.actual ?? {};
@@ -312,10 +353,12 @@ export function OiisLivePage() {
 
   const detailsView = (
     <section className={styles.panel}>
+      <StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={filteredCandidates.length} />
+      <StockDistribution profiles={filteredCandidates.map((row) => profiles.bySymbol.get(String(row.symbol).toUpperCase())).filter((item): item is NonNullable<typeof item> => Boolean(item))} />
       <div className={styles.sectionHeading}>
         <div>
           <span className={styles.kicker}>Full evidence ledger</span>
-          <h2>Every NIFTY 50 stock with active F&amp;O eligibility</h2>
+          <h2>Every active stock F&amp;O underlying</h2>
         </div>
         <span className={styles.note}>
           {filteredCandidates.length} of {candidates.length} stocks · latest
@@ -330,12 +373,12 @@ export function OiisLivePage() {
           aria-label="Search evaluated stocks"
         />
         <span>
-          Eligible intersection {value(data?.universe ?? {}, "eligible")} ·
-          F&amp;O master {value(data?.universe ?? {}, "fno")} · NIFTY 50 master{" "}
+          Active F&amp;O universe {value(data?.universe ?? {}, "eligible")} ·
+          F&amp;O master {value(data?.universe ?? {}, "fno")} · NIFTY 50 members{" "}
           {value(data?.universe ?? {}, "nifty50")}
         </span>
       </div>
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="All F and O evidence">
         <table className={`${styles.table} ${styles.detailTable}`}>
           <thead>
             <tr>
@@ -352,7 +395,7 @@ export function OiisLivePage() {
             </tr>
           </thead>
           <tbody>
-            {filteredCandidates.map((row) => {
+            {filteredCandidates.map((row, index) => {
               const features = row.feature_values ?? {};
               const gates = row.gate_evidence ?? {};
               const longComponents =
@@ -370,15 +413,13 @@ export function OiisLivePage() {
                 row.component_scores?.ofactor_short?.weighted_contributions ??
                 {};
               return (
-                <tr key={row.candidate_id}>
+                <tr key={row.candidate_id} data-quality-band={qualityBand(row)}>
                   <td>
-                    <strong>
-                      {row.opportunity_rank ? `#${row.opportunity_rank} ` : ""}
-                      {row.symbol}
-                    </strong>
+                    <Link className={styles.stockLink} to={`/analytics/stock/${encodeURIComponent(row.symbol)}?strategy=oiis-live&runId=${encodeURIComponent(String(latestRun.run_id ?? ""))}&source=oiis-live&selectedEntityId=${encodeURIComponent(String(row.candidate_id))}&returnTo=${encodeURIComponent("/strategy/oiis-live")}`}>
+                      #{index + 1} {row.symbol}
+                    </Link>
                     <small>
-                      {value(row, "sector")} · execution #
-                      {value(row, "execution_rank")}
+                      Quality sum {qualityScore(row).toFixed(2)} · {value(row, "sector")}
                     </small>
                   </td>
                   <td>
@@ -581,6 +622,72 @@ export function OiisLivePage() {
     </section>
   );
 
+  const queueView = view === "opportunities" || view === "execution" ? (
+    <section className={styles.panel}>
+      <div className={styles.sectionHeading}>
+        <div>
+          <span className={styles.kicker}>{view === "opportunities" ? "Watch quality" : "Entry readiness"}</span>
+          <h2>{view === "opportunities" ? "Opportunity leaderboard" : "Execution queue"}</h2>
+        </div>
+        <span className={styles.note}>
+          {view === "opportunities"
+            ? "Ranked by directional evidence; this is not trade permission."
+            : "Ranked by setup and gate readiness; only entry-enabled rows are trades."}
+        </span>
+      </div>
+      <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="OIIS candidate list">
+        <table className={styles.table}>
+          <thead><tr>
+            <th>Sequence / symbol</th><th>Direction</th><th>Quality sum</th><th>OFactor</th><th>X / DQ</th>
+            <th>Structure / session</th><th>Setup</th><th>Status</th><th>Why</th>
+          </tr></thead>
+          <tbody>
+            {(view === "opportunities" ? opportunityRows : executionRows).map((row, index) => (
+              <tr key={row.candidate_id} data-quality-band={qualityBand(row)}>
+                <td><Link className={styles.stockLink} to={`/analytics/stock/${encodeURIComponent(row.symbol)}?strategy=oiis-live&runId=${encodeURIComponent(String(latestRun.run_id ?? ""))}&source=oiis-live&selectedEntityId=${encodeURIComponent(String(row.candidate_id))}&returnTo=${encodeURIComponent("/strategy/oiis-live")}`}>#{index + 1} {row.symbol}</Link><small>{row.universe_flags?.is_nifty50 ? "NIFTY 50 · " : ""}F&amp;O · {value(row, "sector")}</small></td>
+                <td><span className={styles.pill} data-state={row.direction}>{value(row, "direction")}</span><small>{humanise(row.direction_state)}</small></td>
+                <td><strong>{qualityScore(row).toFixed(2)}</strong><small>O + X + DQ, high to low</small></td>
+                <td><strong>{number(row, "ofactor", 2)}</strong><small>{value(row, "ofactor_level")}</small></td>
+                <td><strong>{number(row, "xfactor_snapshot", 1)} / {number(row, "data_quality", 1)}</strong><small>coverage {number(row, "data_coverage", 0)}%</small></td>
+                <td><small>{value(row, "structural_direction")} structure</small><small>{value(row, "session_direction")} session</small></td>
+                <td><strong>{humanise(row.setup_id)}</strong><small>{humanise(row.setup_state)}</small></td>
+                <td><strong>{row.selected ? "ENTRY ENABLED" : humanise(row.data_permission)}</strong><small>{row.selected ? "Paper entry permitted" : "Watch / blocked"}</small></td>
+                <td><div className={styles.reasonList}>{reasons(row).map((reason) => <span key={reason}>{reason}</span>)}</div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ) : null;
+
+  const diagnosticsView = view === "diagnostics" ? (
+    <section className={styles.panel}>
+      <div className={styles.sectionHeading}>
+        <div><span className={styles.kicker}>Run integrity</span><h2>Data, gate and universe diagnostics</h2></div>
+        <span className={styles.note}>Run {value(latestRun, "run_id")} · decision {timeIst(latestRun.decision_as_of)} IST</span>
+      </div>
+      <div className={styles.summaryTiles}>
+        <div><span>All F&amp;O evaluated</span><strong>{evaluated}</strong></div>
+        <div><span>NIFTY 50 ∩ F&amp;O</span><strong>{integer(data?.universe, "intersection")}</strong></div>
+        <div><span>Full data permission</span><strong>{integer(funnel, "data_permitted")}</strong></div>
+        <div><span>Selected entries</span><strong>{selected}</strong></div>
+      </div>
+      <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="OIIS diagnostic counts">
+        <table className={styles.table}>
+          <thead><tr><th>Diagnostic</th><th>Count</th><th>What it means</th><th>Required response</th></tr></thead>
+          <tbody>
+            {(data?.rejectionReasons ?? []).map((row) => {
+              const guide = GATE_GUIDE.find((item) => item.code === row.reason);
+              return <tr key={row.reason}><td><strong>{humanise(row.reason)}</strong></td><td>{row.count}</td><td>{guide?.meaning ?? "Recorded scanner condition."}</td><td>{guide?.rule ?? "Inspect the row evidence before use."}</td></tr>;
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className={styles.ruleNote}><strong>Integrity rules</strong><p>Missing inputs remain missing, not zero. Opportunity and execution ranks are independent. A triggered setup cannot also be classified as no valid setup. No symbol-specific production overrides are permitted.</p></div>
+    </section>
+  ) : null;
+
   return (
     <div className={styles.page}>
       <header className={styles.workspaceHeader}>
@@ -594,21 +701,6 @@ export function OiisLivePage() {
             are closest to becoming actionable.
           </p>
         </div>
-        <nav className={styles.tabs} aria-label="Strategy workspace">
-          {STRATEGY_SECTION_TABS.map((tab) => (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              end={tab.to === "/strategy/oiis-live"}
-              className={({ isActive }) =>
-                isActive ? styles.tabActive : styles.tab
-              }
-            >
-              <span>{tab.badge}</span>
-              {tab.label}
-            </NavLink>
-          ))}
-        </nav>
       </header>
 
       {error && <div className={styles.error}>{error}</div>}
@@ -619,21 +711,33 @@ export function OiisLivePage() {
         aria-label="OIIS selection views"
       >
         <button
-          className={view === "summary" ? styles.viewTabActive : styles.viewTab}
-          onClick={() => setView("summary")}
+          role="tab"
+          aria-selected={view === "overview"}
+          className={view === "overview" ? styles.viewTabActive : styles.viewTab}
+          onClick={() => setView("overview")}
         >
-          Summary
+          Overview
         </button>
+        <button role="tab" aria-selected={view === "opportunities"} className={view === "opportunities" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("opportunities")}>Opportunity leaderboard ({opportunityRows.length})</button>
+        <button role="tab" aria-selected={view === "execution"} className={view === "execution" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("execution")}>Execution queue ({executionRows.length})</button>
+        <button role="tab" aria-selected={view === "diagnostics"} className={view === "diagnostics" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("diagnostics")}>Diagnostics</button>
         <button
+          role="tab"
+          aria-selected={view === "details"}
           className={view === "details" ? styles.viewTabActive : styles.viewTab}
           onClick={() => setView("details")}
         >
-          All stock details ({candidates.length})
+          All F&amp;O evidence ({candidates.length})
         </button>
+        <Link role="tab" aria-selected="false" className={styles.viewTab} to="/strategy/oiis-live/history">Run history</Link>
       </div>
 
       {view === "details" ? (
         detailsView
+      ) : view === "opportunities" || view === "execution" ? (
+        queueView
+      ) : view === "diagnostics" ? (
+        diagnosticsView
       ) : (
         <>
           <section
@@ -665,13 +769,22 @@ export function OiisLivePage() {
             </div>
             <div className={styles.decisionMeta}>
               <span>
-                Signal date<strong>{dateOnly(latestRun.signal_date)}</strong>
+                Latest snapshot<strong>{timeIst(latestRun.decision_as_of)} IST</strong>
               </span>
               <span>
-                Trade date<strong>{tradeDate || "—"}</strong>
+                Run executed<strong>{timeIst(latestRun.execution_timestamp)} IST</strong>
               </span>
               <span>
-                Run status<strong>{value(latestRun, "status")}</strong>
+                Run slot<strong>{humanise(latestRun.run_slot)}</strong>
+              </span>
+              <span>
+                Auto paper<strong>{humanise(latestRun.auto_paper_status)}</strong>
+              </span>
+              <span>
+                Universe<strong>{value(latestRun, "evaluated_symbols")} F&amp;O</strong>
+              </span>
+              <span>
+                Policy<strong>v{data?.policyVersion ?? "—"}</strong>
               </span>
             </div>
           </section>
@@ -683,7 +796,7 @@ export function OiisLivePage() {
                 <h2>Where the universe narrowed</h2>
               </div>
               <span className={styles.refresh}>
-                Auto-refreshes every 30 seconds
+                Engine every 30 min, 09:30–15:00 IST · UI refresh 30 sec
               </span>
             </div>
             <div className={styles.funnel}>
@@ -704,73 +817,6 @@ export function OiisLivePage() {
             </div>
           </section>
 
-          <section className={styles.panel}>
-            <div className={styles.sectionHeading}>
-              <div>
-                <span className={styles.kicker}>
-                  Tier and failure distribution
-                </span>
-                <h2>What passed, and exactly where setups failed</h2>
-              </div>
-              <span className={styles.note}>
-                Stop width is recorded but non-blocking; trigger confirmation is
-                removed.
-              </span>
-            </div>
-            <div className={styles.summaryTiles}>
-              <div>
-                <span>OFactor LOW 54–63.99</span>
-                <strong>{integer(funnel, "ofactor_low")}</strong>
-              </div>
-              <div>
-                <span>OFactor MEDIUM 64–73.99</span>
-                <strong>{integer(funnel, "ofactor_medium")}</strong>
-              </div>
-              <div>
-                <span>OFactor HIGH ≥74</span>
-                <strong>{integer(funnel, "ofactor_high")}</strong>
-              </div>
-              {(data?.failureBuckets ?? []).map((row) => (
-                <div key={row.failed_gate_count}>
-                  <span>
-                    {row.failed_gate_count} failed gate
-                    {Number(row.failed_gate_count) === 1 ? "" : "s"}
-                  </span>
-                  <strong>{row.count}</strong>
-                </div>
-              ))}
-            </div>
-            <div className={styles.setupBreakdown}>
-              <div>
-                <span>Long breakout absent</span>
-                <strong>{setupStats.longBreakout}</strong>
-              </div>
-              <div>
-                <span>Long pullback absent</span>
-                <strong>{setupStats.longPullback}</strong>
-              </div>
-              <div>
-                <span>Short breakdown absent</span>
-                <strong>{setupStats.shortBreakdown}</strong>
-              </div>
-              <div>
-                <span>Short pullback absent</span>
-                <strong>{setupStats.shortPullback}</strong>
-              </div>
-              <div>
-                <span>Good-volume confirmation absent</span>
-                <strong>{setupStats.volume}</strong>
-              </div>
-            </div>
-            <div className={styles.directionBreakdown}>
-              {(data?.gateBreakdown ?? []).map((row) => (
-                <span key={`${row.reason}-${row.direction}`}>
-                  <b>{humanise(row.reason)}</b> · {row.direction} {row.count}
-                </span>
-              ))}
-            </div>
-          </section>
-
           <div className={styles.analysisGrid}>
             <section className={styles.panel}>
               <div className={styles.sectionHeading}>
@@ -782,7 +828,7 @@ export function OiisLivePage() {
                   Latest completed run · research context, not trade permission
                 </span>
               </div>
-              <div className={styles.tableWrap}>
+              <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Current opportunity leaderboard">
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -875,66 +921,6 @@ export function OiisLivePage() {
           <section className={styles.panel}>
             <div className={styles.sectionHeading}>
               <div>
-                <span className={styles.kicker}>Gate definitions</span>
-                <h2>How each rejection is calculated</h2>
-              </div>
-              <span className={styles.note}>
-                Counts are for {tradeDate || "the selected trade date"}; reasons
-                can overlap.
-              </span>
-            </div>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Gate / count</th>
-                    <th>What it means</th>
-                    <th>Exact rule</th>
-                    <th>Indicator fields evaluated</th>
-                    <th>Evidence location</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {GATE_GUIDE.map((gate) => {
-                    const count =
-                      (data?.rejectionReasons ?? []).find(
-                        (row) => row.reason === gate.code,
-                      )?.count ?? 0;
-                    return (
-                      <tr key={gate.code}>
-                        <td>
-                          <strong>{humanise(gate.code)}</strong>
-                          <small>{count} candidates</small>
-                        </td>
-                        <td>{gate.meaning}</td>
-                        <td>{gate.rule}</td>
-                        <td>
-                          <code>{gate.fields}</code>
-                        </td>
-                        <td>
-                          <small>{gate.source}</small>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className={styles.ruleNote}>
-              <strong>How to read the counts</strong>
-              <p>
-                A candidate may fail several gates, so these counts are not
-                additive and can exceed the number of evaluated stocks. RSI14
-                and WILLR14 are shown as intraday entry context; the daily
-                rejection gates above are evaluated first. A rejection means “do
-                not trade today”, not that the stock will necessarily fall.
-              </p>
-            </div>
-          </section>
-
-          <section className={styles.panel}>
-            <div className={styles.sectionHeading}>
-              <div>
                 <span className={styles.kicker}>Ranked list</span>
                 <h2>Top recommendations and entry permissions</h2>
               </div>
@@ -945,7 +931,7 @@ export function OiisLivePage() {
               </div>
             </div>
             {watch.length ? (
-              <div className={styles.tableWrap}>
+              <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Top recommendations and entry permissions">
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -1265,6 +1251,112 @@ export function OiisLivePage() {
               </div>
             </div>
           </section>
+
+          <section className={styles.panel}>
+            <div className={styles.sectionHeading}>
+              <div>
+                <span className={styles.kicker}>
+                  Tier and failure distribution
+                </span>
+                <h2>What passed, and exactly where setups failed</h2>
+              </div>
+              <span className={styles.note}>
+                Stop width is recorded but non-blocking; trigger confirmation is
+                removed.
+              </span>
+            </div>
+            <div className={styles.summaryTiles}>
+              <div>
+                <span>OFactor LOW 54–63.99</span>
+                <strong>{integer(funnel, "ofactor_low")}</strong>
+              </div>
+              <div>
+                <span>OFactor MEDIUM 64–73.99</span>
+                <strong>{integer(funnel, "ofactor_medium")}</strong>
+              </div>
+              <div>
+                <span>OFactor HIGH ≥74</span>
+                <strong>{integer(funnel, "ofactor_high")}</strong>
+              </div>
+              {(data?.failureBuckets ?? []).map((row) => (
+                <div key={row.failed_gate_count}>
+                  <span>
+                    {row.failed_gate_count} failed gate
+                    {Number(row.failed_gate_count) === 1 ? "" : "s"}
+                  </span>
+                  <strong>{row.count}</strong>
+                </div>
+              ))}
+            </div>
+            <div className={styles.setupBreakdown}>
+              <div>
+                <span>Long breakout absent</span>
+                <strong>{setupStats.longBreakout}</strong>
+              </div>
+              <div>
+                <span>Long pullback absent</span>
+                <strong>{setupStats.longPullback}</strong>
+              </div>
+              <div>
+                <span>Short breakdown absent</span>
+                <strong>{setupStats.shortBreakdown}</strong>
+              </div>
+              <div>
+                <span>Short pullback absent</span>
+                <strong>{setupStats.shortPullback}</strong>
+              </div>
+              <div>
+                <span>Good-volume confirmation absent</span>
+                <strong>{setupStats.volume}</strong>
+              </div>
+            </div>
+            <div className={styles.directionBreakdown}>
+              {(data?.gateBreakdown ?? []).map((row) => (
+                <span key={`${row.reason}-${row.direction}`}>
+                  <b>{humanise(row.reason)}</b> · {row.direction} {row.count}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          <RelatedJourney
+            title="Continue this strategy investigation"
+            items={[
+              { id: "stock", title: "Stock 360", detail: "Inspect a candidate's price, levels, indicators and signal evidence.", to: "/analytics/indicators?strategy=oiis-live&source=oiis-live" },
+              { id: "paper", title: "Paper Trading", detail: "Review authorised paper observations and their target chronology.", to: "/paper-trading?source=oiis-live" },
+              { id: "history", title: "Historical outcomes", detail: "Compare OIIS evidence across completed backtest runs.", to: "/backtesting/results?strategy=oiis-live&source=oiis-live" },
+              { id: "quality", title: "Data quality", detail: "Inspect stale, incomplete or blocked inputs affecting this run.", to: "/analytics/system/quality?source=oiis-live" },
+            ]}
+          />
+
+          <LearnAboutThisAnalysis
+            sections={[
+              {
+                id: "read",
+                title: "How to read this page",
+                content: <p>The decision hero is authoritative. Near misses are evidence for investigation, not authorised entries. Tier and failure counts can overlap.</p>,
+              },
+              {
+                id: "methodology",
+                title: "Methodology and calculation rules",
+                content: (
+                  <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="OIIS rejection gate definitions">
+                    <table className={styles.table}>
+                      <thead><tr><th>Gate / count</th><th>Meaning</th><th>Exact rule</th><th>Fields</th><th>Evidence</th></tr></thead>
+                      <tbody>{GATE_GUIDE.map((gate) => {
+                        const count = (data?.rejectionReasons ?? []).find((row) => row.reason === gate.code)?.count ?? 0;
+                        return <tr key={gate.code}><td><strong>{humanise(gate.code)}</strong><small>{count} candidates</small></td><td>{gate.meaning}</td><td>{gate.rule}</td><td><code>{gate.fields}</code></td><td><small>{gate.source}</small></td></tr>;
+                      })}</tbody>
+                    </table>
+                  </div>
+                ),
+              },
+              { id: "definitions", title: "Definitions", content: <p>OFactor measures opportunity, XFactor measures execution quality, and DQ records data completeness. A rejection means do not enter under this strategy now; it does not forecast that the stock must fall.</p> },
+              { id: "sources", title: "Data sources and freshness", content: <p>Candidate evidence comes from the persisted OIIS run and canonical market-data tables. The live-services panel shows the latest source timestamps.</p> },
+              { id: "limitations", title: "Limitations and assumptions", content: <p>Counts are non-additive because one candidate may fail multiple gates. Missing or stale inputs downgrade the decision instead of being converted to zero.</p> },
+              { id: "version", title: "Formula and model version", content: <p>Run {String(latestRun.run_id ?? "—")} · formula {value(latestRun, "formula_version")}.</p> },
+            ]}
+          />
         </>
       )}
     </div>

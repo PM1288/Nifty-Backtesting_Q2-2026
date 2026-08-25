@@ -3,7 +3,7 @@ import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
 import { useBacktestingRuns } from "../lib/hooks";
-import { formatDateIST, formatNumber } from "../lib/format";
+import { formatDateIST, formatNumber, roundUiNumericData } from "../lib/format";
 import { BacktestingGroupedBarChart, BacktestingHeader, fmtCompactCurrency } from "./BacktestingChrome";
 import styles from "./AnalyticsPage.module.css";
 
@@ -104,7 +104,7 @@ export function BacktestingRunsPage() {
           { key: "name", header: tr("Validation"), cell: (row) => tr(row.validationName) },
           { key: "status", header: tr("Status"), cell: (row) => tr(row.status) },
           { key: "created", header: tr("Recorded"), cell: (row) => formatDateIST(row.createdAt, { includeTime: true }) },
-          { key: "details", header: tr("Details"), cell: (row) => JSON.stringify(row.details) }
+          { key: "details", header: tr("Details"), cell: (row) => JSON.stringify(roundUiNumericData(row.details)) }
         ]}
       />
     </div>

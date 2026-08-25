@@ -19,7 +19,7 @@ export function BacktestingH30Page() {
     return response.json();
   }).then(setData).catch((reason) => setError(String(reason.message ?? reason))); }, []);
   const summary = data?.ranking.summary ?? {};
-  return <main className={styles.page}>
+  return <div className={styles.page}>
     <BacktestingHeader title="30-session opportunity" subtitle="How far each entry travelled using official daily closes, independent of execution exits." testRunAt={data?.generatedAt} />
     <section className={styles.warning}><strong>Hindsight opportunity — not realised P&L</strong><span>The scan always observes D0 through D+29. Crossing 0.3%, 0.5%, 0.7%, 1%, 2% or 5% never stops this evaluation or releases capital.</span></section>
     {error && <section className={styles.error}>{error}</section>}
@@ -38,5 +38,5 @@ export function BacktestingH30Page() {
       <section className={styles.charts}>{data.charts.filter((chart) => chart.format === "png").map((chart) => <figure key={chart.chartId}><img src={chart.url} alt={chart.chartId} /><figcaption>{chart.chartId.replaceAll("_", " ")}</figcaption></figure>)}</section>
       <section className={styles.table}><h2>Entry observations</h2><div><table><thead><tr><th>Stock</th><th>Entry</th><th>Coverage</th><th>Sessions</th><th>Max close</th><th>Day of max</th><th>After-tax opportunity</th><th>Drawdown before max</th></tr></thead><tbody>{data.observations.map((row, index) => <tr key={`${row.symbol}-${row.entryDate}-${index}`}><td>{fmt(row.symbol)}</td><td>{fmt(row.entryDate).slice(0,10)}</td><td>{fmt(row.coverageStatus)}</td><td>{fmt(row.sessionsObserved)}</td><td>{fmt(row.maxClosePrice)}</td><td>D+{fmt(row.sessionsToMax)}</td><td>{fmt(row.afterTaxUpsidePct)}%</td><td>{fmt(row.maeBeforeMaxPct)}%</td></tr>)}</tbody></table></div></section>
     </>}
-  </main>;
+  </div>;
 }

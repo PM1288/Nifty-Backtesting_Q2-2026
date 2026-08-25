@@ -8,6 +8,7 @@ import { ButtonButton, ChartCard, DataState, KpiCard, LoadingSkeletonCard, PageI
 import { ChangeHeatmap } from "../components/visual/ChangeHeatmap";
 import { EChartSurface } from "../components/visual/EChartSurface";
 import { HeatmapLegend } from "../components/visual/HeatmapLegend";
+import { HeatmapLensNavigation } from "../components/market/HeatmapLensNavigation";
 import { formatCurrencyINR, formatDateIST, formatNumber, fmtPct } from "../lib/format";
 import { useChangeHeatmap } from "../lib/hooks";
 import { useDeferredBusyState } from "../lib/useDeferredBusyState";
@@ -211,6 +212,7 @@ export function ChangeHeatmapPage() {
 
   return (
     <div className={styles.page}>
+      <HeatmapLensNavigation coverage={`${payload.rows.length} visible · ${rawPayload?.rows.length ?? 0} available`} />
       <AnalyticsHeader
         title="% Change Heatmap"
         meta={`${tr("Rows")} ${formatNumber(payload.rows.length, { maximumFractionDigits: 0 })} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}

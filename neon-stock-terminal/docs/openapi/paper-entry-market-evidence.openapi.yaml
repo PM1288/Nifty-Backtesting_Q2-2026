@@ -1,0 +1,143 @@
+openapi: 3.1.0
+info:
+  title: NIFTY 50 Trader Paper Entry Market Evidence API
+  version: 1.0.0
+  description: >-
+    Read-only Paper Trading projections for entry-time SmartAPI quote and
+    top-three order-book evidence. This evidence is informational and does not
+    alter the governed BAR_OPEN_CONSERVATIVE_V1 paper fill model.
+paths:
+  /v1/workspace/paper-trading:
+    get:
+      summary: List paper trades with entry market evidence
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Workspace payload. Each item in `trades` may contain the entry-book fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaperTradeEntryEvidenceProjection'
+        '401':
+          description: Active session required.
+  /v1/workspace/paper-trading/trades/{tradeGroupId}:
+    get:
+      summary: Get one paper trade and its entry market evidence
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: tradeGroupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Canonical trade detail.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trade:
+                    $ref: '#/components/schemas/PaperTradeEntryEvidenceProjection'
+        '401':
+          description: Active session required.
+        '404':
+          description: Paper equity trade not found.
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: n50_session
+  schemas:
+    BookLevel:
+      type: object
+      required: [level, price, quantity, orders]
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 3
+        price:
+          type: string
+          description: Exact PostgreSQL numeric value.
+        quantity:
+          type: string
+          description: Quantity displayed at the level.
+        orders:
+          type: string
+          description: Number of orders displayed at the level.
+        cumulative_quantity:
+          type: string
+        cumulative_notional:
+          type: string
+    PaperTradeEntryEvidenceProjection:
+      type: object
+      description: >-
+        Projection fields added to the existing paper trade object. Historical
+        trades have null status and empty/unavailable evidence; the API never
+        backfills missing market depth with zero.
+      properties:
+        trade_direction:
+          type: string
+          enum: [LONG, SHORT]
+        entry_book_status:
+          type: [string, 'null']
+          enum: [CAPTURED, PARTIAL_DEPTH, NO_TWO_SIDED_BOOK, NO_NEARBY_QUOTE, null]
+        entry_book_quote_ts:
+          type: [string, 'null']
+          format: date-time
+        entry_book_quote_age_ms:
+          type: [string, 'null']
+        entry_book_quote_source:
+          type: [string, 'null']
+        entry_book_ltp:
+          type: [string, 'null']
+        entry_book_last_trade_qty:
+          type: [string, 'null']
+        entry_book_cumulative_volume:
+          type: [string, 'null']
+        entry_book_total_buy_qty:
+          type: [string, 'null']
+        entry_book_total_sell_qty:
+          type: [string, 'null']
+        entry_book_best_bid_price:
+          type: [number, 'null']
+        entry_book_best_bid_qty:
+          type: [string, 'null']
+        entry_book_best_ask_price:
+          type: [number, 'null']
+        entry_book_best_ask_qty:
+          type: [string, 'null']
+        entry_book_reference_touch:
+          type: [number, 'null']
+          description: Best ask for LONG entry and best bid for SHORT entry.
+        entry_book_reference_touch_side:
+          type: string
+          enum: [ASK, BID]
+        entry_book_spread:
+          type: [number, 'null']
+        entry_book_spread_bps:
+          type: [number, 'null']
+        entry_bid_levels:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/BookLevel'
+        entry_ask_levels:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/BookLevel'
+        entry_book_detail:
+          type: [object, 'null']
+          additionalProperties: true

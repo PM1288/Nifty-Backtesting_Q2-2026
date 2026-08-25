@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import { useAuthGate } from "../../auth/AuthGateProvider";
 import { useI18n } from "../../i18n/LocaleProvider";
 import { trackAnalyticsEvent } from "../../lib/analytics";
@@ -35,6 +36,17 @@ export function AuthStatus() {
         ? tr("Verify email")
         : tr("Guest")
     : tr("Loading");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: MouseEvent) => { if (!wrapRef.current?.contains(event.target as Node)) setMenuOpen(false); };
+    const key = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", key); };
+  }, [menuOpen]);
 
   const onLoginClick = async () => {
     if (!authReady) return;
@@ -47,22 +59,26 @@ export function AuthStatus() {
   };
 
   const onLogoutClick = async () => {
+    setMenuOpen(false);
     await signOutUser();
   };
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.labels}>
+    <div ref={wrapRef} className={styles.wrap}>
+      <button type="button" className={styles.identity} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>
+        <UserRound size={16} aria-hidden="true" /><span className={styles.labels}>
         <span className={styles.primary}>{primaryLabel}</span>
         <span className={styles.secondary} data-auth={user ? "yes" : requiresEmailVerification ? "pending" : "no"}>
           {status}
         </span>
-      </div>
-      {user ? (
-        <button type="button" className={styles.action} onClick={onLogoutClick}>
-          {tr("Sign out")}
-        </button>
-      ) : (
+        </span><ChevronDown size={14} aria-hidden="true" />
+      </button>
+      {user ? (menuOpen ? (
+        <div className={styles.menu} role="menu">
+          <div><strong>{primaryLabel}</strong><span>{status}</span></div>
+          <button type="button" role="menuitem" onClick={onLogoutClick}><LogOut size={15} aria-hidden="true" />{tr("Sign out")}</button>
+        </div>
+      ) : null) : (
         <button type="button" className={styles.action} onClick={onLoginClick} disabled={!authReady}>
           {requiresEmailVerification ? tr("Continue") : tr("Sign in")}
         </button>

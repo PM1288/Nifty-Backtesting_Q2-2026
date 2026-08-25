@@ -15,6 +15,71 @@ export type Quote = {
   timestamp: string;
   rsi: number | null;
   willr: number | null;
+  change5d: number | null;
+  relativeVolume: number | null;
+  averageVolume20: number | null;
+  bid: number | null;
+  ask: number | null;
+  bidQty: number | null;
+  askQty: number | null;
+  spreadPct: number | null;
+  dayOpen: number | null;
+  dayHigh: number | null;
+  dayLow: number | null;
+  previousClose: number | null;
+  rangePosition: number | null;
+  opportunity30d: number | null;
+  oiisSelected: boolean;
+  oiisState: "AUTO_PAPER" | "RECOMMENDED" | "ELIGIBLE" | "WATCH" | null;
+  oiisDirection: "LONG" | "SHORT" | "NEUTRAL" | null;
+  oiisScore: number | null;
+  oiisOFactor: number | null;
+  oiisXFactor: number | null;
+  oiisDataQuality: number | null;
+  alert: {
+    type: "EXCESS_PRICE_MOVE" | "BIG_ASK" | "BIG_BID" | "WIDE_SPREAD";
+    severity: "HIGH" | "MEDIUM";
+    label: string;
+  } | null;
+};
+
+type FnoContractAnomaly = {
+  symbolToken: string;
+  tradingSymbol: string;
+  underlying: string;
+  instrumentType: string;
+  expiry: string;
+  strike: number | null;
+  right: "CE" | "PE" | "FUT";
+  lotSize: number | null;
+  last: number | null;
+  changePct: number | null;
+  bid: number | null;
+  ask: number | null;
+  bidQty: number | null;
+  askQty: number | null;
+  bidNotional: number | null;
+  askNotional: number | null;
+  spreadPct: number | null;
+  depthImbalance: number | null;
+  lastUpdated: string | null;
+  anomalyTypes: Array<"EXCESS_PRICE_MOVE" | "BIG_ASK" | "BIG_BID" | "WIDE_SPREAD">;
+  severityScore: number;
+};
+
+type DerivativesOverview = {
+  universe: "ALL_ACTIVE_NSE_FNO_CONTRACTS";
+  contractCount: number;
+  underlyingCount: number;
+  observedContractCount: number;
+  observedTodayCount: number;
+  anomalyCount: number;
+  bigAskCount: number;
+  bigBidCount: number;
+  excessPriceMoveCount: number;
+  wideSpreadCount: number;
+  asOf: string | null;
+  anomalies: FnoContractAnomaly[];
 };
 
 type QuoteLite = {
@@ -43,6 +108,7 @@ type OverviewPayload = {
     losers: Quote[];
   };
   tickerTape: QuoteLite[];
+  derivatives: DerivativesOverview;
 };
 
 type StackQuoteRow = {
@@ -56,6 +122,26 @@ type StackQuoteRow = {
   timestamp: Date | string | null;
   rsi_14: number | null;
   willr_14: number | null;
+  change_5d: number | null;
+  average_volume_20: number | null;
+  last_bid: number | null;
+  last_ask: number | null;
+  last_bid_qty: number | string | null;
+  last_ask_qty: number | string | null;
+  last_open: number | null;
+  last_high: number | null;
+  last_low: number | null;
+  last_close: number | null;
+  opportunity_30d: number | null;
+  oiis_selected: boolean | null;
+  oiis_recommended: boolean | null;
+  oiis_eligible: boolean | null;
+  oiis_auto_paper: boolean | null;
+  oiis_direction: "LONG" | "SHORT" | "NEUTRAL" | null;
+  oiis_score: number | null;
+  oiis_ofactor: number | null;
+  oiis_xfactor: number | null;
+  oiis_data_quality: number | null;
 };
 
 type StackIndexRow = {
@@ -70,6 +156,43 @@ type StackIndexRow = {
   willr_14: number | null;
 };
 
+type FnoSummaryRow = {
+  contract_count: number | string;
+  underlying_count: number | string;
+  observed_contract_count: number | string;
+  observed_today_count: number | string;
+  anomaly_count: number | string;
+  big_ask_count: number | string;
+  big_bid_count: number | string;
+  excess_price_move_count: number | string;
+  wide_spread_count: number | string;
+  latest_at: Date | string | null;
+};
+
+type FnoAnomalyRow = {
+  symbol_token: string;
+  tradingsymbol: string;
+  underlying: string;
+  instrumenttype: string;
+  expiry: Date | string;
+  strike: number | null;
+  lotsize: number | null;
+  last_price: number | null;
+  percent_change: number | null;
+  last_bid: number | null;
+  last_ask: number | null;
+  last_bid_qty: number | string | null;
+  last_ask_qty: number | string | null;
+  spread_pct: number | null;
+  depth_imbalance: number | null;
+  last_seen_ts: Date | string | null;
+  excess_price_move: boolean;
+  big_ask: boolean;
+  big_bid: boolean;
+  wide_spread: boolean;
+  severity_score: number;
+};
+
 function toIso(ts: Date | string | null | undefined): string {
   if (!ts) return new Date().toISOString();
   if (ts instanceof Date) return ts.toISOString();
@@ -77,18 +200,145 @@ function toIso(ts: Date | string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
 }
 
+function nullableNumber(value: number | string | null | undefined): number | null {
+  if (value == null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function marketSessionProgressIst(now = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(now);
+  const minuteOfDay = Number(parts.find((part) => part.type === "hour")?.value ?? 0) * 60
+    + Number(parts.find((part) => part.type === "minute")?.value ?? 0);
+  return Math.max(0, Math.min(1, (minuteOfDay - (9 * 60 + 15)) / 385));
+}
+
+function quoteAlert(row: StackQuoteRow): Quote["alert"] {
+  const change = nullableNumber(row.change_pct);
+  const bid = nullableNumber(row.last_bid);
+  const ask = nullableNumber(row.last_ask);
+  const bidQty = nullableNumber(row.last_bid_qty);
+  const askQty = nullableNumber(row.last_ask_qty);
+  const midpoint = bid != null && ask != null && bid > 0 && ask >= bid ? (bid + ask) / 2 : null;
+  const spreadPct = midpoint ? ((ask! - bid!) / midpoint) * 100 : null;
+
+  if (change != null && Math.abs(change) >= 3) {
+    return { type: "EXCESS_PRICE_MOVE", severity: Math.abs(change) >= 5 ? "HIGH" : "MEDIUM", label: `${change > 0 ? "+" : ""}${change.toFixed(1)}% move` };
+  }
+  if (askQty != null && bidQty != null && askQty >= 5_000 && askQty >= Math.max(1, bidQty) * 5) {
+    return { type: "BIG_ASK", severity: askQty >= Math.max(1, bidQty) * 10 ? "HIGH" : "MEDIUM", label: `Ask wall ${Math.round(askQty / Math.max(1, bidQty))}×` };
+  }
+  if (bidQty != null && askQty != null && bidQty >= 5_000 && bidQty >= Math.max(1, askQty) * 5) {
+    return { type: "BIG_BID", severity: bidQty >= Math.max(1, askQty) * 10 ? "HIGH" : "MEDIUM", label: `Bid wall ${Math.round(bidQty / Math.max(1, askQty))}×` };
+  }
+  if (spreadPct != null && spreadPct >= 0.5) {
+    return { type: "WIDE_SPREAD", severity: spreadPct >= 1 ? "HIGH" : "MEDIUM", label: `${spreadPct.toFixed(2)}% spread` };
+  }
+  return null;
+}
+
+function emptyQuoteEnrichment(): Omit<Quote, "symbol" | "name" | "last" | "change" | "changePct" | "sector" | "volume" | "timestamp" | "rsi" | "willr"> {
+  return {
+    change5d: null,
+    relativeVolume: null,
+    averageVolume20: null,
+    bid: null,
+    ask: null,
+    bidQty: null,
+    askQty: null,
+    spreadPct: null,
+    dayOpen: null,
+    dayHigh: null,
+    dayLow: null,
+    previousClose: null,
+    rangePosition: null,
+    opportunity30d: null,
+    oiisSelected: false,
+    oiisState: null,
+    oiisDirection: null,
+    oiisScore: null,
+    oiisOFactor: null,
+    oiisXFactor: null,
+    oiisDataQuality: null,
+    alert: null
+  };
+}
+
+function emptyDerivativesOverview(): DerivativesOverview {
+  return {
+    universe: "ALL_ACTIVE_NSE_FNO_CONTRACTS",
+    contractCount: 0,
+    underlyingCount: 0,
+    observedContractCount: 0,
+    observedTodayCount: 0,
+    anomalyCount: 0,
+    bigAskCount: 0,
+    bigBidCount: 0,
+    excessPriceMoveCount: 0,
+    wideSpreadCount: 0,
+    asOf: null,
+    anomalies: []
+  };
+}
+
 function asQuote(row: StackQuoteRow): Quote {
+  const last = nullableNumber(row.last) ?? 0;
+  const averageVolume = nullableNumber(row.average_volume_20);
+  const volume = nullableNumber(row.volume);
+  const progress = Math.max(0.05, marketSessionProgressIst());
+  const expectedVolume = averageVolume != null && averageVolume > 0 ? averageVolume * progress : null;
+  const bid = nullableNumber(row.last_bid);
+  const ask = nullableNumber(row.last_ask);
+  const midpoint = bid != null && ask != null && bid > 0 && ask >= bid ? (bid + ask) / 2 : null;
+  const dayLow = nullableNumber(row.last_low);
+  const dayHigh = nullableNumber(row.last_high);
+  const oiisState: Quote["oiisState"] = row.oiis_auto_paper
+    ? "AUTO_PAPER"
+    : row.oiis_recommended || row.oiis_selected
+      ? "RECOMMENDED"
+      : row.oiis_eligible
+        ? "ELIGIBLE"
+        : row.oiis_score != null
+          ? "WATCH"
+          : null;
   return {
     symbol: row.symbol,
     name: row.name || row.symbol,
     sector: row.sector ?? null,
-    last: toNumber(row.last),
+    last,
     change: toNumber(row.change),
     changePct: toNumber(row.change_pct),
     volume: toSafeVolume(row.volume),
     timestamp: toIso(row.timestamp),
     rsi: row.rsi_14 == null ? null : toNumber(row.rsi_14),
-    willr: row.willr_14 == null ? null : toNumber(row.willr_14)
+    willr: row.willr_14 == null ? null : toNumber(row.willr_14),
+    change5d: nullableNumber(row.change_5d),
+    relativeVolume: expectedVolume ? volume! / expectedVolume : null,
+    averageVolume20: averageVolume,
+    bid,
+    ask,
+    bidQty: nullableNumber(row.last_bid_qty),
+    askQty: nullableNumber(row.last_ask_qty),
+    spreadPct: midpoint ? ((ask! - bid!) / midpoint) * 100 : null,
+    dayOpen: nullableNumber(row.last_open),
+    dayHigh,
+    dayLow,
+    previousClose: nullableNumber(row.last_close),
+    rangePosition: dayLow != null && dayHigh != null && dayHigh > dayLow ? Math.max(0, Math.min(1, (last - dayLow) / (dayHigh - dayLow))) : null,
+    opportunity30d: nullableNumber(row.opportunity_30d),
+    oiisSelected: Boolean(row.oiis_selected || row.oiis_recommended || row.oiis_auto_paper),
+    oiisState,
+    oiisDirection: row.oiis_direction,
+    oiisScore: nullableNumber(row.oiis_score),
+    oiisOFactor: nullableNumber(row.oiis_ofactor),
+    oiisXFactor: nullableNumber(row.oiis_xfactor),
+    oiisDataQuality: nullableNumber(row.oiis_data_quality),
+    alert: quoteAlert(row)
   };
 }
 
@@ -108,7 +358,8 @@ function makeIndexQuote(
     volume: toSafeVolume(row?.volume ?? null),
     timestamp: toIso(row?.timestamp ?? asOf),
     rsi: row?.rsi_14 == null ? null : toNumber(row.rsi_14),
-    willr: row?.willr_14 == null ? null : toNumber(row.willr_14)
+    willr: row?.willr_14 == null ? null : toNumber(row.willr_14),
+    ...emptyQuoteEnrichment()
   };
 }
 
@@ -134,7 +385,7 @@ function marketStatusIst(now = new Date()): { isOpen: boolean; label: "OPEN" | "
   const isWeekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(weekday);
   const mins = hour * 60 + minute;
   const openMins = 9 * 60 + 15;
-  const closeMins = 15 * 60 + 30;
+  const closeMins = 15 * 60 + 40;
   const isOpen = isWeekday && mins >= openMins && mins < closeMins;
 
   return { isOpen, label: isOpen ? "OPEN" : "CLOSED" };
@@ -144,7 +395,8 @@ function buildOverviewFromQuotes(
   asOf: string,
   nifty: Quote,
   quotes: Quote[],
-  indices: OverviewPayload["indices"]
+  indices: OverviewPayload["indices"],
+  derivatives: DerivativesOverview
 ): OverviewPayload {
   const sectorMap = new Map<string, Quote[]>();
   for (const quote of quotes) {
@@ -182,12 +434,13 @@ function buildOverviewFromQuotes(
     nifty,
     sectors,
     leaderboards: { gainers, losers },
-    tickerTape
+    tickerTape,
+    derivatives
   };
 }
 
 async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPayload> {
-  const [indexRows, stockRows] = await Promise.all([
+  const [indexRows, stockRows, contractSummaryRows, contractAnomalyRows] = await Promise.all([
     prisma.$queryRaw<StackIndexRow[]>(Prisma.sql`
       WITH index_targets(symbol_token, symbol, name) AS (
         VALUES
@@ -261,17 +514,28 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
         ON ic.symbol_token = t.symbol_token
     `),
     prisma.$queryRaw<StackQuoteRow[]>(Prisma.sql`
-      WITH universe AS (
-        SELECT DISTINCT ON (iu.symbol_token)
-          iu.symbol_token,
-          UPPER(REGEXP_REPLACE(TRIM(iu.tradingsymbol), '-EQ$', '')) AS symbol,
-          iu.tradingsymbol
-        FROM instrument_universe iu
-        WHERE iu.exchange = 'NSE'
-          AND iu.universe_name = 'nifty100_equity'
-          AND iu.active_to IS NULL
-          AND COALESCE(TRIM(iu.tradingsymbol), '') <> ''
-        ORDER BY iu.symbol_token, iu.active_from DESC NULLS LAST
+      WITH fno_underlyings AS (
+        SELECT DISTINCT UPPER(TRIM(i.name)) AS symbol
+        FROM instruments i
+        WHERE i.exchange = 'NFO'
+          AND i.instrumenttype IN ('FUTSTK','OPTSTK')
+          AND i.expiry BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 year'
+          AND UPPER(COALESCE(i.name, '')) NOT LIKE '%TEST%'
+      ),
+      universe AS (
+        SELECT f.symbol, eq.symbol_token, eq.tradingsymbol
+        FROM fno_underlyings f
+        JOIN LATERAL (
+          SELECT i.symbol_token, i.tradingsymbol
+          FROM instruments i
+          WHERE i.exchange = 'NSE'
+            AND (
+              UPPER(TRIM(i.name)) = f.symbol
+              OR UPPER(REGEXP_REPLACE(TRIM(i.tradingsymbol), '-EQ$', '')) = f.symbol
+            )
+          ORDER BY CASE WHEN i.tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END, i.updated_at DESC
+          LIMIT 1
+        ) eq ON TRUE
       ),
       classified AS (
         SELECT
@@ -364,6 +628,57 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
             ELSE ((high_max - close_latest) / NULLIF(high_max - low_min, 0)) * -100
           END AS willr_14
         FROM willr_window
+      ),
+      daily_ranked AS (
+        SELECT
+          b.symbol_token,
+          b.close::double precision AS close,
+          b.volume::double precision AS volume,
+          ROW_NUMBER() OVER (PARTITION BY b.symbol_token ORDER BY b.trade_date DESC) AS rn
+        FROM bars_1d b
+        JOIN universe u ON u.symbol_token = b.symbol_token
+        WHERE b.exchange = 'NSE'
+      ),
+      daily_metrics AS (
+        SELECT
+          symbol_token,
+          MAX(close) FILTER (WHERE rn = 1) AS latest_close,
+          MAX(close) FILTER (WHERE rn = 6) AS close_5d_ago,
+          AVG(volume) FILTER (WHERE rn BETWEEN 2 AND 21) AS average_volume_20
+        FROM daily_ranked
+        WHERE rn <= 21
+        GROUP BY symbol_token
+      ),
+      latest_oiis_run AS (
+        SELECT run_id
+        FROM oiis_live.selection_run
+        WHERE status = 'COMPLETED'
+        ORDER BY trade_date DESC, completed_at DESC NULLS LAST
+        LIMIT 1
+      ),
+      oiis AS (
+        SELECT
+          c.symbol,
+          c.selected,
+          c.recommended,
+          c.auto_paper_eligible,
+          c.auto_paper_selected,
+          c.direction,
+          c.quality_score,
+          c.ofactor,
+          c.xfactor_snapshot,
+          c.data_quality
+        FROM oiis_live.daily_candidate c
+        JOIN latest_oiis_run r ON r.run_id = c.run_id
+      ),
+      h30_latest AS (
+        SELECT DISTINCT ON (UPPER(symbol))
+          UPPER(symbol) AS symbol,
+          after_tax_max_close_upside_pct::double precision AS opportunity_30d
+        FROM strategy_eval.long_horizon_observation
+        WHERE rankable_flag
+          AND after_tax_max_close_upside_pct IS NOT NULL
+        ORDER BY UPPER(symbol), created_at DESC, entry_date DESC
       )
       SELECT
         c.symbol,
@@ -375,7 +690,31 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
         COALESCE(st.last_volume, 0)::double precision AS volume,
         st.last_seen_ts AS timestamp,
         rc.rsi_14,
-        wc.willr_14
+        wc.willr_14,
+        CASE
+          WHEN dm.latest_close > 0 AND dm.close_5d_ago > 0
+          THEN ((dm.latest_close / dm.close_5d_ago) - 1) * 100
+          ELSE NULL
+        END AS change_5d,
+        dm.average_volume_20,
+        st.last_bid::double precision AS last_bid,
+        st.last_ask::double precision AS last_ask,
+        st.last_bid_qty,
+        st.last_ask_qty,
+        st.last_open::double precision AS last_open,
+        st.last_high::double precision AS last_high,
+        st.last_low::double precision AS last_low,
+        st.last_close::double precision AS last_close,
+        h.opportunity_30d,
+        o.selected AS oiis_selected,
+        o.recommended AS oiis_recommended,
+        o.auto_paper_eligible AS oiis_eligible,
+        o.auto_paper_selected AS oiis_auto_paper,
+        o.direction AS oiis_direction,
+        o.quality_score::double precision AS oiis_score,
+        o.ofactor::double precision AS oiis_ofactor,
+        o.xfactor_snapshot::double precision AS oiis_xfactor,
+        o.data_quality::double precision AS oiis_data_quality
       FROM classified c
       LEFT JOIN instrument_state st
         ON st.exchange = 'NSE' AND st.symbol_token = c.symbol_token
@@ -383,7 +722,139 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
         ON rc.symbol_token = c.symbol_token
       LEFT JOIN willr_calc wc
         ON wc.symbol_token = c.symbol_token
+      LEFT JOIN daily_metrics dm
+        ON dm.symbol_token = c.symbol_token
+      LEFT JOIN oiis o
+        ON UPPER(o.symbol) = c.symbol
+      LEFT JOIN h30_latest h
+        ON h.symbol = c.symbol
       ORDER BY c.symbol ASC
+    `),
+    prisma.$queryRaw<FnoSummaryRow[]>(Prisma.sql`
+      WITH contracts AS (
+        SELECT
+          i.symbol_token,
+          i.name AS underlying,
+          i.instrumenttype,
+          i.lotsize,
+          s.last_seen_ts,
+          s.last_price::double precision AS last_price,
+          s.percent_change::double precision AS percent_change,
+          s.last_bid::double precision AS last_bid,
+          s.last_ask::double precision AS last_ask,
+          s.last_bid_qty::double precision AS last_bid_qty,
+          s.last_ask_qty::double precision AS last_ask_qty,
+          CASE WHEN s.last_bid > 0 AND s.last_ask >= s.last_bid
+            THEN ((s.last_ask - s.last_bid) / NULLIF((s.last_ask + s.last_bid) / 2, 0)) * 100
+            ELSE NULL END AS spread_pct
+        FROM instruments i
+        LEFT JOIN instrument_state s
+          ON s.exchange = i.exchange AND s.symbol_token = i.symbol_token
+        WHERE i.exchange = 'NFO'
+          AND i.instrumenttype IN ('FUTIDX','FUTSTK','OPTIDX','OPTSTK')
+          AND i.expiry BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 year'
+          AND UPPER(COALESCE(i.name, '')) NOT LIKE '%TEST%'
+      ),
+      classified AS (
+        SELECT *,
+          (ABS(COALESCE(percent_change, 0)) >= CASE WHEN instrumenttype LIKE 'OPT%' THEN 20 ELSE 3 END) AS excess_move,
+          (COALESCE(last_ask_qty, 0) >= GREATEST(COALESCE(lotsize, 1) * 5, 100)
+            AND COALESCE(last_ask_qty, 0) >= GREATEST(COALESCE(last_bid_qty, 0), 1) * 5) AS big_ask,
+          (COALESCE(last_bid_qty, 0) >= GREATEST(COALESCE(lotsize, 1) * 5, 100)
+            AND COALESCE(last_bid_qty, 0) >= GREATEST(COALESCE(last_ask_qty, 0), 1) * 5) AS big_bid,
+          (COALESCE(spread_pct, 0) >= CASE WHEN instrumenttype LIKE 'OPT%' THEN 8 ELSE 1 END) AS wide_spread,
+          ((last_seen_ts AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date) AS observed_today
+        FROM contracts
+      )
+      SELECT
+        COUNT(*)::bigint::text AS contract_count,
+        COUNT(DISTINCT underlying)::bigint::text AS underlying_count,
+        COUNT(*) FILTER (WHERE last_seen_ts IS NOT NULL)::bigint::text AS observed_contract_count,
+        COUNT(*) FILTER (WHERE observed_today)::bigint::text AS observed_today_count,
+        COUNT(*) FILTER (WHERE observed_today AND (excess_move OR big_ask OR big_bid OR wide_spread))::bigint::text AS anomaly_count,
+        COUNT(*) FILTER (WHERE observed_today AND big_ask)::bigint::text AS big_ask_count,
+        COUNT(*) FILTER (WHERE observed_today AND big_bid)::bigint::text AS big_bid_count,
+        COUNT(*) FILTER (WHERE observed_today AND excess_move)::bigint::text AS excess_price_move_count,
+        COUNT(*) FILTER (WHERE observed_today AND wide_spread)::bigint::text AS wide_spread_count,
+        MAX(last_seen_ts) AS latest_at
+      FROM classified
+    `),
+    prisma.$queryRaw<FnoAnomalyRow[]>(Prisma.sql`
+      WITH base AS (
+        SELECT
+          i.symbol_token,
+          i.tradingsymbol,
+          UPPER(i.name) AS underlying,
+          i.instrumenttype,
+          i.expiry,
+          NULLIF(i.strike, -1)::double precision AS strike,
+          i.lotsize,
+          s.last_price::double precision AS last_price,
+          s.percent_change::double precision AS percent_change,
+          s.last_bid::double precision AS last_bid,
+          s.last_ask::double precision AS last_ask,
+          s.last_bid_qty,
+          s.last_ask_qty,
+          s.last_seen_ts,
+          CASE WHEN s.last_bid > 0 AND s.last_ask >= s.last_bid
+            THEN ((s.last_ask - s.last_bid) / NULLIF((s.last_ask + s.last_bid) / 2, 0)) * 100
+            ELSE NULL END AS spread_pct,
+          CASE WHEN COALESCE(s.last_bid_qty, 0) + COALESCE(s.last_ask_qty, 0) > 0
+            THEN (COALESCE(s.last_bid_qty, 0) - COALESCE(s.last_ask_qty, 0))::double precision
+              / NULLIF(COALESCE(s.last_bid_qty, 0) + COALESCE(s.last_ask_qty, 0), 0)
+            ELSE NULL END AS depth_imbalance
+        FROM instruments i
+        JOIN instrument_state s
+          ON s.exchange = i.exchange AND s.symbol_token = i.symbol_token
+        WHERE i.exchange = 'NFO'
+          AND i.instrumenttype IN ('FUTIDX','FUTSTK','OPTIDX','OPTSTK')
+          AND i.expiry BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 year'
+          AND UPPER(COALESCE(i.name, '')) NOT LIKE '%TEST%'
+          AND (s.last_seen_ts AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date
+      ),
+      classified AS (
+        SELECT *,
+          (ABS(COALESCE(percent_change, 0)) >= CASE WHEN instrumenttype LIKE 'OPT%' THEN 20 ELSE 3 END) AS excess_price_move,
+          (COALESCE(last_ask_qty, 0) >= GREATEST(COALESCE(lotsize, 1) * 5, 100)
+            AND COALESCE(last_ask_qty, 0) >= GREATEST(COALESCE(last_bid_qty, 0), 1) * 5) AS big_ask,
+          (COALESCE(last_bid_qty, 0) >= GREATEST(COALESCE(lotsize, 1) * 5, 100)
+            AND COALESCE(last_bid_qty, 0) >= GREATEST(COALESCE(last_ask_qty, 0), 1) * 5) AS big_bid,
+          (COALESCE(spread_pct, 0) >= CASE WHEN instrumenttype LIKE 'OPT%' THEN 8 ELSE 1 END) AS wide_spread
+        FROM base
+      )
+      , scored AS (
+        SELECT *, GREATEST(
+          LEAST(ABS(COALESCE(percent_change, 0)) / CASE WHEN instrumenttype LIKE 'OPT%' THEN 20 ELSE 3 END, 10),
+          LEAST(COALESCE(last_ask_qty, 0)::double precision / GREATEST(COALESCE(last_bid_qty, 0), 1) / 5, 20),
+          LEAST(COALESCE(last_bid_qty, 0)::double precision / GREATEST(COALESCE(last_ask_qty, 0), 1) / 5, 20),
+          LEAST(COALESCE(spread_pct, 0) / CASE WHEN instrumenttype LIKE 'OPT%' THEN 8 ELSE 1 END, 10)
+        )::double precision AS severity_score
+        FROM classified
+        WHERE excess_price_move OR big_ask OR big_bid OR wide_spread
+      ), diversified AS (
+        SELECT *, ROW_NUMBER() OVER (
+          PARTITION BY underlying
+          ORDER BY severity_score DESC,
+            GREATEST(
+              COALESCE(last_bid, 0) * COALESCE(last_bid_qty, 0),
+              COALESCE(last_ask, 0) * COALESCE(last_ask_qty, 0)
+            ) DESC,
+            last_seen_ts DESC,
+            tradingsymbol
+        ) AS underlying_rank
+        FROM scored
+      )
+      SELECT *
+      FROM diversified
+      WHERE underlying_rank <= 2
+      ORDER BY severity_score DESC,
+        GREATEST(
+          COALESCE(last_bid, 0) * COALESCE(last_bid_qty, 0),
+          COALESCE(last_ask, 0) * COALESCE(last_ask_qty, 0)
+        ) DESC,
+        last_seen_ts DESC,
+        tradingsymbol
+      LIMIT 36
     `)
   ]);
 
@@ -397,8 +868,58 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
     indiaVix: makeIndexQuote("INDIAVIX", "INDIA VIX", indexBySymbol.get("INDIAVIX") ?? null, asOf)
   };
 
+  const contractSummary = contractSummaryRows[0];
+  const anomalies: FnoContractAnomaly[] = contractAnomalyRows.map((row) => {
+    const anomalyTypes: FnoContractAnomaly["anomalyTypes"] = [];
+    if (row.excess_price_move) anomalyTypes.push("EXCESS_PRICE_MOVE");
+    if (row.big_ask) anomalyTypes.push("BIG_ASK");
+    if (row.big_bid) anomalyTypes.push("BIG_BID");
+    if (row.wide_spread) anomalyTypes.push("WIDE_SPREAD");
+    const bid = nullableNumber(row.last_bid);
+    const ask = nullableNumber(row.last_ask);
+    const bidQty = nullableNumber(row.last_bid_qty);
+    const askQty = nullableNumber(row.last_ask_qty);
+    return {
+      symbolToken: row.symbol_token,
+      tradingSymbol: row.tradingsymbol,
+      underlying: row.underlying,
+      instrumentType: row.instrumenttype,
+      expiry: toIso(row.expiry).slice(0, 10),
+      strike: nullableNumber(row.strike),
+      right: row.instrumenttype.startsWith("FUT") ? "FUT" : row.tradingsymbol.endsWith("CE") ? "CE" : "PE",
+      lotSize: row.lotsize,
+      last: nullableNumber(row.last_price),
+      changePct: nullableNumber(row.percent_change),
+      bid,
+      ask,
+      bidQty,
+      askQty,
+      bidNotional: bid != null && bidQty != null ? bid * bidQty : null,
+      askNotional: ask != null && askQty != null ? ask * askQty : null,
+      spreadPct: nullableNumber(row.spread_pct),
+      depthImbalance: nullableNumber(row.depth_imbalance),
+      lastUpdated: row.last_seen_ts ? toIso(row.last_seen_ts) : null,
+      anomalyTypes,
+      severityScore: toNumber(row.severity_score)
+    };
+  });
+  const derivatives: DerivativesOverview = {
+    universe: "ALL_ACTIVE_NSE_FNO_CONTRACTS",
+    contractCount: Number(contractSummary?.contract_count ?? 0),
+    underlyingCount: Number(contractSummary?.underlying_count ?? 0),
+    observedContractCount: Number(contractSummary?.observed_contract_count ?? 0),
+    observedTodayCount: Number(contractSummary?.observed_today_count ?? 0),
+    anomalyCount: Number(contractSummary?.anomaly_count ?? 0),
+    bigAskCount: Number(contractSummary?.big_ask_count ?? 0),
+    bigBidCount: Number(contractSummary?.big_bid_count ?? 0),
+    excessPriceMoveCount: Number(contractSummary?.excess_price_move_count ?? 0),
+    wideSpreadCount: Number(contractSummary?.wide_spread_count ?? 0),
+    asOf: contractSummary?.latest_at ? toIso(contractSummary.latest_at) : null,
+    anomalies
+  };
+
   const quotes = stockRows.map(asQuote);
-  return buildOverviewFromQuotes(asOf, nifty, quotes, indices);
+  return buildOverviewFromQuotes(asOf, nifty, quotes, indices, derivatives);
 }
 
 async function getSeedSchemaOverview(prisma: PrismaClient): Promise<OverviewPayload> {
@@ -478,7 +999,8 @@ async function getSeedSchemaOverview(prisma: PrismaClient): Promise<OverviewPayl
         volume: bar ? toSafeVolume(bar.volume) : daily ? toSafeVolume(daily.volume) : null,
         timestamp: bar ? bar.ts.toISOString() : asOf,
         rsi: null,
-        willr: null
+        willr: null,
+        ...emptyQuoteEnrichment()
       };
     });
 
@@ -503,7 +1025,8 @@ async function getSeedSchemaOverview(prisma: PrismaClient): Promise<OverviewPayl
     volume: niftyBar ? toSafeVolume(niftyBar.volume) : niftyDaily ? toSafeVolume(niftyDaily.volume) : null,
     timestamp: niftyBar ? niftyBar.ts.toISOString() : asOf,
     rsi: null,
-    willr: null
+    willr: null,
+    ...emptyQuoteEnrichment()
   };
 
   const emptyIndex = (symbol: string, name: string): Quote => ({
@@ -516,14 +1039,15 @@ async function getSeedSchemaOverview(prisma: PrismaClient): Promise<OverviewPayl
     volume: 0,
     timestamp: asOf,
     rsi: null,
-    willr: null
+    willr: null,
+    ...emptyQuoteEnrichment()
   });
 
   return buildOverviewFromQuotes(asOf, nifty, quotes, {
     nifty50: nifty,
     bankNifty: emptyIndex("BANKNIFTY", "BANK NIFTY"),
     indiaVix: emptyIndex("INDIAVIX", "INDIA VIX")
-  });
+  }, emptyDerivativesOverview());
 }
 
 export async function getOverview(prisma: PrismaClient): Promise<OverviewPayload> {

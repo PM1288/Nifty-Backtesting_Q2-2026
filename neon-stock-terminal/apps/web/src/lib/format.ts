@@ -3,6 +3,7 @@ import type { DigitSystem, UiLanguage } from "../i18n/types";
 const DEFAULT_LOCALE = "en-IN-u-nu-latn";
 const IST_TIMEZONE = "Asia/Kolkata";
 const EM_DASH = "—";
+export const MAX_UI_DECIMAL_PLACES = 2;
 
 type CompactType = "number" | "currency";
 
@@ -32,6 +33,51 @@ function normalizeTimeZone(timeZone?: string) {
   return timeZone?.trim() ? timeZone : formatterState.timeZone ?? IST_TIMEZONE;
 }
 
+function clampDecimalPlaces(value: number) {
+  if (!Number.isFinite(value)) return MAX_UI_DECIMAL_PLACES;
+  return Math.max(0, Math.min(MAX_UI_DECIMAL_PLACES, Math.trunc(value)));
+}
+
+export function roundUiNumber(value: number): number {
+  if (!Number.isFinite(value)) return value;
+  const factor = 10 ** MAX_UI_DECIMAL_PLACES;
+  const rounded = Math.round((value + Number.EPSILON) * factor) / factor;
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
+export function roundUiNumericData(value: unknown): unknown {
+  if (typeof value === "number") return roundUiNumber(value);
+  if (Array.isArray(value)) return value.map((entry) => roundUiNumericData(entry));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, roundUiNumericData(entry)])
+    );
+  }
+  return value;
+}
+
+export function formatUiValue(value: unknown): string {
+  if (typeof value === "number") return formatNumber(value);
+  return value == null ? EM_DASH : String(value);
+}
+
+/**
+ * Financial calculations retain their source precision. This boundary only
+ * limits rendered UI values to two decimal places across every dashboard.
+ */
+export function clampUiNumberFormatOptions(options: Intl.NumberFormatOptions = {}): Intl.NumberFormatOptions {
+  const requestedMaximum = options.maximumFractionDigits ?? MAX_UI_DECIMAL_PLACES;
+  const maximumFractionDigits = clampDecimalPlaces(requestedMaximum);
+  const requestedMinimum = options.minimumFractionDigits ?? 0;
+  const minimumFractionDigits = Math.min(clampDecimalPlaces(requestedMinimum), maximumFractionDigits);
+
+  return {
+    ...options,
+    minimumFractionDigits,
+    maximumFractionDigits
+  };
+}
+
 export function setFormattingLocale(nextState: FormatterLocaleState) {
   formatterState = {
     ...formatterState,
@@ -55,7 +101,7 @@ export function formatNumber(
   locale?: string
 ): string {
   if (!isFiniteNumber(value)) return EM_DASH;
-  return new Intl.NumberFormat(normalizeLocale(locale), options).format(value);
+  return new Intl.NumberFormat(normalizeLocale(locale), clampUiNumberFormatOptions(options)).format(value);
 }
 
 export function formatWholeNumber(
@@ -70,9 +116,10 @@ export function formatDecimal(
   digits = 2,
   locale?: string
 ): string {
+  const safeDigits = clampDecimalPlaces(digits);
   return formatNumber(value, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits
+    minimumFractionDigits: safeDigits,
+    maximumFractionDigits: safeDigits
   }, locale);
 }
 
@@ -97,10 +144,10 @@ export function formatCompactIN(
           maximumFractionDigits: 1
         };
 
-  return new Intl.NumberFormat(normalizeLocale(locale), {
+  return new Intl.NumberFormat(normalizeLocale(locale), clampUiNumberFormatOptions({
     ...baseOptions,
     ...options
-  }).format(value);
+  })).format(value);
 }
 
 export function formatCompactNumber(
@@ -122,13 +169,13 @@ export function formatCurrencyINR(
     return formatCompactIN(value, "currency", options, locale);
   }
 
-  return new Intl.NumberFormat(normalizeLocale(locale), {
+  return new Intl.NumberFormat(normalizeLocale(locale), clampUiNumberFormatOptions({
     style: "currency",
     currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
     ...options
-  }).format(value);
+  })).format(value);
 }
 
 export function formatCompactCurrency(
@@ -146,10 +193,11 @@ export function formatPercent(
   locale?: string
 ): string {
   if (!isFiniteNumber(value)) return EM_DASH;
+  const safeDecimals = clampDecimalPlaces(decimals);
   const sign = signed ? (value > 0 ? "+" : value < 0 ? "-" : "") : "";
   return `${sign}${formatNumber(Math.abs(value), {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
+    minimumFractionDigits: safeDecimals,
+    maximumFractionDigits: safeDecimals
   }, locale)}%`;
 }
 

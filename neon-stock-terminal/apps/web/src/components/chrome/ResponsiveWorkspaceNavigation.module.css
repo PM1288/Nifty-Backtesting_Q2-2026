@@ -1,0 +1,449 @@
+.desktopWrap {
+  position: sticky;
+  top: var(--app-header-height, 98px);
+  z-index: 19;
+  padding: 0 clamp(12px, 2vw, 28px);
+  border-bottom: 1px solid rgba(153, 169, 190, 0.28);
+  background: rgba(238, 243, 249, 0.92);
+  backdrop-filter: blur(16px);
+}
+
+.desktopDock {
+  width: min(100%, 1880px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 0;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: none;
+}
+
+.desktopItem {
+  min-width: 0;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  color: #425570;
+  text-decoration: none;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.desktopMenu {
+  position: relative;
+  min-width: 0;
+}
+
+.desktopMenu > .desktopItem {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.menuChevron {
+  flex: 0 0 auto;
+  transition: transform 150ms ease;
+}
+
+.desktopMenu:hover .menuChevron,
+.desktopMenu:focus-within .menuChevron {
+  transform: rotate(180deg);
+}
+
+.desktopDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 45;
+  width: 320px;
+  display: grid;
+  gap: 5px;
+  visibility: hidden;
+  padding: 8px;
+  border: 1px solid #d4deeb;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(18, 43, 76, 0.2);
+  opacity: 0;
+  transform: translate(-50%, -5px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 140ms;
+}
+.desktopDropdown::before {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 8px;
+  content: "";
+}
+
+.desktopMenu:hover .desktopDropdown,
+.desktopMenu:focus-within .desktopDropdown {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.desktopDropdown > a {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  color: #354b69;
+  text-decoration: none;
+}
+
+.desktopDropdown > a:hover,
+.desktopDropdown > a:focus-visible,
+.desktopDropdown > a[data-active="true"] {
+  background: #edf4ff;
+  color: #175ec8;
+  outline: none;
+}
+
+.desktopDropdown span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.desktopDropdown strong {
+  font-size: 13px;
+}
+
+.desktopDropdown small,
+.desktopDropdown p {
+  color: #6a7c93;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.desktopDropdown p {
+  margin: 2px 8px 3px;
+}
+
+.desktopItem > span {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.desktopItem strong,
+.desktopItem small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktopItem strong {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.desktopItem:hover {
+  color: #175ec8;
+  background: #f0f5fc;
+}
+
+.desktopItem:focus-visible,
+.mobileItem:focus-visible,
+.sheetTile:focus-visible,
+.sheetHeader button:focus-visible,
+.exitPresentation:focus-visible {
+  outline: 3px solid rgba(23, 94, 200, 0.28);
+  outline-offset: 2px;
+}
+
+.desktopItem[data-active="true"] {
+  color: #fff;
+  background: linear-gradient(135deg, #175ec8, #6b52cb);
+  box-shadow: 0 8px 20px rgba(56, 76, 186, 0.24);
+}
+
+.mobileDock,
+.sheetBackdrop {
+  display: none;
+}
+
+.exitPresentation {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 58;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #cbd6e4;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(25, 51, 81, 0.16);
+  color: #18314f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 1260px) and (min-width: 721px) {
+  .desktopDock {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    scroll-snap-type: x proximity;
+  }
+
+  .desktopItem {
+    flex: 0 0 132px;
+    scroll-snap-align: center;
+  }
+
+  .desktopMenu {
+    flex: 0 0 132px;
+  }
+
+  .desktopMenu .desktopItem {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 860px) and (min-width: 721px) {
+  .desktopItem {
+    flex-basis: 116px;
+  }
+
+  .desktopMenu {
+    flex-basis: 116px;
+  }
+}
+
+@media (max-width: 720px) {
+  .desktopWrap {
+    display: none;
+  }
+
+  .mobileDock {
+    position: fixed;
+    left: 50%;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    z-index: 60;
+    width: min(calc(100% - 18px), 470px);
+    min-height: 66px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 5px;
+    border: 1px solid rgba(185, 197, 213, 0.9);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 14px 38px rgba(20, 42, 72, 0.2);
+    backdrop-filter: blur(18px);
+    transform: translateX(-50%);
+  }
+
+  .mobileItem {
+    min-width: 0;
+    min-height: 54px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: #5b6e87;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .mobileItem span {
+    width: 100%;
+    overflow: hidden;
+    color: inherit;
+    font-size: 10px;
+    font-weight: 720;
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobileItem[data-active="true"] {
+    color: #175ec8;
+    background: #edf4ff;
+  }
+
+  .sheetBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 12px 8px 0;
+    background: rgba(16, 35, 63, 0.35);
+    animation: fadeIn 150ms ease-out;
+  }
+
+  .sheet {
+    width: min(100%, 520px);
+    max-height: min(78vh, 640px);
+    overflow-y: auto;
+    padding: 8px 14px calc(18px + env(safe-area-inset-bottom));
+    border: 1px solid #d3deeb;
+    border-bottom: 0;
+    border-radius: 24px 24px 0 0;
+    background: #fff;
+    box-shadow: 0 -18px 48px rgba(16, 35, 63, 0.2);
+    animation: slideUp 180ms ease-out;
+  }
+
+  .sheetHandle {
+    width: 42px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 999px;
+    background: #c7d2e0;
+  }
+
+  .sheetHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 2px 12px;
+  }
+
+  .sheetHeader h2,
+  .sheetHeader p {
+    margin: 0;
+  }
+
+  .sheetHeader h2 {
+    color: #10233f;
+    font-size: 18px;
+  }
+
+  .sheetHeader p {
+    margin-top: 3px;
+    color: #687a92;
+    font-size: 12px;
+  }
+
+  .sheetHeader button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid #d7e0eb;
+    border-radius: 13px;
+    background: #f7f9fc;
+    color: #263d59;
+    cursor: pointer;
+  }
+
+  .sheetGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .sheetTile {
+    min-width: 0;
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px;
+    border: 1px solid #dce4ee;
+    border-radius: 15px;
+    background: #f8fafc;
+    color: #425570;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .sheetTile[data-active="true"] {
+    border-color: #98b9e8;
+    background: #edf4ff;
+    color: #175ec8;
+  }
+
+  .sheetTile > span {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+  }
+
+  .sheetTile strong,
+  .sheetTile small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sheetTile strong {
+    color: inherit;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .sheetTile small {
+    color: #73839a;
+    font-size: 10px;
+    line-height: 1.3;
+  }
+}
+
+@media (max-width: 380px) {
+  .sheetGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desktopItem,
+  .desktopDropdown,
+  .sheetBackdrop,
+  .sheet {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -22,7 +22,7 @@ export function StatusPill({ tone = "neutral", children }: { tone?: StatusTone; 
   );
 }
 
-export function EnvironmentBadge({ value = "PAPER" }: { value?: "PAPER" | "LIVE" }) {
+export function EnvironmentBadge({ value = "PAPER" }: { value?: "PAPER" | "LIVE" | "ADMIN" | "REPLAY" }) {
   return (
     <span className={styles.environmentBadge} data-environment={value.toLowerCase()}>
       <ShieldCheck size={14} aria-hidden="true" />

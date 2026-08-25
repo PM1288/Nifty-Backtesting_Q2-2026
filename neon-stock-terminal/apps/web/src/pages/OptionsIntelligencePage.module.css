@@ -1,0 +1,577 @@
+.page {
+  display: grid;
+  gap: 14px;
+  min-height: 100vh;
+  margin: -16px;
+  padding: 20px;
+  background: #f4f7fb;
+  color: #13243a;
+  color-scheme: light;
+}
+.page p,
+.page small,
+.page th {
+  color: #52647a;
+}
+.hero,
+.pulse,
+.panel,
+.stockHero,
+.kpis article,
+.economics article {
+  border: 1px solid #dce5ef;
+  background: #fff;
+  box-shadow: 0 7px 20px rgba(31, 53, 81, 0.05);
+}
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 22px;
+  border-radius: 16px;
+  background: linear-gradient(115deg, #eef5ff, #fff 62%);
+}
+.hero span,
+.stockHero > div > span {
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #315fcc;
+}
+.hero h1 {
+  margin: 5px 0;
+  font-size: clamp(1.9rem, 3vw, 2.8rem);
+  letter-spacing: -0.04em;
+}
+.hero p,
+.panelHead p,
+.stockHero p {
+  margin: 0;
+  color: #66768a;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.heroActions span,
+.heroActions button {
+  border: 1px solid #d6e0ec;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #fff;
+  font-size: 0.7rem;
+  font-weight: 750;
+  color: #30455f;
+}
+.heroActions span[data-tone="pass"] {
+  color: #087653;
+  border-color: #bce4d5;
+}
+.heroActions span[data-tone="fail"] {
+  color: #a23c49;
+  border-color: #efc5ca;
+}
+.heroActions button {
+  cursor: pointer;
+}
+.error {
+  border: 1px solid #efc7ca;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff4f5;
+  color: #a23c49;
+}
+.pulse {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(480px, 2.2fr) minmax(
+      210px,
+      0.8fr
+    );
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+}
+.pulseLead,
+.health {
+  padding: 10px;
+}
+.pulseLead > span,
+.health > span {
+  color: #66778b;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.pulseLead > strong {
+  display: block;
+  margin: 8px 0;
+  font-size: 1.42rem;
+}
+.pulseLead > strong[data-tone="watch"] {
+  color: #a56500;
+}
+.pulseLead > strong[data-tone="pass"] {
+  color: #087653;
+}
+.pulseLead p {
+  margin: 0;
+  color: #66778b;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+.funnel {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: stretch;
+}
+.funnel div {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-height: 92px;
+  margin-right: 4px;
+  padding: 10px 16px;
+  background: #f1f5fa;
+  clip-path: polygon(0 0, 90% 0, 100% 50%, 90% 100%, 0 100%, 10% 50%);
+}
+.funnel div:first-child {
+  clip-path: polygon(0 0, 90% 0, 100% 50%, 90% 100%, 0 100%);
+}
+.funnel small {
+  color: #52647a;
+  font-size: 0.55rem;
+}
+.funnel b {
+  font-size: 1.35rem;
+}
+.funnel span {
+  color: #596b80;
+  font-size: 0.63rem;
+}
+.health {
+  display: grid;
+  gap: 6px;
+  border-left: 1px solid #e4eaf1;
+}
+.health strong {
+  color: #087653;
+}
+.health small {
+  color: #52647a;
+  font-size: 0.65rem;
+}
+.kpis,
+.economics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.kpis article,
+.economics article {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border-radius: 12px;
+}
+.kpis span,
+.kpis small,
+.economics span,
+.economics small {
+  color: #52647a;
+  font-size: 0.64rem;
+}
+.kpis strong,
+.economics strong {
+  font-size: 1.25rem;
+  color: #193f68;
+}
+.kpis article:last-child strong {
+  font-size: 0.8rem;
+}
+.panel {
+  min-width: 0;
+  padding: 16px;
+  border-radius: 14px;
+}
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.panelHead h2,
+.auditGrid h2 {
+  margin: 0;
+  color: #172c45;
+  font-size: 1rem;
+}
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.filters input {
+  border: 1px solid #ccd8e5;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #172c45;
+}
+.filters label {
+  font-size: 0.68rem;
+  color: #586b82;
+  white-space: nowrap;
+}
+.tableWrap {
+  overflow: auto;
+  border: 1px solid #e1e8f0;
+  border-radius: 9px;
+}
+.ranking,
+.chainTable {
+  width: 100%;
+  min-width: 1250px;
+  border-collapse: collapse;
+}
+.ranking th,
+.ranking td,
+.chainTable th,
+.chainTable td {
+  padding: 10px 9px;
+  border-bottom: 1px solid #e8edf3;
+  text-align: left;
+  vertical-align: top;
+}
+.ranking th,
+.chainTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f3f6fa;
+  color: #52647a;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ranking td,
+.chainTable td {
+  font-size: 0.7rem;
+  color: #2a3e57;
+}
+.ranking tbody tr {
+  cursor: pointer;
+}
+.ranking tbody tr:hover,
+.ranking tr[data-selected="true"] {
+  background: #f1f5ff;
+}
+.ranking tr[data-selected="true"] {
+  box-shadow: inset 3px 0 #6658d3;
+}
+.ranking td small {
+  display: block;
+  margin-top: 4px;
+  color: #52647a;
+  font-size: 0.59rem;
+}
+.ranking [data-tone="pass"],
+.stockDecision[data-tone="pass"] {
+  color: #087653;
+}
+.ranking [data-tone="watch"],
+.stockDecision[data-tone="watch"] {
+  color: #9a6100;
+}
+.ranking [data-tone="fail"],
+.stockDecision[data-tone="fail"] {
+  color: #a23c49;
+}
+.reason {
+  display: block;
+  max-width: 190px;
+  font-size: 0.62rem;
+}
+.stockHero {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 14px;
+}
+.stockHero h2 {
+  margin: 5px 0;
+  font-size: 1.45rem;
+}
+.stockHero h2 b {
+  margin-left: 8px;
+  color: #087653;
+}
+.stockDecision {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  background: #fbfdfc;
+}
+.stockDecision span,
+.stockDecision small {
+  font-size: 0.62rem;
+}
+.stockDecision strong {
+  font-size: 1.14rem;
+}
+.stockDecision b {
+  color: #2b415c;
+}
+.twoCol {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 12px;
+}
+.twoColWide {
+  display: grid;
+  grid-template-columns: 1.7fr 0.8fr;
+  gap: 12px;
+}
+.chart {
+  height: 340px;
+}
+.chainChart {
+  height: 410px;
+}
+.scoreStack {
+  display: grid;
+  gap: 11px;
+}
+.scoreBar > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+}
+.scoreBar small {
+  color: #52647a;
+  font-size: 0.56rem;
+}
+.track {
+  position: relative;
+  height: 6px;
+  margin: 5px 0;
+  background: #e7edf4;
+  border-radius: 999px;
+}
+.track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #a23c49;
+}
+.scoreBar[data-tone="watch"] .track i {
+  background: #d09120;
+}
+.scoreBar[data-tone="pass"] .track i {
+  background: #0b8f68;
+}
+.track b {
+  position: absolute;
+  top: -3px;
+  width: 1px;
+  height: 12px;
+  background: #293c54;
+}
+.economics {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.economics strong {
+  font-size: 1rem;
+}
+.structure {
+  display: grid;
+  gap: 14px;
+}
+.structure > strong {
+  color: #5064ca;
+  font-size: 0.66rem;
+}
+.structure h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+.structure > div {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.structure > div span {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #52647a;
+  font-size: 0.62rem;
+}
+.structure > div b {
+  color: #213751;
+  font-size: 0.82rem;
+}
+.structure p {
+  color: #65768b;
+  font-size: 0.68rem;
+}
+.empty {
+  padding: 24px;
+  border: 1px dashed #cbd8e5;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #65768b;
+  text-align: center;
+}
+.chainTable tr[data-selected="true"] {
+  background: #fff8dc;
+}
+.chainTable [data-side="CE"] {
+  color: #2563eb;
+}
+.chainTable [data-side="PE"] {
+  color: #7c3aed;
+}
+.auditGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 12px;
+}
+.auditGrid > .panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+.reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.reasons span {
+  border: 1px solid #efc7ca;
+  border-radius: 999px;
+  padding: 6px 8px;
+  background: #fff6f6;
+  color: #a23c49;
+  font-size: 0.58rem;
+  font-weight: 750;
+}
+.reasons span[data-tone="pass"] {
+  border-color: #bce4d5;
+  background: #f0fbf6;
+  color: #087653;
+}
+.auditGrid p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 7px 0;
+  border-bottom: 1px solid #edf1f5;
+}
+.auditGrid p span {
+  color: #52647a;
+  font-size: 0.59rem;
+}
+.auditGrid p b {
+  overflow-wrap: anywhere;
+  color: #2b4059;
+  font-size: 0.65rem;
+}
+.reject {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding-bottom: 6px;
+}
+.reject span,
+.reject b {
+  font-size: 0.62rem;
+}
+.reject i {
+  grid-column: 1/-1;
+  height: 4px;
+  border-radius: 999px;
+  background: #de9353;
+}
+.reject:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  height: 4px;
+  border-radius: 999px;
+  background: #edf1f5;
+  z-index: -1;
+}
+@media (max-width: 1100px) {
+  .pulse {
+    grid-template-columns: 1fr;
+  }
+  .health {
+    border-left: 0;
+    border-top: 1px solid #e4eaf1;
+  }
+  .twoCol,
+  .twoColWide,
+  .auditGrid {
+    grid-template-columns: 1fr;
+  }
+  .economics {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .page {
+    padding: 12px;
+  }
+  .hero,
+  .panelHead,
+  .stockHero {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .heroActions,
+  .filters {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .pulse {
+    padding: 10px;
+  }
+  .funnel {
+    grid-template-columns: repeat(5, minmax(85px, 1fr));
+    overflow: auto;
+  }
+  .kpis,
+  .economics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chart,
+  .chainChart {
+    height: 300px;
+  }
+}
+@media (max-width: 430px) {
+  .kpis,
+  .economics {
+    grid-template-columns: 1fr;
+  }
+  .heroActions button {
+    width: 100%;
+  }
+}

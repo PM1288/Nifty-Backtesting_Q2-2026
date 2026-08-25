@@ -1,0 +1,23 @@
+.field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
+  contain: strict;
+}
+
+:global([data-calm="true"]) .field {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce), (pointer: coarse), (hover: none) {
+  .field {
+    display: none;
+  }
+}
+

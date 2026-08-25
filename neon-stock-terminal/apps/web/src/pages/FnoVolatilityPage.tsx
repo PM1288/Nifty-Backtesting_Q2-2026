@@ -36,11 +36,11 @@ export function FnoVolatilityPage() {
   const signals = (data?.live ?? []).filter((row) => row.signal_id);
   const actionable = signals.filter((row) => row.decision !== "NO_TRADE");
 
-  if (error) return <main className={styles.page}><div className={styles.error}>Unable to load F&amp;O signals: {error}</div></main>;
-  if (!data) return <main className={styles.page}><div className={styles.loading}>Loading live option-value evidence…</div></main>;
+  if (error) return <div className={styles.page}><div className={styles.error}>Unable to load F&amp;O signals: {error}</div></div>;
+  if (!data) return <div className={styles.page}><div className={styles.loading}>Loading live option-value evidence…</div></div>;
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <section className={styles.header}>
         <div>
           <span>Paper research · two-gate volatility selection</span>
@@ -90,6 +90,6 @@ export function FnoVolatilityPage() {
           </tr>)}
         </tbody></table></div>
       </section>
-    </main>
+    </div>
   );
 }

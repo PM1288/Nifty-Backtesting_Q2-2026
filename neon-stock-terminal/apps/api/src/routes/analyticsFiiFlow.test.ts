@@ -69,6 +69,16 @@ test("analytics fii flow route returns a teaching payload", async () =>
         { trade_date: "2026-03-27", close_price: 23500, prev_close: 23000, loaded_at: "2026-03-27T12:00:00.000Z" },
         { trade_date: "2026-03-30", close_price: 23800, prev_close: 23500, loaded_at: "2026-03-30T12:00:00.000Z" },
         { trade_date: "2026-03-31", close_price: 24100, prev_close: 23800, loaded_at: "2026-03-31T12:00:00.000Z" }
+      ],
+      [
+        { market_date: "2026-03-27", participant_type: "FII/FPI", buy_value: 1200, sell_value: 1000, net_value: 200, exchange_scope: "nse_only", source_dataset: "nse_fii_dii_nse_only" },
+        { market_date: "2026-03-27", participant_type: "DII", buy_value: 900, sell_value: 1000, net_value: -100, exchange_scope: "nse_only", source_dataset: "nse_fii_dii_nse_only" },
+        { market_date: "2026-03-30", participant_type: "FII/FPI", buy_value: 1100, sell_value: 1000, net_value: 100, exchange_scope: "nse_only", source_dataset: "nse_fii_dii_nse_only" },
+        { market_date: "2026-03-30", participant_type: "DII", buy_value: 1300, sell_value: 1000, net_value: 300, exchange_scope: "nse_only", source_dataset: "nse_fii_dii_nse_only" }
+      ],
+      [
+        { source_id: "cash_fii_dii", source_label: "NSE cash FII/DII", latest_market_date: "2026-03-30", latest_refresh_at: "2026-03-31T03:00:00.000Z", row_count: 4, cadence: "DAILY" },
+        { source_id: "participant_oi", source_label: "NSE participant derivatives OI", latest_market_date: "2026-03-30", latest_refresh_at: null, row_count: 8, cadence: "DAILY" }
       ]
     ],
     async (baseUrl, calls) => {
@@ -77,12 +87,15 @@ test("analytics fii flow route returns a teaching payload", async () =>
 
       const payload = (await response.json()) as {
         latestTradeDate: string | null;
+        latestCashTradeDate: string | null;
         backdrop: string;
         summary: { regimeLabel: string; reportLagNote: string } | null;
         participants: Array<{ clientType: string; oiNetPct: number | null }>;
         divergences: Array<{ title: string }>;
         percentileBuckets: Array<{ label: string; sampleSize: number }>;
         diagnostics: { sampleSize: number };
+        cashCoverage: { expectedRecentSessions: number; availableRecentSessions: number; missingTradeDates: string[] };
+        sourceStatus: Array<{ sourceId: string; freshness: string }>;
         charts: {
           clientLongShortMatrix: unknown[];
           fiiVsClientSpread: unknown[];
@@ -90,11 +103,13 @@ test("analytics fii flow route returns a teaching payload", async () =>
           positioningPercentile: unknown[];
           regimeOverlay: unknown[];
           dayOverDayPositioningChange: unknown[];
+          cashFlowTrend: Array<{ tradeDate: string; fiiNetCr: number; diiNetCr: number; cumulativeFiiCr: number }>;
         };
       };
 
-      assert.equal(calls.count, 4);
+      assert.equal(calls.count, 6);
       assert.equal(payload.latestTradeDate, "2026-03-30");
+      assert.equal(payload.latestCashTradeDate, "2026-03-30");
       assert.ok(["supportive", "contrarian", "stretched", "neutral"].includes(payload.backdrop));
       assert.ok(payload.summary?.regimeLabel);
       assert.ok(payload.summary?.reportLagNote.includes("daily context layer"));
@@ -109,11 +124,17 @@ test("analytics fii flow route returns a teaching payload", async () =>
       assert.equal(payload.charts.positioningPercentile.length, 2);
       assert.equal(payload.charts.regimeOverlay.length, 2);
       assert.ok(payload.charts.dayOverDayPositioningChange.length >= 4);
+      assert.equal(payload.charts.cashFlowTrend.length, 2);
+      assert.equal(payload.charts.cashFlowTrend[1]?.fiiNetCr, 100);
+      assert.equal(payload.charts.cashFlowTrend[1]?.diiNetCr, 300);
+      assert.equal(payload.charts.cashFlowTrend[1]?.cumulativeFiiCr, 300);
+      assert.deepEqual(payload.cashCoverage.missingTradeDates, ["2026-03-31"]);
+      assert.equal(payload.sourceStatus.length, 2);
     }
   ));
 
 test("analytics fii flow route returns an empty teaching payload when no OI rows exist", async () =>
-  withServer([[], [], [], []], async (baseUrl, calls) => {
+  withServer([[], [], [], [], [], []], async (baseUrl, calls) => {
     const response = await fetch(`${baseUrl}/v1/analytics/fii-flow`);
     assert.equal(response.status, 200);
 
@@ -125,7 +146,7 @@ test("analytics fii flow route returns an empty teaching payload when no OI rows
       backdrop: string;
     };
 
-    assert.equal(calls.count, 4);
+    assert.equal(calls.count, 6);
     assert.equal(payload.latestTradeDate, null);
     assert.equal(payload.summary, null);
     assert.equal(payload.backdrop, "neutral");

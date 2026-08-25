@@ -96,6 +96,7 @@ export function AnalyticsFiiReportsPage() {
 
   const latestBackfill = runsQuery.data?.backfill_runs[0] ?? null;
   const latestDaily = runsQuery.data?.daily_runs[0] ?? null;
+  const hasRuns = Boolean(latestBackfill || latestDaily);
   const detailSummary = summarizeDetail(detailQuery.data);
   const detailRun = detailQuery.data?.run;
 
@@ -210,7 +211,13 @@ export function AnalyticsFiiReportsPage() {
           </section>
 
           <section className={styles.detailRail}>
-            {detailQuery.isLoading && !detailQuery.data ? (
+            {!hasRuns ? (
+              <DataState
+                kind="empty"
+                title={tr("No report runs are available")}
+                body={tr("The FII reports service is healthy, but it has not recorded a daily pull or historical backfill yet.")}
+              />
+            ) : detailQuery.isLoading && !detailQuery.data ? (
               <LoadingSkeletonCard title={tr("Run detail")} lines={6} />
             ) : detailQuery.error || !detailQuery.data ? (
               <DataState

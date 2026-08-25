@@ -47,6 +47,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   ];
   if (workspace === "oiis-lab") return [
     { label: "Live Selection", to: "/strategy/oiis-live", match: (path) => path === "/strategy/oiis-live" },
+    { label: "OISS v1.202608", to: "/strategy/oiss-v1-202608", match: (path) => path.startsWith("/strategy/oiss-v1-202608") },
     { label: "Strategy Definition", to: "/backtesting/strategies" },
     { label: "Backtest Builder", to: "/backtesting/lab" },
     { label: "Results", to: "/backtesting/results" },

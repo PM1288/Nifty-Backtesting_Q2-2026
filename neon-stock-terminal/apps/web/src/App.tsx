@@ -83,6 +83,7 @@ const BacktestingComparePage = lazy(async () => ({ default: (await preloadBackte
 const BacktestingRunsPage = lazy(async () => ({ default: (await preloadBacktestingRunsPage()).BacktestingRunsPage }));
 const BacktestingH30Page = lazy(async () => ({ default: (await import("./pages/BacktestingH30Page")).BacktestingH30Page }));
 const OiisLivePage = lazy(async () => ({ default: (await preloadOiisLivePage()).OiisLivePage }));
+const OissV1Page = lazy(async () => ({ default: (await import("./pages/OissV1Page")).OissV1Page }));
 const RollingMonthlyPage = lazy(async () => ({ default: (await preloadRollingMonthlyPage()).RollingMonthlyPage }));
 const MonthlyStrategyPage = lazy(async () => ({ default: (await preloadMonthlyStrategiesPage()).MonthlyStrategyPage }));
 const RollingMonthlyLegacyRouter = lazy(async () => ({ default: (await preloadMonthlyStrategiesPage()).RollingMonthlyLegacyRouter }));
@@ -181,6 +182,8 @@ export default function App() {
           <Route path="/strategy/evaluation" element={<Navigate to="/strategy/oiis-live?tab=strategy-definition" replace />} />
           <Route path="/strategy/oiis-live" element={<OiisLivePage />} />
           <Route path="/strategy/oiis-live/history" element={<OiisRunHistoryPage />} />
+          <Route path="/strategy/oiss-v1-202608" element={<OissV1Page />} />
+          <Route path="/strategy/oiss-v1-202608/:lens" element={<OissV1Page />} />
           <Route path="/strategy/monthly" element={<MonthlyStrategyPage />} />
           <Route path="/strategy/rolling-monthly" element={<RollingMonthlyLegacyRouter />} />
           <Route path="/strategy/rolling-monthly/legacy" element={<RollingMonthlyPage />} />

@@ -39,6 +39,7 @@ import { registerNiftyWeeklyOptions } from "./niftyWeeklyOptions";
 import { registerMobileNotifications } from "./mobileNotifications";
 import { registerStockProfiles } from "./stockProfiles";
 import { registerTrendlyneSummary } from "./trendlyneSummary";
+import { registerOissV1 } from "./oissV1";
 
 export function registerRoutes(
   app: Express,
@@ -90,5 +91,6 @@ export function registerRoutes(
   registerMobileNotifications(app, prisma);
   registerStockProfiles(app, prisma);
   registerTrendlyneSummary(app, prisma);
+  registerOissV1(app, prisma);
   registerWorkspaceRoutes(app, prisma, authRuntime, paperPrisma);
 }

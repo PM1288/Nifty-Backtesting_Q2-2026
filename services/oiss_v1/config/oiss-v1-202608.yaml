@@ -1,0 +1,18 @@
+{
+  "strategy_id": "OISS_V1_202608",
+  "display_name": "OISS v1.202608",
+  "framework_version": "OISS-1.202608",
+  "formula_version": "FORMULA-OISS-1.202608.0",
+  "config_version": "RISK-OISS-1.202608.0",
+  "modes": {"intelligence": true, "paper": false, "assisted": false, "live_candidate": false},
+  "thresholds": {
+    "ofactor_actionable": 75, "xfactor_actionable": 75, "tqs_actionable": 78,
+    "ofactor_candidate": 65, "direction_gap": 8, "minimum_rr": 1.5,
+    "btst_qualified": 80, "btst_watch": 70, "h2_qualified": 80, "h2_watch": 70,
+    "h3_qualified": 80, "h3_watch": 70, "h4_qualified": 85, "h4_watch": 75
+  },
+  "extension": {"fresh_max": 0.5, "acceptable_max": 1.0, "moderate_max": 1.5, "extended_max": 2.0},
+  "risk": {"account_capital": 1000000, "risk_per_trade_pct": 0.005, "max_lots": 3},
+  "option": {"maximum_quote_age_minutes": 15, "maximum_spread_pct": 3.0, "minimum_open_interest": 100, "minimum_volume": 1},
+  "schedule": ["09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00"]
+}

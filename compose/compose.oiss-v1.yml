@@ -1,0 +1,30 @@
+services:
+  oiss-v1:
+    image: trading-stack-oiss-v1:1.202608.0
+    build:
+      context: .
+      dockerfile: services/oiss_v1/Dockerfile
+    env_file: ./.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      OISS_CONFIG_PATH: /app/config/oiss-v1-202608.yaml
+      OISS_V1_202608_ENABLED: ${OISS_V1_202608_ENABLED:-1}
+      OISS_V1_202608_BACKFILL_ENABLED: ${OISS_V1_202608_BACKFILL_ENABLED:-0}
+      OISS_V1_202608_SCHEDULER_ENABLED: ${OISS_V1_202608_SCHEDULER_ENABLED:-0}
+      OISS_V1_202608_PAPER_ENABLED: ${OISS_V1_202608_PAPER_ENABLED:-0}
+      OISS_V1_202608_ASSISTED_ENABLED: ${OISS_V1_202608_ASSISTED_ENABLED:-0}
+      OISS_V1_202608_LIVE_CANDIDATE_ENABLED: ${OISS_V1_202608_LIVE_CANDIDATE_ENABLED:-0}
+      TZ: Asia/Kolkata
+    depends_on:
+      postgres: {condition: service_healthy}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "oiss-v1", "validate"]
+      interval: 60s
+      timeout: 30s
+      retries: 5

@@ -54,6 +54,13 @@ export const STRATEGY_MENU_ROUTES = [
     icon: FlaskConical,
   },
   {
+    id: "oiss-v1-202608",
+    label: "OISS v1.202608",
+    description: "Independent explainable decision, execution, risk and evaluation framework",
+    path: "/strategy/oiss-v1-202608",
+    icon: FlaskConical,
+  },
+  {
     id: "monthly-strategy",
     label: "Monthly Strategy",
     description: "Expiry, calendar closure and first-session entries in one ledger",

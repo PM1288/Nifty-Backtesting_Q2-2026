@@ -56,12 +56,14 @@ test("top Strategy workspace groups independent strategy dashboards without merg
   assert.deepEqual(STRATEGY_MENU_ROUTES.map((route) => route.label), [
     "Trendlyne Summary",
     "OIIS Lab",
+    "OISS v1.202608",
     "Monthly Strategy",
     "Rolling Strategy",
     "Long Options",
     "NIFTY Options",
   ]);
   assert.equal(resolveWorkspaceRoute("/strategy/oiis-live").id, "oiis-lab");
+  assert.equal(resolveWorkspaceRoute("/strategy/oiss-v1-202608").id, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/rolling-monthly").parentId, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/nifty-options").parentId, "oiis-lab");
 });

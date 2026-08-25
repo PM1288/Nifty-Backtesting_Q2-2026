@@ -1,0 +1,27 @@
+[project]
+name = "oiss-v1"
+version = "1.202608.0"
+requires-python = ">=3.12"
+dependencies = ["psycopg[binary,pool]==3.2.9"]
+
+[project.optional-dependencies]
+test = ["pytest==8.4.1", "ruff==0.12.7"]
+
+[project.scripts]
+oiss-v1 = "oiss_v1.main:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110

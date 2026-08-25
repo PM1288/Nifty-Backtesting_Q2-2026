@@ -457,6 +457,22 @@ export function fetchOiisLiveDashboard(
   );
 }
 
+export type OissV1Dashboard = {
+  strategy: { id: "OISS_V1_202608"; displayName: string; frameworkVersion: string };
+  run: Record<string, any> & { run_id: string; scan_timestamp: string; sections: Record<string, any> };
+  sectors: Array<Record<string, any>>;
+  radar: Array<Record<string, any>>;
+  changes: Array<Record<string, any>>;
+  outcomes: Array<Record<string, any>>;
+  priorRuns: Array<Record<string, any>>;
+  paper: Array<Record<string, any>>;
+  comparison: Array<Record<string, any>>;
+};
+
+export function fetchOissV1Dashboard(runId?: string): Promise<OissV1Dashboard> {
+  return getJson<OissV1Dashboard>(`/v1/oiss-v1/dashboard${runId ? `?runId=${encodeURIComponent(runId)}` : ""}`);
+}
+
 export type OiisRunHistory = {
   environment: "PAPER";
   scheduleIst: string[];

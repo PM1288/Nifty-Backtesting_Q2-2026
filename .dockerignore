@@ -10,6 +10,8 @@
 !internal/**
 !services/oiis_live/
 !services/oiis_live/**
+!services/oiss_v1/
+!services/oiss_v1/**
 !services/fno_volatility/
 !services/fno_volatility/**
 !services/market_status/

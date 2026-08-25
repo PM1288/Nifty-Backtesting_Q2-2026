@@ -7,7 +7,7 @@ import { DataAge, EnvironmentBadge } from "../../design-system/TradingPrimitives
 import { DataQualityBadge } from "../../design-system/WorkspacePrimitives";
 import { buildMarketQuoteQuality } from "../../design-system/quality";
 import { useI18n } from "../../i18n/LocaleProvider";
-import { useLiveQuotesWithStatus, useOverview } from "../../lib/hooks";
+import { useHeaderMarketSummary, useLiveQuotesWithStatus } from "../../lib/hooks";
 import { useDashboardPrefetch } from "../../lib/useDashboardPrefetch";
 import { arrow, fmtPct, fmtPrice } from "../../lib/format";
 import { useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
@@ -114,7 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [paperVoiceEnabled, setPaperVoiceEnabled] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("n50.paper-alert-voice") === "speak");
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
   const sessionEnabled = authReady && Boolean(user);
-  const overview = useOverview(sessionEnabled);
+  const overview = useHeaderMarketSummary(sessionEnabled);
   const liveFeed = useLiveQuotesWithStatus(["NIFTY50", "BANKNIFTY", "INDIAVIX"], sessionEnabled);
   const live = liveFeed.quotes;
   const tickerItems = useMemo(() => (overview.data?.tickerTape ?? []).map((item) => {
@@ -139,27 +139,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pageTitle = tr(workspaceRoute.label);
   const authState = authReady && user ? "signed_in" : "guest";
   const prefetchDashboardRoute = useDashboardPrefetch(authReady);
-  const commandItems = useMemo<CommandPaletteItem[]>(() => {
-    const stocks = (overview.data?.sectors ?? []).flatMap((sector) => sector.stocks.map<CommandItem>((stock) => ({
-      id: `stock:${stock.symbol}`,
-      group: "Stocks",
-      label: stock.symbol,
-      description: `${stock.name || stock.symbol} · ${sector.sector}`,
-      context: Number.isFinite(stock.last) ? `₹${Number(stock.last).toLocaleString("en-IN", { maximumFractionDigits: 2 })} · ${Number(stock.changePct) >= 0 ? "+" : ""}${Number(stock.changePct).toFixed(2)}%` : undefined,
-      freshness: stock.timestamp ? `Data ${new Date(stock.timestamp).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}` : undefined,
-      to: `/analytics/stock/${encodeURIComponent(stock.symbol)}?source=command-palette`,
-      keywords: [stock.name, sector.sector, "stock", "instrument"].filter(Boolean) as string[],
-      actionLabel: "Stock 360"
-    })));
-    return [...routeCommandItems(user?.role === "admin"), ...stocks];
-  }, [overview.data?.sectors, user?.role]);
+  const commandItems = useMemo<CommandPaletteItem[]>(() => routeCommandItems(user?.role === "admin"), [user?.role]);
 
   const loadCommandEntities = useCallback(async (): Promise<CommandPaletteItem[]> => {
-    const [paperResponse, runResponse] = await Promise.allSettled([
+    const [paperResponse, runResponse, profileResponse] = await Promise.allSettled([
       fetch(`${import.meta.env.VITE_API_BASE_URL ?? ""}/v1/workspace/paper-trading`, { credentials: "include", headers: { Accept: "application/json" } }).then(async (response) => response.ok ? response.json() : Promise.reject(new Error(`Paper API ${response.status}`))),
-      fetch(`${import.meta.env.VITE_API_BASE_URL ?? ""}/v1/backtesting/lab/runs?limit=25`, { credentials: "include", headers: { Accept: "application/json" } }).then(async (response) => response.ok ? response.json() : Promise.reject(new Error(`Runs API ${response.status}`)))
+      fetch(`${import.meta.env.VITE_API_BASE_URL ?? ""}/v1/backtesting/lab/runs?limit=25`, { credentials: "include", headers: { Accept: "application/json" } }).then(async (response) => response.ok ? response.json() : Promise.reject(new Error(`Runs API ${response.status}`))),
+      fetch(`${import.meta.env.VITE_API_BASE_URL ?? ""}/v1/instrument-profiles`, { credentials: "include", headers: { Accept: "application/json" } }).then(async (response) => response.ok ? response.json() : Promise.reject(new Error(`Profiles API ${response.status}`)))
     ]);
     const dynamic: CommandPaletteItem[] = [];
+    if (profileResponse.status === "fulfilled") {
+      for (const profile of profileResponse.value?.records ?? []) dynamic.push({
+        id: `stock:${profile.symbol}`,
+        group: "Stocks",
+        label: String(profile.symbol),
+        description: `${profile.name || profile.symbol}${profile.sector ? ` · ${profile.sector}` : ""}`,
+        to: `/analytics/stock/${encodeURIComponent(String(profile.symbol))}?source=command-palette`,
+        keywords: [profile.name, profile.sector, profile.capBucket, profile.fno ? "fno" : null, "stock", "instrument"].filter(Boolean),
+        actionLabel: "Stock 360"
+      });
+    }
     if (paperResponse.status === "fulfilled") {
       for (const trade of paperResponse.value?.stockTrades ?? []) dynamic.push({
         id: `paper:${trade.trade_group_id}`,

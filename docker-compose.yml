@@ -25,7 +25,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
+          # The canonical store serves live ingestion plus analytical read
+          # models. One CPU caused dashboard reads and collectors to queue
+          # behind each other during market hours.
+          cpus: "2.0"
           memory: 2g
 
   collector:
@@ -781,7 +784,10 @@ services:
       N50_PAPER_DB_CONNECTION_LIMIT: ${N50_PAPER_DB_CONNECTION_LIMIT:-3}
       N50_PAPER_DB_POOL_TIMEOUT: ${N50_PAPER_DB_POOL_TIMEOUT:-20}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=${POSTGRES_SCHEMA:-public}&connection_limit=${N50_API_DB_CONNECTION_LIMIT:-4}&pool_timeout=${N50_API_DB_POOL_TIMEOUT:-15}
-      DASHBOARD_SNAPSHOT_SCHEDULER_ENABLED: "1"
+      # Analytical snapshots are stale-while-revalidate on their own routes.
+      # Running every heavy market/derivatives materializer inside the shared
+      # API process starved Paper and Strategy during market hours.
+      DASHBOARD_SNAPSHOT_SCHEDULER_ENABLED: "0"
       AUTH_REQUIRED: ${N50_AUTH_REQUIRED:-1}
       DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
       DEV_LOCAL_AUTH_EMAIL: ${DEV_LOCAL_AUTH_EMAIL:-}

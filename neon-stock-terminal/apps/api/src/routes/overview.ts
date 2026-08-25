@@ -156,6 +156,8 @@ type StackIndexRow = {
   willr_14: number | null;
 };
 
+type HeaderIndexRow = StackIndexRow;
+
 type FnoSummaryRow = {
   contract_count: number | string;
   underlying_count: number | string;
@@ -391,6 +393,80 @@ function marketStatusIst(now = new Date()): { isOpen: boolean; label: "OPEN" | "
   return { isOpen, label: isOpen ? "OPEN" : "CLOSED" };
 }
 
+/**
+ * The application shell must not depend on the full market canvas.  The full
+ * overview joins the complete F&O universe, daily indicators, OIIS evidence,
+ * horizon observations and derivatives depth.  Loading that payload from the
+ * shell made every route compete for the same expensive query.
+ *
+ * This deliberately small query reads only the three index rows required by
+ * the permanent header.  RSI is calculated from at most 15 daily bars per
+ * index so the existing market background remains data-driven.
+ */
+async function getHeaderMarketSummary(prisma: PrismaClient) {
+  const rows = await prisma.$queryRaw<HeaderIndexRow[]>(Prisma.sql`
+    WITH index_targets(symbol_token, symbol, name) AS (
+      VALUES
+        ('99926000', 'NIFTY50', 'NIFTY 50'),
+        ('99926009', 'BANKNIFTY', 'BANK NIFTY'),
+        ('99926017', 'INDIAVIX', 'INDIA VIX')
+    ),
+    rsi_points AS (
+      SELECT
+        t.symbol_token,
+        AVG(GREATEST(p.close - p.previous_close, 0)) AS avg_gain,
+        AVG(GREATEST(p.previous_close - p.close, 0)) AS avg_loss
+      FROM index_targets t
+      CROSS JOIN LATERAL (
+        SELECT close, LAG(close) OVER (ORDER BY trade_date) AS previous_close
+        FROM (
+          SELECT trade_date, close::double precision AS close
+          FROM bars_1d
+          WHERE exchange = 'NSE' AND symbol_token = t.symbol_token
+          ORDER BY trade_date DESC
+          LIMIT 15
+        ) recent
+      ) p
+      WHERE p.previous_close IS NOT NULL
+      GROUP BY t.symbol_token
+    )
+    SELECT
+      t.symbol,
+      t.name,
+      COALESCE(st.last_price, st.last_close, 0)::double precision AS last,
+      COALESCE(st.net_change, 0)::double precision AS change,
+      COALESCE(st.percent_change, 0)::double precision AS change_pct,
+      COALESCE(st.last_volume, 0)::double precision AS volume,
+      st.last_seen_ts AS timestamp,
+      CASE
+        WHEN rp.avg_loss IS NULL THEN NULL
+        WHEN rp.avg_loss = 0 THEN 100
+        ELSE 100 - (100 / (1 + (rp.avg_gain / NULLIF(rp.avg_loss, 0))))
+      END AS rsi_14,
+      NULL::double precision AS willr_14
+    FROM index_targets t
+    LEFT JOIN instrument_state st
+      ON st.exchange = 'NSE' AND st.symbol_token = t.symbol_token
+    LEFT JOIN rsi_points rp ON rp.symbol_token = t.symbol_token
+  `);
+  const asOf = rows
+    .map((row) => row.timestamp)
+    .filter((value): value is Date | string => Boolean(value))
+    .map((value) => new Date(value).toISOString())
+    .sort()
+    .at(-1) ?? new Date().toISOString();
+  const bySymbol = new Map(rows.map((row) => [row.symbol, row]));
+  const nifty50 = makeIndexQuote("NIFTY50", "NIFTY 50", bySymbol.get("NIFTY50") ?? null, asOf);
+  const bankNifty = makeIndexQuote("BANKNIFTY", "BANK NIFTY", bySymbol.get("BANKNIFTY") ?? null, asOf);
+  const indiaVix = makeIndexQuote("INDIAVIX", "INDIA VIX", bySymbol.get("INDIAVIX") ?? null, asOf);
+  return {
+    asOf,
+    market: marketStatusIst(new Date()),
+    indices: { nifty50, bankNifty, indiaVix },
+    tickerTape: [nifty50, bankNifty, indiaVix].map(({ symbol, last, changePct }) => ({ symbol, last, changePct }))
+  };
+}
+
 function buildOverviewFromQuotes(
   asOf: string,
   nifty: Quote,
@@ -522,20 +598,22 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
           AND i.expiry BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 year'
           AND UPPER(COALESCE(i.name, '')) NOT LIKE '%TEST%'
       ),
+      equity_candidates AS (
+        SELECT
+          UPPER(COALESCE(NULLIF(TRIM(iu.underlying), ''), REGEXP_REPLACE(TRIM(iu.tradingsymbol), '-EQ$', ''))) AS symbol,
+          iu.symbol_token,
+          iu.tradingsymbol,
+          ROW_NUMBER() OVER (
+            PARTITION BY UPPER(COALESCE(NULLIF(TRIM(iu.underlying), ''), REGEXP_REPLACE(TRIM(iu.tradingsymbol), '-EQ$', '')))
+            ORDER BY CASE WHEN iu.tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END, iu.active_from DESC NULLS LAST
+          ) AS rn
+        FROM instrument_universe iu
+        WHERE iu.exchange = 'NSE' AND iu.active_to IS NULL
+      ),
       universe AS (
         SELECT f.symbol, eq.symbol_token, eq.tradingsymbol
         FROM fno_underlyings f
-        JOIN LATERAL (
-          SELECT i.symbol_token, i.tradingsymbol
-          FROM instruments i
-          WHERE i.exchange = 'NSE'
-            AND (
-              UPPER(TRIM(i.name)) = f.symbol
-              OR UPPER(REGEXP_REPLACE(TRIM(i.tradingsymbol), '-EQ$', '')) = f.symbol
-            )
-          ORDER BY CASE WHEN i.tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END, i.updated_at DESC
-          LIMIT 1
-        ) eq ON TRUE
+        JOIN equity_candidates eq ON eq.symbol = f.symbol AND eq.rn = 1
       ),
       classified AS (
         SELECT
@@ -545,22 +623,12 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
           CASE
             WHEN u.symbol IN ('TMCV', 'TMPV') THEN 'Automobile and Auto Components'
             ELSE COALESCE(
-              NULLIF(TRIM(ic.sector), ''),
-              NULLIF(TRIM(ic.industry), ''),
-              NULLIF(TRIM(ic.basic_industry), ''),
+              NULLIF(TRIM(ip.sector), ''),
               'OTHER'
             )
           END AS sector
         FROM universe u
-        LEFT JOIN LATERAL (
-          SELECT c.sector, c.industry, c.basic_industry
-          FROM index_constituents c
-          WHERE UPPER(TRIM(c.symbol)) = u.symbol
-          ORDER BY
-            CASE WHEN UPPER(TRIM(c.index_name)) IN ('NIFTY100', 'NIFTY 100') THEN 0 ELSE 1 END,
-            c.updated_at DESC
-          LIMIT 1
-        ) ic ON TRUE
+        LEFT JOIN instrument_profiles ip ON ip.symbol = u.symbol
       ),
       rsi_window AS (
         SELECT
@@ -1108,6 +1176,16 @@ export async function getLeaderboard(prisma: PrismaClient, limit: number) {
 }
 
 export function registerOverview(app: Express, prisma: PrismaClient) {
+  app.get("/v1/overview/header", async (_req, res, next) => {
+    try {
+      const payload = await getHeaderMarketSummary(prisma);
+      res.setHeader("Cache-Control", "private, max-age=5, stale-while-revalidate=30");
+      return res.json(payload);
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   app.get("/v1/overview", async (req, res) => serveSnapshotRoute(req, res, prisma, OVERVIEW_SNAPSHOT_DEFINITION));
 
   app.get("/v1/leaderboard", async (req, res) => {

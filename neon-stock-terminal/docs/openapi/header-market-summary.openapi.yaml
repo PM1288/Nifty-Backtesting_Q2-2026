@@ -1,0 +1,66 @@
+openapi: 3.1.0
+info:
+  title: NIFTY 50 Trader Header Market Summary API
+  version: 1.0.0
+  description: Lightweight permanent-shell market state. It does not build the full F&O market canvas.
+servers:
+  - url: /n50
+security:
+  - sessionCookie: []
+paths:
+  /v1/overview/header:
+    get:
+      summary: Get the three permanent header index quotes
+      description: Returns NIFTY 50, BANK NIFTY and INDIA VIX plus market-session state and a compact ticker tape.
+      responses:
+        '200':
+          description: Header market summary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [asOf, market, indices, tickerTape]
+                properties:
+                  asOf: { type: string, format: date-time }
+                  market:
+                    type: object
+                    required: [isOpen, label]
+                    properties:
+                      isOpen: { type: boolean }
+                      label: { enum: [OPEN, CLOSED] }
+                  indices:
+                    type: object
+                    required: [nifty50, bankNifty, indiaVix]
+                    properties:
+                      nifty50: { $ref: '#/components/schemas/IndexQuote' }
+                      bankNifty: { $ref: '#/components/schemas/IndexQuote' }
+                      indiaVix: { $ref: '#/components/schemas/IndexQuote' }
+                  tickerTape:
+                    type: array
+                    items:
+                      type: object
+                      required: [symbol, last, changePct]
+                      properties:
+                        symbol: { type: string }
+                        last: { type: number }
+                        changePct: { type: number }
+        '401': { description: Active authenticated session required }
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: n50-prod-session
+  schemas:
+    IndexQuote:
+      type: object
+      additionalProperties: true
+      required: [symbol, name, last, change, changePct, timestamp]
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        last: { type: number }
+        change: { type: number }
+        changePct: { type: number }
+        timestamp: { type: string, format: date-time }
+        rsi: { type: [number, 'null'] }

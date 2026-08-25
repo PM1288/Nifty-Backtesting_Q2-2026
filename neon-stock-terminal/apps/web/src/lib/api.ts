@@ -30,6 +30,7 @@ import type {
   ExportManifestPayload,
   IntradayAnalyticsStockPayload,
   IntradayAnalyticsSummaryPayload,
+  HeaderMarketSummaryResponse,
   LeaderboardResponse,
   OpsQualityPayload,
   OptionChainAnalyticsResponse,
@@ -414,6 +415,10 @@ export function getBacktestingLabCsvUrl(runId: string): string {
 
 export function fetchOverview(): Promise<OverviewResponse> {
   return getJson<OverviewResponse>("/v1/overview");
+}
+
+export function fetchHeaderMarketSummary(): Promise<HeaderMarketSummaryResponse> {
+  return getJson<HeaderMarketSummaryResponse>("/v1/overview/header");
 }
 
 export type OiisLiveDashboard = {
@@ -808,10 +813,11 @@ export type AbsoluteMonthlyChart = {
   bars: Array<Record<string, any>>;
 };
 
-export function fetchAbsoluteMonthlyDashboard(year?: string, month?: string) {
+export function fetchAbsoluteMonthlyDashboard(year?: string, month?: string, includeEvaluations = true) {
   const params = new URLSearchParams();
   if (year) params.set("year", year);
   if (month) params.set("month", month);
+  if (!includeEvaluations) params.set("includeEvaluations", "false");
   const suffix = params.size ? `?${params.toString()}` : "";
   return getJson<AbsoluteMonthlyDashboard>(`/v1/rolling-monthly/absolute-months${suffix}`);
 }

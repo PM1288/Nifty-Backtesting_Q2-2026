@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: NIFTY 50 Trader Monthly and Rolling Strategy API
-  version: 1.2.0
+  version: 1.3.0
   description: Independent research APIs. These routes do not create paper or live orders.
 servers:
   - url: /n50
@@ -24,6 +24,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Year'
         - $ref: '#/components/parameters/Month'
+        - in: query
+          name: includeEvaluations
+          description: >-
+            Set to false for the fast selected-candidate list. The complete all-stock
+            rejection ledger remains available by omitting this parameter or setting it to true.
+          schema: { type: boolean, default: true }
       responses:
         '200':
           description: Calendar-month evidence including informational EMA9 fields

@@ -108,6 +108,8 @@ export type OverviewResponse = {
   };
 };
 
+export type HeaderMarketSummaryResponse = Pick<OverviewResponse, "asOf" | "market" | "indices" | "tickerTape">;
+
 export type IntradayBar = {
   t: string; // ISO
   o: number;

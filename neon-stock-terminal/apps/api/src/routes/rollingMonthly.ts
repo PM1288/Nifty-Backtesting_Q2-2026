@@ -73,6 +73,7 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
   app.get("/v1/rolling-monthly/absolute-months", async (req, res) => {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
+    const includeEvaluations = clean(req.query.includeEvaluations, 5).toLowerCase() !== "false";
     if (year && !YEAR.test(year)) return void res.status(400).json({ error: "year must be YYYY" });
     if (month && !MONTH.test(month)) return void res.status(400).json({ error: "month must be MM" });
     const [runs, candidates, evaluations, monthlySummary, yearlySummary] = await Promise.all([
@@ -85,7 +86,7 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
            AND ($2='' OR extract(year FROM evaluation_month)::int=$2::int)
            AND ($3='' OR extract(month FROM evaluation_month)::int=$3::int)
          ORDER BY evaluation_month DESC,signal_date,symbol`, ABSOLUTE_MONTH_VERSION, year, month),
-      prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      includeEvaluations ? prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT e.*,p.market_cap_bucket,p.is_nifty_50,p.is_nifty_100,p.is_nifty_200,
           p.is_nifty_largemidcap_250,p.is_nifty_500,p.is_nse_fno
          FROM rolling_monthly.evaluation_ledger e
@@ -93,7 +94,7 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
          WHERE e.variant='ABSOLUTE_MONTH'
            AND ($1='' OR extract(year FROM e.evaluation_month)::int=$1::int)
            AND ($2='' OR extract(month FROM e.evaluation_month)::int=$2::int)
-         ORDER BY e.evaluation_month DESC,e.symbol`, year, month),
+         ORDER BY e.evaluation_month DESC,e.symbol`, year, month) : Promise.resolve([]),
       prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT evaluation_month,count(*)::int AS opportunities,
           count(*) FILTER (WHERE evaluation_status<>'INCOMPLETE')::int AS eligible_opportunities,

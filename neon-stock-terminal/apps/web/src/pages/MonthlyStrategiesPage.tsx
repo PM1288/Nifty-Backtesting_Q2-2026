@@ -142,21 +142,25 @@ function Kpi({ label, value, detail }: { label: string; value: string; detail: s
 function StrategyTable({ rows, title, profiles, onSelect }: { rows: EvidenceRow[]; title: string; profiles: ReturnType<typeof useProfileIndex>["bySymbol"]; onSelect: (row: EvidenceRow) => void }) {
   const [sort, setSort] = useState<keyof EvidenceRow>("entryDate");
   const [ascending, setAscending] = useState(false);
+  const [visibleLimit, setVisibleLimit] = useState(250);
   const sorted = useMemo(() => [...rows].sort((a, b) => {
     const left = a[sort]; const right = b[sort];
     const order = typeof left === "number" && typeof right === "number" ? left - right : String(left ?? "").localeCompare(String(right ?? ""));
     return ascending ? order : -order;
   }), [rows, sort, ascending]);
+  useEffect(() => { setVisibleLimit(250); }, [rows]);
+  const visibleRows = sorted.slice(0, visibleLimit);
   const rollingMode = rows.length > 0 && rows.every((row) => row.entryMethod === "ROLLING_5_30_60");
   const header = (key: keyof EvidenceRow, label: string) => <button type="button" onClick={() => { if (sort === key) setAscending((value) => !value); else { setSort(key); setAscending(false); } }}>{label}{sort === key ? (ascending ? " ↑" : " ↓") : ""}</button>;
   return <section className={styles.ledger}><header><div><span>COMPLETE EVIDENCE</span><h2>{title}</h2></div><small>{rows.length} filtered rows · click a row for the full condition and calculation record</small></header>
     <div className={styles.tableViewport}><table><thead><tr><th>{header("symbol", "Stock")}</th><th>{header("entryMethod", "Entry method")}</th><th>{header("period", "Month")}</th><th>{header("entryDate", "Entry")}</th><th>Entry price</th><th>{header("endReturn", "As-of / end")}</th><th>{header("maxProfit", "Max profit")}</th><th>{header("maxDrawdown", "Max drawdown")}</th><th>1%</th><th>3%</th><th>5%</th><th>{header("pnl10000", "₹10k P&L")}</th><th>{rollingMode ? "60 / 30-session block" : "Monthly EMA9"}</th><th>{rollingMode ? "10 / 5-session opens" : "Body above EMA9"}</th><th>{header("status", "State")}</th></tr></thead>
-      <tbody>{sorted.map((row) => <tr key={`${row.entryMethod}-${row.id}`} onClick={() => onSelect(row)} tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter") onSelect(row); }}>
+      <tbody>{visibleRows.map((row) => <tr key={`${row.entryMethod}-${row.id}`} onClick={() => onSelect(row)} tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter") onSelect(row); }}>
         <td><StockIdentity symbol={row.symbol} profile={profiles.get(row.symbol)} compact /></td><td><b className={styles.method}>{row.entryMethod.replaceAll("_", " ")}</b><small>{row.selectionStatus.replaceAll("_", " ")}</small>{rejectionReasons(row)[0] ? <small>{reasonLabel(rejectionReasons(row)[0])}</small> : null}{row.gapThreshold != null ? <small>Gap {row.gapThreshold.toFixed(2)}%</small> : null}</td><td>{row.period.slice(0, 7)}</td><td>{row.entryDate || "—"}<small>{row.signalDate ? `Signal ${row.signalDate}` : ""}</small></td><td>{price(row.entryPrice)}</td>
         <td className={row.endReturn == null ? styles.missing : row.endReturn >= 0 ? styles.positive : styles.negative}>{pct(row.endReturn)}</td><td className={styles.positive}>{pct(row.maxProfit)}</td><td className={styles.negative}>{pct(row.maxDrawdown)}</td>
         {[row.hit1, row.hit3, row.hit5].map((hit, index) => <td key={index}><span className={hit ? styles.hit : styles.miss}>{hit ? "✓ HIT" : "×"}</span></td>)}<td>{money(row.pnl10000)}</td>
         {rollingMode ? <><td>{price(number(row.raw.older_block_open))}<small>Older close {price(number(row.raw.older_block_close))} · recent open {price(number(row.raw.recent_block_open))}</small></td><td>{price(number(row.raw.prior_week_open))}<small>5-session {price(number(row.raw.current_week_open))}</small></td></> : <><td>{price(row.ema9)}<small>{row.closeAboveEma9 == null ? "Not available" : row.closeAboveEma9 ? "Close above" : "Close below"}</small></td><td>{pct(row.candleAboveEma9Pct)}<small>{(row.candleAboveEma9Pct ?? 0) >= 70 ? "≥70%" : "<70%"}</small></td></>}<td><span className={styles.state}>{row.status.replaceAll("_", " ")}</span></td>
       </tr>)}</tbody></table></div>
+    {visibleRows.length < sorted.length ? <footer><span>Showing {visibleRows.length.toLocaleString("en-IN")} of {sorted.length.toLocaleString("en-IN")} filtered rows</span><button type="button" onClick={() => setVisibleLimit((limit) => Math.min(sorted.length, limit + 250))}>Load 250 more</button></footer> : null}
   </section>;
 }
 
@@ -175,29 +179,70 @@ function Inspector({ row, onClose }: { row: EvidenceRow; onClose: () => void }) 
 export function MonthlyStrategyPage() {
   const location = useLocation();
   const profiles = useProfileIndex();
-  const [data, setData] = useState<{ expiry: any[]; closure: any[]; first: any[]; closureEvaluations: any[] } | null>(null);
+  const [data, setData] = useState<{ expiry: any[]; closure: any[]; first: any[]; closureEvaluations: any[] }>({ expiry: [], closure: [], first: [], closureEvaluations: [] });
+  const [loadingSources, setLoadingSources] = useState(4);
   const [error, setError] = useState(""); const [selected, setSelected] = useState<EvidenceRow | null>(null);
   const requestedMethod = new URLSearchParams(location.search).get("entryMethod");
   const [method, setMethod] = useState(["EXPIRY", "MONTHLY_CLOSURE", "FIRST_SESSION"].includes(requestedMethod ?? "") ? requestedMethod! : "ALL"); const [year, setYear] = useState("ALL"); const [month, setMonth] = useState("ALL"); const [ema, setEma] = useState("ALL");
   const [selection, setSelection] = useState("SELECTED");
+  const [evaluationsLoading, setEvaluationsLoading] = useState(false);
   const [failureReason, setFailureReason] = useState("ALL");
   const [stockFilters, setStockFilters] = useState<StockProfileFilters>({ universe: "ALL", capBucket: "ALL", sector: "ALL" });
-  useEffect(() => { let active = true; setError(""); Promise.all([fetchRollingMonthlyDashboard(), fetchAbsoluteMonthlyDashboard(), fetchAbsoluteFirstSessionDashboard(undefined, undefined, "0.50"), fetchAbsoluteFirstSessionDashboard(undefined, undefined, "1.00")]).then(([rolling, closure, first05, first10]) => { if (active) setData({ expiry: rolling.expiryHistory.candidates, closure: closure.candidates, first: [...first05.candidates, ...first10.candidates], closureEvaluations: closure.evaluations ?? [] }); }).catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : String(reason)); }); return () => { active = false; }; }, []);
-  const allRows = useMemo(() => data ? normalized(data.expiry, data.closure, data.first, data.closureEvaluations) : [], [data]);
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setError(""); setLoadingSources(4);
+      let firstRows: any[] = [];
+      const apply = (patch: Partial<typeof data>) => {
+        if (!active) return;
+        setData((current) => ({ ...current, ...patch }));
+        setLoadingSources((count) => Math.max(0, count - 1));
+      };
+      const fail = (reason: unknown) => {
+        if (!active) return;
+        setError((current) => [current, reason instanceof Error ? reason.message : String(reason)].filter(Boolean).join(" · "));
+        setLoadingSources((count) => Math.max(0, count - 1));
+      };
+      // Each endpoint fans out into several evidence queries. Loading them in
+      // parallel exhausted the shared Prisma pool and left the complete page
+      // waiting for the slowest request. Render each source as it arrives and
+      // keep no more than one monthly endpoint active at a time.
+      try { const closure = await fetchAbsoluteMonthlyDashboard(undefined, undefined, false); apply({ closure: closure.candidates, closureEvaluations: [] }); } catch (reason) { fail(reason); }
+      try { const first = await fetchAbsoluteFirstSessionDashboard(undefined, undefined, "0.50"); firstRows = first.candidates; apply({ first: firstRows }); } catch (reason) { fail(reason); }
+      try { const first = await fetchAbsoluteFirstSessionDashboard(undefined, undefined, "1.00"); firstRows = [...firstRows, ...first.candidates]; apply({ first: firstRows }); } catch (reason) { fail(reason); }
+      try { const rolling = await fetchRollingMonthlyDashboard(); apply({ expiry: rolling.expiryHistory.candidates }); } catch (reason) { fail(reason); }
+    };
+    void load();
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    if (selection === "SELECTED" || data.closureEvaluations.length > 0 || evaluationsLoading) return;
+    let active = true;
+    setEvaluationsLoading(true);
+    fetchAbsoluteMonthlyDashboard(undefined, undefined, true)
+      .then((closure) => { if (active) setData((current) => ({ ...current, closureEvaluations: closure.evaluations ?? [] })); })
+      .catch((reason) => { if (active) setError((current) => [current, reason instanceof Error ? reason.message : String(reason)].filter(Boolean).join(" · ")); })
+      .finally(() => { if (active) setEvaluationsLoading(false); });
+    return () => { active = false; };
+  }, [data.closureEvaluations.length, selection]);
+  const allRows = useMemo(() => normalized(data.expiry, data.closure, data.first, data.closureEvaluations), [data]);
   const years = useMemo(() => Array.from(new Set(allRows.map((row) => row.period.slice(0, 4))).values()).filter(Boolean).sort().reverse(), [allRows]);
   const failureReasons = useMemo(() => Array.from(new Set(allRows.flatMap(rejectionReasons))).sort(), [allRows]);
   const rows = useMemo(() => allRows.filter((row) => (selection === "ALL" || row.selectionStatus === selection) && (failureReason === "ALL" || rejectionReasons(row).includes(failureReason)) && (method === "ALL" || row.entryMethod === method) && (year === "ALL" || row.period.startsWith(year)) && (month === "ALL" || row.period.slice(5, 7) === month) && (ema === "ALL" || (ema === "ABOVE" && row.closeAboveEma9) || (ema === "BELOW" && row.closeAboveEma9 === false) || (ema === "BODY70" && (row.candleAboveEma9Pct ?? -1) >= 70)) && matchesStockProfile(profiles.bySymbol.get(row.symbol), stockFilters)), [allRows, selection, failureReason, method, year, month, ema, profiles.bySymbol, stockFilters]);
   const eligible = rows.filter((row) => row.endReturn != null); const winners = eligible.filter((row) => (row.endReturn ?? 0) > 0); const total = (key: "pnl10000" | "maxProfit10000" | "maxDrawdown10000") => eligible.reduce((sum, row) => sum + (row[key] ?? 0), 0);
   const visibleProfiles = rows.map((row) => profiles.bySymbol.get(row.symbol)).filter(Boolean) as NonNullable<ReturnType<typeof profiles.bySymbol.get>>[];
   return <main className={styles.page}><header className={styles.hero}><div><span>INDEPENDENT CASH-EQUITY RESEARCH · NOT OIIS</span><h1>Monthly Strategy</h1><p>Compare expiry-anchored, calendar-month closure and first-session entries in one evidence ledger. The entry date changes; outcomes, target tests and capital bases remain directly comparable.</p></div><nav><Link className={styles.activeTab} to="/strategy/monthly">Monthly anchors</Link><Link to="/strategy/rolling-monthly">Rolling 5/30/60</Link></nav></header>
-    {error ? <div className={styles.error}><b>Monthly evidence unavailable</b><span>{error}</span></div> : !data ? <div className={styles.loading}>Loading monthly strategy evidence…</div> : <>
+    {error ? <div className={styles.error}><b>Some monthly evidence is unavailable</b><span>{error}</span></div> : null}
+    {loadingSources > 0 ? <div className={styles.loading}>Loading monthly evidence progressively… {4 - loadingSources}/4 sources ready</div> : null}
+    {evaluationsLoading ? <div className={styles.loading}>Loading the all-stock rejection ledger on request…</div> : null}
+    <>
       <div className={styles.context}><strong>{rows.length} visible / {allRows.length} total</strong><label>Selection<select value={selection} onChange={(e) => setSelection(e.target.value)}><option value="SELECTED">Selected entries</option><option value="REJECTED">Not selected</option><option value="INCOMPLETE">Incomplete data</option><option value="ALL">All evaluated stocks</option></select></label><label>Failure reason<select value={failureReason} onChange={(e) => setFailureReason(e.target.value)}><option value="ALL">All reasons</option>{failureReasons.map((reason) => <option key={reason} value={reason}>{reasonLabel(reason)}</option>)}</select></label><label>Entry method<select value={method} onChange={(e) => setMethod(e.target.value)}><option value="ALL">All three methods</option><option value="EXPIRY">Expiry</option><option value="MONTHLY_CLOSURE">Monthly closure</option><option value="FIRST_SESSION">First session</option></select></label><label>Year<select value={year} onChange={(e) => setYear(e.target.value)}><option value="ALL">All</option>{years.map((item) => <option key={item}>{item}</option>)}</select></label><label>Month<select value={month} onChange={(e) => setMonth(e.target.value)}><option value="ALL">All</option>{Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((item) => <option key={item}>{item}</option>)}</select></label><label>EMA9 context<select value={ema} onChange={(e) => setEma(e.target.value)}><option value="ALL">All</option><option value="ABOVE">Close above EMA9</option><option value="BELOW">Close below EMA9</option><option value="BODY70">≥70% candle above</option></select></label><button type="button" onClick={() => csvDownload(rows, "monthly-strategy-evidence.csv")}>Download filtered CSV</button></div>
       <StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={stockFilters} onChange={setStockFilters} count={rows.length} />
       <section className={styles.kpis}><Kpi label="Evaluable entries" value={String(eligible.length)} detail={`${rows.length - eligible.length} developing / unavailable`} /><Kpi label="Positive at end / as-of" value={eligible.length ? `${(100 * winners.length / eligible.length).toFixed(2)}%` : "—"} detail={`${winners.length} of ${eligible.length}`} /><Kpi label="₹10k each · end P&L" value={money(total("pnl10000"))} detail="Gross research path" /><Kpi label="Max reward / pain" value={`${money(total("maxProfit10000"))} / ${money(total("maxDrawdown10000"))}`} detail="Observed extrema, not booked P&L" /></section>
       <section className={styles.targets}><header><div><span>TARGET CONVERSION</span><h2>How often did each entry method reach +1%, +3% and +5%?</h2></div><small>Denominator: filtered rows with an observed path.</small></header><div>{[1, 3, 5].map((target) => { const hits = eligible.filter((row) => row[`hit${target}` as "hit1"]); const rate = eligible.length ? 100 * hits.length / eligible.length : 0; return <article key={target}><b>+{target}%</b><strong>{hits.length}<small> / {eligible.length}</small></strong><span>{rate.toFixed(2)}%</span><i><em style={{ width: `${rate}%` }} /></i></article>; })}</div></section>
       <StockDistribution profiles={visibleProfiles} />
       <StrategyTable rows={rows} title="All monthly entry methods in one table" profiles={profiles.bySymbol} onSelect={setSelected} />
-    </>}{selected ? <Inspector row={selected} onClose={() => setSelected(null)} /> : null}</main>;
+    </>{selected ? <Inspector row={selected} onClose={() => setSelected(null)} /> : null}</main>;
 }
 
 export function RollingWindowStrategyPage() {

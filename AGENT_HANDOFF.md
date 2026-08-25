@@ -2983,3 +2983,15 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - A final whole-tree scan also restored migrations `044` and `049`, audit generators, UI/UX and Paper workflow regressions, and the non-binary technical documentation corpus. Large generated evidence is retained in the canonical ignored archive rather than Git.
 - Validation: web 29/29, API 122/122, NSE ingestor 5/5 and Go tests passed; Compose/source gates passed; rebuilt dashboard and NSE ingestor images; dashboard, scheduler and delivery containers healthy; public home and auth-session endpoints returned HTTP 200.
 - Current performance caveat: concurrent browser suites can drive a market-universe SQL query above 70 seconds. Run critical Playwright suites sequentially pending query optimisation.
+
+## 2026-08-25 — Strategy and Paper Trading performance repair
+
+- Removed the full `/v1/overview` analytical workload from the shared application shell. The permanent header ticker now uses authenticated `GET /v1/overview/header`, a three-index query measured at approximately 0.10 seconds.
+- Made `/health` and `/ready` constant-time probes and moved expensive database/snapshot/statement diagnostics to the explicit admin-only `/health/details` endpoint.
+- Disabled the in-process analytical snapshot scheduler in production; snapshot-backed routes retain on-demand stale-while-revalidate behavior.
+- Monthly Strategy now renders its four sources progressively, requests the compact selected-entry Absolute Monthly payload first, and loads the all-stock rejection ledger only when requested.
+- Strategy ledgers render 250 rows at a time while filtering, counts and CSV export continue to operate on the complete loaded population.
+- Replaced the full-overview per-underlying lateral instrument scan with a normalized instrument-universe pass and profile join.
+- Restored PostgreSQL to the canonical 2 CPU / 2 GiB / 80-connection runtime profile without replacing the persistent volume. Verified 57 durable paper trade groups after recreation.
+- Measured authenticated production improvements: Paper Trading 29.9 s under contention to 3.25 s; Absolute Monthly 18.6 s / 20.2 MB to 2.05 s / 3.1 MB; health up to 3.95 s to 0.05–0.10 s.
+- API tests 122/122, web tests 45/45, both typechecks/builds and the canonical preservation gate pass. Full evidence and rollback: `docs/worklogs/strategy-paper-performance-repair-2026-08-25.md`.

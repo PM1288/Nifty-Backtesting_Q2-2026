@@ -1,4 +1,4 @@
-import type { Express, Response } from "express";
+import type { Express, Request, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import type { RequestAuthenticator } from "../auth/guard";
 import { getDashboardSnapshotHealth } from "../lib/dashboardSnapshots";
@@ -10,11 +10,7 @@ export function registerHealth(app: Express, prisma: PrismaClient, auth: Request
     try {
       await Promise.allSettled([auth.ensureReady(), ensureRateLimitStoreReady()]);
       const dbRows = await prisma.$queryRawUnsafe<Array<{ ok: number }>>("SELECT 1 AS ok");
-      const pgStatStatementsEnabled = await isPgStatStatementsEnabled(prisma);
-      const dbSizing = await getDatabaseSizing(prisma);
       const dbRuntime = getApiDbRuntimeProfile();
-      const snapshots = await getDashboardSnapshotHealth(prisma);
-      const topStatements = pgStatStatementsEnabled ? await getTopPgStatements(prisma, 5) : [];
       const sessionStore = auth.getHealth();
       const rateLimitStore = getRateLimitStoreHealth();
       const dbConnected = dbRows[0]?.ok === 1;
@@ -25,7 +21,6 @@ export function registerHealth(app: Express, prisma: PrismaClient, auth: Request
         ready,
         db: {
           connected: dbConnected,
-          size: dbSizing,
           pooling: dbRuntime.prisma
         },
         cache: { redisConfigured: sessionStore.redisConfigured || rateLimitStore.redisConfigured },
@@ -34,14 +29,9 @@ export function registerHealth(app: Express, prisma: PrismaClient, auth: Request
           rateLimitStore
         },
         observability: {
-          slowQueryMs: dbRuntime.slowQueryMs,
-          pgStatStatementsEnabled,
-          topStatements
+          slowQueryMs: dbRuntime.slowQueryMs
         },
-        snapshots: {
-          count: snapshots.length,
-          latest: snapshots
-        }
+        diagnostics: "Use the authenticated /health/details endpoint for database size, statement and snapshot diagnostics."
       });
     } catch (err) {
       return res.status(503).json({
@@ -55,4 +45,27 @@ export function registerHealth(app: Express, prisma: PrismaClient, auth: Request
 
   app.get("/health", async (_req, res) => sendHealth(res));
   app.get("/ready", async (_req, res) => sendHealth(res));
+
+  app.get("/health/details", async (req: Request, res: Response) => {
+    const session = await auth.getSession(req);
+    if (!session || session.user.role !== "admin") {
+      return res.status(403).json({ error: { code: "ADMIN_REQUIRED", message: "Administrator access required." } });
+    }
+    try {
+      const pgStatStatementsEnabled = await isPgStatStatementsEnabled(prisma);
+      const [dbSizing, snapshots, topStatements] = await Promise.all([
+        getDatabaseSizing(prisma),
+        getDashboardSnapshotHealth(prisma),
+        pgStatStatementsEnabled ? getTopPgStatements(prisma, 5) : Promise.resolve([])
+      ]);
+      return res.json({
+        asOf: new Date().toISOString(),
+        db: { size: dbSizing, pooling: getApiDbRuntimeProfile().prisma },
+        observability: { slowQueryMs: getApiDbRuntimeProfile().slowQueryMs, pgStatStatementsEnabled, topStatements },
+        snapshots: { count: snapshots.length, latest: snapshots }
+      });
+    } catch (error) {
+      return res.status(503).json({ error: { code: "HEALTH_DIAGNOSTICS_FAILED", message: error instanceof Error ? error.message : "Diagnostics failed." } });
+    }
+  });
 }

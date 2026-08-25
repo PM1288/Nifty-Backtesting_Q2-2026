@@ -190,6 +190,27 @@
   overflow: auto;
   overscroll-behavior: contain;
 }
+.ledger > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-top: 1px solid #dce5f1;
+  background: #f8fafc;
+  color: #526985;
+  font-size: 12px;
+}
+.ledger > footer button {
+  border: 1px solid #b9c8dc;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f4f88;
+  padding: 7px 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
 .ledger table {
   border-collapse: separate;
   border-spacing: 0;

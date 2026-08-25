@@ -28,6 +28,11 @@ export const SNAPSHOT_DEFINITIONS: SnapshotDefinition<unknown>[] = [
     cacheControl: "private, max-age=60, stale-while-revalidate=300",
     freshnessMs: 3 * 60_000,
     snapshotDate: marketDayIso,
+    // The full overview is intentionally on-demand. It scans the complete F&O
+    // and indicator universe and must never compete with Paper/Strategy simply
+    // because the API process restarted. Stale snapshots are served instantly
+    // and refreshed in the background when the market canvas is opened.
+    scheduled: false,
     build: getOverview
   },
   {

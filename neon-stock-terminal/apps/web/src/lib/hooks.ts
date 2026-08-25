@@ -13,6 +13,7 @@ import {
   fetchAnalyticsStrategyEvaluation,
   fetchFiiReportsRunDetail,
   fetchFiiReportsRuns,
+  fetchHeaderMarketSummary,
   fetchAnalyticsFlows,
   fetchAnalyticsQuality,
   fetchBacktestingCompare,
@@ -129,6 +130,17 @@ export function useOverview(
     enabled,
     refetchInterval: options?.refetchInterval ?? 10_000,
     staleTime: options?.staleTime
+  });
+}
+
+export function useHeaderMarketSummary(enabled = true) {
+  const tokenVersion = useSessionVersion();
+  return useProfiledQuery("header-market-summary", {
+    queryKey: ["header-market-summary", tokenVersion],
+    queryFn: fetchHeaderMarketSummary,
+    enabled,
+    refetchInterval: 30_000,
+    staleTime: 10_000
   });
 }
 

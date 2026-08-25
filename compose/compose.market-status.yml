@@ -1,0 +1,94 @@
+x-market-status-common: &market-status-common
+  image: trading-stack-market-status:1.0.0
+  build:
+    context: .
+    dockerfile: services/market_status/Dockerfile
+  environment:
+    DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    MARKET_STATUS_SCHEMA_PATH: /app/schemas/market-status-whatsapp.v1.schema.json
+    MARKET_STATUS_NOTIFICATIONS_ENABLED: ${MARKET_STATUS_NOTIFICATIONS_ENABLED:-false}
+    MARKET_STATUS_DRY_RUN: ${MARKET_STATUS_DRY_RUN:-true}
+    MARKET_STATUS_TIMEZONE: ${MARKET_STATUS_TIMEZONE:-Asia/Kolkata}
+    MARKET_STATUS_DESTINATION_KEY: ${MARKET_STATUS_DESTINATION_KEY:-market-status-whatsapp}
+    MARKET_STATUS_WEBHOOK_URL: ${MARKET_STATUS_WEBHOOK_URL:-}
+    MARKET_STATUS_WEBHOOK_USERNAME: ${MARKET_STATUS_WEBHOOK_USERNAME:-}
+    MARKET_STATUS_WEBHOOK_PASSWORD: ${MARKET_STATUS_WEBHOOK_PASSWORD:-}
+    MARKET_STATUS_WEBHOOK_TIMEOUT_SECONDS: ${MARKET_STATUS_WEBHOOK_TIMEOUT_SECONDS:-10}
+    MARKET_STATUS_WEBHOOK_MAX_ATTEMPTS: ${MARKET_STATUS_WEBHOOK_MAX_ATTEMPTS:-6}
+    MARKET_STATUS_POLL_SECONDS: ${MARKET_STATUS_POLL_SECONDS:-5}
+    MARKET_OPEN_SEND_TIME_IST: ${MARKET_OPEN_SEND_TIME_IST:-09:16:05}
+    MARKET_OPEN_RETRY_DEADLINE_IST: ${MARKET_OPEN_RETRY_DEADLINE_IST:-09:18:00}
+    MARKET_MOVERS_SEND_TIME_IST: ${MARKET_MOVERS_SEND_TIME_IST:-09:20:05}
+    MARKET_MOVERS_RETRY_DEADLINE_IST: ${MARKET_MOVERS_RETRY_DEADLINE_IST:-09:22:00}
+    MARKET_MOVERS_COUNT: ${MARKET_MOVERS_COUNT:-3}
+    MARKET_CLOSE_TRIGGER_TIME_IST: ${MARKET_CLOSE_TRIGGER_TIME_IST:-15:30:00}
+    MARKET_CLOSE_FINAL_NOT_BEFORE_IST: ${MARKET_CLOSE_FINAL_NOT_BEFORE_IST:-15:42:00}
+    MARKET_CLOSE_FINAL_DEADLINE_IST: ${MARKET_CLOSE_FINAL_DEADLINE_IST:-15:50:00}
+    MARKET_CLOSE_DELAYED_CUTOFF_IST: ${MARKET_CLOSE_DELAYED_CUTOFF_IST:-18:00:00}
+    MARKET_INDEX_MAX_AGE_SECONDS: ${MARKET_INDEX_MAX_AGE_SECONDS:-30}
+    MARKET_CONSTITUENT_MAX_AGE_SECONDS: ${MARKET_CONSTITUENT_MAX_AGE_SECONDS:-60}
+    MARKET_REQUIRED_CONSTITUENT_COUNT: ${MARKET_REQUIRED_CONSTITUENT_COUNT:-50}
+    MARKET_REQUIRED_FRESH_QUOTE_COUNT: ${MARKET_REQUIRED_FRESH_QUOTE_COUNT:-50}
+    OIIS_MARKET_NOTIFICATIONS_ENABLED: ${OIIS_MARKET_NOTIFICATIONS_ENABLED:-true}
+    OIIS_X_MIN_EXCLUSIVE: ${OIIS_X_MIN_EXCLUSIVE:-70}
+    OIIS_O_MIN_EXCLUSIVE: ${OIIS_O_MIN_EXCLUSIVE:-70}
+    OIIS_MAX_PER_DIRECTION: ${OIIS_MAX_PER_DIRECTION:-3}
+    OIIS_MAX_RUN_AGE_SECONDS: ${OIIS_MAX_RUN_AGE_SECONDS:-300}
+    OIIS_NOTIFY_ON_SCORE_ONLY_CHANGE: ${OIIS_NOTIFY_ON_SCORE_ONLY_CHANGE:-false}
+    OIIS_NOTIFY_ON_RANK_ONLY_CHANGE: ${OIIS_NOTIFY_ON_RANK_ONLY_CHANGE:-false}
+    OIIS_SEND_CLEAR_EVENT: ${OIIS_SEND_CLEAR_EVENT:-false}
+    MARKET_STATUS_OPS_ALERTS_ENABLED: ${MARKET_STATUS_OPS_ALERTS_ENABLED:-false}
+    MARKET_STATUS_OPS_WEBHOOK_URL: ${MARKET_STATUS_OPS_WEBHOOK_URL:-}
+    MARKET_THRESHOLD_ALERTS_ENABLED: ${MARKET_THRESHOLD_ALERTS_ENABLED:-false}
+    MARKET_THRESHOLD_ALERT_PERCENTAGES: ${MARKET_THRESHOLD_ALERT_PERCENTAGES:-1.0,1.5,2.0}
+    MARKET_INCLUDE_VIX: ${MARKET_INCLUDE_VIX:-false}
+    MARKET_CLOSE_INCLUDE_FINAL_MOVERS: ${MARKET_CLOSE_INCLUDE_FINAL_MOVERS:-false}
+    TZ: Asia/Kolkata
+  depends_on:
+    postgres:
+      condition: service_healthy
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "5"}
+  deploy:
+    resources:
+      limits:
+        cpus: "0.50"
+        memory: 256m
+
+services:
+  market-status-scheduler:
+    <<: *market-status-common
+    entrypoint: ["market-status-scheduler"]
+    command: ["run"]
+    healthcheck:
+      test: ["CMD", "market-status-scheduler", "check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  market-status-worker:
+    <<: *market-status-common
+    entrypoint: ["market-status-worker"]
+    command: ["run"]
+    healthcheck:
+      test: ["CMD", "market-status-worker", "check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  market-status-delivery:
+    <<: *market-status-common
+    entrypoint: ["market-status-delivery"]
+    command: ["run"]
+    healthcheck:
+      test: ["CMD", "market-status-delivery", "check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

@@ -1,0 +1,45 @@
+{
+  "schema": "market-status-whatsapp.v1",
+  "event_id": "4eeb9e0c-1cb0-5904-a439-d44a637a3f5a",
+  "event_type": "market.oiis.candidates.changed.v1",
+  "environment": "MARKET_INTELLIGENCE",
+  "trade_date": "2026-08-11",
+  "generated_at": "2026-08-11T17:01:02.046027Z",
+  "data_as_of": "2026-08-11T03:46:05Z",
+  "timezone": "Asia/Kolkata",
+  "dedupe_key": "sample:oiis-short:2026-08-11",
+  "correlation_id": "d0a937ab-2858-412b-93bc-abfd6136bd5c",
+  "source": {
+    "provider": "canonical-test-fixture",
+    "mode": "DATABASE"
+  },
+  "quality": {
+    "status": "VALID",
+    "coverage_count": 1,
+    "expected_count": 1,
+    "max_age_seconds": 10
+  },
+  "payload": {
+    "source_run_id": "b3416397-e5fb-4531-82dd-6fb53f0cd6fa",
+    "source_run_slot": "RUN_1000",
+    "source_run_completed_at": "2026-08-11T03:46:05+00:00",
+    "scoring_rule_version": "OIIS:2.0",
+    "trade_date": "2026-08-11",
+    "long_candidates": [],
+    "short_candidates": [
+      {
+        "rank": 1,
+        "symbol": "BBB",
+        "direction": "SHORT",
+        "xfactor": "76.1",
+        "ofactor": "74.8"
+      }
+    ],
+    "added_memberships": [
+      "SHORT:BBB"
+    ],
+    "removed_memberships": [],
+    "first_qualifying_scan_of_day": true,
+    "data_as_of": "2026-08-11T03:46:05+00:00"
+  }
+}

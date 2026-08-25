@@ -12,6 +12,12 @@
 !services/oiis_live/**
 !services/fno_volatility/
 !services/fno_volatility/**
+!services/market_status/
+!services/market_status/**
+!services/rolling_monthly/
+!services/rolling_monthly/**
+!schemas/
+!schemas/market-status-whatsapp.v1.schema.json
 !platform/
 !platform/nifty_stratlab/
 !platform/nifty_stratlab/src/

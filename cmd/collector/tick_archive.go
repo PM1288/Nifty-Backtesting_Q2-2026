@@ -45,13 +45,29 @@ type wsConnectionStat struct {
 }
 
 type wsHealthTracker struct {
-	mu          sync.Mutex
-	connections map[string]wsConnectionStat
-	dropped     atomic.Int64
+	mu                 sync.Mutex
+	connections        map[string]wsConnectionStat
+	subscriptionCounts map[string]int
+	dropped            atomic.Int64
 }
 
 func newWSHealthTracker() *wsHealthTracker {
-	return &wsHealthTracker{connections: map[string]wsConnectionStat{}}
+	return &wsHealthTracker{connections: map[string]wsConnectionStat{}, subscriptionCounts: map[string]int{}}
+}
+
+func (t *wsHealthTracker) SetSubscriptionCounts(counts map[string]int) {
+	if t == nil {
+		return
+	}
+	t.mu.Lock()
+	t.subscriptionCounts = make(map[string]int, len(counts))
+	for connection, count := range counts {
+		t.subscriptionCounts[connection] = count
+		if _, exists := t.connections[connection]; !exists {
+			t.connections[connection] = wsConnectionStat{LastSequenceByToken: map[string]int64{}}
+		}
+	}
+	t.mu.Unlock()
 }
 
 func (t *wsHealthTracker) Mark(tick smartapi.Tick) {
@@ -69,10 +85,15 @@ func (t *wsHealthTracker) Mark(tick smartapi.Tick) {
 	}
 	tokenKey := subKey(tick.Exchange, tick.Token)
 	lastSequence := stat.LastSequenceByToken[tokenKey]
-	if lastSequence > 0 && tick.Sequence > lastSequence+1 {
-		stat.Gaps += tick.Sequence - lastSequence - 1
+	// SmartAPI exposes an exchange sequence number, not a guaranteed contiguous
+	// per-subscription counter. Large positive jumps are therefore expected and
+	// must not be reported as packet loss. Count only duplicate/out-of-order
+	// observations during a live connection window. A lower sequence after a
+	// prolonged silence is treated as a reconnect/reset.
+	if lastSequence > 0 && tick.Sequence < lastSequence && (stat.LastTick.IsZero() || tick.ReceivedAt.Sub(stat.LastTick) <= 60*time.Second) {
+		stat.Gaps++
 	}
-	if tick.Sequence > lastSequence {
+	if tick.Sequence > lastSequence || (!stat.LastTick.IsZero() && tick.ReceivedAt.Sub(stat.LastTick) > 60*time.Second) {
 		stat.LastSequenceByToken[tokenKey] = tick.Sequence
 	}
 	stat.LastTick = tick.ReceivedAt
@@ -100,9 +121,17 @@ func (t *wsHealthTracker) Snapshot(ts time.Time, subscriptions int) []store.Webs
 		if last.IsZero() || ts.Sub(last) > 60*time.Second {
 			status = "STALE"
 		}
-		detail, _ := json.Marshal(map[string]any{"tokens_tracked": len(stat.LastSequenceByToken)})
+		subscriptionCount := t.subscriptionCounts[connection]
+		if subscriptionCount == 0 {
+			subscriptionCount = subscriptions
+		}
+		detail, _ := json.Marshal(map[string]any{
+			"tokens_tracked":         len(stat.LastSequenceByToken),
+			"sequence_metric":        "duplicate_or_out_of_order_observations",
+			"archive_dropped_global": t.dropped.Load(),
+		})
 		rows = append(rows, store.WebsocketHealth{Ts: ts, ConnectionID: connection, Status: status,
-			SubscriptionsCount: subscriptions, LastTickTs: &last, TicksReceived: stat.Ticks,
+			SubscriptionsCount: subscriptionCount, LastTickTs: &last, TicksReceived: stat.Ticks,
 			SequenceGaps: stat.Gaps, ArchiveDropped: t.dropped.Load(), Detail: detail})
 	}
 	return rows

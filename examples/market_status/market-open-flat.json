@@ -1,0 +1,39 @@
+{
+  "schema": "market-status-whatsapp.v1",
+  "event_id": "3454ab88-f713-5e50-b7a4-b369804ee8c8",
+  "event_type": "market.open.snapshot.v1",
+  "environment": "MARKET_INTELLIGENCE",
+  "trade_date": "2026-08-11",
+  "generated_at": "2026-08-11T17:01:02.045747Z",
+  "data_as_of": "2026-08-11T03:46:05Z",
+  "timezone": "Asia/Kolkata",
+  "dedupe_key": "sample:open-flat:2026-08-11",
+  "correlation_id": "077ca195-2948-4586-b945-71b895baba29",
+  "source": {
+    "provider": "canonical-test-fixture",
+    "mode": "DATABASE"
+  },
+  "quality": {
+    "status": "VALID",
+    "coverage_count": 1,
+    "expected_count": 1,
+    "max_age_seconds": 10
+  },
+  "payload": {
+    "index_symbol": "NIFTY50",
+    "index_name": "NIFTY 50",
+    "current_level": "25000",
+    "previous_close": "25000",
+    "point_change": "0",
+    "percentage_change": "0",
+    "session_open": "25020",
+    "gap_points": "20",
+    "gap_percentage": "0.08",
+    "move_from_open_points": "-20.0",
+    "move_from_open_percentage": "-0.07993605115907274",
+    "session_high": "25100",
+    "session_low": "24950",
+    "data_as_of": "2026-08-11T03:46:05+00:00",
+    "source": "canonical-test-fixture"
+  }
+}

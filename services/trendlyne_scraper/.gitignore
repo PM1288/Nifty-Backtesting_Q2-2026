@@ -1,0 +1,14 @@
+# Environment / secrets - never commit.
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Runtime artifacts
+data/
+logs/
+checkpoints/
+state/

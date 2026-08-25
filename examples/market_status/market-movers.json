@@ -1,0 +1,87 @@
+{
+  "schema": "market-status-whatsapp.v1",
+  "event_id": "d840c1b8-a670-579a-b42f-013e7b736a2a",
+  "event_type": "market.movers.snapshot.v1",
+  "environment": "MARKET_INTELLIGENCE",
+  "trade_date": "2026-08-11",
+  "generated_at": "2026-08-11T17:01:02.045887Z",
+  "data_as_of": "2026-08-11T03:46:05Z",
+  "timezone": "Asia/Kolkata",
+  "dedupe_key": "sample:movers:2026-08-11",
+  "correlation_id": "9d2f94f9-c731-4ccc-8fba-a2c46b6a36c7",
+  "source": {
+    "provider": "canonical-test-fixture",
+    "mode": "DATABASE"
+  },
+  "quality": {
+    "status": "VALID",
+    "coverage_count": 50,
+    "expected_count": 50,
+    "max_age_seconds": 10
+  },
+  "payload": {
+    "index_symbol": "NIFTY50",
+    "gainers": [
+      {
+        "rank": 1,
+        "symbol": "AAA",
+        "current_price": "103",
+        "previous_close": "100",
+        "change_points": "3",
+        "change_percentage": "3",
+        "quote_time": "2026-08-11T03:46:05+00:00"
+      },
+      {
+        "rank": 2,
+        "symbol": "BBB",
+        "current_price": "102",
+        "previous_close": "100",
+        "change_points": "2",
+        "change_percentage": "2",
+        "quote_time": "2026-08-11T03:46:05+00:00"
+      },
+      {
+        "rank": 3,
+        "symbol": "CCC",
+        "current_price": "101",
+        "previous_close": "100",
+        "change_points": "1",
+        "change_percentage": "1",
+        "quote_time": "2026-08-11T03:46:05+00:00"
+      }
+    ],
+    "losers": [
+      {
+        "rank": 1,
+        "symbol": "XXX",
+        "current_price": "97",
+        "previous_close": "100",
+        "change_points": "-3",
+        "change_percentage": "-3",
+        "quote_time": "2026-08-11T03:46:05+00:00"
+      },
+      {
+        "rank": 2,
+        "symbol": "YYY",
+        "current_price": "98",
+        "previous_close": "100",
+        "change_points": "-2",
+        "change_percentage": "-2",
+        "quote_time": "2026-08-11T03:46:05+00:00"
+      },
+      {
+        "rank": 3,
+        "symbol": "ZZZ",
+        "current_price": "99",
+        "previous_close": "100",
+        "change_points": "-1",
+        "change_percentage": "-1",
+        "quote_time": "2026-08-11T03:46:05+00:00"
+      }
+    ],
+    "universe_count": 50,
+    "fresh_quote_count": 50,
+    "data_as_of": "2026-08-11T03:46:05+00:00",
+    "ranking_basis": "PREVIOUS_OFFICIAL_CLOSE"
+  }
+}

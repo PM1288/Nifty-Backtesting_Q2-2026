@@ -9,20 +9,6 @@ the requested rule: enter after completed 1-minute RSI(14) is below 30 only when
 the prior completed session's daily RSI(14) is above 45; exit after completed
 1-minute RSI(14) is above 70. Entries and exits occur at the next minute open.
 
-`strategies/daily_rising_oversold_intraday_v1.yml` adds the new multi-timeframe
-setup. The previous completed daily RSI(14) must simply be greater than the
-immediately preceding daily RSI(14); the next session open must exceed that prior
-close. A completed 1-minute bar between 09:30 and 12:00 IST must then have
-RSI(14) below 25, Williams %R below -80, and its low above the 20-period,
-two-standard-deviation lower Bollinger band. It emits at the next minute open;
-the existing target/exit policy remains simulator-owned and the manifest records
-Positions are target-only: 0.3% during the entry session, promoted to 1.0% from
-the original buy price after the session closes; RSI does not close a position.
-
-Run one explicit stock with `tools/run_daily_rising_oversold_intraday.py`; it
-writes `trades.csv`, `signals.csv`, `equity_curve.csv`, `summary.json`,
-`SUMMARY.md`, and a checksummed artifact manifest.
-
 `programme.runtime.example.yml` provides the non-secret V2.0 programme paths and
 safety defaults. Database credentials remain environment variables. Full-estate
 execution is disabled until the documented data and owner gates are accepted.

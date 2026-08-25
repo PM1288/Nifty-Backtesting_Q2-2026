@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -14,10 +15,45 @@ def connect(database_url: str) -> psycopg.Connection:
 
 
 def run_migrations(conn: psycopg.Connection, sql_dir: Path) -> None:
-    for path in sorted(sql_dir.glob("*.sql")):
-        with path.open("r", encoding="utf-8") as f:
-            conn.execute(f.read())
+    conn.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS nse.schema_migrations (
+            filename TEXT PRIMARY KEY,
+            sha256 TEXT NOT NULL,
+            applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        '''
+    )
     conn.commit()
+    for path in sorted(sql_dir.glob("*.sql")):
+        body = path.read_text(encoding="utf-8")
+        digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+        existing = conn.execute(
+            "SELECT sha256 FROM nse.schema_migrations WHERE filename=%s", (path.name,)
+        ).fetchone()
+        if existing:
+            if existing[0] != digest:
+                raise RuntimeError(f"Applied NSE migration changed: {path.name}")
+            continue
+
+        # This service pre-dates migration bookkeeping. Safely baseline objects that already exist.
+        legacy_object = {
+            "001_init.sql": "nse.ingest_runs",
+            "002_views.sql": "nse.vw_eod_enriched",
+            # 003 is an operator query pack, not DDL; legacy installations already own it.
+            "003_analysis_queries.sql": "nse.ingest_runs",
+            "004_daily_scheduler_notifications.sql": "nse.daily_job_run",
+        }.get(path.name)
+        already_present = False
+        if legacy_object:
+            already_present = conn.execute("SELECT to_regclass(%s) IS NOT NULL", (legacy_object,)).fetchone()[0]
+        if not already_present:
+            conn.execute(body)
+        conn.execute(
+            "INSERT INTO nse.schema_migrations(filename,sha256) VALUES (%s,%s)",
+            (path.name, digest),
+        )
+        conn.commit()
 
 
 def create_ingest_run(conn: psycopg.Connection, run_mode: str, backfill_start=None, backfill_end=None, notes=None) -> int:
@@ -83,6 +119,99 @@ def finish_run_report(
          WHERE run_report_id = %s
         ''',
         (status, rows_loaded, bytes_downloaded, file_sha256, message, Jsonb(metadata or {}), run_report_id),
+    )
+    conn.commit()
+
+
+def record_unavailable_report(
+    conn: psycopg.Connection,
+    run_id: int,
+    report_name: str,
+    source_date,
+    file_name: str,
+    attempted_urls: list[str],
+) -> int:
+    row = conn.execute(
+        '''
+        INSERT INTO nse.ingest_run_reports
+            (run_id, report_name, source_date, file_name, status, finished_at, message, metadata)
+        VALUES (%s, %s, %s, %s, 'unavailable', now(), 'No official file was available', %s)
+        RETURNING run_report_id
+        ''',
+        (run_id, report_name, source_date, file_name, Jsonb({"attempted_urls": attempted_urls})),
+    ).fetchone()
+    conn.commit()
+    return row[0]
+
+
+def enqueue_notification(
+    conn: psycopg.Connection,
+    event_type: str,
+    dedupe_key: str,
+    trade_date,
+    payload: dict,
+) -> bool:
+    row = conn.execute(
+        '''
+        INSERT INTO nse.notification_outbox (event_id, event_type, dedupe_key, trade_date, payload)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (dedupe_key) DO NOTHING
+        RETURNING event_id
+        ''',
+        (payload["event_id"], event_type, dedupe_key, trade_date, Jsonb(payload)),
+    ).fetchone()
+    conn.commit()
+    return row is not None
+
+
+def resolve_previous_trading_day(conn: psycopg.Connection, job_date):
+    row = conn.execute(
+        '''
+        SELECT trade_date
+        FROM market_status.exchange_session_calendar
+        WHERE trade_date < %s AND is_trading_day
+        ORDER BY trade_date DESC
+        LIMIT 1
+        ''',
+        (job_date,),
+    ).fetchone()
+    if row is None:
+        raise RuntimeError(f"No exchange calendar session exists before {job_date}")
+    return row[0]
+
+
+def is_trading_day(conn: psycopg.Connection, job_date) -> bool:
+    row = conn.execute(
+        '''SELECT is_trading_day FROM market_status.exchange_session_calendar WHERE trade_date=%s''',
+        (job_date,),
+    ).fetchone()
+    if row is None:
+        raise RuntimeError(f"Exchange calendar is missing {job_date}")
+    return bool(row[0])
+
+
+def claim_daily_job(conn: psycopg.Connection, job_date, source_trade_date, scheduled_for) -> int | None:
+    row = conn.execute(
+        '''
+        INSERT INTO nse.daily_job_run (job_date, source_trade_date, scheduled_for, status)
+        VALUES (%s, %s, %s, 'RUNNING')
+        ON CONFLICT (job_date) DO NOTHING
+        RETURNING id
+        ''',
+        (job_date, source_trade_date, scheduled_for),
+    ).fetchone()
+    conn.commit()
+    return row[0] if row else None
+
+
+def finish_daily_job(conn: psycopg.Connection, job_id: int, run_id: int | None, status: str, metrics: dict) -> None:
+    conn.execute(
+        '''
+        UPDATE nse.daily_job_run
+        SET run_id=%s,status=%s,finished_at=now(),metrics=%s,updated_at=now()
+        WHERE id=%s
+        ''',
+        (run_id, status, Jsonb(metrics), job_id),
     )
     conn.commit()
 

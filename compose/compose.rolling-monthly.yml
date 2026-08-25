@@ -1,0 +1,36 @@
+services:
+  rolling-monthly:
+    image: trading-stack-rolling-monthly:2.3.0
+    build:
+      context: .
+      dockerfile: services/rolling_monthly/Dockerfile
+    env_file:
+      - .env
+      - compose/env/core.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      ROLLING_MONTHLY_CONFIG: /app/config/factor_v2.json
+      ROLLING_MONTHLY_INTERVAL_SECONDS: ${ROLLING_MONTHLY_INTERVAL_SECONDS:-900}
+      TZ: Asia/Kolkata
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rolling-monthly", "verify-config"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g

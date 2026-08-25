@@ -7,6 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "migrate": "node dist/cli.js migrate",
     "migrate:dev": "ts-node src/cli.ts migrate",
+    "test": "npm run build && node --test dist/*.test.js",
     "start": "node dist/main.js",
     "dev": "ts-node src/main.ts"
   },

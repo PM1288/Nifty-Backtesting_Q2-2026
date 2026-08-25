@@ -289,6 +289,19 @@ func partitionSubscriptions(subs []store.Subscription, maxConnections, maxTokens
 	return shards
 }
 
+// SubscriptionCounts returns the exact shard allocation used by WSManager.
+// Keeping this calculation beside partitionSubscriptions prevents health and
+// dashboard data from reporting a global count for every websocket.
+func SubscriptionCounts(subs []store.Subscription, maxConnections, maxTokens int) map[string]int {
+	active, _ := applyCapacityLimits(subs, maxConnections, maxTokens)
+	shards := partitionSubscriptions(active, maxConnections, maxTokens)
+	counts := make(map[string]int, len(shards))
+	for i, shard := range shards {
+		counts[fmt.Sprintf("smartapi-ws-%d", i+1)] = len(shard)
+	}
+	return counts
+}
+
 func truncate(src []store.Subscription, limit int) []store.Subscription {
 	if limit <= 0 || len(src) <= limit {
 		return src

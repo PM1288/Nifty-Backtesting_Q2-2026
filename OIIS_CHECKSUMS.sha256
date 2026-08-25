@@ -1,0 +1,5 @@
+bf4ee995aaf1d3f56912d0eaa804a288ddfcbb7cef3c7109cdfb06e4a25566da  OIIS_TEST_RESULTS.json
+7ad51639d905959ea1459ad093f9f303d8836b9355af248099dfe6859062e3c9  OIIS_UI_RECONCILIATION.json
+04dfe070812d2d7cfd35bfd4b49f643d59e80ea929f523af1e4d296075af292f  ../../platform/nifty_stratlab/config/oiis/formulas/oiis_cash_daily_research_v1.json
+9816ab313598790b9b6582a9fb72d42370c8d973b56d7793234fcc6feb502771  ../../platform/nifty_stratlab/config/workloads/oiis_cash_daily_research_v1.json
+77d14f937a7502ccc9fc1b0e41be6b3423be7d9ecd9bcd2459501a8c668aa62f  ../../db/sql/021_oiis_research.sql

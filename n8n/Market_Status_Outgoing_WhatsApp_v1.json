@@ -1,0 +1,216 @@
+{
+  "name": "Market-Status-Outgoing-WhatsApp-v1",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "codex-market-status-v1",
+        "authentication": "basicAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "449d9dc5-2a65-44ae-b6fe-c75b0d59c327",
+      "name": "Market Status Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -500,
+        0
+      ],
+      "webhookId": "4039be18-d2ca-4d9d-bb90-2367393297cf",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "MARKET_STATUS_INBOUND_BASIC_AUTH",
+          "name": "Market Status Inbound Basic Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json.body ?? $json;\nconst allowed = new Set([\n  'market.open.snapshot.v1', 'market.movers.snapshot.v1',\n  'market.oiis.candidates.changed.v1', 'market.close.snapshot.v1'\n]);\nconst required = ['schema','event_id','event_type','trade_date','generated_at','data_as_of','timezone','dedupe_key','correlation_id','source','quality','payload'];\nif (required.some((key) => input[key] === undefined) || input.schema !== 'market-status-whatsapp.v1' ||\n    input.environment !== 'MARKET_INTELLIGENCE' || input.timezone !== 'Asia/Kolkata' || !allowed.has(input.event_type)) {\n  throw new Error('UNSUPPORTED_OR_INVALID_MARKET_STATUS_EVENT');\n}\nconst n = (value, digits=2) => new Intl.NumberFormat('en-IN',{minimumFractionDigits:digits,maximumFractionDigits:digits}).format(Number(value));\nconst signed = (value, suffix='') => {\n  const number = Number(value); return (number > 0 ? '+' : '') + n(number) + suffix;\n};\nconst ist = (value) => new Date(value).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:false}) + ' IST';\nconst p = input.payload;\nlet lines = [];\nswitch (input.event_type) {\n  case 'market.open.snapshot.v1':\n    lines = ['*NIFTY 50 — OPEN*', 'Level *' + n(p.current_level) + '* · ' + signed(p.point_change,' pts') + ' (' + signed(p.percentage_change,'%') + ')',\n      'Open ' + n(p.session_open) + ' · Gap ' + signed(p.gap_percentage,'%') + ' · From open ' + signed(p.move_from_open_percentage,'%'),\n      'Range ' + n(p.session_low) + '–' + n(p.session_high) + ' · ' + ist(input.data_as_of)];\n    break;\n  case 'market.movers.snapshot.v1':\n    lines = ['*NIFTY 50 MOVERS — 09:20*','*Gainers*'];\n    for (const row of p.gainers) lines.push(row.rank + '. ' + row.symbol + ' ' + signed(row.change_percentage,'%') + ' · ₹' + n(row.current_price));\n    lines.push('*Losers*');\n    for (const row of p.losers) lines.push(row.rank + '. ' + row.symbol + ' ' + signed(row.change_percentage,'%') + ' · ₹' + n(row.current_price));\n    lines.push('50/50 fresh · vs previous official close · ' + ist(input.data_as_of));\n    break;\n  case 'market.oiis.candidates.changed.v1':\n    lines = ['*OIIS CANDIDATES — ' + ist(p.data_as_of) + '*'];\n    if (p.long_candidates.length) { lines.push('*LONG*'); for (const row of p.long_candidates) lines.push(row.rank + '. ' + row.symbol + ' · X ' + n(row.xfactor,1) + ' · O ' + n(row.ofactor,1)); }\n    if (p.short_candidates.length) { lines.push('*SHORT*'); for (const row of p.short_candidates) lines.push(row.rank + '. ' + row.symbol + ' · X ' + n(row.xfactor,1) + ' · O ' + n(row.ofactor,1)); }\n    if (p.added_memberships.length || p.removed_memberships.length) {\n      const changes = []; if (p.added_memberships.length) changes.push('Added ' + p.added_memberships.join(', '));\n      if (p.removed_memberships.length) changes.push('Removed ' + p.removed_memberships.join(', ')); lines.push(changes.join(' · '));\n    }\n    lines.push('Only XFactor >70 and OFactor >70','Market intelligence, not an order');\n    break;\n  case 'market.close.snapshot.v1':\n    lines = ['*NIFTY 50 — FINAL CLOSE*','Close *' + n(p.final_close) + '* · ' + signed(p.daily_delta_points,' pts') + ' (' + signed(p.daily_delta_percentage,'%') + ')',\n      'Open→close ' + signed(p.open_to_close_percentage,'%') + ' · Range ' + n(p.session_low) + '–' + n(p.session_high) + ' (' + n(p.range_percentage) + '%)',\n      'Final · ' + ist(input.data_as_of)];\n    break;\n}\nconst message = lines.filter(Boolean).join('\\n');\nif (!message || message.length > 1800) throw new Error('MARKET_STATUS_MESSAGE_LENGTH_INVALID');\nconst state = $getWorkflowStaticData('global'); const now = Date.now(); const ttl = 48*60*60*1000;\nstate.seen = state.seen || {}; for (const [id,at] of Object.entries(state.seen)) if (now-Number(at)>ttl) delete state.seen[id];\nif (state.seen[input.event_id]) return [{json:{send:false,suppression_reason:'DUPLICATE_EVENT',event_id:input.event_id}}];\nif (input.delivery_test_only === true) return [{json:{send:false,suppression_reason:'TEST_ONLY',event_id:input.event_id,preview:message}}];\nreturn [{json:{send:true,event_id:input.event_id,event_type:input.event_type,correlation_id:input.correlation_id,whatsapp_message:message}}];"
+      },
+      "id": "67e442f6-a18c-4e67-ab7a-30232298ee18",
+      "name": "Validate and Format Whitelisted Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ca531b28-f638-45d0-b4ab-385dfb0e70c8",
+              "leftValue": "={{ $json.send }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b4877566-cd95-4a3d-94c4-d91d3374145c",
+      "name": "Send Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.MARKET_STATUS_WHATSAPP_GATEWAY_URL }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $json.event_id }}"
+            },
+            {
+              "name": "X-Market-Status-Event-Id",
+              "value": "={{ $json.event_id }}"
+            },
+            {
+              "name": "X-Market-Status-Event-Type",
+              "value": "={{ $json.event_type }}"
+            },
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chatId",
+              "value": "={{ $vars.MARKET_STATUS_WHATSAPP_CHAT_ID }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.whatsapp_message }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "f43e54ad-1596-473f-b312-fbd3badb2750",
+      "name": "Send Market WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        -100
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MARKET_STATUS_GATEWAY_HEADER_AUTH",
+          "name": "Market Status Gateway X-API-Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Validate and Format Whitelisted Event').first().json;\nconst state = $getWorkflowStaticData('global');\nstate.seen = state.seen || {};\nstate.seen[original.event_id] = Date.now();\nreturn [{json:{accepted:true,event_id:original.event_id,event_type:original.event_type}}];"
+      },
+      "id": "216ee1ea-2534-49ac-82cc-70b3335df61a",
+      "name": "Record Delivered Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        470,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "570b36ae-3176-438c-a10f-b20adfdefb00",
+      "name": "Suppressed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        240,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "Market Status Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate and Format Whitelisted Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate and Format Whitelisted Event": {
+      "main": [
+        [
+          {
+            "node": "Send Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message?": {
+      "main": [
+        [
+          {
+            "node": "Send Market WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Suppressed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Market WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Record Delivered Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

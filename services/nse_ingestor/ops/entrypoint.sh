@@ -57,39 +57,5 @@ run_sync() {
 cd /app
 
 log "container start at $(date '+%Y-%m-%d %H:%M:%S %Z')"
-log "running migrations"
-python -m app.cli migrate
-
-log "startup catch-up check"
-export RUN_THRESHOLD="${STARTUP_CATCHUP_AFTER:-07:00}"
-startup_decision="$(should_run_today | tail -n 1)"
-
-if [[ "${startup_decision}" == "RUN_NOW" ]]; then
-  log "no successful sync recorded for today, running startup catch-up"
-  run_sync
-else
-  log "startup catch-up decision: ${startup_decision}"
-fi
-
-log "entering scheduler loop for ${SCHEDULE_TIME:-07:30} ${TZ}"
-while true; do
-  if [[ "$(date '+%u')" -gt 5 && "${WEEKDAY_ONLY:-true}" == "true" ]]; then
-    sleep 60
-    continue
-  fi
-
-  if [[ "$(date '+%H:%M')" == "${SCHEDULE_TIME:-07:30}" ]]; then
-    export RUN_THRESHOLD="${SCHEDULE_TIME:-07:30}"
-    scheduled_decision="$(should_run_today | tail -n 1)"
-    if [[ "${scheduled_decision}" == "RUN_NOW" ]]; then
-      log "scheduled sync window reached"
-      run_sync
-    else
-      log "scheduled sync skipped: ${scheduled_decision}"
-    fi
-    sleep 65
-    continue
-  fi
-
-  sleep 20
-done
+log "starting exchange-calendar-aware scheduler for ${SCHEDULE_TIME:-07:55} ${TZ}"
+exec python -m app.cli scheduler

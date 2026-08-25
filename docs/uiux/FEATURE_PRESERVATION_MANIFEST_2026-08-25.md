@@ -15,6 +15,12 @@ This manifest prevents additive dashboard work from silently removing shared she
 | Permanent NIFTY ticker | `HeaderTicker.tsx` and `AppShell.tsx` | Visible on every authenticated workspace and rigidly attached to the header |
 | Strategy destinations | `workspaceRoutes.ts`, route catalogue and responsive navigation | Trendlyne Summary, OIIS Lab, Monthly Strategy, Rolling Strategy, Long Options and NIFTY Options remain reachable |
 | Paper evidence workbench | `/paper-trading` route and `PaperTradingCommandCenter.tsx` | Existing evidence, filters, detail inspector and market-book fields remain present |
+| Monthly rejected ledger | `MonthlyStrategiesPage.tsx` plus `rolling_monthly.evaluation_ledger` | Selection filter exposes selected, rejected, incomplete and all evaluated stocks; rejected rows show reasons |
+| Rolling rejected ledger | `MonthlyStrategiesPage.tsx`, `rollingWindow.ts` and `rolling_monthly.rolling_window_evaluation` | Population filter exposes selected, continuation, rejected and incomplete stocks; rejected rows show reasons |
+| Native cursor preservation | `MarketTargetCursor.module.css` | Target overlay may snap to controls but must never apply `cursor:none` to the page |
+| High-legibility font | `fontMode.ts`, `AuthStatus.tsx`, `EChartSurface.tsx` | User-menu switch selects Atkinson, persists across reload and updates charts without external font requests |
+| Home stock identity | `StockPill.tsx` and stock-profile assets | Symbol, name and logo remain visible; pixel interaction cannot obscure text |
+| Trendlyne Summary | `/strategy/trendlyne-summary` plus `trendlyneSummary.ts` | Six-month ledger, fund-house/stock summaries and inspector remain reachable without fixed-count assumptions |
 
 ## Mandatory regression commands
 
@@ -27,11 +33,14 @@ cd /home/novius2/trading-stack/neon-stock-terminal/apps/api
 npm run typecheck
 npx tsx --test src/routes/mobileNotifications.paperPopup.test.ts
 
-cd /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/tools/playwright
+cd /home/novius2/trading-stack
+bash scripts/verify/canonical-repository-gate.sh
+
+cd /home/novius2/trading-stack
 PLAYWRIGHT_ORIGIN=https://n50.nifty50today.co.in \
 PLAYWRIGHT_ADMIN_PASSWORD='<from protected deployment environment>' \
 PLAYWRIGHT_OUTPUT_DIR=/tmp/paper-notifier-regression \
-node paper-event-notifier-regression.mjs
+node tools/playwright/paper-event-notifier-regression.mjs
 ```
 
 The Playwright script uses browser response interception for the synthetic new-event check. It must not insert, modify or delete a paper trade or durable event.

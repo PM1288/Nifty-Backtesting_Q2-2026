@@ -144,6 +144,8 @@ def test_webhook_delivery_and_summary_events(monkeypatch: pytest.MonkeyPatch) ->
     assert received[0].headers["X-Paper-Signature-256"]
     assert received[0].headers["Authorization"].startswith("Basic ")
     scheduler = Scheduler(db, settings)
+    finalized = scheduler.finalize_target_windows(date.today())
+    assert set(finalized) == {"targets_inferred_monotonic", "intraday_missed", "swing_timed_out"}
     daily = scheduler.daily(date.today())
     assert daily["environment"] == "PAPER"
     assert scheduler.daily(date.today()) == daily

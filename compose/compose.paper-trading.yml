@@ -14,6 +14,7 @@ x-paper-image: &paper_image
     MARKET_DATA_SCHEMA: ${POSTGRES_SCHEMA:-public}
     MARKET_DATA_BAR_TABLE: bars_1m
     MARKET_DATA_INSTRUMENT_TABLE: instruments
+    MARKET_DATA_STALE_SECONDS: ${PAPER_MARKET_DATA_STALE_SECONDS:-360}
     DEFAULT_ACCOUNT_ID: ${PAPER_DEFAULT_ACCOUNT_ID:-paper-main}
     STARTING_PAPER_CAPITAL: ${PAPER_STARTING_CAPITAL:-1600000}
     DEFAULT_INCOME_TAX_RATE: ${PAPER_INCOME_TAX_RATE:-0.35}
@@ -55,8 +56,22 @@ services:
     <<: *paper_image
     command: ["scheduler"]
 
+  n50-dashboard:
+    environment:
+      PAPER_API_URL: http://paper-api:8088
+      PAPER_API_SERVICE_TOKEN_FILE: /run/secrets/paper_ui_service_token
+    secrets:
+      - paper_ui_service_token
+    depends_on:
+      paper-api:
+        condition: service_healthy
+
   paper-migrate:
     <<: *paper_image
     command: ["migrate"]
     restart: "no"
     profiles: ["tools"]
+
+secrets:
+  paper_ui_service_token:
+    file: ${PAPER_UI_SERVICE_TOKEN_FILE:-./secrets/paper_ui_service_token}

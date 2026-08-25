@@ -1,13 +1,11 @@
 .env
 .env.*
-!.env.example
-!services/paper_trading/.env.example
-!services/paper_trading/.env.test
 .tmp/
 backups/
 state/
 output/
 services/nse_ingestor/.env
+secrets/
 services/nse_ingestor/runtime/inbound/*
 services/nse_ingestor/runtime/staging/*
 services/nse_ingestor/runtime/logs/*
@@ -15,8 +13,6 @@ services/nse_ingestor/runtime/logs/*
 !services/nse_ingestor/runtime/staging/.gitkeep
 !services/nse_ingestor/runtime/logs/.gitkeep
 services/nse_analytics_worker/runtime/logs/*
-services/nse_analytics_worker/runtime/exports/*
-!services/nse_analytics_worker/runtime/exports/.gitkeep
 services/nse_orchestration_exports/runtime/exports/*
 services/nse_intraday_intelligence/runtime/exports/*
 services/nse_reco_state_engine/runtime/exports/*
@@ -36,26 +32,25 @@ android/local.properties
 node_modules/
 **/node_modules/
 **/dist/
-
-# Python test/runtime caches (source-independent and reproducible)
+**/build/
 **/__pycache__/
-*.py[cod]
-/.hypothesis/
-/.pytest_cache/
+**/.pytest_cache/
+**/*.egg-info/
+**/.hypothesis/
+**/.mypy_cache/
+**/.ruff_cache/
+**/coverage/
+**/.coverage
+**/runtime/exports/
+**/runtime/logs/
+**/output/
+getComputedStyle*
 platform/nifty_stratlab/.venv/
 platform/nifty_stratlab/outputs/
 platform/nifty_stratlab/artifacts/
 platform/nifty_stratlab/src/*.egg-info/
 platform/nifty_stratlab/**/__pycache__/
 platform/nifty_stratlab/.pytest_cache/
-services/paper_trading/.venv/
-services/paper_trading/.coverage
-services/paper_trading/.hypothesis/
-services/paper_trading/.mypy_cache/
-services/paper_trading/.pytest_cache/
-services/paper_trading/.ruff_cache/
-services/paper_trading/**/__pycache__/
-services/paper_trading/src/*.egg-info/
 
 # Host/runtime captures and generated review media
 /.audit-playwright/
@@ -64,9 +59,9 @@ services/paper_trading/src/*.egg-info/
 /.gomodcache/
 /.tmp-hoover/
 /archive/
+/.git-repository-backups/
 /artifacts_*/
 /exports/
-/outputs/
 /tmp/
 /tmp_*
 /temp_*

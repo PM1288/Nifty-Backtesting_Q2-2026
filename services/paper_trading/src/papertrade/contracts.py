@@ -138,7 +138,9 @@ class ExecutionPolicy(StrictModel):
 
 class AnalyticsPolicy(StrictModel):
     apply_default_ladders: bool = True
-    intraday_targets_pct: list[Decimal] = [Decimal("0.003"), Decimal("0.005"), Decimal("0.010")]
+    intraday_targets_pct: list[Decimal] = [
+        Decimal("0.003"), Decimal("0.004"), Decimal("0.005"), Decimal("0.010")
+    ]
     swing_targets_pct: list[Decimal] = [Decimal("0.010"), Decimal("0.030"), Decimal("0.050")]
     horizons_trading_sessions: list[int] = [5, 30]
     track_after_execution_close: bool = True

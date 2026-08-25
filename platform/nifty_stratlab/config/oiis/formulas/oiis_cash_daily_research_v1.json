@@ -1,6 +1,6 @@
 {
   "strategy_id": "oiis_cash_daily_research_v1",
-  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.3",
+  "formula_version": "OIIS-CASH-DAILY-RESEARCH-V1.1",
   "status": "RESEARCH_DRAFT_PENDING_OWNER_AND_QUANT_APPROVAL",
   "mode": "historical_replay",
   "instrument": "cash_equity_long_only",
@@ -47,11 +47,6 @@
   "execution": {
     "entry": "next_session_open",
     "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
-    "execution_scenario_id": "EXEC-I030-ELSE-S100-NO-TIMEOUT-V2",
-    "evaluation_policy_id": "FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2",
-    "evaluation_through_subsequent_sessions": 5,
-    "stop_on_first_target": false,
-    "stop_on_first_adverse_level": false,
     "intraday_target_pct_from_buy_price": 0.3,
     "swing_target_pct_from_original_buy_price": 1.0,
     "intraday_target_ladder_pct": [0.3, 0.5, 0.7],

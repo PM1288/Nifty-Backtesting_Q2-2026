@@ -22,6 +22,19 @@ def _json(value: Any) -> str:
     return json.dumps(value, default=str, sort_keys=True)
 
 
+def _analytical_ladders(
+    intraday: list[Decimal] | list[str], swing: list[Decimal] | list[str], apply_defaults: bool
+) -> tuple[list[Decimal], list[Decimal]]:
+    intraday_values = {Decimal(str(value)) for value in intraday}
+    swing_values = {Decimal(str(value)) for value in swing}
+    if apply_defaults:
+        intraday_values.update(
+            {Decimal("0.003"), Decimal("0.004"), Decimal("0.005"), Decimal("0.010")}
+        )
+        swing_values.update({Decimal("0.010"), Decimal("0.030"), Decimal("0.050")})
+    return sorted(intraday_values), sorted(swing_values)
+
+
 class PaperService:
     def __init__(self, db: Any, schema: str) -> None:
         self.db, self.schema = db, schema
@@ -167,15 +180,11 @@ class PaperService:
                         intent_id,
                     ),
                 )
-                intraday = (
-                    intent.analytics_policy.intraday_targets_pct
-                    if intent.analytics_policy.apply_default_ladders
-                    else intent.analytics_policy.intraday_targets_pct
-                )
-                swing = (
-                    intent.analytics_policy.swing_targets_pct
-                    if intent.analytics_policy.apply_default_ladders
-                    else intent.analytics_policy.swing_targets_pct
+                intraday, swing = _analytical_ladders(
+                    intent.analytics_policy.intraday_targets_pct,
+                    intent.analytics_policy.swing_targets_pct,
+                    intent.analytics_policy.apply_default_ladders
+                    or intent.trade_group.asset_class == "EQUITY",
                 )
                 for lifecycle, targets in (("INTRADAY", intraday), ("SWING", swing)):
                     for target in sorted(set(targets)):
@@ -461,10 +470,13 @@ class PaperService:
                         group["trade_intent_id"],
                     ),
                 )
-                for lifecycle, targets in (
-                    ("INTRADAY", policy["analytics_policy"]["intraday_targets_pct"]),
-                    ("SWING", policy["analytics_policy"]["swing_targets_pct"]),
-                ):
+                intraday, swing = _analytical_ladders(
+                    policy["analytics_policy"]["intraday_targets_pct"],
+                    policy["analytics_policy"]["swing_targets_pct"],
+                    bool(policy["analytics_policy"].get("apply_default_ladders", False))
+                    or group["asset_class"] == "EQUITY",
+                )
+                for lifecycle, targets in (("INTRADAY", intraday), ("SWING", swing)):
                     for target in sorted(set(targets), key=Decimal):
                         definition_id = conn.execute(
                             f"INSERT INTO {self.schema}.target_definitions(target_definition_id,trade_group_id,target_code,lifecycle,target_pct) VALUES (%s,%s,%s,%s,%s) ON CONFLICT(trade_group_id,target_code) DO UPDATE SET target_pct=EXCLUDED.target_pct RETURNING target_definition_id",

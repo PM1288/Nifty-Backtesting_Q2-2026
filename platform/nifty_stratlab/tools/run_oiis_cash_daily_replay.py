@@ -28,21 +28,14 @@ from nifty_stratlab.oiis import OIISFeature, evaluate_feature  # noqa: E402
 from nifty_stratlab.evaluation.common_exit import (  # noqa: E402
     CommonExitPolicy, PathBar, evaluate_long_target_only,
 )
-from nifty_stratlab.evaluation.long_horizon_opportunity import (  # noqa: E402
-    HorizonDailyBar, HorizonEconomicsPolicy, evaluate_long_horizon,
-)
-from nifty_stratlab.evaluation.horizon_ranking import rank_h30  # noqa: E402
-from nifty_stratlab.reporting.h30_report import write_h30_report  # noqa: E402
 
 
 STRATEGY_ID = "oiis_cash_daily_research_v1"
-FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.4-H30"
+FORMULA_VERSION = "OIIS-CASH-DAILY-RESEARCH-V1.1"
 POLICY_VERSION = "NIFTY-SEROE-V1.0"
 EXCLUDED_SYMBOLS = {"TMPV"}
 DEFAULT_CONFIG = PROJECT_ROOT / "config/oiis/formulas/oiis_cash_daily_research_v1.json"
 DEFAULT_SCHEMA = MONOREPO_ROOT / "db/sql/021_oiis_research.sql"
-DEFAULT_FULL_PATH_SCHEMA = MONOREPO_ROOT / "db/sql/022_full_path_ladder_v2.sql"
-DEFAULT_H30_SCHEMA = MONOREPO_ROOT / "db/sql/024_h30_opportunity_v3.sql"
 LIMITATIONS = [
     "Current-panel Nifty 100 universe introduces survivorship bias.",
     "Public OHLCV and delivery are participation proxies, not confirmed institutional flow.",
@@ -71,18 +64,16 @@ def frame(cur, sql: str, params: tuple[Any, ...] = ()) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=[column.name for column in cur.description])
 
 
-def load_source(conn, start: date, end: date, symbol: str | None, all_stocks: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_source(conn, start: date, end: date, symbol: str | None) -> tuple[pd.DataFrame, pd.DataFrame]:
     warmup = start - timedelta(days=150)
     symbol_clause = "AND UPPER(TRIM(e.symbol))=%s" if symbol else ""
     params: tuple[Any, ...] = (warmup, end, symbol) if symbol else (warmup, end)
-    all_stock_union = "" if not all_stocks else "UNION SELECT DISTINCT UPPER(REGEXP_REPLACE(TRIM(REGEXP_REPLACE(yahoo_symbol,'\\.NS$','')),'-EQ$','')) FROM strategy_eval.stock_daily_regime"
     with conn.cursor() as cur:
         prices = frame(cur, f"""
           WITH universe AS (
             SELECT DISTINCT UPPER(REGEXP_REPLACE(TRIM(tradingsymbol),'-EQ$','')) symbol
             FROM public.instrument_universe
             WHERE exchange='NSE' AND universe_name='nifty100_equity' AND active_to IS NULL
-            {all_stock_union}
           ), sectors AS (
             SELECT DISTINCT ON (UPPER(TRIM(symbol))) UPPER(TRIM(symbol)) symbol,
               COALESCE(NULLIF(TRIM(sector),''),NULLIF(TRIM(industry),''),NULLIF(TRIM(basic_industry),''),'OTHER') sector
@@ -103,7 +94,7 @@ def load_source(conn, start: date, end: date, symbol: str | None, all_stocks: bo
         regime_symbol_clause = "AND (instrument_type='INDEX' OR symbol=%s)" if symbol else ""
         regime_params: tuple[Any, ...] = (POLICY_VERSION, warmup, end, symbol) if symbol else (POLICY_VERSION, warmup, end)
         regimes = frame(cur, f"""
-          SELECT trade_date,instrument_type,symbol,close_price,return_21d_pct,primary_trend,market_zone,vix_regime
+          SELECT trade_date,instrument_type,symbol,return_21d_pct,primary_trend,market_zone,vix_regime
           FROM strategy_eval.market_regime_daily
           WHERE policy_version=%s AND trade_date BETWEEN %s AND %s
             {regime_symbol_clause}
@@ -143,20 +134,14 @@ def derive_features(prices: pd.DataFrame, regimes: pd.DataFrame) -> pd.DataFrame
     prices["close_location"] = ((prices["close_price"] - prices["low_price"]) / spread.replace(0, np.nan)).clip(0, 1)
     prices["turnover_percentile"] = prices.groupby("trade_date")["turnover_lacs"].rank(pct=True, method="average")
     prices["sector_return_21d_pct"] = prices.groupby(["trade_date", "sector"])["return_21d_pct"].transform("mean")
-    # Auditable equal-weight sector proxy until a certified point-in-time sector
-    # index series is available. Its proxy identity is a ranking hard blocker.
-    prices["_daily_return"] = grouped["close_price"].pct_change(fill_method=None).fillna(0.0)
-    sector_daily = prices.groupby(["sector", "trade_date"])["_daily_return"].mean().rename("_sector_daily_return").reset_index()
-    sector_daily["sector_proxy_close"] = sector_daily.groupby("sector")["_sector_daily_return"].transform(lambda s: (1.0 + s).cumprod() * 100.0)
-    prices = prices.merge(sector_daily[["sector", "trade_date", "sector_proxy_close"]], on=["sector", "trade_date"], how="left")
 
     index_regimes = regimes[regimes["instrument_type"] == "INDEX"].copy()
     stock_regimes = regimes[regimes["instrument_type"] == "STOCK"].copy()
     index_regimes["trade_date"] = pd.to_datetime(index_regimes["trade_date"])
     stock_regimes["trade_date"] = pd.to_datetime(stock_regimes["trade_date"])
     for code, prefix in (("NIFTY 50", "nifty"), ("BANK NIFTY", "bank_nifty"), ("INDIA VIX", "vix")):
-        subset = index_regimes[index_regimes["symbol"] == code][["trade_date", "close_price", "return_21d_pct", "primary_trend", "market_zone", "vix_regime"]].rename(columns={
-            "close_price": f"{prefix}_close", "return_21d_pct": f"{prefix}_return_21d_pct", "primary_trend": f"{prefix}_trend", "market_zone": f"{prefix}_zone", "vix_regime": f"{prefix}_regime"
+        subset = index_regimes[index_regimes["symbol"] == code][["trade_date", "return_21d_pct", "primary_trend", "market_zone", "vix_regime"]].rename(columns={
+            "return_21d_pct": f"{prefix}_return_21d_pct", "primary_trend": f"{prefix}_trend", "market_zone": f"{prefix}_zone", "vix_regime": f"{prefix}_regime"
         }).sort_values("trade_date")
         # Index files occasionally omit a session present in the stock bhavcopy.
         # Carry only the latest already-available regime, capped at seven days;
@@ -180,7 +165,7 @@ def text_value(value: Any) -> str | None:
     return None if value is None or pd.isna(value) else str(value)
 
 
-def evaluate_symbol(item: tuple[str, pd.DataFrame], start: date, end: date, thresholds: dict[str, float] | None = None) -> list[dict[str, Any]]:
+def evaluate_symbol(item: tuple[str, pd.DataFrame], start: date, end: date) -> list[dict[str, Any]]:
     symbol, rows = item
     output: list[dict[str, Any]] = []
     for row in rows.itertuples(index=False):
@@ -202,7 +187,7 @@ def evaluate_symbol(item: tuple[str, pd.DataFrame], start: date, end: date, thre
             bank_nifty_trend=text_value(getattr(row, "bank_nifty_trend", None)), bank_nifty_zone=text_value(getattr(row, "bank_nifty_zone", None)),
             vix_regime=text_value(getattr(row, "vix_regime", None)) or text_value(getattr(row, "nifty_vix_regime", None)),
         )
-        result = evaluate_feature(feature, thresholds)
+        result = evaluate_feature(feature)
         payload = {
             "symbol": symbol, "sector": row.sector, "trade_date": trade_date,
             "data_quality_score": result["dq"]["score"], "data_permission": result["dq"]["permission"],
@@ -231,41 +216,14 @@ def _minute_frame(path: Path, start: date, end: date) -> pd.DataFrame:
         frame["ts"] = frame["ts"].dt.tz_localize("Asia/Kolkata", ambiguous="raise", nonexistent="raise")
     for column in ("open", "high", "low", "close"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    frame = frame.dropna().sort_values("ts")
-    # Inventory records malformed OHLC rows; execution must never consume
-    # them.  Filtering is deterministic and leaves the immutable CSV intact.
-    frame = frame[
-        (frame["low"] > 0)
-        & (frame["low"] <= frame[["open", "close"]].min(axis=1))
-        & (frame["high"] >= frame[["open", "close"]].max(axis=1))
-        & (frame["high"] >= frame["low"])
-    ]
-    # The source is declared as IST. Off-session and weekend rows are not
-    # executable NSE evidence and must not participate in entry or path tests.
-    local_minutes = frame["ts"].dt.hour * 60 + frame["ts"].dt.minute
-    frame = frame[
-        (frame["ts"].dt.weekday < 5)
-        & (local_minutes >= 9 * 60 + 15)
-        & (local_minutes <= 15 * 60 + 30)
-    ].drop_duplicates(subset=["ts"], keep="last").reset_index(drop=True)
+    frame = frame.dropna().sort_values("ts").reset_index(drop=True)
     frame["session"] = frame["ts"].dt.date
     return frame
 
 
-def session_basis_factor(eod_open: float, csv_open: float) -> float:
-    """Map retrospectively adjusted minute prices to the session EOD basis."""
-    if not np.isfinite(eod_open) or not np.isfinite(csv_open) or eod_open <= 0 or csv_open <= 0:
-        raise ValueError("positive finite EOD and minute opens are required")
-    return eod_open / csv_open
-
-
 def simulate_trades(
     decisions: list[dict[str, Any]], prices: pd.DataFrame, config: dict[str, Any],
-    minute_csv_dir: Path, end: date, run_namespace: str,
-    symbol_aliases: dict[str, str] | None = None,
-    shared_minute_cache: dict[str, pd.DataFrame] | None = None,
-    shared_minute_checksums: dict[str, str] | None = None,
-    rejected_minute_symbols: set[str] | None = None,
+    minute_csv_dir: Path, end: date,
 ) -> list[dict[str, Any]]:
     simulate_trades.missing_minute_symbols = []
     execution = config["execution"]
@@ -280,63 +238,32 @@ def simulate_trades(
     index_by_symbol = {symbol: {pd.Timestamp(value).date(): idx for idx, value in enumerate(group["trade_date"])} for symbol, group in by_symbol.items()}
     trades: list[dict[str, Any]] = []
     busy_until: dict[str, date] = {}
-    minute_cache = shared_minute_cache if shared_minute_cache is not None else {}
-    minute_checksums = shared_minute_checksums if shared_minute_checksums is not None else {}
+    minute_cache: dict[str, pd.DataFrame] = {}
+    minute_checksums: dict[str, str] = {}
     missing_minute_symbols: set[str] = set()
-    skipped_signals: list[dict[str, Any]] = []
-    aliases = {key.upper(): value.upper() for key, value in (symbol_aliases or {}).items()}
-    rejected_sources = {value.upper() for value in (rejected_minute_symbols or set())}
-    def skip(decision: dict[str, Any], reason: str, details: str) -> None:
-        skipped_signals.append({
-            "decision_hash": decision["decision_hash"], "symbol": decision["symbol"],
-            "trade_date": decision["trade_date"], "reason_code": reason, "details": details,
-        })
     for decision in sorted(decisions, key=lambda row: (row["trade_date"], row["symbol"])):
         if decision["decision_code"] not in {"ENTERABLE_TIER_A", "ENTERABLE_TIER_B"} or decision["selected_direction"] != "LONG":
             continue
         symbol = decision["symbol"]
         if busy_until.get(symbol, date.min) >= decision["trade_date"]:
-            skip(decision, "DUPLICATE_SAME_SYMBOL_POSITION", f"existing position occupied through {busy_until[symbol]}")
             continue
         group = by_symbol[symbol]
         signal_index = index_by_symbol[symbol].get(decision["trade_date"])
         if signal_index is None or signal_index + 1 >= len(group):
-            skip(decision, "NO_NEXT_VALID_SESSION", "no canonical next session after signal")
             continue
         entry_index = signal_index + 1
         entry_row = group.iloc[entry_index]
         entry_date = pd.Timestamp(entry_row.trade_date).date()
-        source_symbol = aliases.get(symbol, symbol)
-        if source_symbol in rejected_sources:
-            skip(decision, "DATA_QUALITY_REJECTED", f"minute source {source_symbol} failed the frozen research-admission policy")
-            continue
-        if source_symbol not in minute_cache:
-            minute_path = minute_csv_dir / f"{source_symbol}.csv"
+        if symbol not in minute_cache:
+            minute_path = minute_csv_dir / f"{symbol}.csv"
             if not minute_path.is_file():
                 missing_minute_symbols.add(symbol)
-                reason = "SYMBOL_ALIAS_UNRESOLVED" if any(character in symbol for character in "& ") else "MINUTE_FILE_NOT_FOUND"
-                skip(decision, reason, f"no admitted minute source for {symbol}")
                 continue
-            cache_start = pd.Timestamp(prices["trade_date"].min()).date() if shared_minute_cache is not None else entry_date
-            minute_cache[source_symbol] = _minute_frame(minute_path, cache_start, end)
-            minute_checksums[source_symbol] = digest_file(minute_path)
-        minute = minute_cache[source_symbol]
+            minute_cache[symbol] = _minute_frame(minute_path, entry_date, end)
+            minute_checksums[symbol] = digest_file(minute_path)
+        minute = minute_cache[symbol]
         path_frame = minute[minute["session"] >= entry_date].copy()
-        if minute.empty:
-            skip(decision, "EXECUTION_PRICE_UNAVAILABLE", "minute source contains no admitted market-session rows")
-            continue
-        if entry_date < minute.iloc[0]["session"]:
-            skip(decision, "ENTRY_DATE_BEFORE_SOURCE_START", f"source begins {minute.iloc[0]['session']}")
-            continue
-        if entry_date > minute.iloc[-1]["session"]:
-            skip(decision, "ENTRY_DATE_AFTER_SOURCE_END", f"source ends {minute.iloc[-1]['session']}")
-            continue
         if path_frame.empty or path_frame.iloc[0]["session"] != entry_date:
-            skip(decision, "ENTRY_SESSION_INCOMPLETE", "entry session absent after IST market-session filter")
-            continue
-        entry_session_rows = path_frame[path_frame["session"] == entry_date]
-        if len(entry_session_rows) < 300 or entry_session_rows.iloc[0]["ts"].time().strftime("%H:%M") != "09:15":
-            skip(decision, "ENTRY_SESSION_INCOMPLETE", f"entry session has {len(entry_session_rows)} admitted minutes")
             continue
         # The CSV estate is retrospectively corporate-action adjusted whereas
         # canonical EOD facts retain their session price basis.  Normalize each
@@ -345,10 +272,9 @@ def simulate_trades(
         # historical ₹2 lakh position size.
         eod_open = {pd.Timestamp(row.trade_date).date(): float(row.open_price) for row in group.itertuples(index=False)}
         csv_open = path_frame.groupby("session", sort=False)["open"].first().to_dict()
-        factors = {session: session_basis_factor(eod_open[session], value) for session, value in csv_open.items() if session in eod_open and value > 0}
+        factors = {session: eod_open[session] / value for session, value in csv_open.items() if session in eod_open and value > 0}
         path_frame = path_frame[path_frame["session"].isin(factors)].copy()
         if path_frame.empty or entry_date not in factors:
-            skip(decision, "CORPORATE_ACTION_AMBIGUITY", "minute-to-EOD session basis could not be reconciled")
             continue
         for column in ("open", "high", "low", "close"):
             path_frame[column] = path_frame[column] * path_frame["session"].map(factors)
@@ -362,11 +288,10 @@ def simulate_trades(
         ) for row in path_frame.itertuples(index=False)]
         outcome = evaluate_long_target_only(
             symbol=symbol, signal_date=decision["trade_date"], entry_price=entry,
-            quantity=quantity, bars=path, policy=policy, run_namespace=run_namespace,
+            quantity=quantity, bars=path, policy=policy,
         )
         outcome["decision_hash"] = decision["decision_hash"]
-        outcome["minute_source_sha256"] = minute_checksums[source_symbol]
-        outcome["minute_source_symbol"] = source_symbol
+        outcome["minute_source_sha256"] = minute_checksums[symbol]
         outcome["minute_to_eod_entry_basis_factor"] = round(float(factors[entry_date]), 8)
         outcome["target_price"] = (
             outcome["intraday_target_price"] if str(outcome["exit_reason"]).startswith("TARGET_INTRADAY")
@@ -375,34 +300,6 @@ def simulate_trades(
         notional = float(entry) * quantity
         economic_pnl = outcome["after_tax_net_pnl"] if outcome["status"] == "CLOSED" else outcome["unrealized_net_liquidation_pnl"]
         outcome["return_pct"] = round(100.0 * float(economic_pnl) / notional, 4)
-        h30_rows = group.iloc[entry_index:entry_index + 30]
-        h30_bars: list[HorizonDailyBar] = []
-        previous_close: float | None = None
-        for session_index, daily in enumerate(h30_rows.itertuples(index=False)):
-            close_value = float(daily.close_price)
-            ca_ok = previous_close is None or abs(close_value / previous_close - 1.0) <= 0.35
-            h30_bars.append(HorizonDailyBar(
-                session_index=session_index, trade_date=pd.Timestamp(daily.trade_date).date(),
-                open=Decimal(str(daily.open_price)), high=Decimal(str(daily.high_price)),
-                low=Decimal(str(daily.low_price)), close=Decimal(str(close_value)),
-                nifty_close=Decimal(str(daily.nifty_close)) if number(getattr(daily, "nifty_close", None)) is not None else None,
-                sector_close=Decimal(str(daily.sector_proxy_close)) if number(getattr(daily, "sector_proxy_close", None)) is not None else None,
-                data_quality_ok=all(number(getattr(daily, key, None)) is not None for key in ("open_price", "high_price", "low_price", "close_price")),
-                corporate_action_ok=ca_ok,
-            ))
-            previous_close = close_value
-        h30_snapshot = digest_bytes(json.dumps([(b.trade_date.isoformat(), str(b.open), str(b.high), str(b.low), str(b.close), str(b.nifty_close), str(b.sector_close)) for b in h30_bars]).encode())
-        outcome["h30_observation"] = evaluate_long_horizon(
-            entry_path_id=outcome["entry_path_id"], run_id=run_namespace,
-            strategy_version_id=FORMULA_VERSION, symbol=symbol, sector=str(entry_row.sector),
-            entry_price=entry, entry_date=entry_date, daily_bars=h30_bars, quantity=quantity,
-            economics_policy=HorizonEconomicsPolicy(
-                ticket_limit=Decimal(str(execution["ticket_rupees"])),
-                intraday_round_trip_cost_bps=Decimal(str(execution["intraday_round_trip_cost_bps"])),
-                delivery_round_trip_cost_bps=Decimal(str(execution["swing_round_trip_cost_bps"])),
-                tax_reserve_rate=Decimal(str(execution["positive_profit_tax_rate"])),
-            ), data_snapshot_hash=h30_snapshot,
-        )
         trades.append(outcome)
         if outcome["status"] == "CLOSED":
             busy_until[symbol] = outcome["exit_date"]
@@ -414,7 +311,6 @@ def simulate_trades(
     # trade-row contract. Missing minute evidence is a data warning, never a
     # fabricated daily fallback or a synthetic exit.
     simulate_trades.missing_minute_symbols = sorted(missing_minute_symbols)
-    simulate_trades.skipped_signals = skipped_signals
     return trades
 
 
@@ -454,26 +350,16 @@ def jsonable(value: Any) -> Any:
     raise TypeError(type(value).__name__)
 
 
-def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]], trades: list[dict[str, Any]], buckets: list[dict[str, Any]], summary: dict[str, Any], missing_minute_symbols: list[str], h30_ranking: dict[str, Any]) -> list[Path]:
+def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]], trades: list[dict[str, Any]], buckets: list[dict[str, Any]], summary: dict[str, Any], missing_minute_symbols: list[str]) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     decision_export = [{key: json.dumps(value, default=jsonable, sort_keys=True) if key in {"hard_gates", "evidence"} else value for key, value in row.items()} for row in decisions]
     pd.DataFrame(decision_export).to_csv(output_dir / "decisions.csv", index=False, lineterminator="\n")
-    trade_export = [{key: value for key, value in row.items() if key not in {"target_events", "adverse_events", "path_checkpoints", "invariant_checks", "policy", "h30_observation"}} for row in trades]
+    trade_export = [{key: value for key, value in row.items() if key not in {"target_events", "adverse_events", "policy"}} for row in trades]
     target_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["target_events"]]
     adverse_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **event} for row in trades for event in row["adverse_events"]]
-    checkpoint_export = [{"decision_hash": row["decision_hash"], "symbol": row["symbol"], **checkpoint} for row in trades for checkpoint in row["path_checkpoints"]]
-    path_export = [{
-        "decision_hash": row["decision_hash"], "entry_path_id": row["entry_path_id"], "symbol": row["symbol"],
-        "evaluation_policy_id": row["evaluation_policy_id"], "path_evidence_hash": row["path_evidence_hash"],
-        "coverage_status": row["coverage_status"], "best_intraday_target_id": row["best_intraday_target_id"],
-        "best_d5_target_id": row["best_d5_target_id"], "deepest_adverse_level_id": row["deepest_adverse_level_id"],
-        "mfe_d5_pct": row["mfe_pct"], "mae_d5_pct": row["mae_pct"],
-    } for row in trades]
     pd.DataFrame(trade_export).to_csv(output_dir / "trades.csv", index=False, lineterminator="\n")
     pd.DataFrame(target_export).to_csv(output_dir / "target_events.csv", index=False, lineterminator="\n")
     pd.DataFrame(adverse_export).to_csv(output_dir / "adverse_events.csv", index=False, lineterminator="\n")
-    pd.DataFrame(checkpoint_export).to_csv(output_dir / "path_checkpoints.csv", index=False, lineterminator="\n")
-    pd.DataFrame(path_export).to_csv(output_dir / "entry_path_evaluations.csv", index=False, lineterminator="\n")
     pd.DataFrame({"symbol": missing_minute_symbols}).to_csv(output_dir / "missing_minute_symbols.csv", index=False, lineterminator="\n")
     pd.DataFrame(buckets).to_csv(output_dir / "regime_performance.csv", index=False, lineterminator="\n")
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True, default=jsonable) + "\n", encoding="utf-8")
@@ -481,7 +367,6 @@ def write_outputs(output_dir: Path, run_id: str, decisions: list[dict[str, Any]]
         "# OIIS cash-daily replay\n\n" + "\n".join(f"- {key}: `{value}`" for key, value in summary.items() if not isinstance(value, (dict, list)))
         + "\n\nThis is a research replay, not live-order authority or a profitability claim.\n", encoding="utf-8"
     )
-    write_h30_report(output_dir, STRATEGY_ID, trades, h30_ranking)
     files = sorted(path for path in output_dir.iterdir() if path.is_file())
     checksums = "\n".join(f"{digest_file(path)}  {path.name}" for path in files) + "\n"
     (output_dir / "checksums.sha256").write_text(checksums, encoding="utf-8")
@@ -497,14 +382,9 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--schema-sql", type=Path, default=DEFAULT_SCHEMA)
-    parser.add_argument("--full-path-schema-sql", type=Path, default=DEFAULT_FULL_PATH_SCHEMA)
-    parser.add_argument("--h30-schema-sql", type=Path, default=DEFAULT_H30_SCHEMA)
     parser.add_argument("--minute-csv-dir", type=Path, default=DEFAULT_MINUTE_CSV_DIR,
                         help="IST one-minute OHLCV directory used by the common exit evaluator")
     parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT / "outputs" / "oiis_cash_daily_research_v1")
-    parser.add_argument("--ofactor-min", type=float, default=74.0)
-    parser.add_argument("--xfactor-tier-a", type=float, default=84.0)
-    parser.add_argument("--xfactor-tier-b", type=float, default=76.0)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     if not args.database_url: raise SystemExit("--database-url or DATABASE_URL is required")
@@ -519,13 +399,10 @@ def main() -> None:
     run_id = str(uuid.uuid4())
     run_hash = digest_bytes(json.dumps({"config": config_hash, "start": str(args.start), "end": str(args.end), "symbol": symbol}, sort_keys=True).encode())
     output_dir = args.output_root / run_id
-    thresholds = {"ofactor_min": args.ofactor_min, "xfactor_a": args.xfactor_tier_a, "xfactor_b": args.xfactor_tier_b}
 
     with psycopg.connect(args.database_url, row_factory=dict_row) as conn:
         with conn.cursor() as cur:
             cur.execute(args.schema_sql.read_text(encoding="utf-8"))
-            cur.execute(args.full_path_schema_sql.read_text(encoding="utf-8"))
-            cur.execute(args.h30_schema_sql.read_text(encoding="utf-8"))
             cur.execute("INSERT INTO oiis.formula_version (formula_version,strategy_id,status,config_json,config_sha256) VALUES (%s,%s,%s,%s::jsonb,%s) ON CONFLICT (formula_version) DO NOTHING", (FORMULA_VERSION, STRATEGY_ID, config["status"], json.dumps(config), config_hash))
             cur.execute("INSERT INTO oiis.replay_run (replay_run_id,strategy_id,formula_version,universe_name,membership_mode,requested_start,requested_end,symbol_filter,status,run_hash,limitations_json) VALUES (%s,%s,%s,'nifty100_equity','CURRENT_PANEL_RESEARCH_ONLY',%s,%s,%s,'RUNNING',%s,%s::jsonb)", (run_id, STRATEGY_ID, FORMULA_VERSION, args.start, args.end, symbol, run_hash, json.dumps(LIMITATIONS)))
         conn.commit()
@@ -534,26 +411,15 @@ def main() -> None:
             features = derive_features(prices, regimes)
             groups = list(features.groupby("symbol", sort=True))
             with ThreadPoolExecutor(max_workers=max(1, min(args.workers, len(groups)))) as pool:
-                nested = list(pool.map(lambda item: evaluate_symbol(item, args.start, args.end, thresholds), groups))
+                nested = list(pool.map(lambda item: evaluate_symbol(item, args.start, args.end), groups))
             decisions = [row for rows in nested for row in rows]
-            trades = simulate_trades(decisions, features, config, args.minute_csv_dir, args.end, run_id)
+            trades = simulate_trades(decisions, features, config, args.minute_csv_dir, args.end)
             missing_minute_symbols = list(getattr(simulate_trades, "missing_minute_symbols", []))
             buckets = performance(decisions, trades)
             closed_trades = [row for row in trades if row["status"] == "CLOSED"]
             open_positions = [row for row in trades if row["status"] != "CLOSED"]
             minute_sources = {row["symbol"]: row["minute_source_sha256"] for row in trades}
             run_hash = digest_bytes(json.dumps({"base_run_hash": run_hash, "minute_sources": minute_sources}, sort_keys=True).encode())
-            reward_level_counts = {
-                level: sum(any(event["level_id"] == level and event["hit_flag"] for event in row["target_events"]) for row in trades)
-                for level in ("I030", "I050", "I070", "S100", "S200", "S500")
-            }
-            adverse_level_counts = {
-                level: sum(any(event["level_id"] == level and event["hit_flag"] for event in row["adverse_events"]) for row in trades)
-                for level in ("A050", "A100", "A200", "A500", "A1000", "A_GT1000")
-            }
-            invariant_status = "PASS" if all(all(row["invariant_checks"].values()) for row in trades) else "FAIL"
-            h30_observations = [row["h30_observation"] for row in trades if row.get("h30_observation")]
-            h30_ranking = rank_h30(h30_observations)
             summary = {
                 "replay_run_id": run_id, "strategy_id": STRATEGY_ID, "formula_version": FORMULA_VERSION,
                 "requested_start": args.start, "requested_end": args.end,
@@ -568,25 +434,12 @@ def main() -> None:
                 "total_net_liquidation_pnl": round(sum(row["after_tax_net_pnl"] for row in closed_trades) + sum(row["unrealized_net_liquidation_pnl"] for row in open_positions), 4),
                 "win_rate_pct": round(100 * sum(row["after_tax_net_pnl"] > 0 for row in closed_trades) / len(closed_trades), 4) if closed_trades else None,
                 "config_sha256": config_hash, "run_hash": run_hash, "status": "SUCCEEDED", "limitations": LIMITATIONS,
-                "thresholds": thresholds,
                 "exit_policy_id": "COMMON-TARGET-ONLY-0.3-1.0-V1",
-                "execution_scenario_id": "EXEC-I030-ELSE-S100-NO-TIMEOUT-V2",
                 "missing_minute_symbols": missing_minute_symbols,
                 "data_completeness_status": "WARN" if missing_minute_symbols else "PASS",
-                "evaluation_policy_id": "FULL-PATH-LADDER-EVAL-I030-I050-I070-S100-S200-S500-A050-A100-A200-A500-A1000-A_GT1000-V2",
-                "reward_level_hit_counts": reward_level_counts,
-                "adverse_level_hit_counts": adverse_level_counts,
-                "ladder_invariant_status": invariant_status,
-                "path_checkpoint_count": sum(len(row["path_checkpoints"]) for row in trades),
-                "h30_policy_id": "FULL-PATH-LADDER-PLUS-H30T-MAX-CLOSE-OPPORTUNITY-V3",
-                "h30_observation_count": len(h30_observations),
-                "h30_mature_count": h30_ranking["summary"]["mature_entry_count"],
-                "h30_ranking_status": h30_ranking["status"],
-                "h30_diagnostic_score": h30_ranking["diagnostic_score"],
-                "h30_rank_blockers": h30_ranking["hard_gate_blockers"],
                 "result_type": "OPPORTUNITY_SCAN", "rankability_status": "NOT_RANKABLE", "rating": "NR",
             }
-            files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary, missing_minute_symbols, h30_ranking)
+            files = write_outputs(output_dir, run_id, decisions, trades, buckets, summary, missing_minute_symbols)
             if args.dry_run:
                 conn.rollback()
             else:
@@ -607,73 +460,12 @@ def main() -> None:
                             exit_reason,gross_pnl,costs,tax_reserve,after_tax_net_pnl,return_pct,holding_sessions,mfe_pct,mae_pct,outcome_json,
                             position_status,unrealized_net_liquidation_pnl,capital_released)
                           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s)
-                        """, (decision_ids[row["decision_hash"]],row["entry_date"],row["exit_date"],row["entry_price"],row["exit_price"],row["stop_price"],row["target_price"],row["quantity"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["return_pct"],row["holding_sessions"],row["mfe_pct"],row["mae_pct"],json.dumps({"policy_id":row["policy_id"],"evaluation_policy_id":row["evaluation_policy_id"],"execution_scenario_id":row["execution_scenario_id"],"entry_path_id":row["entry_path_id"],"path_evidence_hash":row["path_evidence_hash"],"target_events":row["target_events"],"adverse_events":row["adverse_events"],"path_checkpoints":row["path_checkpoints"],"entry_ts":row["entry_ts"],"exit_ts":row["exit_ts"],"mark_price":row["mark_price"],"minute_source_sha256":row["minute_source_sha256"],"stop_exit_enabled":False,"timeout_exit_enabled":False},default=jsonable),row["status"],row["unrealized_net_liquidation_pnl"],row["capital_released"]))
-                        cur.execute("""
-                          INSERT INTO strategy_eval.entry_path_evaluation
-                            (entry_path_id,run_id,strategy_version_id,symbol,entry_fill_ts,entry_price,quantity,
-                             evaluation_policy_id,path_evidence_hash,coverage_status,evaluated_through_stage,
-                             best_intraday_target_id,best_d5_target_id,deepest_adverse_level_id,mfe_d5_pct,mae_d5_pct,data_snapshot_hash)
-                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                        """, (row["entry_path_id"],run_id,FORMULA_VERSION,row["symbol"],row["entry_ts"],row["entry_price"],row["quantity"],
-                              row["evaluation_policy_id"],row["path_evidence_hash"],row["coverage_status"],row["path_checkpoints"][-1]["stage"],
-                              row["best_intraday_target_id"],row["best_d5_target_id"],row["deepest_adverse_level_id"],row["mfe_pct"],row["mae_pct"],row["minute_source_sha256"]))
-                        h30 = row["h30_observation"]
-                        cur.execute("""
-                          INSERT INTO strategy_eval.long_horizon_observation
-                            (entry_path_id,horizon_policy_id,data_snapshot_hash,run_id,strategy_version_id,symbol,entry_date,entry_price,
-                             sessions_observed,coverage_status,rankable_flag,max_close_price,max_close_date,max_close_session_index,
-                             after_tax_max_close_upside_pct,mae_before_max_close_pct,sessions_to_max_close,outcome_label,observation_hash,observation_json)
-                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
-                        """, (h30["entry_path_id"],h30["horizon_policy_id"],h30["data_snapshot_hash"],run_id,FORMULA_VERSION,h30["symbol"],h30["entry_date"],h30["entry_price"],
-                              h30["sessions_observed"],h30["coverage_status"],h30["rankable_flag"],h30.get("max_close_price"),h30.get("max_close_date"),h30.get("max_close_session_index"),
-                              (h30.get("max_close_economics") or {}).get("after_tax_upside_pct"),h30.get("mae_before_max_close_pct"),h30.get("sessions_to_max_close"),
-                              h30["outcome_label"],h30["observation_hash"],json.dumps(h30,default=jsonable)))
-                        for checkpoint in h30.get("checkpoints", []):
-                            cur.execute("""
-                              INSERT INTO strategy_eval.long_horizon_checkpoint
-                                (entry_path_id,horizon_policy_id,data_snapshot_hash,session_index,trade_date,close_price,close_return_pct,
-                                 max_close_so_far,min_low_so_far,underwater_flag,checkpoint_hash,checkpoint_json)
-                              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
-                            """, (h30["entry_path_id"],h30["horizon_policy_id"],h30["data_snapshot_hash"],checkpoint["session_index"],checkpoint["trade_date"],
-                                  checkpoint["close_price"],checkpoint["close_return_pct"],checkpoint["max_close_so_far"],checkpoint["min_low_so_far"],
-                                  checkpoint["underwater_flag"],checkpoint["checkpoint_hash"],json.dumps(checkpoint,default=jsonable)))
-                        for event in row["target_events"] + row["adverse_events"]:
-                            cur.execute("""
-                              INSERT INTO strategy_eval.ladder_event
-                                (entry_path_id,evaluation_policy_id,level_id,level_kind,window_id,level_pct,raw_price,tick_price,
-                                 hit_flag,first_touch_ts,first_touch_stage,first_touch_kind,opportunity_price,
-                                 same_bar_order_ambiguous,sequence,hit_on_d0,hit_after_d0,evidence_json)
-                              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
-                            """, (row["entry_path_id"],row["evaluation_policy_id"],event["level_id"],event["level_kind"],event["window_id"],
-                                  event["level_pct"],event["raw_price"],event.get("tick_price"),event["hit_flag"],event.get("first_touch_ts"),
-                                  event.get("first_touch_stage"),event.get("first_touch_kind"),event.get("opportunity_price"),
-                                  event.get("same_bar_order_ambiguous",False),event.get("sequence"),event.get("hit_on_d0",False),
-                                  event.get("hit_after_d0",False),json.dumps(event,default=jsonable)))
-                        for checkpoint in row["path_checkpoints"]:
-                            cur.execute("""
-                              INSERT INTO strategy_eval.path_checkpoint
-                                (entry_path_id,evaluation_policy_id,stage,checkpoint_ts,close_price,return_pct,mfe_pct,mae_pct,
-                                 highest_reward_level,worst_adverse_level,capital_locked_flag)
-                              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                            """, (row["entry_path_id"],row["evaluation_policy_id"],checkpoint["stage"],checkpoint["checkpoint_ts"],checkpoint["close_price"],
-                                  checkpoint["return_pct"],checkpoint["mfe_pct"],checkpoint["mae_pct"],checkpoint.get("highest_reward_level"),
-                                  checkpoint.get("worst_adverse_level"),checkpoint["capital_locked_flag"]))
-                        cur.execute("""
-                          INSERT INTO strategy_eval.execution_scenario_result
-                            (entry_path_id,execution_scenario_id,run_id,path_evidence_hash,status,exit_ts,exit_price,exit_reason,
-                             realised_gross_pnl,costs,tax_reserve,after_tax_pnl,capital_released)
-                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                        """, (row["entry_path_id"],row["execution_scenario_id"],run_id,row["path_evidence_hash"],row["status"],row["exit_ts"],
-                              row["exit_price"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["capital_released"]))
+                        """, (decision_ids[row["decision_hash"]],row["entry_date"],row["exit_date"],row["entry_price"],row["exit_price"],row["stop_price"],row["target_price"],row["quantity"],row["exit_reason"],row["gross_pnl"],row["costs"],row["tax_reserve"],row["after_tax_net_pnl"],row["return_pct"],row["holding_sessions"],row["mfe_pct"],row["mae_pct"],json.dumps({"policy_id":row["policy_id"],"target_events":row["target_events"],"adverse_events":row["adverse_events"],"entry_ts":row["entry_ts"],"exit_ts":row["exit_ts"],"mark_price":row["mark_price"],"minute_source_sha256":row["minute_source_sha256"],"stop_exit_enabled":False,"timeout_exit_enabled":False},default=jsonable),row["status"],row["unrealized_net_liquidation_pnl"],row["capital_released"]))
                     for row in buckets:
                         cur.execute("INSERT INTO oiis.performance_bucket (replay_run_id,bucket_type,bucket_key,decision_count,trade_count,win_rate_pct,avg_return_pct,median_return_pct,after_tax_net_pnl,metrics_json) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)", (run_id,row["bucket_type"],row["bucket_key"],row["decision_count"],row["trade_count"],row["win_rate_pct"],row["avg_return_pct"],row["median_return_pct"],row["after_tax_net_pnl"],json.dumps({"open_position_count":row["open_position_count"],"open_unrealized_net_liquidation_pnl":row["open_unrealized_net_liquidation_pnl"]})))
-                    cur.execute("INSERT INTO strategy_eval.strategy_horizon_summary (run_id,strategy_version_id,horizon_policy_id,summary_json) VALUES (%s,%s,%s,%s::jsonb)", (run_id,FORMULA_VERSION,summary["h30_policy_id"],json.dumps(h30_ranking["summary"])))
-                    cur.execute("INSERT INTO strategy_eval.strategy_horizon_ranking (run_id,strategy_version_id,league,ranking_config_id,status,final_score,diagnostic_score,blockers_json,ranking_json) VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb)", (run_id,FORMULA_VERSION,h30_ranking["league"],h30_ranking["ranking_config_id"],h30_ranking["status"],h30_ranking["final_score"],h30_ranking["diagnostic_score"],json.dumps(h30_ranking["hard_gate_blockers"]),json.dumps(h30_ranking)))
                     cur.execute("UPDATE oiis.replay_run SET actual_start=%s,actual_end=%s,symbol_count=%s,decision_count=%s,enterable_count=%s,trade_count=%s,status='SUCCEEDED',result_type=%s,rankability_status=%s,rating=%s,run_hash=%s,metrics_json=%s::jsonb,finished_at=NOW() WHERE replay_run_id=%s", (summary["actual_start"],summary["actual_end"],summary["symbol_count"],summary["decision_count"],summary["enterable_count"],summary["trade_count"],summary["result_type"],summary["rankability_status"],summary["rating"],summary["run_hash"],json.dumps(summary,default=jsonable),run_id))
                     for path in files:
                         cur.execute("INSERT INTO oiis.artifact_manifest (replay_run_id,artifact_type,artifact_path,sha256,size_bytes) VALUES (%s,%s,%s,%s,%s)", (run_id,path.suffix.lstrip(".") or "file",str(path.resolve()),digest_file(path),path.stat().st_size))
-                        if path.name.endswith(("month_density.png", "month_density.svg", "month_density_data.csv")):
-                            cur.execute("INSERT INTO strategy_eval.chart_artifact (run_id,strategy_version_id,chart_id,format,artifact_path,sha256,size_bytes) VALUES (%s,%s,%s,%s,%s,%s,%s)", (run_id,FORMULA_VERSION,path.stem,path.suffix.lstrip("."),str(path.resolve()),digest_file(path),path.stat().st_size))
                 conn.commit()
             print(json.dumps({**summary, "output_dir": str(output_dir), "persisted": not args.dry_run}, indent=2, default=jsonable))
         except Exception as exc:

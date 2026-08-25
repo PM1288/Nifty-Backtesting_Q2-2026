@@ -2,18 +2,17 @@
 
 ## Canonical engine
 
-`platform/nifty_stratlab/src/nifty_stratlab/evaluation/full_path_ladder.py`
+`platform/nifty_stratlab/src/nifty_stratlab/evaluation/common_exit.py`
 
-- immutable full-path V2 policy;
+- immutable `COMMON-TARGET-ONLY-0.3-1.0-V1` policy;
+- I030/S100 actual exit state machine;
 - I030/I050/I070 and S100/S200/S500 event evidence;
 - A050/A100/A200/A500/A1000 adverse evidence;
 - upward NSE tick rounding;
-- no break or return at any ladder event;
-- six D0-D+5 checkpoints and cumulative invariants.
-
-`simulation/execution_scenarios.py` separately implements the
-`EXEC-I030-ELSE-S100-NO-TIMEOUT-V2` sale/economics policy. `common_exit.py` is a
-compatibility facade and must not reintroduce path truncation.
+- no stop, strategy, timeout or run-end exit;
+- closed economics, 35% positive-profit tax reserve and open net-liquidation
+  value;
+- explicit `capital_released` state.
 
 ## Shared event simulator
 
@@ -32,15 +31,12 @@ entry rules remain unchanged.
 
 ## OIIS
 
-OIIS formula `OIIS-CASH-DAILY-RESEARCH-V1.3` replaces both the invalid V1.0
-2R/stop/ten-session model and the truncated ladder evidence in V1.1. OIIS still
-creates daily entry eligibility, but
+OIIS formula `OIIS-CASH-DAILY-RESEARCH-V1.1` replaces the invalid V1.0 2R/stop/
+ten-session outcome model. OIIS still creates daily entry eligibility, but
 accepted entries are evaluated against one-minute IST OHLC from the canonical
 CSV estate. Each CSV session is normalised to its matching canonical EOD open
 to prevent retrospective split/bonus adjustment from changing historical
-position size. Outputs include normalized path, target, adverse and checkpoint
-CSVs. V1.2 path labels are valid where successful, but its execution adapter
-incorrectly stopped at D+5 and is superseded by V1.3.
+position size. Outputs add `target_events.csv` and `adverse_events.csv`.
 
 The OIIS database schema now permits null exit/stop fields and stores
 `position_status`, `unrealized_net_liquidation_pnl`, `capital_released` and the

@@ -29,3 +29,18 @@ func TestApplyCapacityLimits(t *testing.T) {
 		}
 	}
 }
+
+func TestSubscriptionCountsReflectActualShards(t *testing.T) {
+	var subs []store.Subscription
+	for i := 0; i < 7; i++ {
+		kind := "OPTSTK"
+		if i < 2 {
+			kind = "EQUITY"
+		}
+		subs = append(subs, store.Subscription{Exchange: "NSE", SymbolToken: string(rune('1' + i)), Mode: "LTP", Kind: kind, Priority: i})
+	}
+	counts := SubscriptionCounts(subs, 3, 3)
+	if counts["smartapi-ws-1"] != 3 || counts["smartapi-ws-2"] != 3 || counts["smartapi-ws-3"] != 1 {
+		t.Fatalf("unexpected shard counts: %#v", counts)
+	}
+}

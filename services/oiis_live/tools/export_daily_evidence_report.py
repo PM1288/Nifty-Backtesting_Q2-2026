@@ -112,6 +112,7 @@ def component_table(layer: Mapping[str, Any], formulas: Mapping[str, str]) -> li
 
 
 def report(database_url: str, trade_date: date, run_slot: str) -> str:
+    report_generated_at = datetime.now(IST)
     with psycopg.connect(database_url, row_factory=dict_row) as conn:
         run = conn.execute(
             """SELECT * FROM oiis_live.selection_run
@@ -155,6 +156,21 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
         for reason in row["reason_codes"] or []:
             gate_counts[reason][row["direction"]] += 1
 
+    requested_universe = run.get("requested_universe") or "NOT AVAILABLE"
+    if requested_universe == "ALL_FNO":
+        universe_description = "point-in-time active stock F&O-underlying universe"
+        universe_method = (
+            "Refresh the eligible universe from every active, unexpired SmartAPI stock-derivative "
+            "underlying. Each stock is evaluated once; its individual FUTSTK/OPTSTK contracts are "
+            "collected separately and are not counted as additional stocks."
+        )
+    else:
+        universe_description = "point-in-time NIFTY 50 and active-F&O intersection"
+        universe_method = (
+            "Refresh the eligible universe as the intersection of active SmartAPI F&O underlyings "
+            "and official NSE NIFTY 50 constituents."
+        )
+
     lines: list[str] = [
         f"# OIIS Live Complete Calculation and Selection Report — {trade_date.strftime('%d %B %Y')}",
         "",
@@ -167,12 +183,13 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
         f"**Trade date:** `{run['trade_date']}`",
         f"**Decision as-of:** `{run['decision_as_of'].astimezone(IST).isoformat() if run.get('decision_as_of') else 'NOT AVAILABLE'}`",
         f"**Physical execution timestamp:** `{run['execution_timestamp'].astimezone(IST).isoformat() if run.get('execution_timestamp') else 'NOT AVAILABLE'}`",
+        f"**Report generated at:** `{report_generated_at.isoformat()}`",
         f"**Requested universe:** `{run.get('requested_universe') or 'NOT AVAILABLE'}`",
         f"**Result hash:** `{run['result_hash']}`",
         "",
         "## Executive conclusion",
         "",
-        f"The run evaluated **{len(candidates)}** symbols in the point-in-time NIFTY 50 and active-F&O intersection. "
+        f"The run evaluated **{len(candidates)}** symbols in the {universe_description}. "
         f"**{sum(row['data_permission'] != 'DATA_INSUFFICIENT' for row in candidates)}** had FULL execution-grade evidence and "
         f"**{sum(row['data_permission'] == 'DATA_INSUFFICIENT' for row in candidates)}** were retained as explicit data-insufficient rows. "
         f"It produced **{sum(bool(row['recommended']) for row in candidates)}** ranked research recommendations, "
@@ -182,7 +199,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
         "",
         "## Time and source interpretation",
         "",
-        "1. The most recent completed cash-equity daily inputs were from 7 August 2026.",
+        f"1. The governed completed cash-equity signal/base date for this run was {run['signal_date']}.",
         "2. Each slot uses its governed point-in-time cutoff: 08:30, 09:30 or 15:00 IST. Physical backfill time is stored separately and never changes the data cutoff.",
         "3. Intraday volume was compared with volume accumulated by the same IST clock time on previous sessions. It was not compared with prior full-day volume.",
         "4. Daily history came from `nse.fact_eod_prices`, with `strategy_eval.stock_daily_regime` only as the governed fallback/regime source.",
@@ -191,7 +208,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
         "",
         "## Complete decision flow",
         "",
-        "1. Refresh the eligible universe as the intersection of active SmartAPI F&O underlyings and official NSE NIFTY 50 constituents.",
+        f"1. {universe_method}",
         "2. Load at least 180 calendar days of daily OHLCV and the current partial intraday bar aggregation when available.",
         "3. Calculate returns, SMA20, SMA50, EMA61, ATR14, RSI14, Williams %R14, MACD, volume history, prior 20-session barriers, relative strength and regime joins.",
         "4. Calculate data-quality coverage, freshness, OHLC consistency and source reliability. Require DQ >= 85 and permission FULL.",
@@ -272,7 +289,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
             ],
         ),
         "",
-        "## Run ledger for 10 August",
+        f"## Run ledger for {trade_date.strftime('%d %B %Y')}",
         "",
         *table(
             ["Run slot", "Run ID", "Status", "Decision as-of", "Executed at", "Evaluated", "Qualified", "Selected", "Result hash"],
@@ -315,7 +332,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
             ((row["rank"], row["symbol"], row["daily_level"], row["canonical_status"], row["entry_enabled"], row["buy_limit"], row["no_chase_price"], row["source"]) for row in active_watchlist),
         ),
         "",
-        "All ten rows above are recommendations. `entry_enabled=FALSE` confirms they were not authorised trades.",
+        f"All {len(active_watchlist)} rows above are recommendations. `entry_enabled=FALSE` confirms they were not authorised trades.",
         "",
         "## All-stock decision table",
         "",
@@ -457,7 +474,7 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
                     "This stock was fully selected and eligible for subsequent RSI/Williams %R intraday entry monitoring."
                     if row["selected"]
                     else "This stock was not authorised for automatic entry. "
-                    + ("It was included in the top-ten research review because it ranked closest under the governed ordering. " if row["recommended"] else "")
+                    + ("It was included in the ranked research review because it ranked closest under the governed ordering. " if row["recommended"] else "")
                     + f"The recorded reasons were: {', '.join(row['reason_codes'] or []) or 'none'}; blocking failures: {row['blocking_gate_count']}."
                 ),
                 "",
@@ -470,10 +487,10 @@ def report(database_url: str, trade_date: date, run_slot: str) -> str:
             "",
             "```bash",
             "docker exec trading-stack-novius2-oiis-live-1 oiis-live select \\",
-            "  --signal-date 2026-08-07 --trade-date 2026-08-10 \\",
-            "  --run-slot MANUAL_CORRECTED_FINAL",
+            f"  --signal-date {run['signal_date']} --trade-date {run['trade_date']} \\",
+            f"  --run-slot {run['run_slot']}",
             "",
-            "curl -fsS 'http://127.0.0.1:19090/n50/v1/oiis-live/candidates?tradeDate=2026-08-10'",
+            f"curl -fsS 'http://127.0.0.1:19090/n50/v1/oiis-live/candidates?tradeDate={run['trade_date']}'",
             "```",
             "",
             "The selection command is idempotent by run slot. Re-running against later-revised market data may legitimately produce a different result hash; never overwrite the original report without recording a new run identity.",

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nifty50.local/schemas/market-status-whatsapp.v1.schema.json",
+  "title": "Market Status WhatsApp V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "event_id", "event_type", "environment", "trade_date", "generated_at", "data_as_of", "timezone", "dedupe_key", "correlation_id", "source", "quality", "payload"],
+  "properties": {
+    "schema": {"const": "market-status-whatsapp.v1"},
+    "event_id": {"type": "string", "format": "uuid"},
+    "event_type": {"enum": ["market.open.snapshot.v1", "market.movers.snapshot.v1", "market.oiis.candidates.changed.v1", "market.close.snapshot.v1"]},
+    "environment": {"const": "MARKET_INTELLIGENCE"},
+    "trade_date": {"type": "string", "format": "date"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "data_as_of": {"type": "string", "format": "date-time"},
+    "timezone": {"const": "Asia/Kolkata"},
+    "dedupe_key": {"type": "string", "minLength": 8, "maxLength": 200},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "source": {
+      "type": "object", "additionalProperties": false, "required": ["provider", "mode"],
+      "properties": {"provider": {"type": "string", "minLength": 1}, "mode": {"enum": ["CACHE", "DATABASE", "API"]}}
+    },
+    "quality": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "coverage_count", "expected_count", "max_age_seconds"],
+      "properties": {
+        "status": {"const": "VALID"}, "coverage_count": {"type": "integer", "minimum": 0},
+        "expected_count": {"type": "integer", "minimum": 1}, "max_age_seconds": {"type": "integer", "minimum": 0}
+      }
+    },
+    "payload": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"event_type": {"const": "market.open.snapshot.v1"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/open"}}}
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "market.movers.snapshot.v1"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/movers"}}}
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "market.oiis.candidates.changed.v1"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/oiis"}}}
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "market.close.snapshot.v1"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/close"}}}
+    }
+  ],
+  "$defs": {
+    "decimal": {"type": "string", "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$"},
+    "mover": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rank", "symbol", "current_price", "previous_close", "change_points", "change_percentage", "quote_time"],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1, "maximum": 10}, "symbol": {"type": "string"},
+        "display_name": {"type": "string"}, "current_price": {"$ref": "#/$defs/decimal"},
+        "previous_close": {"$ref": "#/$defs/decimal"}, "change_points": {"$ref": "#/$defs/decimal"},
+        "change_percentage": {"$ref": "#/$defs/decimal"}, "quote_time": {"type": "string", "format": "date-time"}
+      }
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rank", "symbol", "direction", "xfactor", "ofactor"],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1, "maximum": 3}, "symbol": {"type": "string"},
+        "direction": {"enum": ["LONG", "SHORT"]}, "xfactor": {"$ref": "#/$defs/decimal"},
+        "ofactor": {"$ref": "#/$defs/decimal"}, "current_price": {"$ref": "#/$defs/decimal"},
+        "session_change_percentage": {"$ref": "#/$defs/decimal"}, "status": {"type": "string", "maxLength": 80}
+      }
+    },
+    "open": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index_symbol", "index_name", "current_level", "previous_close", "point_change", "percentage_change", "session_open", "gap_points", "gap_percentage", "move_from_open_points", "move_from_open_percentage", "session_high", "session_low", "data_as_of", "source"],
+      "properties": {
+        "index_symbol": {"const": "NIFTY50"}, "index_name": {"const": "NIFTY 50"},
+        "current_level": {"$ref": "#/$defs/decimal"}, "previous_close": {"$ref": "#/$defs/decimal"},
+        "point_change": {"$ref": "#/$defs/decimal"}, "percentage_change": {"$ref": "#/$defs/decimal"},
+        "session_open": {"$ref": "#/$defs/decimal"}, "gap_points": {"$ref": "#/$defs/decimal"},
+        "gap_percentage": {"$ref": "#/$defs/decimal"}, "move_from_open_points": {"$ref": "#/$defs/decimal"},
+        "move_from_open_percentage": {"$ref": "#/$defs/decimal"}, "session_high": {"$ref": "#/$defs/decimal"},
+        "session_low": {"$ref": "#/$defs/decimal"}, "advancers": {"type": "integer"},
+        "decliners": {"type": "integer"}, "unchanged": {"type": "integer"},
+        "data_as_of": {"type": "string", "format": "date-time"}, "source": {"type": "string"}
+      }
+    },
+    "movers": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index_symbol", "gainers", "losers", "universe_count", "fresh_quote_count", "data_as_of", "ranking_basis"],
+      "properties": {
+        "index_symbol": {"const": "NIFTY50"}, "gainers": {"type": "array", "minItems": 1, "maxItems": 10, "items": {"$ref": "#/$defs/mover"}},
+        "losers": {"type": "array", "minItems": 1, "maxItems": 10, "items": {"$ref": "#/$defs/mover"}},
+        "universe_count": {"type": "integer", "minimum": 1}, "fresh_quote_count": {"type": "integer", "minimum": 1},
+        "data_as_of": {"type": "string", "format": "date-time"}, "ranking_basis": {"const": "PREVIOUS_OFFICIAL_CLOSE"}
+      }
+    },
+    "oiis": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_run_id", "source_run_slot", "source_run_completed_at", "scoring_rule_version", "trade_date", "long_candidates", "short_candidates", "added_memberships", "removed_memberships", "first_qualifying_scan_of_day", "data_as_of"],
+      "properties": {
+        "source_run_id": {"type": "string", "format": "uuid"}, "source_run_slot": {"type": "string"},
+        "source_run_completed_at": {"type": "string", "format": "date-time"}, "scoring_rule_version": {"type": "string"},
+        "trade_date": {"type": "string", "format": "date"}, "long_candidates": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/candidate"}},
+        "short_candidates": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/candidate"}},
+        "added_memberships": {"type": "array", "items": {"type": "string", "pattern": "^(LONG|SHORT):"}},
+        "removed_memberships": {"type": "array", "items": {"type": "string", "pattern": "^(LONG|SHORT):"}},
+        "first_qualifying_scan_of_day": {"type": "boolean"}, "data_as_of": {"type": "string", "format": "date-time"}
+      }
+    },
+    "close": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index_symbol", "final_close", "previous_close", "daily_delta_points", "daily_delta_percentage", "session_open", "open_to_close_points", "open_to_close_percentage", "session_high", "session_low", "range_points", "range_percentage", "finalisation_status", "data_as_of"],
+      "properties": {
+        "index_symbol": {"const": "NIFTY50"}, "final_close": {"$ref": "#/$defs/decimal"},
+        "previous_close": {"$ref": "#/$defs/decimal"}, "daily_delta_points": {"$ref": "#/$defs/decimal"},
+        "daily_delta_percentage": {"$ref": "#/$defs/decimal"}, "session_open": {"$ref": "#/$defs/decimal"},
+        "open_to_close_points": {"$ref": "#/$defs/decimal"}, "open_to_close_percentage": {"$ref": "#/$defs/decimal"},
+        "session_high": {"$ref": "#/$defs/decimal"}, "session_low": {"$ref": "#/$defs/decimal"},
+        "range_points": {"$ref": "#/$defs/decimal"}, "range_percentage": {"$ref": "#/$defs/decimal"},
+        "finalisation_status": {"const": "FINAL"}, "data_as_of": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

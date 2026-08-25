@@ -8,26 +8,42 @@ import (
 
 	"trading-stack/internal/config"
 	"trading-stack/internal/instruments"
+	"trading-stack/internal/smartapi"
 	"trading-stack/internal/store"
 )
 
-func subscriptionRefreshLoop(ctx context.Context, cfg *config.Config, st *store.Store, insts []instruments.Instrument, baseSubs []store.Subscription, prices *priceCache, subIndex *subscriptionIndex, optionStates *optionStateIndex, subsCount *atomic.Int64, logger *slog.Logger, triggers <-chan string, loc *time.Location) error {
+func subscriptionRefreshLoop(ctx context.Context, cfg *config.Config, st *store.Store, insts []instruments.Instrument, baseSubs []store.Subscription, prices *priceCache, subIndex *subscriptionIndex, optionStates *optionStateIndex, wsTracker *wsHealthTracker, subsCount *atomic.Int64, logger *slog.Logger, triggers <-chan string, loc *time.Location) error {
 	interval := time.Duration(cfg.Universe.Options.StrikeRefreshMinutes) * time.Minute
 	if interval <= 0 {
 		interval = 5 * time.Minute
 	}
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
+	lastRefresh := time.Now()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case reason := <-triggers:
+			// ATM monitoring runs every 30 seconds, but subscription plans must not
+			// churn faster than the configured strike refresh cadence. Repeated
+			// unsubscribe/subscribe storms can overload all three broker sockets.
+			if time.Since(lastRefresh) < interval {
+				if logger != nil {
+					logger.Debug("options_refresh_deferred", "reason", reason, "next_in", interval-time.Since(lastRefresh))
+				}
+				continue
+			}
 			if logger != nil {
 				logger.Info("options_refresh_triggered", "reason", reason)
 			}
 		case <-ticker.C:
+			// An ATM trigger can become ready at the same instant as this ticker.
+			// Coalesce the two events so only one subscription plan is applied.
+			if time.Since(lastRefresh) < interval {
+				continue
+			}
 		}
 		active, err := refreshSubscriptions(ctx, st, insts, baseSubs, cfg, prices, logger, time.Now().In(loc))
 		if err != nil {
@@ -38,7 +54,11 @@ func subscriptionRefreshLoop(ctx context.Context, cfg *config.Config, st *store.
 		}
 		subIndex.Update(active)
 		subsCount.Store(int64(len(active)))
+		if wsTracker != nil {
+			wsTracker.SetSubscriptionCounts(smartapi.SubscriptionCounts(active, cfg.WS.MaxConnections, cfg.WS.MaxTokensPerConnection))
+		}
 		optionStates.Update(buildOptionStates(active, prices, time.Now().In(loc)))
+		lastRefresh = time.Now()
 	}
 }
 

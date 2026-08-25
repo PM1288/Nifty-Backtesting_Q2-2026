@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     MARKET_DATA_BAR_TABLE: str = "bars_1m"
     MARKET_DATA_INSTRUMENT_TABLE: str = "instruments"
     POLL_INTERVAL_SECONDS: Decimal = Decimal("2")
-    MARKET_DATA_STALE_SECONDS: int = 180
+    MARKET_DATA_STALE_SECONDS: int = 360
     SAME_BAR_AMBIGUITY_POLICY: Literal["WORST_CASE", "TARGET_FIRST", "STOP_FIRST"] = "WORST_CASE"
     DEFAULT_ACCOUNT_ID: str = "paper-main"
     STARTING_PAPER_CAPITAL: Decimal = Decimal("1600000")

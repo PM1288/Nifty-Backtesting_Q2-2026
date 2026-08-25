@@ -1,0 +1,20 @@
+services:
+  trendlyne-scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: trendlyne-scraper
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./checkpoints:/app/checkpoints
+      - ./state:/app/state
+
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 45s

@@ -15,6 +15,7 @@ from papertrade.domain import (
     tax_provision,
     validate_group_transition,
 )
+from papertrade.service import _analytical_ladders
 
 
 def test_required_long_ladder_does_not_close_execution() -> None:
@@ -30,6 +31,18 @@ def test_required_long_ladder_does_not_close_execution() -> None:
     assert adverse_return("BUY", Decimal("100"), Decimal("101.20"), Decimal("99.40")) == Decimal("-0.006")
 
 
+def test_default_paper_evaluation_ladders_include_every_required_target() -> None:
+    intraday, swing = _analytical_ladders([], [], True)
+    assert intraday == [Decimal("0.003"), Decimal("0.004"), Decimal("0.005"), Decimal("0.010")]
+    assert swing == [Decimal("0.010"), Decimal("0.030"), Decimal("0.050")]
+
+
+def test_explicit_ladders_are_not_silently_expanded_when_defaults_are_disabled() -> None:
+    intraday, swing = _analytical_ladders(["0.007"], ["0.020"], False)
+    assert intraday == [Decimal("0.007")]
+    assert swing == [Decimal("0.020")]
+
+
 def test_short_ladder_and_pnl() -> None:
     assert evaluate_target_ladder(
         "SELL",
@@ -41,6 +54,12 @@ def test_short_ladder_and_pnl() -> None:
     assert favourable_return("SELL", Decimal("100"), Decimal("100.70"), Decimal("98.80")) == Decimal("0.012")
     assert adverse_return("SELL", Decimal("100"), Decimal("100.70"), Decimal("98.80")) == Decimal("-0.007")
     assert leg_pnl("SELL", Decimal("100"), Decimal("98.80"), Decimal("100")) == Decimal("120.0000")
+
+
+def test_short_sells_first_and_buy_to_close_determines_profit() -> None:
+    one_fno_lot = Decimal("150")
+    assert leg_pnl("SELL", Decimal("100"), Decimal("90"), one_fno_lot) == Decimal("1500.0000")
+    assert leg_pnl("SELL", Decimal("100"), Decimal("110"), one_fno_lot) == Decimal("-1500.0000")
 
 
 def test_tax_examples() -> None:

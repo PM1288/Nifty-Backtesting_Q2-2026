@@ -13,25 +13,24 @@
    value and does not release capital.
 5. Long targets round upward to the tick.
 
-The full repository suite now passes: 63 tests, zero failures. Twelve golden
-cases in `test_full_path_ladder_v2.py` prove independent ladder reachability,
-same-bar uncertainty, D+6 immutability, tick rounding, partial coverage and
-monotonic invariants.
+Phase 2 and Phase 3 tests passed after integration: 31 tests, zero failures.
 Python compilation passed for the common evaluator, OIIS runner, hybrid runner
 and shared simulator.
 
 ## Bounded OIIS acceptance
 
-The canonical OIIS V1.3 acceptance is run
-`26803207-5b90-4cdd-8ca9-f59601245291` for RELIANCE from 2023-08-06 through
+The corrected OIIS V1.1 was dry-run and then persisted as run
+`51140c91-82f6-4437-92ad-555279108f74` for RELIANCE from 2023-08-06 through
 2026-08-05 using 718 daily decisions and one enterable entry. The one-minute
-path. Although the execution scenario sold at I030, the immutable evaluator
-continued and proved that I050, I070, S100, S200 and S500 were also reached by
-D+5. After-tax realised P&L under the selected execution scenario was ₹286.2566.
+path entered at the canonical-basis price ₹2,685.90 on 2024-01-25 at 09:15 IST
+and reached the tick-rounded I030 target ₹2,694.00 at 09:28 IST. It did not use
+a stop or timeout. Quantity was 74, gross P&L ₹599.40, proxy costs ₹159.0053,
+35% tax reserve ₹154.1382 and after-tax realised P&L ₹286.2566. MAE before exit
+was -0.3463% and MFE was +0.3351%.
 
-Ten checksummed artifacts passed, including paths, targets, adverse events and
-D0-D+5 checkpoints.
+Seven checksummed artifacts passed, including consolidated decisions, trades,
+target events, adverse events and regime performance.
 The evidence-bound run hash includes the exact RELIANCE minute CSV SHA-256.
 
 This one profitable target is pipeline evidence only. It is not proof that OIIS
-works, and V1.3 remains `OPPORTUNITY_SCAN / NOT_RANKABLE / NR`.
+works, and V1.1 remains `OPPORTUNITY_SCAN / NOT_RANKABLE / NR`.

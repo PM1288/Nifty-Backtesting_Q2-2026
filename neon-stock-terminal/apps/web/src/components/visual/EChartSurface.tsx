@@ -14,6 +14,7 @@ import {
 } from "echarts/components";
 import type { EChartsOption, SetOptionOpts } from "echarts";
 import { useI18n, useLocale } from "../../i18n/LocaleProvider";
+import { useFontMode } from "../../lib/fontMode";
 import {
   normalizeChartAxisFormatter,
   normalizeChartTooltipFormatter,
@@ -475,14 +476,17 @@ export function EChartSurface({
 }) {
   const { tr } = useI18n();
   const { language, digits } = useLocale();
+  const [fontMode] = useFontMode();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<ReturnType<typeof echarts.init> | null>(null);
   const fontFamily = useMemo(
     () =>
-      digits === "deva" || language !== "en"
+      fontMode === "high-legibility" && language === "en" && digits === "latn"
+        ? "\"Atkinson Hyperlegible Next Variable\", \"Inter Variable\", sans-serif"
+        : digits === "deva" || language !== "en"
         ? "\"Hind\", \"Noto Sans Devanagari\", \"Inter Variable\", \"Inter\", sans-serif"
         : "\"Inter Variable\", \"Inter\", sans-serif",
-    [digits, language]
+    [digits, fontMode, language]
   );
   const normalizedOption = useMemo(
     () => normalizeOption(option, tr, fontFamily, appearance),

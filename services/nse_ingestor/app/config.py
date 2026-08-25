@@ -20,6 +20,16 @@ class Settings:
     request_timeout_seconds: int
     nse_http_user_agent: str
     report_catalog_path: Path
+    timezone: str
+    schedule_time: str
+    startup_catchup_after: str
+    scheduler_poll_seconds: int
+    n8n_webhook_url: str
+    n8n_user: str
+    n8n_password: str
+    n8n_timeout_seconds: int
+    notification_max_attempts: int
+    notifications_enabled: bool
 
 
 def _as_bool(value: str | None, default: bool = False) -> bool:
@@ -49,6 +59,16 @@ def get_settings() -> Settings:
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
         ),
         report_catalog_path=Path(os.getenv("REPORT_CATALOG_PATH", "/app/config/report_catalog.yml")),
+        timezone=os.getenv("TZ", "Asia/Kolkata"),
+        schedule_time=os.getenv("SCHEDULE_TIME", "07:55"),
+        startup_catchup_after=os.getenv("STARTUP_CATCHUP_AFTER", "07:55"),
+        scheduler_poll_seconds=int(os.getenv("SCHEDULER_POLL_SECONDS", "20")),
+        n8n_webhook_url=os.getenv("NSE_N8N_WEBHOOK_URL", "").strip(),
+        n8n_user=os.getenv("NSE_N8N_BASIC_AUTH_USER", "").strip(),
+        n8n_password=os.getenv("NSE_N8N_BASIC_AUTH_PASSWORD", ""),
+        n8n_timeout_seconds=int(os.getenv("NSE_N8N_TIMEOUT_SECONDS", "10")),
+        notification_max_attempts=int(os.getenv("NSE_NOTIFICATION_MAX_ATTEMPTS", "6")),
+        notifications_enabled=_as_bool(os.getenv("NSE_NOTIFICATIONS_ENABLED"), False),
     )
 
 

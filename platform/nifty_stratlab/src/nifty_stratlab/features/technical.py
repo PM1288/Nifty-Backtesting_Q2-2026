@@ -25,7 +25,6 @@ FEATURE_DEFINITIONS = (
     FeatureDefinition("sma50", "1", 50, "50-bar simple moving average"),
     FeatureDefinition("macd_12_26_9", "1", 35, "EMA 12/26 MACD and EMA 9 signal"),
     FeatureDefinition("vwap_session", "1", 1, "Cumulative session VWAP using typical price"),
-    FeatureDefinition("bollinger_lower_20_2", "1", 20, "20-bar lower Bollinger band at two standard deviations"),
 )
 
 
@@ -105,7 +104,6 @@ def compute_technical_features(frame: pd.DataFrame) -> pd.DataFrame:
         group["willr_14"] = _willr(high, low, close, 14)
         group["sma20"] = close.rolling(20, min_periods=20).mean()
         group["sma50"] = close.rolling(50, min_periods=50).mean()
-        group["bollinger_lower_20_2"] = group["sma20"] - (close.rolling(20, min_periods=20).std(ddof=0) * 2.0)
         ema12 = close.ewm(span=12, adjust=False, min_periods=12).mean()
         ema26 = close.ewm(span=26, adjust=False, min_periods=26).mean()
         group["macd_line"] = ema12 - ema26
@@ -162,41 +160,6 @@ def attach_prior_completed_daily_rsi(frame: pd.DataFrame, period: int = 14) -> p
         on=["symbol", "session_date"],
         how="left",
         validate="many_to_one",
-    )
-
-
-def attach_daily_oversold_setup(frame: pd.DataFrame, period: int = 14) -> pd.DataFrame:
-    """Attach the previous completed day's three-point RSI setup to intraday bars.
-
-    A setup is valid for session D only when session D-1's daily RSI is below
-    the oversold threshold and greater than both D-2 and D-3.  The associated
-    close is also exposed so the next session's opening-gap rule is point-in-
-    time safe.  The current session's close is never used for its own setup.
-    """
-    required = {"symbol", "event_ts", "open", "close"}
-    missing = sorted(required - set(frame.columns))
-    if missing:
-        raise ValueError(f"missing columns: {', '.join(missing)}")
-    working = frame.copy()
-    working["event_ts"] = pd.to_datetime(working["event_ts"], utc=True)
-    working["session_date"] = working["event_ts"].dt.tz_convert("Asia/Kolkata").dt.date
-    daily = (
-        working.sort_values(["symbol", "event_ts"], kind="mergesort")
-        .groupby(["symbol", "session_date"], sort=False, as_index=False)
-        .agg(daily_open=("open", "first"), daily_close=("close", "last"))
-        .sort_values(["symbol", "session_date"], kind="mergesort")
-    )
-    daily["daily_rsi_14"] = daily.groupby("symbol", sort=False)["daily_close"].transform(
-        lambda values: _wilder_rsi(pd.to_numeric(values), period)
-    )
-    grouped = daily.groupby("symbol", sort=False)
-    daily["setup_rsi"] = grouped["daily_rsi_14"].shift(1)
-    daily["setup_rsi_prev1"] = grouped["daily_rsi_14"].shift(2)
-    daily["setup_rsi_prev2"] = grouped["daily_rsi_14"].shift(3)
-    daily["setup_close"] = grouped["daily_close"].shift(1)
-    return working.merge(
-        daily[["symbol", "session_date", "setup_rsi", "setup_rsi_prev1", "setup_rsi_prev2", "setup_close"]],
-        on=["symbol", "session_date"], how="left", validate="many_to_one",
     )
 
 

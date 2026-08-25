@@ -17,10 +17,6 @@ assert config["status"] == "RESEARCH_DRAFT_PENDING_OWNER_AND_QUANT_APPROVAL"
 assert "live_broker_orders" in config["blocked_capabilities"]
 execution = config["execution"]
 assert execution["exit_policy_id"] == "COMMON-TARGET-ONLY-0.3-1.0-V1"
-assert execution["execution_scenario_id"] == "EXEC-I030-ELSE-S100-NO-TIMEOUT-V2"
-assert execution["evaluation_policy_id"].endswith("V2")
-assert execution["stop_on_first_target"] is False
-assert execution["stop_on_first_adverse_level"] is False
 assert execution["intraday_target_pct_from_buy_price"] == 0.3
 assert execution["swing_target_pct_from_original_buy_price"] == 1.0
 assert execution["stop_loss_exit"] is None

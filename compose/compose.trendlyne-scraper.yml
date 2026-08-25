@@ -1,0 +1,57 @@
+services:
+  trendlyne-scraper:
+    build:
+      context: ./services/trendlyne_scraper
+      dockerfile: Dockerfile
+    image: trading-stack-trendlyne-scraper:1.0.0
+    env_file:
+      - .env
+      - .env.trendlyne-scraper
+    environment:
+      POSTGRES_ENABLED: "true"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      WEBHOOK_TOKEN_FILE: /run/secrets/trendlyne_webhook_token
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - trendlyne_scraper_data:/app/data
+      - trendlyne_scraper_logs:/app/logs
+      - trendlyne_scraper_checkpoints:/app/checkpoints
+      - trendlyne_scraper_state:/app/state
+    secrets:
+      - trendlyne_webhook_token
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 45s
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512m
+
+volumes:
+  trendlyne_scraper_data:
+  trendlyne_scraper_logs:
+  trendlyne_scraper_checkpoints:
+  trendlyne_scraper_state:
+
+secrets:
+  trendlyne_webhook_token:
+    file: ./secrets/trendlyne_webhook_token

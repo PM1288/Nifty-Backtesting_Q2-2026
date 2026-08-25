@@ -12,7 +12,80 @@ class Scheduler:
     def __init__(self, db: Any, settings: Any) -> None:
         self.db, self.settings, self.schema = db, settings, settings.PAPER_TRADING_SCHEMA
 
+    def finalize_target_windows(self, session_date: date) -> dict[str, int]:
+        """Close analytical target windows without waiting for a future market bar.
+
+        Intraday targets expire after their entry session. Swing targets use the
+        product's long observation boundary and expire only after 30 observed
+        trading sessions. HIT/CLOSED_AT_TARGET rows are immutable.
+        """
+        with self.db.connection() as conn:
+            conn.execute(
+                "SELECT pg_advisory_xact_lock(hashtext(%s))",
+                (f"paper-target-finalize:{session_date}",),
+            )
+            inferred = conn.execute(
+                f"""WITH implied AS (
+                       SELECT lower_track.target_track_id,
+                              min(higher_track.first_hit_at) AS implied_hit_at
+                         FROM {self.schema}.target_tracks lower_track
+                         JOIN {self.schema}.target_definitions lower_def
+                           ON lower_def.target_definition_id=lower_track.target_definition_id
+                         JOIN {self.schema}.target_definitions higher_def
+                           ON higher_def.trade_group_id=lower_def.trade_group_id
+                          AND higher_def.lifecycle=lower_def.lifecycle
+                          AND higher_def.target_pct>lower_def.target_pct
+                         JOIN {self.schema}.target_tracks higher_track
+                           ON higher_track.target_definition_id=higher_def.target_definition_id
+                          AND higher_track.trade_leg_id=lower_track.trade_leg_id
+                        WHERE higher_track.status IN ('HIT','CLOSED_AT_TARGET')
+                          AND higher_track.first_hit_at IS NOT NULL
+                        GROUP BY lower_track.target_track_id
+                     )
+                     UPDATE {self.schema}.target_tracks t
+                        SET status='CLOSED_AT_TARGET',
+                            first_hit_at=LEAST(COALESCE(t.first_hit_at,implied.implied_hit_at),implied.implied_hit_at),
+                            result_kind='INFERRED_MONOTONIC',version=t.version+1
+                       FROM implied
+                      WHERE t.target_track_id=implied.target_track_id
+                        AND (t.status NOT IN ('HIT','CLOSED_AT_TARGET') OR t.first_hit_at>implied.implied_hit_at)
+                  RETURNING t.target_track_id"""
+            ).fetchall()
+            intraday = conn.execute(
+                f"""UPDATE {self.schema}.target_tracks t
+                       SET status='NOT_HIT_INTRADAY',version=t.version+1
+                      FROM {self.schema}.target_definitions d,
+                           {self.schema}.observation_trackers o
+                     WHERE t.target_definition_id=d.target_definition_id
+                       AND t.trade_leg_id=o.trade_leg_id
+                       AND t.status='ACTIVE'
+                       AND d.lifecycle='INTRADAY'
+                       AND o.entry_session IS NOT NULL
+                       AND o.entry_session<=%s
+                       AND o.bars_observed>0
+                 RETURNING t.target_track_id""",
+                (session_date,),
+            ).fetchall()
+            swing = conn.execute(
+                f"""UPDATE {self.schema}.target_tracks t
+                       SET status='TIMED_OUT',version=t.version+1
+                      FROM {self.schema}.target_definitions d,
+                           {self.schema}.observation_trackers o
+                     WHERE t.target_definition_id=d.target_definition_id
+                       AND t.trade_leg_id=o.trade_leg_id
+                       AND t.status='ACTIVE'
+                       AND d.lifecycle='SWING'
+                       AND o.sessions_observed>=30
+                 RETURNING t.target_track_id"""
+            ).fetchall()
+            return {
+                "targets_inferred_monotonic": len(inferred),
+                "intraday_missed": len(intraday),
+                "swing_timed_out": len(swing),
+            }
+
     def daily(self, session_date: date, revision: int = 1) -> dict[str, Any]:
+        target_finalization = self.finalize_target_windows(session_date)
         with self.db.connection() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"paper-daily:{session_date}",))
             prior = conn.execute(
@@ -20,7 +93,7 @@ class Scheduler:
                 (self.settings.DEFAULT_ACCOUNT_ID, session_date, revision),
             ).fetchone()
             if prior:
-                return prior["metrics"]
+                return {**prior["metrics"], "target_finalization": target_finalization}
             metrics = conn.execute(
                 f"""SELECT
               (SELECT count(*) FROM {self.schema}.trade_intents WHERE account_id=%s AND (received_at AT TIME ZONE %s)::date=%s) requests_received,
@@ -41,6 +114,7 @@ class Scheduler:
             values = {k: str(v) if hasattr(v, "as_tuple") else v for k, v in metrics.items()}
             values["activity_status"] = "NO_ACTIVITY" if values["requests_received"] == 0 else "ACTIVE"
             values["environment"] = "PAPER"
+            values["target_finalization"] = target_finalization
             run_id = str(uuid.uuid4())
             conn.execute(
                 f"INSERT INTO {self.schema}.summary_runs(summary_run_id,account_id,summary_type,period_start,period_end,revision,status,completed_at) VALUES (%s,%s,'DAILY',%s,%s,%s,'COMPLETE',now())",

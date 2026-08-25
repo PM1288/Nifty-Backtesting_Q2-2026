@@ -5,10 +5,11 @@ import { DateTime } from 'luxon';
 import { loadConfig } from './config';
 import { Logger } from './logger';
 import { migrate } from './migrate';
-import { NseOptionChainClient } from './nseClient';
+import { NseOptionChainClient, pickExpiryRoles } from './nseClient';
 import { OptionChainStore } from './store';
 import { selectAtmPlusMinus } from './transform';
 import { createPool } from './db';
+import { marketSnapshotFingerprint, sessionSuppressionReason } from './sessionPolicy';
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -778,11 +779,23 @@ async function main(): Promise<void> {
     startedAt: string;
     lastPollAt: string | null;
     lastPollOkAt: string | null;
+    lastStoredAt: string | null;
+    lastSuppressedAt: string | null;
+    suppressionReason: string | null;
+    sessionState: 'OPEN' | 'SUPPRESSED' | 'UNKNOWN';
+    outOfSessionPollsSuppressed: number;
+    unchangedSnapshotsSuppressed: number;
     lastError: { time: string; message: string } | null;
   } = {
     startedAt: new Date().toISOString(),
     lastPollAt: null,
     lastPollOkAt: null,
+    lastStoredAt: null,
+    lastSuppressedAt: null,
+    suppressionReason: null,
+    sessionState: 'UNKNOWN',
+    outOfSessionPollsSuppressed: 0,
+    unchangedSnapshotsSuppressed: 0,
     lastError: null,
   };
 
@@ -1100,32 +1113,95 @@ async function main(): Promise<void> {
       nextTick += jitter;
     }
 
-    state.lastPollAt = new Date().toISOString();
-    logger.info('Polling NSE option chain', { symbol: cfg.symbol });
-
     try {
-      const { json, fetchMs, status, expiryRaw } = await nse.fetchOptionChainV3(cfg.symbol, 'Indices');
-      const snapshot = selectAtmPlusMinus(json, {
-        symbol: cfg.symbol,
-        expiryRaw,
-        strikesAround: cfg.strikesAround,
-        keepRaw: cfg.keepRaw,
-        riskFreeRate: cfg.riskFreeRate,
-        dividendYield: cfg.dividendYield,
-      });
+      const tickAt = new Date();
+      const exchangeSession = await store.getExchangeSession(tickAt);
+      const suppressionReason = sessionSuppressionReason(exchangeSession, tickAt);
+      if (suppressionReason) {
+        const previousReason = state.suppressionReason;
+        state.sessionState = 'SUPPRESSED';
+        state.suppressionReason = suppressionReason;
+        state.lastSuppressedAt = tickAt.toISOString();
+        state.outOfSessionPollsSuppressed += 1;
+        state.lastError = null;
+        if (previousReason !== suppressionReason || state.outOfSessionPollsSuppressed % 30 === 1) {
+          logger.info('NSE option-chain poll suppressed outside exchange session', {
+            symbol: cfg.symbol,
+            reason: suppressionReason,
+            tradeDate: exchangeSession?.tradeDate ?? null,
+            marketOpenAt: exchangeSession?.marketOpenAt?.toISOString() ?? null,
+            marketCloseAt: exchangeSession?.marketCloseAt?.toISOString() ?? null,
+            suppressedCount: state.outOfSessionPollsSuppressed,
+          });
+        }
+        await maybeCleanup();
+        const delay = Math.max(0, nextTick - Date.now());
+        await sleep(delay);
+        continue;
+      }
 
-      await store.insertSnapshot(snapshot, fetchMs);
+      if (state.sessionState !== 'OPEN') {
+        logger.info('NSE option-chain polling enabled for exchange session', {
+          symbol: cfg.symbol,
+          tradeDate: exchangeSession?.tradeDate ?? null,
+          marketOpenAt: exchangeSession?.marketOpenAt?.toISOString() ?? null,
+          marketCloseAt: exchangeSession?.marketCloseAt?.toISOString() ?? null,
+        });
+      }
+      state.sessionState = 'OPEN';
+      state.suppressionReason = null;
+      state.lastPollAt = tickAt.toISOString();
+      logger.info('Polling NSE option chain', { symbol: cfg.symbol });
+
+      const expiryRoles = pickExpiryRoles(await nse.fetchExpiryDates(cfg.symbol));
+      const expiryTargets = [...new Map([
+        ['W0', expiryRoles.W0],
+        ['M0', expiryRoles.M0],
+      ].map(([role, expiry]) => [expiry, { role, expiry }])).values()];
+
+      for (const target of expiryTargets) {
+        const { json, fetchMs, status, expiryRaw } = await nse.fetchOptionChainV3(cfg.symbol, 'Indices', target.expiry);
+        const snapshot = selectAtmPlusMinus(json, {
+          symbol: cfg.symbol,
+          expiryRaw,
+          strikesAround: cfg.strikesAround,
+          keepRaw: cfg.keepRaw,
+          riskFreeRate: cfg.riskFreeRate,
+          dividendYield: cfg.dividendYield,
+        });
+
+        const previous = await store.getLatestSnapshotWithLegs(cfg.symbol, snapshot.expiryDate);
+        const unchanged = previous != null
+          && marketSnapshotFingerprint({ ...previous.snapshot, legs: previous.legs }) === marketSnapshotFingerprint(snapshot);
+        if (unchanged) {
+          state.lastSuppressedAt = new Date().toISOString();
+          state.unchangedSnapshotsSuppressed += 1;
+          if (state.unchangedSnapshotsSuppressed % 30 === 1) {
+            logger.info('Unchanged option-chain persistence suppressed', {
+              symbol: cfg.symbol,
+              expiryRole: target.role,
+              expiry: snapshot.expiryDate,
+              suppressedCount: state.unchangedSnapshotsSuppressed,
+            });
+          }
+        } else {
+          await store.insertSnapshot(snapshot, fetchMs);
+          state.lastStoredAt = new Date().toISOString();
+          logger.info('Snapshot stored', {
+            status,
+            fetchMs,
+            expiryRole: target.role,
+            alsoNearestWeekly: expiryRoles.alsoNearestWeekly,
+            expiry: snapshot.expiryDate,
+            underlying: snapshot.underlyingValue,
+            atm: snapshot.atmStrike,
+            legs: snapshot.legs.length,
+          });
+        }
+      }
+
       state.lastPollOkAt = new Date().toISOString();
       state.lastError = null;
-
-      logger.info('Snapshot stored', {
-        status,
-        fetchMs,
-        expiry: snapshot.expiryDate,
-        underlying: snapshot.underlyingValue,
-        atm: snapshot.atmStrike,
-        legs: snapshot.legs.length,
-      });
 
       await maybeCleanup();
     } catch (e) {

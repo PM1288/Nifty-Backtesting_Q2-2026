@@ -830,6 +830,7 @@
             "title": "Intraday Targets Pct",
             "default": [
               "0.003",
+              "0.004",
               "0.005",
               "0.010"
             ]

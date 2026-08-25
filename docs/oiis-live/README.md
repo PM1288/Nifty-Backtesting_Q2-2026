@@ -21,6 +21,13 @@ are visibly disabled and offer sign-in instead of producing a hidden 401.
 Enabling a non-canonical manual row is an explicit operator override and is
 labelled as such in the paper intent.
 
+Every watchlist row belongs to exactly one `trade_date`. At the first service
+loop after IST midnight, OIIS deactivates and entry-disables every earlier
+date's row. Rows are retained for run history and audit; they are never carried
+into the new day's selected list. The dashboard defaults to the current IST
+date even before that day's first selection run, and mutation endpoints reject
+attempts to create or reactivate a prior-date row.
+
 The read-only dashboard endpoint `GET /v1/oiis-live/dashboard` is intentionally
 available without a session so the page and service diagnostics do not fail
 with `AUTH_REQUIRED`.  Watchlist mutations and operational commands remain
@@ -31,26 +38,31 @@ The dashboard response includes `funnel`, `nearMisses`, `rejectionReasons` and
 the latest completed `historical` run in addition to the governed watchlist.
 Near misses are research context only and never receive trade permission.
 
-The verified 2026-08-10 V2 run evaluated all 208 current F&O/NIFTY 50 universe
-members. 190 had evaluable current features and 18 were retained as explicit
-`DATA_INSUFFICIENT` rows. OFactor tiers were 73 LOW, 34 MEDIUM, 7 HIGH, 76 below
-minimum and 18 not estimable. Ten near-pass recommendations were ranked, two
-rows were qualified for intraday revalidation, zero cleared every blocking
-gate and zero were entry-enabled. The UI therefore correctly shows no
-authorised trade while still exposing every stock and every calculation.
+Policy 3.6 evaluates every active stock F&O underlying. Individual futures and
+option contracts are collected separately and are not counted as additional
+stocks. Dashboard aggregates and the all-stock ledger are bound to the same
+explicit latest completed `ALL_FNO` run ID, preventing a later-completed legacy
+intersection run from mixing 50-stock and all-F&O results.
 
 ## Governed flow
 
-1. At 08:30, 09:30 and 15:00 Asia/Kolkata on each governed trading session,
-   select the latest completed daily session and current intraday snapshot.
-   A restart catches up any due slot once.
+1. Every 30 minutes from 09:30 through 15:00 Asia/Kolkata on each governed
+   trading session, select the latest completed daily session and the intraday
+   snapshot available at that immutable cutoff. The governed slots are 09:30,
+   10:00, 10:30, 11:00, 11:30, 12:00, 12:30, 13:00, 13:30, 14:00, 14:30 and
+   15:00. A restart does not repeat an already completed slot merely because the
+   policy version changed.
 2. Admit a HIGH, MEDIUM, or LOW daily candidate only when DQ is at least 85,
    permission is `FULL`, and no daily hard gate is unresolved.
 3. Add the candidate to `oiis_live.watchlist_item`.  Daily selection is
    deterministic and safely replaces only that day's generated rows; manual
-   rows are retained.
-4. The SmartAPI collector merges all active OIIS watchlist symbols into its
-   dynamically prioritised subscription set, before derivative overflow.
+   rows are retained only for that same date. Prior-date generated and manual
+   rows are deactivated at the next IST date boundary while their audit records
+   remain available.
+4. The SmartAPI collector merges active OIIS watchlist symbols for the exact
+   current Asia/Kolkata trade date into its dynamically prioritised
+   subscription set, before derivative overflow. Prior and future dates never
+   consume live subscription capacity.
 5. OFactor passes at 54 and carries LOW (`54–<64`), MEDIUM (`64–<74`) or HIGH
    (`>=74`). Directional edge similarly carries LOW (`6–<7`), MEDIUM (`7–<8`)
    or HIGH (`>=8`). These labels do not bypass the remaining gates. A row is
@@ -62,17 +74,21 @@ authorised trade while still exposing every stock and every calculation.
    than one OIIS entry for one stock on one day across restarts and workers.
 8. Submit a `PAPER` market intent for the next eligible bar open.  A later day
    may open another independent position in the same symbol.
-9. Actual execution exits are `I030`: +0.30% during D0; otherwise `S100`: +1%
+9. Independently, the top run candidate with complete
+   `OFactor + XFactor + Data Quality > 185` evidence is submitted immediately
+   to paper trading when the run is current. A stale catch-up run never trades.
+10. Actual execution exits are `I030`: +0.30% during D0; otherwise `S100`: +1%
    from D+1 onward.  There is no stop, forced square-off, D+5 timeout, or
    run-end liquidation.
-10. Independent diagnostic tracks continue for intraday +0.30/+0.50/+0.70%,
+11. Independent diagnostic tracks continue for intraday +0.30/+0.50/+0.70%,
     D+5 +1/+2/+5%, adverse excursion, and 5/30-session observations.  A lower
     target never truncates a higher target.
 
 ## PostgreSQL map
 
-The base migration is `db/sql/032_oiis_live.sql`; V2 evidence and run-slot
-changes are additive in `db/sql/033_oiis_live_tiered_evidence.sql`. Important
+The base migration is `db/sql/032_oiis_live.sql`; later evidence, direction and
+run-history changes are additive through `db/sql/035_oiis_live_run_history_auto_paper.sql`.
+See [RUN_HISTORY_AUTO_PAPER.md](RUN_HISTORY_AUTO_PAPER.md). Important
 objects:
 
 - `oiis_live.selection_run`: immutable selection-run identity and counts.
@@ -86,7 +102,8 @@ objects:
 - `oiis_live.error_outbox`: deduplicated retrying error notifications.
 - `oiis_live.historical_run` and `historical_trade`: report provenance.
 - `oiis_live.v_current_watchlist` and `v_service_diagnostics`: UI views.
-- `oiis_live.v_latest_daily_candidate`: one authoritative latest run per date.
+- `oiis_live.v_latest_daily_candidate`: compatibility view; the production UI
+  queries `daily_candidate` by the explicit latest completed `ALL_FNO` run ID.
 
 Paper execution, fills, lifecycle targets, costs, 35% management tax provision,
 observations and outbound n8n events remain in `paper_trading.*`.

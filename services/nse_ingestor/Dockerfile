@@ -34,6 +34,7 @@ RUN apt-get update \
 
 COPY --from=builder /opt/venv /opt/venv
 COPY app /app/app
+COPY tests /app/tests
 COPY sql /app/sql
 COPY config /app/config
 COPY ops /app/ops

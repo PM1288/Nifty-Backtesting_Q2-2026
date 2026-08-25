@@ -97,11 +97,15 @@ archive:
   enable: true
   enable_market_ticks: true
   tick_sample_milliseconds: 1000
-  tick_buffer_size: 32768
-  tick_batch_size: 1000
+  tick_buffer_size: 65536
+  tick_batch_size: 2000
   enable_instrument_snapshots: true
   enable_option_chain_snapshots: true
   option_chain_interval_seconds: 300
+  option_chain_snapshot_timeout_seconds: 45
+  option_chain_snapshot_max_attempts: 3
+  option_chain_retry_base_seconds: 5
+  option_chain_stale_after_seconds: 900
   enable_websocket_health: true
   websocket_health_interval_seconds: 60
   dynamic_greeks_shortlist_size: 20
@@ -165,7 +169,8 @@ limits:
   quote_per_minute_cap: 500
   quote_per_hour_cap: 5000
   quote_max_symbols_per_request: 50
-  candles_rps: 3
+  candles_rps: 2
+  candles_per_minute_cap: 120
   candles_per_hour_cap: 5000
   greeks_rps: 1
   aggregates_rps: 1

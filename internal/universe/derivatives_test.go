@@ -132,6 +132,59 @@ func TestBuildStockDerivativePlanUsesLastExpiryInMonthForMonthlyFlag(t *testing.
 	}
 }
 
+func TestBuildStockDerivativePlanMatchesHyphenatedUnderlying(t *testing.T) {
+	expiry := time.Date(2026, time.August, 25, 0, 0, 0, 0, time.UTC)
+	insts := []instruments.Instrument{
+		{Exchange: "NFO", InstrumentType: "FUTSTK", TradingSymbol: "BAJAJ-AUTO25AUG26FUT", Name: "BAJAJ-AUTO", SymbolToken: "501", Expiry: &expiry},
+	}
+	equities := []store.Subscription{
+		{Exchange: "NSE", SymbolToken: "16669", Mode: "LTP", Kind: "EQUITY", TradingSymbol: "BAJAJ-AUTO-EQ", Underlying: "BAJAJ-AUTO"},
+	}
+
+	result, err := BuildStockDerivativePlan(
+		groupByUnderlying(insts), equities, config.WSConfig{ModeFutures: "FULL"},
+		nil, nil, time.Date(2026, time.August, 23, 0, 0, 0, 0, time.UTC), true, false,
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.PlanRows) != 1 || result.PlanRows[0].Underlying != "BAJAJ-AUTO" {
+		t.Fatalf("expected hyphenated underlying plan row, got %#v", result.PlanRows)
+	}
+}
+
+func TestBuildStockDerivativePlanHandlesAdjustedInterleavedStrikeLadders(t *testing.T) {
+	expiry := time.Date(2026, time.August, 25, 0, 0, 0, 0, time.UTC)
+	var insts []instruments.Instrument
+	// This mirrors a corporate-action chain such as HINDPETRO where adjusted
+	// .75 strikes coexist with the standard ten-point ladder.
+	strikes := []float64{340, 340.75, 350, 350.75, 360, 360.75, 370, 370.75, 380, 380.75, 390}
+	for idx, strike := range strikes {
+		insts = append(insts,
+			instruments.Instrument{Exchange: "NFO", InstrumentType: "OPTSTK", TradingSymbol: fmt.Sprintf("HINDPETRO%dCE", idx), Name: "HINDPETRO", SymbolToken: fmt.Sprintf("8%d0", idx), Strike: floatPtr(strike), Expiry: &expiry},
+			instruments.Instrument{Exchange: "NFO", InstrumentType: "OPTSTK", TradingSymbol: fmt.Sprintf("HINDPETRO%dPE", idx), Name: "HINDPETRO", SymbolToken: fmt.Sprintf("8%d1", idx), Strike: floatPtr(strike), Expiry: &expiry},
+		)
+	}
+	equities := []store.Subscription{{Exchange: "NSE", SymbolToken: "1406", Mode: "LTP", Kind: "EQUITY", TradingSymbol: "HINDPETRO-EQ", Underlying: "HINDPETRO"}}
+	priceProvider := func(string) (float64, bool) { return 369.8, true }
+
+	result, err := BuildStockDerivativePlan(
+		groupByUnderlying(insts), equities, config.WSConfig{ModeOptions: "SNAPQUOTE"},
+		priceProvider, nil, time.Date(2026, time.August, 24, 0, 0, 0, 0, time.UTC), false, true,
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.PlanRows) != 14 {
+		t.Fatalf("expected 14 option rows around the actual ATM ladder, got %d", len(result.PlanRows))
+	}
+	for _, row := range result.PlanRows {
+		if row.Strike == nil || row.Right == "" {
+			t.Fatalf("adjusted-chain row missing strike/right: %#v", row)
+		}
+	}
+}
+
 func floatPtr(v float64) *float64 {
 	return &v
 }

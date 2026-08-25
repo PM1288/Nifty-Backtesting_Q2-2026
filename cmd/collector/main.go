@@ -199,7 +199,10 @@ func main() {
 			ratelimit.NewRollingLimiter(cfg.Limits.QuotePerMinuteCap, time.Minute),
 			ratelimit.NewRollingLimiter(cfg.Limits.QuotePerHourCap, time.Hour),
 		},
-		endpointCandles: {ratelimit.NewRollingLimiter(cfg.Limits.CandlesPerHourCap, time.Hour)},
+		endpointCandles: {
+			ratelimit.NewRollingLimiter(cfg.Limits.CandlesPerMinuteCap, time.Minute),
+			ratelimit.NewRollingLimiter(cfg.Limits.CandlesPerHourCap, time.Hour),
+		},
 		endpointAggregates: {
 			ratelimit.NewRollingLimiter(cfg.Limits.AggregatesPerMinuteCap, time.Minute),
 			ratelimit.NewRollingLimiter(cfg.Limits.AggregatesPerHourCap, time.Hour),
@@ -229,6 +232,7 @@ func main() {
 	}
 	subIndex.Update(activeSubs)
 	subsCount.Store(int64(len(activeSubs)))
+	wsArchiveTracker.SetSubscriptionCounts(smartapi.SubscriptionCounts(activeSubs, cfg.WS.MaxConnections, cfg.WS.MaxTokensPerConnection))
 	optionStates.Update(buildOptionStates(activeSubs, priceCache, time.Now().In(loc)))
 
 	wsManager := smartapi.NewWSManager(cfg.SmartAPI, cfg.WS, tokenProvider, logger)
@@ -492,7 +496,7 @@ func main() {
 
 	refreshTriggers := make(chan string, 1)
 	eg.Go(func() error {
-		return subscriptionRefreshLoop(egCtx, cfg, st, insts, baseSubs, priceCache, subIndex, optionStates, &subsCount, logger, refreshTriggers, loc)
+		return subscriptionRefreshLoop(egCtx, cfg, st, insts, baseSubs, priceCache, subIndex, optionStates, wsArchiveTracker, &subsCount, logger, refreshTriggers, loc)
 	})
 	eg.Go(func() error {
 		return atmShiftMonitor(egCtx, cfg, optionStates, priceCache, refreshTriggers, logger)

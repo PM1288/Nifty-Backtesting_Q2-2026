@@ -2,6 +2,13 @@
 
 Purpose: scrape NSE NIFTY option chain using Playwright request context (cookie warmup + JSON API), store **current expiry** and **ATM ± N strikes** (CE+PE) into Postgres.
 
+Persistence is exchange-session aware. The watcher reads the effective Asia/Kolkata session from
+`public.trading_calendar`, fails closed on holidays or missing/special-session times, and does not
+contact NSE or insert rows before open or after close. During a valid session it fingerprints
+exchange-native quote, volume, OI, OI-change and depth fields; an unchanged chain is not inserted.
+Capture time, raw response and locally recalculated Greeks do not create a new history row by
+themselves.
+
 ## Docker (recommended)
 
 This repo wires the service as `option-chain-watcher` in `docker-compose.yml`.
@@ -26,6 +33,10 @@ In this stack it is proxied via nginx at:
 - UI: `http://localhost:19090/option-chain/`
 - Latest JSON: `http://localhost:19090/option-chain/api/latest` (optional compare: `?compareMinutes=10`)
 - ATM series JSON: `http://localhost:19090/option-chain/api/series?minutes=120`
+
+`/option-chain/healthz` exposes the current `sessionState`, `suppressionReason`,
+`outOfSessionPollsSuppressed` and `unchangedSnapshotsSuppressed` counters. Outside the configured
+session, `lastPollAt` remaining unchanged is expected and healthy.
 
 ## Verify
 

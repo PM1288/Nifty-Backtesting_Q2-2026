@@ -6,6 +6,7 @@ from oiis_live.policy import (
     classify_daily,
     extension_level,
     intraday_entry_eligible,
+    price_momentum_entry_evaluation,
     minimum_level,
     wilder_rsi,
     williams_r,
@@ -79,3 +80,43 @@ def test_indicator_calculations() -> None:
     lows = [value - 1 for value in closes]
     result = williams_r(highs, lows, closes)
     assert result is not None and result < -80
+
+
+def momentum_bars(hourly_closes: tuple[float, float], fifteen_closes: tuple[float, float]) -> list[dict]:
+    ist = ZoneInfo("Asia/Kolkata")
+    start = datetime(2026,8,17,9,15,tzinfo=ist)
+    bars = []
+    for index in range(120):
+        hour = index // 60
+        value = hourly_closes[hour]
+        if index >= 105:
+            value = fifteen_closes[1]
+        elif index >= 90:
+            value = fifteen_closes[0]
+        bars.append({"ts":start+timedelta(minutes=index),"close":value})
+    return bars
+
+
+def test_price_momentum_requires_all_three_strict_confirmations() -> None:
+    bars = momentum_bars((101,103),(102,103))
+    result = price_momentum_entry_evaluation(bars,100)
+    assert result["eligible"] is True
+    assert all(result["checks"].values())
+    assert result["current_hour_close"] == 103
+    assert result["previous_hour_close"] == 101
+
+
+def test_price_momentum_rejects_equal_close_and_incomplete_hour() -> None:
+    equal = price_momentum_entry_evaluation(momentum_bars((101,101),(101,101)),100)
+    assert equal["eligible"] is False
+    assert equal["checks"]["current_hour_above_previous_hour"] is False
+    incomplete = price_momentum_entry_evaluation(momentum_bars((101,103),(102,103))[:-1],100)
+    assert incomplete["eligible"] is False
+    assert incomplete["state"] == "WAIT_CANDLES"
+
+
+def test_price_momentum_requires_previous_official_close() -> None:
+    result = price_momentum_entry_evaluation(momentum_bars((101,103),(102,103)),None)
+    assert result == {"eligible":False,"state":"WAIT_DATA","reason":"PREVIOUS_CLOSE_OR_BARS_MISSING"}
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo

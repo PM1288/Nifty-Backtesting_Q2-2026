@@ -119,11 +119,12 @@
 
   /* Typography */
   --font-sans-latin: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-sans-accessible: "Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", "Inter Variable", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --font-sans-devanagari: "Hind", "Noto Sans Devanagari", "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-sans: var(--font-sans-latin);
   --font-mono: "IBM Plex Mono", "Inter Variable", "Inter", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-ui: var(--font-sans-latin);
-  --font-numeric: var(--font-mono);
+  --font-numeric: var(--font-ui);
   --font-size-display: clamp(1.75rem, 2vw, 2rem);
   --font-size-page: 1.25rem;
   --font-size-section: 1rem;
@@ -145,8 +146,13 @@
   --font-ui: var(--font-sans-devanagari);
 }
 
+:root[data-font-mode="high-legibility"]:not([data-ui-language="hi"]):not([data-ui-language="mr"]) {
+  --font-ui: var(--font-sans-accessible);
+  --font-numeric: var(--font-sans-accessible);
+}
+
 :root[data-digit-system="latn"] {
-  --font-numeric: var(--font-mono);
+  --font-numeric: var(--font-ui);
 }
 
 :root[data-digit-system="deva"] {

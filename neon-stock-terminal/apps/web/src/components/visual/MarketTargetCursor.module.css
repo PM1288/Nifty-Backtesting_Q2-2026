@@ -54,11 +54,6 @@
 .cursor[data-pressed="true"] { filter: drop-shadow(0 0 8px color-mix(in srgb, currentColor 55%, transparent)); }
 .cursor[data-pressed="true"] .corner { width: 18px; height: 18px; }
 
-:global(html.n50-target-cursor-enabled),
-:global(html.n50-target-cursor-enabled *) {
-  cursor: none !important;
-}
-
 @media (pointer: coarse), (hover: none) {
   .cursor { display: none; }
 }

@@ -12,16 +12,10 @@ long-equity exit mandate used to compare those entries:
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from decimal import ROUND_CEILING, Decimal
 from typing import Iterable
-
-from nifty_stratlab.evaluation.full_path_ladder import (
-    FullPathPolicy, LadderBar, evaluate_full_path,
-)
-from nifty_stratlab.simulation.execution_scenarios import i030_else_s100_v1
 
 
 @dataclass(frozen=True)
@@ -90,7 +84,6 @@ def evaluate_long_target_only(
     quantity: int,
     bars: Iterable[PathBar],
     policy: CommonExitPolicy | None = None,
-    run_namespace: str = "standalone",
 ) -> dict:
     """Evaluate one accepted long entry under the shared exit mandate.
 
@@ -109,83 +102,78 @@ def evaluate_long_target_only(
     entry_session = path[0].session
     intraday_target = _target(entry_price, policy.intraday_target_pct, policy.tick_size)
     swing_target = _target(entry_price, policy.swing_target_pct, policy.tick_size)
-    entry_path_id = hashlib.sha256(
-        f"{run_namespace}|{symbol}|{signal_date}|{path[0].ts.isoformat()}|{entry_price}|{quantity}".encode()
-    ).hexdigest()
-    full_path = evaluate_full_path(
-        entry_path_id=entry_path_id, symbol=symbol, entry_price=entry_price,
-        quantity=quantity,
-        bars=[LadderBar(bar.ts, bar.session, bar.open, bar.high, bar.low, bar.close) for bar in path],
-        policy=FullPathPolicy(tick_size=policy.tick_size),
-    )
-    execution = i030_else_s100_v1(
-        full_path, entry_price=entry_price, quantity=quantity,
-        intraday_cost_bps=policy.intraday_round_trip_cost_bps,
-        swing_cost_bps=policy.swing_round_trip_cost_bps,
-        positive_profit_tax_rate=policy.positive_profit_tax_rate,
-    )
-    evaluation_sessions = full_path["sessions_evaluated"]
+    exit_bar: PathBar | None = None
+    exit_price: Decimal | None = None
+    exit_reason: str | None = None
+
+    for bar in path:
+        target = intraday_target if bar.session == entry_session else swing_target
+        if bar.open >= target:
+            exit_bar, exit_price = bar, bar.open
+            exit_reason = "TARGET_INTRADAY_0_3_GAP" if bar.session == entry_session else "TARGET_SWING_1_0_GAP"
+            break
+        if bar.high >= target:
+            exit_bar, exit_price = bar, target
+            exit_reason = "TARGET_INTRADAY_0_3" if bar.session == entry_session else "TARGET_SWING_1_0"
+            break
+
+    observed_path = path[: path.index(exit_bar) + 1] if exit_bar else path
+    intraday_bars = [bar for bar in observed_path if bar.session == entry_session]
+    swing_bars = [bar for bar in observed_path if bar.session != entry_session]
+    target_events: list[dict] = []
+    for pct in policy.intraday_ladder_pct:
+        level = _target(entry_price, pct, policy.tick_size)
+        touched = next((bar for bar in intraday_bars if bar.open >= level or bar.high >= level), None)
+        target_events.append(_event(f"I{int(pct * 100):03d}", pct, level, touched))
+    for pct in policy.swing_ladder_pct:
+        level = _target(entry_price, pct, policy.tick_size)
+        touched = next((bar for bar in swing_bars if bar.open >= level or bar.high >= level), None)
+        target_events.append(_event(f"S{int(pct * 100):03d}", pct, level, touched))
+
+    adverse_events: list[dict] = []
+    for pct in policy.adverse_ladder_pct:
+        level = entry_price * (Decimal("1") + pct / Decimal("100"))
+        touched = next((bar for bar in observed_path if bar.low <= level), None)
+        adverse_events.append({
+            "threshold_id": f"A{abs(int(pct * 100)):03d}",
+            "threshold_pct": float(pct),
+            "threshold_price": float(level),
+            "touched": touched is not None,
+            "first_touch_ts": touched.ts.isoformat() if touched else None,
+            "first_touch_session": touched.session.isoformat() if touched else None,
+            "exit_triggered": False,
+        })
+
+    maximum = max(bar.high for bar in observed_path)
+    minimum = min(bar.low for bar in observed_path)
+    mfe_pct = (maximum / entry_price - Decimal("1")) * Decimal("100")
+    mae_pct = (minimum / entry_price - Decimal("1")) * Decimal("100")
+    sessions = len({bar.session for bar in observed_path})
     entry_notional = entry_price * quantity
-    if execution["status"] == "CLOSED":
+
+    if exit_bar and exit_price is not None:
+        cost_bps = policy.intraday_round_trip_cost_bps if exit_bar.session == entry_session else policy.swing_round_trip_cost_bps
+        costs = entry_notional * cost_bps / Decimal("10000")
+        gross = (exit_price - entry_price) * quantity
+        pre_tax = gross - costs
+        tax = max(pre_tax, Decimal("0")) * policy.positive_profit_tax_rate
+        after_tax = pre_tax - tax
         status = "CLOSED"
-        exit_ts = datetime.fromisoformat(execution["exit_ts"])
-        exit_price = Decimal(str(execution["exit_price"]))
-        exit_date = exit_ts.date()
-        gross = Decimal(str(execution["realised_gross_pnl"]))
-        costs = Decimal(str(execution["costs"]))
-        tax = Decimal(str(execution["tax_reserve"]))
-        after_tax = Decimal(str(execution["after_tax_pnl"]))
         mark_price = exit_price
-        unrealized_net = Decimal("0")
     else:
-        status = "OPEN_AS_OF_DATA_BOUNDARY"
-        exit_ts = None
-        exit_date = None
-        exit_price = None
-        mark_price = Decimal(str(full_path["extended_capital_lock"]["data_boundary_close"]))
+        # No synthetic sale is created.  This is a net-liquidation estimate for
+        # risk/equity reporting only and does not release capital.
+        mark_price = observed_path[-1].close
         costs = entry_notional * policy.swing_round_trip_cost_bps / Decimal("10000")
         gross = Decimal("0")
+        pre_tax = Decimal("0")
         tax = Decimal("0")
         after_tax = Decimal("0")
-        unrealized_net = (mark_price - entry_price) * quantity - costs
-    observation_end_ts = exit_ts or path[-1].ts
-    observed_sessions = list(dict.fromkeys(bar.session for bar in path if bar.ts <= observation_end_ts))
-    actual_holding_minutes = max((observation_end_ts - path[0].ts).total_seconds() / 60.0, 0.0)
-    actual_holding_calendar_days = max((observation_end_ts.date() - entry_session).days, 0)
-    session_closes: list[tuple[date, Decimal]] = []
-    for session in observed_sessions:
-        close = [bar.close for bar in path if bar.session == session and bar.ts <= observation_end_ts][-1]
-        session_closes.append((session, close))
-    underwater = [session for session, close in session_closes if close < entry_price]
-    first_underwater_index = next((index for index, (_, close) in enumerate(session_closes) if close < entry_price), None)
-    recovery_index = None if first_underwater_index is None else next(
-        (index for index, (_, close) in enumerate(session_closes[first_underwater_index + 1:], start=first_underwater_index + 1) if close >= entry_price),
-        None,
-    )
-    capital_day_fraction = max(actual_holding_minutes / 1440.0, 1.0 / 1440.0)
-    i030 = next(event for event in full_path["reward_events"] if event["level_id"] == "I030")
-    s100 = next(event for event in full_path["reward_events"] if event["level_id"] == "S100")
-    roe_d5_success = bool(i030["hit_flag"] or s100["hit_flag"])
-    eventual_s100 = bool(full_path["extended_capital_lock"].get("s100_eventually_hit"))
-    if roe_d5_success:
-        roe_d5_outcome = "ROE_D5_SUCCESS"
-    elif eventual_s100:
-        roe_d5_outcome = "ROE_D5_FAILURE_LATE_RECOVERY"
-    else:
-        roe_d5_outcome = "ROE_D5_FAILURE_STILL_OPEN"
-    d5_checkpoint = full_path["checkpoints"][-1]
-    d5_mark = Decimal(str(d5_checkpoint["close_price"]))
-    d5_gross = (d5_mark - entry_price) * quantity
-    d5_costs = entry_notional * policy.swing_round_trip_cost_bps / Decimal("10000")
-    d5_pre_tax = d5_gross - d5_costs
-    d5_tax = max(d5_pre_tax, Decimal("0")) * policy.positive_profit_tax_rate
-    d5_liquidation = d5_pre_tax - d5_tax
+        status = "OPEN_AS_OF_END"
+
+    unrealized_net = (mark_price - entry_price) * quantity - costs if status == "OPEN_AS_OF_END" else Decimal("0")
     return {
         "policy_id": policy.policy_id,
-        "evaluation_policy_id": full_path["evaluation_policy_id"],
-        "execution_scenario_id": execution["execution_scenario_id"],
-        "entry_path_id": entry_path_id,
-        "path_evidence_hash": full_path["path_evidence_hash"],
         "symbol": symbol,
         "signal_date": signal_date,
         "entry_ts": path[0].ts,
@@ -195,44 +183,24 @@ def evaluate_long_target_only(
         "intraday_target_price": round(float(intraday_target), 6),
         "swing_target_price": round(float(swing_target), 6),
         "status": status,
-        "exit_ts": exit_ts,
-        "exit_date": exit_date,
+        "exit_ts": exit_bar.ts if exit_bar else None,
+        "exit_date": exit_bar.session if exit_bar else None,
         "exit_price": round(float(exit_price), 6) if exit_price is not None else None,
-        "exit_reason": execution.get("exit_reason", "OPEN_TARGET_NOT_REACHED_AT_DATA_BOUNDARY"),
+        "exit_reason": exit_reason or "OPEN_TARGET_NOT_REACHED",
         "gross_pnl": round(float(gross), 4),
         "costs": round(float(costs), 4),
         "tax_reserve": round(float(tax), 4),
         "after_tax_net_pnl": round(float(after_tax), 4),
         "unrealized_net_liquidation_pnl": round(float(unrealized_net), 4),
         "mark_price": round(float(mark_price), 6),
-        "evaluation_sessions": evaluation_sessions,
-        # Compatibility only for existing persistence; new analysis must use
-        # evaluation_sessions or the actual-holding fields below.
-        "holding_sessions": evaluation_sessions,
-        "actual_holding_minutes": round(actual_holding_minutes, 4),
-        "actual_holding_trading_sessions": len(observed_sessions),
-        "actual_holding_calendar_days": actual_holding_calendar_days,
-        "capital_days": round(float(entry_notional) * capital_day_fraction, 4),
-        "time_underwater_sessions": len(underwater),
-        "recovery_sessions": None if recovery_index is None or first_underwater_index is None else recovery_index - first_underwater_index,
-        "roe_d5_outcome": roe_d5_outcome,
-        "roe_d5_evaluation_ts": d5_checkpoint["checkpoint_ts"],
-        "roe_d5_success": roe_d5_success,
-        "roe_d5_mark_to_market_pnl": round(float(d5_gross), 4),
-        "roe_d5_liquidation_diagnostic_pnl": round(float(d5_liquidation), 4),
-        "mfe_pct": round(float(full_path["mfe_d5_pct"]), 4),
-        "mae_pct": round(float(full_path["mae_d5_pct"]), 4),
+        "holding_sessions": sessions,
+        "mfe_pct": round(float(mfe_pct), 4),
+        "mae_pct": round(float(mae_pct), 4),
         "stop_price": None,
         "stop_exit_enabled": False,
         "timeout_exit_enabled": False,
         "capital_released": status == "CLOSED",
-        "target_events": full_path["reward_events"],
-        "adverse_events": full_path["adverse_events"],
-        "path_checkpoints": full_path["checkpoints"],
-        "coverage_status": full_path["coverage_status"],
-        "invariant_checks": full_path["invariant_checks"],
-        "best_intraday_target_id": full_path["best_intraday_target_id"],
-        "best_d5_target_id": full_path["best_d5_target_id"],
-        "deepest_adverse_level_id": full_path["deepest_adverse_level_id"],
+        "target_events": target_events,
+        "adverse_events": adverse_events,
         "policy": asdict(policy),
     }

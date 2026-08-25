@@ -83,7 +83,7 @@ docker compose -p trading-stack-novius2 \
   run --rm fno-volatility live --trade-date 2026-08-10 --slot LIVE_MANUAL
 ```
 
-Dashboard: `/n50/options/volatility-signals` after authentication.
+Primary explainable workspace: `/n50/options/intelligence` after authentication. It separates the immutable decision snapshot from current chain monitoring and exposes all hard-gate reasons, score anatomy, chain evidence and provenance. The original compact dashboard remains available at `/n50/options/volatility-signals`.
 
 Database inspection:
 

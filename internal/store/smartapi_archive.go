@@ -128,6 +128,28 @@ func (s *Store) InsertMarketTicks(ctx context.Context, rows []MarketTick) error 
 	if len(rows) == 0 {
 		return nil
 	}
+	columns := []string{
+		"exchange_ts", "received_ts", "connection_id", "sequence_no", "subscription_mode", "exchange", "symbol_token", "session_phase",
+		"ltp", "last_trade_qty", "avg_price", "day_volume", "total_buy_qty", "total_sell_qty", "open", "high", "low", "close", "last_trade_ts",
+		"oi", "oi_change_pct", "upper_circuit", "lower_circuit", "week52_high", "week52_low", "raw",
+	}
+	values := make([][]any, 0, len(rows))
+	for _, row := range rows {
+		values = append(values, []any{
+			row.ExchangeTs, row.ReceivedTs, row.ConnectionID, row.SequenceNo, row.SubscriptionMode, row.Exchange, row.SymbolToken, row.SessionPhase,
+			row.LTP, row.LastTradeQty, row.AvgPrice, row.DayVolume, row.TotalBuyQty, row.TotalSellQty, row.Open, row.High, row.Low, row.Close,
+			row.LastTradeTs, row.OI, row.OIChangePct, row.UpperCircuit, row.LowerCircuit, row.Week52High, row.Week52Low, row.Raw,
+		})
+	}
+	start := time.Now()
+	if _, err := s.Pool.CopyFrom(ctx, pgx.Identifier{s.Schema, "market_ticks"}, columns, pgx.CopyFromRows(values)); err == nil {
+		s.logQuery("copy_market_ticks", start, len(rows), nil)
+		return nil
+	} else {
+		// A reconnect can replay an already archived event. Fall back to the
+		// idempotent insert path so a duplicate never loses the rest of the batch.
+		s.logQuery("copy_market_ticks_fallback", start, len(rows), err)
+	}
 	q := fmt.Sprintf(`
     INSERT INTO %s.market_ticks
       (exchange_ts,received_ts,connection_id,sequence_no,subscription_mode,exchange,symbol_token,session_phase,
@@ -179,37 +201,44 @@ WITH latest_plan AS (
 ), options AS (
   SELECT p.* FROM %[1]s.derivative_token_plan p JOIN latest_plan l USING(plan_date)
   WHERE p.plan_name='NIFTY250_STOCK_DERIVATIVES' AND p.contract_kind='OPTSTK'
+), futures AS (
+  SELECT DISTINCT ON (upper(fp.underlying))
+         upper(fp.underlying) underlying_key, fs.last_price
+  FROM %[1]s.derivative_token_plan fp
+  JOIN latest_plan l USING(plan_date)
+  JOIN %[1]s.instrument_state fs
+    ON fs.exchange=fp.exchange AND fs.symbol_token=fp.symbol_token
+  WHERE fp.plan_name='NIFTY250_STOCK_DERIVATIVES' AND fp.contract_kind='FUT'
+  ORDER BY upper(fp.underlying),fp.expiry NULLS LAST
+), latest_depth AS (
+  SELECT DISTINCT ON (d.exchange,d.symbol_token)
+         d.exchange,d.symbol_token,d.depth_imbalance
+  FROM %[1]s.depth_5_metrics d
+  JOIN options o ON o.exchange=d.exchange AND o.symbol_token=d.symbol_token
+  WHERE d.ts BETWEEN $1-interval '10 minutes' AND $1
+  ORDER BY d.exchange,d.symbol_token,d.ts DESC
+), latest_greeks AS (
+  SELECT DISTINCT ON (upper(og.tradingsymbol))
+         upper(og.tradingsymbol) symbol_key,
+         og.iv,og.delta,og.gamma,og.theta,og.vega
+  FROM %[1]s.option_greeks og
+  JOIN options o ON upper(o.tradingsymbol)=upper(og.tradingsymbol)
+  WHERE og.ts BETWEEN $1-interval '30 minutes' AND $1
+  ORDER BY upper(og.tradingsymbol),og.ts DESC
 ), sources AS (
-  SELECT o.*, q.ts quote_ts,q.bid,q.ask,q.volume,q.oi,q.total_buy_qty,q.total_sell_qty,
+  SELECT o.*, s.last_seen_ts quote_ts,s.last_bid bid,s.last_ask ask,
+         s.last_volume volume,s.last_oi oi,s.total_buy_qty,s.total_sell_qty,
          s.last_oi_change_pct,
          spot.last_price spot_price, fut.last_price futures_price,
          dm.depth_imbalance,
          g.iv broker_iv,g.delta broker_delta,g.gamma broker_gamma,g.theta broker_theta,g.vega broker_vega
   FROM options o
-  LEFT JOIN LATERAL (
-    SELECT * FROM %[1]s.quote_snapshots q
-    WHERE q.exchange=o.exchange AND q.symbol_token=o.symbol_token AND q.ts <= $1
-    ORDER BY q.ts DESC LIMIT 1
-  ) q ON true
   LEFT JOIN %[1]s.instrument_state s ON s.exchange=o.exchange AND s.symbol_token=o.symbol_token
   LEFT JOIN %[1]s.universe_underlyings u ON upper(u.underlying)=upper(o.underlying)
   LEFT JOIN %[1]s.instrument_state spot ON spot.exchange=u.equity_exchange AND spot.symbol_token=u.equity_token
-  LEFT JOIN LATERAL (
-    SELECT fs.last_price FROM %[1]s.derivative_token_plan fp
-    JOIN %[1]s.instrument_state fs ON fs.exchange=fp.exchange AND fs.symbol_token=fp.symbol_token
-    WHERE fp.plan_name=o.plan_name AND fp.plan_date=o.plan_date AND upper(fp.underlying)=upper(o.underlying)
-      AND fp.contract_kind='FUT' ORDER BY fp.expiry NULLS LAST LIMIT 1
-  ) fut ON true
-  LEFT JOIN LATERAL (
-    SELECT d.depth_imbalance FROM %[1]s.depth_5_metrics d
-    WHERE d.exchange=o.exchange AND d.symbol_token=o.symbol_token AND d.ts <= $1
-    ORDER BY d.ts DESC LIMIT 1
-  ) dm ON true
-  LEFT JOIN LATERAL (
-    SELECT og.iv,og.delta,og.gamma,og.theta,og.vega FROM %[1]s.option_greeks og
-    WHERE upper(og.tradingsymbol)=upper(o.tradingsymbol) AND og.ts <= $1
-    ORDER BY og.ts DESC LIMIT 1
-  ) g ON true
+  LEFT JOIN futures fut ON fut.underlying_key=upper(o.underlying)
+  LEFT JOIN latest_depth dm ON dm.exchange=o.exchange AND dm.symbol_token=o.symbol_token
+  LEFT JOIN latest_greeks g ON g.symbol_key=upper(o.tradingsymbol)
 )
 INSERT INTO %[1]s.smartapi_option_chain_snapshots
   (ts,underlying,expiry,exchange,symbol_token,tradingsymbol,strike,"right",lotsize,
@@ -241,6 +270,15 @@ ON CONFLICT (ts,exchange,symbol_token) DO NOTHING
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+func (s *Store) LatestOptionChainSnapshotTime(ctx context.Context) (*time.Time, error) {
+	q := fmt.Sprintf(`SELECT max(ts) FROM %s.smartapi_option_chain_snapshots`, quoteIdent(s.Schema))
+	var latest *time.Time
+	if err := s.Pool.QueryRow(ctx, q).Scan(&latest); err != nil {
+		return nil, err
+	}
+	return latest, nil
 }
 
 func (s *Store) ListOptionChainGreekInputs(ctx context.Context, ts time.Time) ([]OptionChainGreekInput, error) {

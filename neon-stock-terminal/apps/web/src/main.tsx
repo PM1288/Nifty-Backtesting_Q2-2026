@@ -6,6 +6,7 @@ import App from "./App";
 import { AuthGateProvider } from "./auth/AuthGateProvider";
 import { LocaleProvider } from "./i18n/LocaleProvider";
 import { analytics } from "./analytics";
+import { applyFontMode, readFontMode } from "./lib/fontMode";
 import "./styles/global.css";
 
 const queryClient = new QueryClient({
@@ -22,6 +23,7 @@ function resolveRouterBasename(): string {
 }
 
 if (typeof window !== "undefined") {
+  applyFontMode(readFontMode());
   analytics.init();
   window.addEventListener("contextmenu", (event) => {
     event.preventDefault();

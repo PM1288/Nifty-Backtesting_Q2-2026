@@ -154,7 +154,10 @@ func BuildStockDerivativePlan(byUnderlying map[string][]instruments.Instrument, 
 		}
 		seen[underlying] = struct{}{}
 
-		chain := byUnderlying[underlying]
+		// Instrument-master grouping normalises separators (for example
+		// BAJAJ-AUTO -> BAJAJAUTO). Apply the same normalisation to the cash
+		// underlying before lookup so hyphenated F&O names are not omitted.
+		chain := byUnderlying[NormalizeIndexUnderlying(underlying)]
 		if len(chain) == 0 {
 			continue
 		}
@@ -246,36 +249,70 @@ func buildStockOptionSelections(underlying string, insts []instruments.Instrumen
 	if len(expiries) == 0 {
 		return nil
 	}
-	expiry := expiries[0]
-	strikeSet := map[float64]struct{}{}
-	optionsByRight := map[string]map[float64]instruments.Instrument{}
-	for _, inst := range insts {
-		if inst.Expiry == nil || !inst.Expiry.Equal(expiry) || inst.Strike == nil {
-			continue
+	// Use the first expiry that has an internally complete CE/PE ladder. The
+	// instrument master can temporarily publish an incomplete front expiry
+	// around expiry/corporate-action transitions; that must not suppress the
+	// underlying's entire options feed.
+	var expiry time.Time
+	var strikeSet map[float64]struct{}
+	var optionsByRight map[string]map[float64]instruments.Instrument
+	for _, candidateExpiry := range expiries {
+		candidateStrikes := map[float64]struct{}{}
+		candidateByRight := map[string]map[float64]instruments.Instrument{}
+		for _, inst := range insts {
+			if inst.Expiry == nil || !inst.Expiry.Equal(candidateExpiry) || inst.Strike == nil {
+				continue
+			}
+			right := optionRight(inst.TradingSymbol)
+			if right == "" {
+				continue
+			}
+			if candidateByRight[right] == nil {
+				candidateByRight[right] = map[float64]instruments.Instrument{}
+			}
+			candidateByRight[right][*inst.Strike] = inst
+			candidateStrikes[*inst.Strike] = struct{}{}
 		}
-		right := optionRight(inst.TradingSymbol)
-		if right == "" {
-			continue
+		for strike := range candidateStrikes {
+			_, hasCE := candidateByRight["CE"][strike]
+			_, hasPE := candidateByRight["PE"][strike]
+			if hasCE && hasPE {
+				expiry = candidateExpiry
+				strikeSet = candidateStrikes
+				optionsByRight = candidateByRight
+				break
+			}
 		}
-		if optionsByRight[right] == nil {
-			optionsByRight[right] = map[float64]instruments.Instrument{}
+		if !expiry.IsZero() {
+			break
 		}
-		optionsByRight[right][*inst.Strike] = inst
-		strikeSet[*inst.Strike] = struct{}{}
 	}
-	if len(strikeSet) == 0 {
+	if expiry.IsZero() {
 		return nil
 	}
 
+	// Select from strikes that have both a call and a put. Stock chains can
+	// temporarily contain two interleaved ladders after a corporate action
+	// (for example 360 and 360.75). Inferring one global step and rounding the
+	// spot to it can therefore produce a strike that does not exist, dropping
+	// the whole underlying from collection. Walking the actual common strike
+	// ladder keeps the ATM neighbourhood valid for both regular and adjusted
+	// chains.
 	strikes := make([]float64, 0, len(strikeSet))
 	for strike := range strikeSet {
+		if _, hasCE := optionsByRight["CE"][strike]; !hasCE {
+			continue
+		}
+		if _, hasPE := optionsByRight["PE"][strike]; !hasPE {
+			continue
+		}
 		strikes = append(strikes, strike)
 	}
 	sort.Float64s(strikes)
-	step := InferStrikeStep(strikes)
-	if step <= 0 {
+	if len(strikes) == 0 {
 		return nil
 	}
+	step := InferStrikeStep(strikes)
 	ltp, ok := priceProvider(underlying)
 	if !ok || ltp <= 0 {
 		if logger != nil {
@@ -283,13 +320,19 @@ func buildStockOptionSelections(underlying string, insts []instruments.Instrumen
 		}
 		return nil
 	}
-	atm := RoundToStep(ltp, step)
+	atmIndex := nearestStrikeIndex(strikes, ltp)
 	var out []stockDerivativeSelection
-	for offset := -strikesEachSide; offset <= strikesEachSide; offset++ {
-		target := RoundToStep(atm+float64(offset)*step, step)
-		if _, ok := strikeSet[target]; !ok {
-			continue
-		}
+	start := atmIndex - strikesEachSide
+	if start < 0 {
+		start = 0
+	}
+	end := atmIndex + strikesEachSide
+	if end >= len(strikes) {
+		end = len(strikes) - 1
+	}
+	for strikeIndex := start; strikeIndex <= end; strikeIndex++ {
+		target := strikes[strikeIndex]
+		offset := strikeIndex - atmIndex
 		for _, right := range []string{"CE", "PE"} {
 			inst, ok := optionsByRight[right][target]
 			if !ok {
@@ -340,6 +383,20 @@ func buildStockOptionSelections(underlying string, insts []instruments.Instrumen
 		}
 	}
 	return out
+}
+
+func nearestStrikeIndex(strikes []float64, price float64) int {
+	bestIndex := 0
+	bestDistance := math.Inf(1)
+	for i, strike := range strikes {
+		distance := math.Abs(strike - price)
+		// Match normal half-up ATM behaviour when two strikes are equidistant.
+		if distance < bestDistance || (distance == bestDistance && strike > strikes[bestIndex]) {
+			bestIndex = i
+			bestDistance = distance
+		}
+	}
+	return bestIndex
 }
 
 func chooseInstrumentForExpiry(insts []instruments.Instrument, expiry time.Time) *instruments.Instrument {

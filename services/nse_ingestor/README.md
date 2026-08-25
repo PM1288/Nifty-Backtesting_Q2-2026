@@ -6,7 +6,9 @@ This package is designed for a compose stack where PostgreSQL already exists and
 
 ## What it does
 
-- Backfills the last **7 days** of NSE daily files and skips what is already loaded.
+- Runs the canonical daily job at **07:55 Asia/Kolkata** on exchange trading days.
+- Resolves the previous official trading session from the exchange calendar rather than weekdays.
+- Retains the existing manual seven-day backfill command and skips files already loaded.
 - Supports **idempotent re-runs** using `ON CONFLICT` upserts and file registry checks.
 - Loads core daily reports into normalized PostgreSQL tables under schema `nse`.
 - Keeps **run logs**, file logs, row counts, and file checksums.
@@ -74,7 +76,10 @@ This compose file assumes PostgreSQL already exists on the same compose network 
 docker compose up --build nse_ingestor
 ```
 
-For scheduled operation, run the container from your orchestrator once per day after NSE publishes the previous trading day's files.
+The deployed scheduler runs at 07:55 IST. It creates one idempotent job row for the day, attempts
+every enabled manifest report for the previous official NSE session, records unavailable reports,
+and enqueues one consolidated `nse.daily.files.missing.v1` event when any expected file is absent.
+The delivery worker retries n8n independently; ingestion never waits on WhatsApp delivery.
 
 ## This stack integration
 
@@ -89,8 +94,10 @@ The wrapper behavior is:
 
 - runs migrations on startup
 - if the container starts on a weekday at or after `STARTUP_CATCHUP_AFTER` and no successful `sync` or `load-bundle` run exists yet for today in `Asia/Kolkata`, it runs `sync`
-- keeps a weekday-only loop and checks again at `SCHEDULE_TIME`
-- prevents duplicate same-day runs by checking `nse.ingest_runs`
+- uses `market_status.exchange_session_calendar`, including holidays and special sessions
+- runs at `SCHEDULE_TIME=07:55`
+- prevents duplicate same-day jobs with `nse.daily_job_run(job_date)` and a PostgreSQL advisory lock
+- uses `nse.notification_outbox` for bounded, retryable n8n delivery
 
 Useful commands in this stack:
 

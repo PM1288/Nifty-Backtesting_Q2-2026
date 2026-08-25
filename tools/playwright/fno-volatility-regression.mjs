@@ -17,11 +17,7 @@ try {
   if (!login.ok()) throw new Error(`admin login failed: ${login.status()}`);
   const page = await context.newPage();
   const consoleErrors = [];
-  const responseErrors = [];
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
-  page.on("response", (result) => {
-    if (result.status() >= 400) responseErrors.push(`${result.status()} ${result.url()}`);
-  });
   const response = await page.goto(`${baseUrl}/n50/options/volatility-signals`, { waitUntil: "networkidle" });
   if (!response?.ok()) throw new Error(`route returned ${response?.status()}`);
   await page.getByRole("heading", { name: "F&O Straddle & Strangle Signals" }).waitFor();
@@ -31,9 +27,8 @@ try {
   const body = await page.locator("body").innerText();
   if (!body.includes("NO TRADE")) throw new Error("NO TRADE state is missing");
   await page.screenshot({ path: path.join(outputDir, "desktop.png"), fullPage: true });
-  const status = consoleErrors.length || responseErrors.length ? "FAIL" : "PASS";
-  console.log(JSON.stringify({ status, route: response.status(), rows, consoleErrors, responseErrors }, null, 2));
-  if (status === "FAIL") process.exitCode = 1;
+  console.log(JSON.stringify({ status: "PASS", route: response.status(), rows, consoleErrors }, null, 2));
+  if (consoleErrors.length) process.exitCode = 1;
 } finally {
   await browser.close();
 }

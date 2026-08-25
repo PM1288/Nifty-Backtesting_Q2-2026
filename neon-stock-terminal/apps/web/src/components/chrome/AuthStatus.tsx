@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, LogOut, UserRound } from "lucide-react";
+import { Accessibility, Check, ChevronDown, LogOut, UserRound } from "lucide-react";
 import { useAuthGate } from "../../auth/AuthGateProvider";
 import { useI18n } from "../../i18n/LocaleProvider";
 import { trackAnalyticsEvent } from "../../lib/analytics";
+import { useFontMode } from "../../lib/fontMode";
 import styles from "./AuthStatus.module.css";
 
 function trimLabel(value: string, max = 22) {
@@ -37,6 +38,7 @@ export function AuthStatus() {
         : tr("Guest")
     : tr("Loading");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [fontMode, setFontMode] = useFontMode();
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,6 +78,16 @@ export function AuthStatus() {
       {user ? (menuOpen ? (
         <div className={styles.menu} role="menu">
           <div><strong>{primaryLabel}</strong><span>{status}</span></div>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={fontMode === "high-legibility"}
+            onClick={() => setFontMode(fontMode === "high-legibility" ? "standard" : "high-legibility")}
+          >
+            <Accessibility size={15} aria-hidden="true" />
+            <span className={styles.menuLabel}>High-legibility font</span>
+            {fontMode === "high-legibility" ? <Check size={15} aria-hidden="true" /> : null}
+          </button>
           <button type="button" role="menuitem" onClick={onLogoutClick}><LogOut size={15} aria-hidden="true" />{tr("Sign out")}</button>
         </div>
       ) : null) : (

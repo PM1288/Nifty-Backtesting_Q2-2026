@@ -1,5 +1,36 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-08-11 six-workspace UI and ui-2 integration
+
+The deployed dashboard and versioned source now use six visible workspaces:
+Today, Markets, Stocks, Strategy Lab, Trading, and Data & Operations. Legacy
+routes remain deep-linkable. The ticker is limited to market-relevant
+workspaces, administration has a separate shell, and misleading global
+freshness/winner/date/heatmap states were corrected.
+
+`ui-2` was integrated into OIIS as separate Opportunity Leaderboard, Execution
+Queue, Diagnostics, and All F&O Evidence views. The production universe remains
+all active F&O per the latest operational requirement; NIFTY 50 membership and
+the intersection count remain visible. No symbol-specific override was added.
+
+Deployment used the verified project name:
+
+```bash
+cd /home/novius2/trading-stack
+docker compose -p trading-stack-novius2 build n50-dashboard
+docker compose -p trading-stack-novius2 up -d --no-deps n50-dashboard
+```
+
+Verification: production API/web build passed; stable six-workspace/OIIS
+Playwright regression passed 21/21; the broader responsive workflow regression
+passed 26/26; Nginx validation and `/n50/health` passed. Evidence and mapping are
+in `docs/ui-ux/SIX_WORKSPACE_INFORMATION_ARCHITECTURE_2026-08-11.md`. One
+accidental dashboard container created under the default Compose project was
+removed without touching volumes; the intended `trading-stack-novius2`
+services and PostgreSQL data were not removed. The build still reports 13 npm
+dependency findings (8 moderate, 3 high, 2 critical); handle these as a
+separately tested dependency change.
+
 **Updated:** 2026-08-02 UTC
 **Repository:** `/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026`
 **Branch:** `DEV_PM_CODE`
@@ -2165,7 +2196,7 @@ npm --prefix neon-stock-terminal/apps/api run build
 npm --prefix neon-stock-terminal/apps/api test
 git diff --check
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:19090/n50 \
-  PLAYWRIGHT_ADMIN_PASSWORD='<local-admin-password>' \
+  '<set-in-shell>' \
   PLAYWRIGHT_OUTPUT_DIR=output/playwright/uxs3-final \
   node tools/playwright/uxs3-regression.mjs
 ```
@@ -2286,3 +2317,668 @@ Operations and limitations: `docs/fno-volatility/README.md`. Current run report:
 - Verification: `go test ./... -count=1` passed; Docker image built; disposable PostgreSQL migration reached 025 with nine partitions; production migration reached 025; collector healthy as non-root `appuser`; API audit observed 152 quote and 5 aggregate calls over ten minutes with zero throttles.
 - Data preservation check before/after: `bars_1m=24,119,679`, `instruments=450,511`, `option_greeks=18,604`; pre-existing raw option-chain table retained 4,897 rows. Daily instrument snapshot captured 152,044 master rows.
 - Operational contract: `docs/SMARTAPI_RATE_SAFE_DATA_ARCHIVE.md`.
+
+## OIIS all-F&O universe evidence — 2026-08-11
+
+OIIS policy version 3.4 now uses `ALL_FNO` rather than the prior NIFTY50/F&O intersection. The immutable manual point-in-time run `2db45c08-bc36-45c6-ba56-16fc4b7792c7` evaluated all 208 active stock F&O underlyings: 162 had FULL evidence, 46 were explicitly data-insufficient, 15 were recommended for research review, four qualified for intraday revalidation, and zero received final automatic-entry permission. Individual futures and option contracts remain separately collected and are not counted as additional stocks.
+
+Complete 45,272-line per-stock evidence report:
+
+`docs/reports/OIIS_LIVE_COMPLETE_ANALYSIS_ALL_FNO_2026-08-11.md`
+
+The report includes the run ledger, formulas, thresholds, source tables, aggregate failure counts, active watchlist, all-stock decision table, and every persisted feature, LONG/SHORT OFactor contribution, XFactor contribution, data-quality input, setup, gate and final reason for all 208 stocks. Export validation confirmed exactly 208 per-stock sections, the expected run ID and `ALL_FNO` scope, with no detected DSN, bearer-token or Firebase-key pattern. No live broker order was placed.
+
+## OIIS 30-minute trading-session schedule — 2026-08-11
+
+Policy 3.5 schedules immutable all-F&O snapshots every 30 minutes from 09:30 through 15:00 IST on governed NSE trading sessions: `OPEN_0930`, `INTRADAY_1000`, `INTRADAY_1030`, `INTRADAY_1100`, `INTRADAY_1130`, `INTRADAY_1200`, `INTRADAY_1230`, `INTRADAY_1300`, `INTRADAY_1330`, `INTRADAY_1400`, `INTRADAY_1430`, and `AFTERNOON_1500`. Restarts catch up due slots idempotently; weekends and calendar holidays remain excluded by `paper_trading.trading_sessions`.
+
+The dashboard and candidate APIs now resolve one explicit latest completed `ALL_FNO` run, prefer the newest policy version, and query all aggregates/details using that same run ID. The UI displays the actual policy version, run slot, IST cutoff, evaluated F&O count, and 30-minute engine cadence; the details heading and universe label no longer claim a NIFTY50 intersection.
+
+Verification: 23 OIIS tests passed; API TypeScript and web TypeScript/Vite production builds passed in Docker; OIIS and N50 dashboard containers are healthy; through-Nginx dashboard and candidate endpoints returned HTTP 200, policy 3.5, `ALL_FNO`, identical run IDs, 208 evaluated/candidate rows, 15 recommendations, and 12 schedule slots. The first persisted production run was `ca3fe494-88d3-451f-a641-52c72fd0c9c3` (`OPEN_0930`, 208 evaluated). PostgreSQL and all volumes were left untouched; no live broker order was placed.
+
+## OIIS evidence UI and sidebar behaviour — 2026-08-11
+
+- Restored the dynamic sector heatmap on Home and renamed the primary research workspace to `OIIS Lab`.
+- The desktop sidebar expands on deliberate hover and collapses immediately after a route selection; the mobile overlay behaviour is unchanged.
+- OIIS opportunity and all-F&O evidence rows sequence by descending `OFactor + XFactor + Data Quality`. LONG is green, SHORT is red, and strict O/X row bands are green above 70, yellow above 50, orange above 40 and gray otherwise.
+- Every symbol links to Stock 360. The page now exposes the latest OIIS rules and actual values, liquidity/VWAP/volume/ATR/range/pivots, a one-year candlestick/Bollinger/pivot/volume/RSI chart, and stored SmartAPI option bid/ask, depth, OI, IV and Greeks. Missing data remains explicit.
+- Added authenticated `GET /v1/oiis-live/candidates/:symbol/context`; it reads the latest immutable candidate and `public.smartapi_option_chain_snapshots` without inventing broker data.
+- PostgreSQL connection exhaustion was corrected without changing data location: verified volume `trading-stack-novius2_pgdata` remains mounted, `max_connections` is 80, PostgreSQL memory is 2 GiB and the dashboard Prisma pools are four connections each. After recreation of only PostgreSQL, dashboard/dispatcher and option-chain watcher, PostgreSQL reported 35 active connections and the affected services recovered.
+- API/web production builds passed. The focused authenticated browser regression passed 30/30 with no console errors; evidence is `output/playwright/oiis-ranking-stock-detail-2026-08-11-stable/results.json` with screenshots beside it. The broader desktop/mobile regression passed 26/26 at `output/playwright/oiis-sidebar-broad-2026-08-11/results.json`. No live order was placed and no Docker volume was removed.
+
+## Home live-index tick direction — 2026-08-11
+
+The rotating NIFTY 50, BANK NIFTY and INDIA VIX prices now compare each newly received quote with that index's immediately previous quote. Rising digits are green, falling digits are red and a same-price update is dark text. Tracking uses each quote's own timestamp, so an update for one index does not reset another index's state. The production API/web image built successfully (2,452 Vite modules) and `n50-dashboard` was recreated without dependencies or volumes. A mocked authenticated WebSocket regression passed 12/12 assertions across all three indices and all three direction/colour states.
+
+## Sidebar click-collapse repair — 2026-08-11
+
+The desktop sidebar now blurs a selected link, closes immediately for internal and external destinations, suppresses hover expansion during the width transition and rearms hover only after a genuine pointer exit. This removes both stuck-open `focus-within` behaviour and stuck-collapsed icon-click behaviour. The production build passed with 2,452 Vite modules. An authenticated browser regression passed 8/8 for center clicks, icon clicks, pointer movement inside the collapsed rail, pointer exit and subsequent hover re-entry. The dashboard was recreated without dependencies or volumes and remained healthy.
+
+## OIIS run history and automatic paper entry — 2026-08-11
+
+- Added additive migration `035_oiis_live_run_history_auto_paper.sql`; no table was deleted or renamed. Before applying it, a schema-only OIIS backup and exact table counts were stored outside Git at `/home/novius2/backups/oiis-live-20260811-1438/` with mode 0600.
+- Policy 3.6 retains the 09:30–15:00 half-hour schedule. Completed time slots are recognised across policy versions so deployment does not recalculate eleven already-completed slots and delay the current run.
+- Every new run links to its preceding run. `oiis_live.candidate_run_change` durably stores current/previous OFactor, XFactor, data quality, their deltas, total score/delta, direction, rank movement, threshold crossing and paper selection.
+- Automatic eligibility requires all three values and strict `OFactor + XFactor + Data Quality > 185`. Only the highest scoring eligible candidate is considered per run. Current bar, direction and 10-minute freshness guards apply; stale catch-up runs are persisted but cannot trade.
+- `entry_claim` remains unique by policy/date/symbol. Failed transport claims can now retry the same idempotency key. Paper API correlation IDs were corrected to deterministic UUIDs.
+- New public read endpoint: `GET /v1/oiis-live/run-history`. New UI: `/strategy/oiis-live/history`, linked as **Run History** within OIIS Lab. It shows data cutoff IST, actual execution IST, completion, top candidate, paper action and symbol-level deltas.
+- Production verification: migration backfilled 5,748 candidate quality scores without row loss; a stale 09:30 v3.6 catch-up recorded 208 changes, 85 above-threshold candidates and zero submissions. The existing RSI/Williams PFC paper claim retried successfully after the correlation fix, opened paper group `c8308fa3-dbad-4602-bb9c-308ddb2bc56c`, and five related outbox events were delivered. No live broker order was placed.
+- API and web TypeScript checks passed, production Vite/Docker builds passed, the run-history and dashboard APIs returned HTTP 200 through container Nginx, and the OIIS/Paper/Dashboard services remained healthy. Full behaviour is documented in `docs/oiis-live/RUN_HISTORY_AUTO_PAPER.md`.
+
+The first current scheduled auto-paper proof completed at the 15:00 IST cutoff. It evaluated 208 stocks, found 166 complete sums above 185, selected LTM LONG at 268.0268 and submitted exactly one paper group, `aa904f70-0d9d-42b3-8b7c-3f7f36919c89`. The group filled 41 shares at ₹4,839.60 and became OPEN. Its accepted, pending-entry, leg-opened and group-opened events were all delivered through the webhook outbox. The 15:00 ledger contains 208 current-versus-14:30 comparisons and one selected row.
+
+This fill also exposed and resolved a pre-existing paper-monitor constraint defect: `data_quality_incidents` previously permitted only one historical `RECOVERED` row per instrument. Additive paper migration `003_data_quality_incident_history` replaces that with a partial unique index allowing only one `OPEN` stale incident while retaining unlimited recovery history. A schema/count backup is at `/home/novius2/backups/paper-trading-20260811-1510/`; the normal `paper-migrate` job reapplied all idempotent SQL successfully, the disposable-schema migration integration test passed 1/1, the monitor resumed, and no business row was deleted. Focused OIIS tests passed 25/25.
+
+## Paper Trading UI workspace — 2026-08-11
+
+Paper Trading is now a separate primary sidebar workspace rather than a child of the general derivatives area. Its first data surface is a typed open-position table joined from paper groups, legs, instrument snapshots and positions. Authenticated operators can add a single-leg NSE equity or active NFO option PAPER intent through the UI; the server resolves the instrument from `public.instruments`, enforces session and CSRF checks, keeps the service token in a read-only Docker secret, and forwards the canonical intent to `paper-api`. The browser never receives the internal token and no broker path exists. OIIS gate definitions were also moved behind tier/failure evidence at the end of its Overview.
+
+Verification: API/web TypeScript checks passed, API tests passed 60/60, the Docker production build passed, `n50-dashboard` is healthy, the Paper page returned HTTP 200, unauthenticated mutation returned 401, authenticated malformed mutation returned the expected 400 without creating a trade, and the authenticated portfolio query returned two open-position rows. No live or test trade was created during verification.
+
+## Twelve-hour login session — 2026-08-11
+
+Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second absolute timeout and 43,200-second secure cookie lifetime. Redis remains authoritative, CSRF protection and explicit logout are unchanged, and sessions cannot extend past 12 hours. API typecheck and all 60 API tests passed; the rebuilt dashboard is healthy and a real local-admin login emitted `Max-Age=43200`.
+
+## Paper stock lifecycle, valuation and concise webhooks — 2026-08-11
+
+- Paper positions are now marked from every eligible post-entry one-minute bar. `positions.last_mark`, `last_mark_at`, `unrealised_pnl`, valuation snapshots, MFE and MAE update durably in PostgreSQL.
+- Monitoring starts at the actual fill timestamp. Migration `004_position_valuation_and_standard_ladders` retained corrupt pre-entry horizon rows as `INVALIDATED_PRE_ENTRY`, reset only affected open observations and replayed eligible bars without deleting the immutable processed-bar ledger.
+- Equity analytical ladders are standardised to intraday `0.3% / 0.5% / 1%` and swing `1% / 3% / 5%`. Actual execution exits remain separate. Five- and 30-session outcomes now store closing return, hypothetical after-cost P&L and one-time 35% profit-tax provision.
+- `/paper-trading` now leads with open stock cards: buy/short time, entry, mark, quantity, live P&L/return, MFE/MAE, both target ladders and 5-/30-session progress. The manual PAPER-only form remains below the position book.
+- Default webhook delivery excludes internal pending/group-opened noise. Accepted and filled events remain distinct; lifecycle, target, horizon, summary, data-quality and critical events expose concise top-level `title` and `message` fields plus the complete structured CloudEvent payload.
+- Production proof: LTM was marked at ₹4,850 with ₹426.40 unrealised P&L and one-session observation state. PFC correctly closed via its configured paper execution target while its 5-/30-session observation continues; its pre-entry outcomes were retained but invalidated.
+- Verification: 20/20 paper tests passed against disposable PostgreSQL with 85% overall coverage; Ruff and mypy passed; API/web TypeScript and production builds passed; authenticated browser regression passed 11/11 with no overflow or console errors. Screenshot: `output/playwright/paper-trading/paper-trading-stock-lifecycle.png`. Pre-change backup and count manifests: `/home/novius2/backups/paper-trading-20260811-logic-fix/`; no table lost rows.
+# SmartAPI collector hardening and operations dashboard (2026-08-11)
+
+- Critically reviewed `/home/novius2/NIFTY50/smarapi`, the Go collector, PostgreSQL archive evidence and the deployed `trading-stack-novius2` runtime. Full evidence and limitations are in `docs/smartapi/SMARTAPI_COLLECTOR_CRITICAL_REVIEW_2026-08-11.md`.
+- Hardened candle throttling to 2/sec and 120/minute, made WebSocket TLS verification mandatory, blocked order/GTT endpoints unconditionally, stabilised five-minute option subscription replanning, corrected per-socket allocation health, corrected false exchange-sequence gap accounting, and added liveness/readiness/metrics endpoints.
+- Raw tick persistence now uses PostgreSQL COPY with an idempotent conflict fallback. Post-restart WebSocket health shows three real 1,000-token socket allocations, zero sequence anomalies and zero archive drops.
+- Added SmartAPI collector coverage, REST rate usage, freshness and socket health to the authenticated Admin Control Plane. Replaced partition-wide freshness scans; authenticated response improved from about 19.7 seconds to 312 ms.
+- Verification: `go test ./... -count=1` passed; TypeScript checks passed; dashboard API tests passed 60/60; production dashboard and collector images built and deployed; both services are healthy. No live order was placed.
+- Explicit limitation: all three SmartAPI sockets are full and 363-365 lowest-priority requested option-wing subscriptions are capacity-dropped. Deployment was after market close, so a full 09:15-15:40 live-session soak remains required.
+
+## Homepage all-F&O real-data uplift (2026-08-11)
+
+- Implemented `homepage-upflit/REAL_DATA_WIRING.md` as a real-data acceptance contract while retaining the established homepage sector canvas.
+- The overview now renders all 208 mapped F&O stock underlyings, exposes 1D/5D/relative-volume/RSI/Williams/OIIS/30-day lenses, keeps live ordering stable by default and marks the latest OIIS-selected stocks with a persistent purple border.
+- The API evaluates all 36,343 genuine active NSE F&O contracts from the contract master and separately reports current-session observation coverage. At verification: 3,898 observed today, 2,158 anomalies, 246 big asks, 158 big bids, 1,412 excess moves and 895 wide spreads.
+- Added an above-fold anomaly flash that guarantees promotion of an available big-ask and excess-move contract, plus a full 36-row radar diversified to no more than two promoted contracts per underlying. Missing quotes remain unavailable rather than becoming zero.
+- Re-enabled the existing Dow Jones, Brent crude and other supporting global/commodity metrics on Home.
+- API/web TypeScript checks passed, API tests passed 60/60, and the deployed authenticated Playwright regression passed 20/20 with no application request failure, console error or horizontal overflow. Dashboard is healthy with zero final-deployment restarts.
+- Evidence and formulas: `docs/ui-ux/HOMEPAGE_REAL_DATA_UPLIFT_2026-08-11.md`. Screenshot: `output/playwright/homepage-real-data/homepage-all-fno-1920x1080.png`.
+
+## Paper Trading Command Center uplift (2026-08-11)
+
+- Replaced the open-position-only screen with a decision-led paper signal-quality command center. It explicitly separates actual execution P&L from analytical target potential and keeps closed executions visible while their D+5/D+30 observation continues.
+- Added four clocks: D0 intraday `+0.3/+0.4/+0.5/+1%`, D+1…D+5 swing `+1/+3/+5%`, five-session MFE/MAE and thirty-session MFE/MAE. Developing evidence is not counted as a failed mature outcome.
+- Added an explainable quality projection, actual-versus-opportunity summary, reward/pain atlas, target/adverse conversion, complete trade matrix, keyboard search/filters/sorts and a Journey/Targets/Evidence/Audit drawer backed by bounded one-minute bars and immutable events.
+- Additive migration `005_evaluation_rules_and_intraday_040.sql` created the versioned evaluation rule set and added only two expected +0.4% definitions/tracks. All trade, fill, position, observation, event and outbox counts were preserved. External backup and count manifests are at `/home/novius2/backups/paper-trading-command-center-20260811T1330Z`.
+- Added a deterministic standalone prototype at `/home/novius2/NIFTY50/Paper-Trade-UI/NIFTY50_Paper_Trading_Command_Center_Uplift.html` and detailed implementation/report docs under `docs/paper-trading/`.
+- Verification: API tests 63/63; paper tests 22/22 with Ruff, mypy and 85% coverage; TypeScript and production builds passed; migration repeatability passed; deployed Playwright passed 30/30 on desktop, responsive layout, all drawer tabs and the standalone prototype. Screenshots/results are under `output/playwright/paper-trading-command-center`. No live order was placed.
+# Options Intelligence workspace (2026-08-11)
+
+- Reviewed the complete `/home/novius2/NIFTY50/Option-Chain-Prediction-UI` guide and rendered HTML reference before implementation.
+- Added the authenticated `/options/intelligence` route and a new Options sidebar item. The workspace uses live PostgreSQL evidence rather than mock rows.
+- Added `/v1/options-intelligence/summary` and `/v1/options-intelligence/candidates/:symbol`; sources are `fno_volatility.*` decision tables plus coherent snapshots from `public.smartapi_option_chain_snapshots`.
+- Decision-time chain quality is frozen at/before `decision_as_of`; current chain monitoring has a separate timestamp and cannot rewrite the stored decision.
+- UI exposes the full funnel, ranking, DQS/MRS/LCS/VES/CQS/FRS anatomy, hard reasons, current spot/future path, OI/volume chain, selected structure economics, detailed bid/ask/OI/IV/Greeks/depth rows and provenance.
+- Verified real archive at implementation time: 79,508 normalized chain rows, 186 stock-F&O underlyings, latest 15-name movement shortlist, five live structure tests and zero valid trades. `NO_TRADE` was preserved.
+- Added three score/gate regression tests. API suite 66/66 passed; API/web typechecks and production image build passed.
+- Deployed only `n50-dashboard`; container healthy. Playwright `tools/playwright/options-intelligence-regression.mjs` passed 13/13 at desktop and tablet sizes. Evidence is under `output/playwright/options-intelligence/`.
+- Full implementation/audit record: `docs/options-intelligence/OPTIONS_INTELLIGENCE_IMPLEMENTATION_2026-08-11.md`.
+
+## n8n paper-trading low-noise notifications (2026-08-11)
+
+- Audited every `/home/novius2/NIFTY50/n8n` document, the active workflow, recent executions, the PostgreSQL event/outbox history and paper event/monitor/webhook code.
+- Replaced the active recursive formatter with `Paper-Trade-Outgoing-Low-Noise-v3` while retaining the authenticated `/webhook/codex-paper-trade` endpoint.
+- Today's 83-event replay would send 9 decision-relevant messages and suppress 74 chat notifications, including 68 transient stale/recovered flips; all events remain stored in PostgreSQL.
+- Added concise stock/OIIS, actionable F&O, accepted, filled, analytical-target, partial/full-close, horizon and summary messages. Unknown/heartbeat/poll/mark, non-actionable F&O and duplicate single-leg lifecycle events are silent.
+- Added an explicit actionable/suppressed branch and `lastNode` response mode. Immediate duplicate and transient-stale tests return 200 without calling the gateway; actionable gateway failures can now be retried by the backend outbox.
+- Moved the outbound `X-API-Token` from inline node parameters into n8n Header Auth credential storage. The historically exposed gateway token and the API key supplied in chat still require operator rotation.
+- Verification: 15/15 local policy tests passed; production smoke executions for equity, F&O, analytical target, actual close, dedupe, stale suppression, credential-backed summary and an explicit non-trade delivery test succeeded; outbox had zero pending and zero dead.
+- Code and tests: `services/paper_trading/n8n/`; implementation record: `services/paper_trading/docs/n8n-low-noise-alert-plan.md`; protected rollback export: `/home/novius2/backups/n8n/2026-08-11-paper-low-noise-v3/workflow-before.json`.
+- A later exact production-shape audit found that n8n treats `application/cloudevents+json` as binary. Embedded strict mode removed the Code node's binary-helper context, producing controlled failed execution 143. The workflow builder/live patcher now omit strict mode only from embedded n8n source; standalone code remains strict. Execution 144 then returned HTTP 200 and WhatsApp gateway status `sent` (result 4871). The message explicitly said delivery test and no paper trade was created or changed. Historical red executions 114/115 were separate gateway 429 burst failures and remain immutable audit records.
+
+## FII/DII trend and source-freshness upgrade (2026-08-12)
+
+- Upgraded `/institutional/flow` into a visible `FII / DII & Participant Flow` view while preserving all existing participant-positioning evidence.
+- Added an official NSE-only cash-flow chart with daily FII/FPI and DII net activity in ₹ crore plus cumulative FII/FPI and DII trend lines. The chart reads `institutional_flow.normalized_nse_fii_dii`, retains nulls as missing, supports zoom, and is explicitly labelled as daily/post-close rather than live intraday flow.
+- Added source-level status for NSE cash FII/DII, normalized participant derivatives OI, NSDL daily FPI trends, NSDL fortnightly sector exposure, and the legacy detailed participant report. Each source shows cadence, data-through date, lag, row count, last refresh when recorded, and CURRENT/DELAYED/STALE/MISSING state.
+- Added recent-session cash coverage against the Nifty trading-date series and lists missing dates instead of silently filling them. At deployment the cash source was current through `2026-08-11` with 16/20 recent sessions; `2026-07-20` through `2026-07-23` were honestly identified as missing. The detailed participant charts remained stale through `2026-03-30`, so the page-level state remains degraded rather than falsely current.
+- Added a user-triggered `Refresh data` action that re-queries the canonical API/PostgreSQL sources. It does not invent reports or start an unscheduled external ingestion job.
+- Corrected all seven ECharts on this page from zero-height canvases to responsive 420px/340px desktop and 320px mobile surfaces, and aligned the page with the canonical light workstation tokens.
+- Validation: API route tests 2/2, API/web TypeScript checks passed, live API returned 46 cash trend points, dashboard container healthy, and targeted Playwright passed 2/2 at 1920x1080 and 390x844 with chart height assertions, no horizontal overflow, no failed application requests, and no console errors. Evidence: `output/playwright/fii-dii-flow/`.
+- Follow-up decimal audit covered all seven FII/DII charts. Every plotted numeric series is display-rounded to at most two decimal places, and every numeric value axis, tooltip, heatmap label, percentage, percentage-point and ₹-crore formatter now uses the same two-decimal maximum. Near-zero negative values normalize to zero, eliminating floating-point axis strings such as long `-25,526.000000000...` labels. Type checking, API tests and the deployed desktop/mobile Playwright suite remained green after the change.
+
+## Global UI decimal precision enforcement (2026-08-12)
+
+- Extended the two-decimal display rule from FII/DII to the entire authenticated application. The shared number/currency/percentage formatters now clamp requested fraction precision to two places while leaving underlying calculations and stored values unchanged.
+- The common ECharts surface now rounds rendered series data, value-axis labels, visual-map labels, default/custom tooltip values and custom tooltip text to at most two decimals. Negative zero is normalised to zero.
+- A live route audit found and fixed direct-render bypasses in the Market Story stock snapshot, Backtesting Run Monitor validation JSON, Simulator charge rates and fractional quantities, plus the explicit four-decimal MACD cell.
+- Added deterministic formatter/chart tests and `tools/playwright/ui-decimal-precision-regression.mjs`. The final deployed audit passed 42/42 legacy routes with no visible numeric value above two decimal places; canonical desktop/tablet/mobile validation passed 24/24; FII/DII desktop/mobile validation passed 2/2. Evidence is under `output/playwright/ui-decimal-precision-final/`, `output/playwright/ui-decimal-canonical-final/` and `output/playwright/ui-decimal-fii-dii/`.
+- Web tests pass 13/13, focused ESLint passes, TypeScript/build passes, and `trading-stack-novius2-n50-dashboard-1` is healthy. The repository-wide lint remains blocked by inherited unrelated errors and was not misreported as passing.
+
+## Paper SHORT accounting and one-F&O-lot sizing (2026-08-11)
+
+- Confirmed and regression-locked the paper domain invariant: a SHORT opens with `SELL`, closes with `BUY`, and P&L is `(entry sell price - buy-to-close price) × quantity`. A ₹100 → ₹90 SHORT profits; ₹100 → ₹110 loses.
+- Every new OIIS equity paper entry and authenticated manual equity paper entry now resolves the nearest active `FUTSTK` contract from `public.instruments` and uses exactly one current F&O lot in shares. Missing lot metadata fails closed instead of reverting to one share or a rupee ticket cap.
+- The paper matrix now has a Qty column, labels LONG as `BUY → SELL` and SHORT as `SELL → BUY`, keeps per-share P&L as the primary row value, and shows total position P&L only below it in brackets. The detail drawer carries the same semantics.
+- Historical fills were not rescaled or rewritten. Rows whose recorded quantity differs from the current F&O lot are explicitly labelled `Legacy size`, preserving their immutable order/fill/ledger history.
+- Verification: financial-domain tests 10/10, API paper projection tests 5/5, OIIS trade-contract tests 4/4, API/web typechecks and production build passed. The public authenticated Playwright regression passed with two PostgreSQL-backed trades including the PFC SHORT; screenshot: `tools/playwright/output/playwright/paper-trading-lot/paper-trading-quantity-and-short-pnl.png`. `trading-stack-novius2-n50-dashboard-1` and `trading-stack-novius2-oiis-live-1` are healthy. No live broker order was placed.
+
+## Responsive workspace navigation — 2026-08-11
+
+- Reviewed the complete `/home/novius2/NIFTY50/responsive-sidebar` implementation prompt and HTML references. The legacy left sidebar and hamburger drawer were retired from the rendered DOM and from the shared-shell CSS.
+- Desktop/tablet widths above 720px now use one sticky, seven-workspace horizontal dock: Today, Markets, Stocks, OIIS Lab, Paper Trading, Derivatives and Data & Operations. Narrow desktop/tablet widths scroll the dock horizontally without reducing touch targets.
+- Widths at or below 720px now use a fixed five-item bottom dock: Today, Markets, Stocks, Paper and More. More opens a non-persistent, focus-trapped bottom sheet with secondary workspaces, Commands, Presentation, Settings & feedback and admin-only controls.
+- The sheet closes on X, backdrop, Escape, destination choice, route change, a downward swipe over 72px, blocking surfaces and resize above 720px. Body scroll is locked only while it is open; ordinary close restores focus to More. Mobile content reserves safe-area-aware space for the dock.
+- Added canonical route metadata in `workspaceRoutes.ts`, kept workspace secondary tabs and all dashboard data/content intact, connected More to the existing command palette, and corrected an OIIS grid min-content issue that caused table overflow on phones.
+- Verification: web production build and targeted ESLint passed. The deployed authenticated Playwright suite passed 118/118 across 360x800, 390x844, 430x932, 720x900, 768x1024, 1024x768, 1280x720, 1440x900 and 1920x1080, including all seven route states and 25 repeated sheet cycles. `trading-stack-novius2-n50-dashboard-1` is healthy. Evidence: `tools/playwright/output/playwright/responsive-navigation/results.json`, `wide-1920x1080-today.png`, `mobile-390x844-today.png` and `mobile-390x844-more-sheet-actual.png`.
+
+## Isolated market status and OIIS WhatsApp V1 — 2026-08-11
+
+- The earlier prototype `market-notifier` is retired and its n8n workflow was replaced in place
+  with the strict, inactive `Market-Status-Outgoing-WhatsApp-v1` export. The route is
+  `/webhook/codex-market-status-v1`; it requires dedicated credentials before activation.
+- Migration `037_market_status_notifications_v1.sql` adds the isolated `market_status` schema:
+  exchange-session calendar, effective NIFTY50 universe, job ledger, transactional outbox,
+  delivery-attempt ledger, membership state, watermark and service heartbeats. Migration 036 is
+  retained as inert historical audit; no destructive rollback was attempted.
+- Three independent services are deployed: scheduler, evaluation worker and delivery worker. All
+  are healthy but `DISABLED`; safe defaults are notifications false and dry-run true.
+- Open is due 09:16:05 with an 09:18 cutoff; movers are due 09:20:05 with a 09:22 cutoff and
+  require 50/50 unique mapped/fresh NIFTY50 constituents; final close is gated at 15:42 and can
+  catch up only until 18:00. Special sessions require explicit calendar times.
+- OIIS reads only committed canonical runs, uses strict full-precision X > 70 and O > 70, chooses
+  at most three per direction, and suppresses empty, rank-only, score-only, unchanged and
+  in-flight-equivalent memberships. Successful state advances only after a real 2xx delivery.
+- Live database proof captured exactly 50 symbols and 50 unique cash tokens. Concurrent scheduler
+  runs left one row per slot. A shadow run consumed OIIS run
+  `bf4308d7-91d3-4092-b21c-77b8c0f41c07`, generated one schema-valid combined LONG event and
+  dry-delivered it as `DRY_RUN_NO_NETWORK`; no successful membership state was advanced.
+- Market-status tests pass 28/28, Ruff passes, n8n formatter/contract tests pass, Compose validates,
+  all three services are healthy, and the outbox has no pending/retry/dead rows. Paper tests remain
+  17 passed/6 integration skips; 93 paper-owned files match their pre-assignment SHA-256 hashes.
+- The active paper workflow remains `LRFbVccpU3w0B03S`, route `/webhook/codex-paper-trade`. Its formatter-only production-shape repair was applied at `2026-08-11T19:20:03.929Z`; webhook and credentials were preserved.
+- Operations, rollout and rollback: `docs/notifications/MARKET_STATUS_WHATSAPP_V1.md`.
+
+### Market-status production activation — 2026-08-12
+
+- Root cause for missing daily webhook messages: the isolated services were healthy but deliberately
+  configured `MARKET_STATUS_NOTIFICATIONS_ENABLED=false`, `MARKET_STATUS_DRY_RUN=true`; n8n workflow
+  `xPrJ9eh7RXtBopUh` was inactive and still referenced placeholder credentials.
+- Created dedicated n8n inbound Basic Auth and outbound Header Auth credential records, activated
+  `Market-Status-Outgoing-WhatsApp-v1`, and moved gateway/destination lookup away from unsupported
+  `$vars` into runtime static data. No reusable token or destination was added to the checked-in export.
+- Verified inbound auth/schema/formatter with HTTP 200 `TEST_ONLY`, then sent one clearly labelled
+  end-to-end WhatsApp delivery test. n8n execution `175` completed successfully through the gateway
+  and delivery-record node for event `8759b4fb-c8c6-4a20-adea-f6d5e19871ef`. The temporary send-test
+  branch was restored to ordinary suppression immediately afterwards.
+- Enabled the backend and disabled dry-run. Scheduler, evaluation worker and delivery worker are
+  healthy/OK with zero pending, retry or dead outbox rows. Today's late-start open/movers jobs were
+  correctly suppressed as `MISSED_NOTIFICATION_DEADLINE`; no backlog burst was sent.
+- Replaced the example inbound values with a dedicated generated Basic Auth credential. The final
+  production-client probe from the delivery container returned HTTP 200 with `TEST_ONLY`, and the
+  active workflow retains its runtime gateway/destination configuration with no temporary
+  configuration or send-test branch.
+- Market-status tests pass 28/28 with Ruff; focused paper non-regression tests pass 12/12; n8n
+  formatter contract passes. The active paper workflow and route were not modified.
+
+## NSE daily 07:55 ingestion and missing-file WhatsApp alerts — 2026-08-12
+
+- Reviewed the complete `/home/novius2/NIFTY50/nse-csv-ingest` package and mapped it against the
+  deployed `services/nse_ingestor`, institutional-flow/FII services, SmartAPI collector, PostgreSQL
+  tables and n8n estate. The existing ingestor remains canonical; no duplicate collector was added.
+- Replaced weekday/07:30 orchestration with an exchange-calendar-aware 07:55 IST scheduler. It
+  resolves the previous official session, uses a PostgreSQL advisory lock and enforces one
+  `nse.daily_job_run` per job date.
+- Every enabled report now produces an attempt record. Missing files are `unavailable`, make the
+  run `PARTIAL`, and create one deduplicated `nse.daily.files.missing.v1` event rather than one alert
+  per file. Delivery uses an isolated durable outbox and retry worker; paper trading is untouched.
+- Added and activated n8n workflow `NSE-Daily-Ingest-WhatsApp-v1` at
+  `/webhook/codex-nse-daily-ingest-v1`, with Basic Auth, an explicit event whitelist and concise
+  WhatsApp formatter.
+- Production proof for source session 11 August: 17 expected, 5 available/already loaded and 12
+  unavailable; one outbox event was sent with HTTP 200. n8n execution `227` ran the gateway and
+  delivery-record nodes. Repeated scheduler ticks were `ALREADY_CLAIMED`.
+- Corrected migration startup behavior by adding `nse.schema_migrations`; pre-existing SQL is
+  baselined rather than rerun, and the analysis query pack is no longer executed during restarts.
+- Both containers are healthy. Container tests pass 5/5, the n8n workflow contract passes, Compose
+  validates and `git diff --check` passes. Runbook:
+  `docs/nse-reports/DAILY_0755_INGEST_RUNBOOK.md`.
+
+## Master UI/UX transformation integration and release evidence — 2026-08-11
+
+- Added the mandatory evidence ledger under `docs/ui-ux-transformation/` and mapped all 42 legacy routes to seven canonical workspaces plus a separate Admin shell.
+- Retained the full all-F&O Home sector canvas (208 stocks, 19 sectors), while delivering the horizontal desktop/tablet workspace dock, five-item mobile bottom dock and explicit More sheet. No persistent left sidebar remains in the rendered DOM.
+- Added canonical light tokens and typed workspace primitives; separated transport, freshness and analytical readiness; added WebSocket sequence-gap recovery and serial/de-duplicated startup snapshots to avoid Prisma pool exhaustion.
+- Centralised backtesting presentation acceptance so negative-return or low-sample strategies cannot be presented as successful winners. Stored calculation outputs and strategy logic were not changed.
+- Completed the final accessibility remediation: named/focusable scroll regions, valid landmarks/tab semantics, accessible form/dialog names and AA text contrast. Deployed axe result is 16/16 scans with zero violations and zero affected nodes.
+- Final deployed evidence: Web 11/11; API 68/68; Paper disposable-PostgreSQL suite 23/23; Home 21/21; OIIS/Stock/Admin 33/33; Paper UI 31/31 plus SHORT/lot/P&L proof; Derivatives 14/14; canonical workspaces 24/24; responsive navigation 118/118.
+- Canonical screenshots are in `/home/novius2/NIFTY50/ui-ux-transformation-evidence/phase-15-canonical-workspaces/`; responsive evidence is in `phase-12-responsive/`; accessibility JSON is in `phase-14a-accessibility/`.
+- The production `trading-stack-novius2-n50-dashboard-1` image was rebuilt and is healthy. No live broker order was placed, SmartAPI collector logic was not replaced by the UI work, and no production record was deleted.
+- Open gates are recorded rather than hidden: Home replay/wallboard automation, one physical selected-run Backtesting consolidation, multi-hour heap/soak and cross-engine p95 measurements, manual screen-reader/forced-colour/400% review, and inherited npm dependency findings.
+
+## Paper WhatsApp trade-context repair — 2026-08-12 07:05 UTC
+
+- Confirmed against production event rows that the active formatter received fill/P&L fields but
+  not first-class symbol, strategy, original quantity, entry/exit or target-level context. Closed
+  events also reconstructed quantity from `remaining_quantity`, producing the hidden `0 units`
+  defect.
+- Enriched new immutable CloudEvents with symbol, BUY/SELL side, original units, F&O lot size,
+  entry/exit prices and strategy identity. Target events now retain target price, observed price,
+  hit time and current mark; close events retain entry, exit, quantity and close time. No fill,
+  target, cost, tax or P&L calculation changed.
+- Reworked the event-specific WhatsApp copy to show stock, LONG `(BUY -> SELL)` or SHORT
+  `(SELL -> BUY)`, strategy, entry/target/observed/exit levels, one-lot context, execution state,
+  MFE/MAE and actual P&L. Execution closure remains explicitly separate from 5D/30D analytics.
+- Updated active n8n workflow `LRFbVccpU3w0B03S` in place; it remained active and retained its
+  existing webhook path and credential bindings. Pre-change backup is mode 0600 under
+  `/home/novius2/backups/n8n/2026-08-12-paper-context-v4/`.
+- Rebuilt/restarted only the four paper services with image
+  `sha256:908152741e33f5f712ccaf327c2fbbbdc4b2238dc6b0a02154bfa40c9ff3aa26`;
+  API is healthy and all workers have restart count zero. Outbox verification: 237 delivered,
+  zero pending/retry/dead-letter rows.
+- Verification: notification policy 16/16; focused Python tests 12/12; runtime integration tests
+  correctly skipped 2/2 without `TEST_DATABASE_URL`; controlled n8n/WhatsApp delivery test
+  returned HTTP 200 and gateway status `sent` with result ID 4910. The test created no trade.
+
+## Paper Trading typography uplift — 2026-08-12 08:36 UTC
+
+- Raised every explicit Paper Trading Command Center text declaration below 10px to a 10px
+  minimum, including the previously 6px target timestamps, 7px matrix metadata, 8px target chips
+  and conversion labels, and 9px chart/table support text. Headings and financial values retain
+  their larger hierarchy.
+- Rebuilt and deployed `trading-stack-n50-dashboard:latest` as image
+  `sha256:99a4c6622551`; the authenticated dashboard is healthy with restart count zero.
+- Extended the Paper Playwright regression with computed-style typography-floor checks and a
+  390x844 mobile run. Result: 34/34 checks passed; 538 visible desktop text nodes and 537 mobile
+  nodes have a computed minimum of 10px, with no body overflow at 1920, 768 or 390 widths.
+- Evidence: `/home/novius2/NIFTY50/ui-ux-transformation-evidence/paper-font-uplift-2026-08-12/`
+  contains desktop, tablet, mobile and full-page screenshots plus `results.json`.
+
+## Complete live PostgreSQL catalog and freshness report — 2026-08-12 08:42 UTC
+
+- Generated `docs/database/POSTGRES_COMPLETE_SCHEMA_AND_FRESHNESS_2026-08-12.md` directly from the
+  live PostgreSQL 16 `tradingdb` catalogs. It covers 24 application schemas, 455 ordinary tables,
+  16 partitioned-table parents and 56 views (527 relations total; 29,736 Markdown lines).
+- Every relation includes columns/types/nullability/defaults, constraints, indexes, ownership,
+  partition relationship, estimated live/dead rows, heap/index/total size, scan/write counters,
+  maintenance evidence, observed update cadence and latest timestamp evidence when estimable.
+- Added executive schema totals, 50 freshest-table ranking, 50 largest-relation ranking and an
+  exact direct-`MAX()` spot-check of ten leading live candidates. Report distinguishes heartbeat
+  freshness, data freshness, ANALYZE estimates and contractual scheduling rather than treating
+  PostgreSQL connection health as proof that all data is current.
+- Added reproducible generator `scripts/generate_postgres_schema_inventory.py`; Python compile and
+  `git diff --check` pass. No schema or production data was changed.
+# Email authentication and Clarity delivery repair (2026-08-12 UTC)
+
+- Reproduced Firebase verification failure: the automatically generated N50 `continueUrl` was rejected with `UNAUTHORIZED_DOMAIN`.
+- Changed the client to send a continue URL only when explicitly configured; blank now uses Firebase's hosted verification completion page.
+- Added optional `N50_FIREBASE_AUTH_CONTINUE_URL` and stage equivalent to the dashboard build contract.
+- Confirmed Mailpit is not applicable to the current hosted Firebase email path and did not add a misleading unused SMTP dependency.
+- Added `https://t.clarity.ms` to API and ingress `connect-src`; live Clarity collection now returns HTTP 204.
+- Deployed the dashboard and reloaded Nginx. API tests 70/70, web tests 13/13, both typechecks passed, auth/Clarity Playwright regression 8/8.
+- Evidence: `docs/ui-ux/AUTH_EMAIL_AND_CLARITY_FIX_2026-08-12.md` and `output/playwright/auth-email-clarity/`.
+
+## Paper Trading admin-only durable comments — 2026-08-12 UTC
+
+- Added idempotent migration `008_admin_trade_comments` and deployed `paper_trading.trade_comments` with trade FK, administrator identity, 2,000-character validation and trade/time index.
+- Added an administrator-only comments column to All Paper Trades and a Comments tab with durable history and CSRF-protected creation. Ordinary users receive no comment metadata/content and cannot call the endpoints.
+- Successful creation is audited as `PAPER_TRADE_COMMENT_CREATE`; no execution, P&L, target, observation, webhook or broker-order path changed.
+- Validation: canonical API 71/71 and web 13/13 tests, both typechecks, disposable migration 1/1, authenticated Playwright 65/65, unauthenticated GET/POST both HTTP 401. Dashboard and paper services remained healthy.
+- Evidence and contract notes: `docs/paper-trading/ADMIN_TRADE_COMMENTS_2026-08-12.md` and `tools/playwright/output/playwright/paper-trading-command-center/`.
+
+## Rolling Monthly independent research strategy — 2026-08-12 23:30 UTC
+
+- Reviewed every artefact in `/home/novius2/NIFTY50/Monthly-Strat`, including the complete V2
+  methodology, JSON factor contract, ten-sheet workbook, DOCX report and 23,069 scored-trade rows.
+- Implemented an isolated `rolling_monthly` PostgreSQL schema, V2 factor engine, canonical-data
+  runner/daemon, authenticated API and separate `Rolling Monthly` workspace at
+  `/n50/strategy/rolling-monthly`. It does not import OIIS and has no Paper Trading/broker path.
+- The first real run evaluated 219 active F&O underlyings for the 11 Aug signal / 12 Aug entry:
+  13 LONG and 29 SHORT scanner matches, 0 High, 0 Medium, 42 Low, with complete 50/50 NIFTY breadth.
+  The UI correctly reports NO TRADE and presents only the closest rejected matches for diagnosis.
+- Validation: Python 6/6; API 71/71; web 13/13; API/web type checks; production build; deployed
+  Playwright 28/28 at 1920x1080 and 390x844; repeat-run candidate identity stable; runner and
+  dashboard containers healthy.
+- Full implementation and evidence paths are in
+  `docs/rolling-monthly/IMPLEMENTATION_REPORT_2026-08-12.md`.
+
+## Navigation, interaction and strategic-journey upgrade — 2026-08-12 23:58 UTC
+
+- Deployed a compact seven-workspace shell, universal `Ctrl/Cmd+K` command palette, central
+  shortcut/focus registry, permission-aware live entity search, strategic URL context and browser
+  Back scroll restoration. Removed workspace subtitles and moved Sign out into the user menu.
+- Added shared Page Header, Return to Source, Related Journey, Source Freshness and collapsed
+  Learn-about-analysis components to the priority Home -> Stock -> OIIS -> Paper -> Backtest ->
+  Data Quality journey. OIIS formulas are now below current evidence.
+- Preserved all legacy routes and the independent Rolling Monthly dashboard; it is discoverable
+  through Commands/mobile More without becoming an eighth primary workspace.
+- Validation: web tests 17/17, interaction Playwright 25/25, responsive navigation 118/118,
+  Paper Trading 65/65 and final Axe 16/16 with zero violations. Production dashboard is
+  healthy. No broker order, collector, strategy formula, Paper calculation, schema or data changed.
+- Evidence: `docs/ui-ux-transformation/NAVIGATION_INTERACTION_UPGRADE_2026-08-12.md`.
+
+## Complete backend OpenAPI documentation package — 2026-08-13 UTC
+
+- Audited the complete repository for Express/Fastify, FastAPI, Go ServeMux and WebSocket HTTP
+  surfaces. Generated a separate documentation package at
+  `/home/novius2/NIFTY50/backend-openapi-documentation-2026-08-13`.
+- Documented 276 unique operations across 17 services. The package includes an aggregate catalogue,
+  YAML and JSON per-service specifications, source-linked endpoint reference, route inventory,
+  authentication/safety guides, request examples, multi-service Swagger UI and reproducible tools.
+- Captured the authoritative OpenAPI emitted by seven running FastAPI services, including the full
+  Paper Trading schema, and used source-derived contracts for Express, Fastify, Go and WebSocket
+  endpoints. No credential values were read into or written to the deliverable.
+- Validation: 18 specifications parsed as OpenAPI 3.1; 552 aggregate plus per-service operations
+  checked; unique operation IDs, path parameters, internal schema references and source paths all
+  pass. No runtime service, database record, API contract or deployment was changed.
+
+## OIIS selected-list daily rollover — 2026-08-13 04:27 UTC
+
+- Made the OIIS watchlist strictly trade-date scoped. At the first OIIS loop after IST midnight,
+  earlier rows are deactivated and entry-disabled with `updated_by=oiis-live-day-rollover`; no
+  candidate, run, claim, paper-trade or audit evidence is deleted.
+- Dashboard and candidate APIs now default to the current IST date instead of falling back to the
+  latest prior run. Manual creation is rejected for a non-current date, and prior-date rows cannot
+  be edited or reactivated through the watchlist mutation endpoints.
+- Deployed the OIIS worker and N50 dashboard. Startup expired 48 stale active rows from 10–12 Aug;
+  the 15 current 13 Aug rows remained active. Live API returned trade date `2026-08-13` with all
+  15 watchlist rows belonging to that date.
+- Tightened the SmartAPI collector's dynamic OIIS subscription query from a yesterday-to-tomorrow
+  window to the exact current Asia/Kolkata date. The deployed refresh selected 15 current OIIS
+  tokens and no prior-date rows, preventing stale daily lists from consuming token capacity.
+- Validation: OIIS Python tests 26/26, API tests 74/74, API typecheck and production dashboard
+  build, and Go store/collector tests passed; OIIS, dashboard and collector containers are healthy.
+  A non-canonical duplicate OIIS container that could not resolve its database was stopped; the
+  canonical `trading-stack-novius2` worker remains running.
+
+## SmartAPI derivatives archive recovery watch — 2026-08-13 06:17 UTC
+
+- Diagnosed the all-stock F&O option-chain archive as a database materialisation backlog rather
+  than an absent UI feed. The old snapshot used partition-spanning per-contract LATERAL history
+  lookups for roughly 2,584 contracts; REST logs also contained SmartAPI 403/rate-limit responses.
+- Reworked the archive to use the collector's existing canonical `instrument_state` cache for
+  quotes, volume and OI, preserving the existing WebSocket connection and adding no broker calls.
+  A stale watch, 45-second attempt timeout, three bounded attempts and exponential 5/10-second
+  database-only retries are active. Stale/terminal failure notifications use the existing
+  rate-limited collector alert path.
+- Added explicit archive watch status, snapshot age and fresh/stale/missing contract counts to the
+  Options Intelligence API and UI. `Rolling 60 Day` is now a command-search alias for the governed,
+  independent `Rolling Monthly` route `/strategy/rolling-monthly`; no second strategy was invented.
+- Deployed collector and dashboard. Two consecutive snapshots completed on the first attempt in
+  8.5s and 9.7s. The 06:17:06 UTC snapshot contains 2,584 contracts across 187 underlyings, 2,570
+  fresh contracts, 13 stale contracts and 2,583 two-sided quotes. Collector, dashboard and Rolling
+  Monthly containers are healthy; both public routes return HTTP 200.
+- Validation: Go collector/store/config tests pass, TypeScript API/web typechecks pass, web tests
+  17/17 pass, and both production images build successfully. No orders, paper-trade behavior,
+  strategy formula, database schema or production records were changed.
+
+## Strategy navigation and Rolling Monthly backtest history — 2026-08-13 07:12 UTC
+
+- Replaced the desktop `OIIS Lab` workspace label with an extensible `Strategy` navigation menu.
+  Hover/focus exposes separate `OIIS Lab` and `Rolling Monthly` destinations; mobile More retains
+  both destinations. Their routes, calculations and runtime services remain independent.
+- Added a `Backtest history` tab to Rolling Monthly backed by additive PostgreSQL evidence tables:
+  16 High/Medium/Low band summaries, 40 condition pass/fail comparisons, 50 descriptive indicator
+  correlations and 23 annual High/Medium summaries covering 1 Oct 2021 through 31 Jul 2026.
+- The UI reports actual successful/failed counts, clean +1/+3/+5 outcomes, adverse 2% events,
+  MFE/MAE, profit factor, yearly stability, condition uplift and correlation evidence. The governed
+  success definition is clean +3% by D+5 before a 2% adverse event under the daily-OHLC stop-first
+  model; correlation is explicitly descriptive rather than causal.
+- Applied migration `db/sql/039_rolling_monthly_backtest_evidence.sql`, rebuilt and deployed the
+  N50 dashboard, and confirmed the container healthy. Validation: web tests 18/18; production
+  Playwright 41/41 at 1920x1080 and 390x844, including hover menu destinations, API record counts,
+  both directions/all bands, outcome counts, evidence sections, zero console errors and no body
+  overflow. Screenshots are under `tools/playwright/output/rolling-monthly/`.
+
+## Rolling Monthly last-Tuesday expiry journey — 2026-08-13 08:42 UTC
+
+- Added a separate `Expiry journey` view anchored to the last Tuesday of each month, not the first
+  trading day. If that Tuesday is not a valid exchange session, the signal resolves to the latest
+  available session on or before it; the entry remains the next valid session open.
+- Added additive `rolling_monthly.expiry_run` persistence and an idempotent `backfill-expiry`
+  runner command. Six completed expiries from February through July 2026 were reconstructed from
+  canonical daily bars. The daemon refreshes only the latest completed expiry, avoiding repeated
+  historical work and opening no new SmartAPI connection.
+- The dashboard exposes original expiry-close quality, score, mandatory-gate state and full captured
+  conditions; entry/current cash-equity price; current direction-normalised return; MFE/MAE; and a
+  D+5 SUCCESS/FAILED/PENDING outcome. SUCCESS is clean +3% before a 2% adverse event; same daily-bar
+  target/adverse is conservatively adverse-first.
+- Added six-expiry performance cards with successful/failed counts, High/Medium/Low mix, pending
+  count, success rate and current mean return. Production API returns six months and 289 candidate
+  observations. Rolling Monthly remains independent of OIIS and disconnected from Paper Trading.
+- Validation: Rolling Monthly Python tests 7/7, web tests 18/18, API/web typechecks, production
+  builds, migration and both containers healthy. Authenticated production Playwright passed 51/51
+  at 1920x1080 and 390x844 with no console errors/body overflow. Evidence is under
+  `tools/playwright/output/rolling-monthly-expiry/`.
+
+## Rolling Monthly Month–Year stability — 2026-08-13 09:00 UTC
+
+- Replaced the annual stability presentation with a true Month–Year history. The backtest view now
+  groups the supplied five-year research observations by signal month, direction and High/Medium
+  quality band, ordered newest first; the independent last-Tuesday expiry journey is unchanged.
+- Added additive table `rolling_monthly.backtest_monthly_summary` through migration
+  `db/sql/041_rolling_monthly_backtest_monthly_summary.sql` and a reproducible standard-library
+  generator. It contains 118 side/band cohorts across 49 distinct months from October 2021 through
+  July 2026.
+- Each Month–Year row exposes episodes, successful/failed counts, clean +3%/+5%, 2% adverse rate,
+  T5/S2 mean, profit factor and median MAE. The previous annual evidence table remains available
+  for audit compatibility but is no longer used by this dashboard section.
+- Rebuilt and deployed the `/n50` dashboard. API/web typechecks, 18/18 web tests and 2/2 Rolling
+  Monthly API tests pass. Authenticated production Playwright passed 53/53 at 1920x1080 and
+  390x844; screenshots are in `tools/playwright/output/rolling-monthly-expiry/`.
+
+## Rolling Monthly data-integrity and entry-timing correction — 2026-08-13 09:55 UTC
+
+- Reconciled the supplied August review against current canonical PostgreSQL bars instead of
+  hard-coding its stock list or conclusions. The old research CSV genuinely loses most equities
+  from 12 June through 17 July and ends on 7 August, but the current `bars_1d` estate has repaired
+  those sessions. The current confirmed scanner finds 15 reviewed names on 3 August, HYUNDAI on
+  4 August and BOSCHLTD on 5 August; MANAPPURAM remains correctly rejected.
+- Upgraded Rolling Monthly to factor version `2.1.0-research` with exchange-session completeness
+  gates for monthly, weekly, previous-session and next-session inputs. Missing signal-time data
+  blocks qualification. Missing next-session entry data leaves the valid signal visible with a
+  non-executable missing-entry state instead of deleting it.
+- Persisted explicit model provenance: `CONFIRMED_CLOSE_NEXT_SESSION_OPEN`, information cutoff at
+  signal-session close, and next-valid-session-open entry. A separate month-end-only strategy was
+  deliberately not invented or combined with these results.
+- Added additive evidence governance and data-driven exchange-calendar recovery through migration
+  `042_rolling_monthly_evidence_governance.sql`. The old five-year quality evidence is now
+  `BLOCKED_DATA_QUALITY_REBUILD` and the Backtest History UI labels it quarantined.
+- Replayed the research engine to
+  `/home/novius2/NIFTY50/monthlystrat/reviewed-output/rolling_monthly_5y_20260807_20260813T094228Z`.
+  It produced 21,858 trade rows and 40,688 occurrences, detected 22,682 incomplete symbol-session
+  records and generically identified probable LTIM/LTM duplicate lineage across 799 sessions. The
+  output remains an audit artefact, not approved performance evidence.
+- Detailed findings and remaining release blockers are in
+  `docs/rolling-monthly/DATA_INTEGRITY_STRATEGY_REVIEW_2026-08-13.md`. Validation: service tests
+  10/10, research tests 13/13, API route tests 2/2, web tests 18/18 and authenticated production
+  Playwright 57/57 at desktop/mobile. No Paper Trading connection or broker order was added.
+
+## OpenAPI documentation refresh for Rolling Monthly — 2026-08-13 10:05 UTC
+
+- Regenerated the complete backend OpenAPI package after the Rolling Monthly integrity changes.
+  Both existing endpoints remain unchanged, but their response contracts are now typed rather than
+  represented as generic objects.
+- The dashboard schema documents factor version 2.1, confirmed-close/next-session-open provenance,
+  live-candidate versus matured-evidence separation, evidence-governance status and the
+  non-executable `MISSING_ENTRY` state. Candidate history, `signalDate` date validation and symbol
+  validation are also explicit.
+- Added safe request examples and `CHANGELOG.md`, regenerated YAML/JSON/catalogue/inventory files,
+  and validated all 18 specifications: 552 catalogue-plus-service operations, zero validation
+  errors. Refreshed package:
+  `/home/novius2/NIFTY50/NIFTY50-backend-openapi-documentation-2026-08-13.zip`.
+
+## NSE Intelligence production integration — 2026-08-13 11:20 UTC
+
+- Corrected the prior planning-only handoff by implementing the real-data NSE Intelligence
+  dashboard at `/institutional/nse-intelligence`, with `/nse-intelligence` compatibility redirect.
+  It appears in the Data & Operations header and Search & Commands.
+- Added authenticated overview/reports/health APIs backed by `nse.daily_job_run`,
+  `nse.ingest_run_reports`, `nse.file_registry`, `nse.fact_bhavcopy_udiff` and
+  `nse.fact_text_events`. No prototype market arrays or synthetic values were copied.
+- The UI separates scheduler outcome from analytical readiness. Production currently reports a
+  `PARTIAL` job but `DEGRADED` usable cash intelligence: 5/5 core inputs, 5/17 total reports,
+  46,057 rows loaded, and exact missing-file reasons. Official 12 August EQ breadth reconciles to
+  976 advancers, 1,451 decliners and 32 unchanged across 2,459 securities.
+- Command Centre, normalized Events and all 17 Reports & Health rows are live. Sector and
+  stock-level F&O views fail closed with explicit prerequisite reasons instead of static/zero
+  widgets. No new broker connection, database mutation, Paper Trading action or order path exists.
+- API/web typechecks pass; API tests 74/74 and web tests 18/18 pass. Production build and container
+  health pass. Authenticated Playwright passed 21/21 at 1920x1080 and 390x844; evidence is under
+  `output/playwright/nse-intelligence/`. Implementation detail:
+  `docs/nse-reports/NSE_INTELLIGENCE_IMPLEMENTATION_2026-08-13.md`.
+
+## Rolling Monthly next-expiry cohort reports — 2026-08-13 12:00 UTC
+
+- Added separate July 2026, June 2026 and May 2026 tabs to the independent Rolling Monthly
+  `Expiry journey`. Each report includes every six-condition base-scanner match and separately
+  states whether the V2 quality model considered it entry-eligible.
+- Added direction-normalized cash-equity performance from next-session entry through the following
+  monthly expiry: final return, maximum favourable move, maximum drawdown, dates of both extremes,
+  observed sessions and `MATURED`/`DEVELOPING`/`INCOMPLETE`/`NO_DATA` state.
+- June and May are matured. July is intentionally developing through the latest 12 August bar toward
+  the projected 25 August last-Tuesday expiry; it is not presented as a final outcome.
+- Production averages are documented in
+  `docs/rolling-monthly/EXPIRY_COHORT_REPORTS_2026-08-13.md`. The two matured cohorts have a combined
+  trade-weighted average expiry return of approximately -1.09%; all three including developing July
+  are provisionally -1.12%.
+- API tests pass 74/74, web tests pass 20/20, API/web typechecks pass, production build/container
+  health pass and authenticated desktop/mobile Playwright passes 24/24. The OpenAPI Rolling Monthly
+  expiry contract and ZIP were regenerated. No Paper Trading or broker-order integration was added.
+
+- Follow-up: stock symbols in the cohort table now open an actual weekly OHLCV candlestick dialog.
+  Candles are aggregated server-side from canonical `bars_1d`; purple vertical lines mark calendar
+  months, and signal/next-expiry dates remain visible. The additive authenticated chart endpoint is
+  `/v1/rolling-monthly/expiry-candidates/{candidateId}/chart`. Production Playwright now passes
+  28/28 including desktop/mobile open-render-close coverage.
+
+## Paper Reward vs Pain closed-execution border — 2026-08-13 13:45 UTC
+
+- Reward vs Pain bubble fill continues to encode the analytical grade. A distinct 5px green border
+  now identifies execution positions whose `remaining_quantity <= 0`; this does not imply the 5D or
+  30D analytical observation has finished.
+- Added explicit explanatory copy and accessible open/closed state to each bubble. Production
+  verification found 9 closed and 3 open bubbles, confirmed the closed stroke as `rgb(11, 122, 83)`,
+  and found no product console errors. Web typecheck and all 21 web tests pass.
+
+## Independent Long-Only Options Router v2.0 — 2026-08-13 17:30 UTC
+
+- Extracted and reviewed the complete package at
+  `/home/novius2/NIFTY50/Long-derivatives/Long_Only_Options_Implementation_Package_v2.0`.
+- Added the independent Strategy-menu route `/strategy/long-options`. It reads canonical
+  `fno_volatility` movement and exact option-structure evidence, not OIIS or Rolling Monthly.
+- Enforced PAPER-only, BUY-to-open/SELL-to-close safety. ATM straddles and delta strangles are the
+  only PAPER routes; calls and puts remain shadow-disabled. No paper-trade write or live broker
+  order endpoint was connected.
+- Hard gates fail closed for stale/crossed quotes and unavailable sequence, event, depth, delta or
+  tail evidence. The production response contains 14 real structures across five underlyings and
+  correctly reports zero READY after the quote window expired.
+- Added three authenticated APIs and regenerated the backend OpenAPI YAML/JSON/catalogue. API and
+  web typechecks/builds pass, policy tests pass 5/5, production container is healthy and
+  authenticated Playwright passes 25/25 at desktop/mobile.
+- Implementation and remaining promotion blockers are documented in
+  `docs/long-options/LONG_OPTIONS_IMPLEMENTATION_2026-08-13.md`.
+
+## Rolling Monthly current and historical entry annotations — 2026-08-13 17:42 UTC
+
+- Current candidate stock buttons and historical expiry-cohort stock buttons now open the same
+  weekly evidence chart.
+- The API returns canonical current/past qualification events for the selected symbol. Purple dots
+  mark condition-met sessions; blue diamonds and solid blue vertical lines mark actual entry price
+  and week. The selected entry is labelled, while past entries remain visible without label clutter.
+- An evidence list states each signal date, entry date, entry price, direction and eligibility.
+  Events are sourced from `rolling_monthly.candidate`, not inferred from candles.
+- API/web typechecks pass, Rolling Monthly route tests pass 3/3, production container is healthy,
+  and authenticated desktop/mobile Playwright passes 34/34. Detail:
+  `docs/rolling-monthly/ENTRY_MARKERS_2026-08-13.md`.
+# Stock Long Options funnel and NIFTY Weekly Options (2026-08-13)
+
+- Corrected the stock Long Options presentation to expose the complete governed funnel rather than making the five-name live shortlist look like the available universe.
+- Added independent dashboard `/strategy/nifty-weekly-options` and API `/v1/nifty-weekly-options/summary` for the nearest persisted NIFTY weekly expiry.
+- The new strategy evaluates a BUY ATM straddle and BUY approximately 30-delta strangle using actual bid/ask, IV, delta, volume, OI and the effective NIFTY lot size.
+- It is intentionally `SHADOW_NO_TRADE`: `TARGET_PROBABILITY_NOT_CALIBRATED` prevents Paper Trading or live execution.
+- Implementation rationale: `docs/long-options/FNO_FUNNEL_AND_NIFTY_WEEKLY_2026-08-13.md`.
+
+## NIFTY option-chain session retention and weekly-strategy OI context — 2026-08-14
+
+- `option-chain-watcher` now reads `public.trading_calendar` and suppresses NSE polling and
+  persistence outside the effective Asia/Kolkata exchange session. Holidays and unavailable
+  session times fail closed.
+- During the session, unchanged exchange-native snapshots are suppressed. Capture time and locally
+  decaying Greeks are excluded from the fingerprint; an OI, OI-change, price, volume or bid/ask
+  change still persists a new snapshot.
+- Before cleanup, 1,793 out-of-session snapshots and 46,618 child legs were exported as gzipped CSV
+  and checksum-validated. The exact 1,793 snapshots were then deleted in one transaction; cascading
+  deletion removed their legs. The database retains 582 in-session snapshots and 15,132 legs, with
+  zero calendar-invalid snapshots.
+- Recoverable exports and manifest:
+  `/home/novius2/NIFTY50/backups/option-chain-watcher/2026-08-14-out-of-session-cleanup/`.
+- The independent NIFTY Weekly Options API/UI now shows OI coverage, CE/PE totals, PCR, day OI
+  change, call/put walls, same-session change and per-strike OI change. This remains descriptive
+  `SHADOW_NO_TRADE` evidence and does not create a Paper Trading or broker-order path.
+- Watcher tests pass 4/4; NIFTY weekly API tests pass 5/5; API/web typechecks pass; production builds
+  are healthy; authenticated desktop/mobile Playwright passes 41/41.
+- OpenAPI was regenerated and validated: 18 specifications, 572 aggregate operations, zero errors.
+  Updated ZIP: `/home/novius2/NIFTY50/NIFTY50-backend-openapi-documentation-2026-08-13.zip`.
+
+## NIFTY Weekly & Monthly Options V2 — 2026-08-14 04:05 UTC
+
+- Reviewed the complete `/home/novius2/NIFTY50/Niftyoptiknv2` prompt, HTML, architecture,
+  API, policy, migration template, cost model, events and n8n reference.
+- Canonical route is now `/strategy/nifty-options`; `/strategy/nifty-weekly-options` remains a
+  compatible deep link. The Strategy menu label is `NIFTY Options`.
+- The existing NSE watcher now collects distinct W0 and M0 surfaces during exchange sessions using
+  one expiry-registry lookup and one request per distinct expiry. If W0=M0 it stores once. Dedupe is
+  expiry-specific and the existing out-of-session suppression remains active.
+- Production captured W0 2026-08-18 and M0 2026-08-25, each with 13 strikes / 26 two-sided legs.
+- Added authenticated `/v1/nifty-options/summary` and `/v1/nifty-options/expiries` APIs and six UI
+  views: Command Centre, Weekly, Monthly, Chain & Surface, Paper Book, Validation & Health.
+- Remains `SHADOW_NO_TRADE`: uncalibrated scores render `—`; Paper Book is isolated and empty;
+  no Paper Trading or live broker write path was added. Every opening leg remains BUY.
+- Watcher 6/6, API 84/84, web 21/21, production build and service health pass. Authenticated
+  desktop/mobile Playwright passes 53/53. OpenAPI validates 18 specs / 576 aggregate operations.
+- Full implementation record:
+  `docs/derivatives/NIFTY_OPTIONS_V2_IMPLEMENTATION_2026-08-14.md`.
+# 2026-08-14 — Versioned Paper/Backtest trade-quality scoring
+
+- Added leakage-safe `n50-trade-quality@1.0.0` scorer in `neon-stock-terminal/apps/api/src/lib/tradeQuality.ts`.
+- Cash weights are 55 process / 45 outcome; Options are 60 / 40. Confirmed hard fails override profit.
+- Missing historical entry evidence remains `NOT_ESTIMABLE` with coverage; it is not silently rated zero.
+- Paper Trading includes `/paper-trading?tab=quality`, row/detail scores, and required forward plan/risk fields.
+- Backtest trade projections now expose `tradeQuality`; old snapshots without the required entry-time evidence remain honest partials.
+- Additive migration: `services/paper_trading/migrations/009_trade_quality_assessments.sql`.
+- Historical durable checkpoint: `cd neon-stock-terminal/apps/api && npm run trade-quality:backfill` after migration.
+- Full report: `docs/paper-trading/TRADE_QUALITY_SCORING_IMPLEMENTATION_2026-08-14.md`.
+- Validation and deployment: API 89/89, API/web typecheck, web build, disposable PostgreSQL migration and authenticated desktop/mobile Paper plus Backtesting Playwright passed.
+- Live migration `009_trade_quality_assessments` is applied. Twenty-one trade groups have durable snapshots; current visible legacy trades remain honestly `NOT_ESTIMABLE` because the original entry evidence does not exist.
+- Runtime evidence and rollback are in the full report. Updated OpenAPI archive: `/home/novius2/NIFTY50/NIFTY50-backend-openapi-documentation-2026-08-14.zip`.
+
+## Paper Trading loading incident — 2026-08-14 08:40 UTC
+
+- The Paper workspace was delayed by an unused Weekly Performance query that remained after its UI widget was removed. It generated weekly correlated valuation/P&L/NIFTY lookups and took 8.410 seconds during reproduction under database load.
+- Removed that dead read query from `GET /v1/workspace/paper-trading`; no paper write, execution, calculation, notification or stored observation changed.
+- Added a three-second slow-load explanation plus a safe 20-second timeout and retry action so the page cannot remain on an indefinite spinner.
+- Post-deployment authenticated API response time is 0.079–0.151 seconds across three requests, down from 8.670 seconds. API 89/89, typechecks, build and authenticated desktop/mobile Playwright pass.
+- Full incident record: `docs/paper-trading/PAPER_LOADING_INCIDENT_2026-08-14.md`.
+
+## Paper Trade Quality Matrix and durable reviews — 2026-08-14 12:58 UTC
+
+- Reviewed and safely adapted `/home/novius2/NIFTY50/trade--quality/trade_quality_matrix_ui_bundle` into Paper Trading → `What good looks like`.
+- Added server-authoritative process/outcome matrix, per-trade criterion evidence, 12 cash and 16 options hard-risk overrides, and admin-only versioned reviews.
+- Migration `010_trade_quality_reviews` is live. Reviews are append-only, CSRF-protected and audited; process ratings require explicit confirmation that evidence existed at or before entry.
+- Backfill evaluated all 24 paper trade groups. Latest results remain 24 `NOT_ESTIMABLE` because legacy process evidence was not captured; no false zero or demo score was created.
+- API 90/90, focused 11/11, API/web typechecks, production build, disposable/live migration, Chromium desktop/mobile and CSRF-negative regression pass.
+- Full report: `docs/paper-trading/TRADE_QUALITY_MATRIX_IMPLEMENTATION_2026-08-14.md`.
+- Updated validated OpenAPI ZIP: `/home/novius2/NIFTY50/NIFTY50-backend-openapi-documentation-2026-08-14.zip`.
+## 2026-08-25 — One-repository consolidation
+
+- Canonical source and sole deployment checkout: `/home/novius2/trading-stack`.
+- Release branch: `master`; remote: `https://github.com/PM1288/Nifty-Backtesting_Q2-2026.git`.
+- Full consolidation evidence and rollback instructions: `docs/REPOSITORY_CONSOLIDATION_2026-08-25.md`.
+- The 82 GB strategy artifact tree was moved under the canonical ignored `platform/nifty_stratlab/outputs/` path; `n50-dashboard` now mounts that path and has no dependency on the retired checkout.
+- Restored NSE scheduler/outbox/delivery implementation and tests from the former delivery tree. Kept the newer canonical mobile dispatcher rather than restoring the superseded Firebase implementation.
+- Validation: web 29/29, API 122/122, NSE ingestor 5/5 and Go tests passed; Compose/source gates passed; rebuilt dashboard and NSE ingestor images; dashboard, scheduler and delivery containers healthy; public home and auth-session endpoints returned HTTP 200.
+- Current performance caveat: concurrent browser suites can drive a market-universe SQL query above 70 seconds. Run critical Playwright suites sequentially pending query optimisation.

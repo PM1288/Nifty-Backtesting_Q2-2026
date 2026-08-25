@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import { Pool } from 'pg';
 import { SelectedSnapshot } from './transform';
+import { ExchangeSession } from './sessionPolicy';
 
 type SnapshotRow = {
   id: number;
@@ -212,6 +213,28 @@ function toIsoDate(value: string | Date): string {
 export class OptionChainStore {
   constructor(private readonly pool: Pool) {}
 
+  async getExchangeSession(at: Date): Promise<ExchangeSession | null> {
+    const result = await this.pool.query(
+      `
+      select trade_date, is_trading_day, market_open_ts, market_close_ts, note
+      from public.trading_calendar
+      where trade_date = ($1::timestamptz at time zone 'Asia/Kolkata')::date
+      limit 1
+      `,
+      [at],
+    );
+    const row = result.rows?.[0];
+    if (!row) return null;
+    return {
+      tradeDate: toIsoDate(row.trade_date),
+      isTradingDay: Boolean(row.is_trading_day),
+      marketOpenAt: row.market_open_ts ? new Date(row.market_open_ts) : null,
+      marketCloseAt: row.market_close_ts ? new Date(row.market_close_ts) : null,
+      specialSession: typeof row.note === 'string' && /special/i.test(row.note),
+      sessionLabel: row.note == null ? null : String(row.note),
+    };
+  }
+
   private mapSnapshotRow(row: any): SnapshotRow {
     return {
       id: Number(row.id),
@@ -386,7 +409,7 @@ export class OptionChainStore {
     }
   }
 
-  async getLatestSnapshotWithLegs(symbol: string): Promise<
+  async getLatestSnapshotWithLegs(symbol: string, expiryDate?: string | null): Promise<
     | {
         snapshot: {
           id: number;
@@ -420,7 +443,7 @@ export class OptionChainStore {
       }
     | null
   > {
-    const snapshot = await this.getLatestSnapshotRow(symbol);
+    const snapshot = await this.getLatestSnapshotRow(symbol, expiryDate);
     if (!snapshot) return null;
 
     const legsRes = await this.pool.query(

@@ -3,7 +3,6 @@
 
 import argparse
 import hashlib
-import json
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -21,22 +20,6 @@ for line in manifest.read_text(encoding="utf-8").splitlines():
         raise SystemExit(f"Checksum mismatch: {name}")
     checked += 1
 required = {"decisions.csv", "trades.csv", "target_events.csv", "adverse_events.csv", "missing_minute_symbols.csv", "regime_performance.csv", "summary.json", "summary.md"}
-summary = json.loads((args.output_dir / "summary.json").read_text(encoding="utf-8"))
-formula_version = str(summary.get("formula_version", ""))
-if formula_version.endswith(("V1.2", "V1.3")):
-    required |= {"entry_path_evaluations.csv", "path_checkpoints.csv"}
-if "V1.4-H30" in formula_version:
-    required |= {
-        "entry_path_evaluations.csv", "path_checkpoints.csv",
-        "h30_observations.csv", "h30_observations.parquet",
-        "h30_checkpoints.csv", "h30_checkpoints.parquet",
-        "h30_ranking.json", "h30_summary.md", "strategy_evaluation.xlsx",
-        "strategy_oiis_cash_daily_research_v1_01_intraday_month_density.png",
-        "strategy_oiis_cash_daily_research_v1_01_intraday_month_density.svg",
-        "strategy_oiis_cash_daily_research_v1_02_swing_long_month_density.png",
-        "strategy_oiis_cash_daily_research_v1_02_swing_long_month_density.svg",
-        "strategy_oiis_cash_daily_research_v1_month_density_data.csv",
-    }
 missing = required - {path.name for path in args.output_dir.iterdir()}
 if missing:
     raise SystemExit(f"Missing required artifacts: {sorted(missing)}")

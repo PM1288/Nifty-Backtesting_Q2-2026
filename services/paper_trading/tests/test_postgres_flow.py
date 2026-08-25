@@ -16,6 +16,33 @@ from papertrade.service import PaperService
 pytestmark = pytest.mark.skipif(not os.getenv("TEST_DATABASE_URL"), reason="TEST_DATABASE_URL not configured")
 
 
+def _reset_market_tables(raw: object) -> None:
+    raw.execute("DROP TABLE IF EXISTS public.depth_5_snapshots")
+    raw.execute("DROP TABLE IF EXISTS public.quote_snapshots")
+    raw.execute("DROP TABLE IF EXISTS public.bars_1m")
+    raw.execute(
+        """CREATE TABLE public.bars_1m(
+           ts timestamptz NOT NULL, exchange text NOT NULL, symbol_token text NOT NULL,
+           open numeric NOT NULL, high numeric NOT NULL, low numeric NOT NULL,
+           close numeric NOT NULL, volume bigint, source text,
+           PRIMARY KEY(exchange,symbol_token,ts))"""
+    )
+    raw.execute(
+        """CREATE TABLE public.quote_snapshots(
+           ts timestamptz NOT NULL,exchange text NOT NULL,symbol_token text NOT NULL,
+           ltp numeric,last_trade_qty bigint,volume bigint,total_buy_qty bigint,total_sell_qty bigint,
+           bid numeric,bid_qty bigint,ask numeric,ask_qty bigint,
+           PRIMARY KEY(exchange,symbol_token,ts))"""
+    )
+    raw.execute(
+        """CREATE TABLE public.depth_5_snapshots(
+           ts timestamptz NOT NULL,exchange text NOT NULL,symbol_token text NOT NULL,
+           side text NOT NULL,level smallint NOT NULL,price numeric,quantity bigint,orders bigint,
+           cumulative_quantity bigint,cumulative_notional numeric,
+           PRIMARY KEY(exchange,symbol_token,ts,side,level))"""
+    )
+
+
 def _settings(dsn: str) -> Settings:
     return Settings(
         PAPER_TRADING_ONLY=True,
@@ -86,14 +113,7 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
     dsn = os.environ["TEST_DATABASE_URL"]
     with connect(dsn, autocommit=True) as raw:
         raw.execute("DROP SCHEMA IF EXISTS paper_trading CASCADE")
-        raw.execute("DROP TABLE IF EXISTS public.bars_1m")
-        raw.execute(
-            """CREATE TABLE public.bars_1m(
-               ts timestamptz NOT NULL, exchange text NOT NULL, symbol_token text NOT NULL,
-               open numeric NOT NULL, high numeric NOT NULL, low numeric NOT NULL,
-               close numeric NOT NULL, volume bigint, source text,
-               PRIMARY KEY(exchange,symbol_token,ts))"""
-        )
+        _reset_market_tables(raw)
 
     settings = _settings(dsn)
     db = Database(settings)
@@ -111,6 +131,16 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
             "INSERT INTO public.bars_1m VALUES (%s,'NSE','TEST1',100,101.20,99.40,100.80,1000,'TEST')",
             (first_bar,),
         )
+        conn.execute(
+            "INSERT INTO public.quote_snapshots VALUES (%s,'NSE','TEST1',100.05,17,25000,12000,13000,99.95,500,100.10,450)",
+            (first_bar,),
+        )
+        for side, prices in (("B", ("99.95", "99.90", "99.85")), ("S", ("100.10", "100.15", "100.20"))):
+            for level, price in enumerate(prices, 1):
+                conn.execute(
+                    "INSERT INTO public.depth_5_snapshots VALUES (%s,'NSE','TEST1',%s,%s,%s,%s,%s,%s,%s)",
+                    (first_bar, side, level, price, 100 * level, level + 1, 100 * level, Decimal(price) * 100 * level),
+                )
     monitor = Monitor(db, settings, "pytest-monitor")
     result = monitor.once()
     assert result == {"fills": 1, "bars": 1, "stale": 0, "recovered": 0}
@@ -119,13 +149,25 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
             "SELECT status,count(*) n FROM paper_trading.target_tracks GROUP BY status"
         ).fetchall()
         # Intraday targets are evaluated on D0; swing targets start on D+1.
-        assert {row["status"]: row["n"] for row in statuses} == {"ACTIVE": 3, "CLOSED_AT_TARGET": 3}
+        assert {row["status"]: row["n"] for row in statuses} == {"ACTIVE": 3, "CLOSED_AT_TARGET": 4}
         assert (
             conn.execute(
                 "SELECT status FROM paper_trading.trade_groups WHERE trade_group_id=%s", (group_id,)
             ).fetchone()["status"]
             == "OPEN"
         )
+        entry_book = conn.execute(
+            "SELECT availability_status,bid_level_count,ask_level_count,best_bid_price,best_ask_price,last_trade_qty,cumulative_volume FROM paper_trading.entry_market_evidence"
+        ).fetchone()
+        assert entry_book == {
+            "availability_status": "CAPTURED",
+            "bid_level_count": 3,
+            "ask_level_count": 3,
+            "best_bid_price": Decimal("99.95"),
+            "best_ask_price": Decimal("100.10"),
+            "last_trade_qty": 17,
+            "cumulative_volume": 25000,
+        }
 
     close = CloseIntent.model_validate(
         {
@@ -153,7 +195,7 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
             (group_id,),
         ).fetchone()
         assert group == {"status": "CLOSED", "fully_closed": True}
-        assert conn.execute("SELECT count(*) n FROM paper_trading.target_hits").fetchone()["n"] == 6
+        assert conn.execute("SELECT count(*) n FROM paper_trading.target_hits").fetchone()["n"] == 7
         assert (
             conn.execute(
                 "SELECT count(*) n FROM paper_trading.trade_events WHERE event_type='com.papertrading.trade_group.closed.v1'"
@@ -245,7 +287,7 @@ def test_incremental_multileg_group_commit() -> None:
                 "SELECT count(*) n FROM paper_trading.target_tracks t JOIN paper_trading.trade_legs l USING(trade_leg_id) WHERE l.trade_group_id=%s",
                 (group_id,),
             ).fetchone()["n"]
-            == 12
+            == 14
         )
     db.close()
 
@@ -254,10 +296,7 @@ def test_execution_target_closes_only_actual_position_and_higher_analytics_conti
     dsn = os.environ["TEST_DATABASE_URL"]
     with connect(dsn, autocommit=True) as raw:
         raw.execute("DROP SCHEMA IF EXISTS paper_trading CASCADE")
-        raw.execute("DROP TABLE IF EXISTS public.bars_1m")
-        raw.execute(
-            "CREATE TABLE public.bars_1m(ts timestamptz,exchange text,symbol_token text,open numeric,high numeric,low numeric,close numeric,volume bigint,source text,PRIMARY KEY(exchange,symbol_token,ts))"
-        )
+        _reset_market_tables(raw)
     settings = _settings(dsn)
     db = Database(settings)
     db.open()
@@ -286,6 +325,9 @@ def test_execution_target_closes_only_actual_position_and_higher_analytics_conti
     monitor = Monitor(db, settings, "execution-target-worker")
     monitor.once()
     with db.connection() as conn:
+        assert conn.execute(
+            "SELECT availability_status FROM paper_trading.entry_market_evidence"
+        ).fetchone()["availability_status"] == "NO_NEARBY_QUOTE"
         assert (
             conn.execute(
                 "SELECT count(*) n FROM paper_trading.paper_orders WHERE trade_group_id=%s AND position_effect='CLOSE' AND status='ACCEPTED'",

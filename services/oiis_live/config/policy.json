@@ -1,11 +1,11 @@
 {
   "policy_id": "OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0",
-  "version": "3.3",
+  "version": "3.9",
   "scanner_mode": "OIIS_LIVE_FULL_DIRECTIONAL",
   "execution_mode": "OIIS_DAILY_LONG_PULLBACK",
-  "selection_times_ist": ["08:30", "09:30", "15:00"],
+  "selection_times_ist": ["09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00"],
   "trading_sessions_only": true,
-  "universe": "NIFTY50_FNO_INTERSECTION",
+  "universe": "ALL_FNO",
   "tiers": {
     "ofactor": {"low": 54, "medium": 64, "high": 74},
     "directional_edge": {"low": 6, "medium": 7, "high": 8},
@@ -27,15 +27,39 @@
     "rsi_max_exclusive": 30,
     "willr_period": 14,
     "willr_max_exclusive": -80,
-    "one_entry_per_symbol_per_trade_date": true,
+    "one_entry_per_symbol_per_trade_date_per_method": true,
     "fill_model": "NEXT_AVAILABLE_BAR_OPEN",
-    "maximum_ticket_inr": 200000
+    "maximum_ticket_inr": 200000,
+    "methods": [
+      {
+        "id": "RSI_WILLR",
+        "label": "RSI / Williams %R pullback",
+        "enabled": true
+      },
+      {
+        "id": "PRICE_MOMENTUM_1D_1H_15M",
+        "label": "Price above previous close + rising completed 1H and 15M closes",
+        "enabled": true,
+        "direction": "LONG",
+        "hourly_alignment": "NSE_0915_ANCHORED",
+        "fifteen_minute_alignment": "NSE_0915_ANCHORED",
+        "require_complete_candles": true
+      }
+    ]
+  },
+  "auto_paper_entry": {
+    "enabled": true,
+    "quality_sum_threshold": 185,
+    "top_candidates_per_run": 1,
+    "scheduled_slots_only": true,
+    "maximum_signal_age_minutes": 10,
+    "one_watchlist_item_per_symbol_per_trade_date": true
   },
   "execution": {
     "intraday_target_pct": "0.003",
     "swing_target_pct": "0.010",
-    "intraday_diagnostics": ["0.003", "0.005", "0.007"],
-    "swing_diagnostics": ["0.010", "0.020", "0.050"],
+    "intraday_diagnostics": ["0.003", "0.005", "0.010"],
+    "swing_diagnostics": ["0.010", "0.030", "0.050"],
     "horizons_sessions": [5, 30],
     "stop_exit": false,
     "timeout_exit": false

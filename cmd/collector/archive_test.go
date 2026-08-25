@@ -28,14 +28,17 @@ func TestTickArchiveSamplerIsPerTokenAndBoundedByTime(t *testing.T) {
 	}
 }
 
-func TestWSHealthTrackerCountsSequenceGaps(t *testing.T) {
+func TestWSHealthTrackerCountsOnlyDuplicateOrOutOfOrderSequences(t *testing.T) {
 	tracker := newWSHealthTracker()
 	now := time.Now().UTC()
 	tracker.Mark(smartapi.Tick{ConnectionID: "ws-1", Exchange: "NSE", Token: "1", Sequence: 10, ReceivedAt: now})
 	tracker.Mark(smartapi.Tick{ConnectionID: "ws-1", Exchange: "NSE", Token: "2", Sequence: 100, ReceivedAt: now.Add(500 * time.Millisecond)})
 	tracker.Mark(smartapi.Tick{ConnectionID: "ws-1", Exchange: "NSE", Token: "1", Sequence: 13, ReceivedAt: now.Add(time.Second)})
+	tracker.Mark(smartapi.Tick{ConnectionID: "ws-1", Exchange: "NSE", Token: "1", Sequence: 13, ReceivedAt: now.Add(1500 * time.Millisecond)})
+	tracker.Mark(smartapi.Tick{ConnectionID: "ws-1", Exchange: "NSE", Token: "1", Sequence: 12, ReceivedAt: now.Add(1750 * time.Millisecond)})
+	tracker.SetSubscriptionCounts(map[string]int{"ws-1": 37})
 	rows := tracker.Snapshot(now.Add(2*time.Second), 200)
-	if len(rows) != 1 || rows[0].SequenceGaps != 2 || rows[0].TicksReceived != 3 {
+	if len(rows) != 1 || rows[0].SequenceGaps != 1 || rows[0].TicksReceived != 5 || rows[0].SubscriptionsCount != 37 {
 		t.Fatalf("unexpected health snapshot: %+v", rows)
 	}
 }

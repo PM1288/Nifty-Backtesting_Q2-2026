@@ -10,7 +10,8 @@ STAMP="${BACKUP_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
 FINAL_DIR="${BACKUP_ROOT%/}/${STAMP}"
 WORK_DIR="${FINAL_DIR}.partial"
 
-if [[ "$(realpath -m "$BACKUP_ROOT")" == /home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026* ]]; then
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [[ "$(realpath -m "$BACKUP_ROOT")" == "$REPO_ROOT"* ]]; then
   echo "BACKUP_ROOT must be outside the Git repository" >&2
   exit 2
 fi

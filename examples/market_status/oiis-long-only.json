@@ -1,0 +1,45 @@
+{
+  "schema": "market-status-whatsapp.v1",
+  "event_id": "1b8e79f0-4191-5511-b292-364861535d8a",
+  "event_type": "market.oiis.candidates.changed.v1",
+  "environment": "MARKET_INTELLIGENCE",
+  "trade_date": "2026-08-11",
+  "generated_at": "2026-08-11T17:01:02.045965Z",
+  "data_as_of": "2026-08-11T03:46:05Z",
+  "timezone": "Asia/Kolkata",
+  "dedupe_key": "sample:oiis-long:2026-08-11",
+  "correlation_id": "3d5f57f7-0cad-4b6c-a8f9-fd9457e9afd1",
+  "source": {
+    "provider": "canonical-test-fixture",
+    "mode": "DATABASE"
+  },
+  "quality": {
+    "status": "VALID",
+    "coverage_count": 1,
+    "expected_count": 1,
+    "max_age_seconds": 10
+  },
+  "payload": {
+    "source_run_id": "c962bb6d-e558-48f0-a772-4254bed83cea",
+    "source_run_slot": "OPEN_0930",
+    "source_run_completed_at": "2026-08-11T03:46:05+00:00",
+    "scoring_rule_version": "OIIS:2.0",
+    "trade_date": "2026-08-11",
+    "long_candidates": [
+      {
+        "rank": 1,
+        "symbol": "AAA",
+        "direction": "LONG",
+        "xfactor": "76.1",
+        "ofactor": "74.8"
+      }
+    ],
+    "short_candidates": [],
+    "added_memberships": [
+      "LONG:AAA"
+    ],
+    "removed_memberships": [],
+    "first_qualifying_scan_of_day": true,
+    "data_as_of": "2026-08-11T03:46:05+00:00"
+  }
+}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -72,6 +73,14 @@ func tickKey(exchange, token string) string {
 func startHealthServer(ctx context.Context, addr string, st *store.Store, ticks *tickTracker, subsCount *atomic.Int64, logger *slog.Logger, tradingStart, tradingEnd string, loc *time.Location) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":     "ok",
+			"service":    "smartapi-collector",
+			"checked_at": time.Now().UTC(),
+		})
+	})
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		dbCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 
@@ -114,6 +123,20 @@ func startHealthServer(ctx context.Context, addr string, st *store.Store, ticks 
 		}
 		_ = json.NewEncoder(w).Encode(resp)
 	})
+	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		lastTick := ticks.LastTickAt()
+		age := -1.0
+		if !lastTick.IsZero() {
+			age = time.Since(lastTick).Seconds()
+		}
+		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
+		_, _ = w.Write([]byte("# HELP smartapi_collector_subscriptions Active broker subscriptions.\n"))
+		_, _ = w.Write([]byte("# TYPE smartapi_collector_subscriptions gauge\n"))
+		_, _ = w.Write([]byte("smartapi_collector_subscriptions " + formatMetricInt(subsCount.Load()) + "\n"))
+		_, _ = w.Write([]byte("# HELP smartapi_collector_last_tick_age_seconds Age of the newest received market tick.\n"))
+		_, _ = w.Write([]byte("# TYPE smartapi_collector_last_tick_age_seconds gauge\n"))
+		_, _ = w.Write([]byte("smartapi_collector_last_tick_age_seconds " + formatMetricFloat(age) + "\n"))
+	})
 
 	srv := &http.Server{Addr: addr, Handler: mux}
 
@@ -132,4 +155,12 @@ func startHealthServer(ctx context.Context, addr string, st *store.Store, ticks 
 		return nil
 	}
 	return err
+}
+
+func formatMetricInt(value int64) string {
+	return strconv.FormatInt(value, 10)
+}
+
+func formatMetricFloat(value float64) string {
+	return strconv.FormatFloat(value, 'f', 3, 64)
 }

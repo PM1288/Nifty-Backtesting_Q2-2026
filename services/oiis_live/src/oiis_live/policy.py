@@ -3,7 +3,9 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import time
 from typing import Any
+from zoneinfo import ZoneInfo
 
 
 LEVEL_ORDER = {"BELOW_MINIMUM": 0, "NO_CANDIDATE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3}
@@ -148,3 +150,94 @@ def williams_r(highs: Sequence[float], lows: Sequence[float], closes: Sequence[f
 
 def intraday_entry_eligible(rsi: float | None, willr: float | None, rsi_max: float = 30, willr_max: float = -80) -> bool:
     return rsi is not None and willr is not None and rsi < rsi_max and willr < willr_max
+
+
+IST = ZoneInfo("Asia/Kolkata")
+
+
+def _completed_exchange_bucket_closes(
+    bars: Sequence[Mapping[str, Any]], bucket_minutes: int
+) -> list[dict[str, Any]]:
+    """Return complete NSE-session-aligned candle closes from one-minute bars.
+
+    Buckets are anchored at 09:15 IST. A 15-minute candle therefore closes with
+    the 09:29 bar, and an hourly candle closes with the 10:14 bar. Incomplete or
+    gapped buckets are intentionally unavailable rather than inferred.
+    """
+    buckets: dict[tuple[Any, int], list[Mapping[str, Any]]] = {}
+    for bar in bars:
+        timestamp = bar.get("ts")
+        if timestamp is None:
+            continue
+        local = timestamp.astimezone(IST)
+        session_open = local.replace(hour=9, minute=15, second=0, microsecond=0)
+        elapsed = int((local - session_open).total_seconds() // 60)
+        if elapsed < 0 or local.time() > time(15, 30):
+            continue
+        bucket_index = elapsed // bucket_minutes
+        buckets.setdefault((local.date(), bucket_index), []).append(bar)
+
+    completed: list[dict[str, Any]] = []
+    for (session_date, bucket_index), values in sorted(buckets.items()):
+        ordered = sorted(values, key=lambda item: item["ts"])
+        expected_last_minute = bucket_index * bucket_minutes + bucket_minutes - 1
+        last_local = ordered[-1]["ts"].astimezone(IST)
+        session_open = last_local.replace(hour=9, minute=15, second=0, microsecond=0)
+        actual_last_minute = int((last_local - session_open).total_seconds() // 60)
+        unique_minutes = {value["ts"].replace(second=0, microsecond=0) for value in ordered}
+        if len(unique_minutes) != bucket_minutes or actual_last_minute < expected_last_minute:
+            continue
+        completed.append(
+            {
+                "session_date": session_date,
+                "bucket_index": bucket_index,
+                "close": float(ordered[-1]["close"]),
+                "closed_at": ordered[-1]["ts"],
+            }
+        )
+    return completed
+
+
+def price_momentum_entry_evaluation(
+    bars: Sequence[Mapping[str, Any]], previous_daily_close: float | None
+) -> dict[str, Any]:
+    """Evaluate the point-in-time LONG 1D/1H/15M confirmation entry.
+
+    Only complete exchange-anchored 15-minute and hourly candles are used. The
+    current-price comparison uses the newest available completed one-minute bar.
+    """
+    if not bars or previous_daily_close is None or previous_daily_close <= 0:
+        return {"eligible": False, "state": "WAIT_DATA", "reason": "PREVIOUS_CLOSE_OR_BARS_MISSING"}
+    ordered = sorted(bars, key=lambda item: item["ts"])
+    hourly = _completed_exchange_bucket_closes(ordered, 60)
+    fifteen = _completed_exchange_bucket_closes(ordered, 15)
+    if len(hourly) < 2 or len(fifteen) < 2:
+        return {
+            "eligible": False,
+            "state": "WAIT_CANDLES",
+            "reason": "TWO_COMPLETED_1H_AND_15M_CANDLES_REQUIRED",
+            "hourly_completed": len(hourly),
+            "fifteen_minute_completed": len(fifteen),
+        }
+    current_price = float(ordered[-1]["close"])
+    current_hour, previous_hour = hourly[-1], hourly[-2]
+    current_fifteen, previous_fifteen = fifteen[-1], fifteen[-2]
+    checks = {
+        "current_above_previous_daily_close": current_price > previous_daily_close,
+        "current_hour_above_previous_hour": current_hour["close"] > previous_hour["close"],
+        "current_15m_above_previous_15m": current_fifteen["close"] > previous_fifteen["close"],
+    }
+    return {
+        "eligible": all(checks.values()),
+        "state": "ENTRY_READY" if all(checks.values()) else "WAIT_PRICE_CONFIRMATION",
+        "reason": None if all(checks.values()) else "ONE_OR_MORE_PRICE_CONFIRMATIONS_FAILED",
+        "checks": checks,
+        "current_price": current_price,
+        "previous_daily_close": float(previous_daily_close),
+        "current_hour_close": current_hour["close"],
+        "previous_hour_close": previous_hour["close"],
+        "current_hour_closed_at": current_hour["closed_at"],
+        "current_15m_close": current_fifteen["close"],
+        "previous_15m_close": previous_fifteen["close"],
+        "current_15m_closed_at": current_fifteen["closed_at"],
+    }

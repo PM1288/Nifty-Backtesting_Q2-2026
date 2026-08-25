@@ -34,8 +34,10 @@ def _frame(conn: Any, query: str, params: tuple[Any, ...] = ()) -> pd.DataFrame:
         return pd.DataFrame(rows, columns=[column.name for column in cur.description])
 
 
-def refresh_universe(conn: Any) -> dict[str, int]:
-    """Refresh and activate only the point-in-time NIFTY 50/F&O intersection."""
+def refresh_universe(conn: Any, universe_mode: str = "NIFTY50_FNO_INTERSECTION") -> dict[str, int]:
+    """Refresh the F&O/NIFTY reference flags and activate the requested universe."""
+    if universe_mode not in {"ALL_FNO", "NIFTY50_FNO_INTERSECTION"}:
+        raise ValueError(f"unsupported OIIS universe: {universe_mode}")
     conn.execute("UPDATE oiis_live.universe_member SET is_fno=false, active=false WHERE is_fno")
     fno = conn.execute("""SELECT DISTINCT UPPER(TRIM(name)) symbol
       FROM public.instruments WHERE exchange='NFO'
@@ -65,7 +67,10 @@ def refresh_universe(conn: Any) -> dict[str, int]:
                 refreshed_at=now()""", (symbol,))
     except Exception:
         pass
-    conn.execute("UPDATE oiis_live.universe_member SET active=(is_fno AND is_nifty50)")
+    if universe_mode == "ALL_FNO":
+        conn.execute("UPDATE oiis_live.universe_member SET active=is_fno")
+    else:
+        conn.execute("UPDATE oiis_live.universe_member SET active=(is_fno AND is_nifty50)")
     counts = conn.execute("""SELECT count(*) FILTER (WHERE active) total,
       count(*) FILTER (WHERE is_fno) fno,
       count(*) FILTER (WHERE is_nifty50) nifty50
@@ -78,7 +83,7 @@ def load_prices(conn: Any, signal_date: date, as_of_ts: datetime | None = None) 
     history = _frame(conn, """
       WITH universe AS (
         SELECT symbol FROM oiis_live.universe_member
-        WHERE active AND is_fno AND is_nifty50
+        WHERE active AND is_fno
       ), canonical AS (
         SELECT DISTINCT ON (e.trade_date,UPPER(TRIM(e.symbol))) e.trade_date,
           UPPER(TRIM(e.symbol)) symbol,e.open_price::double precision open_price,

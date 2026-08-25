@@ -602,7 +602,7 @@ func (s *Store) ListOIISLiveSubscriptions(ctx context.Context) ([]Subscription, 
     JOIN %s.instruments i
       ON i.exchange='NSE' AND i.symbol_token=w.instrument_token
     WHERE w.active=true
-      AND w.trade_date BETWEEN (current_date - 1) AND (current_date + 1)
+      AND w.trade_date=(now() AT TIME ZONE 'Asia/Kolkata')::date
     ORDER BY w.trade_date,w.rank NULLS LAST,w.symbol
   `, quoteIdent(s.Schema))
 	rows, err := s.Pool.Query(ctx, q)

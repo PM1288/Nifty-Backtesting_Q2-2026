@@ -28,9 +28,10 @@ func newRequest(ctx context.Context, cfg config.SmartAPIConfig, method, rawURL s
 }
 
 func guardNoLiveOrders(cfg config.SmartAPIConfig, rawURL string) error {
-	if !cfg.DisableLiveOrders {
-		return nil
-	}
+	// This service is a market-data collector. Order and GTT endpoints are
+	// prohibited unconditionally; a malformed or future config must never turn
+	// the collector into an execution adapter.
+	_ = cfg
 	if rawURL == "" {
 		return nil
 	}

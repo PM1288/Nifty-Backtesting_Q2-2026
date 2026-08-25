@@ -136,6 +136,45 @@ class Ingestor:
                     errors += 1
         return {"rows_total": rows_total, "files_total": files_total, "errors": errors}
 
+    def daily(self, run_id: int, source_date: date) -> dict:
+        """Download every enabled manifest report for exactly one exchange session."""
+        reports = self.report_catalog.get("reports", {})
+        rows_total = 0
+        available_files = 0
+        errors = 0
+        missing_files: list[dict[str, object]] = []
+
+        for report_name, cfg in reports.items():
+            if not cfg.get("enabled", True):
+                continue
+            file_name = cfg["filename"].format(**fmt_ctx(source_date))
+            urls = [template.format(**fmt_ctx(source_date)) for template in cfg.get("url_candidates", [])]
+            result = self.downloader.download_report(report_name, source_date, cfg)
+            if result is None:
+                logger.warning("Required daily file unavailable report=%s date=%s", report_name, source_date)
+                db.record_unavailable_report(self.conn, run_id, report_name, source_date, file_name, urls)
+                missing_files.append({"report_id": report_name, "file_name": file_name})
+                continue
+            try:
+                processed = self.process_file(run_id, report_name, cfg["parser"], source_date, result.path)
+                rows_total += processed.rows_loaded
+                available_files += 1
+            except Exception as exc:
+                errors += 1
+                missing_files.append(
+                    {"report_id": report_name, "file_name": file_name, "reason": f"PARSE_FAILED: {exc}"}
+                )
+
+        return {
+            "source_trade_date": source_date.isoformat(),
+            "expected_files": sum(1 for cfg in reports.values() if cfg.get("enabled", True)),
+            "available_files": available_files,
+            "missing_count": len(missing_files),
+            "missing_files": missing_files,
+            "rows_total": rows_total,
+            "errors": errors,
+        }
+
     def load_bundle(self, run_id: int, bundle_path: Path, source_date_override: date | None = None) -> dict:
         rows_total = 0
         files_total = 0

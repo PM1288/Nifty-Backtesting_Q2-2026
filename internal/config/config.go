@@ -199,6 +199,7 @@ type LimitsConfig struct {
 	QuotePerHourCap            int `yaml:"quote_per_hour_cap"`
 	QuoteMaxSymbolsPerRequest  int `yaml:"quote_max_symbols_per_request"`
 	CandlesRPS                 int `yaml:"candles_rps"`
+	CandlesPerMinuteCap        int `yaml:"candles_per_minute_cap"`
 	CandlesPerHourCap          int `yaml:"candles_per_hour_cap"`
 	GreeksRPS                  int `yaml:"greeks_rps"`
 	AggregatesRPS              int `yaml:"aggregates_rps"`
@@ -237,18 +238,22 @@ type MetricsConfig struct {
 // ArchiveConfig controls derived persistence from the existing websocket and
 // REST streams. It never creates a second SmartAPI session or an order path.
 type ArchiveConfig struct {
-	Enable                         bool    `yaml:"enable"`
-	EnableMarketTicks              bool    `yaml:"enable_market_ticks"`
-	TickSampleMilliseconds         int     `yaml:"tick_sample_milliseconds"`
-	TickBufferSize                 int     `yaml:"tick_buffer_size"`
-	TickBatchSize                  int     `yaml:"tick_batch_size"`
-	EnableInstrumentSnapshots      bool    `yaml:"enable_instrument_snapshots"`
-	EnableOptionChainSnapshots     bool    `yaml:"enable_option_chain_snapshots"`
-	OptionChainIntervalSeconds     int     `yaml:"option_chain_interval_seconds"`
-	EnableWebsocketHealth          bool    `yaml:"enable_websocket_health"`
-	WebsocketHealthIntervalSeconds int     `yaml:"websocket_health_interval_seconds"`
-	DynamicGreeksShortlistSize     int     `yaml:"dynamic_greeks_shortlist_size"`
-	LocalGreekRiskFreeRate         float64 `yaml:"local_greek_risk_free_rate"`
+	Enable                            bool    `yaml:"enable"`
+	EnableMarketTicks                 bool    `yaml:"enable_market_ticks"`
+	TickSampleMilliseconds            int     `yaml:"tick_sample_milliseconds"`
+	TickBufferSize                    int     `yaml:"tick_buffer_size"`
+	TickBatchSize                     int     `yaml:"tick_batch_size"`
+	EnableInstrumentSnapshots         bool    `yaml:"enable_instrument_snapshots"`
+	EnableOptionChainSnapshots        bool    `yaml:"enable_option_chain_snapshots"`
+	OptionChainIntervalSeconds        int     `yaml:"option_chain_interval_seconds"`
+	OptionChainSnapshotTimeoutSeconds int     `yaml:"option_chain_snapshot_timeout_seconds"`
+	OptionChainSnapshotMaxAttempts    int     `yaml:"option_chain_snapshot_max_attempts"`
+	OptionChainRetryBaseSeconds       int     `yaml:"option_chain_retry_base_seconds"`
+	OptionChainStaleAfterSeconds      int     `yaml:"option_chain_stale_after_seconds"`
+	EnableWebsocketHealth             bool    `yaml:"enable_websocket_health"`
+	WebsocketHealthIntervalSeconds    int     `yaml:"websocket_health_interval_seconds"`
+	DynamicGreeksShortlistSize        int     `yaml:"dynamic_greeks_shortlist_size"`
+	LocalGreekRiskFreeRate            float64 `yaml:"local_greek_risk_free_rate"`
 }
 
 type StrategyConfig struct {
@@ -810,7 +815,10 @@ func applyDefaults(cfg *Config) {
 		cfg.Limits.QuoteMaxSymbolsPerRequest = 50
 	}
 	if cfg.Limits.CandlesRPS == 0 {
-		cfg.Limits.CandlesRPS = 3
+		cfg.Limits.CandlesRPS = 2
+	}
+	if cfg.Limits.CandlesPerMinuteCap == 0 {
+		cfg.Limits.CandlesPerMinuteCap = 120
 	}
 	if cfg.Limits.CandlesPerHourCap == 0 {
 		cfg.Limits.CandlesPerHourCap = 5000
@@ -1356,6 +1364,18 @@ func applyDefaults(cfg *Config) {
 		}
 		if cfg.Archive.OptionChainIntervalSeconds == 0 {
 			cfg.Archive.OptionChainIntervalSeconds = 300
+		}
+		if cfg.Archive.OptionChainSnapshotTimeoutSeconds == 0 {
+			cfg.Archive.OptionChainSnapshotTimeoutSeconds = 45
+		}
+		if cfg.Archive.OptionChainSnapshotMaxAttempts == 0 {
+			cfg.Archive.OptionChainSnapshotMaxAttempts = 3
+		}
+		if cfg.Archive.OptionChainRetryBaseSeconds == 0 {
+			cfg.Archive.OptionChainRetryBaseSeconds = 5
+		}
+		if cfg.Archive.OptionChainStaleAfterSeconds == 0 {
+			cfg.Archive.OptionChainStaleAfterSeconds = 900
 		}
 		if cfg.Archive.WebsocketHealthIntervalSeconds == 0 {
 			cfg.Archive.WebsocketHealthIntervalSeconds = 60
@@ -2029,6 +2049,9 @@ func (c *Config) Validate() error {
 	if c.WS.MaxTokensPerConnection < 1 {
 		return errors.New("ws.max_tokens_per_connection must be >= 1")
 	}
+	if c.WS.InsecureSkipVerify {
+		return errors.New("ws.insecure_skip_verify must be false; SmartAPI TLS verification is mandatory")
+	}
 	if c.WS.EnableDepthSnapshots && c.WS.DepthSnapshotIntervalSeconds < 1 {
 		return errors.New("ws.depth_snapshot_interval_seconds must be >= 1 when depth snapshots are enabled")
 	}
@@ -2043,6 +2066,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Limits.CandlesPerHourCap < 1 {
 		return errors.New("limits.candles_per_hour_cap must be >= 1")
+	}
+	if c.Limits.CandlesPerMinuteCap < 1 {
+		return errors.New("limits.candles_per_minute_cap must be >= 1")
 	}
 	if c.Limits.AggregatesPerMinuteCap < 1 {
 		return errors.New("limits.aggregates_per_minute_cap must be >= 1")
@@ -2176,6 +2202,18 @@ func (c *Config) Validate() error {
 		}
 		if c.Archive.EnableOptionChainSnapshots && c.Archive.OptionChainIntervalSeconds < 30 {
 			return errors.New("archive.option_chain_interval_seconds must be >= 30")
+		}
+		if c.Archive.EnableOptionChainSnapshots && c.Archive.OptionChainSnapshotTimeoutSeconds < 5 {
+			return errors.New("archive.option_chain_snapshot_timeout_seconds must be >= 5")
+		}
+		if c.Archive.EnableOptionChainSnapshots && (c.Archive.OptionChainSnapshotMaxAttempts < 1 || c.Archive.OptionChainSnapshotMaxAttempts > 10) {
+			return errors.New("archive.option_chain_snapshot_max_attempts must be between 1 and 10")
+		}
+		if c.Archive.EnableOptionChainSnapshots && c.Archive.OptionChainRetryBaseSeconds < 1 {
+			return errors.New("archive.option_chain_retry_base_seconds must be >= 1")
+		}
+		if c.Archive.EnableOptionChainSnapshots && c.Archive.OptionChainStaleAfterSeconds < c.Archive.OptionChainIntervalSeconds {
+			return errors.New("archive.option_chain_stale_after_seconds must be >= archive.option_chain_interval_seconds")
 		}
 		if c.Archive.EnableWebsocketHealth && c.Archive.WebsocketHealthIntervalSeconds < 5 {
 			return errors.New("archive.websocket_health_interval_seconds must be >= 5")

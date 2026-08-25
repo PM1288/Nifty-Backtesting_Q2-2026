@@ -462,6 +462,14 @@ def sync_raw_minute(trade_date: date | None = None) -> dict:
     if not trade_date:
         raise RuntimeError("No trade_date found in public.bars_1m")
     _ensure_partitions_for_trade_date(trade_date)
+    market_tz = ZoneInfo(get_settings().timezone)
+    session_start = datetime.combine(trade_date, time(9, 15), tzinfo=market_tz).astimezone(timezone.utc)
+    session_end = datetime.combine(trade_date, time(15, 30), tzinfo=market_tz).astimezone(timezone.utc)
+    source_params = {
+        "trade_date": trade_date,
+        "session_start": session_start,
+        "session_end": session_end,
+    }
 
     execute(
         """
@@ -491,6 +499,7 @@ def sync_raw_minute(trade_date: date | None = None) -> dict:
           coalesce(volume, 0), turnover, vwap, trades, source_pk, source_system
         from integration.v_source_security_1m
         where trade_date = %(trade_date)s
+          and minute_ts between %(session_start)s and %(session_end)s
         on conflict (trade_date, minute_ts, symbol) do update
         set open_px = excluded.open_px,
             high_px = excluded.high_px,
@@ -504,7 +513,7 @@ def sync_raw_minute(trade_date: date | None = None) -> dict:
             source_system = excluded.source_system,
             ingested_at = now()
         """,
-        {"trade_date": trade_date},
+        source_params,
     )
 
     execute(
@@ -518,6 +527,7 @@ def sync_raw_minute(trade_date: date | None = None) -> dict:
           volume, turnover, vwap, trades, source_pk, source_system
         from integration.v_source_index_1m
         where trade_date = %(trade_date)s
+          and minute_ts between %(session_start)s and %(session_end)s
         on conflict (trade_date, minute_ts, index_code) do update
         set index_name = excluded.index_name,
             open_px = excluded.open_px,
@@ -532,7 +542,7 @@ def sync_raw_minute(trade_date: date | None = None) -> dict:
             source_system = excluded.source_system,
             ingested_at = now()
         """,
-        {"trade_date": trade_date},
+        source_params,
     )
 
     return {
@@ -545,7 +555,46 @@ def sync_raw_minute(trade_date: date | None = None) -> dict:
 SECURITY_FEATURE_SQL = """
 delete from nse_intraday.security_minute_feature where trade_date = %(trade_date)s;
 
-with base as (
+with prev_security as materialized (
+  select
+    %(trade_date)s::date as trade_date,
+    upper(p.symbol) as symbol,
+    prev.prev_close,
+    stats.avg_daily_volume_20d,
+    coalesce(nullif(trim(p.sector), ''), 'OTHER')::text as sector_name,
+    coalesce(n100.weight::numeric(18,8), 1.0::numeric(18,8)) as universe_weight
+  from public.instrument_profiles p
+  left join lateral (
+    select d.close_price::numeric(18,6) as prev_close
+    from nse.fact_eod_prices d
+    where d.symbol = upper(p.symbol)
+      and d.series = 'EQ'
+      and d.trade_date < %(trade_date)s::date
+    order by d.trade_date desc
+    limit 1
+  ) prev on true
+  left join lateral (
+    select round(avg(v.volume)::numeric, 0)::bigint as avg_daily_volume_20d
+    from (
+      select d.total_traded_qty as volume
+      from nse.fact_eod_prices d
+      where d.symbol = upper(p.symbol)
+        and d.series = 'EQ'
+        and d.trade_date < %(trade_date)s::date
+      order by d.trade_date desc
+      limit 20
+    ) v
+  ) stats on true
+  left join lateral (
+    select c.weight
+    from public.index_constituents c
+    where c.index_name = 'NIFTY100' and upper(c.symbol) = upper(p.symbol)
+    order by c.updated_at desc
+    limit 1
+  ) n100 on true
+  where p.is_nifty_largemidcap_250 or p.is_nse_fno
+),
+base as (
   select
     r.trade_date,
     r.minute_ts,
@@ -569,7 +618,7 @@ with base as (
     lag(r.close_px, 15) over (partition by r.trade_date, r.symbol order by r.minute_ts) as close_15m_ago,
     lag(r.close_px, 30) over (partition by r.trade_date, r.symbol order by r.minute_ts) as close_30m_ago
   from nse_intraday.raw_security_1m r
-  left join integration.v_prev_security_daily p
+  left join prev_security p
     on p.trade_date = r.trade_date
    and p.symbol = r.symbol
   where r.trade_date = %(trade_date)s
@@ -666,7 +715,24 @@ delete from nse_intraday.market_minute_feature
 where trade_date = %(trade_date)s
   and (%(index_code)s::text is null or index_code = %(index_code)s::text);
 
-with idx_base as (
+with prev_index as materialized (
+  select
+    %(trade_date)s::date as trade_date,
+    %(index_code)s::text as index_code,
+    b.close::numeric(18,6) as prev_close
+  from public.bars_1d b
+  join public.subscriptions s
+    on s.exchange = b.exchange
+   and s.symbol_token = b.symbol_token
+   and s.exchange = 'NSE'
+   and s.kind = 'INDEX'
+   and s.active
+  where replace(upper(s.underlying), ' ', '') = replace(upper(%(index_code)s::text), ' ', '')
+    and b.trade_date < %(trade_date)s::date
+  order by b.trade_date desc
+  limit 1
+),
+idx_base as (
   select
     r.trade_date,
     r.minute_ts,
@@ -684,7 +750,7 @@ with idx_base as (
     lag(r.close_px, 15) over (partition by r.trade_date, r.index_code order by r.minute_ts) as close_15m_ago,
     lag(r.close_px, 30) over (partition by r.trade_date, r.index_code order by r.minute_ts) as close_30m_ago
   from nse_intraday.raw_index_1m r
-  left join integration.v_prev_index_daily p
+  left join prev_index p
     on p.trade_date = r.trade_date
    and p.index_code = r.index_code
   where r.trade_date = %(trade_date)s
@@ -1034,16 +1100,17 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
 
     stock_rows = fetch_all(
         """
-        select *
+        select distinct on (symbol) *
         from nse_intraday.security_minute_feature
-        where trade_date = %(trade_date)s and minute_ts = %(as_of_ts)s
-        order by symbol
+        where trade_date = %(trade_date)s and minute_ts <= %(as_of_ts)s
+        order by symbol, minute_ts desc
         """,
         {"trade_date": trade_date, "as_of_ts": as_of_ts},
     )
     index_change = _scalar(market_row.get("change_pct_from_prev_close"))
     live_rows: list[dict] = []
     for row in stock_rows:
+        row_as_of_ts = row.get("minute_ts") or as_of_ts
         stock_change = _scalar(row.get("change_pct_from_prev_close"))
         rel_strength_bps = 100.0 * (stock_change - index_change)
         change_15m = _scalar(row.get("change_pct_15m"))
@@ -1138,7 +1205,7 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
 
         payload = {
             "trade_date": trade_date,
-            "as_of_ts": as_of_ts,
+            "as_of_ts": row_as_of_ts,
             "symbol": row["symbol"],
             "sector_name": row.get("sector_name"),
             "last_price": row.get("last_price"),
@@ -1163,7 +1230,7 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
         live_rows.append(
             {
                 "trade_date": trade_date,
-                "as_of_ts": as_of_ts,
+                "as_of_ts": row_as_of_ts,
                 "symbol": row["symbol"],
                 "sector_name": row.get("sector_name"),
                 "last_price": row.get("last_price"),
@@ -1821,10 +1888,16 @@ def refresh_live_state(trade_date: date | None = None, index_code: str | None = 
     index_code = index_code or settings.default_index_code
     as_of_ts = fetch_val(
         """
-        select max(minute_ts)
-        from nse_intraday.market_minute_feature
-        where trade_date = %(trade_date)s
-          and index_code = %(index_code)s
+        select max(m.minute_ts)
+        from nse_intraday.market_minute_feature m
+        where m.trade_date = %(trade_date)s
+          and m.index_code = %(index_code)s
+          and exists (
+            select 1
+            from nse_intraday.security_minute_feature s
+            where s.trade_date = m.trade_date
+              and s.minute_ts = m.minute_ts
+          )
         """,
         {"trade_date": trade_date, "index_code": index_code},
     )
@@ -2388,23 +2461,35 @@ where trade_date = %(trade_date)s
   and index_code = %(index_code)s;
 
 with sec_close as (
-  select distinct on (trade_date, symbol)
-    trade_date,
-    symbol,
-    close_px
-  from integration.v_source_security_1m
-  where trade_date < %(trade_date)s
-  order by trade_date, symbol, minute_ts desc
+  select
+    b.trade_date,
+    upper(s.underlying) as symbol,
+    b.close as close_px
+  from public.bars_1d b
+  join public.subscriptions s
+    on s.exchange = b.exchange
+   and s.symbol_token = b.symbol_token
+   and s.exchange = 'NSE'
+   and s.kind = 'EQUITY'
+   and s.active
+  where b.trade_date < %(trade_date)s
+    and b.trade_date >= %(trade_date)s::date - interval '120 days'
 ),
 idx_close as (
-  select distinct on (trade_date, index_code)
-    trade_date,
-    index_code,
-    close_px
-  from integration.v_source_index_1m
-  where trade_date < %(trade_date)s
-    and index_code = %(index_code)s
-  order by trade_date, index_code, minute_ts desc
+  select
+    b.trade_date,
+    %(index_code)s::text as index_code,
+    b.close as close_px
+  from public.bars_1d b
+  join public.subscriptions s
+    on s.exchange = b.exchange
+   and s.symbol_token = b.symbol_token
+   and s.exchange = 'NSE'
+   and s.kind = 'INDEX'
+   and s.active
+  where replace(upper(s.underlying), ' ', '') = replace(upper(%(index_code)s::text), ' ', '')
+    and b.trade_date < %(trade_date)s
+    and b.trade_date >= %(trade_date)s::date - interval '120 days'
 ),
 sec_rets as (
   select
@@ -2472,8 +2557,9 @@ with bars as (
     coalesce(volume, 0) as minute_volume,
     sum(coalesce(volume, 0)) over (partition by trade_date, symbol order by minute_ts) as cum_volume,
     sum(coalesce(volume, 0)) over (partition by trade_date, symbol) as day_volume
-  from integration.v_source_security_1m
+  from nse_intraday.raw_security_1m
   where trade_date < %(trade_date)s
+    and trade_date >= %(trade_date)s::date - interval '40 days'
 ),
 ranked as (
   select
@@ -2517,6 +2603,7 @@ with sec as (
     f.day_vwap,
     f.vwap_dev_bps,
     f.cum_volume,
+    f.volume_ratio_day,
     f.above_vwap,
     f.range_position_pct,
     r.high_px as minute_high_px,
@@ -2586,7 +2673,10 @@ joined as (
     s.cum_volume,
     p.avg_minute_volume,
     p.avg_cum_volume_share_pct,
-    d.avg_daily_volume_20d
+    case
+      when s.volume_ratio_day is not null and s.volume_ratio_day > 0
+      then s.cum_volume::numeric / s.volume_ratio_day
+    end as avg_daily_volume_20d
   from sec2 s
   left join idx
     on idx.trade_date = s.trade_date
@@ -2599,9 +2689,6 @@ joined as (
     on p.trade_date = s.trade_date
    and p.symbol = s.symbol
    and p.minute_no = s.minute_no
-  left join integration.v_prev_security_daily d
-    on d.trade_date = s.trade_date
-   and d.symbol = s.symbol
 ),
 scored as (
   select
@@ -2710,8 +2797,19 @@ def refresh_feature_tables(trade_date: date | None = None, index_code: str | Non
     _ensure_partitions_for_trade_date(trade_date)
     execute(SECURITY_FEATURE_SQL, {"trade_date": trade_date})
     execute(MARKET_FEATURE_SQL, {"trade_date": trade_date, "index_code": index_code})
-    _refresh_beta_profiles(trade_date, index_code)
-    _refresh_volume_profiles(trade_date)
+    # Daily beta/volume baselines are invariant within the session. Rebuilding
+    # them every minute caused overlapping full-history scans and delayed the
+    # current minute features. Populate them once, then reuse them all day.
+    if not fetch_val(
+        "select exists(select 1 from nse_intraday.stock_daily_beta_profile where trade_date = %(trade_date)s and index_code = %(index_code)s)",
+        {"trade_date": trade_date, "index_code": index_code},
+    ):
+        _refresh_beta_profiles(trade_date, index_code)
+    if not fetch_val(
+        "select exists(select 1 from nse_intraday.stock_minute_volume_profile where trade_date = %(trade_date)s)",
+        {"trade_date": trade_date},
+    ):
+        _refresh_volume_profiles(trade_date)
     execute(STOCK_ALPHA_UPDATE_SQL, {"trade_date": trade_date, "index_code": index_code})
     return {
         "trade_date": trade_date.isoformat(),
@@ -2757,10 +2855,10 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
 
     stock_rows = fetch_all(
         """
-        select *
+        select distinct on (symbol) *
         from nse_intraday.security_minute_feature
-        where trade_date = %(trade_date)s and minute_ts = %(as_of_ts)s
-        order by symbol
+        where trade_date = %(trade_date)s and minute_ts <= %(as_of_ts)s
+        order by symbol, minute_ts desc
         """,
         {"trade_date": trade_date, "as_of_ts": as_of_ts},
     )
@@ -2778,6 +2876,7 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
     broad_participation = bool(market_state.get("broad_participation"))
     live_rows: list[dict] = []
     for row in stock_rows:
+        row_as_of_ts = row.get("minute_ts") or as_of_ts
         stock_change = _scalar(row.get("change_pct_from_prev_close"))
         rel_strength_bps = 100.0 * (stock_change - index_change)
         change_15m = _scalar(row.get("change_pct_15m"))
@@ -3010,7 +3109,7 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
 
         payload = {
             "trade_date": trade_date,
-            "as_of_ts": as_of_ts,
+            "as_of_ts": row_as_of_ts,
             "symbol": row["symbol"],
             "sector_name": row.get("sector_name"),
             "last_price": row.get("last_price"),
@@ -3056,7 +3155,7 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
         live_rows.append(
             {
                 "trade_date": trade_date,
-                "as_of_ts": as_of_ts,
+                "as_of_ts": row_as_of_ts,
                 "symbol": row["symbol"],
                 "sector_name": row.get("sector_name"),
                 "last_price": row.get("last_price"),
@@ -3107,8 +3206,10 @@ def _build_stock_live_rows(trade_date: date, as_of_ts: datetime, index_code: str
 def _persist_stock_live_rows(live_rows: list[dict]) -> None:  # type: ignore[override]
     if not live_rows:
         return
+    # Upsert before pruning. Deleting in a separate committed transaction made
+    # the public Stock 360 API intermittently return no rows while each minute's
+    # dashboard rebuild was still calculating/persisting the replacement set.
     trade_date = live_rows[0]["trade_date"]
-    execute("delete from nse_intraday.stock_intraday_live where trade_date = %(trade_date)s", {"trade_date": trade_date})
     execute_many(
         """
         insert into nse_intraday.stock_intraday_live (
@@ -3189,6 +3290,14 @@ def _persist_stock_live_rows(live_rows: list[dict]) -> None:  # type: ignore[ove
             }
             for row in live_rows
         ],
+    )
+    execute(
+        """
+        delete from nse_intraday.stock_intraday_live
+        where trade_date = %(trade_date)s
+          and not (symbol = any(%(symbols)s::text[]))
+        """,
+        {"trade_date": trade_date, "symbols": [row["symbol"] for row in live_rows]},
     )
 
 

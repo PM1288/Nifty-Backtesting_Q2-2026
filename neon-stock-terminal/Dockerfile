@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM node:20-bookworm AS deps
+FROM node:22-bookworm AS deps
 
 WORKDIR /app
 
@@ -21,6 +21,7 @@ ARG VITE_CLARITY_PROJECT_ID=
 ARG VITE_MATOMO_BASE_URL=
 ARG VITE_MATOMO_SITE_ID=
 ARG VITE_FIREBASE_API_KEY=
+ARG VITE_FIREBASE_AUTH_CONTINUE_URL=
 ARG VITE_DEV_LOCAL_AUTH_ENABLED=0
 ARG VITE_AUTO_AUTH_GATE=false
 
@@ -35,6 +36,7 @@ ENV VITE_CLARITY_PROJECT_ID=${VITE_CLARITY_PROJECT_ID}
 ENV VITE_MATOMO_BASE_URL=${VITE_MATOMO_BASE_URL}
 ENV VITE_MATOMO_SITE_ID=${VITE_MATOMO_SITE_ID}
 ENV VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY}
+ENV VITE_FIREBASE_AUTH_CONTINUE_URL=${VITE_FIREBASE_AUTH_CONTINUE_URL}
 ENV VITE_DEV_LOCAL_AUTH_ENABLED=${VITE_DEV_LOCAL_AUTH_ENABLED}
 ENV VITE_AUTO_AUTH_GATE=${VITE_AUTO_AUTH_GATE}
 
@@ -46,7 +48,7 @@ RUN npm run prisma:generate --workspace=@app/api \
   && cp -r apps/web/dist/. apps/api/web-dist/ \
   && npm prune --omit=dev --workspaces --include-workspace-root
 
-FROM node:20-bookworm-slim AS runtime
+FROM node:22-bookworm-slim AS runtime
 
 WORKDIR /app
 
@@ -63,6 +65,7 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/apps/api/web-dist ./apps/api/web-dist

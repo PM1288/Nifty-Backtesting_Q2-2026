@@ -10,6 +10,7 @@ from typing import Any
 import httpx
 
 from .events import canonical_json, sign
+from .whatsapp import build_gateway_payload, classify, load_entry_evidence, render_entry_chart
 
 
 class WebhookWorker:
@@ -67,31 +68,82 @@ class WebhookWorker:
                 if item["subscription_id"]
                 else None
             )
-        body = canonical_json(event["payload"])
+        event_payload = event["payload"]
+        body = canonical_json(event_payload)
         timestamp = str(int(time.time()))
-        url = str(sub["endpoint_url"] if sub else self.settings.N8N_WEBHOOK_URL)
-        headers = {
-            "Content-Type": "application/cloudevents+json",
-            "X-Paper-Event-Id": str(event["event_id"]),
-            "X-Paper-Delivery-Id": delivery_id,
-            "X-Paper-Delivery-Attempt": str(attempt),
-            "X-Paper-Event-Sequence": str(event["sequence"]),
-            "X-Paper-Signature-Timestamp": timestamp,
-            "X-Paper-Signature-256": sign(
-                timestamp, body, self.settings.WEBHOOK_SIGNING_SECRET.get_secret_value()
-            ),
-        }
+        direct_gateway = bool(self.settings.WA_GATEWAY_ENABLED and not sub)
+        decision = classify(event_payload, self.settings) if direct_gateway else None
+        if direct_gateway and decision and not decision.send:
+            duration = int((time.monotonic() - started) * 1000)
+            with self.db.connection() as conn:
+                conn.execute(
+                    f"INSERT INTO {self.schema}.webhook_delivery_attempts(delivery_id,outbox_id,attempt_number,started_at,completed_at,response_status,response_body_excerpt,error_class,duration_ms) VALUES (%s,%s,%s,now(),now(),204,%s,NULL,%s)",
+                    (delivery_id, item["outbox_id"], attempt, f"SUPPRESSED:{decision.reason}", duration),
+                )
+                conn.execute(
+                    f"UPDATE {self.schema}.webhook_outbox SET status='DELIVERED',attempt_count=%s,delivered_at=now(),lease_owner=NULL,lease_expires_at=NULL,last_error=%s WHERE outbox_id=%s",
+                    (attempt, f"SUPPRESSED:{decision.reason}", item["outbox_id"]),
+                )
+            return True
+
+        if direct_gateway:
+            assert decision is not None
+            factors: dict[str, Any] = {}
+            chart = None
+            if decision and decision.kind == "ENTRY":
+                try:
+                    factors, bars = load_entry_evidence(self.db, event_payload)
+                    if self.settings.WA_ENTRY_CHART_ENABLED:
+                        data = event_payload.get("data") or {}
+                        chart = render_entry_chart(
+                            bars,
+                            data.get("fill_price") or data.get("entry_price"),
+                            data.get("symbol") or "PAPER",
+                            factors,
+                        )
+                except Exception:
+                    # Media is evidence enhancement. A query/render problem must
+                    # not discard the compact operational text notification.
+                    factors, chart = {}, None
+            request_body = build_gateway_payload(
+                event_payload, decision, self.settings.WA_MYSELF_CHAT_ID, factors, chart
+            )
+            url = str(self.settings.WA_GATEWAY_URL)
+            headers = {
+                "Content-Type": "application/json; charset=utf-8",
+                "X-API-Token": self.settings.whatsapp_gateway_token,
+                "Idempotency-Key": str(event["event_id"]),
+                "X-Paper-Event-Id": str(event["event_id"]),
+                "X-Paper-Event-Sequence": str(event["sequence"]),
+            }
+        else:
+            request_body = None
+            url = str(sub["endpoint_url"] if sub else self.settings.N8N_WEBHOOK_URL)
+            headers = {
+                "Content-Type": "application/cloudevents+json",
+                "X-Paper-Event-Id": str(event["event_id"]),
+                "X-Paper-Delivery-Id": delivery_id,
+                "X-Paper-Delivery-Attempt": str(attempt),
+                "X-Paper-Event-Sequence": str(event["sequence"]),
+                "X-Paper-Signature-Timestamp": timestamp,
+                "X-Paper-Signature-256": sign(
+                    timestamp, body, self.settings.WEBHOOK_SIGNING_SECRET.get_secret_value()
+                ),
+            }
         status = None
         excerpt = ""
         error = None
         retry_after = None
         try:
-            response = self.client.post(
-                url,
-                content=body,
-                headers=headers,
-                auth=(self.settings.N8N_BASIC_USERNAME, self.settings.N8N_BASIC_PASSWORD.get_secret_value()),
-            )
+            if direct_gateway:
+                response = self.client.post(url, json=request_body, headers=headers)
+            else:
+                response = self.client.post(
+                    url,
+                    content=body,
+                    headers=headers,
+                    auth=(self.settings.N8N_BASIC_USERNAME, self.settings.N8N_BASIC_PASSWORD.get_secret_value()),
+                )
             status = response.status_code
             excerpt = response.text[:1000]
             retry_after = response.headers.get("Retry-After")

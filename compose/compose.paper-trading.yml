@@ -51,6 +51,17 @@ services:
   paper-webhook-worker:
     <<: *paper_image
     command: ["webhook-worker"]
+    environment:
+      <<: *paper_env
+      WA_GATEWAY_ENABLED: "true"
+      WA_GATEWAY_URL: ${WA_GATEWAY_URL:-https://wweb.noviusrailtech.com/webhook/send}
+      WA_GATEWAY_API_TOKEN_FILE: /run/secrets/whatsapp_gateway_api_token
+      WA_MYSELF_CHAT_ID: ${WA_MYSELF_CHAT_ID:-120363425559229373@g.us}
+      WA_ENTRY_CHART_ENABLED: ${WA_ENTRY_CHART_ENABLED:-true}
+      WA_DATA_ALERT_MIN_AFFECTED: ${WA_DATA_ALERT_MIN_AFFECTED:-10}
+      WA_DATA_ALERT_MIN_DURATION_SECONDS: ${WA_DATA_ALERT_MIN_DURATION_SECONDS:-1200}
+    secrets:
+      - whatsapp_gateway_api_token
 
   paper-scheduler:
     <<: *paper_image
@@ -75,3 +86,5 @@ services:
 secrets:
   paper_ui_service_token:
     file: ${PAPER_UI_SERVICE_TOKEN_FILE:-./secrets/paper_ui_service_token}
+  whatsapp_gateway_api_token:
+    file: ${WA_GATEWAY_API_TOKEN_FILE:-./secrets/whatsapp_gateway_api_token}

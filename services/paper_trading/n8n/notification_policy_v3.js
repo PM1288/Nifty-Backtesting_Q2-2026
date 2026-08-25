@@ -3,7 +3,7 @@
 const MAX_MESSAGE_LENGTH = 1500;
 const DEDUPE_TTL_MS = 48 * 60 * 60 * 1000;
 const DATA_ALERT_MIN_AFFECTED = 10;
-const DATA_ALERT_MIN_DURATION_SECONDS = 600;
+const DATA_ALERT_MIN_DURATION_SECONDS = 1200;
 const MATERIAL_ADVERSE_LEVELS = new Set([-1, -2, -5]);
 
 function object(value) {
@@ -172,7 +172,7 @@ function deliveryAllowed(ctx, kind) {
   if (delivery.send_whatsapp === false || (channels && !channels.includes('whatsapp'))) {
     return { allowed: false, reason: 'CHANNEL_DISABLED' };
   }
-  if (kind === 'SUPPRESS' || kind === 'LEG_CLOSE' || kind === 'INTENT_ACCEPTED' || kind === 'TARGET_HIT') {
+  if (kind === 'SUPPRESS' || kind === 'LEG_CLOSE' || kind === 'INTENT_ACCEPTED') {
     return { allowed: false, reason: 'NOISE_POLICY' };
   }
   if (kind === 'GROUP_OPEN') {
@@ -531,6 +531,9 @@ function formatNotification(payload, options = {}) {
     if (dateTime(ctx.occurredAt)) lines.push(dateTime(ctx.occurredAt));
   } else lines = formatTradeEvent(ctx, kind);
 
+  if (kind !== 'DELIVERY_TEST' && !lines.some((line) => String(line).includes('Simulation only'))) {
+    lines.push('_PAPER TRADE · Simulation only; no live order was placed_');
+  }
   let message = lines.filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n').trim();
   if (message.length > MAX_MESSAGE_LENGTH) message = `${message.slice(0, MAX_MESSAGE_LENGTH - 32)}\n…full details are in the dashboard`;
   const state = object(options.state);

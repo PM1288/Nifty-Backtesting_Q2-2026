@@ -142,7 +142,7 @@ test('suppresses duplicate single-leg group open and aggregates multi-leg group 
   assert.match(multi.whatsapp_message, /\*SBIN — PAPER OPENED\*/);
 });
 
-test('suppresses analytical target and execution-trigger precursor noise', () => {
+test('sends one analytical target but suppresses the execution-trigger precursor', () => {
   const target = run(cloudEvent('com.papertrading.target_track.closed.v1', {
     symbol: 'TITAN', side: 'BUY', strategy_id: 'OIIS_LIVE', entry_price: '3900',
     newly_closed_target_tracks: [
@@ -152,8 +152,9 @@ test('suppresses analytical target and execution-trigger precursor noise', () =>
   const trigger = run(cloudEvent('com.papertrading.execution_target.hit.v1', {
     symbol: 'TITAN', execution_action: 'FULL_CLOSE', target_pct: '0.003',
   }));
-  assert.equal(target.send, false);
-  assert.equal(target.reason, 'NOISE_POLICY');
+  assert.equal(target.send, true);
+  assert.match(target.whatsapp_message, /PAPER ANALYTICAL TARGET HIT/);
+  assert.match(target.whatsapp_message, /Simulation only/);
   assert.equal(trigger.send, false);
 });
 

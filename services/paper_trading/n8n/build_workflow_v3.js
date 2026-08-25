@@ -44,7 +44,7 @@ return [{ json: formatted }];
 const workflow = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
 const codeNode = workflow.nodes.find((node) =>
   node.type === 'n8n-nodes-base.code' &&
-  ['Format WhatsApp Message', 'Normalise and Format', 'Policy and Format'].includes(node.name)
+  ['Format WhatsApp Message', 'Normalise and Format', 'Policy and Format', 'Low-Noise Policy and Format'].includes(node.name)
 );
 if (!codeNode) throw new Error('No supported formatter Code node found in workflow template.');
 
@@ -89,6 +89,10 @@ for (const name of removedNodes) delete workflow.connections[name];
 
 const sendNode = workflow.nodes.find((node) => node.type === 'n8n-nodes-base.httpRequest' && node.disabled !== true);
 if (!sendNode) throw new Error('No enabled outbound HTTP Request node found.');
+sendNode.parameters.url = "={{ $vars.WA_GATEWAY_URL || $vars.PAPER_TRADE_WHATSAPP_GATEWAY_URL || 'https://wweb.noviusrailtech.com/webhook/send' }}";
+for (const parameter of sendNode.parameters?.bodyParameters?.parameters || []) {
+  if (parameter.name === 'chatId') parameter.value = '={{ $vars.WA_MYSELF_CHAT_ID || $vars.PAPER_TRADE_WHATSAPP_CHAT_ID }}';
+}
 
 const headerCredentialId = process.env.N8N_HEADER_AUTH_CREDENTIAL_ID;
 const headerCredentialName = process.env.N8N_HEADER_AUTH_CREDENTIAL_NAME || 'Paper WhatsApp Gateway - X-API-Token';

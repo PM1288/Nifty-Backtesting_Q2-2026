@@ -15,6 +15,7 @@ This manifest prevents additive dashboard work from silently removing shared she
 | Permanent NIFTY ticker | `HeaderTicker.tsx` and `AppShell.tsx` | Visible on every authenticated workspace and rigidly attached to the header |
 | Strategy destinations | `workspaceRoutes.ts`, route catalogue and responsive navigation | Trendlyne Summary, OIIS Lab, Monthly Strategy, Rolling Strategy, Long Options and NIFTY Options remain reachable |
 | Paper evidence workbench | `/paper-trading` route and `PaperTradingCommandCenter.tsx` | Existing evidence, filters, detail inspector and market-book fields remain present |
+| Paper WhatsApp lifecycle alerts | `paper-webhook-worker`, `papertrade/whatsapp.py` and PostgreSQL outbox | Configurable chat ID; entry/target/exit events are formatted, low-noise and idempotent; entries add a fail-soft candlestick/RSI/factor PNG |
 | Monthly rejected ledger | `MonthlyStrategiesPage.tsx` plus `rolling_monthly.evaluation_ledger` | Selection filter exposes selected, rejected, incomplete and all evaluated stocks; rejected rows show reasons |
 | Rolling rejected ledger | `MonthlyStrategiesPage.tsx`, `rollingWindow.ts` and `rolling_monthly.rolling_window_evaluation` | Population filter exposes selected, continuation, rejected and incomplete stocks; rejected rows show reasons |
 | Native cursor preservation | `MarketTargetCursor.module.css` | Target overlay may snap to controls but must never apply `cursor:none` to the page |

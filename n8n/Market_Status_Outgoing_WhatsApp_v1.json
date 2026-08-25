@@ -74,7 +74,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $vars.MARKET_STATUS_WHATSAPP_GATEWAY_URL }}",
+        "url": "={{ $vars.WA_GATEWAY_URL || $vars.MARKET_STATUS_WHATSAPP_GATEWAY_URL || 'https://wweb.noviusrailtech.com/webhook/send' }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -103,7 +103,7 @@
           "parameters": [
             {
               "name": "chatId",
-              "value": "={{ $vars.MARKET_STATUS_WHATSAPP_CHAT_ID }}"
+              "value": "={{ $vars.WA_MYSELF_CHAT_ID || $vars.MARKET_STATUS_WHATSAPP_CHAT_ID }}"
             },
             {
               "name": "message",

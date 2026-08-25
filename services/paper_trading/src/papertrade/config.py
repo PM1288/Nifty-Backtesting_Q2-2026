@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 from decimal import Decimal
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import AnyHttpUrl, SecretStr, field_validator, model_validator
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     DEFAULT_ACCOUNT_ID: str = "paper-main"
     STARTING_PAPER_CAPITAL: Decimal = Decimal("1600000")
     DEFAULT_INCOME_TAX_RATE: Decimal = Decimal("0.35")
-    N8N_WEBHOOK_URL: AnyHttpUrl
+    N8N_WEBHOOK_URL: AnyHttpUrl | None = None
     N8N_CRITICAL_WEBHOOK_URL: AnyHttpUrl | None = None
     N8N_BASIC_USERNAME: str
     N8N_BASIC_PASSWORD: SecretStr
@@ -35,6 +36,13 @@ class Settings(BaseSettings):
     WEBHOOK_TIMEOUT_SECONDS: Decimal = Decimal("10")
     WEBHOOK_MAX_ATTEMPTS: int = 12
     WEBHOOK_BASE_RETRY_SECONDS: int = 5
+    WA_GATEWAY_ENABLED: bool = False
+    WA_GATEWAY_URL: AnyHttpUrl | None = None
+    WA_GATEWAY_API_TOKEN_FILE: str | None = None
+    WA_MYSELF_CHAT_ID: str | None = None
+    WA_ENTRY_CHART_ENABLED: bool = True
+    WA_DATA_ALERT_MIN_AFFECTED: int = 10
+    WA_DATA_ALERT_MIN_DURATION_SECONDS: int = 1200
     DAILY_SUMMARY_TIME: str = "16:00"
     WEEKLY_SUMMARY_DAY: int = 5
     WEEKLY_SUMMARY_TIME: str = "10:00"
@@ -59,6 +67,15 @@ class Settings(BaseSettings):
             raise ValueError("API_SERVICE_TOKENS is mandatory")
         if len(self.WEBHOOK_SIGNING_SECRET.get_secret_value()) < 24:
             raise ValueError("WEBHOOK_SIGNING_SECRET must contain at least 24 characters")
+        if self.WA_GATEWAY_ENABLED:
+            if not self.WA_GATEWAY_URL or not self.WA_MYSELF_CHAT_ID or not self.WA_GATEWAY_API_TOKEN_FILE:
+                raise ValueError(
+                    "WA_GATEWAY_URL, WA_GATEWAY_API_TOKEN_FILE and WA_MYSELF_CHAT_ID are mandatory when WA_GATEWAY_ENABLED=true"
+                )
+            if not Path(self.WA_GATEWAY_API_TOKEN_FILE).is_file():
+                raise ValueError("WA_GATEWAY_API_TOKEN_FILE does not exist")
+        elif self.N8N_WEBHOOK_URL is None:
+            raise ValueError("N8N_WEBHOOK_URL is mandatory when the direct WhatsApp gateway is disabled")
         if not (Decimal("0") <= self.DEFAULT_INCOME_TAX_RATE <= Decimal("1")):
             raise ValueError("DEFAULT_INCOME_TAX_RATE must be between 0 and 1")
         return self
@@ -81,6 +98,12 @@ class Settings(BaseSettings):
             for item in self.API_SERVICE_TOKENS.get_secret_value().split(",")
             if item.strip()
         }
+
+    @property
+    def whatsapp_gateway_token(self) -> str:
+        if not self.WA_GATEWAY_API_TOKEN_FILE:
+            return ""
+        return Path(self.WA_GATEWAY_API_TOKEN_FILE).read_text(encoding="utf-8").strip()
 
 
 @lru_cache

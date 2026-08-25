@@ -140,9 +140,9 @@ class Settings:
 
     # ---- New-report webhook ------------------------------------------------
     webhook_enabled: bool = _env_bool("WEBHOOK_ENABLED", False)
-    webhook_url: Optional[str] = os.getenv("WEBHOOK_URL")
-    webhook_token_file: Optional[str] = os.getenv("WEBHOOK_TOKEN_FILE")
-    webhook_chat_id: Optional[str] = os.getenv("WEBHOOK_CHAT_ID")
+    webhook_url: Optional[str] = os.getenv("WA_GATEWAY_URL") or os.getenv("WEBHOOK_URL")
+    webhook_token_file: Optional[str] = os.getenv("WA_GATEWAY_API_TOKEN_FILE") or os.getenv("WEBHOOK_TOKEN_FILE")
+    webhook_chat_id: Optional[str] = os.getenv("WA_MYSELF_CHAT_ID") or os.getenv("WEBHOOK_CHAT_ID")
     webhook_timeout_sec: int = _env_int("WEBHOOK_TIMEOUT_SECONDS", 15)
     webhook_batch_size: int = _env_int("WEBHOOK_BATCH_SIZE", 50)
 

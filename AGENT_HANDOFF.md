@@ -3005,3 +3005,17 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Slow/full hydration cannot erase the valid summary. Failures retain usable information and expose a detailed-evidence retry.
 - Applied additive read indexes in `db/sql/054_paper_workspace_read_indexes.sql`; the per-trade OIIS entry-evidence lookup improved from about 1.35 seconds to 0.19 seconds for the current ledger.
 - No trading data, formulas, execution semantics or paper/live permissions changed. Full evidence: `docs/worklogs/paper-progressive-loading-2026-08-25.md`.
+
+## 2026-08-25 — Configurable low-noise WhatsApp adapter and entry evidence media
+
+- Replaced the default Paper outbox's external n8n hop with a direct adapter in the independent
+  `paper-webhook-worker`; trading calculations and database writes never wait for notification delivery.
+- Standardised the configurable destination variables as `WA_GATEWAY_URL`,
+  `WA_GATEWAY_API_TOKEN_FILE` and `WA_MYSELF_CHAT_ID`. The secret is Docker-mounted and never stored
+  in Git; changing a group requires deployment configuration only.
+- Routine acknowledgements, pending/tick/horizon chatter and transient stale/recovered flaps remain
+  durable but are suppressed from WhatsApp. Entry, target, partial/full exit, reject, summaries,
+  critical failures and sustained/broad data outages remain enabled.
+- Paper entries render a 1080 x 1080 PNG from time-valid NSE one-minute candles with an entry line,
+  RSI panel and O/X factor evidence. Media lookup/rendering is fail-soft, so text delivery remains.
+- Gateway and rollback contract: `services/paper_trading/docs/whatsapp-gateway-v4.md`.

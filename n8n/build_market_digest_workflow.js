@@ -69,12 +69,12 @@ const workflow = {
     {
       parameters: {
         method: 'POST',
-        url: "={{ $vars.PAPER_TRADE_WHATSAPP_GATEWAY_URL || 'https://wweb.noviusrailtech.com/webhook/send' }}",
+        url: "={{ $vars.WA_GATEWAY_URL || $vars.PAPER_TRADE_WHATSAPP_GATEWAY_URL || 'https://wweb.noviusrailtech.com/webhook/send' }}",
         authentication: 'genericCredentialType',
         genericAuthType: 'httpHeaderAuth',
         sendBody: true,
         bodyParameters: {parameters: [
-          {name: 'chatId', value: '={{ $vars.PAPER_TRADE_WHATSAPP_CHAT_ID }}'},
+          {name: 'chatId', value: '={{ $vars.WA_MYSELF_CHAT_ID || $vars.PAPER_TRADE_WHATSAPP_CHAT_ID }}'},
           {name: 'message', value: '={{ $json.whatsapp_message }}'},
         ]},
         options: {timeout: 15000},

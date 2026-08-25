@@ -1,0 +1,6 @@
+flowchart LR
+  API[Typed API response] --> Adapter[Page view model/series builder]
+  Adapter --> Options[ECharts option or SVG props]
+  Options --> Chart[Rendered chart]
+  Chart --> Tooltip[Tooltip/selection]
+  Chart --> Inspector[Table or detail inspector]

@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "structural": {
+    "duplicateIds": [],
+    "unnamedControls": [],
+    "unnamedDialogs": 0,
+    "positiveTabIndex": 0,
+    "h1Count": 1,
+    "reducedMotion": true,
+    "bodyOverflow": false
+  },
+  "keyboard": {
+    "rowEnterOpenedInspector": true,
+    "escapeClosedInspector": true,
+    "activeElementAfterClose": "TR"
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "bodyOverflow": false
+  },
+  "note": "960px layout is the 1920px desktop reflow-equivalent used for the automated 200% zoom pass."
+}

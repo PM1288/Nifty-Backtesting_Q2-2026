@@ -1,0 +1,4777 @@
+[
+  {
+    "name": "RouteFallback",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 100,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "LegacyStockRedirect",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 105,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "App",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 111,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/strategies/:strategyId",
+      "/strategy/rolling-monthly/legacy",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "ChangeHeatmapPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 49,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "RsiSurfacePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 50,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "WillSurfacePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 51,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsOverviewPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 52,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsLeadershipPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 53,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/leadership",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSetupsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 54,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/daily-setups",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsEventContextPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 55,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/context",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsFiiFlowPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 56,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/context",
+      "/institutional/flow",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsMarketStatePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 57,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsEventsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 58,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsFiiReportsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 59,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsFlowsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 60,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/events",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSupportingMetricsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 61,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsQualityPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 62,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSystemMapPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 63,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsRegimePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 64,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsRiskPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 65,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsLearnPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 66,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSimulatorPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 67,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsIndicatorsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 68,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsStockPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 69,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsOptionsStructurePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 70,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsOptionsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 71,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsStrategyEvaluationPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 72,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "FeedbackPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 73,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/feedback",
+      "/options/structure",
+      "/options/snapshot",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingOverviewPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 74,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingLabPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 75,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/lab",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingStrategyLibraryPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 76,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/strategies",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingStrategyDetailPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 77,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/strategies/:strategyId",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingPortfolioResultsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 78,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/results",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingRegimeAnalysisPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 79,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/regimes",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingStockInsightsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 80,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/stocks",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingDailySummaryPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 81,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingComparePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 82,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingRunsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 83,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingH30Page",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 84,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/daily-summary",
+      "/backtesting/compare",
+      "/backtesting/runs",
+      "/backtesting/h30",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "OiisLivePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 85,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/oiis-live",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "RollingMonthlyPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 86,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/rolling-monthly/legacy",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "MonthlyStrategyPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 87,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "RollingMonthlyLegacyRouter",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 88,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "LongOptionsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 89,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "NiftyWeeklyOptionsPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 90,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "NseIntelligencePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 91,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "OiisRunHistoryPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 92,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/institutional/nse-intelligence",
+      "/institutional/nse-intelligence/sectors",
+      "/institutional/nse-intelligence/fno",
+      "/institutional/nse-intelligence/events",
+      "/institutional/nse-intelligence/reports",
+      "/strategy/oiis-live/history",
+      "/strategy/long-options",
+      "/strategy/nifty-options",
+      "/strategy/nifty-weekly-options",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "FnoVolatilityPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 93,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/options/volatility-signals",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "OptionsIntelligencePage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 94,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/options/intelligence",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "PaperTradingPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 95,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "Nifty500Page",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 96,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "FuturesPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 97,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AdminPage",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "line": 98,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./pages/AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "PerformanceDebugPanel",
+    "file": "neon-stock-terminal/apps/web/src/analytics/PerformanceDebugPanel.tsx",
+    "line": 21,
+    "usedBy": [
+      "/"
+    ],
+    "cssModules": [
+      "./PerformanceDebugPanel.module.css"
+    ]
+  },
+  {
+    "name": "IndicatorAnalyticsDebugPanel",
+    "file": "neon-stock-terminal/apps/web/src/analytics/useIndicatorAnalytics.tsx",
+    "line": 225,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "AuthGateProvider",
+    "file": "neon-stock-terminal/apps/web/src/auth/AuthGateProvider.tsx",
+    "line": 221,
+    "usedBy": [
+      "/",
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/options/structure",
+      "/options/snapshot",
+      "/strategy/oiis-live",
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": []
+  },
+  {
+    "name": "AUTO_AUTH_GATE_ENABLED",
+    "file": "neon-stock-terminal/apps/web/src/auth/AuthGateProvider.tsx",
+    "line": 39,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "ACTION_QUEUE_STORAGE_KEY",
+    "file": "neon-stock-terminal/apps/web/src/auth/AuthGateProvider.tsx",
+    "line": 40,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "EMAIL_REGEX",
+    "file": "neon-stock-terminal/apps/web/src/auth/AuthGateProvider.tsx",
+    "line": 41,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "AuthGateContext",
+    "file": "neon-stock-terminal/apps/web/src/auth/AuthGateProvider.tsx",
+    "line": 71,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "AuthGateModal",
+    "file": "neon-stock-terminal/apps/web/src/components/auth/AuthGateModal.tsx",
+    "line": 79,
+    "usedBy": [],
+    "cssModules": [
+      "./AuthGateModal.module.css"
+    ]
+  },
+  {
+    "name": "EMAIL_REGEX",
+    "file": "neon-stock-terminal/apps/web/src/components/auth/AuthGateModal.tsx",
+    "line": 12,
+    "usedBy": [],
+    "cssModules": [
+      "./AuthGateModal.module.css"
+    ]
+  },
+  {
+    "name": "VERIFICATION_RESEND_COOLDOWN_MS",
+    "file": "neon-stock-terminal/apps/web/src/components/auth/AuthGateModal.tsx",
+    "line": 13,
+    "usedBy": [],
+    "cssModules": [
+      "./AuthGateModal.module.css"
+    ]
+  },
+  {
+    "name": "VERIFICATION_RESEND_STORAGE_KEY",
+    "file": "neon-stock-terminal/apps/web/src/components/auth/AuthGateModal.tsx",
+    "line": 14,
+    "usedBy": [],
+    "cssModules": [
+      "./AuthGateModal.module.css"
+    ]
+  },
+  {
+    "name": "AppShell",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+    "line": 104,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AppShell.module.css"
+    ]
+  },
+  {
+    "name": "AuthStatus",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/AuthStatus.tsx",
+    "line": 13,
+    "usedBy": [],
+    "cssModules": [
+      "./AuthStatus.module.css"
+    ]
+  },
+  {
+    "name": "CommandPalette",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/CommandPalette.tsx",
+    "line": 45,
+    "usedBy": [],
+    "cssModules": [
+      "./CommandPalette.module.css"
+    ]
+  },
+  {
+    "name": "GROUP_ORDER",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/CommandPalette.tsx",
+    "line": 9,
+    "usedBy": [],
+    "cssModules": [
+      "./CommandPalette.module.css"
+    ]
+  },
+  {
+    "name": "FOCUSABLE",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/CommandPalette.tsx",
+    "line": 10,
+    "usedBy": [],
+    "cssModules": [
+      "./CommandPalette.module.css"
+    ]
+  },
+  {
+    "name": "FooterDisclaimer",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/FooterDisclaimer.tsx",
+    "line": 6,
+    "usedBy": [],
+    "cssModules": [
+      "./FooterDisclaimer.module.css"
+    ]
+  },
+  {
+    "name": "HeaderTicker",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/HeaderTicker.tsx",
+    "line": 6,
+    "usedBy": [],
+    "cssModules": [
+      "./HeaderTicker.module.css"
+    ]
+  },
+  {
+    "name": "MarqueeText",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/MarqueeText.tsx",
+    "line": 4,
+    "usedBy": [],
+    "cssModules": [
+      "./MarqueeText.module.css"
+    ]
+  },
+  {
+    "name": "ResponsiveWorkspaceNavigation",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+    "line": 28,
+    "usedBy": [],
+    "cssModules": [
+      "./ResponsiveWorkspaceNavigation.module.css"
+    ]
+  },
+  {
+    "name": "MOBILE_BREAKPOINT",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+    "line": 20,
+    "usedBy": [],
+    "cssModules": [
+      "./ResponsiveWorkspaceNavigation.module.css"
+    ]
+  },
+  {
+    "name": "FOCUSABLE",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+    "line": 21,
+    "usedBy": [],
+    "cssModules": [
+      "./ResponsiveWorkspaceNavigation.module.css"
+    ]
+  },
+  {
+    "name": "Icon",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+    "line": 202,
+    "usedBy": [],
+    "cssModules": [
+      "./ResponsiveWorkspaceNavigation.module.css"
+    ]
+  },
+  {
+    "name": "ItemIcon",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+    "line": 245,
+    "usedBy": [],
+    "cssModules": [
+      "./ResponsiveWorkspaceNavigation.module.css"
+    ]
+  },
+  {
+    "name": "TickerTape",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/TickerTape.tsx",
+    "line": 7,
+    "usedBy": [],
+    "cssModules": [
+      "./TickerTape.module.css"
+    ]
+  },
+  {
+    "name": "StatGrid",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 143,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "LeaderList",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 154,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "SectorList",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 194,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "IndicatorChartFrame",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 228,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "ChartRangeSelector",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 307,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "IndicatorHero",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 331,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "ThresholdGuideTable",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 390,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "CurrentStatusSummary",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 409,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "HeatmapScaleLegend",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 610,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "PriceIndicatorSignalChart",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 728,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "ForwardReturnHeatmap",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 809,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "StrategySummaryCards",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 821,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "EquityCurveChart",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 847,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "DrawdownChart",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 898,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "TradeReturnDistribution",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 909,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "HoldingDurationChart",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 919,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "CapitalDeploymentChart",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 929,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "OpenPositionReturnChart",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 940,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "CurrentPortfolioSection",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 966,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "StrategyPerStockTable",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 1039,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "StockResultTable",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 1087,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "AssumptionsCard",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 1130,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "LimitationsCard",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 1145,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "CHART_SANS",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 48,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "CHART_MONO",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 49,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "CHART_RANGE_OPTIONS",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "line": 286,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorEducationBlocks.module.css"
+    ]
+  },
+  {
+    "name": "DashboardInfoPopup",
+    "file": "neon-stock-terminal/apps/web/src/components/market/DashboardInfoPopup.tsx",
+    "line": 36,
+    "usedBy": [
+      "/"
+    ],
+    "cssModules": [
+      "./DashboardInfoPopup.module.css"
+    ]
+  },
+  {
+    "name": "HeatmapLensNavigation",
+    "file": "neon-stock-terminal/apps/web/src/components/market/HeatmapLensNavigation.tsx",
+    "line": 10,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./HeatmapLensNavigation.module.css"
+    ]
+  },
+  {
+    "name": "IndicatorMarkers",
+    "file": "neon-stock-terminal/apps/web/src/components/market/IndicatorMarkers.tsx",
+    "line": 12,
+    "usedBy": [
+      "/"
+    ],
+    "cssModules": [
+      "./IndicatorMarkers.module.css"
+    ]
+  },
+  {
+    "name": "TRACK_INSET_PX",
+    "file": "neon-stock-terminal/apps/web/src/components/market/IndicatorMarkers.tsx",
+    "line": 5,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorMarkers.module.css"
+    ]
+  },
+  {
+    "name": "MARKER_HALF_PX",
+    "file": "neon-stock-terminal/apps/web/src/components/market/IndicatorMarkers.tsx",
+    "line": 6,
+    "usedBy": [],
+    "cssModules": [
+      "./IndicatorMarkers.module.css"
+    ]
+  },
+  {
+    "name": "MoversSidebar",
+    "file": "neon-stock-terminal/apps/web/src/components/market/MoversSidebar.tsx",
+    "line": 13,
+    "usedBy": [],
+    "cssModules": [
+      "./MoversSidebar.module.css"
+    ]
+  },
+  {
+    "name": "StockPill",
+    "file": "neon-stock-terminal/apps/web/src/components/market/StockPill.tsx",
+    "line": 48,
+    "usedBy": [
+      "/"
+    ],
+    "cssModules": [
+      "./StockPill.module.css"
+    ]
+  },
+  {
+    "name": "StockPixelField",
+    "file": "neon-stock-terminal/apps/web/src/components/market/StockPixelField.tsx",
+    "line": 24,
+    "usedBy": [],
+    "cssModules": [
+      "./StockPixelField.module.css"
+    ]
+  },
+  {
+    "name": "TopList",
+    "file": "neon-stock-terminal/apps/web/src/components/market/TopList.tsx",
+    "line": 6,
+    "usedBy": [],
+    "cssModules": [
+      "./TopList.module.css"
+    ]
+  },
+  {
+    "name": "PageHeader",
+    "file": "neon-stock-terminal/apps/web/src/components/navigation/StrategicPrimitives.tsx",
+    "line": 7,
+    "usedBy": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./StrategicPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "RelatedJourney",
+    "file": "neon-stock-terminal/apps/web/src/components/navigation/StrategicPrimitives.tsx",
+    "line": 16,
+    "usedBy": [
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/strategy/oiis-live",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./StrategicPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "LearnAboutThisAnalysis",
+    "file": "neon-stock-terminal/apps/web/src/components/navigation/StrategicPrimitives.tsx",
+    "line": 23,
+    "usedBy": [
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/strategy/oiis-live",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./StrategicPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ReturnToSource",
+    "file": "neon-stock-terminal/apps/web/src/components/navigation/StrategicPrimitives.tsx",
+    "line": 35,
+    "usedBy": [
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol"
+    ],
+    "cssModules": [
+      "./StrategicPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "SourceFreshness",
+    "file": "neon-stock-terminal/apps/web/src/components/navigation/StrategicPrimitives.tsx",
+    "line": 41,
+    "usedBy": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./StrategicPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ExternalEvidenceLink",
+    "file": "neon-stock-terminal/apps/web/src/components/navigation/StrategicPrimitives.tsx",
+    "line": 45,
+    "usedBy": [],
+    "cssModules": [
+      "./StrategicPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "AccountingClassBadge",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 16,
+    "usedBy": [],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "MetricDefinitionPopover",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 20,
+    "usedBy": [],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "WorkbenchMetric",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 39,
+    "usedBy": [],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "PaperWorkbenchHeader",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 51,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "PaperWorkbenchSubnav",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 73,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "AnalysisContextBar",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 81,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "AccountingLaneOverview",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 98,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "CalculationTraceDrawer",
+    "file": "neon-stock-terminal/apps/web/src/components/paper/PaperWorkbenchPrimitives.tsx",
+    "line": 112,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperWorkbenchPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "StockLogo",
+    "file": "neon-stock-terminal/apps/web/src/components/stocks/StockProfileControls.tsx",
+    "line": 5,
+    "usedBy": [],
+    "cssModules": [
+      "./StockProfileControls.module.css"
+    ]
+  },
+  {
+    "name": "StockIdentity",
+    "file": "neon-stock-terminal/apps/web/src/components/stocks/StockProfileControls.tsx",
+    "line": 10,
+    "usedBy": [
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./StockProfileControls.module.css"
+    ]
+  },
+  {
+    "name": "StockUniverseFilterBar",
+    "file": "neon-stock-terminal/apps/web/src/components/stocks/StockProfileControls.tsx",
+    "line": 13,
+    "usedBy": [
+      "/",
+      "/strategy/oiis-live",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./StockProfileControls.module.css"
+    ]
+  },
+  {
+    "name": "StockDistribution",
+    "file": "neon-stock-terminal/apps/web/src/components/stocks/StockProfileControls.tsx",
+    "line": 23,
+    "usedBy": [
+      "/",
+      "/strategy/oiis-live",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./StockProfileControls.module.css"
+    ]
+  },
+  {
+    "name": "ButtonLink",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 58,
+    "usedBy": [
+      "/feedback",
+      "/options/structure",
+      "/options/snapshot"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ExternalButtonLink",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 82,
+    "usedBy": [],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ButtonButton",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 104,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ButtonPrimary",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 130,
+    "usedBy": [],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ButtonSecondary",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 134,
+    "usedBy": [
+      "/feedback",
+      "/institutional/flow",
+      "/options/structure",
+      "/options/snapshot"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ButtonTertiary",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 138,
+    "usedBy": [],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "StatusBadge",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 142,
+    "usedBy": [],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "SectionTabs",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 185,
+    "usedBy": [],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "PageIntroAccordion",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 257,
+    "usedBy": [
+      "/",
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/institutional/flow",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "DensityBadge",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 315,
+    "usedBy": [
+      "/catalysts/events",
+      "/institutional/reports",
+      "/analytics/flows"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "DataState",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 331,
+    "usedBy": [
+      "/analytics",
+      "/analytics/leadership",
+      "/catalysts/context",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/institutional/flow",
+      "/options/structure",
+      "/options/snapshot",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "LoadingState",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 390,
+    "usedBy": [
+      "/catalysts/events",
+      "/institutional/reports",
+      "/analytics/flows"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "EmptyState",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 394,
+    "usedBy": [
+      "/analytics/daily-setups",
+      "/catalysts/events",
+      "/institutional/reports",
+      "/strategy/rolling-monthly/legacy",
+      "/analytics/flows"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ErrorState",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 398,
+    "usedBy": [
+      "/",
+      "/analytics/daily-setups",
+      "/catalysts/events",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/reports",
+      "/strategy/rolling-monthly/legacy",
+      "/analytics/flows",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "DelayedState",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 402,
+    "usedBy": [],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "PartialState",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 406,
+    "usedBy": [],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "SectionDivider",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 410,
+    "usedBy": [
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/strategies",
+      "/institutional/reports",
+      "/analytics/flows"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "KpiCard",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 434,
+    "usedBy": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "SymbolPill",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 457,
+    "usedBy": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "InterpretationCard",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 475,
+    "usedBy": [
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting/strategies",
+      "/institutional/reports",
+      "/analytics/flows"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "PlainLanguageCard",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 497,
+    "usedBy": [
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ChartCard",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 526,
+    "usedBy": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/institutional/flow",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "LoadingSkeletonCard",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 562,
+    "usedBy": [
+      "/analytics/leadership",
+      "/catalysts/context",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "LoadingTableCard",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "line": 593,
+    "usedBy": [
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting/lab",
+      "/backtesting/strategies"
+    ],
+    "cssModules": [
+      "./DashboardPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "CandlestickChart",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/CandlestickChart.tsx",
+    "line": 121,
+    "usedBy": [],
+    "cssModules": [
+      "./CandlestickChart.module.css"
+    ]
+  },
+  {
+    "name": "ChangeHeatmap",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "line": 43,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "TOP_GUTTER",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "line": 14,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "ROW_HEIGHT",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "line": 15,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "SYMBOL_COL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "line": 16,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "CHANGE_COL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "line": 17,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "LABEL_GUTTER_TOTAL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "ANIMATION_MS",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "line": 19,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "EChartSurface",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/EChartSurface.tsx",
+    "line": 463,
+    "usedBy": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/institutional/flow",
+      "/options/intelligence",
+      "/strategy/rolling-monthly/legacy",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": []
+  },
+  {
+    "name": "GlitchText",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/GlitchText.tsx",
+    "line": 5,
+    "usedBy": [],
+    "cssModules": [
+      "./GlitchText.module.css"
+    ]
+  },
+  {
+    "name": "HeatmapLegend",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/HeatmapLegend.tsx",
+    "line": 5,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./HeatmapLegend.module.css"
+    ]
+  },
+  {
+    "name": "LiquidBackdrop",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/LiquidBackdrop.tsx",
+    "line": 92,
+    "usedBy": [],
+    "cssModules": [
+      "./LiquidBackdrop.module.css"
+    ]
+  },
+  {
+    "name": "MarketGradientWaves",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/MarketGradientWaves.tsx",
+    "line": 21,
+    "usedBy": [],
+    "cssModules": [
+      "./MarketGradientWaves.module.css"
+    ]
+  },
+  {
+    "name": "MarketRsiParticles",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/MarketRsiParticles.tsx",
+    "line": 20,
+    "usedBy": [],
+    "cssModules": [
+      "./MarketRsiParticles.module.css"
+    ]
+  },
+  {
+    "name": "MarketTargetCursor",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/MarketTargetCursor.tsx",
+    "line": 32,
+    "usedBy": [],
+    "cssModules": [
+      "./MarketTargetCursor.module.css"
+    ]
+  },
+  {
+    "name": "TARGET_SELECTOR",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/MarketTargetCursor.tsx",
+    "line": 5,
+    "usedBy": [],
+    "cssModules": [
+      "./MarketTargetCursor.module.css"
+    ]
+  },
+  {
+    "name": "N50Button",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/N50Button.tsx",
+    "line": 6,
+    "usedBy": [],
+    "cssModules": [
+      "./N50Button.module.css"
+    ]
+  },
+  {
+    "name": "OscilloscopeChart",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/OscilloscopeChart.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": [
+      "./OscilloscopeChart.module.css"
+    ]
+  },
+  {
+    "name": "RsiHeatmap",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "line": 43,
+    "usedBy": [
+      "/heatmap/rsi"
+    ],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "TOP_GUTTER",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "line": 14,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "ROW_HEIGHT",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "line": 15,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "SYMBOL_COL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "line": 16,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "RSI_COL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "line": 17,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "LABEL_GUTTER_TOTAL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "ANIMATION_MS",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "line": 19,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "RsiSurfaceCanvas",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiSurfaceCanvas.tsx",
+    "line": 69,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiSurfaceCanvas.module.css"
+    ]
+  },
+  {
+    "name": "COLOR_STOPS",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiSurfaceCanvas.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiSurfaceCanvas.module.css"
+    ]
+  },
+  {
+    "name": "WillHeatmap",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "line": 43,
+    "usedBy": [
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "TOP_GUTTER",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "line": 14,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "ROW_HEIGHT",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "line": 15,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "SYMBOL_COL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "line": 16,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "WILLR_COL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "line": 17,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "LABEL_GUTTER_TOTAL",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "ANIMATION_MS",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "line": 19,
+    "usedBy": [],
+    "cssModules": [
+      "./RsiHeatmap.module.css"
+    ]
+  },
+  {
+    "name": "StatusPill",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 15,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "EnvironmentBadge",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 25,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "FeedFreshnessBadge",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 34,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ContextIdentityStrip",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 52,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ValidationGateStrip",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 84,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "FailurePanel",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 100,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "DataAge",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 134,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "Icon",
+    "file": "neon-stock-terminal/apps/web/src/design-system/TradingPrimitives.tsx",
+    "line": 16,
+    "usedBy": [],
+    "cssModules": [
+      "./TradingPrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ModuleStatusStrip",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 8,
+    "usedBy": [
+      "/",
+      "/institutional/flow",
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "DataQualityBadge",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "DecisionHero",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 27,
+    "usedBy": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ExecutiveKpiStrip",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 39,
+    "usedBy": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "MetricTile",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 43,
+    "usedBy": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "CompactEmptyState",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 52,
+    "usedBy": [
+      "/analytics/daily-setups",
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ErrorState",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 60,
+    "usedBy": [
+      "/",
+      "/analytics/daily-setups",
+      "/catalysts/events",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/reports",
+      "/strategy/rolling-monthly/legacy",
+      "/analytics/flows",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "LoadingSkeleton",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 64,
+    "usedBy": [
+      "/",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/strategy/rolling-monthly/legacy",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "NarrativeEvidenceBlock",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 68,
+    "usedBy": [],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "DataQualitySummary",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 72,
+    "usedBy": [],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ContextDrawer",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 76,
+    "usedBy": [],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "ReducedMotionController",
+    "file": "neon-stock-terminal/apps/web/src/design-system/WorkspacePrimitives.tsx",
+    "line": 88,
+    "usedBy": [],
+    "cssModules": [
+      "./WorkspacePrimitives.module.css"
+    ]
+  },
+  {
+    "name": "LocaleProvider",
+    "file": "neon-stock-terminal/apps/web/src/i18n/LocaleProvider.tsx",
+    "line": 100,
+    "usedBy": [
+      "/",
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/backtesting",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/options/structure",
+      "/options/snapshot",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": []
+  },
+  {
+    "name": "LANGUAGE_STORAGE_KEY",
+    "file": "neon-stock-terminal/apps/web/src/i18n/LocaleProvider.tsx",
+    "line": 17,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "DIGIT_STORAGE_KEY",
+    "file": "neon-stock-terminal/apps/web/src/i18n/LocaleProvider.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "DEFAULT_LANGUAGE",
+    "file": "neon-stock-terminal/apps/web/src/i18n/LocaleProvider.tsx",
+    "line": 19,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "DEFAULT_DIGITS",
+    "file": "neon-stock-terminal/apps/web/src/i18n/LocaleProvider.tsx",
+    "line": 20,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "LocaleContext",
+    "file": "neon-stock-terminal/apps/web/src/i18n/LocaleProvider.tsx",
+    "line": 98,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "NavigationStateManager",
+    "file": "neon-stock-terminal/apps/web/src/interaction/NavigationStateManager.tsx",
+    "line": 6,
+    "usedBy": [],
+    "cssModules": []
+  },
+  {
+    "name": "ShortcutProvider",
+    "file": "neon-stock-terminal/apps/web/src/interaction/ShortcutRegistry.tsx",
+    "line": 41,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./ShortcutRegistry.module.css"
+    ]
+  },
+  {
+    "name": "DEFINITIONS",
+    "file": "neon-stock-terminal/apps/web/src/interaction/ShortcutRegistry.tsx",
+    "line": 17,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./ShortcutRegistry.module.css"
+    ]
+  },
+  {
+    "name": "ShortcutContext",
+    "file": "neon-stock-terminal/apps/web/src/interaction/ShortcutRegistry.tsx",
+    "line": 34,
+    "usedBy": [],
+    "cssModules": [
+      "./ShortcutRegistry.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsHeader",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 352,
+    "usedBy": [
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/options/structure",
+      "/options/snapshot",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "ExplainThis",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 366,
+    "usedBy": [
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "ANALYTICS_MODE_STORAGE_KEY",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 20,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "ANALYTICS_MODE_EVENT",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 21,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "SECTION_META",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 23,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "MARKET_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 80,
+    "usedBy": [
+      "/analytics",
+      "/heatmap/change"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "CATALYSTS_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 110,
+    "usedBy": [
+      "/catalysts/context"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "INSTITUTIONAL_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 123,
+    "usedBy": [
+      "/institutional/flow"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "STOCKS_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 136,
+    "usedBy": [
+      "/analytics/leadership",
+      "/analytics/daily-setups"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "OPTIONS_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 155,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "STRATEGY_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 168,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "SIGNAL_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 196,
+    "usedBy": [
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "LEARNING_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 221,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "SYSTEM_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "line": 239,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "CatalystCard",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsEventContextPage.tsx",
+    "line": 639,
+    "usedBy": [
+      "/catalysts/context"
+    ],
+    "cssModules": [
+      "./AnalyticsFiiFlowPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsEventContextPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsEventContextPage.tsx",
+    "line": 680,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/context",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsFiiFlowPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsEventsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsEventsPage.tsx",
+    "line": 96,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsEventsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsFiiFlowPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsFiiFlowPage.tsx",
+    "line": 390,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/context",
+      "/institutional/flow",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsFiiFlowPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsFiiReportsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsFiiReportsPage.tsx",
+    "line": 66,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsFiiReportsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsFlowsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsFlowsPage.tsx",
+    "line": 29,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/events",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsIndicatorsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsIndicatorsPage.tsx",
+    "line": 84,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "DEFAULT_INDICATOR_SLUG",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsIndicatorsPage.tsx",
+    "line": 71,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsLeadershipPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsLeadershipPage.tsx",
+    "line": 213,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/leadership",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsLeadershipPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsLearnPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsLearnPage.tsx",
+    "line": 153,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsMarketStatePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsMarketStatePage.tsx",
+    "line": 372,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsMarketStatePage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsOptionsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOptionsPage.tsx",
+    "line": 510,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "TAB_OPTIONS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOptionsPage.tsx",
+    "line": 43,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "WINDOW_OPTIONS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOptionsPage.tsx",
+    "line": 50,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "REFRESH_OPTIONS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOptionsPage.tsx",
+    "line": 51,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsOptionsStructurePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOptionsStructurePage.tsx",
+    "line": 331,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsOptionsStructurePage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsOverviewPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOverviewPage.tsx",
+    "line": 126,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsQualityPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsQualityPage.tsx",
+    "line": 368,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsQualityPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsRegimePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsRegimePage.tsx",
+    "line": 58,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "WatchlistBlock",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsRiskPage.tsx",
+    "line": 26,
+    "usedBy": [
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/system/quality",
+      "/analytics/system/map"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsRiskPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsRiskPage.tsx",
+    "line": 78,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSetupsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSetupsPage.tsx",
+    "line": 136,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/daily-setups",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsSetupsPage.module.css"
+    ]
+  },
+  {
+    "name": "ComparisonBarChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 710,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "TimelineChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 743,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "DrawdownChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 778,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "ChargePanel",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 803,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSimulatorPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 975,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "DEFAULT_QUERY",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 28,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "PRELOADED_UNIVERSE",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 40,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "CHART_COLORS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 80,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "LEGEND_BOTTOM",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 94,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "DEFAULT_SAVINGS_RATE_PCT",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "line": 99,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsStockPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "line": 180,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsStrategyEvaluationPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStrategyEvaluationPage.tsx",
+    "line": 360,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsStrategyEvaluationPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSupportingMetricsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSupportingMetricsPage.tsx",
+    "line": 177,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "EMPTY_SUPPORTING_METRICS_PAYLOAD",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSupportingMetricsPage.tsx",
+    "line": 152,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "AnalyticsSystemMapPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSystemMapPage.tsx",
+    "line": 138,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "LIFECYCLE_STAGES",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSystemMapPage.tsx",
+    "line": 18,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "QUESTION_ROWS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSystemMapPage.tsx",
+    "line": 61,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "RELATIONSHIP_ROWS",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSystemMapPage.tsx",
+    "line": 100,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingHeader",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 75,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/backtesting/daily-summary",
+      "/backtesting/compare",
+      "/backtesting/runs",
+      "/backtesting/h30"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingContextStrip",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 102,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingDecisionBrief",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 141,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingEvidenceCards",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 180,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingStrategyJourney",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 209,
+    "usedBy": [
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingFilterBar",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 283,
+    "usedBy": [
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingCompareScopeBar",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 427,
+    "usedBy": [
+      "/backtesting/regimes",
+      "/backtesting/stocks"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingLineChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 485,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingDrawdownChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 563,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingMultiLineChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 611,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingScatterChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 661,
+    "usedBy": [
+      "/backtesting/stocks"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingHistogramChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 731,
+    "usedBy": [
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingHorizontalBarChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 776,
+    "usedBy": [
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/stocks"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingGroupedBarChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 846,
+    "usedBy": [
+      "/backtesting/regimes"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingDeploymentChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 928,
+    "usedBy": [
+      "/backtesting/results"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingPriceContextChart",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 998,
+    "usedBy": [
+      "/backtesting/strategies/:strategyId"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BACKTESTING_SECTION_TABS",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 28,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "STRATEGY_COLORS",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 230,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "GRID",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 231,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "LEGEND_BOTTOM",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "line": 238,
+    "usedBy": [],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingComparePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingComparePage.tsx",
+    "line": 24,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingDailySummaryPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingDailySummaryPage.tsx",
+    "line": 10,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingH30Page",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingH30Page.tsx",
+    "line": 14,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/daily-summary",
+      "/backtesting/compare",
+      "/backtesting/runs",
+      "/backtesting/h30",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./BacktestingH30Page.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingLabPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingLabPage.tsx",
+    "line": 50,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/lab",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css",
+      "./BacktestingLabPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingOverviewPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingOverviewPage.tsx",
+    "line": 20,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingPortfolioResultsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingPortfolioResultsPage.tsx",
+    "line": 20,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/results",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingRegimeAnalysisPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingRegimeAnalysisPage.tsx",
+    "line": 18,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/regimes",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingRunsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingRunsPage.tsx",
+    "line": 10,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingStockInsightsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingStockInsightsPage.tsx",
+    "line": 20,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/stocks",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingStrategyDetailPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingStrategyDetailPage.tsx",
+    "line": 30,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/strategies/:strategyId",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "BacktestingStrategyLibraryPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingStrategyLibraryPage.tsx",
+    "line": 12,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/strategies",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css"
+    ]
+  },
+  {
+    "name": "ExtremesStrip",
+    "file": "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+    "line": 32,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "HeatmapTrend",
+    "file": "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+    "line": 56,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "ChangeHeatmapPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+    "line": 99,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "FeedbackPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/FeedbackPage.tsx",
+    "line": 43,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/feedback",
+      "/options/structure",
+      "/options/snapshot",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css",
+      "./FeedbackPage.module.css"
+    ]
+  },
+  {
+    "name": "DEFAULT_FORM_STATE",
+    "file": "neon-stock-terminal/apps/web/src/pages/FeedbackPage.tsx",
+    "line": 27,
+    "usedBy": [
+      "/feedback",
+      "/options/structure",
+      "/options/snapshot"
+    ],
+    "cssModules": [
+      "./AnalyticsPage.module.css",
+      "./FeedbackPage.module.css"
+    ]
+  },
+  {
+    "name": "FnoVolatilityPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/FnoVolatilityPage.tsx",
+    "line": 19,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/options/volatility-signals",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./FnoVolatilityPage.module.css"
+    ]
+  },
+  {
+    "name": "AnimatedIndexPrice",
+    "file": "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+    "line": 128,
+    "usedBy": [
+      "/"
+    ],
+    "cssModules": [
+      "./LandingPage.module.css"
+    ]
+  },
+  {
+    "name": "LandingPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+    "line": 151,
+    "usedBy": [
+      "/",
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./LandingPage.module.css"
+    ]
+  },
+  {
+    "name": "HOME_LENSES",
+    "file": "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+    "line": 114,
+    "usedBy": [
+      "/"
+    ],
+    "cssModules": [
+      "./LandingPage.module.css"
+    ]
+  },
+  {
+    "name": "LongOptionsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/LongOptionsPage.tsx",
+    "line": 38,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./LongOptionsPage.module.css"
+    ]
+  },
+  {
+    "name": "Kpi",
+    "file": "neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx",
+    "line": 121,
+    "usedBy": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./MonthlyStrategiesPage.module.css"
+    ]
+  },
+  {
+    "name": "StrategyTable",
+    "file": "neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx",
+    "line": 125,
+    "usedBy": [
+      "/strategy/monthly",
+      "/strategy/rolling-monthly"
+    ],
+    "cssModules": [
+      "./MonthlyStrategiesPage.module.css"
+    ]
+  },
+  {
+    "name": "Inspector",
+    "file": "neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx",
+    "line": 146,
+    "usedBy": [
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./MonthlyStrategiesPage.module.css"
+    ]
+  },
+  {
+    "name": "MonthlyStrategyPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx",
+    "line": 157,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./MonthlyStrategiesPage.module.css"
+    ]
+  },
+  {
+    "name": "RollingWindowStrategyPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx",
+    "line": 182,
+    "usedBy": [
+      "/strategy/monthly",
+      "/strategy/rolling-monthly"
+    ],
+    "cssModules": [
+      "./MonthlyStrategiesPage.module.css"
+    ]
+  },
+  {
+    "name": "RollingMonthlyLegacyRouter",
+    "file": "neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx",
+    "line": 195,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./MonthlyStrategiesPage.module.css"
+    ]
+  },
+  {
+    "name": "SurfaceOverview",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 41,
+    "usedBy": [],
+    "cssModules": [
+      "./NiftyWeeklyOptionsPage.module.css"
+    ]
+  },
+  {
+    "name": "ChainTable",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 70,
+    "usedBy": [],
+    "cssModules": [
+      "./NiftyWeeklyOptionsPage.module.css"
+    ]
+  },
+  {
+    "name": "NiftyWeeklyOptionsPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 75,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./NiftyWeeklyOptionsPage.module.css"
+    ]
+  },
+  {
+    "name": "VIEWS",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 9,
+    "usedBy": [],
+    "cssModules": [
+      "./NiftyWeeklyOptionsPage.module.css"
+    ]
+  },
+  {
+    "name": "NotFoundPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/NotFoundPage.tsx",
+    "line": 5,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./NotFoundPage.module.css"
+    ]
+  },
+  {
+    "name": "BreadthTrend",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "line": 34,
+    "usedBy": [],
+    "cssModules": [
+      "./NseIntelligencePage.module.css"
+    ]
+  },
+  {
+    "name": "Reports",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "line": 49,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./NseIntelligencePage.module.css"
+    ]
+  },
+  {
+    "name": "NseIntelligencePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "line": 71,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./NseIntelligencePage.module.css"
+    ]
+  },
+  {
+    "name": "OiisLivePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/OiisLivePage.tsx",
+    "line": 164,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/oiis-live",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./OiisLivePage.module.css"
+    ]
+  },
+  {
+    "name": "GATE_GUIDE",
+    "file": "neon-stock-terminal/apps/web/src/pages/OiisLivePage.tsx",
+    "line": 97,
+    "usedBy": [
+      "/strategy/oiis-live"
+    ],
+    "cssModules": [
+      "./OiisLivePage.module.css"
+    ]
+  },
+  {
+    "name": "OiisRunHistoryPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/OiisRunHistoryPage.tsx",
+    "line": 28,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/institutional/nse-intelligence",
+      "/institutional/nse-intelligence/sectors",
+      "/institutional/nse-intelligence/fno",
+      "/institutional/nse-intelligence/events",
+      "/institutional/nse-intelligence/reports",
+      "/strategy/oiis-live/history",
+      "/strategy/long-options",
+      "/strategy/nifty-options",
+      "/strategy/nifty-weekly-options",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./OiisRunHistoryPage.module.css"
+    ]
+  },
+  {
+    "name": "ScoreBar",
+    "file": "neon-stock-terminal/apps/web/src/pages/OptionsIntelligencePage.tsx",
+    "line": 60,
+    "usedBy": [
+      "/options/intelligence"
+    ],
+    "cssModules": [
+      "./OptionsIntelligencePage.module.css"
+    ]
+  },
+  {
+    "name": "OptionsIntelligencePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/OptionsIntelligencePage.tsx",
+    "line": 70,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/options/intelligence",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./OptionsIntelligencePage.module.css"
+    ]
+  },
+  {
+    "name": "PaperTradingCommandCenter",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 262,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/paper-trading",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "TradeQualityGuide",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 889,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "TradeQualityEvaluator",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1058,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "Outcome",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1208,
+    "usedBy": [
+      "/feedback",
+      "/options/structure",
+      "/options/snapshot",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "Metric",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1230,
+    "usedBy": [
+      "/",
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/strategy/oiis-live",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "SummaryMetric",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1246,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "TargetScenarioStrip",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1266,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "HorizonCard",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1326,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "FixedCapitalPortfolioSimulator",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1428,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "PaperParallelEvidencePlot",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1529,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "OiisContourSurface",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1624,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "RewardPainAtlas",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1745,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "ConversionSummary",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1869,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "AttentionList",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1942,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "PaperDataQualityPanel",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1979,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "ConversionGroup",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1998,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "AdverseLadder",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2026,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "TradeIdentity",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2098,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "EvidenceTargetCell",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2206,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "HorizonOutcomeCell",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2228,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "TradePerformanceHeatmap",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2249,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "TradeEvidenceTotals",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2448,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "UnifiedTradeMatrix",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2521,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "TradeDrawer",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2789,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "Journey",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 2932,
+    "usedBy": [
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting/strategies/:strategyId",
+      "/strategy/oiis-live",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "DrawerTargets",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 3033,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "Evidence",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 3073,
+    "usedBy": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId",
+      "/strategy/oiis-live",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "DrawerEconomics",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 3094,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "DrawerCalculationTrace",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 3106,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "DrawerComments",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 3124,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "Audit",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 3226,
+    "usedBy": [
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "AddPaperTradeDialog",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 3243,
+    "usedBy": [
+      "/paper-trading"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "API_BASE_URL",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 54,
+    "usedBy": [
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane"
+    ],
+    "cssModules": [
+      "./PaperTradingCommandCenter.module.css"
+    ]
+  },
+  {
+    "name": "RollingMonthlyPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/RollingMonthlyPage.tsx",
+    "line": 333,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/rolling-monthly/legacy",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./RollingMonthlyPage.module.css"
+    ]
+  },
+  {
+    "name": "FIRST_SESSION_PERFORMANCE_THRESHOLDS",
+    "file": "neon-stock-terminal/apps/web/src/pages/RollingMonthlyPage.tsx",
+    "line": 104,
+    "usedBy": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "cssModules": [
+      "./RollingMonthlyPage.module.css"
+    ]
+  },
+  {
+    "name": "ExtremesStrip",
+    "file": "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+    "line": 38,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "HeatmapTrend",
+    "file": "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+    "line": 63,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "RsiSurfacePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+    "line": 107,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "MetricCard",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "line": 139,
+    "usedBy": [],
+    "cssModules": [
+      "./StockPage.module.css"
+    ]
+  },
+  {
+    "name": "StockPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "line": 149,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./StockPage.module.css"
+    ]
+  },
+  {
+    "name": "RANGES",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "line": 16,
+    "usedBy": [],
+    "cssModules": [
+      "./StockPage.module.css"
+    ]
+  },
+  {
+    "name": "ExtremesStrip",
+    "file": "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx",
+    "line": 38,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "HeatmapTrend",
+    "file": "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx",
+    "line": 63,
+    "usedBy": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "WillSurfacePage",
+    "file": "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx",
+    "line": 107,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./RsiSurfacePage.module.css"
+    ]
+  },
+  {
+    "name": "Page",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 29,
+    "usedBy": [
+      "/",
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/backtesting/daily-summary",
+      "/backtesting/compare",
+      "/backtesting/runs",
+      "/backtesting/h30",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/institutional/nse-intelligence",
+      "/institutional/nse-intelligence/sectors",
+      "/institutional/nse-intelligence/fno",
+      "/institutional/nse-intelligence/events",
+      "/institutional/nse-intelligence/reports",
+      "/options/structure",
+      "/options/snapshot",
+      "/options/volatility-signals",
+      "/options/intelligence",
+      "/strategy/oiis-live",
+      "/strategy/oiis-live/history",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/strategy/long-options",
+      "/strategy/nifty-options",
+      "/strategy/nifty-weekly-options",
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "OperationalBar",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 40,
+    "usedBy": [
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "PaperTradingPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 48,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "TargetLadder",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 158,
+    "usedBy": [
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "Nifty500Page",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 170,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "FuturesPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 179,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "AdminPage",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 193,
+    "usedBy": [
+      "/dashboard/stocks/:symbol",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "AdminContent",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 198,
+    "usedBy": [
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "Metric",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 222,
+    "usedBy": [
+      "/",
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/strategy/oiis-live",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "Panel",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 223,
+    "usedBy": [
+      "/",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "Table",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 231,
+    "usedBy": [
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/reports",
+      "/options/intelligence",
+      "/strategy/oiis-live",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  },
+  {
+    "name": "API_BASE_URL",
+    "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+    "line": 8,
+    "usedBy": [
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane"
+    ],
+    "cssModules": [
+      "./WorkspacePages.module.css"
+    ]
+  }
+]

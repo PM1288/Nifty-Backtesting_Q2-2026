@@ -1,0 +1,27 @@
+{
+  "baseline_reproduced": false,
+  "baseline_reason": "Exact canonical O74 / XFactor Tier-B 76 / Tier-A 84 was not run as one governed baseline; the 49-combination sweep omitted it and nine cells failed.",
+  "items_49_classification": "49 aggregate OFactor/XFactor threshold combinations, not 49 independent factors",
+  "component_importance_estimable": false,
+  "component_importance_reason": "Raw event-level component scores and controlled component perturbation trials are not included in the supplied bundles.",
+  "ffactor_status": "UNDEFINED_IN_AUTHORITATIVE_OIIS_SOURCES",
+  "current_results_rankable": false,
+  "current_results_blockers": [
+    "current-panel survivorship bias",
+    "requested/actual coverage mismatch",
+    "corporate-action policy not certified",
+    "cost profile not certified",
+    "target-only exit with no timeout",
+    "no finite-capital portfolio",
+    "missing/unknown market and sector regimes",
+    "incomplete 49-cell sweep",
+    "incorrect legacy risk metrics"
+  ],
+  "preferred_configuration": null,
+  "next_control": {
+    "ofactor_min": 74,
+    "xfactor_tier_b": 76,
+    "xfactor_tier_a": 84,
+    "status": "BASELINE_TO_REPRODUCE_NOT_RECOMMENDATION"
+  }
+}

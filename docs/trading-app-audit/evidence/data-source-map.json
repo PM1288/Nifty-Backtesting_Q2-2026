@@ -1,0 +1,2144 @@
+[
+  {
+    "provider": "SmartAPI / Angel One",
+    "evidence": [
+      {
+        "file": "cmd/collector/archive_test.go",
+        "line": 8
+      },
+      {
+        "file": "cmd/collector/depth_snapshots.go",
+        "line": 11
+      },
+      {
+        "file": "cmd/collector/health.go",
+        "line": 79
+      },
+      {
+        "file": "cmd/collector/main.go",
+        "line": 24
+      },
+      {
+        "file": "cmd/collector/refresh.go",
+        "line": 11
+      },
+      {
+        "file": "cmd/collector/seed_prices.go",
+        "line": 10
+      },
+      {
+        "file": "cmd/collector/stock_webhook.go",
+        "line": 16
+      },
+      {
+        "file": "cmd/collector/stock_webhook_test.go",
+        "line": 41
+      },
+      {
+        "file": "cmd/collector/tasks.go",
+        "line": 16
+      },
+      {
+        "file": "cmd/collector/tick_archive.go",
+        "line": 12
+      },
+      {
+        "file": "config.example.yaml",
+        "line": 1
+      },
+      {
+        "file": "docs/source/smartConnect.py",
+        "line": 4
+      },
+      {
+        "file": "docs/source/smartWebSocketV2.py",
+        "line": 13
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/api-map.json",
+        "line": 4709
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 3
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 35
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 1498
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/runtime-audit.json",
+        "line": 3894
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 728
+      },
+      {
+        "file": "internal/config/config.go",
+        "line": 15
+      },
+      {
+        "file": "internal/smartapi/auth_runtime.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/password_selection_test.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/request.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/request_test.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/rest_aggregates.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/rest_auth.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/rest_auth_test.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/rest_candles.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/rest_option_greeks.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/rest_quote.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/ws.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/ws_manager.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/ws_manager_test.go",
+        "line": 1
+      },
+      {
+        "file": "internal/smartapi/ws_packet_test.go",
+        "line": 1
+      },
+      {
+        "file": "internal/store/cleanup.go",
+        "line": 21
+      },
+      {
+        "file": "internal/store/migrations.go",
+        "line": 1292
+      },
+      {
+        "file": "internal/store/reset.go",
+        "line": 41
+      },
+      {
+        "file": "internal/store/smartapi_archive.go",
+        "line": 243
+      },
+      {
+        "file": "internal/store/validate.go",
+        "line": 35
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/fnoVolatility.ts",
+        "line": 145
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/longOptions.ts",
+        "line": 250
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/niftyWeeklyOptions.ts",
+        "line": 370
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+        "line": 415
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+        "line": 205
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/workspace.paper.test.ts",
+        "line": 34
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+        "line": 178
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/public/stock-profiles.json",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/lib/api.ts",
+        "line": 498
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+        "line": 302
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+        "line": 790
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/LongOptionsPage.tsx",
+        "line": 78
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+        "line": 49
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/OptionsIntelligencePage.tsx",
+        "line": 180
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+        "line": 204
+      },
+      {
+        "file": "scripts/audit/finalize_runtime_docs.mjs",
+        "line": 73
+      },
+      {
+        "file": "scripts/audit/generate_trading_app_audit.mjs",
+        "line": 224
+      },
+      {
+        "file": "services/market_status/src/market_status/worker.py",
+        "line": 270
+      },
+      {
+        "file": "services/oiis_live/src/oiis_live/selector.py",
+        "line": 48
+      },
+      {
+        "file": "services/oiis_live/tools/export_daily_evidence_report.py",
+        "line": 163
+      },
+      {
+        "file": "services/rolling_monthly/src/rolling_monthly/absolute_first_session.py",
+        "line": 272
+      },
+      {
+        "file": "services/rolling_monthly/src/rolling_monthly/absolute_month.py",
+        "line": 227
+      },
+      {
+        "file": "services/rolling_monthly/src/rolling_monthly/service.py",
+        "line": 418
+      },
+      {
+        "file": "tools/playwright/six-workspace-oiis-regression.mjs",
+        "line": 81
+      },
+      {
+        "file": "tools/playwright/trade-quality-regression.mjs",
+        "line": 210
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "NSE",
+    "evidence": [
+      {
+        "file": "OIIS-DOE/OIIS_FACTOR_DOE_COMPLETE_DELIVERY_V1.0/OIIS_DOE_Experiment_Config.json",
+        "line": 181
+      },
+      {
+        "file": "bhavcopy_ingest.py",
+        "line": 15
+      },
+      {
+        "file": "cmd/collector/archive_test.go",
+        "line": 14
+      },
+      {
+        "file": "cmd/collector/health.go",
+        "line": 75
+      },
+      {
+        "file": "cmd/collector/metrics.go",
+        "line": 406
+      },
+      {
+        "file": "cmd/collector/session_phase_test.go",
+        "line": 25
+      },
+      {
+        "file": "cmd/collector/stock_webhook_test.go",
+        "line": 18
+      },
+      {
+        "file": "cmd/collector/subscriptions_test.go",
+        "line": 10
+      },
+      {
+        "file": "cmd/collector/tick_archive.go",
+        "line": 166
+      },
+      {
+        "file": "compose/compose.base.yml",
+        "line": 8
+      },
+      {
+        "file": "compose/compose.core.yml",
+        "line": 51
+      },
+      {
+        "file": "compose/compose.dev.yml",
+        "line": 11
+      },
+      {
+        "file": "compose/compose.stage.yml",
+        "line": 51
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-backtest.json",
+        "line": 338
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-equilibrium.json",
+        "line": 85
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-home.json",
+        "line": 50
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-max-pain.json",
+        "line": 85
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-option-greeks.json",
+        "line": 85
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-overview.json",
+        "line": 288
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-portfolio.json",
+        "line": 45
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-sector-heatmap.json",
+        "line": 120
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-strategy.json",
+        "line": 168
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-trading.json",
+        "line": 51
+      },
+      {
+        "file": "config.example.yaml",
+        "line": 51
+      },
+      {
+        "file": "db/sql/010_api_read_model_indexes.sql",
+        "line": 8
+      },
+      {
+        "file": "db/sql/011_nifty100_disclosures.sql",
+        "line": 4
+      },
+      {
+        "file": "db/sql/012_nse_fii_reports.sql",
+        "line": 4
+      },
+      {
+        "file": "db/sql/013_discord_market_stream.sql",
+        "line": 15
+      },
+      {
+        "file": "db/sql/016_nifty_stratlab_replay.sql",
+        "line": 184
+      },
+      {
+        "file": "db/sql/018_nifty_stratlab_options.sql",
+        "line": 85
+      },
+      {
+        "file": "db/sql/020_strategy_evaluation_roe.sql",
+        "line": 109
+      },
+      {
+        "file": "db/sql/025_nifty50_yfinance_daily_regime.sql",
+        "line": 6
+      },
+      {
+        "file": "db/sql/030_oiis_doe_v2.sql",
+        "line": 82
+      },
+      {
+        "file": "db/sql/032_oiis_live.sql",
+        "line": 143
+      },
+      {
+        "file": "db/sql/036_market_notification_outbox.sql",
+        "line": 42
+      },
+      {
+        "file": "db/sql/037_market_status_notifications_v1.sql",
+        "line": 29
+      },
+      {
+        "file": "db/sql/038_rolling_monthly_quality.sql",
+        "line": 106
+      },
+      {
+        "file": "db/sql/039_rolling_monthly_backtest_evidence.sql",
+        "line": 84
+      },
+      {
+        "file": "db/sql/041_rolling_monthly_backtest_monthly_summary.sql",
+        "line": 22
+      },
+      {
+        "file": "db/sql/042_rolling_monthly_evidence_governance.sql",
+        "line": 5
+      },
+      {
+        "file": "docker-compose.yml",
+        "line": 237
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-final.json",
+        "line": 391
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-post.json",
+        "line": 391
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-pre.json",
+        "line": 391
+      },
+      {
+        "file": "docs/modernisation/baseline/repository-inventory.json",
+        "line": 25
+      },
+      {
+        "file": "docs/paper-trading-v2/metric-field-inventory.json",
+        "line": 43
+      },
+      {
+        "file": "docs/source/smartConnect.py",
+        "line": 33
+      },
+      {
+        "file": "docs/source/smartWebSocketV2.py",
+        "line": 34
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/api-map.json",
+        "line": 45
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/audit-summary.json",
+        "line": 12
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/calculation-validation.json",
+        "line": 9
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/chart-map.json",
+        "line": 51
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/component-map.json",
+        "line": 588
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/css-map.json",
+        "line": 103
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 265
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 381
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/metric-map.json",
+        "line": 477
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/mock-placeholder-map.json",
+        "line": 1462
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/page-map.json",
+        "line": 363
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/playwright-summary.json",
+        "line": 11
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 122
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/route-map.json",
+        "line": 411
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/runtime-audit.json",
+        "line": 24
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/screenshot-map.json",
+        "line": 1686
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 418
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/storage-map.json",
+        "line": 4
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/strategy-map.json",
+        "line": 13
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/test-map.json",
+        "line": 103
+      },
+      {
+        "file": "docs/ui-ux-transformation/stock-profile-html-export-evidence/results.json",
+        "line": 4
+      },
+      {
+        "file": "internal/backtest/archive_swing.go",
+        "line": 538
+      },
+      {
+        "file": "internal/backtest/options_backtest.go",
+        "line": 129
+      },
+      {
+        "file": "internal/backtest/runner.go",
+        "line": 179
+      },
+      {
+        "file": "internal/backtest/strategy_backtest.go",
+        "line": 187
+      },
+      {
+        "file": "internal/config/config.go",
+        "line": 140
+      },
+      {
+        "file": "internal/equilibrium/runner.go",
+        "line": 241
+      },
+      {
+        "file": "internal/maxpain/runner.go",
+        "line": 270
+      },
+      {
+        "file": "internal/parameters/service.go",
+        "line": 55
+      },
+      {
+        "file": "internal/portfolio/service.go",
+        "line": 55
+      },
+      {
+        "file": "internal/rsiwillr/http.go",
+        "line": 14
+      },
+      {
+        "file": "internal/rsiwillr/service.go",
+        "line": 245
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "Yahoo Finance",
+    "evidence": [
+      {
+        "file": "db/sql/025_nifty50_yfinance_daily_regime.sql",
+        "line": 14
+      },
+      {
+        "file": "db/sql/026_nifty500_stock_daily_regime.sql",
+        "line": 7
+      },
+      {
+        "file": "db/sql/027_global_market_daily_regime.sql",
+        "line": 5
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 392
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 30272
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/mock-placeholder-map.json",
+        "line": 16648
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 81865
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 483
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/storage-map.json",
+        "line": 443
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/multitasking/__init__.py",
+        "line": 336
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/__init__.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/_http.py",
+        "line": 11
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/base.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/cache.py",
+        "line": 54
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/calendars.py",
+        "line": 175
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/const.py",
+        "line": 1
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/data.py",
+        "line": 143
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/domain/industry.py",
+        "line": 42
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/domain/sector.py",
+        "line": 29
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/live.py",
+        "line": 9
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/lookup.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/multi.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/scrapers/analysis.py",
+        "line": 1
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py",
+        "line": 7
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/scrapers/funds.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/scrapers/history.py",
+        "line": 1
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/scrapers/holders.py",
+        "line": 1
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py",
+        "line": 1
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/screener/query.py",
+        "line": 5
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/screener/screener.py",
+        "line": 1
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/search.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/shared.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/ticker.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/tickers.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/yfinance/utils.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/pyproject.toml",
+        "line": 23
+      },
+      {
+        "file": "platform/nifty_stratlab/tools/export_fno_daily_technical_dataset.py",
+        "line": 4
+      },
+      {
+        "file": "platform/nifty_stratlab/tools/ingest_global_yfinance_regime.py",
+        "line": 7
+      },
+      {
+        "file": "platform/nifty_stratlab/tools/ingest_nifty500_yfinance_regime.py",
+        "line": 2
+      },
+      {
+        "file": "platform/nifty_stratlab/tools/ingest_nifty50_yfinance_regime.py",
+        "line": 2
+      },
+      {
+        "file": "scripts/audit/finalize_runtime_docs.mjs",
+        "line": 75
+      },
+      {
+        "file": "scripts/audit/generate_trading_app_audit.mjs",
+        "line": 225
+      },
+      {
+        "file": "scripts/export_postgres_structure.py",
+        "line": 209
+      },
+      {
+        "file": "services/market_data_gateway/app.py",
+        "line": 12
+      },
+      {
+        "file": "services/nifty100_disclosures_pipeline/pyproject.toml",
+        "line": 8
+      },
+      {
+        "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/pipeline.py",
+        "line": 168
+      },
+      {
+        "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/yf_fetchers.py",
+        "line": 38
+      },
+      {
+        "file": "services/nifty100_disclosures_pipeline/tests/test_transforms.py",
+        "line": 51
+      },
+      {
+        "file": "services/oiis_live/src/oiis_live/selector.py",
+        "line": 104
+      },
+      {
+        "file": "services/rolling_monthly/src/rolling_monthly/service.py",
+        "line": 402
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "Redis",
+    "evidence": [
+      {
+        "file": ".gitleaks.toml",
+        "line": 9
+      },
+      {
+        "file": "compose/compose.base.yml",
+        "line": 87
+      },
+      {
+        "file": "compose/compose.core.yml",
+        "line": 36
+      },
+      {
+        "file": "compose/compose.dev.yml",
+        "line": 270
+      },
+      {
+        "file": "compose/compose.stage.yml",
+        "line": 36
+      },
+      {
+        "file": "docker-compose.yml",
+        "line": 160
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 797
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 2530
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 748
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/test-map.json",
+        "line": 23
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/package.json",
+        "line": 29
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/auth/session.ts",
+        "line": 4
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/dashboardSnapshots.ts",
+        "line": 4
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/redisBackedStore.test.ts",
+        "line": 3
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/redisBackedStore.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/runtimeConfig.ts",
+        "line": 46
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/health.ts",
+        "line": 31
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/security/rateLimit.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/package-lock.json",
+        "line": 27
+      },
+      {
+        "file": "neon-stock-terminal/pnpm-lock.yaml",
+        "line": 41
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/BdfFontFile.py",
+        "line": 17
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/BmpImagePlugin.py",
+        "line": 23
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/BufrStubImagePlugin.py",
+        "line": 9
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ContainerIO.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/CurImagePlugin.py",
+        "line": 16
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/DcxImagePlugin.py",
+        "line": 21
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/EpsImagePlugin.py",
+        "line": 20
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ExifTags.py",
+        "line": 9
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/FitsImagePlugin.py",
+        "line": 9
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/FliImagePlugin.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/FontFile.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/FpxImagePlugin.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/GbrImagePlugin.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/GdImageFile.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/GifImagePlugin.py",
+        "line": 24
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/GimpGradientFile.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/GimpPaletteFile.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/GribStubImagePlugin.py",
+        "line": 9
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/Hdf5StubImagePlugin.py",
+        "line": 9
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/IcnsImagePlugin.py",
+        "line": 17
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/IcoImagePlugin.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImImagePlugin.py",
+        "line": 25
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/Image.py",
+        "line": 24
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageChops.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageCms.py",
+        "line": 18
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageColor.py",
+        "line": 17
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageDraw.py",
+        "line": 30
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageDraw2.py",
+        "line": 16
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageEnhance.py",
+        "line": 18
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageFile.py",
+        "line": 27
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageFilter.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageFont.py",
+        "line": 25
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageGrab.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageMath.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageMode.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageOps.py",
+        "line": 17
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImagePalette.py",
+        "line": 16
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImagePath.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageQt.py",
+        "line": 16
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageSequence.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageShow.py",
+        "line": 12
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageStat.py",
+        "line": 21
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageTk.py",
+        "line": 25
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageTransform.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImageWin.py",
+        "line": 17
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/ImtImagePlugin.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/IptcImagePlugin.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/Jpeg2KImagePlugin.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/JpegImagePlugin.py",
+        "line": 32
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/McIdasImagePlugin.py",
+        "line": 16
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/MicImagePlugin.py",
+        "line": 16
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/MpegImagePlugin.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/MpoImagePlugin.py",
+        "line": 18
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/MspImagePlugin.py",
+        "line": 17
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/PSDraw.py",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/PaletteFile.py",
+        "line": 13
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/PcdImagePlugin.py",
+        "line": 14
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/PcfFontFile.py",
+        "line": 16
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/PcxImagePlugin.py",
+        "line": 25
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/PIL/PdfImagePlugin.py",
+        "line": 16
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "PostgreSQL",
+    "evidence": [
+      {
+        "file": "cmd/backtest/main.go",
+        "line": 60
+      },
+      {
+        "file": "cmd/collector/main.go",
+        "line": 56
+      },
+      {
+        "file": "cmd/equilibrium/main.go",
+        "line": 44
+      },
+      {
+        "file": "cmd/maxpain/main.go",
+        "line": 44
+      },
+      {
+        "file": "cmd/rsiwillr/main.go",
+        "line": 45
+      },
+      {
+        "file": "cmd/strategy/main.go",
+        "line": 44
+      },
+      {
+        "file": "cmd/watchlist/main.go",
+        "line": 46
+      },
+      {
+        "file": "compose/compose.base.yml",
+        "line": 56
+      },
+      {
+        "file": "compose/compose.core.yml",
+        "line": 26
+      },
+      {
+        "file": "compose/compose.dev.yml",
+        "line": 7
+      },
+      {
+        "file": "compose/compose.fno-volatility.yml",
+        "line": 9
+      },
+      {
+        "file": "compose/compose.jobs.yml",
+        "line": 11
+      },
+      {
+        "file": "compose/compose.legacy.yml",
+        "line": 14
+      },
+      {
+        "file": "compose/compose.market-status.yml",
+        "line": 7
+      },
+      {
+        "file": "compose/compose.oiis-live.yml",
+        "line": 11
+      },
+      {
+        "file": "compose/compose.paper-trading.yml",
+        "line": 11
+      },
+      {
+        "file": "compose/compose.rolling-monthly.yml",
+        "line": 11
+      },
+      {
+        "file": "compose/compose.stage.yml",
+        "line": 26
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-backtest.json",
+        "line": 39
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-equilibrium.json",
+        "line": 24
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-home.json",
+        "line": 38
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-market-data.json",
+        "line": 24
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-max-pain.json",
+        "line": 24
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-option-greeks.json",
+        "line": 24
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-overview.json",
+        "line": 39
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-sector-heatmap.json",
+        "line": 77
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-sla.json",
+        "line": 39
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-strategy.json",
+        "line": 39
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-trading.json",
+        "line": 39
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-watchlist.json",
+        "line": 54
+      },
+      {
+        "file": "compose/grafana/provisioning/datasources/datasources.yaml",
+        "line": 4
+      },
+      {
+        "file": "config.example.yaml",
+        "line": 13
+      },
+      {
+        "file": "db/sql/031_oiis_all_signal_capture.sql",
+        "line": 2
+      },
+      {
+        "file": "db/sql/034_oiis_live_directional_integrity.sql",
+        "line": 33
+      },
+      {
+        "file": "docker-compose.yml",
+        "line": 2
+      },
+      {
+        "file": "docs/modernisation/baseline/repository-inventory.json",
+        "line": 34
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/audit-summary.json",
+        "line": 25
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 70
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 1278
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/mock-placeholder-map.json",
+        "line": 460
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 3
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/runtime-audit.json",
+        "line": 15407
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 783
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/test-map.json",
+        "line": 19
+      },
+      {
+        "file": "internal/backtest/archive_runner.go",
+        "line": 40
+      },
+      {
+        "file": "internal/config/config.go",
+        "line": 16
+      },
+      {
+        "file": "internal/store/postgres.go",
+        "line": 387
+      },
+      {
+        "file": "mod-grafana/cloud-viz/docker-compose.prod.yml",
+        "line": 43
+      },
+      {
+        "file": "mod-grafana/cloud-viz/docker-compose.yml",
+        "line": 46
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/eslint.config.mjs",
+        "line": 6
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/package.json",
+        "line": 17
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/prisma/seed.js",
+        "line": 3
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/prisma/seed.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/backtestingPublished.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/backtestingRegistry.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/dashboardSnapshots.ts",
+        "line": 3
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/dbPerformance.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/disclosuresClient.test.ts",
+        "line": 33
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/disclosuresClient.ts",
+        "line": 20
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/discordMarketStream.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/num.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/prismaPoolUrl.test.ts",
+        "line": 3
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/snapshotRegistry.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsDailySetups.test.ts",
+        "line": 9
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsDailySetups.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsEventContext.test.ts",
+        "line": 15
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsEventContext.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsEvents.test.ts",
+        "line": 12
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsEvents.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsFiiFlow.test.ts",
+        "line": 12
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsFiiFlow.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsLeadership.test.ts",
+        "line": 9
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsLeadership.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsMarketState.test.ts",
+        "line": 12
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsMarketState.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsOptionsStructure.test.ts",
+        "line": 12
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsOptionsStructure.ts",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsQuality.test.ts",
+        "line": 59
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/analyticsStrategyEvaluation.test.ts",
+        "line": 12
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "CDSL",
+    "evidence": [
+      {
+        "file": "compose/compose.core.yml",
+        "line": 201
+      },
+      {
+        "file": "compose/compose.dev.yml",
+        "line": 566
+      },
+      {
+        "file": "compose/compose.stage.yml",
+        "line": 189
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-final.json",
+        "line": 254
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-post.json",
+        "line": 254
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-pre.json",
+        "line": 254
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 1449
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 31217
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 82
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 42428
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/public/stock-profiles.json",
+        "line": 1
+      },
+      {
+        "file": "scripts/audit/finalize_runtime_docs.mjs",
+        "line": 78
+      },
+      {
+        "file": "scripts/audit/generate_trading_app_audit.mjs",
+        "line": 226
+      },
+      {
+        "file": "services/cdsl_fii_daily_ingest/app/__init__.py",
+        "line": 1
+      },
+      {
+        "file": "services/cdsl_fii_daily_ingest/app/config.py",
+        "line": 51
+      },
+      {
+        "file": "services/cdsl_fii_daily_ingest/app/db.py",
+        "line": 14
+      },
+      {
+        "file": "services/cdsl_fii_daily_ingest/scripts/run_once.py",
+        "line": 19
+      },
+      {
+        "file": "services/cdsl_fii_daily_ingest/scripts/scheduler.py",
+        "line": 17
+      },
+      {
+        "file": "services/institutional_flow_ingest/src/market_ingest/sources/nsdl/fortnightly.py",
+        "line": 11
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "Firebase",
+    "evidence": [
+      {
+        "file": "compose/compose.core.yml",
+        "line": 14
+      },
+      {
+        "file": "compose/compose.dev.yml",
+        "line": 248
+      },
+      {
+        "file": "compose/compose.stage.yml",
+        "line": 14
+      },
+      {
+        "file": "docker-compose.yml",
+        "line": 769
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 1531
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 3468
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 15462
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/runtime-audit.json",
+        "line": 48
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 5838
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/package.json",
+        "line": 26
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/auth/guard.ts",
+        "line": 4
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/runtimeConfig.ts",
+        "line": 22
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+        "line": 5
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/scripts/sendTestNotification.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/server.ts",
+        "line": 122
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/services/firebaseMessaging.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/package.json",
+        "line": 21
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/auth/AuthGateProvider.tsx",
+        "line": 11
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/components/auth/AuthGateModal.tsx",
+        "line": 2
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/i18n/LocaleProvider.tsx",
+        "line": 13
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/lib/firebase.ts",
+        "line": 1
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+        "line": 201
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/vite.config.ts",
+        "line": 32
+      },
+      {
+        "file": "neon-stock-terminal/package-lock.json",
+        "line": 24
+      },
+      {
+        "file": "neon-stock-terminal/pnpm-lock.yaml",
+        "line": 32
+      },
+      {
+        "file": "scripts/audit/finalize_runtime_docs.mjs",
+        "line": 79
+      },
+      {
+        "file": "scripts/audit/generate_trading_app_audit.mjs",
+        "line": 226
+      },
+      {
+        "file": "services/bff/package.json",
+        "line": 17
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/packageurl/contrib/url2purl.py",
+        "line": 675
+      },
+      {
+        "file": "tools/playwright/auth-email-clarity-regression.mjs",
+        "line": 6
+      },
+      {
+        "file": "tools/playwright/paper-trading-regression.mjs",
+        "line": 32
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "n8n webhook",
+    "evidence": [
+      {
+        "file": "cmd/collector/stock_webhook.go",
+        "line": 20
+      },
+      {
+        "file": "cmd/collector/stock_webhook_test.go",
+        "line": 15
+      },
+      {
+        "file": "cmd/collector/tasks.go",
+        "line": 247
+      },
+      {
+        "file": "compose/compose.base.yml",
+        "line": 380
+      },
+      {
+        "file": "compose/compose.core.yml",
+        "line": 37
+      },
+      {
+        "file": "compose/compose.dev.yml",
+        "line": 271
+      },
+      {
+        "file": "compose/compose.market-status.yml",
+        "line": 13
+      },
+      {
+        "file": "compose/compose.oiis-live.yml",
+        "line": 16
+      },
+      {
+        "file": "compose/compose.paper-trading.yml",
+        "line": 50
+      },
+      {
+        "file": "compose/compose.stage.yml",
+        "line": 37
+      },
+      {
+        "file": "compose/grafana/dashboards/trading-stack-home.json",
+        "line": 305
+      },
+      {
+        "file": "config.example.yaml",
+        "line": 40
+      },
+      {
+        "file": "db/sql/013_discord_market_stream.sql",
+        "line": 13
+      },
+      {
+        "file": "db/sql/036_market_notification_outbox.sql",
+        "line": 63
+      },
+      {
+        "file": "discord_market_stream_design_pack/discord_market_stream_design_pack/config/discord-layout.example.yaml",
+        "line": 54
+      },
+      {
+        "file": "docker-compose.yml",
+        "line": 796
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-final.json",
+        "line": 4070
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-post.json",
+        "line": 4070
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-pre.json",
+        "line": 4070
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/api-map.json",
+        "line": 5030
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 30
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 150
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/mock-placeholder-map.json",
+        "line": 70
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 1258
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 173
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/storage-map.json",
+        "line": 2194
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/test-map.json",
+        "line": 9771
+      },
+      {
+        "file": "internal/alerts/webhook.go",
+        "line": 47
+      },
+      {
+        "file": "internal/config/config.go",
+        "line": 39
+      },
+      {
+        "file": "internal/maxpain/runner.go",
+        "line": 300
+      },
+      {
+        "file": "internal/strategy/engine.go",
+        "line": 27
+      },
+      {
+        "file": "n8n/Market_Status_Outgoing_WhatsApp_v1.json",
+        "line": 14
+      },
+      {
+        "file": "n8n/NSE_Daily_Ingest_WhatsApp_v1.json",
+        "line": 13
+      },
+      {
+        "file": "n8n/build_market_status_workflow.js",
+        "line": 70
+      },
+      {
+        "file": "n8n/test_market_status_workflow.js",
+        "line": 7
+      },
+      {
+        "file": "n8n/test_nse_daily_ingest_workflow.js",
+        "line": 6
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/discordMarketStream.ts",
+        "line": 12
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/runtimeConfig.ts",
+        "line": 130
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.test.ts",
+        "line": 16
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/feedback.ts",
+        "line": 15
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+        "line": 128
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+        "line": 360
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/OiisLivePage.tsx",
+        "line": 1241
+      },
+      {
+        "file": "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx",
+        "line": 91
+      },
+      {
+        "file": "neon-stock-terminal/package-lock.json",
+        "line": 6676
+      },
+      {
+        "file": "neon-stock-terminal/pnpm-lock.yaml",
+        "line": 2411
+      },
+      {
+        "file": "scripts/audit/finalize_runtime_docs.mjs",
+        "line": 80
+      },
+      {
+        "file": "scripts/audit/generate_trading_app_audit.mjs",
+        "line": 137
+      },
+      {
+        "file": "services/bff/src/index.ts",
+        "line": 20
+      },
+      {
+        "file": "services/market_status/src/market_status/config.py",
+        "line": 19
+      },
+      {
+        "file": "services/market_status/src/market_status/delivery.py",
+        "line": 30
+      },
+      {
+        "file": "services/nse_ingestor/app/cli.py",
+        "line": 142
+      },
+      {
+        "file": "services/nse_ingestor/app/config.py",
+        "line": 27
+      },
+      {
+        "file": "services/nse_ingestor/app/notifications.py",
+        "line": 45
+      },
+      {
+        "file": "services/nse_intraday_intelligence/src/nse_intraday_intelligence/alerts.py",
+        "line": 12
+      },
+      {
+        "file": "services/nse_intraday_intelligence/src/nse_intraday_intelligence/config.py",
+        "line": 76
+      },
+      {
+        "file": "services/nse_intraday_intelligence/src/nse_intraday_intelligence/pipeline.py",
+        "line": 10
+      },
+      {
+        "file": "services/oiis_live/src/oiis_live/main.py",
+        "line": 52
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/fastapi/applications.data.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/fastapi/openapi/models.data.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/fastapi/openapi/utils.data.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/papertrade/cli.data.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/papertrade/cli.meta.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/papertrade/config.data.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/papertrade/events.data.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/papertrade/webhook.data.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.mypy_cache/3.12/papertrade/webhook.meta.json",
+        "line": 1
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/cyclonedx/schema/_res/bom-1.5.SNAPSHOT.schema.json",
+        "line": 3409
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/cyclonedx/schema/_res/bom-1.6.SNAPSHOT.schema.json",
+        "line": 4397
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+        "line": 709
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/openapi/models.py",
+        "line": 426
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/openapi/utils.py",
+        "line": 593
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/license_expression/data/scancode-licensedb-index.json",
+        "line": 19505
+      },
+      {
+        "file": "services/paper_trading/docker-compose.yml",
+        "line": 8
+      },
+      {
+        "file": "services/paper_trading/migrations/001_init.sql",
+        "line": 13
+      },
+      {
+        "file": "services/paper_trading/n8n/build_workflow_v3.js",
+        "line": 46
+      },
+      {
+        "file": "services/paper_trading/n8n/notification_policy_v3.js",
+        "line": 145
+      },
+      {
+        "file": "services/paper_trading/n8n/patch_live_workflow_v3.js",
+        "line": 9
+      },
+      {
+        "file": "services/paper_trading/n8n/workflows/paper-trading-events-v1.json",
+        "line": 4
+      },
+      {
+        "file": "services/paper_trading/n8n/workflows/paper-trading-low-noise-v3.json",
+        "line": 1
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  },
+  {
+    "provider": "Discord",
+    "evidence": [
+      {
+        "file": "compose/compose.core.yml",
+        "line": 39
+      },
+      {
+        "file": "compose/compose.dev.yml",
+        "line": 273
+      },
+      {
+        "file": "compose/compose.stage.yml",
+        "line": 39
+      },
+      {
+        "file": "config.example.yaml",
+        "line": 492
+      },
+      {
+        "file": "db/sql/013_discord_market_stream.sql",
+        "line": 3
+      },
+      {
+        "file": "discord_market_stream_design_pack/discord_market_stream_design_pack/config/alert-policy.example.yaml",
+        "line": 5
+      },
+      {
+        "file": "discord_market_stream_design_pack/discord_market_stream_design_pack/config/discord-layout.example.yaml",
+        "line": 54
+      },
+      {
+        "file": "discord_market_stream_design_pack/discord_market_stream_design_pack/schemas/discord_embed_payload.schema.json",
+        "line": 3
+      },
+      {
+        "file": "docker-compose.yml",
+        "line": 798
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-final.json",
+        "line": 13
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-post.json",
+        "line": 13
+      },
+      {
+        "file": "docs/modernisation/baseline/data-preservation-manifest-pre.json",
+        "line": 13
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/api-map.json",
+        "line": 4489
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/data-source-map.json",
+        "line": 376
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/function-map.json",
+        "line": 2356
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/mock-placeholder-map.json",
+        "line": 766
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/postgres-runtime-catalog.json",
+        "line": 10
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/source-manifest.json",
+        "line": 423
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/storage-map.json",
+        "line": 52
+      },
+      {
+        "file": "docs/trading-app-audit/evidence/test-map.json",
+        "line": 83
+      },
+      {
+        "file": "internal/alerts/webhook.go",
+        "line": 19
+      },
+      {
+        "file": "internal/config/config.go",
+        "line": 517
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/package.json",
+        "line": 9
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/discordMarketStream.ts",
+        "line": 9
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/runtimeConfig.test.ts",
+        "line": 12
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/lib/runtimeConfig.ts",
+        "line": 100
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.test.ts",
+        "line": 6
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.ts",
+        "line": 5
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/routes/index.ts",
+        "line": 28
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/scripts/discordStreamDispatcher.ts",
+        "line": 4
+      },
+      {
+        "file": "neon-stock-terminal/apps/api/src/server.ts",
+        "line": 15
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/scipy/stats/_hypotests.py",
+        "line": 21
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/scipy/stats/_stats_py.py",
+        "line": 5668
+      },
+      {
+        "file": "platform/nifty_stratlab/.venv/lib/python3.12/site-packages/sklearn/metrics/cluster/_supervised.py",
+        "line": 377
+      },
+      {
+        "file": "scripts/audit/finalize_runtime_docs.mjs",
+        "line": 81
+      },
+      {
+        "file": "scripts/audit/generate_trading_app_audit.mjs",
+        "line": 227
+      },
+      {
+        "file": "services/nse_intraday_intelligence/src/nse_intraday_intelligence/alerts.py",
+        "line": 12
+      },
+      {
+        "file": "services/paper_trading/.venv/lib/python3.12/site-packages/license_expression/data/scancode-licensedb-index.json",
+        "line": 17254
+      }
+    ],
+    "runtimeStatus": "UNVERIFIED unless separately identified in the runtime audit"
+  }
+]

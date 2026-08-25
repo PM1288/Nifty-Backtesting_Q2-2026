@@ -1,0 +1,14 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": []
+  }
+]

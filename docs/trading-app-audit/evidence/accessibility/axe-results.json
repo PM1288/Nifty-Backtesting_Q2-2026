@@ -1,0 +1,119 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/",
+    "screen": "today",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics",
+    "screen": "markets",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/stock/RELIANCE",
+    "screen": "stock-360",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/strategy/oiis-live",
+    "screen": "oiis-lab",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": 1,
+        "targets": [
+          [
+            "._emptyState_168wu_142 > div > p"
+          ]
+        ],
+        "examples": [
+          {
+            "target": [
+              "._emptyState_168wu_142 > div > p"
+            ],
+            "html": "<p>This is not missing data: 0 daily evaluations are visible above. Review the near misses, but do not convert them into automatic trades.</p>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #6b7b8f, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "viewport": "desktop",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/options/intelligence",
+    "screen": "derivatives",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/control-plane",
+    "screen": "admin",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/",
+    "screen": "today",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics",
+    "screen": "markets",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics/stock/RELIANCE",
+    "screen": "stock-360",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/strategy/oiis-live",
+    "screen": "oiis-lab",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/options/intelligence",
+    "screen": "derivatives",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/control-plane",
+    "screen": "admin",
+    "violations": []
+  }
+]

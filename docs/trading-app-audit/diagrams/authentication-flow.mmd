@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant B as Browser
+  participant A as Auth routes
+  participant S as Session store
+  participant V as Protected v1 route
+  B->>A: Login token or authorised dev login
+  A->>S: Validate and create session
+  A-->>B: Secure session cookie
+  B->>V: Request with credentials
+  V->>S: Authenticate and authorize
+  V-->>B: Data or 401/403

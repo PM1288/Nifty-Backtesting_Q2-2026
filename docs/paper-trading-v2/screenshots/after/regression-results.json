@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "asOf": "2026-08-22T17:53:44.378Z",
+  "tradeCount": 35,
+  "reconciliation": {
+    "realisedNet": 77055.97959999999,
+    "openUnrealisedGross": -53113.55,
+    "higherTargetImpliesLowerTarget": true,
+    "inclusiveHorizonRule": true
+  },
+  "screenshots": [
+    "paper-workbench-v2-1920x1080.png",
+    "paper-workbench-v2-1600x900.png",
+    "paper-workbench-v2-1440x900.png",
+    "paper-workbench-v2-1366x768.png",
+    "paper-workbench-v2-768x1024.png",
+    "paper-workbench-v2-390x844.png"
+  ],
+  "exportPath": "/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/docs/paper-trading-v2/screenshots/after/paper-trading-evidence-2026-08-22.csv"
+}

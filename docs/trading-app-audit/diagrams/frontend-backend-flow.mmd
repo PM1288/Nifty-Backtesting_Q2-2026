@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant U as User
+  participant W as React page
+  participant Q as Query/API client
+  participant G as Express gateway
+  participant D as PostgreSQL/service
+  U->>W: Open route or select control
+  W->>Q: Fetch typed view model
+  Q->>G: Authenticated HTTP request
+  G->>D: Query or service call
+  D-->>G: Canonical rows/result
+  G-->>Q: JSON plus timestamps/state
+  Q-->>W: Cached server state
+  W-->>U: KPI, chart, table, or explicit error

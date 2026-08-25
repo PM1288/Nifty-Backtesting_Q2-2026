@@ -1,0 +1,14 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/",
+    "screen": "today",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/",
+    "screen": "today",
+    "violations": []
+  }
+]

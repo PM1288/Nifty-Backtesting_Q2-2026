@@ -1,0 +1,616 @@
+[
+  {
+    "name": "bff",
+    "root": "services/bff",
+    "languages": [
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 4,
+    "endpoints": [],
+    "tests": [],
+    "packageEvidence": [
+      "services/bff/package.json"
+    ]
+  },
+  {
+    "name": "cdsl_fii_daily_ingest",
+    "root": "services/cdsl_fii_daily_ingest",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 7,
+    "endpoints": [],
+    "tests": [],
+    "packageEvidence": []
+  },
+  {
+    "name": "fno_volatility",
+    "root": "services/fno_volatility",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 8,
+    "endpoints": [],
+    "tests": [
+      "services/fno_volatility/tests/test_model.py"
+    ],
+    "packageEvidence": [
+      "services/fno_volatility/pyproject.toml"
+    ]
+  },
+  {
+    "name": "institutional_flow_ingest",
+    "root": "services/institutional_flow_ingest",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 75,
+    "endpoints": [],
+    "tests": [
+      "services/institutional_flow_ingest/tests/test_bhavcopy_normalize.py",
+      "services/institutional_flow_ingest/tests/test_calendar.py",
+      "services/institutional_flow_ingest/tests/test_checksum.py",
+      "services/institutional_flow_ingest/tests/test_cli_idempotency.py",
+      "services/institutional_flow_ingest/tests/test_fii_dii_normalize.py",
+      "services/institutional_flow_ingest/tests/test_http_failures.py",
+      "services/institutional_flow_ingest/tests/test_registry.py",
+      "services/institutional_flow_ingest/tests/test_storage_idempotency.py"
+    ],
+    "packageEvidence": [
+      "services/institutional_flow_ingest/pyproject.toml"
+    ]
+  },
+  {
+    "name": "lite-dashboard",
+    "root": "services/lite-dashboard",
+    "languages": [
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 2,
+    "endpoints": [
+      "GET /",
+      "GET /api/dashboard",
+      "GET /api/heatmap",
+      "GET /api/rsi-heatmap",
+      "GET /api/stocks",
+      "POST /auth/login",
+      "POST /auth/logout",
+      "GET /healthz",
+      "GET /heatmap",
+      "GET /login",
+      "GET /rsi-heatmap"
+    ],
+    "tests": [],
+    "packageEvidence": [
+      "services/lite-dashboard/package.json"
+    ]
+  },
+  {
+    "name": "market_data_gateway",
+    "root": "services/market_data_gateway",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 2,
+    "endpoints": [
+      "GET /",
+      "GET /",
+      "GET /catalog",
+      "GET /catalog",
+      "GET /global-indices",
+      "GET /global-indices",
+      "GET /health",
+      "GET /health",
+      "GET /quote/{code}",
+      "GET /quote/{code}",
+      "GET /quotes",
+      "GET /quotes",
+      "GET /yahoo/quote",
+      "GET /yahoo/quote"
+    ],
+    "tests": [],
+    "packageEvidence": []
+  },
+  {
+    "name": "market_status",
+    "root": "services/market_status",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 16,
+    "endpoints": [],
+    "tests": [
+      "services/market_status/tests/test_config.py",
+      "services/market_status/tests/test_contract.py",
+      "services/market_status/tests/test_delivery.py",
+      "services/market_status/tests/test_evaluation.py",
+      "services/market_status/tests/test_planning.py"
+    ],
+    "packageEvidence": [
+      "services/market_status/pyproject.toml"
+    ]
+  },
+  {
+    "name": "nifty-parrot-premium",
+    "root": "services/nifty-parrot-premium",
+    "languages": [
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 28,
+    "endpoints": [
+      "GET /",
+      "GET /health",
+      "GET /parrot",
+      "GET /parrot/*",
+      "GET /tree",
+      "GET /tree/*"
+    ],
+    "tests": [],
+    "packageEvidence": [
+      "services/nifty-parrot-premium/client/package.json",
+      "services/nifty-parrot-premium/package.json",
+      "services/nifty-parrot-premium/server/package.json"
+    ]
+  },
+  {
+    "name": "nifty100_disclosures_pipeline",
+    "root": "services/nifty100_disclosures_pipeline",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 21,
+    "endpoints": [
+      "GET /health",
+      "GET /health",
+      "GET /latest-run",
+      "GET /latest-run",
+      "POST /load",
+      "POST /load",
+      "POST /run",
+      "POST /run"
+    ],
+    "tests": [
+      "services/nifty100_disclosures_pipeline/tests/test_config.py",
+      "services/nifty100_disclosures_pipeline/tests/test_db_schema.py",
+      "services/nifty100_disclosures_pipeline/tests/test_pipeline.py",
+      "services/nifty100_disclosures_pipeline/tests/test_postgres_loader.py",
+      "services/nifty100_disclosures_pipeline/tests/test_transforms.py",
+      "services/nifty100_disclosures_pipeline/tests/test_utils.py"
+    ],
+    "packageEvidence": [
+      "services/nifty100_disclosures_pipeline/pyproject.toml"
+    ]
+  },
+  {
+    "name": "nse_analytics_worker",
+    "root": "services/nse_analytics_worker",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 40,
+    "endpoints": [],
+    "tests": [
+      "services/nse_analytics_worker/tests/test_backtesting_contracts.py",
+      "services/nse_analytics_worker/tests/test_backtesting_csv.py",
+      "services/nse_analytics_worker/tests/test_strategy_lab.py"
+    ],
+    "packageEvidence": []
+  },
+  {
+    "name": "nse_fii_reports_service",
+    "root": "services/nse_fii_reports_service",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 23,
+    "endpoints": [
+      "POST /backfill",
+      "POST /backfill",
+      "GET /health",
+      "GET /health",
+      "GET /latest-run",
+      "GET /latest-run",
+      "POST /load",
+      "POST /load",
+      "POST /pull-latest",
+      "POST /pull-latest",
+      "GET /runs",
+      "GET /runs",
+      "GET /runs/{kind}/{run_id}",
+      "GET /runs/{kind}/{run_id}"
+    ],
+    "tests": [
+      "services/nse_fii_reports_service/tests/test_api.py",
+      "services/nse_fii_reports_service/tests/test_client.py",
+      "services/nse_fii_reports_service/tests/test_endpoints.py",
+      "services/nse_fii_reports_service/tests/test_orchestrator.py",
+      "services/nse_fii_reports_service/tests/test_parsers.py",
+      "services/nse_fii_reports_service/tests/test_postgres_loader.py",
+      "services/nse_fii_reports_service/tests/test_services.py"
+    ],
+    "packageEvidence": [
+      "services/nse_fii_reports_service/pyproject.toml"
+    ]
+  },
+  {
+    "name": "nse_ingestor",
+    "root": "services/nse_ingestor",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 26,
+    "endpoints": [],
+    "tests": [
+      "services/nse_ingestor/tests/__init__.py",
+      "services/nse_ingestor/tests/test_daily.py",
+      "services/nse_ingestor/tests/test_migrations.py",
+      "services/nse_ingestor/tests/test_notifications.py",
+      "services/nse_ingestor/tests/test_scheduler.py"
+    ],
+    "packageEvidence": []
+  },
+  {
+    "name": "nse_intraday_intelligence",
+    "root": "services/nse_intraday_intelligence",
+    "languages": [
+      "Python",
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 50,
+    "endpoints": [
+      "GET /health",
+      "GET /health"
+    ],
+    "tests": [],
+    "packageEvidence": [
+      "services/nse_intraday_intelligence/pyproject.toml"
+    ]
+  },
+  {
+    "name": "nse_orchestration_exports",
+    "root": "services/nse_orchestration_exports",
+    "languages": [
+      "Python",
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 42,
+    "endpoints": [
+      "GET /health",
+      "GET /health"
+    ],
+    "tests": [],
+    "packageEvidence": [
+      "services/nse_orchestration_exports/pyproject.toml"
+    ]
+  },
+  {
+    "name": "nse_premium_cockpit",
+    "root": "services/nse_premium_cockpit",
+    "languages": [
+      "Python",
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 42,
+    "endpoints": [
+      "GET /",
+      "GET /",
+      "GET /api/health",
+      "GET /api/health",
+      "GET /api/snapshot",
+      "GET /api/snapshot",
+      "GET /api/stock/{symbol}",
+      "GET /api/stock/{symbol}"
+    ],
+    "tests": [
+      "services/nse_premium_cockpit/tests/test_api.py",
+      "services/nse_premium_cockpit/tests/test_palette_compliance.py"
+    ],
+    "packageEvidence": [
+      "services/nse_premium_cockpit/pyproject.toml"
+    ]
+  },
+  {
+    "name": "nse_reco_state_engine",
+    "root": "services/nse_reco_state_engine",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 50,
+    "endpoints": [
+      "GET /health",
+      "GET /health"
+    ],
+    "tests": [
+      "services/nse_reco_state_engine/tests/conftest.py",
+      "services/nse_reco_state_engine/tests/test_anomalies.py",
+      "services/nse_reco_state_engine/tests/test_regime.py",
+      "services/nse_reco_state_engine/tests/test_scoring.py",
+      "services/nse_reco_state_engine/tests/test_simulator.py"
+    ],
+    "packageEvidence": [
+      "services/nse_reco_state_engine/pyproject.toml"
+    ]
+  },
+  {
+    "name": "oiis_live",
+    "root": "services/oiis_live",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 10,
+    "endpoints": [],
+    "tests": [
+      "services/oiis_live/tests/test_integrity.py",
+      "services/oiis_live/tests/test_policy.py",
+      "services/oiis_live/tests/test_trade_contract.py"
+    ],
+    "packageEvidence": [
+      "services/oiis_live/pyproject.toml"
+    ]
+  },
+  {
+    "name": "option-chain-watcher",
+    "root": "services/option-chain-watcher",
+    "languages": [
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 19,
+    "endpoints": [],
+    "tests": [
+      "services/option-chain-watcher/src/nseClient.test.ts",
+      "services/option-chain-watcher/src/sessionPolicy.test.ts"
+    ],
+    "packageEvidence": [
+      "services/option-chain-watcher/package.json"
+    ]
+  },
+  {
+    "name": "paper_trading",
+    "root": "services/paper_trading",
+    "languages": [
+      "Python",
+      "TypeScript/JavaScript"
+    ],
+    "sourceFiles": 4855,
+    "endpoints": [
+      "GET /",
+      "GET /",
+      "GET /api/v1/accounts/{account_id}/summary",
+      "GET /api/v1/accounts/{account_id}/summary",
+      "GET /api/v1/strategies/{strategy_id}/performance",
+      "GET /api/v1/strategies/{strategy_id}/performance",
+      "GET /api/v1/trade-groups",
+      "GET /api/v1/trade-groups",
+      "GET /api/v1/trade-groups/{group_id}",
+      "GET /api/v1/trade-groups/{group_id}",
+      "POST /api/v1/trade-groups/{group_id}/cancel",
+      "POST /api/v1/trade-groups/{group_id}/cancel",
+      "POST /api/v1/trade-groups/{group_id}/close-intents",
+      "POST /api/v1/trade-groups/{group_id}/close-intents",
+      "POST /api/v1/trade-groups/{group_id}/commit",
+      "POST /api/v1/trade-groups/{group_id}/commit",
+      "POST /api/v1/trade-groups/{group_id}/legs",
+      "POST /api/v1/trade-groups/{group_id}/legs",
+      "POST /api/v1/trade-groups/building",
+      "POST /api/v1/trade-groups/building",
+      "POST /api/v1/trade-intents",
+      "POST /api/v1/trade-intents",
+      "GET /api/v1/trade-intents/{intent_id}",
+      "GET /api/v1/trade-intents/{intent_id}",
+      "GET /async-items/",
+      "GET /async-items/",
+      "GET /events",
+      "GET /events",
+      "GET /events",
+      "GET /events",
+      "POST /files/",
+      "POST /files/",
+      "GET /health/live",
+      "GET /health/live",
+      "GET /health/ready",
+      "GET /health/ready",
+      "GET /image",
+      "GET /image",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "GET /items/",
+      "PATCH /items/",
+      "PATCH /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "POST /items/",
+      "DELETE /items/{item_id}",
+      "DELETE /items/{item_id}",
+      "GET /items/{item_id}",
+      "GET /items/{item_id}",
+      "GET /items/{item_id}",
+      "GET /items/{item_id}",
+      "GET /items/{item_id}",
+      "GET /items/{item_id}",
+      "PUT /items/{item_id}",
+      "PUT /items/{item_id}",
+      "GET /items/me",
+      "GET /items/me",
+      "GET /items/me",
+      "GET /items/me",
+      "GET /items/me",
+      "GET /items/me",
+      "GET /items/me",
+      "GET /items/me",
+      "GET /items/stream",
+      "GET /items/stream",
+      "GET /items/stream",
+      "GET /items/stream",
+      "POST /login",
+      "POST /login",
+      "POST /login",
+      "POST /login",
+      "GET /metrics",
+      "GET /metrics",
+      "POST /send-notification/{email}",
+      "POST /send-notification/{email}",
+      "POST /uploadfile/",
+      "POST /uploadfile/",
+      "GET /users/",
+      "GET /users/",
+      "GET /users/me",
+      "GET /users/me",
+      "GET /users/me",
+      "GET /users/me",
+      "GET /users/me",
+      "GET /users/me",
+      "GET /users/me",
+      "GET /users/me",
+      "GET /users/me/items/",
+      "GET /users/me/items/"
+    ],
+    "tests": [
+      "services/paper_trading/.venv/lib/python3.12/site-packages/certifi/tests/__init__.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/certifi/tests/test_certify.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/__init__.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_c_stack_refs_suspended_gc.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_clearing_run_switches.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_cpp_exception.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_initialstub_already_started.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_issue_515_freethread_gc.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_slp_switch.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_switch_critical_section.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_switch_three_greenlets.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_switch_three_greenlets2.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/fail_switch_two_greenlets.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/leakcheck.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_contextvars.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_cpp.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_extension_interface.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_gc.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_generator.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_generator_nested.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_greenlet.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_greenlet_trash.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_interpreter_shutdown.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_leaks.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_stack_saved.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_throw.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_tracing.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_version.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/greenlet/tests/test_weakref.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/__init__.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/_suite.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/fuzz_validate.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_cli.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_deprecations.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_exceptions.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_format.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_jsonschema_test_suite.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_types.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_utils.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/test_validators.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/typing/__init__.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema/tests/typing/test_all_concrete_validators_match_protocol.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema_specifications/tests/__init__.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/jsonschema_specifications/tests/test_jsonschema_specifications.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/pip/_vendor/colorama/tests/__init__.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/pip/_vendor/colorama/tests/ansi_test.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/pip/_vendor/colorama/tests/ansitowin32_test.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/pip/_vendor/colorama/tests/initialise_test.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/pip/_vendor/colorama/tests/isatty_test.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/pip/_vendor/colorama/tests/utils.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/pip/_vendor/colorama/tests/winterm_test.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/referencing/tests/__init__.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/referencing/tests/test_core.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/referencing/tests/test_exceptions.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/referencing/tests/test_jsonschema.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/referencing/tests/test_referencing_suite.py",
+      "services/paper_trading/.venv/lib/python3.12/site-packages/referencing/tests/test_retrieval.py",
+      "services/paper_trading/tests/mock_receiver.py",
+      "services/paper_trading/tests/test_contracts.py",
+      "services/paper_trading/tests/test_domain.py",
+      "services/paper_trading/tests/test_events_webhook.py",
+      "services/paper_trading/tests/test_migration.py",
+      "services/paper_trading/tests/test_postgres_flow.py",
+      "services/paper_trading/tests/test_runtime_integration.py"
+    ],
+    "packageEvidence": [
+      "services/paper_trading/pyproject.toml"
+    ]
+  },
+  {
+    "name": "realtime-engine",
+    "root": "services/realtime-engine",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 7,
+    "endpoints": [
+      "GET /api/health",
+      "GET /api/health",
+      "GET /api/snapshot",
+      "GET /api/snapshot",
+      "GET /api/stock/{symbol}",
+      "GET /api/stock/{symbol}"
+    ],
+    "tests": [],
+    "packageEvidence": []
+  },
+  {
+    "name": "rolling_monthly",
+    "root": "services/rolling_monthly",
+    "languages": [
+      "Python"
+    ],
+    "sourceFiles": 12,
+    "endpoints": [],
+    "tests": [
+      "services/rolling_monthly/tests/test_absolute_first_session.py",
+      "services/rolling_monthly/tests/test_absolute_month.py",
+      "services/rolling_monthly/tests/test_engine.py"
+    ],
+    "packageEvidence": [
+      "services/rolling_monthly/pyproject.toml"
+    ]
+  }
+]

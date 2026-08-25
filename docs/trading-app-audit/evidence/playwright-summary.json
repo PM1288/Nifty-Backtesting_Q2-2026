@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-08-23T11:24:16.056Z",
+  "origin": "http://127.0.0.1:19090",
+  "basePath": "/n50",
+  "routes": 56,
+  "captures": 224,
+  "screenshots": 385,
+  "captured": 220,
+  "degraded": 4,
+  "failed": 0,
+  "responseErrors": 4,
+  "consoleErrors": 154,
+  "horizontalOverflow": 0
+}

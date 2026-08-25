@@ -1,0 +1,140 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/",
+    "screen": "today",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics",
+    "screen": "markets",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/stock/RELIANCE",
+    "screen": "stock-360",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/strategy/oiis-live",
+    "screen": "oiis-lab",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/options/intelligence",
+    "screen": "derivatives",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": 1,
+        "targets": [
+          [
+            "._moduleGrid_9g14a_15"
+          ]
+        ],
+        "examples": [
+          {
+            "target": [
+              "._moduleGrid_9g14a_15"
+            ],
+            "html": "<div class=\"_moduleGrid_9g14a_15\">",
+            "failureSummary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "viewport": "desktop",
+    "route": "/control-plane",
+    "screen": "admin",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/",
+    "screen": "today",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics",
+    "screen": "markets",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics/stock/RELIANCE",
+    "screen": "stock-360",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/strategy/oiis-live",
+    "screen": "oiis-lab",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/options/intelligence",
+    "screen": "derivatives",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": 1,
+        "targets": [
+          [
+            "._moduleGrid_9g14a_15"
+          ]
+        ],
+        "examples": [
+          {
+            "target": [
+              "._moduleGrid_9g14a_15"
+            ],
+            "html": "<div class=\"_moduleGrid_9g14a_15\">",
+            "failureSummary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "viewport": "mobile",
+    "route": "/control-plane",
+    "screen": "admin",
+    "violations": []
+  }
+]

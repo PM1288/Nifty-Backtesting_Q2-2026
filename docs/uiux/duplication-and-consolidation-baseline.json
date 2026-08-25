@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-08-23T18:16:37.616Z",
+  "evidence": "Static component/CSS catalogue plus current source inspection",
+  "sharedFoundationsAlreadyPresent": [
+    "CommandPalette",
+    "NavigationStateManager",
+    "WorkspacePrimitives",
+    "TradingPrimitives",
+    "PaperWorkbenchPrimitives",
+    "EChartSurface",
+    "ResponsiveWorkspaceNavigation"
+  ],
+  "rules": [
+    "Extend existing foundations; do not create parallel command, chart, status, paper metric, or navigation systems.",
+    "Page-specific CSS is retired only after route parity and visual evidence.",
+    "No business calculation moves into a presentation component."
+  ],
+  "sourceCounts": {
+    "componentRecords": 389,
+    "uniqueCssModules": 65,
+    "pageSpecificCssModules": 1
+  }
+}

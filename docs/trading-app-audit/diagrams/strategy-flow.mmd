@@ -1,0 +1,8 @@
+flowchart LR
+  Inputs[Point-in-time market inputs] --> Gates[Versioned strategy gates]
+  Gates --> Signal[Timestamped signal]
+  Signal --> Entry[Permitted next/same-bar entry rule]
+  Entry --> Path[MFE MAE targets exits]
+  Path --> Results[Backtest or live evidence]
+  Results --> API[Strategy API]
+  API --> UI[Strategy dashboard]

@@ -1,0 +1,15 @@
+flowchart TB
+  Browser[Authenticated React/Vite browser] --> Nginx[N50 Nginx base-path gateway]
+  Nginx --> API[Express TypeScript API]
+  API --> PG[(PostgreSQL 16)]
+  API --> Redis[(Redis)]
+  API --> Paper[Paper Trading FastAPI/workers]
+  API --> OIIS[OIIS Live service]
+  API --> Monthly[Monthly and Rolling service]
+  API --> Deriv[Derivatives services]
+  Collector[Go SmartAPI collector] --> PG
+  NSE[NSE ingestors and option watcher] --> PG
+  Yahoo[Yahoo historical adapter] --> PG
+  Paper --> PG
+  API --> WS[WebSocket stream]
+  WS --> Browser

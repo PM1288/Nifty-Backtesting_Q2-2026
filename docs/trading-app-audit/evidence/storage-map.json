@@ -1,0 +1,2534 @@
+[
+  {
+    "type": "TABLE",
+    "name": "market_data.nse_financial_results",
+    "file": "db/sql/011_nifty100_disclosures.sql",
+    "line": 4
+  },
+  {
+    "type": "TABLE",
+    "name": "market_data.yf_financial_statements",
+    "file": "db/sql/011_nifty100_disclosures.sql",
+    "line": 24
+  },
+  {
+    "type": "TABLE",
+    "name": "market_data.nse_corporate_actions",
+    "file": "db/sql/011_nifty100_disclosures.sql",
+    "line": 37
+  },
+  {
+    "type": "TABLE",
+    "name": "market_data.nse_event_calendar",
+    "file": "db/sql/011_nifty100_disclosures.sql",
+    "line": 53
+  },
+  {
+    "type": "TABLE",
+    "name": "audit.load_manifest",
+    "file": "db/sql/011_nifty100_disclosures.sql",
+    "line": 67
+  },
+  {
+    "type": "TABLE",
+    "name": "market_data.nse_fii_participant_open_interest",
+    "file": "db/sql/012_nse_fii_reports.sql",
+    "line": 4
+  },
+  {
+    "type": "TABLE",
+    "name": "market_data.nse_fii_participant_volume",
+    "file": "db/sql/012_nse_fii_reports.sql",
+    "line": 28
+  },
+  {
+    "type": "TABLE",
+    "name": "market_data.nse_fii_derivatives_stats",
+    "file": "db/sql/012_nse_fii_reports.sql",
+    "line": 52
+  },
+  {
+    "type": "TABLE",
+    "name": "audit.discord_stream_dispatch_log",
+    "file": "db/sql/013_discord_market_stream.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.session_profile",
+    "file": "db/sql/014_nifty_stratlab_foundation.sql",
+    "line": 7
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.expiry_rule",
+    "file": "db/sql/014_nifty_stratlab_foundation.sql",
+    "line": 29
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.data_snapshot",
+    "file": "db/sql/014_nifty_stratlab_foundation.sql",
+    "line": 42
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.source_file",
+    "file": "db/sql/014_nifty_stratlab_foundation.sql",
+    "line": 52
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.quality_result",
+    "file": "db/sql/014_nifty_stratlab_foundation.sql",
+    "line": 71
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.instrument_alias",
+    "file": "db/sql/014_nifty_stratlab_foundation.sql",
+    "line": 87
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.universe_snapshot",
+    "file": "db/sql/014_nifty_stratlab_foundation.sql",
+    "line": 98
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.fee_schedule",
+    "file": "db/sql/015_nifty_stratlab_economics.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.feature_definition",
+    "file": "db/sql/015_nifty_stratlab_economics.sql",
+    "line": 33
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.strategy",
+    "file": "db/sql/015_nifty_stratlab_economics.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.strategy_version",
+    "file": "db/sql/015_nifty_stratlab_economics.sql",
+    "line": 60
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.execution_model",
+    "file": "db/sql/015_nifty_stratlab_economics.sql",
+    "line": 75
+  },
+  {
+    "type": "TABLE",
+    "name": "research.experiment_run",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.run_shard",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 34
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.signal_intent",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 62
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.trade_result",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 83
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.equity_point",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 110
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.skipped_signal",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 124
+  },
+  {
+    "type": "TABLE",
+    "name": "research.metric_result",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 133
+  },
+  {
+    "type": "TABLE",
+    "name": "research.published_run",
+    "file": "db/sql/016_nifty_stratlab_replay.sql",
+    "line": 146
+  },
+  {
+    "type": "TABLE",
+    "name": "research.opportunity_label",
+    "file": "db/sql/017_nifty_stratlab_discovery.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.validation_split",
+    "file": "db/sql/017_nifty_stratlab_discovery.sql",
+    "line": 33
+  },
+  {
+    "type": "TABLE",
+    "name": "research.feature_association",
+    "file": "db/sql/017_nifty_stratlab_discovery.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "research.model_version",
+    "file": "db/sql/017_nifty_stratlab_discovery.sql",
+    "line": 63
+  },
+  {
+    "type": "TABLE",
+    "name": "research.calibration_bin",
+    "file": "db/sql/017_nifty_stratlab_discovery.sql",
+    "line": 79
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.option_contract_observation",
+    "file": "db/sql/018_nifty_stratlab_options.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.option_trade_result",
+    "file": "db/sql/018_nifty_stratlab_options.sql",
+    "line": 25
+  },
+  {
+    "type": "TABLE",
+    "name": "research.feature_parity_result",
+    "file": "db/sql/018_nifty_stratlab_options.sql",
+    "line": 55
+  },
+  {
+    "type": "TABLE",
+    "name": "research.research_pack",
+    "file": "db/sql/018_nifty_stratlab_options.sql",
+    "line": 70
+  },
+  {
+    "type": "TABLE",
+    "name": "research.analyst_response",
+    "file": "db/sql/018_nifty_stratlab_options.sql",
+    "line": 85
+  },
+  {
+    "type": "TABLE",
+    "name": "research.programme_acceptance_criterion",
+    "file": "db/sql/019_nifty_stratlab_runtime_hardening.sql",
+    "line": 6
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.evaluation_policy",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 6
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.market_event",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 17
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.event_window",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.source_register",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 65
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.market_regime_daily",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 77
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.run_evaluation",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 107
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.trade_path_summary",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 134
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.trade_target_event",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 149
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.trade_adverse_event",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 159
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.trade_context_snapshot",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 167
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.period_metric",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 193
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.slice_metric",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 202
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.strategy_score_dimension",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 212
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.strategy_suitability",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 222
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.no_trade_rule",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 232
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.comparison_run",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 243
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.artifact_manifest",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 252
+  },
+  {
+    "type": "VIEW",
+    "name": "strategy_eval.v_latest_strategy_evaluation",
+    "file": "db/sql/020_strategy_evaluation_roe.sql",
+    "line": 263
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis.formula_version",
+    "file": "db/sql/021_oiis_research.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis.replay_run",
+    "file": "db/sql/021_oiis_research.sql",
+    "line": 14
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis.decision_snapshot",
+    "file": "db/sql/021_oiis_research.sql",
+    "line": 44
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis.trade_outcome",
+    "file": "db/sql/021_oiis_research.sql",
+    "line": 79
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis.performance_bucket",
+    "file": "db/sql/021_oiis_research.sql",
+    "line": 110
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis.artifact_manifest",
+    "file": "db/sql/021_oiis_research.sql",
+    "line": 124
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.entry_path_evaluation",
+    "file": "db/sql/022_full_path_ladder_v2.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.ladder_event",
+    "file": "db/sql/022_full_path_ladder_v2.sql",
+    "line": 27
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.path_checkpoint",
+    "file": "db/sql/022_full_path_ladder_v2.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.execution_scenario_result",
+    "file": "db/sql/022_full_path_ladder_v2.sql",
+    "line": 64
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.long_horizon_observation",
+    "file": "db/sql/024_h30_opportunity_v3.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.long_horizon_checkpoint",
+    "file": "db/sql/024_h30_opportunity_v3.sql",
+    "line": 31
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.strategy_horizon_summary",
+    "file": "db/sql/024_h30_opportunity_v3.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.strategy_horizon_ranking",
+    "file": "db/sql/024_h30_opportunity_v3.sql",
+    "line": 58
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.chart_artifact",
+    "file": "db/sql/024_h30_opportunity_v3.sql",
+    "line": 72
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.nifty50_daily_regime",
+    "file": "db/sql/025_nifty50_yfinance_daily_regime.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.stock_daily_regime",
+    "file": "db/sql/026_nifty500_stock_daily_regime.sql",
+    "line": 2
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.global_market_daily_regime",
+    "file": "db/sql/027_global_market_daily_regime.sql",
+    "line": 2
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.universal_evaluation_run",
+    "file": "db/sql/028_universal_strategy_evaluation.sql",
+    "line": 2
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.universal_validation_gate",
+    "file": "db/sql/028_universal_strategy_evaluation.sql",
+    "line": 10
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.universal_risk_register",
+    "file": "db/sql/028_universal_strategy_evaluation.sql",
+    "line": 14
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.universal_artifact_manifest",
+    "file": "db/sql/028_universal_strategy_evaluation.sql",
+    "line": 20
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.oiis_doe_run",
+    "file": "db/sql/029_oiis_component_doe.sql",
+    "line": 2
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.oiis_doe_trial",
+    "file": "db/sql/029_oiis_component_doe.sql",
+    "line": 8
+  },
+  {
+    "type": "TABLE",
+    "name": "strategy_eval.oiis_doe_component_event",
+    "file": "db/sql/029_oiis_component_doe.sql",
+    "line": 16
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.experiment",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.trial",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 15
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.data_snapshot",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 31
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.trial_parameter",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 38
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.component_event",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 51
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.decision_event",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 60
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.entry_path",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 61
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.target_event",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 62
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.adverse_event",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 63
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.capital_event",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 64
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.validation_result",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 66
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.factor_effect",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 78
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.interaction_effect",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 91
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.regime_effect",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 101
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_doe.artifact_manifest",
+    "file": "db/sql/030_oiis_doe_v2.sql",
+    "line": 113
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_research.all_signal_run",
+    "file": "db/sql/031_oiis_all_signal_capture.sql",
+    "line": 7
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_research.all_signal_observation",
+    "file": "db/sql/031_oiis_all_signal_capture.sql",
+    "line": 22
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_research.all_signal_latest",
+    "file": "db/sql/031_oiis_all_signal_capture.sql",
+    "line": 87
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.policy_version",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.selection_run",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 15
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.daily_candidate",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 35
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.watchlist_item",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 80
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.intraday_evaluation",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 108
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.entry_claim",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 127
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.command_queue",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 150
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.service_heartbeat",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 165
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.error_outbox",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 174
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.historical_run",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 192
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.historical_trade",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 208
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_current_watchlist",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 228
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_service_diagnostics",
+    "file": "db/sql/032_oiis_live.sql",
+    "line": 238
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.universe_member",
+    "file": "db/sql/033_oiis_live_tiered_evidence.sql",
+    "line": 3
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_latest_daily_candidate",
+    "file": "db/sql/033_oiis_live_tiered_evidence.sql",
+    "line": 40
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_current_watchlist",
+    "file": "db/sql/033_oiis_live_tiered_evidence.sql",
+    "line": 51
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_latest_daily_candidate",
+    "file": "db/sql/034_oiis_live_directional_integrity.sql",
+    "line": 35
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_current_watchlist",
+    "file": "db/sql/034_oiis_live_directional_integrity.sql",
+    "line": 46
+  },
+  {
+    "type": "TABLE",
+    "name": "oiis_live.candidate_run_change",
+    "file": "db/sql/035_oiis_live_run_history_auto_paper.sql",
+    "line": 32
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_current_watchlist",
+    "file": "db/sql/035_oiis_live_run_history_auto_paper.sql",
+    "line": 65
+  },
+  {
+    "type": "TABLE",
+    "name": "market_notifications.notification_event",
+    "file": "db/sql/036_market_notification_outbox.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "market_notifications.delivery_attempt",
+    "file": "db/sql/036_market_notification_outbox.sql",
+    "line": 34
+  },
+  {
+    "type": "TABLE",
+    "name": "market_notifications.notification_state",
+    "file": "db/sql/036_market_notification_outbox.sql",
+    "line": 47
+  },
+  {
+    "type": "TABLE",
+    "name": "market_notifications.service_heartbeat",
+    "file": "db/sql/036_market_notification_outbox.sql",
+    "line": 53
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.exchange_session_calendar",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.effective_universe_member",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 38
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.job_run",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 56
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.notification_outbox",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 82
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.notification_delivery_attempt",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 111
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.notification_state",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 124
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.worker_state",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 139
+  },
+  {
+    "type": "TABLE",
+    "name": "market_status.service_heartbeat",
+    "file": "db/sql/037_market_status_notifications_v1.sql",
+    "line": 145
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.strategy_version",
+    "file": "db/sql/038_rolling_monthly_quality.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.run",
+    "file": "db/sql/038_rolling_monthly_quality.sql",
+    "line": 18
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.candidate",
+    "file": "db/sql/038_rolling_monthly_quality.sql",
+    "line": 42
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.reference_metric",
+    "file": "db/sql/038_rolling_monthly_quality.sql",
+    "line": 85
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.service_heartbeat",
+    "file": "db/sql/038_rolling_monthly_quality.sql",
+    "line": 98
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_band_summary",
+    "file": "db/sql/039_rolling_monthly_backtest_evidence.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_condition_evidence",
+    "file": "db/sql/039_rolling_monthly_backtest_evidence.sql",
+    "line": 27
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_indicator_correlation",
+    "file": "db/sql/039_rolling_monthly_backtest_evidence.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_yearly_summary",
+    "file": "db/sql/039_rolling_monthly_backtest_evidence.sql",
+    "line": 67
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.expiry_run",
+    "file": "db/sql/040_rolling_monthly_expiry_history.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_monthly_summary",
+    "file": "db/sql/041_rolling_monthly_backtest_monthly_summary.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.evidence_release",
+    "file": "db/sql/042_rolling_monthly_evidence_governance.sql",
+    "line": 34
+  },
+  {
+    "type": "TABLE",
+    "name": "mobile_notifications.device",
+    "file": "db/sql/043_mobile_notifications.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "mobile_notifications.notification_state",
+    "file": "db/sql/043_mobile_notifications.sql",
+    "line": 28
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.absolute_month_run",
+    "file": "db/sql/045_rolling_monthly_absolute_month.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.absolute_month_candidate",
+    "file": "db/sql/045_rolling_monthly_absolute_month.sql",
+    "line": 25
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.absolute_first_session_run",
+    "file": "db/sql/047_rolling_monthly_first_session_gap.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.absolute_first_session_candidate",
+    "file": "db/sql/047_rolling_monthly_first_session_gap.sql",
+    "line": 27
+  },
+  {
+    "type": "VIEW",
+    "name": "oiis_live.v_current_watchlist",
+    "file": "db/sql/048_oiis_dual_entry_methods.sql",
+    "line": 53
+  },
+  {
+    "type": "TABLE",
+    "name": "public.instrument_profiles",
+    "file": "neon-stock-terminal/db/049_stock_profiles_and_logos.sql",
+    "line": 2
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.rolling_window_candidate",
+    "file": "neon-stock-terminal/db/051_rolling_window_strategy.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.rolling_window_refresh",
+    "file": "neon-stock-terminal/db/051_rolling_window_strategy.sql",
+    "line": 46
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.session_profile",
+    "file": "platform/nifty_stratlab/db/migrations/001_foundation.sql",
+    "line": 7
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.expiry_rule",
+    "file": "platform/nifty_stratlab/db/migrations/001_foundation.sql",
+    "line": 29
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.data_snapshot",
+    "file": "platform/nifty_stratlab/db/migrations/001_foundation.sql",
+    "line": 42
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.source_file",
+    "file": "platform/nifty_stratlab/db/migrations/001_foundation.sql",
+    "line": 52
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.quality_result",
+    "file": "platform/nifty_stratlab/db/migrations/001_foundation.sql",
+    "line": 71
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.instrument_alias",
+    "file": "platform/nifty_stratlab/db/migrations/001_foundation.sql",
+    "line": 87
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.universe_snapshot",
+    "file": "platform/nifty_stratlab/db/migrations/001_foundation.sql",
+    "line": 98
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.fee_schedule",
+    "file": "platform/nifty_stratlab/db/migrations/002_economics_strategy_simulator.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.feature_definition",
+    "file": "platform/nifty_stratlab/db/migrations/002_economics_strategy_simulator.sql",
+    "line": 33
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.strategy",
+    "file": "platform/nifty_stratlab/db/migrations/002_economics_strategy_simulator.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.strategy_version",
+    "file": "platform/nifty_stratlab/db/migrations/002_economics_strategy_simulator.sql",
+    "line": 60
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.execution_model",
+    "file": "platform/nifty_stratlab/db/migrations/002_economics_strategy_simulator.sql",
+    "line": 75
+  },
+  {
+    "type": "TABLE",
+    "name": "research.experiment_run",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.run_shard",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 34
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.signal_intent",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 62
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.trade_result",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 83
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.equity_point",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 110
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.skipped_signal",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 124
+  },
+  {
+    "type": "TABLE",
+    "name": "research.metric_result",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 133
+  },
+  {
+    "type": "TABLE",
+    "name": "research.published_run",
+    "file": "platform/nifty_stratlab/db/migrations/003_resumable_backtest_results.sql",
+    "line": 146
+  },
+  {
+    "type": "TABLE",
+    "name": "research.opportunity_label",
+    "file": "platform/nifty_stratlab/db/migrations/004_discovery_calibration.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.validation_split",
+    "file": "platform/nifty_stratlab/db/migrations/004_discovery_calibration.sql",
+    "line": 33
+  },
+  {
+    "type": "TABLE",
+    "name": "research.feature_association",
+    "file": "platform/nifty_stratlab/db/migrations/004_discovery_calibration.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "research.model_version",
+    "file": "platform/nifty_stratlab/db/migrations/004_discovery_calibration.sql",
+    "line": 63
+  },
+  {
+    "type": "TABLE",
+    "name": "research.calibration_bin",
+    "file": "platform/nifty_stratlab/db/migrations/004_discovery_calibration.sql",
+    "line": 79
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.option_contract_observation",
+    "file": "platform/nifty_stratlab/db/migrations/005_options_parity_research_pack.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.option_trade_result",
+    "file": "platform/nifty_stratlab/db/migrations/005_options_parity_research_pack.sql",
+    "line": 25
+  },
+  {
+    "type": "TABLE",
+    "name": "research.feature_parity_result",
+    "file": "platform/nifty_stratlab/db/migrations/005_options_parity_research_pack.sql",
+    "line": 55
+  },
+  {
+    "type": "TABLE",
+    "name": "research.research_pack",
+    "file": "platform/nifty_stratlab/db/migrations/005_options_parity_research_pack.sql",
+    "line": 70
+  },
+  {
+    "type": "TABLE",
+    "name": "research.analyst_response",
+    "file": "platform/nifty_stratlab/db/migrations/005_options_parity_research_pack.sql",
+    "line": 85
+  },
+  {
+    "type": "TABLE",
+    "name": "research.programme_acceptance_criterion",
+    "file": "platform/nifty_stratlab/db/migrations/006_runtime_hardening.sql",
+    "line": 6
+  },
+  {
+    "type": "TABLE",
+    "name": "catalog.csv_minute_import",
+    "file": "platform/nifty_stratlab/db/migrations/007_csv_minute_history.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.security_minute_technical",
+    "file": "platform/nifty_stratlab/db/migrations/007_csv_minute_history.sql",
+    "line": 39
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_band_summary",
+    "file": "scripts/rolling_monthly_backtest_evidence_template.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_condition_evidence",
+    "file": "scripts/rolling_monthly_backtest_evidence_template.sql",
+    "line": 27
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_indicator_correlation",
+    "file": "scripts/rolling_monthly_backtest_evidence_template.sql",
+    "line": 49
+  },
+  {
+    "type": "TABLE",
+    "name": "rolling_monthly.backtest_yearly_summary",
+    "file": "scripts/rolling_monthly_backtest_evidence_template.sql",
+    "line": 67
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.schema_migration",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.strategy_version",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 9
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.signal_run",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 19
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.universe_snapshot",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 46
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.movement_prediction",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 61
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.option_candidate",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 85
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.trade_signal",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 129
+  },
+  {
+    "type": "TABLE",
+    "name": "fno_volatility.service_heartbeat",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 145
+  },
+  {
+    "type": "VIEW",
+    "name": "fno_volatility.v_latest_run",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 163
+  },
+  {
+    "type": "VIEW",
+    "name": "fno_volatility.v_latest_signals",
+    "file": "services/fno_volatility/sql/001_fno_volatility.sql",
+    "line": 169
+  },
+  {
+    "type": "TABLE",
+    "name": "ingestion_registry",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 4
+  },
+  {
+    "type": "TABLE",
+    "name": "dataset_completeness",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 25
+  },
+  {
+    "type": "TABLE",
+    "name": "source_capabilities",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 34
+  },
+  {
+    "type": "TABLE",
+    "name": "raw_file_versions",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 44
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nse_fii_dii",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 53
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nse_cm_bhavcopy",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 63
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nse_bulk_block",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 82
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nse_derivatives_participants",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 95
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nse_shareholding",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 110
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_reference_isin_sector_map",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 122
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nsdl_daily_trends",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 130
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nsdl_monthly_history",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 140
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nsdl_yearly_history",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 155
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nsdl_fortnightly_sector",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 170
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_nsdl_tradewise_monthly",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 185
+  },
+  {
+    "type": "TABLE",
+    "name": "normalized_bse_index_history",
+    "file": "services/institutional_flow_ingest/configs/warehouse_schema.sql",
+    "line": 196
+  },
+  {
+    "type": "VIEW",
+    "name": "daily_institutional_flow_summary",
+    "file": "services/institutional_flow_ingest/src/market_ingest/analytics/views.sql",
+    "line": 6
+  },
+  {
+    "type": "VIEW",
+    "name": "quarterly_holding_changes",
+    "file": "services/institutional_flow_ingest/src/market_ingest/analytics/views.sql",
+    "line": 24
+  },
+  {
+    "type": "VIEW",
+    "name": "participant_positioning_summary",
+    "file": "services/institutional_flow_ingest/src/market_ingest/analytics/views.sql",
+    "line": 49
+  },
+  {
+    "type": "VIEW",
+    "name": "stock_level_institutional_signals",
+    "file": "services/institutional_flow_ingest/src/market_ingest/analytics/views.sql",
+    "line": 65
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.job_runs",
+    "file": "services/nse_analytics_worker/sql/001_control.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.job_steps",
+    "file": "services/nse_analytics_worker/sql/001_control.sql",
+    "line": 13
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.quality_check_results",
+    "file": "services/nse_analytics_worker/sql/001_control.sql",
+    "line": 25
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.security_daily_features",
+    "file": "services/nse_analytics_worker/sql/001_control.sql",
+    "line": 38
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.stock_analysis_signals_daily",
+    "file": "services/nse_analytics_worker/sql/001_control.sql",
+    "line": 112
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.market_summary_daily",
+    "file": "services/nse_analytics_worker/sql/001_control.sql",
+    "line": 140
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.signal_performance_summary",
+    "file": "services/nse_analytics_worker/sql/001_control.sql",
+    "line": 168
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_app.vw_latest_market_summary",
+    "file": "services/nse_analytics_worker/sql/010_views.sql",
+    "line": 1
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_app.vw_latest_signal_performance",
+    "file": "services/nse_analytics_worker/sql/010_views.sql",
+    "line": 6
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_app.vw_latest_watchlist",
+    "file": "services/nse_analytics_worker/sql/010_views.sql",
+    "line": 11
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_app.vw_signal_counts_daily",
+    "file": "services/nse_analytics_worker/sql/010_views.sql",
+    "line": 48
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.batch_run_audit",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 1
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.strategy_scenario_catalog",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 29
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.indicator_daily_values",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 60
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.indicator_summary_snapshot",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 85
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.strategy_trade_log",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 101
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.strategy_daily_equity",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 136
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.strategy_summary_snapshot",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 157
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.strategy_stock_summary",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 174
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.strategy_open_positions",
+    "file": "services/nse_analytics_worker/sql/040_indicator_strategy_precompute.sql",
+    "line": 198
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_strategy",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 1
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_strategy_version",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 11
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_run",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 26
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_run_validation",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 48
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_symbol_daily",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 62
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_daily_equity",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 86
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_trade_log",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 106
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_open_position",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 146
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_stock_summary",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 176
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_regime_summary",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 207
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_skipped_signal",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 226
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_feature_daily",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 270
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_signal_candidate",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 300
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_trade_template",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 319
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_benchmark_fd",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 347
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_strategy_summary_mart",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 362
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_stock_summary_mart",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 382
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_regime_summary_mart",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 395
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_compare_summary_mart",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 408
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_app.backtest_daily_summary_mart",
+    "file": "services/nse_analytics_worker/sql/050_backtesting_precompute.sql",
+    "line": 426
+  },
+  {
+    "type": "TABLE",
+    "name": "research.strategy_lab_run",
+    "file": "services/nse_analytics_worker/sql/060_strategy_lab.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "research.strategy_lab_event",
+    "file": "services/nse_analytics_worker/sql/060_strategy_lab.sql",
+    "line": 62
+  },
+  {
+    "type": "TABLE",
+    "name": "research.strategy_lab_signal",
+    "file": "services/nse_analytics_worker/sql/060_strategy_lab.sql",
+    "line": 77
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.strategy_lab_trade",
+    "file": "services/nse_analytics_worker/sql/060_strategy_lab.sql",
+    "line": 99
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.strategy_lab_ladder_result",
+    "file": "services/nse_analytics_worker/sql/060_strategy_lab.sql",
+    "line": 169
+  },
+  {
+    "type": "TABLE",
+    "name": "simulation.strategy_lab_equity_point",
+    "file": "services/nse_analytics_worker/sql/060_strategy_lab.sql",
+    "line": 191
+  },
+  {
+    "type": "TABLE",
+    "name": "research.strategy_lab_artifact",
+    "file": "services/nse_analytics_worker/sql/060_strategy_lab.sql",
+    "line": 204
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.ingest_runs",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.ingest_run_reports",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 15
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.file_registry",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 31
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.dim_security_master_snapshot",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 44
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_eod_prices",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 73
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_bhavcopy_udiff",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 99
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_daily_volatility",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 129
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_market_activity_kv",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 143
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_market_activity_index",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 153
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_52_week_high_low",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 167
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_bulk_deals",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 180
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_block_deals",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 194
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_short_selling",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 207
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_surveillance_indicators",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 221
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_corporate_actions",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 236
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_text_events",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 253
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_margin_trading_summary",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 264
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_margin_trading_scrip",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 273
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.fact_var_margin",
+    "file": "services/nse_ingestor/sql/001_init.sql",
+    "line": 284
+  },
+  {
+    "type": "VIEW",
+    "name": "nse.vw_security_current",
+    "file": "services/nse_ingestor/sql/002_views.sql",
+    "line": 1
+  },
+  {
+    "type": "VIEW",
+    "name": "nse.vw_eod_enriched",
+    "file": "services/nse_ingestor/sql/002_views.sql",
+    "line": 10
+  },
+  {
+    "type": "VIEW",
+    "name": "nse.vw_stock_features_daily",
+    "file": "services/nse_ingestor/sql/002_views.sql",
+    "line": 58
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.daily_job_run",
+    "file": "services/nse_ingestor/sql/004_daily_scheduler_notifications.sql",
+    "line": 1
+  },
+  {
+    "type": "TABLE",
+    "name": "nse.notification_outbox",
+    "file": "services/nse_ingestor/sql/004_daily_scheduler_notifications.sql",
+    "line": 14
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_source_security_1m",
+    "file": "services/nse_intraday_intelligence/sql/005_integration_templates.sql",
+    "line": 7
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_source_index_1m",
+    "file": "services/nse_intraday_intelligence/sql/005_integration_templates.sql",
+    "line": 31
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_prev_security_daily",
+    "file": "services/nse_intraday_intelligence/sql/005_integration_templates.sql",
+    "line": 56
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_prev_index_daily",
+    "file": "services/nse_intraday_intelligence/sql/005_integration_templates.sql",
+    "line": 74
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_universe_membership",
+    "file": "services/nse_intraday_intelligence/sql/005_integration_templates.sql",
+    "line": 88
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_index_daily_history",
+    "file": "services/nse_intraday_intelligence/sql/005_integration_templates.sql",
+    "line": 106
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_source_security_1m",
+    "file": "services/nse_intraday_intelligence/sql/006_compatibility_views.sql",
+    "line": 3
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_source_index_1m",
+    "file": "services/nse_intraday_intelligence/sql/006_compatibility_views.sql",
+    "line": 36
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_prev_security_daily",
+    "file": "services/nse_intraday_intelligence/sql/006_compatibility_views.sql",
+    "line": 65
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_prev_index_daily",
+    "file": "services/nse_intraday_intelligence/sql/006_compatibility_views.sql",
+    "line": 114
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_universe_membership",
+    "file": "services/nse_intraday_intelligence/sql/006_compatibility_views.sql",
+    "line": 157
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_index_daily_history",
+    "file": "services/nse_intraday_intelligence/sql/006_compatibility_views.sql",
+    "line": 169
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.raw_security_1m",
+    "file": "services/nse_intraday_intelligence/sql/010_raw_tables.sql",
+    "line": 1
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.raw_index_1m",
+    "file": "services/nse_intraday_intelligence/sql/010_raw_tables.sql",
+    "line": 23
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.universe_membership",
+    "file": "services/nse_intraday_intelligence/sql/010_raw_tables.sql",
+    "line": 46
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.security_minute_feature",
+    "file": "services/nse_intraday_intelligence/sql/020_feature_tables.sql",
+    "line": 1
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.market_minute_feature",
+    "file": "services/nse_intraday_intelligence/sql/020_feature_tables.sql",
+    "line": 36
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.stock_intraday_live",
+    "file": "services/nse_intraday_intelligence/sql/020_feature_tables.sql",
+    "line": 71
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.market_session_summary",
+    "file": "services/nse_intraday_intelligence/sql/020_feature_tables.sql",
+    "line": 103
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.dashboard_snapshot_intraday",
+    "file": "services/nse_intraday_intelligence/sql/025_snapshot_tables.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.dashboard_section_intraday",
+    "file": "services/nse_intraday_intelligence/sql/025_snapshot_tables.sql",
+    "line": 21
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.watchlist_snapshot_intraday",
+    "file": "services/nse_intraday_intelligence/sql/025_snapshot_tables.sql",
+    "line": 40
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.alert_state_intraday",
+    "file": "services/nse_intraday_intelligence/sql/026_alert_state.sql",
+    "line": 1
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_intraday.vw_latest_market_summary",
+    "file": "services/nse_intraday_intelligence/sql/030_views.sql",
+    "line": 1
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_intraday.vw_market_state_history_stats",
+    "file": "services/nse_intraday_intelligence/sql/030_views.sql",
+    "line": 37
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_intraday.vw_watchlist_intraday_latest",
+    "file": "services/nse_intraday_intelligence/sql/030_views.sql",
+    "line": 81
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.stock_daily_beta_profile",
+    "file": "services/nse_intraday_intelligence/sql/060_stock_alpha_upgrade.sql",
+    "line": 2
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_intraday.stock_minute_volume_profile",
+    "file": "services/nse_intraday_intelligence/sql/060_stock_alpha_upgrade.sql",
+    "line": 19
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_intraday.vw_stock_alpha_latest",
+    "file": "services/nse_intraday_intelligence/sql/061_stock_alpha_views.sql",
+    "line": 2
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_intraday.vw_stock_signal_history_stats",
+    "file": "services/nse_intraday_intelligence/sql/061_stock_alpha_views.sql",
+    "line": 38
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.job_definition",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 1
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.job_run",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 13
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.job_step_log",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 33
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.quality_check_result",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 45
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.export_manifest",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 60
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.dashboard_snapshot_daily",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 79
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.dashboard_section_daily",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 94
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.watchlist",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 110
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.watchlist_item",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 124
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_ops.watchlist_snapshot_daily",
+    "file": "services/nse_orchestration_exports/sql/010_ops_tables.sql",
+    "line": 138
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_ops.vw_latest_dashboard_snapshot",
+    "file": "services/nse_orchestration_exports/sql/030_views.sql",
+    "line": 1
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_ops.vw_latest_dashboard_sections",
+    "file": "services/nse_orchestration_exports/sql/030_views.sql",
+    "line": 6
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_ops.vw_watchlists_current",
+    "file": "services/nse_orchestration_exports/sql/030_views.sql",
+    "line": 11
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_ops.vw_recent_job_runs",
+    "file": "services/nse_orchestration_exports/sql/030_views.sql",
+    "line": 25
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco_ops.job_run",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco_ops.job_step_run",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 17
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco_ops.quality_check_result",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 32
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.market_regime_snapshot",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 46
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.anomaly_event",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 59
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.recommendation_snapshot",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 76
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.bucket_scorecard",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 101
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.watchlist_def",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 113
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.watchlist_snapshot",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 122
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_exports.export_manifest",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 136
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.stock_minute_profile",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 150
+  },
+  {
+    "type": "TABLE",
+    "name": "nse_reco.market_minute_profile",
+    "file": "services/nse_reco_state_engine/sql/071_tables.sql",
+    "line": 160
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_reco.v_security_forward_returns",
+    "file": "services/nse_reco_state_engine/sql/072_views.sql",
+    "line": 108
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_reco.v_reco_outcomes",
+    "file": "services/nse_reco_state_engine/sql/072_views.sql",
+    "line": 124
+  },
+  {
+    "type": "VIEW",
+    "name": "nse_reco.v_reco_summary",
+    "file": "services/nse_reco_state_engine/sql/072_views.sql",
+    "line": 146
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_universe_membership",
+    "file": "services/nse_reco_state_engine/sql/073_integration_compat.sql",
+    "line": 5
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_index_daily_history",
+    "file": "services/nse_reco_state_engine/sql/073_integration_compat.sql",
+    "line": 33
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_security_minute_feature",
+    "file": "services/nse_reco_state_engine/sql/073_integration_compat.sql",
+    "line": 97
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_market_minute_feature",
+    "file": "services/nse_reco_state_engine/sql/073_integration_compat.sql",
+    "line": 131
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_events_daily",
+    "file": "services/nse_reco_state_engine/sql/073_integration_compat.sql",
+    "line": 191
+  },
+  {
+    "type": "VIEW",
+    "name": "integration.v_stock_daily_history",
+    "file": "services/nse_reco_state_engine/sql/076_simulator.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.schema_migrations",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 2
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.accounts",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 5
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.strategy_registry",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 7
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.strategy_versions",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 8
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.instrument_snapshots",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 9
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.cost_profiles",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 11
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.tax_profiles",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 12
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.webhook_subscriptions",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 13
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trading_sessions",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 14
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.system_configuration_versions",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 15
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_intents",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 17
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.idempotency_records",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 20
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.request_audit",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 21
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_groups",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 23
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_legs",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 26
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.paper_orders",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 29
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.paper_fills",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 32
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.positions",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 33
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.position_lots",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 34
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.close_intents",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 35
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.execution_exit_rules",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 36
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.target_definitions",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 38
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.target_tracks",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 39
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.target_hits",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 41
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.observation_trackers",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 42
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.horizon_outcomes",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 43
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_extrema",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 44
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.valuation_snapshots",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 45
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.instrument_monitor_cursors",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 46
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.processed_market_bars",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 47
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.data_quality_incidents",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 48
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.pnl_ledger",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 50
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.charge_ledger",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 51
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.income_tax_provision_ledger",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 52
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.account_equity_snapshots",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 53
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.capital_reservations",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 54
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_events",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 56
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.webhook_outbox",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 58
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.webhook_delivery_attempts",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 60
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.webhook_dead_letters",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 61
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.summary_runs",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 63
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.daily_summaries",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 64
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.weekly_summaries",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 65
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.reconciliation_runs",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 66
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.reconciliation_findings",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 67
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.audit_log",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 68
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_open_trade_groups",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 70
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_open_trade_legs",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 71
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_trade_execution_performance",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 72
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_target_track_results",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 73
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_strategy_daily_performance",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 81
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_strategy_weekly_performance",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 82
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_account_equity_curve",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 83
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_webhook_delivery_health",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 84
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_data_freshness",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 85
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_option_group_performance",
+    "file": "services/paper_trading/migrations/001_init.sql",
+    "line": 86
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.evaluation_rule_sets",
+    "file": "services/paper_trading/migrations/005_evaluation_rules_and_intraday_040.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_comments",
+    "file": "services/paper_trading/migrations/008_admin_trade_comments.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_quality_policies",
+    "file": "services/paper_trading/migrations/009_trade_quality_assessments.sql",
+    "line": 3
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_quality_assessments",
+    "file": "services/paper_trading/migrations/009_trade_quality_assessments.sql",
+    "line": 18
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_quality_criteria",
+    "file": "services/paper_trading/migrations/009_trade_quality_assessments.sql",
+    "line": 49
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_trade_quality_latest",
+    "file": "services/paper_trading/migrations/009_trade_quality_assessments.sql",
+    "line": 65
+  },
+  {
+    "type": "TABLE",
+    "name": "__SCHEMA__.trade_quality_reviews",
+    "file": "services/paper_trading/migrations/010_trade_quality_reviews.sql",
+    "line": 3
+  },
+  {
+    "type": "VIEW",
+    "name": "__SCHEMA__.v_trade_quality_review_latest",
+    "file": "services/paper_trading/migrations/010_trade_quality_reviews.sql",
+    "line": 22
+  }
+]

@@ -1,0 +1,1072 @@
+{
+  "generatedAt": "2026-08-23T18:00:24.201Z",
+  "origin": "https://n50.nifty50today.co.in",
+  "appPath": "/n50",
+  "viewport": "1440x900",
+  "summary": {
+    "routes": 56,
+    "passed": 56,
+    "failed": 0,
+    "maxHeight": 3509,
+    "routesOverTwoViewports": 36
+  },
+  "failures": [],
+  "results": [
+    {
+      "declared": "/",
+      "route": "/n50/",
+      "status": 200,
+      "elapsedMs": 4186,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1642,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Monitor the tape first."
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 11560
+    },
+    {
+      "declared": "/dashboard/stocks/:symbol",
+      "route": "/n50/analytics/stock/RELIANCE",
+      "status": 200,
+      "elapsedMs": 6299,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1900,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "RELIANCE Stock Lens"
+      ],
+      "tables": 2,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 3676
+    },
+    {
+      "declared": "/analytics",
+      "route": "/n50/analytics",
+      "status": 200,
+      "elapsedMs": 2691,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2711,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Market Hub"
+      ],
+      "tables": 4,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 94617
+    },
+    {
+      "declared": "/analytics/leadership",
+      "route": "/n50/analytics/leadership",
+      "status": 200,
+      "elapsedMs": 7189,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 900,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 78
+    },
+    {
+      "declared": "/analytics/daily-setups",
+      "route": "/n50/analytics/daily-setups",
+      "status": 200,
+      "elapsedMs": 16045,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2945,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Daily Setups"
+      ],
+      "tables": 1,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 8392
+    },
+    {
+      "declared": "/catalysts/context",
+      "route": "/n50/catalysts/context",
+      "status": 200,
+      "elapsedMs": 3929,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2923,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Event Context"
+      ],
+      "tables": 0,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 9502
+    },
+    {
+      "declared": "/catalysts/events",
+      "route": "/n50/catalysts/events",
+      "status": 200,
+      "elapsedMs": 2992,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1125,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Event Calendar"
+      ],
+      "tables": 0,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 1805
+    },
+    {
+      "declared": "/analytics/regime",
+      "route": "/n50/analytics/regime",
+      "status": 200,
+      "elapsedMs": 2441,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2004,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Regime & Breadth"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 5240
+    },
+    {
+      "declared": "/analytics/risk",
+      "route": "/n50/analytics/risk",
+      "status": 200,
+      "elapsedMs": 2760,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2390,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Signals / Anomalies"
+      ],
+      "tables": 2,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 5193
+    },
+    {
+      "declared": "/analytics/learn",
+      "route": "/n50/analytics/learn",
+      "status": 200,
+      "elapsedMs": 2750,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2646,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Learning"
+      ],
+      "tables": 2,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 3968
+    },
+    {
+      "declared": "/analytics/simulator",
+      "route": "/n50/analytics/simulator",
+      "status": 200,
+      "elapsedMs": 2606,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2384,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Simulator"
+      ],
+      "tables": 1,
+      "canvases": 3,
+      "loading": false,
+      "textLength": 88337
+    },
+    {
+      "declared": "/analytics/indicators",
+      "route": "/n50/analytics/indicators",
+      "status": 200,
+      "elapsedMs": 2568,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 925,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "RSI explained"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 4470
+    },
+    {
+      "declared": "/analytics/indicators/:slug",
+      "route": "/n50/analytics/indicators/rsi",
+      "status": 200,
+      "elapsedMs": 2435,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 925,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "RSI explained"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 4470
+    },
+    {
+      "declared": "/analytics/stock/:symbol",
+      "route": "/n50/analytics/stock/RELIANCE",
+      "status": 200,
+      "elapsedMs": 6044,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1900,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "RELIANCE Stock Lens"
+      ],
+      "tables": 2,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 3676
+    },
+    {
+      "declared": "/feedback",
+      "route": "/n50/feedback",
+      "status": 200,
+      "elapsedMs": 3662,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1021,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Share feedback"
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 939
+    },
+    {
+      "declared": "/backtesting",
+      "route": "/n50/backtesting",
+      "status": 200,
+      "elapsedMs": 3614,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2188,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Backtesting Overview"
+      ],
+      "tables": 0,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 2551
+    },
+    {
+      "declared": "/backtesting/lab",
+      "route": "/n50/backtesting/lab",
+      "status": 200,
+      "elapsedMs": 6314,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1724,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Test Strategy"
+      ],
+      "tables": 0,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 2277
+    },
+    {
+      "declared": "/backtesting/strategies",
+      "route": "/n50/backtesting/strategies",
+      "status": 200,
+      "elapsedMs": 2493,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1492,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Strategy Leaderboard"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 2685
+    },
+    {
+      "declared": "/backtesting/strategies/:strategyId",
+      "route": "/n50/backtesting/strategies/rsi30_willr80_closegtprev_tp125",
+      "status": 200,
+      "elapsedMs": 2725,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1873,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Fast Oversold Rebound • v1"
+      ],
+      "tables": 0,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 3147
+    },
+    {
+      "declared": "/backtesting/results",
+      "route": "/n50/backtesting/results",
+      "status": 200,
+      "elapsedMs": 3049,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2510,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Portfolio Results"
+      ],
+      "tables": 2,
+      "canvases": 4,
+      "loading": false,
+      "textLength": 19745
+    },
+    {
+      "declared": "/backtesting/regimes",
+      "route": "/n50/backtesting/regimes",
+      "status": 200,
+      "elapsedMs": 2687,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1626,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Regime Analysis"
+      ],
+      "tables": 1,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 2274
+    },
+    {
+      "declared": "/backtesting/stocks",
+      "route": "/n50/backtesting/stocks",
+      "status": 200,
+      "elapsedMs": 2706,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2066,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Stock Insights"
+      ],
+      "tables": 1,
+      "canvases": 3,
+      "loading": false,
+      "textLength": 27464
+    },
+    {
+      "declared": "/backtesting/daily-summary",
+      "route": "/n50/backtesting/daily-summary",
+      "status": 200,
+      "elapsedMs": 2431,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1951,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Daily Summary"
+      ],
+      "tables": 4,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 1716
+    },
+    {
+      "declared": "/backtesting/compare",
+      "route": "/n50/backtesting/compare",
+      "status": 200,
+      "elapsedMs": 2449,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1911,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Compare Strategies"
+      ],
+      "tables": 3,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 4913
+    },
+    {
+      "declared": "/backtesting/runs",
+      "route": "/n50/backtesting/runs",
+      "status": 200,
+      "elapsedMs": 4290,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1931,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Runs / Audit"
+      ],
+      "tables": 2,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 268682
+    },
+    {
+      "declared": "/backtesting/h30",
+      "route": "/n50/backtesting/h30",
+      "status": 200,
+      "elapsedMs": 2777,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2143,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "30-session opportunity"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 9085
+    },
+    {
+      "declared": "/institutional/flow",
+      "route": "/n50/institutional/flow",
+      "status": 200,
+      "elapsedMs": 2726,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 3509,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "FII / DII & Participant Flow",
+        "FII / DII & Participant Flow"
+      ],
+      "tables": 1,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 8427
+    },
+    {
+      "declared": "/institutional/reports",
+      "route": "/n50/institutional/reports",
+      "status": 200,
+      "elapsedMs": 2751,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 900,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "FII Reports",
+        "No report runs are available"
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 889
+    },
+    {
+      "declared": "/institutional/nse-intelligence",
+      "route": "/n50/institutional/nse-intelligence",
+      "status": 200,
+      "elapsedMs": 3944,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1777,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "NSE Intelligence",
+        "Official breadth was negative; core cash data is usable with ancillary gaps"
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 1811
+    },
+    {
+      "declared": "/institutional/nse-intelligence/sectors",
+      "route": "/n50/institutional/nse-intelligence/sectors",
+      "status": 200,
+      "elapsedMs": 3172,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1954,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "NSE Intelligence"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 2520
+    },
+    {
+      "declared": "/institutional/nse-intelligence/fno",
+      "route": "/n50/institutional/nse-intelligence/fno",
+      "status": 200,
+      "elapsedMs": 2897,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1954,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "NSE Intelligence"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 2540
+    },
+    {
+      "declared": "/institutional/nse-intelligence/events",
+      "route": "/n50/institutional/nse-intelligence/events",
+      "status": 200,
+      "elapsedMs": 2892,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1286,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "NSE Intelligence"
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 7407
+    },
+    {
+      "declared": "/institutional/nse-intelligence/reports",
+      "route": "/n50/institutional/nse-intelligence/reports",
+      "status": 200,
+      "elapsedMs": 2995,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1816,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "NSE Intelligence"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 2410
+    },
+    {
+      "declared": "/options/structure",
+      "route": "/n50/options/structure",
+      "status": 200,
+      "elapsedMs": 5230,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1939,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Options Structure"
+      ],
+      "tables": 0,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 5403
+    },
+    {
+      "declared": "/options/snapshot",
+      "route": "/n50/options/snapshot",
+      "status": 200,
+      "elapsedMs": 2703,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2264,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Option Snapshot"
+      ],
+      "tables": 1,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 4045
+    },
+    {
+      "declared": "/options/volatility-signals",
+      "route": "/n50/options/volatility-signals",
+      "status": 200,
+      "elapsedMs": 2770,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1674,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "F&O Straddle & Strangle Signals"
+      ],
+      "tables": 2,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 31685
+    },
+    {
+      "declared": "/options/intelligence",
+      "route": "/n50/options/intelligence",
+      "status": 200,
+      "elapsedMs": 3881,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 3445,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Options Intelligence"
+      ],
+      "tables": 2,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 5358
+    },
+    {
+      "declared": "/strategy/oiis-live",
+      "route": "/n50/strategy/oiis-live",
+      "status": 200,
+      "elapsedMs": 2850,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2888,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Daily stock selection desk"
+      ],
+      "tables": 2,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 6702
+    },
+    {
+      "declared": "/strategy/oiis-live/history",
+      "route": "/n50/strategy/oiis-live/history",
+      "status": 200,
+      "elapsedMs": 4025,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2498,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "30-minute run history"
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 4276
+    },
+    {
+      "declared": "/strategy/monthly",
+      "route": "/n50/strategy/monthly",
+      "status": 200,
+      "elapsedMs": 9472,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1968,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Monthly Strategy"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 591769
+    },
+    {
+      "declared": "/strategy/rolling-monthly",
+      "route": "/n50/strategy/rolling-monthly",
+      "status": 200,
+      "elapsedMs": 10365,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1764,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Rolling Strategy"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 909679
+    },
+    {
+      "declared": "/strategy/rolling-monthly/legacy",
+      "route": "/n50/strategy/rolling-monthly/legacy",
+      "status": 200,
+      "elapsedMs": 4491,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2779,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Rolling Monthly",
+        "No High or Medium quality candidate for this run"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 8774
+    },
+    {
+      "declared": "/strategy/long-options",
+      "route": "/n50/strategy/long-options",
+      "status": 200,
+      "elapsedMs": 2688,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2847,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Long-Only Options Router"
+      ],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 7582
+    },
+    {
+      "declared": "/strategy/nifty-options",
+      "route": "/n50/strategy/nifty-options",
+      "status": 200,
+      "elapsedMs": 3183,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1751,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "NIFTY Weekly & Monthly Options"
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 2937
+    },
+    {
+      "declared": "/strategy/nifty-weekly-options",
+      "route": "/n50/strategy/nifty-weekly-options",
+      "status": 200,
+      "elapsedMs": 2687,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1751,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "NIFTY Weekly & Monthly Options"
+      ],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 2937
+    },
+    {
+      "declared": "/paper-trading",
+      "route": "/n50/paper-trading",
+      "status": 200,
+      "elapsedMs": 6741,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 900,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 131
+    },
+    {
+      "declared": "/market/nifty-500",
+      "route": "/n50/market/nifty-500",
+      "status": 200,
+      "elapsedMs": 4133,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1116,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [],
+      "tables": 1,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 1511
+    },
+    {
+      "declared": "/futures",
+      "route": "/n50/futures",
+      "status": 200,
+      "elapsedMs": 2724,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1831,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [],
+      "tables": 2,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 18136
+    },
+    {
+      "declared": "/control-plane",
+      "route": "/n50/control-plane",
+      "status": 200,
+      "elapsedMs": 4554,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1985,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [],
+      "tables": 5,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 1464
+    },
+    {
+      "declared": "/analytics/flows",
+      "route": "/n50/analytics/flows",
+      "status": 200,
+      "elapsedMs": 2710,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 1741,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Signals Archive"
+      ],
+      "tables": 3,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 5185
+    },
+    {
+      "declared": "/analytics/system/quality",
+      "route": "/n50/analytics/system/quality",
+      "status": 200,
+      "elapsedMs": 2854,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2553,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "Quality & Freshness"
+      ],
+      "tables": 0,
+      "canvases": 1,
+      "loading": false,
+      "textLength": 6465
+    },
+    {
+      "declared": "/analytics/system/map",
+      "route": "/n50/analytics/system/map",
+      "status": 200,
+      "elapsedMs": 2451,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2302,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "System Map"
+      ],
+      "tables": 2,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 5381
+    },
+    {
+      "declared": "/heatmap/change",
+      "route": "/n50/heatmap/change",
+      "status": 200,
+      "elapsedMs": 2789,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2129,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "% Change Heatmap"
+      ],
+      "tables": 0,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 2083
+    },
+    {
+      "declared": "/heatmap/rsi",
+      "route": "/n50/heatmap/rsi",
+      "status": 200,
+      "elapsedMs": 2956,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2140,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "RSI Heatmap"
+      ],
+      "tables": 0,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 2505
+    },
+    {
+      "declared": "/heatmap/will",
+      "route": "/n50/heatmap/will",
+      "status": 200,
+      "elapsedMs": 2521,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 2195,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [
+        "WILLR Heatmap"
+      ],
+      "tables": 0,
+      "canvases": 2,
+      "loading": false,
+      "textLength": 2701
+    },
+    {
+      "declared": "/stock/:symbol",
+      "route": "/n50/analytics/stock/RELIANCE",
+      "status": 200,
+      "elapsedMs": 6762,
+      "navigationError": null,
+      "responseErrors": [],
+      "consoleErrors": [],
+      "height": 900,
+      "width": 1440,
+      "horizontalOverflow": false,
+      "headings": [],
+      "tables": 0,
+      "canvases": 0,
+      "loading": false,
+      "textLength": 112
+    }
+  ]
+}

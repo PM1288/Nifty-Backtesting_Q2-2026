@@ -1,0 +1,23 @@
+response_id,category,definition,unit,interpretation
+QTY_RAW_SIGNALS,Quantity,Raw signals before OFactor qualification,count,higher is not automatically better
+QTY_QUALIFIED,Quantity,OFactor-qualified candidates,count,coverage response
+QTY_EXECUTABLE,Quantity,XFactor-enterable trades after gates,count,minimum sample and capacity response
+I030_HIT,Intraday,+0.30% touch/executable opportunity,boolean/rate,diagnostic; ladder continues
+I050_HIT,Intraday,+0.50% touch/executable opportunity,boolean/rate,diagnostic; ladder continues
+I070_HIT,Intraday,+0.70% touch/executable opportunity,boolean/rate,canonical project ladder
+I100_HIT,Intraday,+1.00% supplemental intraday diagnostic,boolean/rate,included to preserve pasted prompt requirement
+S100_D5,Five-session,+1% by each D+1..D+5,boolean/time,mandate success
+S200_D5,Five-session,+2% by each D+1..D+5,boolean/time,diagnostic
+S500_D5,Five-session,+5% by each D+1..D+5,boolean/time,diagnostic
+H30_MAX_HIGH,Thirty-session,Maximum high-based upside D0..D29,percent/time,"hindsight opportunity, not realised P&L"
+H30_MAX_CLOSE,Thirty-session,Maximum close-based upside D0..D29,percent/time,"hindsight opportunity, not realised P&L"
+MAE,Risk,Maximum adverse excursion,percent,signed and absolute tail measures
+TARGET_BEFORE_A050,Risk/sequence,Target before -0.5% adverse,boolean/rate,clean-entry response
+EXPECTED_SHORTFALL,Risk,Mean loss beyond selected downside quantile,currency/percent,finite-capital mode
+CAPITAL_DAYS,Capital,Capital committed times holding duration,INR-days,lower is better for equal reward
+RETURN_PER_CAPITAL_DAY,Capital,Net return divided by capital-days,rate,capital efficiency
+NET_EXPECTANCY,Reward,Average net P&L per accepted trade,INR,after certified costs
+PORTFOLIO_RETURN,Reward,Finite-capital total return,percent,chronological equity
+MAX_DRAWDOWN,Risk,Peak-to-trough total-equity drawdown,percent,must include open mark-to-market
+PBO,Reliability,Probability of backtest overfitting,probability,lower is better
+DSR,Reliability,Deflated Sharpe Ratio,probability/statistic,multiple-testing and non-normality adjusted

@@ -1,0 +1,73 @@
+{
+  "capturedAt": "2026-08-23T11:28:00Z",
+  "runs": [
+    {
+      "command": "corepack pnpm --filter @app/web test",
+      "result": "FAIL",
+      "exitCode": 127,
+      "reason": "corepack executable is absent in the current shell"
+    },
+    {
+      "command": "corepack pnpm --filter @app/api test",
+      "result": "FAIL",
+      "exitCode": 127,
+      "reason": "corepack executable is absent in the current shell"
+    },
+    {
+      "command": "npm test --workspace=@app/web",
+      "result": "PASS",
+      "exitCode": 0,
+      "tests": 43,
+      "passed": 43,
+      "failed": 0
+    },
+    {
+      "command": "npm test --workspace=@app/api",
+      "result": "PASS",
+      "exitCode": 0,
+      "tests": 116,
+      "passed": 116,
+      "failed": 0
+    },
+    {
+      "command": "go test ./...",
+      "result": "PASS",
+      "exitCode": 0,
+      "packagesWithTestsPassing": 8,
+      "note": "Go output does not expose an aggregate test-case count without verbose parsing; no count is fabricated."
+    },
+    {
+      "command": "node scripts/audit/validate_runtime_calculations.mjs",
+      "result": "PASS",
+      "exitCode": 0,
+      "checks": 43,
+      "passed": 43,
+      "failed": 0
+    },
+    {
+      "command": "node tests/documentation-audit/capture-all-pages.mjs",
+      "result": "DEGRADED",
+      "exitCode": 0,
+      "captures": 224,
+      "captured": 220,
+      "degraded": 4,
+      "failed": 0,
+      "reason": "The Futures API returned HTTP 500 at all four viewports."
+    },
+    {
+      "command": "node tools/playwright/ui-ux-accessibility.mjs",
+      "result": "FAIL",
+      "exitCode": 1,
+      "scans": 16,
+      "violations": 1,
+      "affectedNodes": 1,
+      "reason": "Serious color-contrast violation in OIIS Lab desktop empty-state explanatory text."
+    },
+    {
+      "command": "node scripts/audit/validate_trading_app_audit.mjs",
+      "result": "PASS",
+      "exitCode": 0,
+      "failures": 0
+    }
+  ]
+}

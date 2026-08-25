@@ -1,0 +1,50 @@
+{
+  "experiment_id": "OIIS_FACTOR_DOE_V1_0",
+  "as_of_date": "2026-08-08",
+  "confirmed_robust_configurations": [],
+  "decision": "NONE_SUPPORTED_BY_CURRENT_EVIDENCE",
+  "reasons": [
+    "The exact canonical baseline O74 / XFactor Tier-B 76 / Tier-A 84 has not been reproduced as one governed run.",
+    "The legacy 49-item bundle contains aggregate threshold combinations, not independent factor experiments.",
+    "Only 40 of 49 legacy threshold combinations completed; all O=80 cells failed.",
+    "Raw event-level OFactor and XFactor component scores are absent from the supplied lite bundles, so component importance is not estimable.",
+    "Current outputs are opportunity scans with target-only exits, no timeout and no finite-capital portfolio.",
+    "Corporate-action treatment, cost calibration, point-in-time universe and regime evidence are not certified.",
+    "Historical data have already been repeatedly inspected, so a true untouched confirmation now requires prospective shadow evidence."
+  ],
+  "controls_to_run_next": [
+    {
+      "configuration_id": "CANONICAL_CONTROL",
+      "ofactor_min": 74,
+      "xfactor_tier_b": 76,
+      "xfactor_tier_a": 84,
+      "status": "BASELINE_TO_REPRODUCE_NOT_RECOMMENDATION"
+    },
+    {
+      "configuration_id": "PRIORITY_TIER_B_CONTROL",
+      "ofactor_min": 82,
+      "xfactor_tier_b": 76,
+      "xfactor_tier_a": 84,
+      "status": "CONFIRMATORY_CANDIDATE"
+    },
+    {
+      "configuration_id": "TIER_A_CONTROL",
+      "ofactor_min": 82,
+      "xfactor_tier_b": 80,
+      "xfactor_tier_a": 84,
+      "status": "CONFIRMATORY_CANDIDATE"
+    }
+  ],
+  "legacy_observations_not_to_promote": [
+    {
+      "configuration": "o70_x70",
+      "observation": "Highest completed legacy H30 diagnostic among the 40 successful cells and no open positions.",
+      "blocker": "Not canonical, target-only, current-panel universe, uncertified costs and incomplete grid."
+    },
+    {
+      "configuration": "o60_x60 minute profile",
+      "observation": "Largest sample and positive submitted total net-liquidation sum.",
+      "blocker": "OFactor and XFactor are below canonical trade thresholds and results are not a finite-capital portfolio."
+    }
+  ]
+}

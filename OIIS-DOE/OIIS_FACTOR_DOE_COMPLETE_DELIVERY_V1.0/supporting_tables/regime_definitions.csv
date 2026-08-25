@@ -1,0 +1,13 @@
+regime_id,dimension,definition
+NIFTY_UP,Nifty,"close>EMA50, EMA20>EMA50 and volatility-scaled 20-session return > +0.5"
+NIFTY_DOWN,Nifty,"close<EMA50, EMA20<EMA50 and volatility-scaled 20-session return < -0.5"
+NIFTY_SIDEWAYS,Nifty,otherwise
+STOCK_UP,Stock,same past-only rule applied to stock
+STOCK_DOWN,Stock,same past-only rule applied to stock
+STOCK_SIDEWAYS,Stock,otherwise
+VIX_LOW,Volatility,trailing 252-session percentile <=30
+VIX_NORMAL,Volatility,percentile >30 and <70
+VIX_HIGH,Volatility,percentile >=70 and <90
+VIX_SHOCK,Volatility,percentile >=90 or one-day VIX increase >=20%
+EVENT_SHOCK,Event,pre-registered known event window; no post-event label used at entry unless scheduled and known
+LIQUIDITY_TERCILE,Liquidity,past-only traded-value percentile terciles

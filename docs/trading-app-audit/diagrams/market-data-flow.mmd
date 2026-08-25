@@ -1,0 +1,7 @@
+flowchart LR
+  Providers[SmartAPI NSE Yahoo reports] --> Adapters[Collectors and provider adapters]
+  Adapters --> Validate[Symbol session timestamp validation]
+  Validate --> Store[(PostgreSQL and artifacts)]
+  Store --> Workers[Analytics and strategy workers]
+  Workers --> Snapshots[Snapshots and API view models]
+  Snapshots --> UI[Charts tables heatmaps]

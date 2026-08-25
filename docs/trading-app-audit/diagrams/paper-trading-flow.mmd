@@ -1,0 +1,10 @@
+flowchart LR
+  Strategy[Authorised strategy/manual intent] --> Validate[Validate idempotency and PAPER boundary]
+  Validate --> Group[Trade group and legs]
+  Group --> Fill[Paper fill simulation]
+  Fill --> Ledger[(Paper ledger)]
+  Ledger --> Monitor[Target and horizon monitor]
+  Monitor --> Events[Events webhook outbox]
+  Ledger --> Workspace[Paper workspace aggregation]
+  Monitor --> Workspace
+  Workspace --> UI[Evidence Workbench]

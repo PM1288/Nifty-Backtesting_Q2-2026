@@ -1,0 +1,8 @@
+flowchart TB
+  Visible[Visible number] --> Component[React component prop/state]
+  Component --> Client[Hook/API client]
+  Client --> Endpoint[Authenticated endpoint]
+  Endpoint --> Helper[Handler/service/calculation]
+  Helper --> Store[(Table/view/file)]
+  Store --> Provider[Exchange broker or historical provider]
+  Helper --> Visible

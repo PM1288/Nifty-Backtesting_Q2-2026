@@ -1,0 +1,1367 @@
+[
+  {
+    "chartId": "app",
+    "file": "neon-stock-terminal/apps/web/src/App.tsx",
+    "components": [
+      "RouteFallback",
+      "LegacyStockRedirect",
+      "App",
+      "ChangeHeatmapPage",
+      "RsiSurfacePage",
+      "WillSurfacePage",
+      "AnalyticsOverviewPage",
+      "AnalyticsLeadershipPage",
+      "AnalyticsSetupsPage",
+      "AnalyticsEventContextPage",
+      "AnalyticsFiiFlowPage",
+      "AnalyticsMarketStatePage",
+      "AnalyticsEventsPage",
+      "AnalyticsFiiReportsPage",
+      "AnalyticsFlowsPage",
+      "AnalyticsSupportingMetricsPage",
+      "AnalyticsQualityPage",
+      "AnalyticsSystemMapPage",
+      "AnalyticsRegimePage",
+      "AnalyticsRiskPage",
+      "AnalyticsLearnPage",
+      "AnalyticsSimulatorPage",
+      "AnalyticsIndicatorsPage",
+      "AnalyticsStockPage",
+      "AnalyticsOptionsStructurePage",
+      "AnalyticsOptionsPage",
+      "AnalyticsStrategyEvaluationPage",
+      "FeedbackPage",
+      "BacktestingOverviewPage",
+      "BacktestingLabPage",
+      "BacktestingStrategyLibraryPage",
+      "BacktestingStrategyDetailPage",
+      "BacktestingPortfolioResultsPage",
+      "BacktestingRegimeAnalysisPage",
+      "BacktestingStockInsightsPage",
+      "BacktestingDailySummaryPage",
+      "BacktestingComparePage",
+      "BacktestingRunsPage",
+      "BacktestingH30Page",
+      "OiisLivePage",
+      "RollingMonthlyPage",
+      "MonthlyStrategyPage",
+      "RollingMonthlyLegacyRouter",
+      "LongOptionsPage",
+      "NiftyWeeklyOptionsPage",
+      "NseIntelligencePage",
+      "OiisRunHistoryPage",
+      "FnoVolatilityPage",
+      "OptionsIntelligencePage",
+      "PaperTradingPage",
+      "Nifty500Page",
+      "FuturesPage",
+      "AdminPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/backtesting/daily-summary",
+      "/backtesting/compare",
+      "/backtesting/runs",
+      "/backtesting/h30",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/institutional/nse-intelligence",
+      "/institutional/nse-intelligence/sectors",
+      "/institutional/nse-intelligence/fno",
+      "/institutional/nse-intelligence/events",
+      "/institutional/nse-intelligence/reports",
+      "/options/structure",
+      "/options/snapshot",
+      "/options/volatility-signals",
+      "/options/intelligence",
+      "/strategy/oiis-live",
+      "/strategy/oiis-live/history",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/strategy/long-options",
+      "/strategy/nifty-options",
+      "/strategy/nifty-weekly-options",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "analytics-useindicatoranalytics",
+    "file": "neon-stock-terminal/apps/web/src/analytics/useIndicatorAnalytics.tsx",
+    "components": [
+      "IndicatorAnalyticsDebugPanel"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": []
+  },
+  {
+    "chartId": "components-chrome-appshell",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+    "components": [
+      "AppShell"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "Administration navigation",
+      "${pageTitle} workspace sections"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "components-chrome-responsiveworkspacenavigation",
+    "file": "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+    "components": [
+      "ResponsiveWorkspaceNavigation",
+      "MOBILE_BREAKPOINT",
+      "FOCUSABLE",
+      "Icon",
+      "ItemIcon"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "Workspace navigation",
+      "Strategy dashboards",
+      "Mobile workspace navigation",
+      "Close more workspaces"
+    ],
+    "apiPaths": [],
+    "pages": []
+  },
+  {
+    "chartId": "components-indicators-indicatoreducationblocks",
+    "file": "neon-stock-terminal/apps/web/src/components/indicators/IndicatorEducationBlocks.tsx",
+    "components": [
+      "StatGrid",
+      "LeaderList",
+      "SectorList",
+      "IndicatorChartFrame",
+      "ChartRangeSelector",
+      "IndicatorHero",
+      "ThresholdGuideTable",
+      "CurrentStatusSummary",
+      "HeatmapScaleLegend",
+      "PriceIndicatorSignalChart",
+      "ForwardReturnHeatmap",
+      "StrategySummaryCards",
+      "EquityCurveChart",
+      "DrawdownChart",
+      "TradeReturnDistribution",
+      "HoldingDurationChart",
+      "CapitalDeploymentChart",
+      "OpenPositionReturnChart",
+      "CurrentPortfolioSection",
+      "StrategyPerStockTable",
+      "StockResultTable",
+      "AssumptionsCard",
+      "LimitationsCard",
+      "CHART_SANS",
+      "CHART_MONO",
+      "CHART_RANGE_OPTIONS"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Price and RSI with signals",
+      "${scenario.label} • ${scenario.capitalModeLabel}"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/backtesting",
+      "/backtesting/strategies/:strategyId"
+    ]
+  },
+  {
+    "chartId": "components-market-dashboardinfopopup",
+    "file": "neon-stock-terminal/apps/web/src/components/market/DashboardInfoPopup.tsx",
+    "components": [
+      "DashboardInfoPopup"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/"
+    ]
+  },
+  {
+    "chartId": "components-market-heatmaplensnavigation",
+    "file": "neon-stock-terminal/apps/web/src/components/market/HeatmapLensNavigation.tsx",
+    "components": [
+      "HeatmapLensNavigation"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "Heatmap metric lens"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ]
+  },
+  {
+    "chartId": "components-ui-dashboardprimitives",
+    "file": "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+    "components": [
+      "ButtonLink",
+      "ExternalButtonLink",
+      "ButtonButton",
+      "ButtonPrimary",
+      "ButtonSecondary",
+      "ButtonTertiary",
+      "StatusBadge",
+      "SectionTabs",
+      "PageIntroAccordion",
+      "DensityBadge",
+      "DataState",
+      "LoadingState",
+      "EmptyState",
+      "ErrorState",
+      "DelayedState",
+      "PartialState",
+      "SectionDivider",
+      "KpiCard",
+      "SymbolPill",
+      "InterpretationCard",
+      "PlainLanguageCard",
+      "ChartCard",
+      "LoadingSkeletonCard",
+      "LoadingTableCard"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "${tr(title)} ${t(",
+      "${tr(title)} table"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/",
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/options/structure",
+      "/options/snapshot",
+      "/strategy/rolling-monthly/legacy",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ]
+  },
+  {
+    "chartId": "components-visual-candlestickchart",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/CandlestickChart.tsx",
+    "components": [
+      "CandlestickChart"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": []
+  },
+  {
+    "chartId": "components-visual-changeheatmap",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+    "components": [
+      "ChangeHeatmap",
+      "TOP_GUTTER",
+      "ROW_HEIGHT",
+      "SYMBOL_COL",
+      "CHANGE_COL",
+      "LABEL_GUTTER_TOTAL",
+      "ANIMATION_MS"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "components-visual-echartsurface",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/EChartSurface.tsx",
+    "components": [
+      "EChartSurface"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/institutional/flow",
+      "/options/intelligence",
+      "/strategy/rolling-monthly/legacy",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ]
+  },
+  {
+    "chartId": "components-visual-heatmaplegend",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/HeatmapLegend.tsx",
+    "components": [
+      "HeatmapLegend"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ]
+  },
+  {
+    "chartId": "components-visual-marketgradientwaves",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/MarketGradientWaves.tsx",
+    "components": [
+      "MarketGradientWaves"
+    ],
+    "library": "Custom SVG/React",
+    "titles": [],
+    "apiPaths": [],
+    "pages": []
+  },
+  {
+    "chartId": "components-visual-oscilloscopechart",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/OscilloscopeChart.tsx",
+    "components": [
+      "OscilloscopeChart"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": []
+  },
+  {
+    "chartId": "components-visual-rsiheatmap",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+    "components": [
+      "RsiHeatmap",
+      "TOP_GUTTER",
+      "ROW_HEIGHT",
+      "SYMBOL_COL",
+      "RSI_COL",
+      "LABEL_GUTTER_TOTAL",
+      "ANIMATION_MS"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/heatmap/rsi"
+    ]
+  },
+  {
+    "chartId": "components-visual-rsisurfacecanvas",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/RsiSurfaceCanvas.tsx",
+    "components": [
+      "RsiSurfaceCanvas",
+      "COLOR_STOPS"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": []
+  },
+  {
+    "chartId": "components-visual-willheatmap",
+    "file": "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+    "components": [
+      "WillHeatmap",
+      "TOP_GUTTER",
+      "ROW_HEIGHT",
+      "SYMBOL_COL",
+      "WILLR_COL",
+      "LABEL_GUTTER_TOTAL",
+      "ANIMATION_MS"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/heatmap/will"
+    ]
+  },
+  {
+    "chartId": "pages-analyticschrome",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+    "components": [
+      "AnalyticsHeader",
+      "ExplainThis",
+      "ANALYTICS_MODE_STORAGE_KEY",
+      "ANALYTICS_MODE_EVENT",
+      "SECTION_META",
+      "MARKET_SECTION_TABS",
+      "CATALYSTS_SECTION_TABS",
+      "INSTITUTIONAL_SECTION_TABS",
+      "STOCKS_SECTION_TABS",
+      "OPTIONS_SECTION_TABS",
+      "STRATEGY_SECTION_TABS",
+      "SIGNAL_SECTION_TABS",
+      "LEARNING_SECTION_TABS",
+      "SYSTEM_SECTION_TABS"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/analytics",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/regime",
+      "/analytics/risk",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/options/structure",
+      "/options/snapshot",
+      "/analytics/flows",
+      "/analytics/system/quality",
+      "/analytics/system/map",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ]
+  },
+  {
+    "chartId": "pages-analyticseventcontextpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsEventContextPage.tsx",
+    "components": [
+      "CatalystCard",
+      "AnalyticsEventContextPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Event Context",
+      "A. Most important upcoming catalysts",
+      "B. Most important recent catalysts"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/context",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticseventspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsEventsPage.tsx",
+    "components": [
+      "AnalyticsEventsPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Event Calendar"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsfiiflowpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsFiiFlowPage.tsx",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "FII / DII & Participant Flow"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/catalysts/context",
+      "/institutional/flow",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsfiireportspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsFiiReportsPage.tsx",
+    "components": [
+      "AnalyticsFiiReportsPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "FII Reports"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsindicatorspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsIndicatorsPage.tsx",
+    "components": [
+      "AnalyticsIndicatorsPage",
+      "DEFAULT_INDICATOR_SLUG"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "${strategySnapshot.data.signalChart.name} • ${strategySnapshot.data.signalChart.sector}"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsleadershippage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsLeadershipPage.tsx",
+    "components": [
+      "AnalyticsLeadershipPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Stock Leadership"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/leadership",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticslearnpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsLearnPage.tsx",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsmarketstatepage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsMarketStatePage.tsx",
+    "components": [
+      "AnalyticsMarketStatePage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Market State"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsoptionspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOptionsPage.tsx",
+    "components": [
+      "AnalyticsOptionsPage",
+      "TAB_OPTIONS",
+      "WINDOW_OPTIONS",
+      "REFRESH_OPTIONS"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsoptionsstructurepage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOptionsStructurePage.tsx",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Options Structure"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsoverviewpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsOverviewPage.tsx",
+    "components": [
+      "AnalyticsOverviewPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsqualitypage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsQualityPage.tsx",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Quality & Freshness"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticssetupspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSetupsPage.tsx",
+    "components": [
+      "AnalyticsSetupsPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Daily Setups"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/daily-setups",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticssimulatorpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+    "components": [
+      "ComparisonBarChart",
+      "TimelineChart",
+      "DrawdownChart",
+      "ChargePanel",
+      "AnalyticsSimulatorPage",
+      "DEFAULT_QUERY",
+      "PRELOADED_UNIVERSE",
+      "CHART_COLORS",
+      "LEGEND_BOTTOM",
+      "DEFAULT_SAVINGS_RATE_PCT"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Charges Paid",
+      "Estimated Exit Charges Today"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting",
+      "/backtesting/strategies/:strategyId",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsstockpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "${symbol} company identity",
+      "Daily history unavailable"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticsstrategyevaluationpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStrategyEvaluationPage.tsx",
+    "components": [
+      "AnalyticsStrategyEvaluationPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Strategy Evaluation"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-analyticssupportingmetricspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsSupportingMetricsPage.tsx",
+    "components": [
+      "AnalyticsSupportingMetricsPage",
+      "EMPTY_SUPPORTING_METRICS_PAYLOAD"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingchrome",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx",
+    "components": [
+      "BacktestingHeader",
+      "BacktestingContextStrip",
+      "BacktestingDecisionBrief",
+      "BacktestingEvidenceCards",
+      "BacktestingStrategyJourney",
+      "BacktestingFilterBar",
+      "BacktestingCompareScopeBar",
+      "BacktestingLineChart",
+      "BacktestingDrawdownChart",
+      "BacktestingMultiLineChart",
+      "BacktestingScatterChart",
+      "BacktestingHistogramChart",
+      "BacktestingHorizontalBarChart",
+      "BacktestingGroupedBarChart",
+      "BacktestingDeploymentChart",
+      "BacktestingPriceContextChart",
+      "BACKTESTING_SECTION_TABS",
+      "STRATEGY_COLORS",
+      "GRID",
+      "LEGEND_BOTTOM"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Decision brief"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/backtesting/daily-summary",
+      "/backtesting/compare",
+      "/backtesting/runs",
+      "/backtesting/h30"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingcomparepage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingComparePage.tsx",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingdailysummarypage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingDailySummaryPage.tsx",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestinglabpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingLabPage.tsx",
+    "components": [
+      "BacktestingLabPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "Strategy Testing Lab",
+      "Testing lab is unavailable",
+      "Test Strategy",
+      "Change only governed levels, queue a bounded historical replay, and compare execution economics with",
+      "Research to paper workflow",
+      "Run failed",
+      "Backtest result views",
+      "Independent ladder evidence",
+      "Every reward and adverse level is evaluated independently; a first hit never stops the remaining dia",
+      "Consolidated trade evidence",
+      "Execution outcomes and opportunity-path diagnostics remain separate in each row.",
+      "Run event history"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/lab",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingoverviewpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingOverviewPage.tsx",
+    "components": [
+      "BacktestingOverviewPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingportfolioresultspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingPortfolioResultsPage.tsx",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/results",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingregimeanalysispage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingRegimeAnalysisPage.tsx",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/regimes",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingrunspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingRunsPage.tsx",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingstockinsightspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingStockInsightsPage.tsx",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/stocks",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-backtestingstrategydetailpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingStrategyDetailPage.tsx",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "${tr(detail.data.strategy.displayName)} • v${detail.data.version.versionNumber}",
+      "Strategy verdict"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/backtesting/strategies/:strategyId",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-changeheatmappage",
+    "file": "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+    "components": [
+      "ExtremesStrip",
+      "HeatmapTrend",
+      "ChangeHeatmapPage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "% Change Heatmap"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-landingpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+    "components": [
+      "AnimatedIndexPrice",
+      "LandingPage",
+      "HOME_LENSES"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "${fmtPrice(value)} ${tickDirection === ",
+      "Sector ordering"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/",
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-monthlystrategiespage",
+    "file": "neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx",
+    "components": [
+      "Kpi",
+      "StrategyTable",
+      "Inspector",
+      "MonthlyStrategyPage",
+      "RollingWindowStrategyPage",
+      "RollingMonthlyLegacyRouter"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "${row.symbol} strategy evidence",
+      "Close inspector",
+      "All monthly entry methods in one table",
+      "Rolling 5/30/60 signal transitions"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-niftyweeklyoptionspage",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "components": [
+      "SurfaceOverview",
+      "ChainTable",
+      "NiftyWeeklyOptionsPage",
+      "VIEWS"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "${title} chain has not been captured",
+      "${surface?.expiryRole ?? ",
+      "NIFTY Options could not be loaded",
+      "NIFTY Weekly & Monthly Options",
+      "NIFTY Options views",
+      "Weekly W0",
+      "Monthly M0"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-nseintelligencepage",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "components": [
+      "BreadthTrend",
+      "Reports",
+      "NseIntelligencePage"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [
+      "Breadth history unavailable",
+      "Official advance minus decline breadth trend",
+      "${date(row.tradeDate)} · ${number(value, 2)}%",
+      "NSE Intelligence is unavailable",
+      "NSE Intelligence views",
+      "${active === ",
+      "No normalized events available"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-optionsintelligencepage",
+    "file": "neon-stock-terminal/apps/web/src/pages/OptionsIntelligencePage.tsx",
+    "components": [
+      "ScoreBar",
+      "OptionsIntelligencePage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Qualification funnel",
+      "Volatility signal ranking",
+      "Option chain"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/options/intelligence",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-papertradingcommandcenter",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "components": [
+      "PaperTradingCommandCenter",
+      "TradeQualityGuide",
+      "TradeQualityEvaluator",
+      "Outcome",
+      "Metric",
+      "SummaryMetric",
+      "TargetScenarioStrip",
+      "HorizonCard",
+      "FixedCapitalPortfolioSimulator",
+      "PaperParallelEvidencePlot",
+      "OiisContourSurface",
+      "RewardPainAtlas",
+      "ConversionSummary",
+      "AttentionList",
+      "PaperDataQualityPanel",
+      "ConversionGroup",
+      "AdverseLadder",
+      "TradeIdentity",
+      "EvidenceTargetCell",
+      "HorizonOutcomeCell",
+      "TradePerformanceHeatmap",
+      "TradeEvidenceTotals",
+      "UnifiedTradeMatrix",
+      "TradeDrawer",
+      "Journey",
+      "DrawerTargets",
+      "Evidence",
+      "DrawerEconomics",
+      "DrawerCalculationTrace",
+      "DrawerComments",
+      "Audit",
+      "AddPaperTradeDialog",
+      "API_BASE_URL"
+    ],
+    "library": "Custom SVG/React",
+    "titles": [
+      "Paper Trading views",
+      "Filter paper trades",
+      "Sort paper trades",
+      "Filter by entry strategy",
+      "Related evidence",
+      "Trade-quality matrix filters",
+      "Filter trade period",
+      "Filter trade quality",
+      "Inspect ${trade.symbol} trade-quality evidence",
+      "${point.trade.symbol}: process ${point.process.toFixed(2)}%, outcome ${point.outcome.toFixed(2)}%",
+      "Inspect ${point.trade.symbol}: process ${point.process.toFixed(2)}%, outcome ${point.outcome.toFixed",
+      "${position.symbol}, ${position.side}, ${compact(position.quantity)} shares, entry ${time(position.en",
+      "Parallel coordinates for ${rows.length} paper trades, coloured by ${colourDefinition.label}",
+      "${row.symbol}, ${row.strategy}, ${row.availableDimensions} of ${paperParallelAxes.length} dimensions",
+      "OIIS entry factor axes",
+      "OIIS surface outcome",
+      "${activeLens.label} by ${axes.xLabel} and ${axes.yLabel} for a fixed two-lakh investment",
+      "${String(point.trade.symbol)}, quantity ${compact(point.trade.opened_quantity)}, entry ${money(point",
+      "${lens} reward versus pain chart",
+      "${trade.symbol}, quality ${qualityScore == null ? ",
+      "Paper data quality",
+      "${displayDateKey(key)} · ${valueLabel(bucket)} · ${bucket?.trades.length ?? 0} trades",
+      "${displayDateKey(key)}: ${valueLabel(bucket)}, ${bucket?.trades.length ?? 0} trades",
+      "Paper performance heatmap",
+      "Heatmap measure",
+      "Rolling year ending ${displayDateKey(referenceKey)}",
+      "Weekly paper performance by metric and trading day",
+      "${displayDateKey(key)} · ${metricLabels[weekMetric]} · ${valueLabel(bucket, weekMetric)}",
+      "${displayDateKey(key)}, ${metricLabels[weekMetric]}: ${valueLabel(bucket, weekMetric)}",
+      "Intraday event type",
+      "Intraday paper events for ${displayDateKey(selectedDate)}",
+      "Paper trade horizon totals",
+      "Capital basis comparison",
+      "Action",
+      "Open ${trade.symbol} evidence",
+      "${trade.symbol} paper trade detail",
+      "Close trade detail",
+      "${detail.trade.symbol} entry-normalised journey",
+      "Paper trade quantity policy"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/",
+      "/dashboard/stocks/:symbol",
+      "/analytics",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/feedback",
+      "/backtesting",
+      "/backtesting/strategies/:strategyId",
+      "/options/structure",
+      "/options/snapshot",
+      "/strategy/oiis-live",
+      "/strategy/monthly",
+      "/strategy/rolling-monthly",
+      "/strategy/rolling-monthly/legacy",
+      "/paper-trading",
+      "/market/nifty-500",
+      "/futures",
+      "/control-plane",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-rollingmonthlypage",
+    "file": "neon-stock-terminal/apps/web/src/pages/RollingMonthlyPage.tsx",
+    "components": [
+      "RollingMonthlyPage",
+      "FIRST_SESSION_PERFORMANCE_THRESHOLDS"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "Rolling Monthly data could not be loaded",
+      "No completed Rolling Monthly run",
+      "Rolling Monthly",
+      "Rolling Monthly view filters",
+      "No base-scanner match",
+      "Expiry cohort reports",
+      "No scanner match at the latest expiry",
+      "Success rate ${pct(successRate)}",
+      "Expiry history is not available",
+      "Absolute Monthly report filters",
+      "Absolute Monthly history could not be loaded",
+      "No absolute-month opportunity for this filter",
+      "Absolute first-session report filters",
+      "First-session analysis could not be loaded",
+      "First-session favourable target attainment and drawdown incidence",
+      "Row colour scale from minus ten to plus ten percent final return",
+      "No first-session setup for this filter",
+      "${weeklyChart?.candidate.symbol ?? absoluteChart?.candidate.symbol ?? firstSessionChart?.candidate.s",
+      "Close candlestick chart",
+      "Candlestick chart unavailable",
+      "Absolute Monthly selected entry and outcome",
+      "Absolute first-session entry and outcome",
+      "Rolling Monthly qualification and entry events"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/strategy/rolling-monthly/legacy",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-rsisurfacepage",
+    "file": "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+    "components": [
+      "ExtremesStrip",
+      "HeatmapTrend",
+      "RsiSurfacePage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "${tr(",
+      "Bottom 3",
+      "Top 3"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-stockpage",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "components": [
+      "MetricCard",
+      "StockPage",
+      "RANGES"
+    ],
+    "library": "CSS/DOM visualisation",
+    "titles": [],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/stock/:symbol"
+    ]
+  },
+  {
+    "chartId": "pages-willsurfacepage",
+    "file": "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx",
+    "components": [
+      "ExtremesStrip",
+      "HeatmapTrend",
+      "WillSurfacePage"
+    ],
+    "library": "Apache ECharts 6",
+    "titles": [
+      "${tr(",
+      "Bottom 3",
+      "Top 3"
+    ],
+    "apiPaths": [],
+    "pages": [
+      "/dashboard/stocks/:symbol",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will",
+      "/stock/:symbol"
+    ]
+  }
+]

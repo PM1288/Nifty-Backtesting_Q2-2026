@@ -1,0 +1,50 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/",
+    "screen": "today",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics",
+    "screen": "markets",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/stock/RELIANCE",
+    "screen": "stock-360",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/strategy/oiis-live",
+    "screen": "oiis-lab",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/options/intelligence",
+    "screen": "derivatives",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/control-plane",
+    "screen": "admin",
+    "violations": []
+  }
+]

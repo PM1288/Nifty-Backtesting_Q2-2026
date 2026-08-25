@@ -1,0 +1,104 @@
+{
+  "capturedAt": "2026-08-22T17:41:17.316Z",
+  "baseUrl": "https://n50.nifty50today.co.in/n50",
+  "results": [
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshot": "paper-trading-before-1920x1080.png",
+      "viewportWidth": 1920,
+      "bodyScrollWidth": 1920,
+      "bodyOverflow": false,
+      "pageHeight": 11020,
+      "headings": [
+        "Paper Trading",
+        "Which entry conditions produced reward or pain",
+        "Favourable evidence",
+        "₹10 lakh capital recycling simulation",
+        "Swing-only ₹10 lakh capital recycling",
+        "Paper performance heatmap",
+        "Reward vs pain map",
+        "Outcome conversion",
+        "Complete trade evidence",
+        "Related evidence",
+        "Learn about this analysis"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "screenshot": "paper-trading-before-1600x900.png",
+      "viewportWidth": 1600,
+      "bodyScrollWidth": 1600,
+      "bodyOverflow": false,
+      "pageHeight": 11039,
+      "headings": [
+        "Paper Trading",
+        "Which entry conditions produced reward or pain",
+        "Favourable evidence",
+        "₹10 lakh capital recycling simulation",
+        "Swing-only ₹10 lakh capital recycling",
+        "Paper performance heatmap",
+        "Reward vs pain map",
+        "Outcome conversion",
+        "Complete trade evidence",
+        "Related evidence",
+        "Learn about this analysis"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "paper-trading-before-1440x900.png",
+      "viewportWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyOverflow": false,
+      "pageHeight": 11026,
+      "headings": [
+        "Paper Trading",
+        "Which entry conditions produced reward or pain",
+        "Favourable evidence",
+        "₹10 lakh capital recycling simulation",
+        "Swing-only ₹10 lakh capital recycling",
+        "Paper performance heatmap",
+        "Reward vs pain map",
+        "Outcome conversion",
+        "Complete trade evidence",
+        "Related evidence",
+        "Learn about this analysis"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshot": "paper-trading-before-1366x768.png",
+      "viewportWidth": 1366,
+      "bodyScrollWidth": 1366,
+      "bodyOverflow": false,
+      "pageHeight": 11054,
+      "headings": [
+        "Paper Trading",
+        "Which entry conditions produced reward or pain",
+        "Favourable evidence",
+        "₹10 lakh capital recycling simulation",
+        "Swing-only ₹10 lakh capital recycling",
+        "Paper performance heatmap",
+        "Reward vs pain map",
+        "Outcome conversion",
+        "Complete trade evidence",
+        "Related evidence",
+        "Learn about this analysis"
+      ]
+    }
+  ],
+  "consoleErrors": [],
+  "failedRequests": []
+}

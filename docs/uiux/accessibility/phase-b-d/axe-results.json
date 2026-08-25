@@ -1,0 +1,14 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  }
+]

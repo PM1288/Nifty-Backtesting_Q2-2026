@@ -1,0 +1,205 @@
+{
+  "experiment_id": "OIIS_FACTOR_DOE_V1_0",
+  "status": "PROTOCOL_READY_BASELINE_NOT_REPRODUCED",
+  "scope": {
+    "primary": [
+      "OFactor",
+      "XFactor"
+    ],
+    "ffactor": "UNDEFINED_DO_NOT_INVENT",
+    "universe_target": "approximately 500 stocks subject to point-in-time membership and data qualification"
+  },
+  "source_precedence": [
+    "raw data and executable code",
+    "configuration and run metadata",
+    "formal specification",
+    "documentation",
+    "prior narrative"
+  ],
+  "baseline": {
+    "ofactor_threshold": 74,
+    "xfactor_tier_b": 76,
+    "xfactor_tier_a": 84,
+    "tier_gap": 8,
+    "status": "hypothesis/control to reproduce, not validated optimum",
+    "ofactor_weights": {
+      "MRS": 0.08,
+      "SRS": 0.14,
+      "TQS": 0.18,
+      "RSS": 0.1,
+      "MFS": 0.18,
+      "MQS": 0.12,
+      "ICS": 0.1,
+      "LTS": 0.06,
+      "CCS": 0.04
+    },
+    "xfactor_weights": {
+      "SIS": 0.18,
+      "ELQ": 0.2,
+      "TCS": 0.16,
+      "SIQ": 0.14,
+      "RRQ": 0.14,
+      "MSS": 0.06,
+      "LSQ": 0.06,
+      "TSQ": 0.03,
+      "IOQ": 0.03
+    },
+    "hard_gates": [
+      "STALE_MARKET_DATA",
+      "OFACTOR_BELOW_MINIMUM",
+      "NO_VALID_SETUP",
+      "SETUP_FAILED",
+      "SETUP_EXPIRED",
+      "NO_STRUCTURAL_STOP",
+      "STOP_TOO_WIDE",
+      "REWARD_RISK_BELOW_MINIMUM",
+      "EXCESSIVE_EXTENSION",
+      "EXCESSIVE_UNCONFIRMED_GAP",
+      "NEAR_OPPOSING_BARRIER",
+      "INSUFFICIENT_LIQUIDITY",
+      "INSUFFICIENT_MARKET_DEPTH",
+      "OPTION_SPREAD_TOO_WIDE",
+      "OPTION_CONTRACT_NOT_TRADABLE",
+      "BINARY_EVENT_RISK",
+      "POSITION_SIZE_NOT_FEASIBLE"
+    ]
+  },
+  "targets": {
+    "intraday_canonical": [
+      0.3,
+      0.5,
+      0.7
+    ],
+    "intraday_supplemental": [
+      1.0
+    ],
+    "swing_d1_d5": [
+      1.0,
+      2.0,
+      5.0
+    ],
+    "adverse": [
+      0.5,
+      1.0,
+      2.0,
+      5.0,
+      10.0,
+      ">10.0"
+    ],
+    "h30": [
+      1.0,
+      2.0,
+      5.0
+    ]
+  },
+  "entry_modes": [
+    "SIGNAL_CLOSE_DIAGNOSTIC",
+    "NEXT_VALID_OPEN",
+    "ONE_BAR_DELAY"
+  ],
+  "capital_modes": [
+    {
+      "id": "UNCONSTRAINED_OPPORTUNITY"
+    },
+    {
+      "id": "CAP10L_MAX5_TICKET2L",
+      "initial_capital_inr": 1000000,
+      "max_positions": 5,
+      "ticket_limit_inr": 200000
+    },
+    {
+      "id": "CAP16L_MAX8_TICKET2L",
+      "initial_capital_inr": 1600000,
+      "max_positions": 8,
+      "ticket_limit_inr": 200000
+    }
+  ],
+  "validation": {
+    "folds": [
+      {
+        "fold_id": "WF01",
+        "train": "2015-01-01/2018-12-31",
+        "validation": "2019-01-01/2019-12-31",
+        "test": "2020-01-01/2020-12-31",
+        "status": "PROVISIONAL_REQUIRES_DATA_QUALIFICATION"
+      },
+      {
+        "fold_id": "WF02",
+        "train": "2015-01-01/2019-12-31",
+        "validation": "2020-01-01/2020-12-31",
+        "test": "2021-01-01/2021-12-31",
+        "status": "PROVISIONAL_REQUIRES_DATA_QUALIFICATION"
+      },
+      {
+        "fold_id": "WF03",
+        "train": "2015-01-01/2020-12-31",
+        "validation": "2021-01-01/2021-12-31",
+        "test": "2022-01-01/2022-12-31",
+        "status": "PROVISIONAL_REQUIRES_DATA_QUALIFICATION"
+      },
+      {
+        "fold_id": "WF04",
+        "train": "2015-01-01/2021-12-31",
+        "validation": "2022-01-01/2022-12-31",
+        "test": "2023-01-01/2023-12-31",
+        "status": "PROVISIONAL_REQUIRES_DATA_QUALIFICATION"
+      },
+      {
+        "fold_id": "WF05",
+        "train": "2015-01-01/2022-12-31",
+        "validation": "2023-01-01/2023-12-31",
+        "test": "2024-01-01/2024-12-31",
+        "status": "PROVISIONAL_REQUIRES_DATA_QUALIFICATION"
+      },
+      {
+        "fold_id": "WF06",
+        "train": "2015-01-01/2023-12-31",
+        "validation": "2024-01-01/2024-12-31",
+        "test": "2025-01-01/2025-12-31",
+        "status": "PROVISIONAL_REQUIRES_DATA_QUALIFICATION"
+      },
+      {
+        "fold_id": "PROSPECTIVE",
+        "train": "FROZEN_HISTORICAL",
+        "validation": "NONE",
+        "test": "2026-08-10/minimum_60_trading_sessions",
+        "status": "TRUE_UNTOUCHED_CONFIRMATION"
+      }
+    ],
+    "purge_sessions": 30,
+    "embargo_sessions": 30,
+    "group_common_dates": true,
+    "final_confirmation": "prospective shadow beginning 2026-08-10 for minimum 60 trading sessions because historical data has already been repeatedly inspected"
+  },
+  "design": {
+    "stage0": "canonical baseline reproduction",
+    "stage1_ofactor": "9 ablations + 24 constrained maximin mixture points + 3 centre replicates",
+    "stage1_xfactor": "same design",
+    "stage1_gates": "17 one-gate adversarial ablations, inner discovery only",
+    "stage2": "confirmatory ablation/redundancy on shortlist",
+    "stage3": "25-point space-filling aggregate threshold design with Tier-A>Tier-B",
+    "stage4": "response surface on no more than four shortlisted continuous factors",
+    "stage5": "Pareto selection and robustness stress",
+    "stage6": "prospective untouched shadow confirmation"
+  },
+  "responses_file": "response_dictionary.csv",
+  "regimes_file": "regime_definitions.csv",
+  "run_matrix_file": "OIIS_DOE_Run_Matrix.csv",
+  "multiple_testing": [
+    "Benjamini-Hochberg FDR",
+    "White Reality Check",
+    "Hansen SPA",
+    "Deflated Sharpe Ratio",
+    "Probability of Backtest Overfitting"
+  ],
+  "acceptance": {
+    "minimum_effective_trades_overall": 200,
+    "minimum_effective_trades_per_major_regime": 30,
+    "positive_oos_net_expectancy_lower_bound": true,
+    "cost_stress_must_remain_nonnegative": true,
+    "no_catastrophic_major_regime_failure": true,
+    "local_parameter_plateau_required": true,
+    "max_candidates": 3
+  },
+  "file_naming": "OIIS_DOE_{phase}_{trial_id}_{data_hash}_{config_hash}"
+}

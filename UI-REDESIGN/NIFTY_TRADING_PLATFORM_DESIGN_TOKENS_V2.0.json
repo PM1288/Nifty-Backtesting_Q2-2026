@@ -1,0 +1,277 @@
+{
+  "$schema": "https://example.internal/schemas/design-tokens-v1.json",
+  "name": "NIFTY Trading Intelligence Platform",
+  "version": "2.0.0",
+  "intent": "Premium light analytical workspace with restrained terminal cues; the existing Home route remains outside this theme scope.",
+  "themeScope": {
+    "default": "light",
+    "homeRouteFrozen": true,
+    "homeRouteSelector": "[data-route='home']",
+    "v2Selector": "[data-ui-generation='trading-v2']",
+    "darkThemeAllowed": false,
+    "highContrastMode": true
+  },
+  "color": {
+    "background": {
+      "canvas": "#F6F8FC",
+      "surface": "#FFFFFF",
+      "surfaceAlt": "#EEF3F9",
+      "inverse": "#0B1F3A"
+    },
+    "text": {
+      "primary": "#0B1220",
+      "secondary": "#5B6575",
+      "tertiary": "#7B8794",
+      "inverse": "#FFFFFF",
+      "link": "#1E5EFF"
+    },
+    "border": {
+      "default": "#D9E0EA",
+      "strong": "#B8C2D1",
+      "focus": "#1E5EFF"
+    },
+    "brand": {
+      "nav": "#0B1F3A",
+      "navSelected": "#12315A",
+      "primary": "#1E5EFF",
+      "primarySoft": "#E9F0FF"
+    },
+    "semantic": {
+      "positive": "#0A8F5A",
+      "positiveSoft": "#E9F8F1",
+      "negative": "#C9362B",
+      "negativeSoft": "#FDEDEC",
+      "warning": "#B7791F",
+      "warningSoft": "#FFF7E0",
+      "info": "#008AA6",
+      "infoSoft": "#E5F7FA",
+      "unknown": "#7B8794",
+      "unknownSoft": "#EEF1F5"
+    },
+    "market": {
+      "niftyBenchmark": "#C49016",
+      "fixedDeposit": "#7B8794",
+      "options": "#6D4AFF",
+      "optionsSoft": "#F0EDFF",
+      "futures": "#008AA6",
+      "cash": "#1E5EFF"
+    },
+    "researchStatus": {
+      "accepted": "#0A8F5A",
+      "provisional": "#B7791F",
+      "rejected": "#C9362B",
+      "notComparable": "#7B8794",
+      "running": "#1E5EFF"
+    },
+    "chart": {
+      "series1": "#1E5EFF",
+      "series2": "#0A8F5A",
+      "series3": "#C49016",
+      "series4": "#6D4AFF",
+      "series5": "#008AA6",
+      "grid": "#E8EDF4"
+    }
+  },
+  "typography": {
+    "uiFamily": "Inter, Noto Sans, system-ui, sans-serif",
+    "dataFamily": "JetBrains Mono, IBM Plex Mono, Noto Sans Mono, monospace",
+    "tabularNumerals": true,
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "sizePx": {
+      "caption": 11,
+      "bodySmall": 12,
+      "body": 14,
+      "bodyLarge": 16,
+      "cardTitle": 18,
+      "pageTitle": 24,
+      "hero": 36,
+      "kpi": 30
+    },
+    "lineHeight": {
+      "compact": 1.25,
+      "body": 1.45,
+      "reading": 1.6
+    },
+    "rules": [
+      "Use monospace only for symbols, timestamps, prices, quantities, hashes and formula expressions.",
+      "Never use all-caps for paragraphs; reserve it for labels under 30 characters.",
+      "Minimum table text is 12px on desktop and 13px on mobile.",
+      "Do not communicate state through colour alone."
+    ]
+  },
+  "spacingPx": {
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "8": 32,
+    "10": 40,
+    "12": 48,
+    "16": 64
+  },
+  "radiusPx": {
+    "control": 8,
+    "card": 12,
+    "panel": 16,
+    "modal": 18,
+    "pill": 999
+  },
+  "shadow": {
+    "card": "0 1px 2px rgba(11,18,32,.06), 0 8px 24px rgba(11,18,32,.05)",
+    "overlay": "0 20px 60px rgba(11,18,32,.18)"
+  },
+  "layout": {
+    "headerHeightPx": 64,
+    "navWidthExpandedPx": 216,
+    "navWidthCollapsedPx": 72,
+    "contentMaxWidthPx": 1920,
+    "pageGutterPx": {
+      "desktop": 24,
+      "tablet": 20,
+      "mobile": 16
+    },
+    "gridColumns": 12,
+    "gridGapPx": 16,
+    "cardMinHeightPx": 88,
+    "densityModes": [
+      "comfortable",
+      "compact"
+    ],
+    "breakpointsPx": {
+      "mobile": 430,
+      "tablet": 768,
+      "laptop": 1024,
+      "desktop": 1440,
+      "wide": 1920
+    }
+  },
+  "motion": {
+    "defaultDurationMs": 160,
+    "slowDurationMs": 320,
+    "marketDeltaPulseMs": 450,
+    "maxFlashesPerSecond": 2,
+    "continuousBlinking": false,
+    "respectReducedMotion": true,
+    "rules": [
+      "A changed quote may pulse once, then becomes static.",
+      "Red and green flashing is never used for decoration.",
+      "Running-state shimmer is replaced by a static progress skeleton when reduced motion is enabled.",
+      "No animation may obscure a risk, validation or error message."
+    ]
+  },
+  "statusPatterns": {
+    "pass": {
+      "icon": "check-circle",
+      "label": "PASS",
+      "tone": "positive"
+    },
+    "warning": {
+      "icon": "alert-triangle",
+      "label": "WARNING",
+      "tone": "warning"
+    },
+    "fail": {
+      "icon": "x-octagon",
+      "label": "FAIL",
+      "tone": "negative"
+    },
+    "unknown": {
+      "icon": "help-circle",
+      "label": "UNKNOWN",
+      "tone": "unknown"
+    },
+    "stale": {
+      "icon": "clock",
+      "label": "STALE",
+      "tone": "warning"
+    },
+    "paper": {
+      "icon": "flask",
+      "label": "PAPER",
+      "tone": "warning"
+    },
+    "live": {
+      "icon": "radio",
+      "label": "LIVE",
+      "tone": "negative"
+    }
+  },
+  "charts": {
+    "background": "#FFFFFF",
+    "grid": "#E8EDF4",
+    "axis": "#7B8794",
+    "tooltipBackground": "#0B1F3A",
+    "maxDefaultPointsPerSeries": 5000,
+    "downsampleServerSide": true,
+    "rules": [
+      "Every chart states metric, unit, period, sample and whether gross/net/after-tax-reserve.",
+      "Use a zero line whenever negative values are possible.",
+      "Use direct labels or a legend below the plot; never hide critical series behind hover only.",
+      "Candles and minute paths are lazy-loaded and virtualised.",
+      "Heatmaps show scale direction, sample sufficiency and missing-state grey."
+    ]
+  },
+  "accessibility": {
+    "standard": "WCAG 2.2 AA",
+    "minimumTouchTargetPx": 44,
+    "minimumFocusRingPx": 2,
+    "zoomPercent": 200,
+    "keyboard": true,
+    "screenReaderLabels": true,
+    "nonColourCues": true,
+    "requirements": [
+      "All grids support keyboard navigation and an accessible table fallback.",
+      "Every icon-only control has an accessible name and tooltip.",
+      "Focus order follows visual order and remains inside modal dialogs.",
+      "Errors are linked to the exact field and summarised at the top of forms.",
+      "Live price regions use polite announcements only for user-selected instruments."
+    ]
+  },
+  "componentRules": {
+    "buttons": {
+      "primary": "One dominant primary action per panel",
+      "destructive": "Requires reason and confirmation",
+      "disabled": "Must explain why in adjacent text or tooltip"
+    },
+    "tables": {
+      "stickyHeader": true,
+      "virtualiseAfterRows": 200,
+      "preserveFiltersInUrl": true,
+      "serverSidePagination": true
+    },
+    "forms": {
+      "autosaveDraft": true,
+      "dirtyStateWarning": true,
+      "inlineValidation": true,
+      "immutableVersionAfterPublish": true
+    },
+    "notifications": {
+      "groupByDomain": true,
+      "separateTasks": true,
+      "deepLink": true,
+      "dismissAllPermissioned": true
+    },
+    "tooltips": {
+      "background": "#0B1F3A",
+      "text": "#FFFFFF",
+      "delayMs": 350
+    }
+  },
+  "homePreservation": {
+    "rule": "Do not restyle, recompose, reroute or replace the existing Home screen.",
+    "guard": "HomePreservationGuard",
+    "tests": [
+      "visual snapshot at 1440x900",
+      "visual snapshot at 1920x1080",
+      "route and navigation parity",
+      "no v2 token leakage"
+    ]
+  }
+}

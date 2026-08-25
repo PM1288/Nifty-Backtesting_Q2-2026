@@ -1,0 +1,4238 @@
+[
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-1.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-2.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-3.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-4.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-5.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-6.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 6",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-7.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 7",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators__chart-8.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "chart 8",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-1.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-2.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-3.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-4.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-5.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-6.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 6",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-7.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 7",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-indicators-param__chart-8.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 8",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-learn__chart-1.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-learn__chart-2.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-simulator__chart-1.png",
+    "page": "/analytics/simulator",
+    "capturedRoute": "/analytics/simulator",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsSimulatorPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-simulator__chart-2.png",
+    "page": "/analytics/simulator",
+    "capturedRoute": "/analytics/simulator",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsSimulatorPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-simulator__chart-3.png",
+    "page": "/analytics/simulator",
+    "capturedRoute": "/analytics/simulator",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "AnalyticsSimulatorPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-stock-param__chart-1.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-system-quality__chart-1.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-system-quality__chart-2.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-system-quality__chart-3.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-system-quality__chart-4.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-system-quality__chart-5.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/analytics-system-quality__chart-6.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1920x1080",
+    "section": "chart 6",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting__chart-1.png",
+    "page": "/backtesting",
+    "capturedRoute": "/backtesting",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingOverviewPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting__chart-2.png",
+    "page": "/backtesting",
+    "capturedRoute": "/backtesting",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "BacktestingOverviewPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-compare__chart-1.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-compare__chart-2.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-compare__chart-3.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-compare__chart-4.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-compare__chart-5.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-compare__chart-6.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "chart 6",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-daily-summary__chart-1.png",
+    "page": "/backtesting/daily-summary",
+    "capturedRoute": "/backtesting/daily-summary",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-h30__figure-1.png",
+    "page": "/backtesting/h30",
+    "capturedRoute": "/backtesting/h30",
+    "viewport": "1920x1080",
+    "section": "figure 1",
+    "components": [
+      "BacktestingH30Page"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-h30__figure-2.png",
+    "page": "/backtesting/h30",
+    "capturedRoute": "/backtesting/h30",
+    "viewport": "1920x1080",
+    "section": "figure 2",
+    "components": [
+      "BacktestingH30Page"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-lab__chart-1.png",
+    "page": "/backtesting/lab",
+    "capturedRoute": "/backtesting/lab",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingLabPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-regimes__chart-1.png",
+    "page": "/backtesting/regimes",
+    "capturedRoute": "/backtesting/regimes",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-regimes__chart-2.png",
+    "page": "/backtesting/regimes",
+    "capturedRoute": "/backtesting/regimes",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-results__chart-1.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-results__chart-2.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-results__chart-3.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-results__chart-4.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-runs__chart-1.png",
+    "page": "/backtesting/runs",
+    "capturedRoute": "/backtesting/runs",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-stocks__chart-1.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-stocks__chart-2.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-stocks__chart-3.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-strategies-param__chart-1.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-strategies-param__chart-2.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-strategies-param__chart-3.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-strategies-param__chart-4.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/backtesting-strategies-param__chart-5.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/catalysts-context__chart-1.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/catalysts-context__chart-2.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/catalysts-context__chart-3.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/catalysts-context__chart-4.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/catalysts-context__chart-5.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/catalysts-events__chart-1.png",
+    "page": "/catalysts/events",
+    "capturedRoute": "/catalysts/events",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsEventsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/dashboard-stocks-param__chart-1.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/heatmap-change__chart-1.png",
+    "page": "/heatmap/change",
+    "capturedRoute": "/heatmap/change",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "ChangeHeatmapPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/heatmap-rsi__chart-1.png",
+    "page": "/heatmap/rsi",
+    "capturedRoute": "/heatmap/rsi",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "RsiSurfacePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/heatmap-will__chart-1.png",
+    "page": "/heatmap/will",
+    "capturedRoute": "/heatmap/will",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "WillSurfacePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/institutional-flow__chart-1.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/institutional-flow__chart-2.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/institutional-flow__chart-3.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/institutional-flow__chart-4.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/institutional-flow__chart-5.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/institutional-flow__chart-6.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "chart 6",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/institutional-flow__chart-7.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "chart 7",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-intelligence__chart-1.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-intelligence__chart-2.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-snapshot__chart-1.png",
+    "page": "/options/snapshot",
+    "capturedRoute": "/options/snapshot",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-snapshot__chart-2.png",
+    "page": "/options/snapshot",
+    "capturedRoute": "/options/snapshot",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-structure__chart-1.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-structure__chart-2.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1920x1080",
+    "section": "chart 2",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-structure__chart-3.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1920x1080",
+    "section": "chart 3",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-structure__chart-4.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1920x1080",
+    "section": "chart 4",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-structure__chart-5.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1920x1080",
+    "section": "chart 5",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/options-structure__chart-6.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1920x1080",
+    "section": "chart 6",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/charts/stock-param__chart-1.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "chart 1",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/desktop/analytics__1440x900__full.png",
+    "page": "/analytics",
+    "capturedRoute": "/analytics",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics__1920x1080__full.png",
+    "page": "/analytics",
+    "capturedRoute": "/analytics",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-daily-setups__1440x900__full.png",
+    "page": "/analytics/daily-setups",
+    "capturedRoute": "/analytics/daily-setups",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsSetupsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-daily-setups__1920x1080__full.png",
+    "page": "/analytics/daily-setups",
+    "capturedRoute": "/analytics/daily-setups",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsSetupsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-flows__1440x900__full.png",
+    "page": "/analytics/flows",
+    "capturedRoute": "/analytics/flows",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsFlowsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-flows__1920x1080__full.png",
+    "page": "/analytics/flows",
+    "capturedRoute": "/analytics/flows",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsFlowsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-indicators__1440x900__full.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-indicators__1920x1080__full.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-indicators-param__1440x900__full.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-indicators-param__1920x1080__full.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-leadership__1440x900__full.png",
+    "page": "/analytics/leadership",
+    "capturedRoute": "/analytics/leadership",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsLeadershipPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-leadership__1920x1080__full.png",
+    "page": "/analytics/leadership",
+    "capturedRoute": "/analytics/leadership",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsLeadershipPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-learn__1440x900__full.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-learn__1920x1080__full.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-regime__1440x900__full.png",
+    "page": "/analytics/regime",
+    "capturedRoute": "/analytics/regime",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsRegimePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-regime__1920x1080__full.png",
+    "page": "/analytics/regime",
+    "capturedRoute": "/analytics/regime",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsRegimePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-risk__1440x900__full.png",
+    "page": "/analytics/risk",
+    "capturedRoute": "/analytics/risk",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsRiskPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-risk__1920x1080__full.png",
+    "page": "/analytics/risk",
+    "capturedRoute": "/analytics/risk",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsRiskPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-simulator__1440x900__full.png",
+    "page": "/analytics/simulator",
+    "capturedRoute": "/analytics/simulator",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsSimulatorPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-simulator__1920x1080__full.png",
+    "page": "/analytics/simulator",
+    "capturedRoute": "/analytics/simulator",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsSimulatorPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-stock-param__1440x900__full.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-stock-param__1920x1080__full.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-system-map__1440x900__full.png",
+    "page": "/analytics/system/map",
+    "capturedRoute": "/analytics/system/map",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsSystemMapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-system-map__1920x1080__full.png",
+    "page": "/analytics/system/map",
+    "capturedRoute": "/analytics/system/map",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsSystemMapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-system-quality__1440x900__full.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/analytics-system-quality__1920x1080__full.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting__1440x900__full.png",
+    "page": "/backtesting",
+    "capturedRoute": "/backtesting",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting__1920x1080__full.png",
+    "page": "/backtesting",
+    "capturedRoute": "/backtesting",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-compare__1440x900__full.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-compare__1920x1080__full.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-daily-summary__1440x900__full.png",
+    "page": "/backtesting/daily-summary",
+    "capturedRoute": "/backtesting/daily-summary",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-daily-summary__1920x1080__full.png",
+    "page": "/backtesting/daily-summary",
+    "capturedRoute": "/backtesting/daily-summary",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-h30__1440x900__full.png",
+    "page": "/backtesting/h30",
+    "capturedRoute": "/backtesting/h30",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingH30Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-h30__1920x1080__full.png",
+    "page": "/backtesting/h30",
+    "capturedRoute": "/backtesting/h30",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingH30Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-lab__1440x900__full.png",
+    "page": "/backtesting/lab",
+    "capturedRoute": "/backtesting/lab",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingLabPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-lab__1920x1080__full.png",
+    "page": "/backtesting/lab",
+    "capturedRoute": "/backtesting/lab",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingLabPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-regimes__1440x900__full.png",
+    "page": "/backtesting/regimes",
+    "capturedRoute": "/backtesting/regimes",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-regimes__1920x1080__full.png",
+    "page": "/backtesting/regimes",
+    "capturedRoute": "/backtesting/regimes",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-results__1440x900__full.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-results__1920x1080__full.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-runs__1440x900__full.png",
+    "page": "/backtesting/runs",
+    "capturedRoute": "/backtesting/runs",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-runs__1920x1080__full.png",
+    "page": "/backtesting/runs",
+    "capturedRoute": "/backtesting/runs",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-stocks__1440x900__full.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-stocks__1920x1080__full.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-strategies__1440x900__full.png",
+    "page": "/backtesting/strategies",
+    "capturedRoute": "/backtesting/strategies",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyLibraryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-strategies__1920x1080__full.png",
+    "page": "/backtesting/strategies",
+    "capturedRoute": "/backtesting/strategies",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyLibraryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-strategies-param__1440x900__full.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/backtesting-strategies-param__1920x1080__full.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/catalysts-context__1440x900__full.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/catalysts-context__1920x1080__full.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/catalysts-events__1440x900__full.png",
+    "page": "/catalysts/events",
+    "capturedRoute": "/catalysts/events",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/catalysts-events__1920x1080__full.png",
+    "page": "/catalysts/events",
+    "capturedRoute": "/catalysts/events",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/control-plane__1440x900__full.png",
+    "page": "/control-plane",
+    "capturedRoute": "/control-plane",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AdminPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/control-plane__1920x1080__full.png",
+    "page": "/control-plane",
+    "capturedRoute": "/control-plane",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AdminPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/dashboard-stocks-param__1440x900__full.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/dashboard-stocks-param__1920x1080__full.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/feedback__1440x900__full.png",
+    "page": "/feedback",
+    "capturedRoute": "/feedback",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "FeedbackPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/feedback__1920x1080__full.png",
+    "page": "/feedback",
+    "capturedRoute": "/feedback",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "FeedbackPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/futures__1440x900__full.png",
+    "page": "/futures",
+    "capturedRoute": "/futures",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "FuturesPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/futures__1920x1080__full.png",
+    "page": "/futures",
+    "capturedRoute": "/futures",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "FuturesPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/heatmap-change__1440x900__full.png",
+    "page": "/heatmap/change",
+    "capturedRoute": "/heatmap/change",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "ChangeHeatmapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/heatmap-change__1920x1080__full.png",
+    "page": "/heatmap/change",
+    "capturedRoute": "/heatmap/change",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "ChangeHeatmapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/heatmap-rsi__1440x900__full.png",
+    "page": "/heatmap/rsi",
+    "capturedRoute": "/heatmap/rsi",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "RsiSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/heatmap-rsi__1920x1080__full.png",
+    "page": "/heatmap/rsi",
+    "capturedRoute": "/heatmap/rsi",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "RsiSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/heatmap-will__1440x900__full.png",
+    "page": "/heatmap/will",
+    "capturedRoute": "/heatmap/will",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "WillSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/heatmap-will__1920x1080__full.png",
+    "page": "/heatmap/will",
+    "capturedRoute": "/heatmap/will",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "WillSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/home__1440x900__full.png",
+    "page": "/",
+    "capturedRoute": "/",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "LandingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/home__1920x1080__full.png",
+    "page": "/",
+    "capturedRoute": "/",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "LandingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-flow__1440x900__full.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-flow__1920x1080__full.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence__1440x900__full.png",
+    "page": "/institutional/nse-intelligence",
+    "capturedRoute": "/institutional/nse-intelligence",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence__1920x1080__full.png",
+    "page": "/institutional/nse-intelligence",
+    "capturedRoute": "/institutional/nse-intelligence",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-events__1440x900__full.png",
+    "page": "/institutional/nse-intelligence/events",
+    "capturedRoute": "/institutional/nse-intelligence/events",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-events__1920x1080__full.png",
+    "page": "/institutional/nse-intelligence/events",
+    "capturedRoute": "/institutional/nse-intelligence/events",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-fno__1440x900__full.png",
+    "page": "/institutional/nse-intelligence/fno",
+    "capturedRoute": "/institutional/nse-intelligence/fno",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-fno__1920x1080__full.png",
+    "page": "/institutional/nse-intelligence/fno",
+    "capturedRoute": "/institutional/nse-intelligence/fno",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-reports__1440x900__full.png",
+    "page": "/institutional/nse-intelligence/reports",
+    "capturedRoute": "/institutional/nse-intelligence/reports",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-reports__1920x1080__full.png",
+    "page": "/institutional/nse-intelligence/reports",
+    "capturedRoute": "/institutional/nse-intelligence/reports",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-sectors__1440x900__full.png",
+    "page": "/institutional/nse-intelligence/sectors",
+    "capturedRoute": "/institutional/nse-intelligence/sectors",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-nse-intelligence-sectors__1920x1080__full.png",
+    "page": "/institutional/nse-intelligence/sectors",
+    "capturedRoute": "/institutional/nse-intelligence/sectors",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-reports__1440x900__full.png",
+    "page": "/institutional/reports",
+    "capturedRoute": "/institutional/reports",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiReportsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/institutional-reports__1920x1080__full.png",
+    "page": "/institutional/reports",
+    "capturedRoute": "/institutional/reports",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiReportsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/market-nifty-500__1440x900__full.png",
+    "page": "/market/nifty-500",
+    "capturedRoute": "/market/nifty-500",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "Nifty500Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/market-nifty-500__1920x1080__full.png",
+    "page": "/market/nifty-500",
+    "capturedRoute": "/market/nifty-500",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "Nifty500Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-intelligence__1440x900__full.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-intelligence__1920x1080__full.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-snapshot__1440x900__full.png",
+    "page": "/options/snapshot",
+    "capturedRoute": "/options/snapshot",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-snapshot__1920x1080__full.png",
+    "page": "/options/snapshot",
+    "capturedRoute": "/options/snapshot",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-structure__1440x900__full.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-structure__1920x1080__full.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-volatility-signals__1440x900__full.png",
+    "page": "/options/volatility-signals",
+    "capturedRoute": "/options/volatility-signals",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "FnoVolatilityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/options-volatility-signals__1920x1080__full.png",
+    "page": "/options/volatility-signals",
+    "capturedRoute": "/options/volatility-signals",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "FnoVolatilityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/paper-trading__1440x900__full.png",
+    "page": "/paper-trading",
+    "capturedRoute": "/paper-trading",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "PaperTradingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/paper-trading__1920x1080__full.png",
+    "page": "/paper-trading",
+    "capturedRoute": "/paper-trading",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "PaperTradingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/stock-param__1440x900__full.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/stock-param__1920x1080__full.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-long-options__1440x900__full.png",
+    "page": "/strategy/long-options",
+    "capturedRoute": "/strategy/long-options",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "LongOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-long-options__1920x1080__full.png",
+    "page": "/strategy/long-options",
+    "capturedRoute": "/strategy/long-options",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "LongOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-monthly__1440x900__full.png",
+    "page": "/strategy/monthly",
+    "capturedRoute": "/strategy/monthly",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "MonthlyStrategyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-monthly__1920x1080__full.png",
+    "page": "/strategy/monthly",
+    "capturedRoute": "/strategy/monthly",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "MonthlyStrategyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-nifty-options__1440x900__full.png",
+    "page": "/strategy/nifty-options",
+    "capturedRoute": "/strategy/nifty-options",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-nifty-options__1920x1080__full.png",
+    "page": "/strategy/nifty-options",
+    "capturedRoute": "/strategy/nifty-options",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-nifty-weekly-options__1440x900__full.png",
+    "page": "/strategy/nifty-weekly-options",
+    "capturedRoute": "/strategy/nifty-weekly-options",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-nifty-weekly-options__1920x1080__full.png",
+    "page": "/strategy/nifty-weekly-options",
+    "capturedRoute": "/strategy/nifty-weekly-options",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-oiis-live__1440x900__full.png",
+    "page": "/strategy/oiis-live",
+    "capturedRoute": "/strategy/oiis-live",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "OiisLivePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-oiis-live__1920x1080__full.png",
+    "page": "/strategy/oiis-live",
+    "capturedRoute": "/strategy/oiis-live",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "OiisLivePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-oiis-live-history__1440x900__full.png",
+    "page": "/strategy/oiis-live/history",
+    "capturedRoute": "/strategy/oiis-live/history",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "OiisRunHistoryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-oiis-live-history__1920x1080__full.png",
+    "page": "/strategy/oiis-live/history",
+    "capturedRoute": "/strategy/oiis-live/history",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "OiisRunHistoryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-rolling-monthly__1440x900__full.png",
+    "page": "/strategy/rolling-monthly",
+    "capturedRoute": "/strategy/rolling-monthly",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyLegacyRouter"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-rolling-monthly__1920x1080__full.png",
+    "page": "/strategy/rolling-monthly",
+    "capturedRoute": "/strategy/rolling-monthly",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyLegacyRouter"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-rolling-monthly-legacy__1440x900__full.png",
+    "page": "/strategy/rolling-monthly/legacy",
+    "capturedRoute": "/strategy/rolling-monthly/legacy",
+    "viewport": "1440x900",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/desktop/strategy-rolling-monthly-legacy__1920x1080__full.png",
+    "page": "/strategy/rolling-monthly/legacy",
+    "capturedRoute": "/strategy/rolling-monthly/legacy",
+    "viewport": "1920x1080",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/errors/paper-trading__auth-required.png",
+    "page": "/paper-trading",
+    "capturedRoute": "/paper-trading",
+    "viewport": "1440x900",
+    "section": "authentication required",
+    "components": [
+      "AuthGateModal",
+      "PaperTradingCommandCenter"
+    ],
+    "purpose": "Safe unauthenticated error-state evidence"
+  },
+  {
+    "filename": "screenshots/hover-states/home__stock-tile-hover.png",
+    "page": "/",
+    "capturedRoute": "/",
+    "viewport": "1920x1080",
+    "section": "stock hover",
+    "components": [
+      "LandingPage"
+    ],
+    "purpose": "Hover-state evidence"
+  },
+  {
+    "filename": "screenshots/mobile/analytics__390x844__full.png",
+    "page": "/analytics",
+    "capturedRoute": "/analytics",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-daily-setups__390x844__full.png",
+    "page": "/analytics/daily-setups",
+    "capturedRoute": "/analytics/daily-setups",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsSetupsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-flows__390x844__full.png",
+    "page": "/analytics/flows",
+    "capturedRoute": "/analytics/flows",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsFlowsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-indicators__390x844__full.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-indicators-param__390x844__full.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-leadership__390x844__full.png",
+    "page": "/analytics/leadership",
+    "capturedRoute": "/analytics/leadership",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsLeadershipPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-learn__390x844__full.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-regime__390x844__full.png",
+    "page": "/analytics/regime",
+    "capturedRoute": "/analytics/regime",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsRegimePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-risk__390x844__full.png",
+    "page": "/analytics/risk",
+    "capturedRoute": "/analytics/risk",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsRiskPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-simulator__390x844__full.png",
+    "page": "/analytics/simulator",
+    "capturedRoute": "/analytics/simulator",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsSimulatorPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-stock-param__390x844__full.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-system-map__390x844__full.png",
+    "page": "/analytics/system/map",
+    "capturedRoute": "/analytics/system/map",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsSystemMapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/analytics-system-quality__390x844__full.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting__390x844__full.png",
+    "page": "/backtesting",
+    "capturedRoute": "/backtesting",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-compare__390x844__full.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-daily-summary__390x844__full.png",
+    "page": "/backtesting/daily-summary",
+    "capturedRoute": "/backtesting/daily-summary",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-h30__390x844__full.png",
+    "page": "/backtesting/h30",
+    "capturedRoute": "/backtesting/h30",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingH30Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-lab__390x844__full.png",
+    "page": "/backtesting/lab",
+    "capturedRoute": "/backtesting/lab",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingLabPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-regimes__390x844__full.png",
+    "page": "/backtesting/regimes",
+    "capturedRoute": "/backtesting/regimes",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-results__390x844__full.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-runs__390x844__full.png",
+    "page": "/backtesting/runs",
+    "capturedRoute": "/backtesting/runs",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-stocks__390x844__full.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-strategies__390x844__full.png",
+    "page": "/backtesting/strategies",
+    "capturedRoute": "/backtesting/strategies",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyLibraryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/backtesting-strategies-param__390x844__full.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/catalysts-context__390x844__full.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/catalysts-events__390x844__full.png",
+    "page": "/catalysts/events",
+    "capturedRoute": "/catalysts/events",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/control-plane__390x844__full.png",
+    "page": "/control-plane",
+    "capturedRoute": "/control-plane",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AdminPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/dashboard-stocks-param__390x844__full.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/feedback__390x844__full.png",
+    "page": "/feedback",
+    "capturedRoute": "/feedback",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "FeedbackPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/futures__390x844__full.png",
+    "page": "/futures",
+    "capturedRoute": "/futures",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "FuturesPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/heatmap-change__390x844__full.png",
+    "page": "/heatmap/change",
+    "capturedRoute": "/heatmap/change",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "ChangeHeatmapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/heatmap-rsi__390x844__full.png",
+    "page": "/heatmap/rsi",
+    "capturedRoute": "/heatmap/rsi",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "RsiSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/heatmap-will__390x844__full.png",
+    "page": "/heatmap/will",
+    "capturedRoute": "/heatmap/will",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "WillSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/home__390x844__full.png",
+    "page": "/",
+    "capturedRoute": "/",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "LandingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/institutional-flow__390x844__full.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/institutional-nse-intelligence__390x844__full.png",
+    "page": "/institutional/nse-intelligence",
+    "capturedRoute": "/institutional/nse-intelligence",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/institutional-nse-intelligence-events__390x844__full.png",
+    "page": "/institutional/nse-intelligence/events",
+    "capturedRoute": "/institutional/nse-intelligence/events",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/institutional-nse-intelligence-fno__390x844__full.png",
+    "page": "/institutional/nse-intelligence/fno",
+    "capturedRoute": "/institutional/nse-intelligence/fno",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/institutional-nse-intelligence-reports__390x844__full.png",
+    "page": "/institutional/nse-intelligence/reports",
+    "capturedRoute": "/institutional/nse-intelligence/reports",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/institutional-nse-intelligence-sectors__390x844__full.png",
+    "page": "/institutional/nse-intelligence/sectors",
+    "capturedRoute": "/institutional/nse-intelligence/sectors",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/institutional-reports__390x844__full.png",
+    "page": "/institutional/reports",
+    "capturedRoute": "/institutional/reports",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiReportsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/market-nifty-500__390x844__full.png",
+    "page": "/market/nifty-500",
+    "capturedRoute": "/market/nifty-500",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "Nifty500Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/options-intelligence__390x844__full.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/options-snapshot__390x844__full.png",
+    "page": "/options/snapshot",
+    "capturedRoute": "/options/snapshot",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/options-structure__390x844__full.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/options-volatility-signals__390x844__full.png",
+    "page": "/options/volatility-signals",
+    "capturedRoute": "/options/volatility-signals",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "FnoVolatilityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/paper-trading__390x844__full.png",
+    "page": "/paper-trading",
+    "capturedRoute": "/paper-trading",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "PaperTradingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/stock-param__390x844__full.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-long-options__390x844__full.png",
+    "page": "/strategy/long-options",
+    "capturedRoute": "/strategy/long-options",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "LongOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-monthly__390x844__full.png",
+    "page": "/strategy/monthly",
+    "capturedRoute": "/strategy/monthly",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "MonthlyStrategyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-nifty-options__390x844__full.png",
+    "page": "/strategy/nifty-options",
+    "capturedRoute": "/strategy/nifty-options",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-nifty-weekly-options__390x844__full.png",
+    "page": "/strategy/nifty-weekly-options",
+    "capturedRoute": "/strategy/nifty-weekly-options",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-oiis-live__390x844__full.png",
+    "page": "/strategy/oiis-live",
+    "capturedRoute": "/strategy/oiis-live",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "OiisLivePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-oiis-live-history__390x844__full.png",
+    "page": "/strategy/oiis-live/history",
+    "capturedRoute": "/strategy/oiis-live/history",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "OiisRunHistoryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-rolling-monthly__390x844__full.png",
+    "page": "/strategy/rolling-monthly",
+    "capturedRoute": "/strategy/rolling-monthly",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyLegacyRouter"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/mobile/strategy-rolling-monthly-legacy__390x844__full.png",
+    "page": "/strategy/rolling-monthly/legacy",
+    "capturedRoute": "/strategy/rolling-monthly/legacy",
+    "viewport": "390x844",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/sections/analytics__table-1.png",
+    "page": "/analytics",
+    "capturedRoute": "/analytics",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsOverviewPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics__table-2.png",
+    "page": "/analytics",
+    "capturedRoute": "/analytics",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsOverviewPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-flows__table-1.png",
+    "page": "/analytics/flows",
+    "capturedRoute": "/analytics/flows",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsFlowsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-flows__table-2.png",
+    "page": "/analytics/flows",
+    "capturedRoute": "/analytics/flows",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsFlowsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-indicators__table-2.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-indicators-param__table-2.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-learn__table-1.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-learn__table-2.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-regime__table-1.png",
+    "page": "/analytics/regime",
+    "capturedRoute": "/analytics/regime",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsRegimePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-risk__table-1.png",
+    "page": "/analytics/risk",
+    "capturedRoute": "/analytics/risk",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsRiskPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-risk__table-2.png",
+    "page": "/analytics/risk",
+    "capturedRoute": "/analytics/risk",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsRiskPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-stock-param__table-1.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-stock-param__table-2.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-stock-param__top-1.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-system-map__table-1.png",
+    "page": "/analytics/system/map",
+    "capturedRoute": "/analytics/system/map",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsSystemMapPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/analytics-system-map__table-2.png",
+    "page": "/analytics/system/map",
+    "capturedRoute": "/analytics/system/map",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AnalyticsSystemMapPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-compare__table-1.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-compare__table-2.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-daily-summary__table-1.png",
+    "page": "/backtesting/daily-summary",
+    "capturedRoute": "/backtesting/daily-summary",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-daily-summary__table-2.png",
+    "page": "/backtesting/daily-summary",
+    "capturedRoute": "/backtesting/daily-summary",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-h30__table-1.png",
+    "page": "/backtesting/h30",
+    "capturedRoute": "/backtesting/h30",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingH30Page"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-regimes__table-1.png",
+    "page": "/backtesting/regimes",
+    "capturedRoute": "/backtesting/regimes",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-results__table-1.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-results__table-2.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-runs__table-1.png",
+    "page": "/backtesting/runs",
+    "capturedRoute": "/backtesting/runs",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-runs__table-2.png",
+    "page": "/backtesting/runs",
+    "capturedRoute": "/backtesting/runs",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-stocks__table-1.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-strategies__table-1.png",
+    "page": "/backtesting/strategies",
+    "capturedRoute": "/backtesting/strategies",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingStrategyLibraryPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-strategies-param__table-1.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/backtesting-strategies-param__table-2.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/control-plane__table-1.png",
+    "page": "/control-plane",
+    "capturedRoute": "/control-plane",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AdminPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/control-plane__table-2.png",
+    "page": "/control-plane",
+    "capturedRoute": "/control-plane",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "AdminPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/dashboard-stocks-param__table-1.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/dashboard-stocks-param__table-2.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/dashboard-stocks-param__top-1.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-flow__table-1.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-flow__top-1.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence__top-1.png",
+    "page": "/institutional/nse-intelligence",
+    "capturedRoute": "/institutional/nse-intelligence",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence__top-2.png",
+    "page": "/institutional/nse-intelligence",
+    "capturedRoute": "/institutional/nse-intelligence",
+    "viewport": "1920x1080",
+    "section": "top 2",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence-events__top-1.png",
+    "page": "/institutional/nse-intelligence/events",
+    "capturedRoute": "/institutional/nse-intelligence/events",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence-fno__table-1.png",
+    "page": "/institutional/nse-intelligence/fno",
+    "capturedRoute": "/institutional/nse-intelligence/fno",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence-fno__top-1.png",
+    "page": "/institutional/nse-intelligence/fno",
+    "capturedRoute": "/institutional/nse-intelligence/fno",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence-reports__table-1.png",
+    "page": "/institutional/nse-intelligence/reports",
+    "capturedRoute": "/institutional/nse-intelligence/reports",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence-reports__top-1.png",
+    "page": "/institutional/nse-intelligence/reports",
+    "capturedRoute": "/institutional/nse-intelligence/reports",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence-sectors__table-1.png",
+    "page": "/institutional/nse-intelligence/sectors",
+    "capturedRoute": "/institutional/nse-intelligence/sectors",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-nse-intelligence-sectors__top-1.png",
+    "page": "/institutional/nse-intelligence/sectors",
+    "capturedRoute": "/institutional/nse-intelligence/sectors",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/institutional-reports__top-1.png",
+    "page": "/institutional/reports",
+    "capturedRoute": "/institutional/reports",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "AnalyticsFiiReportsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/market-nifty-500__table-1.png",
+    "page": "/market/nifty-500",
+    "capturedRoute": "/market/nifty-500",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "Nifty500Page"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/options-intelligence__table-1.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/options-intelligence__table-2.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/options-intelligence__top-1.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/options-snapshot__table-1.png",
+    "page": "/options/snapshot",
+    "capturedRoute": "/options/snapshot",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "AnalyticsOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/options-volatility-signals__table-1.png",
+    "page": "/options/volatility-signals",
+    "capturedRoute": "/options/volatility-signals",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "FnoVolatilityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/options-volatility-signals__table-2.png",
+    "page": "/options/volatility-signals",
+    "capturedRoute": "/options/volatility-signals",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "FnoVolatilityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/options-volatility-signals__top-1.png",
+    "page": "/options/volatility-signals",
+    "capturedRoute": "/options/volatility-signals",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "FnoVolatilityPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/paper-trading__top-1.png",
+    "page": "/paper-trading",
+    "capturedRoute": "/paper-trading",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "PaperTradingPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/stock-param__table-1.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/stock-param__table-2.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "table 2",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/stock-param__top-1.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-long-options__table-1.png",
+    "page": "/strategy/long-options",
+    "capturedRoute": "/strategy/long-options",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "LongOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-long-options__top-1.png",
+    "page": "/strategy/long-options",
+    "capturedRoute": "/strategy/long-options",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "LongOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-long-options__top-2.png",
+    "page": "/strategy/long-options",
+    "capturedRoute": "/strategy/long-options",
+    "viewport": "1920x1080",
+    "section": "top 2",
+    "components": [
+      "LongOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-monthly__table-1.png",
+    "page": "/strategy/monthly",
+    "capturedRoute": "/strategy/monthly",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "MonthlyStrategyPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-monthly__top-1.png",
+    "page": "/strategy/monthly",
+    "capturedRoute": "/strategy/monthly",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "MonthlyStrategyPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-nifty-options__top-1.png",
+    "page": "/strategy/nifty-options",
+    "capturedRoute": "/strategy/nifty-options",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-nifty-options__top-2.png",
+    "page": "/strategy/nifty-options",
+    "capturedRoute": "/strategy/nifty-options",
+    "viewport": "1920x1080",
+    "section": "top 2",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-nifty-weekly-options__top-1.png",
+    "page": "/strategy/nifty-weekly-options",
+    "capturedRoute": "/strategy/nifty-weekly-options",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-nifty-weekly-options__top-2.png",
+    "page": "/strategy/nifty-weekly-options",
+    "capturedRoute": "/strategy/nifty-weekly-options",
+    "viewport": "1920x1080",
+    "section": "top 2",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-oiis-live__table-1.png",
+    "page": "/strategy/oiis-live",
+    "capturedRoute": "/strategy/oiis-live",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "OiisLivePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-oiis-live__top-1.png",
+    "page": "/strategy/oiis-live",
+    "capturedRoute": "/strategy/oiis-live",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "OiisLivePage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-oiis-live-history__top-1.png",
+    "page": "/strategy/oiis-live/history",
+    "capturedRoute": "/strategy/oiis-live/history",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "OiisRunHistoryPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-rolling-monthly__table-1.png",
+    "page": "/strategy/rolling-monthly",
+    "capturedRoute": "/strategy/rolling-monthly",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "RollingMonthlyLegacyRouter"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-rolling-monthly__top-1.png",
+    "page": "/strategy/rolling-monthly",
+    "capturedRoute": "/strategy/rolling-monthly",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "RollingMonthlyLegacyRouter"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-rolling-monthly-legacy__table-1.png",
+    "page": "/strategy/rolling-monthly/legacy",
+    "capturedRoute": "/strategy/rolling-monthly/legacy",
+    "viewport": "1920x1080",
+    "section": "table 1",
+    "components": [
+      "RollingMonthlyPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-rolling-monthly-legacy__top-1.png",
+    "page": "/strategy/rolling-monthly/legacy",
+    "capturedRoute": "/strategy/rolling-monthly/legacy",
+    "viewport": "1920x1080",
+    "section": "top 1",
+    "components": [
+      "RollingMonthlyPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/sections/strategy-rolling-monthly-legacy__top-2.png",
+    "page": "/strategy/rolling-monthly/legacy",
+    "capturedRoute": "/strategy/rolling-monthly/legacy",
+    "viewport": "1920x1080",
+    "section": "top 2",
+    "components": [
+      "RollingMonthlyPage"
+    ],
+    "purpose": "Component-level documentation evidence"
+  },
+  {
+    "filename": "screenshots/tablet/analytics__1024x768__full.png",
+    "page": "/analytics",
+    "capturedRoute": "/analytics",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-daily-setups__1024x768__full.png",
+    "page": "/analytics/daily-setups",
+    "capturedRoute": "/analytics/daily-setups",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsSetupsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-flows__1024x768__full.png",
+    "page": "/analytics/flows",
+    "capturedRoute": "/analytics/flows",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsFlowsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-indicators__1024x768__full.png",
+    "page": "/analytics/indicators",
+    "capturedRoute": "/analytics/indicators",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-indicators-param__1024x768__full.png",
+    "page": "/analytics/indicators/:slug",
+    "capturedRoute": "/analytics/indicators/rsi",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsIndicatorsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-leadership__1024x768__full.png",
+    "page": "/analytics/leadership",
+    "capturedRoute": "/analytics/leadership",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsLeadershipPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-learn__1024x768__full.png",
+    "page": "/analytics/learn",
+    "capturedRoute": "/analytics/learn",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsLearnPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-regime__1024x768__full.png",
+    "page": "/analytics/regime",
+    "capturedRoute": "/analytics/regime",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsRegimePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-risk__1024x768__full.png",
+    "page": "/analytics/risk",
+    "capturedRoute": "/analytics/risk",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsRiskPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-simulator__1024x768__full.png",
+    "page": "/analytics/simulator",
+    "capturedRoute": "/analytics/simulator",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsSimulatorPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-stock-param__1024x768__full.png",
+    "page": "/analytics/stock/:symbol",
+    "capturedRoute": "/analytics/stock/RELIANCE",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsStockPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-system-map__1024x768__full.png",
+    "page": "/analytics/system/map",
+    "capturedRoute": "/analytics/system/map",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsSystemMapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/analytics-system-quality__1024x768__full.png",
+    "page": "/analytics/system/quality",
+    "capturedRoute": "/analytics/system/quality",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsQualityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting__1024x768__full.png",
+    "page": "/backtesting",
+    "capturedRoute": "/backtesting",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingOverviewPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-compare__1024x768__full.png",
+    "page": "/backtesting/compare",
+    "capturedRoute": "/backtesting/compare",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingComparePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-daily-summary__1024x768__full.png",
+    "page": "/backtesting/daily-summary",
+    "capturedRoute": "/backtesting/daily-summary",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingDailySummaryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-h30__1024x768__full.png",
+    "page": "/backtesting/h30",
+    "capturedRoute": "/backtesting/h30",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingH30Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-lab__1024x768__full.png",
+    "page": "/backtesting/lab",
+    "capturedRoute": "/backtesting/lab",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingLabPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-regimes__1024x768__full.png",
+    "page": "/backtesting/regimes",
+    "capturedRoute": "/backtesting/regimes",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingRegimeAnalysisPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-results__1024x768__full.png",
+    "page": "/backtesting/results",
+    "capturedRoute": "/backtesting/results",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingPortfolioResultsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-runs__1024x768__full.png",
+    "page": "/backtesting/runs",
+    "capturedRoute": "/backtesting/runs",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingRunsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-stocks__1024x768__full.png",
+    "page": "/backtesting/stocks",
+    "capturedRoute": "/backtesting/stocks",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingStockInsightsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-strategies__1024x768__full.png",
+    "page": "/backtesting/strategies",
+    "capturedRoute": "/backtesting/strategies",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyLibraryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/backtesting-strategies-param__1024x768__full.png",
+    "page": "/backtesting/strategies/:strategyId",
+    "capturedRoute": "/backtesting/strategies/macd_bullcross_above50dma_rsi55to70_tp400_sl300_max20",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "BacktestingStrategyDetailPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/catalysts-context__1024x768__full.png",
+    "page": "/catalysts/context",
+    "capturedRoute": "/catalysts/context",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventContextPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/catalysts-events__1024x768__full.png",
+    "page": "/catalysts/events",
+    "capturedRoute": "/catalysts/events",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsEventsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/control-plane__1024x768__full.png",
+    "page": "/control-plane",
+    "capturedRoute": "/control-plane",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AdminPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/dashboard-stocks-param__1024x768__full.png",
+    "page": "/dashboard/stocks/:symbol",
+    "capturedRoute": "/dashboard/stocks/RELIANCE",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/feedback__1024x768__full.png",
+    "page": "/feedback",
+    "capturedRoute": "/feedback",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "FeedbackPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/futures__1024x768__full.png",
+    "page": "/futures",
+    "capturedRoute": "/futures",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "FuturesPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/heatmap-change__1024x768__full.png",
+    "page": "/heatmap/change",
+    "capturedRoute": "/heatmap/change",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "ChangeHeatmapPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/heatmap-rsi__1024x768__full.png",
+    "page": "/heatmap/rsi",
+    "capturedRoute": "/heatmap/rsi",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "RsiSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/heatmap-will__1024x768__full.png",
+    "page": "/heatmap/will",
+    "capturedRoute": "/heatmap/will",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "WillSurfacePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/home__1024x768__full.png",
+    "page": "/",
+    "capturedRoute": "/",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "LandingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/institutional-flow__1024x768__full.png",
+    "page": "/institutional/flow",
+    "capturedRoute": "/institutional/flow",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiFlowPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/institutional-nse-intelligence__1024x768__full.png",
+    "page": "/institutional/nse-intelligence",
+    "capturedRoute": "/institutional/nse-intelligence",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/institutional-nse-intelligence-events__1024x768__full.png",
+    "page": "/institutional/nse-intelligence/events",
+    "capturedRoute": "/institutional/nse-intelligence/events",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/institutional-nse-intelligence-fno__1024x768__full.png",
+    "page": "/institutional/nse-intelligence/fno",
+    "capturedRoute": "/institutional/nse-intelligence/fno",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/institutional-nse-intelligence-reports__1024x768__full.png",
+    "page": "/institutional/nse-intelligence/reports",
+    "capturedRoute": "/institutional/nse-intelligence/reports",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/institutional-nse-intelligence-sectors__1024x768__full.png",
+    "page": "/institutional/nse-intelligence/sectors",
+    "capturedRoute": "/institutional/nse-intelligence/sectors",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "NseIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/institutional-reports__1024x768__full.png",
+    "page": "/institutional/reports",
+    "capturedRoute": "/institutional/reports",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsFiiReportsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/market-nifty-500__1024x768__full.png",
+    "page": "/market/nifty-500",
+    "capturedRoute": "/market/nifty-500",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "Nifty500Page"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/options-intelligence__1024x768__full.png",
+    "page": "/options/intelligence",
+    "capturedRoute": "/options/intelligence",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "OptionsIntelligencePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/options-snapshot__1024x768__full.png",
+    "page": "/options/snapshot",
+    "capturedRoute": "/options/snapshot",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/options-structure__1024x768__full.png",
+    "page": "/options/structure",
+    "capturedRoute": "/options/structure",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "AnalyticsOptionsStructurePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/options-volatility-signals__1024x768__full.png",
+    "page": "/options/volatility-signals",
+    "capturedRoute": "/options/volatility-signals",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "FnoVolatilityPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/paper-trading__1024x768__full.png",
+    "page": "/paper-trading",
+    "capturedRoute": "/paper-trading",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "PaperTradingPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/stock-param__1024x768__full.png",
+    "page": "/stock/:symbol",
+    "capturedRoute": "/stock/RELIANCE",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "LegacyStockRedirect"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-long-options__1024x768__full.png",
+    "page": "/strategy/long-options",
+    "capturedRoute": "/strategy/long-options",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "LongOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-monthly__1024x768__full.png",
+    "page": "/strategy/monthly",
+    "capturedRoute": "/strategy/monthly",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "MonthlyStrategyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-nifty-options__1024x768__full.png",
+    "page": "/strategy/nifty-options",
+    "capturedRoute": "/strategy/nifty-options",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-nifty-weekly-options__1024x768__full.png",
+    "page": "/strategy/nifty-weekly-options",
+    "capturedRoute": "/strategy/nifty-weekly-options",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "NiftyWeeklyOptionsPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-oiis-live__1024x768__full.png",
+    "page": "/strategy/oiis-live",
+    "capturedRoute": "/strategy/oiis-live",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "OiisLivePage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-oiis-live-history__1024x768__full.png",
+    "page": "/strategy/oiis-live/history",
+    "capturedRoute": "/strategy/oiis-live/history",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "OiisRunHistoryPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-rolling-monthly__1024x768__full.png",
+    "page": "/strategy/rolling-monthly",
+    "capturedRoute": "/strategy/rolling-monthly",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyLegacyRouter"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  },
+  {
+    "filename": "screenshots/tablet/strategy-rolling-monthly-legacy__1024x768__full.png",
+    "page": "/strategy/rolling-monthly/legacy",
+    "capturedRoute": "/strategy/rolling-monthly/legacy",
+    "viewport": "1024x768",
+    "section": "full page",
+    "components": [
+      "RollingMonthlyPage"
+    ],
+    "purpose": "Authenticated current-UI baseline"
+  }
+]

@@ -1,0 +1,200 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/",
+    "screen": "today",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": 4,
+        "targets": [
+          [
+            "article[data-tone=\"positive\"] > span"
+          ],
+          [
+            "article[data-tone=\"warning\"]:nth-child(2) > span"
+          ],
+          [
+            "article[data-tone=\"warning\"]:nth-child(3) > span"
+          ],
+          [
+            "button[data-tone=\"neutral\"] > span"
+          ]
+        ],
+        "examples": [
+          {
+            "target": [
+              "article[data-tone=\"positive\"] > span"
+            ],
+            "html": "<span>Now</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "article[data-tone=\"warning\"]:nth-child(2) > span"
+            ],
+            "html": "<span>Changed</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "article[data-tone=\"warning\"]:nth-child(3) > span"
+            ],
+            "html": "<span>Attention</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "button[data-tone=\"neutral\"] > span"
+            ],
+            "html": "<span>Next inspection</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics",
+    "screen": "markets",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/stock/RELIANCE",
+    "screen": "stock-360",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/strategy/oiis-live",
+    "screen": "oiis-lab",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/options/intelligence",
+    "screen": "derivatives",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": []
+  },
+  {
+    "viewport": "desktop",
+    "route": "/control-plane",
+    "screen": "admin",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/",
+    "screen": "today",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": 4,
+        "targets": [
+          [
+            "article[data-tone=\"positive\"] > span"
+          ],
+          [
+            "article[data-tone=\"warning\"]:nth-child(2) > span"
+          ],
+          [
+            "article[data-tone=\"warning\"]:nth-child(3) > span"
+          ],
+          [
+            "button[data-tone=\"neutral\"] > span"
+          ]
+        ],
+        "examples": [
+          {
+            "target": [
+              "article[data-tone=\"positive\"] > span"
+            ],
+            "html": "<span>Now</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "article[data-tone=\"warning\"]:nth-child(2) > span"
+            ],
+            "html": "<span>Changed</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "article[data-tone=\"warning\"]:nth-child(3) > span"
+            ],
+            "html": "<span>Attention</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "button[data-tone=\"neutral\"] > span"
+            ],
+            "html": "<span>Next inspection</span>",
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.6 (foreground color: #7a889c, background color: #ffffff, font size: 7.8pt (10.4px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics",
+    "screen": "markets",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics/stock/RELIANCE",
+    "screen": "stock-360",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/strategy/oiis-live",
+    "screen": "oiis-lab",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/paper-trading",
+    "screen": "paper-trading",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/options/intelligence",
+    "screen": "derivatives",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/analytics/system/quality",
+    "screen": "data-operations",
+    "violations": []
+  },
+  {
+    "viewport": "mobile",
+    "route": "/control-plane",
+    "screen": "admin",
+    "violations": []
+  }
+]

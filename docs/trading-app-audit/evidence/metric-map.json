@@ -1,0 +1,756 @@
+[
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-analyticsstockpage-tsx-direction",
+    "label": "Direction",
+    "renderer": "KpiCard",
+    "valueExpression": "{text(oiisCandidate.direction, \"—\")}",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "line": 384,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-analyticsstockpage-tsx-ofactor",
+    "label": "OFactor",
+    "renderer": "KpiCard",
+    "valueExpression": "{fmtMaybe(oiisCandidate.ofactor)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "line": 385,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-analyticsstockpage-tsx-xfactor",
+    "label": "XFactor",
+    "renderer": "KpiCard",
+    "valueExpression": "{fmtMaybe(oiisCandidate.xfactor_snapshot)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "line": 386,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-analyticsstockpage-tsx-data-quality",
+    "label": "Data quality",
+    "renderer": "KpiCard",
+    "valueExpression": "{fmtMaybe(oiisCandidate.data_quality)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "line": 387,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-analyticsstockpage-tsx-o-x-dq",
+    "label": "O + X + DQ",
+    "renderer": "KpiCard",
+    "valueExpression": "{fmtMaybe(num(oiisCandidate.ofactor) + num(oiisCandidate.xfactor_snapshot) + num(oiisCandidate.data_quality))}",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "line": 388,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-analyticsstockpage-tsx-failed-gates",
+    "label": "Failed gates",
+    "renderer": "KpiCard",
+    "valueExpression": "{fmtWholeNumber(num(oiisCandidate.failed_gate_count))}",
+    "file": "neon-stock-terminal/apps/web/src/pages/AnalyticsStockPage.tsx",
+    "line": 389,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-backtestinglabpage-tsx-signals",
+    "label": "Signals",
+    "renderer": "KpiCard",
+    "valueExpression": "{formatNumber(numeric(summary.signalCount), { maximumFractionDigits: 0 }",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingLabPage.tsx",
+    "line": 282,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-backtestinglabpage-tsx-accepted-trades",
+    "label": "Accepted trades",
+    "renderer": "KpiCard",
+    "valueExpression": "{formatNumber(numeric(summary.acceptedTradeCount), { maximumFractionDigits: 0 }",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingLabPage.tsx",
+    "line": 283,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-backtestinglabpage-tsx-open-liability",
+    "label": "Open liability",
+    "renderer": "KpiCard",
+    "valueExpression": "{formatCurrencyINR(numeric(summary.unrealizedPnl), true)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingLabPage.tsx",
+    "line": 285,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-backtestinglabpage-tsx-max-drawdown",
+    "label": "Max drawdown",
+    "renderer": "KpiCard",
+    "valueExpression": "{formatPercent(numeric(summary.maxDrawdownPct), 2, true)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/BacktestingLabPage.tsx",
+    "line": 287,
+    "pages": [
+      "/analytics/leadership",
+      "/analytics/daily-setups",
+      "/catalysts/context",
+      "/catalysts/events",
+      "/analytics/learn",
+      "/analytics/simulator",
+      "/analytics/indicators",
+      "/analytics/indicators/:slug",
+      "/analytics/stock/:symbol",
+      "/backtesting",
+      "/backtesting/lab",
+      "/backtesting/strategies",
+      "/backtesting/strategies/:strategyId",
+      "/backtesting/results",
+      "/backtesting/regimes",
+      "/backtesting/stocks",
+      "/institutional/flow",
+      "/institutional/reports",
+      "/analytics/flows",
+      "/heatmap/change",
+      "/heatmap/rsi",
+      "/heatmap/will"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-longoptionspage-tsx-full-f-o-universe",
+    "label": "Full F&O universe",
+    "renderer": "MetricTile",
+    "valueExpression": "{data.summary.fullFnoUniverse}",
+    "file": "neon-stock-terminal/apps/web/src/pages/LongOptionsPage.tsx",
+    "line": 102,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-longoptionspage-tsx-pre-market-shortlist",
+    "label": "Pre-market shortlist",
+    "renderer": "MetricTile",
+    "valueExpression": "{data.summary.premarketShortlist}",
+    "file": "neon-stock-terminal/apps/web/src/pages/LongOptionsPage.tsx",
+    "line": 103,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-longoptionspage-tsx-live-shortlist",
+    "label": "Live shortlist",
+    "renderer": "MetricTile",
+    "valueExpression": "{data.summary.liveShortlist}",
+    "file": "neon-stock-terminal/apps/web/src/pages/LongOptionsPage.tsx",
+    "line": 104,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-longoptionspage-tsx-option-structures",
+    "label": "Option structures",
+    "renderer": "MetricTile",
+    "valueExpression": "{data.summary.evaluatedStructures}",
+    "file": "neon-stock-terminal/apps/web/src/pages/LongOptionsPage.tsx",
+    "line": 105,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-surface-expiryrole-expiry",
+    "label": "${surface.expiryRole} expiry",
+    "renderer": "MetricTile",
+    "valueExpression": "{snapshot.expiryDate}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 47,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-nifty-spot",
+    "label": "NIFTY spot",
+    "renderer": "MetricTile",
+    "valueExpression": "{n(snapshot.spot)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 48,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-lot-size",
+    "label": "Lot size",
+    "renderer": "MetricTile",
+    "valueExpression": "{snapshot.lotSize}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 49,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-two-sided-coverage",
+    "label": "Two-sided coverage",
+    "renderer": "MetricTile",
+    "valueExpression": "{`${snapshot.twoSidedLegCount}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 50,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-weekly-w0",
+    "label": "Weekly W0",
+    "renderer": "MetricTile",
+    "valueExpression": "{data.expiryRegistry.W0 ?? \"—\"}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 95,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-monthly-m0",
+    "label": "Monthly M0",
+    "renderer": "MetricTile",
+    "valueExpression": "{data.expiryRegistry.M0 ?? \"—\"}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 95,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-nifty-lot",
+    "label": "NIFTY lot",
+    "renderer": "MetricTile",
+    "valueExpression": "{data.expiryRegistry.contracts[0]?.lotSize ?? \"—\"}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 95,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-niftyweeklyoptionspage-tsx-calibration",
+    "label": "Calibration",
+    "renderer": "MetricTile",
+    "valueExpression": "\"Not calibrated\"",
+    "file": "neon-stock-terminal/apps/web/src/pages/NiftyWeeklyOptionsPage.tsx",
+    "line": 95,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-nseintelligencepage-tsx-advancers",
+    "label": "Advancers",
+    "renderer": "MetricTile",
+    "valueExpression": "{number(market?.advancers)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "line": 108,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-nseintelligencepage-tsx-decliners",
+    "label": "Decliners",
+    "renderer": "MetricTile",
+    "valueExpression": "{number(market?.decliners)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "line": 109,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-nseintelligencepage-tsx-traded-value",
+    "label": "Traded value",
+    "renderer": "MetricTile",
+    "valueExpression": "{market?.totalValue == null ? \"—\" : `₹${number(Number(market.totalValue) / 10_000_000, 2)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "line": 110,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-nseintelligencepage-tsx-report-coverage",
+    "label": "Report coverage",
+    "renderer": "MetricTile",
+    "valueExpression": "{`${data.quality.allAvailableInputs}",
+    "file": "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+    "line": 111,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-booked-realised-net",
+    "label": "Booked realised net",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{money(summary.realised_pnl)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 570,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-open-unrealised-gross",
+    "label": "Open unrealised gross",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{money(summary.unrealised_pnl)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 576,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-observed-favourable-value",
+    "label": "Observed favourable value",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{money(summary.analytical_upside)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 584,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-observed-adverse-value",
+    "label": "Observed adverse value",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{money(summary.analytical_downside)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 590,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-live-quality-scores",
+    "label": "Live quality scores",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{`${estimable.length}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 945,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-average-quality",
+    "label": "Average quality",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{average == null ? \"—\" : `${average.toFixed(2)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 946,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-awaiting-entry-evidence",
+    "label": "Awaiting entry evidence",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{String(awaitingEvidence.length)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 947,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-confirmed-bad-risk",
+    "label": "Confirmed bad-risk",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{String(badRisk.length)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 948,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-trade-quality",
+    "label": "Trade quality",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{quality.totalScore == null ? \"—\" : `${number(quality.totalScore).toFixed(2)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1138,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-process",
+    "label": "Process",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{process.scorePct == null ? \"—\" : `${number(process.scorePct).toFixed(2)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1139,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-outcome",
+    "label": "Outcome",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{outcome.scorePct == null ? \"—\" : `${number(outcome.scorePct).toFixed(2)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1140,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-papertradingcommandcenter-tsx-path-risk",
+    "label": "Path risk",
+    "renderer": "SummaryMetric",
+    "valueExpression": "{trade.mae_5d_pct == null ? \"—\" : percent(trade.mae_5d_pct)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+    "line": 1141,
+    "pages": [
+      "/paper-trading"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-rollingmonthlypage-tsx-f-o-universe",
+    "label": "F&O universe",
+    "renderer": "MetricTile",
+    "valueExpression": "{run.universe_size}",
+    "file": "neon-stock-terminal/apps/web/src/pages/RollingMonthlyPage.tsx",
+    "line": 781,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-rollingmonthlypage-tsx-base-scanner-matches",
+    "label": "Base scanner matches",
+    "renderer": "MetricTile",
+    "valueExpression": "{\n                Number(run.long_scanner_count) + Number(run.short_scanner_count)\n              }",
+    "file": "neon-stock-terminal/apps/web/src/pages/RollingMonthlyPage.tsx",
+    "line": 787,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-rollingmonthlypage-tsx-high-medium",
+    "label": "High / Medium",
+    "renderer": "MetricTile",
+    "valueExpression": "{`${run.high_count}",
+    "file": "neon-stock-terminal/apps/web/src/pages/RollingMonthlyPage.tsx",
+    "line": 794,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-rollingmonthlypage-tsx-nifty-breadth-coverage",
+    "label": "NIFTY breadth coverage",
+    "renderer": "MetricTile",
+    "valueExpression": "{`${run.nifty50_coverage}",
+    "file": "neon-stock-terminal/apps/web/src/pages/RollingMonthlyPage.tsx",
+    "line": 800,
+    "pages": [
+      "/strategy/rolling-monthly/legacy"
+    ],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-stockpage-tsx-r1",
+    "label": "R1",
+    "renderer": "MetricCard",
+    "valueExpression": "{fmtMaybePrice(pivots?.r1)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "line": 316,
+    "pages": [],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-stockpage-tsx-r2",
+    "label": "R2",
+    "renderer": "MetricCard",
+    "valueExpression": "{fmtMaybePrice(pivots?.r2)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "line": 317,
+    "pages": [],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-stockpage-tsx-s1",
+    "label": "S1",
+    "renderer": "MetricCard",
+    "valueExpression": "{fmtMaybePrice(pivots?.s1)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "line": 318,
+    "pages": [],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  },
+  {
+    "metricId": "neon-stock-terminal-apps-web-src-pages-stockpage-tsx-s2",
+    "label": "S2",
+    "renderer": "MetricCard",
+    "valueExpression": "{fmtMaybePrice(pivots?.s2)}",
+    "file": "neon-stock-terminal/apps/web/src/pages/StockPage.tsx",
+    "line": 319,
+    "pages": [],
+    "calculationStatus": "Trace value expression through props/selectors/API; UNVERIFIED until independently reconciled"
+  }
+]

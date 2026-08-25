@@ -22,6 +22,7 @@ The bundle is deliberately ignored by Git because it is rollback media, not appl
 - Preserved the Paper Trading notifier, automatic popup, sound/native speech controls, permanent NIFTY ticker, stock identity assets, normal cursor, target overlay and high-legibility mode.
 - Restored the exchange-calendar-aware NSE daily scheduler, durable notification outbox, delivery worker, additive migration and tests that existed only in the former checkout.
 - Preserved useful API regression tests for bounded concurrency, pooled Prisma URLs, mobile notifications and OIIS date handling.
+- Preserved the two mirror-only notification/monthly-ledger migrations, audit generators, UI/UX audit scripts, Paper notification workflow tests and all non-binary technical-audit documentation.
 - Did not restore the former `firebaseMessaging.ts` and `sendTestNotification.ts`: they are superseded by the canonical `mobileNotificationDispatcher.ts` and would create a second notification implementation.
 - Replaced fixed all-stock test counts with population reconciliation so the NIFTY 250 plus F&O universe may change without weakening evidence checks.
 
@@ -33,6 +34,8 @@ The former checkout held 82 GB of historical strategy artifacts. They were merge
 
 The directory contains 70,746 files after consolidation. The dashboard now mounts that canonical directory at `/var/lib/nifty-stratlab/h30`; no Compose service depends on another source checkout.
 
+Generated archives and screenshot binaries that are unsuitable for Git were retained under the ignored canonical path `archive/retired-mirror-evidence-20260825/` (527 MB). Former root-level strategy outputs were retained under the ignored canonical strategy-artifact tree. They are data/evidence, not a second repository.
+
 PostgreSQL volumes, credentials and runtime data remain external to Git as required.
 
 ## Validation evidence
@@ -41,6 +44,7 @@ PostgreSQL volumes, credentials and runtime data remain external to Git as requi
 - Compose configuration validation: passed.
 - Web typecheck: passed.
 - Web unit tests: 29/29 passed.
+- Preserved extended web tests: 45/45 passed.
 - Web production build: passed.
 - API typecheck: passed.
 - API unit tests: 122/122 passed.

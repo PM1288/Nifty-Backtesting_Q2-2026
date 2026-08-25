@@ -1,0 +1,257 @@
+[
+  {
+    "id": "backtest_options_alert_failed",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 3
+  },
+  {
+    "id": "backtest_option_paper_trading_failed",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 8
+  },
+  {
+    "id": "insert_strategy_run",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 13
+  },
+  {
+    "id": "finish_strategy_run",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 18
+  },
+  {
+    "id": "upsert_strategy_state",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 23
+  },
+  {
+    "id": "insert_strategy_signals",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 28
+  },
+  {
+    "id": "upsert_strategy_cooldowns",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 33
+  },
+  {
+    "id": "strategy_options_mapping_failed",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 38
+  },
+  {
+    "id": "daily_strategy_lab_v1",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 43
+  },
+  {
+    "id": "indicator_strategy_precompute",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 48
+  },
+  {
+    "id": "rolling_monthly_bearish_short_quality_v2",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 53
+  },
+  {
+    "id": "absolute_monthly_first_session_gap_fill_long_v1",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 58
+  },
+  {
+    "id": "absolute_monthly_closure_bullish_long_v1",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 63
+  },
+  {
+    "id": "rolling_monthly_technical_quality_factor_v2",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 68
+  },
+  {
+    "id": "rolling_5_30_60_bullish_long_v1",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 73
+  },
+  {
+    "id": "analytics_options",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 78
+  },
+  {
+    "id": "open_strategy_lab",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 83
+  },
+  {
+    "id": "analytics_options_structure",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 88
+  },
+  {
+    "id": "analytics_options_structure_help",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 93
+  },
+  {
+    "id": "analytics_strategy_evaluation",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 98
+  },
+  {
+    "id": "analytics_strategy_evaluation_help",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 103
+  },
+  {
+    "id": "backtesting_strategy_detail",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 108
+  },
+  {
+    "id": "backtesting_strategy_detail_section_view",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 113
+  },
+  {
+    "id": "backtesting_strategy_detail_engagement",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 118
+  },
+  {
+    "id": "format_options",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 123
+  },
+  {
+    "id": "nifty_hybrid_technical_strategy_catalogue_v1",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 128
+  },
+  {
+    "id": "three_views_per_strategy",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 133
+  },
+  {
+    "id": "trial_options",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 138
+  },
+  {
+    "id": "macd_bearish_cross",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 143
+  },
+  {
+    "id": "compare_strategy_count",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 148
+  },
+  {
+    "id": "backtest_strategy_summary_mart",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 153
+  },
+  {
+    "id": "backtesting_strategy_versions",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 158
+  },
+  {
+    "id": "backtesting_compare_strategy_count",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 163
+  },
+  {
+    "id": "backtesting_csv_strategy_count",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 168
+  },
+  {
+    "id": "expected_strategy_count",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 173
+  },
+  {
+    "id": "indicator_strategy_batch_run_id",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 178
+  },
+  {
+    "id": "indicator_strategy_published_batch_run_id",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 183
+  },
+  {
+    "id": "indicator_strategy_data_as_of_date",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 188
+  },
+  {
+    "id": "indicator_strategy_registry_version",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 193
+  },
+  {
+    "id": "implicit_optional",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 198
+  },
+  {
+    "id": "strict_optional",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 203
+  },
+  {
+    "id": "build_options",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 208
+  },
+  {
+    "id": "global_options",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 213
+  },
+  {
+    "id": "attribute_strategy_load_element",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 218
+  },
+  {
+    "id": "token_strategy_load_element",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 223
+  },
+  {
+    "id": "class_strategy_load_element",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 228
+  },
+  {
+    "id": "rolling_candle_bullish_long_v1",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 233
+  },
+  {
+    "id": "rolling_candle_bearish_short_v1",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 238
+  },
+  {
+    "id": "rolling_monthly_bullish_long_quality_v2",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 243
+  },
+  {
+    "id": "base_strategy_id",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 248
+  },
+  {
+    "id": "derived_strategy_id",
+    "file": "docs/trading-app-audit/evidence/strategy-map.json",
+    "line": 253
+  }
+]

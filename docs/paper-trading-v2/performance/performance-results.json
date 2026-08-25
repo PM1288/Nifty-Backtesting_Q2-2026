@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "measuredAt": "2026-08-22T17:56:45.720Z",
+  "environment": "Production public HTTPS route, headless Chromium, 1366x768, server-local network",
+  "tradeCount": 35,
+  "apiSamplesMs": [
+    2765.8,
+    2524.3,
+    1723.8,
+    1721.4,
+    3630.4
+  ],
+  "apiMedianMs": 2524.3,
+  "apiMaxMs": 3630.4,
+  "routeToWorkbenchHeadingMs": 3538.6,
+  "paint": {
+    "first-paint": 168,
+    "first-contentful-paint": 412
+  },
+  "bundle": {
+    "paperTradingJsGzipKb": 42.21,
+    "paperTradingCssGzipKb": 19.77
+  },
+  "limits": [
+    "This is an interactive five-sample production check, not a full market-session soak.",
+    "Browser and network conditions are server-local and should not be represented as end-user broadband SLO results."
+  ]
+}

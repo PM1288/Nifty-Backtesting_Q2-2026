@@ -2980,5 +2980,6 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Full consolidation evidence and rollback instructions: `docs/REPOSITORY_CONSOLIDATION_2026-08-25.md`.
 - The 82 GB strategy artifact tree was moved under the canonical ignored `platform/nifty_stratlab/outputs/` path; `n50-dashboard` now mounts that path and has no dependency on the retired checkout.
 - Restored NSE scheduler/outbox/delivery implementation and tests from the former delivery tree. Kept the newer canonical mobile dispatcher rather than restoring the superseded Firebase implementation.
+- A final whole-tree scan also restored migrations `044` and `049`, audit generators, UI/UX and Paper workflow regressions, and the non-binary technical documentation corpus. Large generated evidence is retained in the canonical ignored archive rather than Git.
 - Validation: web 29/29, API 122/122, NSE ingestor 5/5 and Go tests passed; Compose/source gates passed; rebuilt dashboard and NSE ingestor images; dashboard, scheduler and delivery containers healthy; public home and auth-session endpoints returned HTTP 200.
 - Current performance caveat: concurrent browser suites can drive a market-universe SQL query above 70 seconds. Run critical Playwright suites sequentially pending query optimisation.

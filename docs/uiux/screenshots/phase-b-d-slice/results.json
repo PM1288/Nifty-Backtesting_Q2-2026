@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-08-23T18:19:25.372Z",
+  "origin": "http://127.0.0.1:19100",
+  "results": [
+    {
+      "route": "/",
+      "viewport": "1440x900",
+      "status": 200,
+      "elapsedMs": 28797,
+      "responseErrors": [],
+      "screenshot": "docs/uiux/screenshots/phase-b-d-slice/home__1440x900.png",
+      "height": 1662,
+      "width": 1440,
+      "viewportWidth": 1440,
+      "horizontalOverflow": false,
+      "canvases": 1,
+      "tables": 0,
+      "h1": [
+        "Monitor the tape first."
+      ],
+      "bodyTextPrefix": "NIFTY 50 TRADER\nSearch & commands\nCtrl K\nPAPER\nMarket closed\nData 23 Aug, 23:47\n△\nREADY\nESNG Admin\nConnected\nNIFTY50\n24,252.00\n▲ +0.08%\nBANKNIFTY\n57,761.95\n▲ +0.46%\nINDIAVIX\n11.20\n▲ +4.09%\nVEDL\n279.00\n▲ +4.10%\nHINDZINC\n594.90\n▲ +3.66%\nBRITA"
+    },
+    {
+      "route": "/paper-trading",
+      "viewport": "1440x900",
+      "status": 200,
+      "elapsedMs": 11426,
+      "responseErrors": [],
+      "screenshot": "docs/uiux/screenshots/phase-b-d-slice/paper-trading__1440x900.png",
+      "height": 1661,
+      "width": 1440,
+      "viewportWidth": 1440,
+      "horizontalOverflow": false,
+      "canvases": 1,
+      "tables": 4,
+      "h1": [
+        "Paper Trading Evidence Workbench"
+      ],
+      "bodyTextPrefix": "NIFTY 50 TRADER\nSearch & commands\nCtrl K\nPAPER\nMarket closed\nData 23 Aug, 23:47\n△\nREADY\nESNG Admin\nConnected\nToday\nMarkets\nStocks\nStrategy\nPaper Trading\nDerivatives\nData & Operations\nPAPER / HYPOTHETICAL · NO BROKER ORDER\nPaper Trading Evid"
+    },
+    {
+      "route": "/",
+      "viewport": "390x844",
+      "status": 200,
+      "elapsedMs": 28074,
+      "responseErrors": [],
+      "screenshot": "docs/uiux/screenshots/phase-b-d-slice/home__390x844.png",
+      "height": 2860,
+      "width": 390,
+      "viewportWidth": 390,
+      "horizontalOverflow": false,
+      "canvases": 1,
+      "tables": 0,
+      "h1": [
+        "Monitor the tape first."
+      ],
+      "bodyTextPrefix": "NIFTY 50 TRADER\nESNG Admin\nConnected\nNIFTY50\n24,252.00\n▲ +0.08%\nBANKNIFTY\n57,761.95\n▲ +0.46%\nINDIAVIX\n11.20\n▲ +4.09%\nVEDL\n279.00\n▲ +4.10%\nHINDZINC\n594.90\n▲ +3.66%\nBRITANNIA\n5,365.00\n▼ -3.30%\nBDL\n1,359.00\n▲ +3.19%\nPOWERGRID\n272.40\n▲ +2.87%\nP"
+    },
+    {
+      "route": "/paper-trading",
+      "viewport": "390x844",
+      "status": 200,
+      "elapsedMs": 6235,
+      "responseErrors": [],
+      "screenshot": "docs/uiux/screenshots/phase-b-d-slice/paper-trading__390x844.png",
+      "height": 3690,
+      "width": 390,
+      "viewportWidth": 390,
+      "horizontalOverflow": false,
+      "canvases": 1,
+      "tables": 4,
+      "h1": [
+        "Paper Trading Evidence Workbench"
+      ],
+      "bodyTextPrefix": "NIFTY 50 TRADER\nESNG Admin\nConnected\nToday\nMarkets\nStocks\nPaper\nMore\nPAPER / HYPOTHETICAL · NO BROKER ORDER\nPaper Trading Evidence Workbench\n\nReconcile booked execution, open marks, observed paths, counterfactuals and capital simulations wi"
+    }
+  ]
+}

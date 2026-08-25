@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "asOf": "2026-08-23T05:19:13.832Z",
+  "tradeCount": 35,
+  "axes": 12,
+  "minimumTickInterval": 1,
+  "csvPath": "/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/docs/paper-trading-v2/parallel-evidence/paper-parallel-evidence-2026-08-23.csv",
+  "svgPath": "/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/docs/paper-trading-v2/parallel-evidence/paper-parallel-evidence-2026-08-23.svg",
+  "screenshots": [
+    "paper-parallel-evidence-1920x1080.png",
+    "paper-parallel-evidence-1366x768.png",
+    "paper-parallel-evidence-390x844.png"
+  ]
+}

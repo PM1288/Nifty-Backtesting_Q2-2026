@@ -1,0 +1,5521 @@
+[
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 996,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/market_data_gateway/app.py",
+    "line": 869,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/market_data_gateway/app.py",
+    "line": 869,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/nifty-parrot-premium/server/src/index.ts",
+    "line": 52,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 51,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 51,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 102,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 102,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/dashboard",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 948,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "symbol"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/api/dev/mobile-notifications/live/cancel",
+    "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+    "line": 156,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/dev/mobile-notifications/live/complete",
+    "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+    "line": 155,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/dev/mobile-notifications/live/start",
+    "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+    "line": 153,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/dev/mobile-notifications/live/update",
+    "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+    "line": 154,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/dev/mobile-notifications/standard",
+    "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+    "line": 152,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 32,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Snapshot"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 32,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Snapshot"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "file": "services/realtime-engine/app/main.py",
+    "line": 84,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "file": "services/realtime-engine/app/main.py",
+    "line": 84,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/heatmap",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 964,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/api/rsi-heatmap",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 980,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/api/snapshot",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 36,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Snapshot"
+  },
+  {
+    "method": "GET",
+    "path": "/api/snapshot",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 36,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Snapshot"
+  },
+  {
+    "method": "GET",
+    "path": "/api/snapshot",
+    "file": "services/realtime-engine/app/main.py",
+    "line": 101,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/snapshot",
+    "file": "services/realtime-engine/app/main.py",
+    "line": 101,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/stock/{symbol}",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 42,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "StockDetail"
+  },
+  {
+    "method": "GET",
+    "path": "/api/stock/{symbol}",
+    "file": "services/nse_premium_cockpit/app/main.py",
+    "line": 42,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "StockDetail"
+  },
+  {
+    "method": "GET",
+    "path": "/api/stock/{symbol}",
+    "file": "services/realtime-engine/app/main.py",
+    "line": 108,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/stock/{symbol}",
+    "file": "services/realtime-engine/app/main.py",
+    "line": 108,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/stocks",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 939,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "symbol"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/accounts/{account_id}/summary",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 277,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "account_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/accounts/{account_id}/summary",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 277,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "account_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/strategies/{strategy_id}/performance",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 293,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "strategy_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/strategies/{strategy_id}/performance",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 293,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "strategy_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/trade-groups",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 192,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/trade-groups",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 192,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/trade-groups/{group_id}",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 185,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/trade-groups/{group_id}",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 185,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/cancel",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 230,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/cancel",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 230,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/close-intents",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 216,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/close-intents",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 216,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/commit",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 272,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/commit",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 272,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/legs",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 262,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/{group_id}/legs",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 262,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "group_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/building",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 203,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-groups/building",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 203,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-intents",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 158,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trade-intents",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 158,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/trade-intents/{intent_id}",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 173,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "intent_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/trade-intents/{intent_id}",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 173,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "intent_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/async-items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 224,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/async-items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 224,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/auth/csrf",
+    "file": "neon-stock-terminal/apps/api/src/routes/auth.ts",
+    "line": 141,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/login",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 904,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "symbol"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/logout",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 925,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "symbol"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/profile/signup",
+    "file": "neon-stock-terminal/apps/api/src/routes/auth.ts",
+    "line": 240,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/auth/session",
+    "file": "neon-stock-terminal/apps/api/src/routes/auth.ts",
+    "line": 129,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/hooks.ts",
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/session/dev-login",
+    "file": "neon-stock-terminal/apps/api/src/routes/auth.ts",
+    "line": 170,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/session/login",
+    "file": "neon-stock-terminal/apps/api/src/routes/auth.ts",
+    "line": 149,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/auth/session/logout",
+    "file": "neon-stock-terminal/apps/api/src/routes/auth.ts",
+    "line": 220,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/backfill",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 103,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/backfill",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 103,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/catalog",
+    "file": "services/market_data_gateway/app.py",
+    "line": 900,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/catalog",
+    "file": "services/market_data_gateway/app.py",
+    "line": 900,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/events",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 255,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/FooterDisclaimer.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+      "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsOverviewPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRegimePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRiskPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/events",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 255,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/FooterDisclaimer.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+      "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsOverviewPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRegimePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRiskPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/events",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 52,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/FooterDisclaimer.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+      "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsOverviewPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRegimePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRiskPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/events",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 52,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/FooterDisclaimer.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/ResponsiveWorkspaceNavigation.tsx",
+      "neon-stock-terminal/apps/web/src/components/ui/DashboardPrimitives.tsx",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsOverviewPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRegimePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsRiskPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsSimulatorPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/ChangeHeatmapPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/NseIntelligencePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/RsiSurfacePage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/WillSurfacePage.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/files/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/datastructures.py",
+    "line": 44,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/files/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/datastructures.py",
+    "line": 44,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/global-indices",
+    "file": "services/market_data_gateway/app.py",
+    "line": 952,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "QuotesResponse"
+  },
+  {
+    "method": "GET",
+    "path": "/global-indices",
+    "file": "services/market_data_gateway/app.py",
+    "line": 952,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "QuotesResponse"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "neon-stock-terminal/apps/api/src/routes/health.ts",
+    "line": 56,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/market_data_gateway/app.py",
+    "line": 888,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/market_data_gateway/app.py",
+    "line": 888,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nifty-parrot-premium/server/src/index.ts",
+    "line": 17,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "mins",
+      "seed"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 36,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 36,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 53,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 53,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_intraday_intelligence/src/nse_intraday_intelligence/api_main.py",
+    "line": 30,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_intraday_intelligence/src/nse_intraday_intelligence/api_main.py",
+    "line": 30,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_orchestration_exports/src/nse_orchestration_exports/api_main.py",
+    "line": 31,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_orchestration_exports/src/nse_orchestration_exports/api_main.py",
+    "line": 31,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_reco_state_engine/src/nse_reco_state_aware_engine/api/main.py",
+    "line": 21,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "services/nse_reco_state_engine/src/nse_reco_state_aware_engine/api/main.py",
+    "line": 21,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health/live",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 312,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health/live",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 312,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health/ready",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 317,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/health/ready",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 317,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/healthz",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 886,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "symbol"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/heatmap",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 1000,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/analytics/routeMap.ts",
+      "neon-stock-terminal/apps/web/src/analytics/useTrackPageViews.ts",
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/workspaceRoutes.ts",
+      "neon-stock-terminal/apps/web/src/components/market/HeatmapLensNavigation.tsx",
+      "neon-stock-terminal/apps/web/src/components/visual/ChangeHeatmap.tsx",
+      "neon-stock-terminal/apps/web/src/components/visual/HeatmapLegend.tsx",
+      "neon-stock-terminal/apps/web/src/components/visual/RsiHeatmap.tsx",
+      "neon-stock-terminal/apps/web/src/components/visual/WillHeatmap.tsx",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsIndicatorsPage.tsx",
+      "neon-stock-terminal/apps/web/src/pages/LandingPage.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/image",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 79,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/image",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 79,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/internal/snapshots/refresh",
+    "file": "neon-stock-terminal/apps/api/src/routes/internal.ts",
+    "line": 17,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Internal route guard/rate limiter; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 87,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 230,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 311,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 87,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 230,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 311,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 37,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 107,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 139,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 37,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 107,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 139,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/other-tools.md",
+    "line": 41,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/other-tools.md",
+    "line": 60,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/other-tools.md",
+    "line": 41,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/other-tools.md",
+    "line": 60,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/path-operations.md",
+    "line": 65,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/path-operations.md",
+    "line": 65,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 230,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 387,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 1988,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 230,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 387,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 1988,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/param_functions.py",
+    "line": 2364,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/param_functions.py",
+    "line": 2364,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/api_key.py",
+    "line": 81,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/api_key.py",
+    "line": 173,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/api_key.py",
+    "line": 261,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/api_key.py",
+    "line": 81,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/api_key.py",
+    "line": 173,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/api_key.py",
+    "line": 261,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 4241,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "PATCH",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 4241,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 111,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 289,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 316,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 111,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 289,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 316,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/path-operations.md",
+    "line": 70,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/path-operations.md",
+    "line": 70,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 24,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 47,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 67,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 88,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 24,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 47,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 67,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/pydantic.md",
+    "line": 88,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 2744,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "POST",
+    "path": "/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 2744,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "DELETE",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 3117,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "DELETE",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 3117,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "GET",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 62,
+    "framework": "Express",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 62,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/exceptions.py",
+    "line": 37,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/exceptions.py",
+    "line": 37,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/param_functions.py",
+    "line": 317,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/param_functions.py",
+    "line": 317,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "PUT",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 2366,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "PUT",
+    "path": "/items/{item_id}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 2366,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "item_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "response_model"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 134,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/SKILL.md",
+    "line": 134,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/responses.md",
+    "line": 19,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Item"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/responses.md",
+    "line": 46,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Item"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/responses.md",
+    "line": 73,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Item"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/responses.md",
+    "line": 19,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Item"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/responses.md",
+    "line": 46,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Item"
+  },
+  {
+    "method": "GET",
+    "path": "/items/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/responses.md",
+    "line": 73,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Item"
+  },
+  {
+    "method": "GET",
+    "path": "/items/stream",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 8,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse",
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/stream",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 35,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse",
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/stream",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 8,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse",
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/items/stream",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/streaming.md",
+    "line": 35,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "collections.abc",
+      "fastapi.sse",
+      "fastapi.responses",
+      "app.utils"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/latest-run",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 41,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/latest-run",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 41,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/latest-run",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 62,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/latest-run",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 62,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/load",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 87,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/load",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 87,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/load",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 117,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/load",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 117,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/login",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 895,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "symbol"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/login",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/oauth2.py",
+    "line": 39,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/login",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/oauth2.py",
+    "line": 193,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/login",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/oauth2.py",
+    "line": 39,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/login",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/oauth2.py",
+    "line": 193,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/session.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/metrics",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 335,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/metrics",
+    "file": "services/paper_trading/src/papertrade/api.py",
+    "line": 335,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/paragmore-market/:slug",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2911,
+    "framework": "Express",
+    "pathParameters": [
+      "slug"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/paragmore/:slug",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2865,
+    "framework": "Express",
+    "pathParameters": [
+      "slug"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/parrot",
+    "file": "services/nifty-parrot-premium/server/src/index.ts",
+    "line": 55,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/parrot/*",
+    "file": "services/nifty-parrot-premium/server/src/index.ts",
+    "line": 56,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/pull-latest",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 88,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/pull-latest",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 88,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/quote/{code}",
+    "file": "services/market_data_gateway/app.py",
+    "line": 910,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "code"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/quote/{code}",
+    "file": "services/market_data_gateway/app.py",
+    "line": 910,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "code"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "Quote"
+  },
+  {
+    "method": "GET",
+    "path": "/quotes",
+    "file": "services/market_data_gateway/app.py",
+    "line": 922,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "QuotesResponse"
+  },
+  {
+    "method": "GET",
+    "path": "/quotes",
+    "file": "services/market_data_gateway/app.py",
+    "line": 922,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "QuotesResponse"
+  },
+  {
+    "method": "GET",
+    "path": "/ready",
+    "file": "neon-stock-terminal/apps/api/src/routes/health.ts",
+    "line": 57,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Route-specific/public boundary; inspect handler",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/rsi-heatmap",
+    "file": "services/lite-dashboard/src/server.js",
+    "line": 1004,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/run",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 50,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/analytics/routeMap.ts",
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/workspaceRoutes.ts",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/run",
+    "file": "services/nifty100_disclosures_pipeline/src/nifty100_pipeline/api.py",
+    "line": 50,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/analytics/routeMap.ts",
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/workspaceRoutes.ts",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/runs",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 70,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/analytics/routeMap.ts",
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/workspaceRoutes.ts",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/runs",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 70,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/App.tsx",
+      "neon-stock-terminal/apps/web/src/analytics/routeMap.ts",
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/components/chrome/workspaceRoutes.ts",
+      "neon-stock-terminal/apps/web/src/interaction/routeCatalog.ts",
+      "neon-stock-terminal/apps/web/src/lib/api.ts",
+      "neon-stock-terminal/apps/web/src/lib/useDashboardPrefetch.ts",
+      "neon-stock-terminal/apps/web/src/pages/AnalyticsChrome.tsx",
+      "neon-stock-terminal/apps/web/src/pages/BacktestingChrome.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/runs/{kind}/{run_id}",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 78,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "kind",
+      "run_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/runs/{kind}/{run_id}",
+    "file": "services/nse_fii_reports_service/src/nse_fii_services/api.py",
+    "line": 78,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "kind",
+      "run_id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/send-notification/{email}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/background.py",
+    "line": 33,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [
+      "email"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/send-notification/{email}",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/background.py",
+    "line": 33,
+    "framework": "FastAPI",
+    "pathParameters": [
+      "email"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/tree",
+    "file": "services/nifty-parrot-premium/server/src/index.ts",
+    "line": 53,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/tree/*",
+    "file": "services/nifty-parrot-premium/server/src/index.ts",
+    "line": 54,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/uploadfile/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/datastructures.py",
+    "line": 49,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/uploadfile/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/datastructures.py",
+    "line": 49,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 229,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/applications.py",
+    "line": 229,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 60,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/.agents/skills/fastapi/references/dependencies.md",
+    "line": 60,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/http.py",
+    "line": 134,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/http.py",
+    "line": 246,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/http.py",
+    "line": 349,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/http.py",
+    "line": 134,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/http.py",
+    "line": 246,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fastapi.security"
+    ],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/security/http.py",
+    "line": 349,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/param_functions.py",
+    "line": 2453,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/users/me/items/",
+    "file": "services/paper_trading/.venv/lib/python3.12/site-packages/fastapi/param_functions.py",
+    "line": 2453,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/board-brief",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2856,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/daily-setups",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsDailySetups.ts",
+    "line": 763,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/dashboard",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2829,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/event-context",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsEventContext.ts",
+    "line": 719,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/events",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsEvents.ts",
+    "line": 188,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/fii-flow",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsFiiFlow.ts",
+    "line": 797,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/flows",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2838,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/indicators/:slug",
+    "file": "neon-stock-terminal/apps/api/src/routes/indicatorEducation.ts",
+    "line": 122,
+    "framework": "Express",
+    "pathParameters": [
+      "slug"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/indicators/:slug/strategies/:scenarioId",
+    "file": "neon-stock-terminal/apps/api/src/routes/indicatorStrategySnapshots.ts",
+    "line": 68,
+    "framework": "Express",
+    "pathParameters": [
+      "slug",
+      "scenarioId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/leadership",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsLeadership.ts",
+    "line": 605,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/market-state",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsMarketState.ts",
+    "line": 445,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/options-structure",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsOptionsStructure.ts",
+    "line": 651,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/quality",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2847,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/simulator",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2962,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/simulator/universe",
+    "file": "neon-stock-terminal/apps/api/src/routes/analytics.ts",
+    "line": 2953,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/strategy-evaluation",
+    "file": "neon-stock-terminal/apps/api/src/routes/analyticsStrategyEvaluation.ts",
+    "line": 561,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/analytics/supporting-metrics",
+    "file": "neon-stock-terminal/apps/api/src/routes/supportingMetrics.ts",
+    "line": 240,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/compare",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 891,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/daily-summary",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 882,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/h30/artifacts/:chartId",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 757,
+    "framework": "Express",
+    "pathParameters": [
+      "chartId"
+    ],
+    "queryParameters": [
+      "runId",
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "strategy_eval.chart_artifact"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/h30/latest",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 733,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "runId",
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "strategy_eval.strategy_horizon_ranking",
+      "strategy_eval.long_horizon_observation",
+      "strategy_eval.chart_artifact"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/pages/BacktestingH30Page.tsx"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/lab/catalogue",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 135,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "nse_app.batch_run_audit",
+      "nse_app.backtest_feature_daily",
+      "research.strategy_lab_run",
+      "research.strategy_lab_event",
+      "research.strategy_lab_artifact"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/lab/runs",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 214,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit",
+      "offset"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "research.strategy_lab_run",
+      "research.strategy_lab_event",
+      "research.strategy_lab_artifact",
+      "simulation.strategy_lab_trade",
+      "simulation.strategy_lab_ladder_result",
+      "simulation.strategy_lab_equity_point"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/backtesting/lab/runs",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 154,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit",
+      "offset"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "nse_app.batch_run_audit",
+      "nse_app.backtest_feature_daily",
+      "research.strategy_lab_run",
+      "research.strategy_lab_event",
+      "research.strategy_lab_artifact",
+      "simulation.strategy_lab_trade"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/lab/runs/:runId",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 227,
+    "framework": "Express",
+    "pathParameters": [
+      "runId"
+    ],
+    "queryParameters": [
+      "limit",
+      "offset"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "research.strategy_lab_event",
+      "research.strategy_lab_artifact",
+      "research.strategy_lab_run",
+      "simulation.strategy_lab_trade",
+      "simulation.strategy_lab_ladder_result",
+      "simulation.strategy_lab_equity_point"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/backtesting/lab/runs/:runId/cancel",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 301,
+    "framework": "Express",
+    "pathParameters": [
+      "runId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "research.strategy_lab_run",
+      "research.strategy_lab_event"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/lab/runs/:runId/equity",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 292,
+    "framework": "Express",
+    "pathParameters": [
+      "runId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "simulation.strategy_lab_equity_point",
+      "research.strategy_lab_run",
+      "research.strategy_lab_event"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/lab/runs/:runId/ladders",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 282,
+    "framework": "Express",
+    "pathParameters": [
+      "runId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "simulation.strategy_lab_ladder_result",
+      "simulation.strategy_lab_equity_point",
+      "research.strategy_lab_run",
+      "research.strategy_lab_event"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/lab/runs/:runId/trades",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 249,
+    "framework": "Express",
+    "pathParameters": [
+      "runId"
+    ],
+    "queryParameters": [
+      "limit",
+      "offset"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "simulation.strategy_lab_trade",
+      "research.strategy_lab_artifact",
+      "simulation.strategy_lab_ladder_result",
+      "simulation.strategy_lab_equity_point",
+      "research.strategy_lab_run",
+      "research.strategy_lab_event"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/lab/runs/:runId/trades.csv",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtestingLab.ts",
+    "line": 257,
+    "framework": "Express",
+    "pathParameters": [
+      "runId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "research.strategy_lab_artifact",
+      "simulation.strategy_lab_ladder_result",
+      "simulation.strategy_lab_equity_point",
+      "research.strategy_lab_run",
+      "research.strategy_lab_event"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/overview",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 783,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/runs",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 900,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 792,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 801,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId/drawdown",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 836,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId/equity",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 823,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId/open-positions",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 849,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId/regimes",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 875,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId/stocks",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 868,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId/summary",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 810,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/backtesting/strategies/:strategyId/trades",
+    "file": "neon-stock-terminal/apps/api/src/routes/backtesting.ts",
+    "line": 856,
+    "framework": "Express",
+    "pathParameters": [
+      "strategyId"
+    ],
+    "queryParameters": [
+      "scenario"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/change-heatmap",
+    "file": "neon-stock-terminal/apps/api/src/routes/changeHeatmap.ts",
+    "line": 396,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/disclosures/health",
+    "file": "neon-stock-terminal/apps/api/src/routes/disclosures.ts",
+    "line": 56,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/disclosures/latest-run",
+    "file": "neon-stock-terminal/apps/api/src/routes/disclosures.ts",
+    "line": 64,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/disclosures/load",
+    "file": "neon-stock-terminal/apps/api/src/routes/disclosures.ts",
+    "line": 90,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/disclosures/run",
+    "file": "neon-stock-terminal/apps/api/src/routes/disclosures.ts",
+    "line": 72,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/discord-stream/dispatch",
+    "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.ts",
+    "line": 108,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/discord-stream/health",
+    "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.ts",
+    "line": 58,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/discord-stream/preview",
+    "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.ts",
+    "line": 78,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/discord-stream/recent",
+    "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.ts",
+    "line": 63,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/discord-stream/test",
+    "file": "neon-stock-terminal/apps/api/src/routes/discordMarketStream.ts",
+    "line": 93,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/feedback",
+    "file": "neon-stock-terminal/apps/api/src/routes/feedback.ts",
+    "line": 406,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/feedback.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/feedback/challenge",
+    "file": "neon-stock-terminal/apps/api/src/routes/feedback.ts",
+    "line": 372,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/feedback.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/fii-reports/backfill",
+    "file": "neon-stock-terminal/apps/api/src/routes/fiiReports.ts",
+    "line": 133,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/fii-reports/health",
+    "file": "neon-stock-terminal/apps/api/src/routes/fiiReports.ts",
+    "line": 70,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/fii-reports/latest",
+    "file": "neon-stock-terminal/apps/api/src/routes/fiiReports.ts",
+    "line": 115,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/fii-reports/latest-run",
+    "file": "neon-stock-terminal/apps/api/src/routes/fiiReports.ts",
+    "line": 78,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/fii-reports/load",
+    "file": "neon-stock-terminal/apps/api/src/routes/fiiReports.ts",
+    "line": 151,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/fii-reports/runs",
+    "file": "neon-stock-terminal/apps/api/src/routes/fiiReports.ts",
+    "line": 86,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/fii-reports/runs/:kind/:runId",
+    "file": "neon-stock-terminal/apps/api/src/routes/fiiReports.ts",
+    "line": 97,
+    "framework": "Express",
+    "pathParameters": [
+      "kind",
+      "runId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/fno-volatility/dashboard",
+    "file": "neon-stock-terminal/apps/api/src/routes/fnoVolatility.ts",
+    "line": 166,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fno_volatility.movement_prediction",
+      "public.smartapi_option_chain_snapshots",
+      "fno_volatility.signal_run",
+      "fno_volatility.trade_signal",
+      "fno_volatility.option_candidate"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/instrument-profiles",
+    "file": "neon-stock-terminal/apps/api/src/routes/stockProfiles.ts",
+    "line": 6,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "public.instrument_profiles"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/instrument-profiles/:symbol/logo.svg",
+    "file": "neon-stock-terminal/apps/api/src/routes/stockProfiles.ts",
+    "line": 13,
+    "framework": "Express",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "public.instrument_profiles"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/leaderboard",
+    "file": "neon-stock-terminal/apps/api/src/routes/overview.ts",
+    "line": 1113,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/long-options/candidates",
+    "file": "neon-stock-terminal/apps/api/src/routes/longOptions.ts",
+    "line": 272,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/long-options/candidates/:symbol",
+    "file": "neon-stock-terminal/apps/api/src/routes/longOptions.ts",
+    "line": 279,
+    "framework": "Express",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/long-options/summary",
+    "file": "neon-stock-terminal/apps/api/src/routes/longOptions.ts",
+    "line": 266,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/mobile/devices",
+    "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+    "line": 88,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "mobile_notifications.device",
+      "paper_trading.trade_events",
+      "mobile_notifications.notification_state"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/mobile/notifications",
+    "file": "neon-stock-terminal/apps/api/src/routes/mobileNotifications.ts",
+    "line": 112,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "paper_trading.trade_events",
+      "mobile_notifications.notification_state",
+      "mobile_notifications.device"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/nifty-options/expiries",
+    "file": "neon-stock-terminal/apps/api/src/routes/niftyWeeklyOptions.ts",
+    "line": 387,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/nifty-options/summary",
+    "file": "neon-stock-terminal/apps/api/src/routes/niftyWeeklyOptions.ts",
+    "line": 384,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/nifty-weekly-options/summary",
+    "file": "neon-stock-terminal/apps/api/src/routes/niftyWeeklyOptions.ts",
+    "line": 378,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/nse-intelligence/health",
+    "file": "neon-stock-terminal/apps/api/src/routes/nseIntelligence.ts",
+    "line": 199,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/nse-intelligence/overview",
+    "file": "neon-stock-terminal/apps/api/src/routes/nseIntelligence.ts",
+    "line": 197,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/nse-intelligence/reports",
+    "file": "neon-stock-terminal/apps/api/src/routes/nseIntelligence.ts",
+    "line": 198,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oiis-live/candidates",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 331,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "tradeDate",
+      "search"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "oiis_live.selection_run",
+      "oiis_live.daily_candidate",
+      "public.smartapi_option_chain_snapshots"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oiis-live/candidates/:symbol/context",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 379,
+    "framework": "Express",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "oiis_live.daily_candidate",
+      "oiis_live.selection_run",
+      "public.smartapi_option_chain_snapshots",
+      "oiis_live.watchlist_item",
+      "public.instruments"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/oiis-live/commands",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 538,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "oiis_live.command_queue"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oiis-live/dashboard",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 52,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "tradeDate"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "oiis_live.selection_run",
+      "oiis_live.v_current_watchlist",
+      "oiis_live.entry_claim",
+      "oiis_live.v_service_diagnostics",
+      "oiis_live.error_outbox",
+      "paper_trading.trade_groups",
+      "public.bars_1m",
+      "nse.fact_eod_prices",
+      "strategy_eval.stock_daily_regime",
+      "paper_trading.webhook_outbox",
+      "paper_trading.webhook_dead_letters",
+      "oiis_live.daily_candidate"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/oiis-live/run-history",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 266,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "tradeDate",
+      "limit",
+      "search"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "oiis_live.selection_run",
+      "oiis_live.daily_candidate",
+      "oiis_live.entry_claim",
+      "oiis_live.candidate_run_change"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/oiis-live/watchlist",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 454,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "oiis_live.watchlist_item",
+      "public.instruments",
+      "oiis_live.command_queue"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/oiis-live/watchlist/:id",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 523,
+    "framework": "Express",
+    "pathParameters": [
+      "id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "oiis_live.watchlist_item",
+      "oiis_live.command_queue"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "PATCH",
+    "path": "/v1/oiis-live/watchlist/:id",
+    "file": "neon-stock-terminal/apps/api/src/routes/oiisLive.ts",
+    "line": 497,
+    "framework": "Express",
+    "pathParameters": [
+      "id"
+    ],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "oiis_live.watchlist_item",
+      "oiis_live.command_queue"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/options-intelligence/candidates/:symbol",
+    "file": "neon-stock-terminal/apps/api/src/routes/fnoVolatility.ts",
+    "line": 228,
+    "framework": "Express",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fno_volatility.movement_prediction",
+      "fno_volatility.signal_run",
+      "fno_volatility.trade_signal",
+      "fno_volatility.option_candidate",
+      "public.smartapi_option_chain_snapshots"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/options-intelligence/summary",
+    "file": "neon-stock-terminal/apps/api/src/routes/fnoVolatility.ts",
+    "line": 172,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "fno_volatility.movement_prediction",
+      "public.smartapi_option_chain_snapshots",
+      "fno_volatility.signal_run",
+      "fno_volatility.trade_signal",
+      "fno_volatility.option_candidate"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/overview",
+    "file": "neon-stock-terminal/apps/api/src/routes/overview.ts",
+    "line": 1111,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "limit"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/absolute-first-session",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 215,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "year",
+      "month",
+      "threshold",
+      "format"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.absolute_first_session_run",
+      "rolling_monthly.absolute_first_session_candidate",
+      "strategy_eval.stock_daily_regime"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/absolute-first-session/:candidateId/chart",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 314,
+    "framework": "Express",
+    "pathParameters": [
+      "candidateId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.absolute_first_session_candidate",
+      "strategy_eval.stock_daily_regime",
+      "nse.fact_eod_prices",
+      "rolling_monthly.candidate",
+      "rolling_monthly.expiry_run",
+      "public.instruments",
+      "public.bars_1d"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/absolute-first-session/export",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 287,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "year",
+      "month",
+      "threshold",
+      "format"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.absolute_first_session_candidate",
+      "strategy_eval.stock_daily_regime",
+      "nse.fact_eod_prices",
+      "rolling_monthly.candidate",
+      "rolling_monthly.expiry_run",
+      "public.instruments",
+      "public.bars_1d"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/absolute-month-candidates/:candidateId/chart",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 184,
+    "framework": "Express",
+    "pathParameters": [
+      "candidateId"
+    ],
+    "queryParameters": [
+      "year",
+      "month",
+      "threshold",
+      "format"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.absolute_month_candidate",
+      "strategy_eval.stock_daily_regime",
+      "nse.fact_eod_prices",
+      "public.bars_1d",
+      "public.instruments",
+      "rolling_monthly.absolute_first_session_run",
+      "rolling_monthly.absolute_first_session_candidate"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/absolute-months",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 73,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "year",
+      "month",
+      "format"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.absolute_month_run",
+      "rolling_monthly.absolute_month_candidate"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/absolute-months/export",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 136,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "year",
+      "month",
+      "format",
+      "threshold"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.absolute_month_candidate",
+      "strategy_eval.stock_daily_regime",
+      "nse.fact_eod_prices",
+      "public.bars_1d",
+      "public.instruments"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/candidates/:symbol",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 716,
+    "framework": "Express",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.candidate",
+      "rolling_monthly.run"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/dashboard",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 454,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "signalDate"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.run",
+      "rolling_monthly.candidate",
+      "rolling_monthly.strategy_version",
+      "rolling_monthly.reference_metric",
+      "rolling_monthly.service_heartbeat",
+      "rolling_monthly.backtest_band_summary",
+      "rolling_monthly.backtest_condition_evidence",
+      "rolling_monthly.backtest_indicator_correlation",
+      "rolling_monthly.backtest_monthly_summary",
+      "rolling_monthly.expiry_run",
+      "eb.next_month_end",
+      "public.instruments"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-monthly/expiry-candidates/:candidateId/chart",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingMonthly.ts",
+    "line": 339,
+    "framework": "Express",
+    "pathParameters": [
+      "candidateId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.candidate",
+      "rolling_monthly.expiry_run",
+      "public.instruments",
+      "public.bars_1d"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rolling-strategy/dashboard",
+    "file": "neon-stock-terminal/apps/api/src/routes/rollingWindow.ts",
+    "line": 18,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [
+      "year",
+      "month"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "rolling_monthly.rolling_window_candidate",
+      "public.instrument_profiles",
+      "c.signal_date",
+      "rolling_monthly.rolling_window_refresh"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/rsi-surface",
+    "file": "neon-stock-terminal/apps/api/src/routes/rsiSurface.ts",
+    "line": 442,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/stocks/:symbol",
+    "file": "neon-stock-terminal/apps/api/src/routes/stocks.ts",
+    "line": 389,
+    "framework": "Express",
+    "pathParameters": [
+      "symbol"
+    ],
+    "queryParameters": [
+      "range"
+    ],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/trade-quality/policy",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 335,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "paper_trading.trade_groups",
+      "paper_trading.positions",
+      "paper_trading.pnl_ledger",
+      "paper_trading.webhook_outbox",
+      "paper_trading.target_tracks",
+      "paper_trading.data_quality_incidents",
+      "paper_trading.trade_legs",
+      "paper_trading.instrument_snapshots",
+      "paper_trading.charge_ledger",
+      "paper_trading.paper_fills",
+      "paper_trading.target_definitions"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/will-surface",
+    "file": "neon-stock-terminal/apps/api/src/routes/willSurface.ts",
+    "line": 450,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/lib/api.ts"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workspace/control-plane",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 976,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "public.websocket_health",
+      "public.subscriptions",
+      "public.api_request_log",
+      "public.smartapi_option_chain_snapshots",
+      "public.instrument_state",
+      "public.watermarks"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workspace/futures",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 931,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "institutional_flow.normalized_nse_derivatives_participants",
+      "public.instrument_universe",
+      "public.instrument_state",
+      "public.websocket_health",
+      "public.subscriptions",
+      "public.api_request_log",
+      "public.smartapi_option_chain_snapshots",
+      "public.watermarks"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workspace/nifty-500",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 915,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "nse_app.market_summary_daily",
+      "institutional_flow.normalized_nse_derivatives_participants",
+      "public.instrument_universe",
+      "public.instrument_state",
+      "public.websocket_health",
+      "public.subscriptions",
+      "public.api_request_log"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workspace/paper-trading",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 340,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "paper_trading.trade_groups",
+      "paper_trading.positions",
+      "paper_trading.pnl_ledger",
+      "paper_trading.webhook_outbox",
+      "paper_trading.target_tracks",
+      "paper_trading.data_quality_incidents",
+      "paper_trading.trade_legs",
+      "paper_trading.instrument_snapshots",
+      "paper_trading.charge_ledger",
+      "paper_trading.paper_fills",
+      "paper_trading.target_definitions",
+      "paper_trading.target_hits"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/components/chrome/AppShell.tsx",
+      "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+      "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx"
+    ],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workspace/paper-trading/manual-trades",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 618,
+    "framework": "Express",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "public.instruments"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx",
+      "neon-stock-terminal/apps/web/src/pages/WorkspacePages.tsx"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workspace/paper-trading/trades/:tradeGroupId",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 730,
+    "framework": "Express",
+    "pathParameters": [
+      "tradeGroupId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [
+      "paper_trading.trade_groups",
+      "paper_trading.trade_legs",
+      "paper_trading.positions",
+      "paper_trading.instrument_snapshots",
+      "paper_trading.observation_trackers",
+      "paper_trading.target_tracks",
+      "paper_trading.target_definitions",
+      "paper_trading.target_hits",
+      "paper_trading.horizon_outcomes",
+      "paper_trading.trade_events",
+      "public.bars_1m",
+      "paper_trading.trade_comments"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [
+      "neon-stock-terminal/apps/web/src/pages/PaperTradingCommandCenter.tsx"
+    ],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/workspace/paper-trading/trades/:tradeGroupId/comments",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 825,
+    "framework": "Express",
+    "pathParameters": [
+      "tradeGroupId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "paper_trading.trade_comments",
+      "paper_trading.trade_groups",
+      "paper_trading.request_audit",
+      "paper_trading.v_trade_quality_review_latest",
+      "paper_trading.trade_quality_reviews",
+      "nse_app.market_summary_daily"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workspace/paper-trading/trades/:tradeGroupId/comments",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 839,
+    "framework": "Express",
+    "pathParameters": [
+      "tradeGroupId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "paper_trading.trade_comments",
+      "paper_trading.trade_groups",
+      "paper_trading.request_audit",
+      "paper_trading.v_trade_quality_review_latest",
+      "paper_trading.trade_quality_reviews",
+      "nse_app.market_summary_daily",
+      "institutional_flow.normalized_nse_derivatives_participants",
+      "public.instrument_universe"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/workspace/paper-trading/trades/:tradeGroupId/quality-review",
+    "file": "neon-stock-terminal/apps/api/src/routes/workspace.ts",
+    "line": 871,
+    "framework": "Express",
+    "pathParameters": [
+      "tradeGroupId"
+    ],
+    "queryParameters": [],
+    "bodyUsed": true,
+    "databaseObjects": [
+      "paper_trading.trade_groups",
+      "paper_trading.v_trade_quality_review_latest",
+      "paper_trading.trade_quality_reviews",
+      "paper_trading.request_audit",
+      "nse_app.market_summary_daily",
+      "institutional_flow.normalized_nse_derivatives_participants",
+      "public.instrument_universe",
+      "public.instrument_state"
+    ],
+    "authentication": "Authenticated by global /v1 guard",
+    "frontendConsumers": [],
+    "responseContract": "Inline/TypeScript response; inspect handler and web type"
+  },
+  {
+    "method": "GET",
+    "path": "/yahoo/quote",
+    "file": "services/market_data_gateway/app.py",
+    "line": 981,
+    "framework": "FastAPI/Flask-style",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  },
+  {
+    "method": "GET",
+    "path": "/yahoo/quote",
+    "file": "services/market_data_gateway/app.py",
+    "line": 981,
+    "framework": "FastAPI",
+    "pathParameters": [],
+    "queryParameters": [],
+    "bodyUsed": false,
+    "databaseObjects": [],
+    "authentication": "Service-local boundary; external reachability UNVERIFIED",
+    "frontendConsumers": [],
+    "responseContract": "UNVERIFIED"
+  }
+]

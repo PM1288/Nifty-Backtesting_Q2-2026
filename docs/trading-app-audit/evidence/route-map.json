@@ -1,0 +1,738 @@
+[
+  {
+    "route": "/",
+    "component": "LandingPage",
+    "redirect": false,
+    "target": null,
+    "line": 117,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/home",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/",
+    "line": 118,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/market",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics",
+    "line": 119,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/market/state",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/market-state",
+    "line": 120,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/market/regimes",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/regime",
+    "line": 121,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/oiis",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/strategy/oiis-live",
+    "line": 122,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/oiis/evaluation",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/strategy/evaluation",
+    "line": 123,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/stocks",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/leadership",
+    "line": 124,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/stocks/:symbol",
+    "component": "LegacyStockRedirect",
+    "redirect": false,
+    "target": null,
+    "line": 125,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/strategy-lab",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/backtesting",
+    "line": 126,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/strategy-lab/quick",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/backtesting/lab",
+    "line": 127,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/strategy-lab/runs",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/backtesting/runs",
+    "line": 128,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/strategy-lab/compare",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/backtesting/compare",
+    "line": 129,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/options",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/options/structure",
+    "line": 130,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/research",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/backtesting/h30",
+    "line": 131,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/data-quality",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/system/quality",
+    "line": 132,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/dashboard/operations",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/system/map",
+    "line": 133,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics",
+    "component": "AnalyticsOverviewPage",
+    "redirect": false,
+    "target": null,
+    "line": 134,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/leadership",
+    "component": "AnalyticsLeadershipPage",
+    "redirect": false,
+    "target": null,
+    "line": 135,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/daily-setups",
+    "component": "AnalyticsSetupsPage",
+    "redirect": false,
+    "target": null,
+    "line": 136,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/market-state",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/regime?legacy=market-state",
+    "line": 137,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/strategy-evaluation",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/strategy/evaluation",
+    "line": 138,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/events",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/catalysts/events",
+    "line": 139,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/catalysts",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/catalysts/context",
+    "line": 140,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/catalysts/context",
+    "component": "AnalyticsEventContextPage",
+    "redirect": false,
+    "target": null,
+    "line": 141,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/catalysts/events",
+    "component": "AnalyticsEventsPage",
+    "redirect": false,
+    "target": null,
+    "line": 142,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/fii-reports",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/institutional/reports",
+    "line": 143,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/regime",
+    "component": "AnalyticsRegimePage",
+    "redirect": false,
+    "target": null,
+    "line": 144,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/supporting-metrics",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics?view=evidence",
+    "line": 145,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/setups",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/daily-setups",
+    "line": 146,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/risk",
+    "component": "AnalyticsRiskPage",
+    "redirect": false,
+    "target": null,
+    "line": 147,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/learn",
+    "component": "AnalyticsLearnPage",
+    "redirect": false,
+    "target": null,
+    "line": 148,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/simulator",
+    "component": "AnalyticsSimulatorPage",
+    "redirect": false,
+    "target": null,
+    "line": 149,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/indicators",
+    "component": "AnalyticsIndicatorsPage",
+    "redirect": false,
+    "target": null,
+    "line": 150,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/indicators/:slug",
+    "component": "AnalyticsIndicatorsPage",
+    "redirect": false,
+    "target": null,
+    "line": 151,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/stock/:symbol",
+    "component": "AnalyticsStockPage",
+    "redirect": false,
+    "target": null,
+    "line": 152,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/feedback",
+    "component": "FeedbackPage",
+    "redirect": false,
+    "target": null,
+    "line": 153,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting",
+    "component": "BacktestingOverviewPage",
+    "redirect": false,
+    "target": null,
+    "line": 154,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/lab",
+    "component": "BacktestingLabPage",
+    "redirect": false,
+    "target": null,
+    "line": 155,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/strategies",
+    "component": "BacktestingStrategyLibraryPage",
+    "redirect": false,
+    "target": null,
+    "line": 156,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/strategies/:strategyId",
+    "component": "BacktestingStrategyDetailPage",
+    "redirect": false,
+    "target": null,
+    "line": 157,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/results",
+    "component": "BacktestingPortfolioResultsPage",
+    "redirect": false,
+    "target": null,
+    "line": 158,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/regimes",
+    "component": "BacktestingRegimeAnalysisPage",
+    "redirect": false,
+    "target": null,
+    "line": 159,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/stocks",
+    "component": "BacktestingStockInsightsPage",
+    "redirect": false,
+    "target": null,
+    "line": 160,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/daily-summary",
+    "component": "BacktestingDailySummaryPage",
+    "redirect": false,
+    "target": null,
+    "line": 161,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/compare",
+    "component": "BacktestingComparePage",
+    "redirect": false,
+    "target": null,
+    "line": 162,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/runs",
+    "component": "BacktestingRunsPage",
+    "redirect": false,
+    "target": null,
+    "line": 163,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/backtesting/h30",
+    "component": "BacktestingH30Page",
+    "redirect": false,
+    "target": null,
+    "line": 164,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/institutional/flow",
+    "line": 165,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional/flow",
+    "component": "AnalyticsFiiFlowPage",
+    "redirect": false,
+    "target": null,
+    "line": 166,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional/reports",
+    "component": "AnalyticsFiiReportsPage",
+    "redirect": false,
+    "target": null,
+    "line": 167,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/nse-intelligence",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/institutional/nse-intelligence",
+    "line": 168,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional/nse-intelligence",
+    "component": "NseIntelligencePage",
+    "redirect": false,
+    "target": null,
+    "line": 169,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional/nse-intelligence/sectors",
+    "component": "NseIntelligencePage",
+    "redirect": false,
+    "target": null,
+    "line": 170,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional/nse-intelligence/fno",
+    "component": "NseIntelligencePage",
+    "redirect": false,
+    "target": null,
+    "line": 171,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional/nse-intelligence/events",
+    "component": "NseIntelligencePage",
+    "redirect": false,
+    "target": null,
+    "line": 172,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/institutional/nse-intelligence/reports",
+    "component": "NseIntelligencePage",
+    "redirect": false,
+    "target": null,
+    "line": 173,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/options",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/options/structure",
+    "line": 174,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/options/structure",
+    "component": "AnalyticsOptionsStructurePage",
+    "redirect": false,
+    "target": null,
+    "line": 175,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/options/snapshot",
+    "component": "AnalyticsOptionsPage",
+    "redirect": false,
+    "target": null,
+    "line": 176,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/options/volatility-signals",
+    "component": "FnoVolatilityPage",
+    "redirect": false,
+    "target": null,
+    "line": 177,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/options/intelligence",
+    "component": "OptionsIntelligencePage",
+    "redirect": false,
+    "target": null,
+    "line": 178,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/strategy/evaluation",
+    "line": 179,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/evaluation",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/strategy/oiis-live?tab=strategy-definition",
+    "line": 180,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/oiis-live",
+    "component": "OiisLivePage",
+    "redirect": false,
+    "target": null,
+    "line": 181,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/oiis-live/history",
+    "component": "OiisRunHistoryPage",
+    "redirect": false,
+    "target": null,
+    "line": 182,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/monthly",
+    "component": "MonthlyStrategyPage",
+    "redirect": false,
+    "target": null,
+    "line": 183,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/rolling-monthly",
+    "component": "RollingMonthlyLegacyRouter",
+    "redirect": false,
+    "target": null,
+    "line": 184,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/rolling-monthly/legacy",
+    "component": "RollingMonthlyPage",
+    "redirect": false,
+    "target": null,
+    "line": 185,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/long-options",
+    "component": "LongOptionsPage",
+    "redirect": false,
+    "target": null,
+    "line": 186,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/nifty-options",
+    "component": "NiftyWeeklyOptionsPage",
+    "redirect": false,
+    "target": null,
+    "line": 187,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/strategy/nifty-weekly-options",
+    "component": "NiftyWeeklyOptionsPage",
+    "redirect": false,
+    "target": null,
+    "line": 188,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/paper-trading",
+    "component": "PaperTradingPage",
+    "redirect": false,
+    "target": null,
+    "line": 189,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/market/nifty-500",
+    "component": "Nifty500Page",
+    "redirect": false,
+    "target": null,
+    "line": 190,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/futures",
+    "component": "FuturesPage",
+    "redirect": false,
+    "target": null,
+    "line": 191,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/control-plane",
+    "component": "AdminPage",
+    "redirect": false,
+    "target": null,
+    "line": 192,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/option-chain",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/options/structure",
+    "line": 193,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/option-chain/*",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/options/structure",
+    "line": 194,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/flows",
+    "component": "AnalyticsFlowsPage",
+    "redirect": false,
+    "target": null,
+    "line": 195,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/quality",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/system/quality",
+    "line": 196,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/system/quality",
+    "component": "AnalyticsQualityPage",
+    "redirect": false,
+    "target": null,
+    "line": 197,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/system/map",
+    "component": "AnalyticsSystemMapPage",
+    "redirect": false,
+    "target": null,
+    "line": 198,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/analytics/signals/flows",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/analytics/flows",
+    "line": 199,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/change-heatmap",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/heatmap/change",
+    "line": 200,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/heatmap/change",
+    "component": "ChangeHeatmapPage",
+    "redirect": false,
+    "target": null,
+    "line": 201,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/rsi-surface",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/heatmap/rsi",
+    "line": 202,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/heatmap/rsi",
+    "component": "RsiSurfacePage",
+    "redirect": false,
+    "target": null,
+    "line": 203,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/will-surface",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/heatmap/will",
+    "line": 204,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/heatmap/will",
+    "component": "WillSurfacePage",
+    "redirect": false,
+    "target": null,
+    "line": 205,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/stock/:symbol",
+    "component": "LegacyStockRedirect",
+    "redirect": false,
+    "target": null,
+    "line": 206,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "/stock",
+    "component": "Navigate",
+    "redirect": true,
+    "target": "/",
+    "line": 207,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  },
+  {
+    "route": "*",
+    "component": "NotFoundPage",
+    "redirect": false,
+    "target": null,
+    "line": 208,
+    "sourceFile": "neon-stock-terminal/apps/web/src/App.tsx"
+  }
+]

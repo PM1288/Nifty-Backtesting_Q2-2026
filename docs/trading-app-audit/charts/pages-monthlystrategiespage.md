@@ -1,0 +1,26 @@
+# pages-monthlystrategiespage
+
+> Evidence basis: static source inspection generated 2026-08-23T11:30:04.012Z. Runtime behaviour is labelled separately. “UNVERIFIED” means the source alone cannot establish the runtime condition.
+
+## Identity
+
+| Field | Value |
+| --- | --- |
+| Source | [neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx](/home/novius2/NIFTY50/Nifty-Backtesting_Q2-2026/neon-stock-terminal/apps/web/src/pages/MonthlyStrategiesPage.tsx) |
+| Components | `Kpi`, `StrategyTable`, `Inspector`, `MonthlyStrategyPage`, `RollingWindowStrategyPage`, `RollingMonthlyLegacyRouter` |
+| Library | CSS/DOM visualisation |
+| Pages | `/dashboard/stocks/:symbol`, `/analytics/leadership`, `/analytics/daily-setups`, `/catalysts/context`, `/catalysts/events`, `/analytics/learn`, `/analytics/simulator`, `/analytics/indicators`, `/analytics/indicators/:slug`, `/analytics/stock/:symbol`, `/backtesting`, `/backtesting/lab`, `/backtesting/strategies`, `/backtesting/strategies/:strategyId`, `/backtesting/results`, `/backtesting/regimes`, `/backtesting/stocks`, `/institutional/flow`, `/institutional/reports`, `/strategy/monthly`, `/strategy/rolling-monthly`, `/strategy/rolling-monthly/legacy`, `/paper-trading`, `/analytics/flows`, `/heatmap/change`, `/heatmap/rsi`, `/heatmap/will`, `/stock/:symbol` |
+| Titles found | ${row.symbol} strategy evidence; Close inspector; All monthly entry methods in one table; Rolling 5/30/60 signal transitions |
+| Direct API paths | Supplied through props/hooks |
+
+## Business meaning and interpretation
+
+The visible title, axes, series encodings, and surrounding copy in the linked source define what the chart says. It is descriptive/diagnostic unless the source explicitly identifies a predictive model. Do not infer executable returns from MFE, simulated, hypothetical, or interpolated surfaces.
+
+## Configuration and data input
+
+Inspect the linked option/series construction for axes, tooltips, legends, thresholds, null handling, timezone, colour, and precision. Where data arrives by props, follow the parent component through [component-map.json](../evidence/component-map.json).
+
+## Accuracy considerations
+
+Validate population, eligibility, as-of timestamp, missing-value handling, session boundaries, adjusted/unadjusted price basis, and interpolation before using the visual for decisions. Runtime and independent-calculation evidence is catalogued centrally.

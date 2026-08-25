@@ -1,0 +1,92 @@
+[
+  {
+    "name": "login 1440",
+    "passed": true,
+    "detail": "status=200"
+  },
+  {
+    "name": "authenticated paper alert API",
+    "passed": true,
+    "detail": "status=200"
+  },
+  {
+    "name": "durable event source",
+    "passed": true,
+    "detail": "paper_trading.trade_events"
+  },
+  {
+    "name": "latest five cap",
+    "passed": true,
+    "detail": "items=5"
+  },
+  {
+    "name": "entry or target only",
+    "passed": true,
+    "detail": "[\"TARGET_HIT\",\"TARGET_HIT\",\"TARGET_HIT\",\"TARGET_HIT\",\"TARGET_HIT\"]"
+  },
+  {
+    "name": "header voice switch defaults muted",
+    "passed": true,
+    "detail": "Muted switch missing"
+  },
+  {
+    "name": "global launcher is tiny",
+    "passed": true,
+    "detail": "width=42"
+  },
+  {
+    "name": "panel exposes at most five events",
+    "passed": true,
+    "detail": "more than five event rows"
+  },
+  {
+    "name": "timestamps rendered in IST",
+    "passed": true,
+    "detail": "missing IST suffix"
+  },
+  {
+    "name": "Escape closes",
+    "passed": true,
+    "detail": "panel remained open"
+  },
+  {
+    "name": "login 1366",
+    "passed": true,
+    "detail": "status=200"
+  },
+  {
+    "name": "header switch enters Speak mode",
+    "passed": true,
+    "detail": "Speak state missing"
+  },
+  {
+    "name": "new target auto-opens",
+    "passed": true,
+    "detail": "pollCalls=2"
+  },
+  {
+    "name": "native browser speech receives target conditions",
+    "passed": true,
+    "detail": "[\"CANCELLED\",\"Paper trade target condition hit for RELIANCE. Target level reached: zero point five percent. Higher analytical targets remain active.\"]"
+  },
+  {
+    "name": "mute cancels queued native speech",
+    "passed": true,
+    "detail": "[\"CANCELLED\",\"Paper trade target condition hit for RELIANCE. Target level reached: zero point five percent. Higher analytical targets remain active.\",\"CANCELLED\",\"CANCELLED\"]"
+  },
+  {
+    "name": "login 390",
+    "passed": true,
+    "detail": "status=200"
+  },
+  {
+    "name": "mobile launcher clears bottom navigation",
+    "passed": true,
+    "detail": "{\"x\":336,\"y\":718,\"width\":42,\"height\":44}"
+  },
+  {
+    "name": "mobile panel stays in viewport",
+    "passed": true,
+    "detail": "scrollWidth=390"
+  }
+]

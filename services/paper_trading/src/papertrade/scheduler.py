@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import date, timedelta
+from decimal import Decimal
 from typing import Any
 
 from .events import append_event
@@ -95,23 +96,36 @@ class Scheduler:
             if prior:
                 return {**prior["metrics"], "target_finalization": target_finalization}
             metrics = conn.execute(
-                f"""SELECT
-              (SELECT count(*) FROM {self.schema}.trade_intents WHERE account_id=%s AND (received_at AT TIME ZONE %s)::date=%s) requests_received,
-              (SELECT count(*) FROM {self.schema}.trade_intents WHERE account_id=%s AND status='ACCEPTED' AND (received_at AT TIME ZONE %s)::date=%s) requests_accepted,
-              (SELECT count(*) FROM {self.schema}.trade_groups WHERE account_id=%s AND opened_at IS NOT NULL AND (opened_at AT TIME ZONE %s)::date=%s) groups_opened,
-              (SELECT count(*) FROM {self.schema}.trade_groups WHERE account_id=%s AND fully_closed AND (closed_at AT TIME ZONE %s)::date=%s) groups_closed,
-              (SELECT coalesce(sum(amount),0) FROM {self.schema}.pnl_ledger WHERE account_id=%s AND entry_kind='REALISED_GROSS' AND (effective_at AT TIME ZONE %s)::date=%s) gross_realised_pnl,
-              (SELECT coalesce(sum(amount),0) FROM {self.schema}.charge_ledger WHERE account_id=%s AND (effective_at AT TIME ZONE %s)::date=%s) trading_costs,
-              (SELECT coalesce(sum(provision_amount),0) FROM {self.schema}.income_tax_provision_ledger WHERE account_id=%s AND (effective_at AT TIME ZONE %s)::date=%s) income_tax_provision,
-              (SELECT count(*) FROM {self.schema}.target_hits h JOIN {self.schema}.target_tracks t USING(target_track_id) JOIN {self.schema}.trade_legs l USING(trade_leg_id) JOIN {self.schema}.trade_groups g USING(trade_group_id) WHERE g.account_id=%s AND (h.hit_at AT TIME ZONE %s)::date=%s) analytical_targets_hit
-            """,
-                tuple(
-                    x
-                    for _ in range(8)
-                    for x in (self.settings.DEFAULT_ACCOUNT_ID, self.settings.EXCHANGE_TIMEZONE, session_date)
+                f"""WITH params AS (
+                       SELECT %s::text account_id,%s::text timezone,%s::date session_date
+                     )
+                     SELECT
+              (SELECT count(*) FROM {self.schema}.trade_intents i WHERE i.account_id=p.account_id AND (i.received_at AT TIME ZONE p.timezone)::date=p.session_date) requests_received,
+              (SELECT count(*) FROM {self.schema}.trade_intents i WHERE i.account_id=p.account_id AND i.status='ACCEPTED' AND (i.received_at AT TIME ZONE p.timezone)::date=p.session_date) requests_accepted,
+              (SELECT count(*) FROM {self.schema}.trade_groups g WHERE g.account_id=p.account_id AND g.opened_at IS NOT NULL AND (g.opened_at AT TIME ZONE p.timezone)::date=p.session_date) groups_opened,
+              (SELECT count(*) FROM {self.schema}.trade_groups g WHERE g.account_id=p.account_id AND g.fully_closed AND (g.closed_at AT TIME ZONE p.timezone)::date=p.session_date) groups_closed,
+              (SELECT count(*) FROM {self.schema}.trade_groups g WHERE g.account_id=p.account_id AND g.opened_at IS NOT NULL AND NOT g.fully_closed AND g.strategy_id<>'SYSTEM') groups_open_current,
+              (SELECT coalesce(sum(l.amount),0) FROM {self.schema}.pnl_ledger l WHERE l.account_id=p.account_id AND l.entry_kind='REALISED_GROSS' AND (l.effective_at AT TIME ZONE p.timezone)::date=p.session_date) gross_realised_pnl,
+              (SELECT coalesce(sum(c.amount),0) FROM {self.schema}.charge_ledger c WHERE c.account_id=p.account_id AND (c.effective_at AT TIME ZONE p.timezone)::date=p.session_date) trading_costs,
+              (SELECT coalesce(sum(tax.provision_amount),0) FROM {self.schema}.income_tax_provision_ledger tax WHERE tax.account_id=p.account_id AND (tax.effective_at AT TIME ZONE p.timezone)::date=p.session_date) income_tax_provision,
+              (SELECT count(*) FROM {self.schema}.target_hits h JOIN {self.schema}.target_tracks t USING(target_track_id) JOIN {self.schema}.trade_legs l USING(trade_leg_id) JOIN {self.schema}.trade_groups g USING(trade_group_id) WHERE g.account_id=p.account_id AND (h.hit_at AT TIME ZONE p.timezone)::date=p.session_date) analytical_targets_hit,
+              (SELECT count(DISTINCT g.trade_group_id) FROM {self.schema}.target_tracks t JOIN {self.schema}.target_definitions d USING(target_definition_id) JOIN {self.schema}.trade_legs l USING(trade_leg_id) JOIN {self.schema}.trade_groups g ON g.trade_group_id=l.trade_group_id WHERE g.account_id=p.account_id AND d.lifecycle='INTRADAY' AND t.status IN ('HIT','CLOSED_AT_TARGET') AND (t.first_hit_at AT TIME ZONE p.timezone)::date=p.session_date) intraday_trades_hit,
+              (SELECT count(DISTINCT g.trade_group_id) FROM {self.schema}.target_tracks t JOIN {self.schema}.target_definitions d USING(target_definition_id) JOIN {self.schema}.trade_legs l USING(trade_leg_id) JOIN {self.schema}.trade_groups g ON g.trade_group_id=l.trade_group_id JOIN {self.schema}.observation_trackers o USING(trade_leg_id) WHERE g.account_id=p.account_id AND d.lifecycle='INTRADAY' AND t.status='NOT_HIT_INTRADAY' AND o.entry_session=p.session_date) intraday_trades_missed,
+              (SELECT count(DISTINCT g.trade_group_id) FROM {self.schema}.target_tracks t JOIN {self.schema}.target_definitions d USING(target_definition_id) JOIN {self.schema}.trade_legs l USING(trade_leg_id) JOIN {self.schema}.trade_groups g ON g.trade_group_id=l.trade_group_id WHERE g.account_id=p.account_id AND d.lifecycle='SWING' AND t.status IN ('HIT','CLOSED_AT_TARGET') AND (t.first_hit_at AT TIME ZONE p.timezone)::date=p.session_date) swing_trades_hit,
+              (SELECT count(DISTINCT g.trade_group_id) FROM {self.schema}.target_tracks t JOIN {self.schema}.target_definitions d USING(target_definition_id) JOIN {self.schema}.trade_legs l USING(trade_leg_id) JOIN {self.schema}.trade_groups g ON g.trade_group_id=l.trade_group_id WHERE g.account_id=p.account_id AND d.lifecycle='SWING' AND t.status='ACTIVE') swing_trades_open
+              FROM params p""",
+                (
+                    self.settings.DEFAULT_ACCOUNT_ID,
+                    self.settings.EXCHANGE_TIMEZONE,
+                    session_date,
                 ),
             ).fetchone()
             values = {k: str(v) if hasattr(v, "as_tuple") else v for k, v in metrics.items()}
+            values["net_realised_pnl"] = str(
+                Decimal(str(values["gross_realised_pnl"]))
+                - Decimal(str(values["trading_costs"]))
+                - Decimal(str(values["income_tax_provision"]))
+            )
             values["activity_status"] = "NO_ACTIVITY" if values["requests_received"] == 0 else "ACTIVE"
             values["environment"] = "PAPER"
             values["target_finalization"] = target_finalization

@@ -67,7 +67,7 @@ def _notification(event_type: str, data: dict[str, Any], context: dict[str, Any]
         title, lines = "PAPER POSITION CLOSED", [identity, f"Net after tax provision: ₹{data.get('net_after_tax', '—')}", f"Costs: ₹{data.get('trading_costs', '—')}"]
     elif "five_session_completed" in event_type or "thirty_session_completed" in event_type:
         horizon = data.get("horizon_sessions", 5 if "five_" in event_type else 30)
-        title, lines = f"{horizon}-SESSION OBSERVATION COMPLETE", [identity, f"Return: {float(data.get('closing_return', 0)) * 100:.2f}% · MFE: {float(data.get('mfe', 0)) * 100:.2f}% · MAE: {float(data.get('mae', 0)) * 100:.2f}%", f"Hypothetical after-tax P&L: ₹{data.get('after_tax_pnl', '—')}"]
+        title, lines = f"{horizon}-SESSION OBSERVATION COMPLETE", [identity, f"Return: {float(data.get('closing_return', 0)) * 100:.2f}%", f"Hypothetical after-tax P&L: ₹{data.get('after_tax_pnl', '—')}"]
     elif "market_data.stale" in event_type:
         category, title = "DATA", "PAPER MARKET DATA STALE"
         lines = [f"Affected instruments: {data.get('affected_count', 1)}", "New paper decisions are guarded until data recovers."]

@@ -154,7 +154,7 @@ test('sends one analytical target but suppresses the execution-trigger precursor
   }));
   assert.equal(target.send, true);
   assert.match(target.whatsapp_message, /PAPER ANALYTICAL TARGET HIT/);
-  assert.match(target.whatsapp_message, /Simulation only/);
+  assert.doesNotMatch(target.whatsapp_message, /Simulation only|No live order|MFE|MAE/);
   assert.equal(trigger.send, false);
 });
 
@@ -184,7 +184,7 @@ test('formats full group close with actual P&L components', () => {
   assert.match(result.whatsapp_message, /\*Held:\* 1h 4m/);
   assert.match(result.whatsapp_message, /\*Reason:\* Intraday \+0.30% target filled/);
   assert.match(result.whatsapp_message, /Gross: \+₹628.80/);
-  assert.match(result.whatsapp_message, /Best move: \+0.54% • Worst move: −0.27%/);
+  assert.doesNotMatch(result.whatsapp_message, /Best move|Worst move|MFE|MAE/);
   assert.match(result.whatsapp_message, /Trade ref: 2026-08-11-ltm/);
   assert.match(result.whatsapp_message, /5-session and 30-session observation continues/);
 });

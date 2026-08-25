@@ -33,8 +33,8 @@ switch (input.event_type) {
     break;
   case 'market.oiis.candidates.changed.v1':
     lines = ['*OIIS CANDIDATES — ' + ist(p.data_as_of) + '*'];
-    if (p.long_candidates.length) { lines.push('*LONG*'); for (const row of p.long_candidates) lines.push(row.rank + '. ' + row.symbol + ' · X ' + n(row.xfactor,1) + ' · O ' + n(row.ofactor,1)); }
-    if (p.short_candidates.length) { lines.push('*SHORT*'); for (const row of p.short_candidates) lines.push(row.rank + '. ' + row.symbol + ' · X ' + n(row.xfactor,1) + ' · O ' + n(row.ofactor,1)); }
+    if (p.long_candidates.length) { lines.push('*LONG*'); for (const row of p.long_candidates) lines.push(row.rank + '. ' + row.symbol + ' · X ' + n(row.xfactor,2) + ' · O ' + n(row.ofactor,2)); }
+    if (p.short_candidates.length) { lines.push('*SHORT*'); for (const row of p.short_candidates) lines.push(row.rank + '. ' + row.symbol + ' · X ' + n(row.xfactor,2) + ' · O ' + n(row.ofactor,2)); }
     if (p.added_memberships.length || p.removed_memberships.length) {
       const changes = []; if (p.added_memberships.length) changes.push('Added ' + p.added_memberships.join(', '));
       if (p.removed_memberships.length) changes.push('Removed ' + p.removed_memberships.join(', ')); lines.push(changes.join(' · '));

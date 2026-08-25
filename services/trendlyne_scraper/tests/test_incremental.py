@@ -33,6 +33,7 @@ class IncrementalTests(unittest.TestCase):
                 "payload": {
                     "report_date": "2026-08-24",
                     "nse_symbol": "RELIANCE",
+                    "stock_name": "Reliance Industries",
                     "broker_name": "Example Broker",
                     "recommendation": "Buy",
                     "target_price": 1600,
@@ -43,6 +44,7 @@ class IncrementalTests(unittest.TestCase):
         message = build_message(rows)
         self.assertIn("1 NEW RESEARCH REPORT", message)
         self.assertIn("RELIANCE", message)
+        self.assertIn("Reliance Industries (RELIANCE)", message)
         self.assertIn("Only newly inserted report IDs", message)
 
 

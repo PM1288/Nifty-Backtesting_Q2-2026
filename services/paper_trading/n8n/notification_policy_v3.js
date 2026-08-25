@@ -330,7 +330,6 @@ function formatTradeEvent(ctx, kind) {
         quantity(lotSize) ? (number(qty) === number(lotSize) ? `1 F&O lot = ${quantity(lotSize)}` : `F&O lot size ${quantity(lotSize)}`) : null,
         entryPrice && money(entryPrice, { currency: ctx.currency }) ? `Reference ${money(entryPrice, { currency: ctx.currency })}` : 'Entry level pending next eligible paper fill',
       ]));
-      lines.push('Accepted for simulation only · No broker order');
     }
     if (reason) lines.push(`Reason: ${String(reason).slice(0, 300)}`);
   } else if (kind === 'GROUP_OPEN' || kind === 'OPEN_FILL') {
@@ -352,7 +351,6 @@ function formatTradeEvent(ctx, kind) {
     if (ctx.strategy) lines.push(`Strategy: ${String(ctx.strategy).replace(/[_-]+/g, ' ').toUpperCase()}${ctx.strategyVersion ? ` • v${ctx.strategyVersion}` : ''}`);
     if (dateOnly(openedAt)) lines.push(dateOnly(openedAt));
     if (tradeReference(ctx)) lines.push(`Trade ref: ${tradeReference(ctx)}`);
-    lines.push('_Mode: PAPER • Simulated position; no broker order_');
   } else if (kind === 'TARGET_HIT') {
     const pct = targetPercent(ctx);
     const tracks = Array.isArray(data.newly_closed_target_tracks) ? data.newly_closed_target_tracks : [];
@@ -370,11 +368,9 @@ function formatTradeEvent(ctx, kind) {
       money(first(firstTrack.target_price, data.target_price), { currency: ctx.currency }) ? `Target ${money(first(firstTrack.target_price, data.target_price), { currency: ctx.currency })}` : null,
       money(first(firstTrack.observed_price, data.current_price), { currency: ctx.currency }) ? `Observed ${money(first(firstTrack.observed_price, data.current_price), { currency: ctx.currency })}` : null,
     ]));
-    lines.push(present([
-      percent(first(data.mfe, data.mfe_pct), { ratio: ctx.eventType.endsWith('.v1') }) ? `MFE ${percent(first(data.mfe, data.mfe_pct), { ratio: ctx.eventType.endsWith('.v1') })}` : null,
-      percent(first(data.mae, data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') }) ? `MAE ${percent(first(data.mae, data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') })}` : null,
-      data.actual_execution_position_status ? `Execution ${String(data.actual_execution_position_status).toUpperCase()}` : null,
-    ]));
+    if (data.actual_execution_position_status) {
+      lines.push(`Execution ${String(data.actual_execution_position_status).toUpperCase()}`);
+    }
     lines.push('Analytical milestone only · It does not itself close the position');
   } else if (kind === 'PARTIAL_CLOSE') {
     lines.push('*PAPER POSITION — PARTIAL CLOSE*');
@@ -409,10 +405,6 @@ function formatTradeEvent(ctx, kind) {
       money(costs, { currency: ctx.currency }) ? `Costs: −${money(Math.abs(number(costs)), { currency: ctx.currency })}` : null,
       money(tax, { currency: ctx.currency }) ? `Tax provision: −${money(Math.abs(number(tax)), { currency: ctx.currency })}` : null,
     ], ' • '));
-    lines.push(present([
-      percent(first(data.mfe, trade.mfe), { ratio: true }) ? `Best move: ${percent(first(data.mfe, trade.mfe), { ratio: true })}` : null,
-      percent(first(data.mae, trade.mae), { ratio: true }) ? `Worst move: ${percent(first(data.mae, trade.mae), { ratio: true })}` : null,
-    ], ' • '));
     if (entry !== null && exit !== null && entry !== 0) {
       const rawReturn = (exit / entry - 1) * 100;
       const directionalReturn = String(ctx.side || '').toUpperCase() === 'SELL' ? -rawReturn : rawReturn;
@@ -420,13 +412,13 @@ function formatTradeEvent(ctx, kind) {
     }
     if (ctx.strategy) lines.push(`Strategy: ${String(ctx.strategy).replace(/[_-]+/g, ' ').toUpperCase()}${ctx.strategyVersion ? ` • v${ctx.strategyVersion}` : ''}`);
     if (tradeReference(ctx)) lines.push(`Trade ref: ${tradeReference(ctx)}`);
-    lines.push('_Mode: PAPER • Position closed; 5-session and 30-session observation continues_');
+    lines.push('5-session and 30-session observation continues');
   } else if (kind === 'ADVERSE') {
     const risk = object(first(data.risk, trade.risk, data));
     lines.push(`*PAPER RISK — ${percent(first(risk.threshold_pct, data.threshold_pct), { ratio: ctx.eventType.endsWith('.v1') }) || 'MATERIAL THRESHOLD'}*`);
     if (identity(ctx)) lines.push(identity(ctx));
     lines.push(present([
-      percent(first(risk.observed_pct, risk.mae_pct, data.observed_pct, data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') }) ? `MAE ${percent(first(risk.observed_pct, risk.mae_pct, data.observed_pct, data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') })}` : null,
+      percent(first(risk.observed_pct, risk.mae_pct, data.observed_pct, data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') }) ? `Observed ${percent(first(risk.observed_pct, risk.mae_pct, data.observed_pct, data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') })}` : null,
       money(first(risk.current_price, data.current_price), { currency: ctx.currency }) ? `Mark ${money(first(risk.current_price, data.current_price), { currency: ctx.currency })}` : null,
     ]));
   }
@@ -525,15 +517,10 @@ function formatNotification(payload, options = {}) {
     if (identity(ctx)) lines.push(identity(ctx));
     lines.push(present([
       percent(first(ctx.data.closing_return, ctx.data.closing_return_pct), { ratio: ctx.eventType.endsWith('.v1') }) ? `Close ${percent(first(ctx.data.closing_return, ctx.data.closing_return_pct), { ratio: ctx.eventType.endsWith('.v1') })}` : null,
-      percent(first(ctx.data.mfe, ctx.data.mfe_pct), { ratio: ctx.eventType.endsWith('.v1') }) ? `MFE ${percent(first(ctx.data.mfe, ctx.data.mfe_pct), { ratio: ctx.eventType.endsWith('.v1') })}` : null,
-      percent(first(ctx.data.mae, ctx.data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') }) ? `MAE ${percent(first(ctx.data.mae, ctx.data.mae_pct), { ratio: ctx.eventType.endsWith('.v1') })}` : null,
     ]));
     if (dateTime(ctx.occurredAt)) lines.push(dateTime(ctx.occurredAt));
   } else lines = formatTradeEvent(ctx, kind);
 
-  if (kind !== 'DELIVERY_TEST' && !lines.some((line) => String(line).includes('Simulation only'))) {
-    lines.push('_PAPER TRADE · Simulation only; no live order was placed_');
-  }
   let message = lines.filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n').trim();
   if (message.length > MAX_MESSAGE_LENGTH) message = `${message.slice(0, MAX_MESSAGE_LENGTH - 32)}\n…full details are in the dashboard`;
   const state = object(options.state);

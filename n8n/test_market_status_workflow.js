@@ -16,6 +16,7 @@ for (const file of ['market-movers.json','oiis-long-only.json','oiis-short-only.
   const input=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'../examples/market_status',file)));
   const output=evaluate({body:{...input,delivery_test_only:true}},staticData)[0].json;
   assert.equal(output.send,false); assert.ok(output.preview.length<=1800);
+  if (file === 'oiis-long-only.json') assert.match(output.preview,/X 76\.10 · O 74\.80/);
 }
 const exported=fs.readFileSync(require('node:path').join(__dirname,'Market_Status_Outgoing_WhatsApp_v1.json'),'utf8');
 assert.ok(!exported.includes('PAPER_TRADE_')); assert.ok(!exported.match(/[A-Fa-f0-9]{48,}/));

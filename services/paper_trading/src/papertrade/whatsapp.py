@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import io
+import math
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -75,6 +76,11 @@ def _qty(value: Any) -> str:
     return f"{amount:,.8f}".rstrip("0").rstrip(".")
 
 
+def _metric(value: Any) -> str:
+    amount = _number(value)
+    return "—" if amount is None else f"{amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):.2f}"
+
+
 def _when(value: Any) -> str:
     if not value:
         return "time unavailable"
@@ -122,7 +128,7 @@ def classify(event: dict[str, Any], settings: Any) -> DeliveryDecision:
 
 
 def _rows_table(rows: list[tuple[str, str]]) -> str:
-    rows = [(label, value) for label, value in rows if value != "—"][:8]
+    rows = [(label, value) for label, value in rows if value != "—"][:12]
     width = min(16, max((len(label) for label, _ in rows), default=0))
     return "```\n" + "\n".join(f"{label:<{width}}  {value}" for label, value in rows) + "\n```"
 
@@ -150,7 +156,13 @@ def render_message(
         "DAILY_SUMMARY": ("📊", "PAPER DAILY SUMMARY"),
         "WEEKLY_SUMMARY": ("📊", "PAPER WEEKLY SUMMARY"),
     }.get(decision.kind, ("🔵", "PAPER UPDATE"))
-    lines = [f"{icon_title[0]} *{icon_title[1]}* · `{side}`", f"`{symbol} · NSE`", f"Trade `{trade_ref}`"]
+    company_name = _clean(factors.get("company_name") or symbol, 72)
+    identity = f"{company_name} ({symbol})" if company_name.upper() != symbol else symbol
+    lines = [
+        f"{icon_title[0]} *{icon_title[1]}* · `{side}`",
+        f"*{identity}* · NSE",
+        f"Trade `{trade_ref}`",
+    ]
     rows: list[tuple[str, str]] = []
     reason = data.get("reason") or data.get("detail")
     if decision.kind == "ENTRY":
@@ -165,9 +177,12 @@ def render_message(
             ("Quantity", _qty(quantity)),
             ("Intraday", _money(active.get("target_price"))),
             ("Swing", _money(swing.get("target_price"))),
-            ("O factor", _clean(factors.get("ofactor") or "—")),
-            ("X factor", _clean(factors.get("xfactor") or "—")),
-            ("RSI 14", _clean(factors.get("rsi14") or "—")),
+            ("O factor", _metric(factors.get("ofactor"))),
+            ("X factor", _metric(factors.get("xfactor"))),
+            ("RSI 14", _metric(factors.get("rsi14"))),
+            ("52W high", _money(factors.get("week52_high"))),
+            ("52W low", _money(factors.get("week52_low"))),
+            ("52W position", _pct(factors.get("week52_position_pct"))),
         ]
         reason = data.get("entry_reason") or "Paper fill recorded; monitoring targets and risk path."
     elif decision.kind == "TARGET":
@@ -182,8 +197,9 @@ def render_message(
             ("Target", _money(target.get("target_price") or data.get("target_price"))),
             ("Observed", _money(target.get("observed_price") or data.get("current_price"))),
             ("Target move", _pct(target.get("target_pct") or data.get("target_pct"), ratio=True)),
-            ("MFE", _pct(data.get("mfe"), ratio=True)),
-            ("MAE", _pct(data.get("mae"), ratio=True)),
+            ("52W high", _money(factors.get("week52_high"))),
+            ("52W low", _money(factors.get("week52_low"))),
+            ("52W position", _pct(factors.get("week52_position_pct"))),
         ]
         reason = "Analytical target reached. Execution position status remains separately governed."
     elif decision.kind in {"EXIT", "PARTIAL_EXIT"}:
@@ -194,19 +210,23 @@ def render_message(
             ("Gross P&L", _money(data.get("gross_realised_pnl"), signed=True)),
             ("Costs", _money(data.get("trading_costs"))),
             ("Net P&L", _money(data.get("net_after_tax"), signed=True)),
-            ("MFE", _pct(data.get("mfe"), ratio=True)),
-            ("MAE", _pct(data.get("mae"), ratio=True)),
+            ("52W high", _money(factors.get("week52_high"))),
+            ("52W low", _money(factors.get("week52_low"))),
+            ("52W position", _pct(factors.get("week52_position_pct"))),
         ]
         reason = data.get("exit_reason_code") or "Governed paper exit completed."
     elif decision.kind in {"DAILY_SUMMARY", "WEEKLY_SUMMARY"}:
         summary: dict[str, Any] = data["summary"] if isinstance(data.get("summary"), dict) else data
         rows = [
-            ("Requests", _qty(summary.get("requests_received"))),
-            ("Opened", _qty(summary.get("groups_opened"))),
-            ("Closed", _qty(summary.get("groups_closed"))),
-            ("Realised", _money(summary.get("net_realised_pnl"), signed=True)),
-            ("Open P&L", _money(summary.get("unrealised_pnl"), signed=True)),
-            ("Win rate", _pct(summary.get("win_rate_pct"))),
+            ("Open trades", _qty(summary.get("groups_open_current"))),
+            ("Opened today", _qty(summary.get("groups_opened"))),
+            ("Closed today", _qty(summary.get("groups_closed"))),
+            ("Intraday hit", _qty(summary.get("intraday_trades_hit"))),
+            ("Intraday missed", _qty(summary.get("intraday_trades_missed"))),
+            ("Swing hit", _qty(summary.get("swing_trades_hit"))),
+            ("Swing open", _qty(summary.get("swing_trades_open"))),
+            ("Targets hit", _qty(summary.get("analytical_targets_hit"))),
+            ("Net realised", _money(summary.get("net_realised_pnl"), signed=True)),
         ]
     else:
         rows = [
@@ -216,11 +236,24 @@ def render_message(
         ]
     if rows:
         lines.extend(["", _rows_table(rows)])
+    if decision.kind == "ENTRY":
+        recommendations = factors.get("trendlyne_buy_recommendations")
+        lines.extend(["", "*Trendlyne · previous 30 days*"])
+        if isinstance(recommendations, list) and recommendations:
+            for item in recommendations[:3]:
+                if not isinstance(item, dict):
+                    continue
+                house = _clean(item.get("house") or "Research house", 48)
+                date_value = _clean(item.get("report_date") or "date unavailable", 16)
+                target_text = _money(item.get("target_price"))
+                lines.append(f"- *BUY* · {house} · {date_value} · target {target_text}")
+        else:
+            lines.append("- No BUY suggestions found for this stock in the previous 30 days.")
     if reason:
         lines.extend(["", f"> {_clean(reason, 240)}"])
     if strategy:
         lines.extend(["", f"Strategy `{strategy}`"])
-    lines.extend([f"`{_when(event.get('time'))}`", "⚠️ *Simulation only. No live order was placed.*"])
+    lines.append(f"`{_when(event.get('time'))}`")
     return "\n".join(lines)
 
 
@@ -241,31 +274,106 @@ def _rsi(closes: list[float], period: int = 14) -> list[float | None]:
     return result
 
 
+def _ema(values: list[float], period: int) -> list[float | None]:
+    result: list[float | None] = [None] * len(values)
+    if len(values) < period:
+        return result
+    current = sum(values[:period]) / period
+    result[period - 1] = current
+    multiplier = 2 / (period + 1)
+    for index in range(period, len(values)):
+        current = (values[index] - current) * multiplier + current
+        result[index] = current
+    return result
+
+
+def _bollinger(
+    closes: list[float], period: int = 20
+) -> tuple[list[float | None], list[float | None], list[float | None]]:
+    middle: list[float | None] = [None] * len(closes)
+    upper: list[float | None] = [None] * len(closes)
+    lower: list[float | None] = [None] * len(closes)
+    for index in range(period - 1, len(closes)):
+        window = closes[index - period + 1 : index + 1]
+        average = sum(window) / period
+        deviation = math.sqrt(sum((value - average) ** 2 for value in window) / period)
+        middle[index] = average
+        upper[index] = average + 2 * deviation
+        lower[index] = average - 2 * deviation
+    return middle, upper, lower
+
+
+def _macd(
+    closes: list[float],
+) -> tuple[list[float | None], list[float | None], list[float | None]]:
+    fast = _ema(closes, 12)
+    slow = _ema(closes, 26)
+    line: list[float | None] = [
+        fast_value - slow_value if fast_value is not None and slow_value is not None else None
+        for fast_value, slow_value in zip(fast, slow, strict=True)
+    ]
+    available = [value for value in line if value is not None]
+    signal_available = _ema(available, 9)
+    signal: list[float | None] = [None] * len(closes)
+    cursor = 0
+    for index, value in enumerate(line):
+        if value is not None:
+            signal[index] = signal_available[cursor]
+            cursor += 1
+    histogram = [
+        value - signal_value if value is not None and signal_value is not None else None
+        for value, signal_value in zip(line, signal, strict=True)
+    ]
+    return line, signal, histogram
+
+
+def _line_points(
+    values: list[float | None], left: float, step: float, transform: Any
+) -> list[tuple[float, float]]:
+    return [
+        (left + 18 + step * (index + 0.5), transform(value))
+        for index, value in enumerate(values)
+        if value is not None
+    ]
+
+
 def render_entry_chart(
     bars: list[dict[str, Any]], entry_price: Any, symbol: str, factors: dict[str, Any]
 ) -> bytes | None:
     if len(bars) < 3:
         return None
-    width, height = 1080, 1080
+    width, height = 1080, 1350
     image = Image.new("RGB", (width, height), "#0B1220")
     draw = ImageDraw.Draw(image)
     font = ImageFont.load_default(size=24)
     small = ImageFont.load_default(size=18)
-    draw.text((58, 38), f"{_clean(symbol, 24).upper()} · PAPER ENTRY EVIDENCE", fill="#F8FAFC", font=font)
+    company = _clean(factors.get("company_name") or symbol, 54)
+    identity = (
+        f"{company} ({_clean(symbol, 20).upper()})" if company.upper() != symbol.upper() else symbol.upper()
+    )
+    draw.text((58, 30), f"{identity} · PAPER ENTRY", fill="#F8FAFC", font=font)
     draw.text(
-        (58, 78),
-        f"O {factors.get('ofactor', '—')}   X {factors.get('xfactor', '—')}   RSI {factors.get('rsi14', '—')}",
+        (58, 69),
+        f"O {_metric(factors.get('ofactor'))}   X {_metric(factors.get('xfactor'))}   RSI {_metric(factors.get('rsi14'))}   52W {_metric(factors.get('week52_position_pct'))}%",
         fill="#94A3B8",
         font=small,
     )
-    chart = (70, 140, 1010, 730)
-    rsi_box = (70, 790, 1010, 990)
-    for box in (chart, rsi_box):
+    chart = (70, 125, 1010, 650)
+    volume_box = (70, 680, 1010, 820)
+    rsi_box = (70, 850, 1010, 1030)
+    macd_box = (70, 1060, 1010, 1270)
+    for box in (chart, volume_box, rsi_box, macd_box):
         draw.rounded_rectangle(box, radius=14, fill="#111827", outline="#334155", width=2)
     highs = [float(row["high"]) for row in bars]
     lows = [float(row["low"]) for row in bars]
     closes = [float(row["close"]) for row in bars]
+    volumes = [float(row.get("volume") or 0) for row in bars]
+    middle, upper, lower = _bollinger(closes)
     price_min, price_max = min(lows), max(highs)
+    band_values = [value for series in (upper, lower) for value in series if value is not None]
+    if band_values:
+        price_min = min(price_min, min(band_values))
+        price_max = max(price_max, max(band_values))
     span = max(price_max - price_min, 1e-9)
     left, top, right, bottom = chart
     step = (right - left - 30) / len(bars)
@@ -278,6 +386,26 @@ def render_entry_chart(
     entry_y = py(entry)
     draw.line((left + 8, entry_y, right - 8, entry_y), fill="#38BDF8", width=3)
     draw.text((right - 245, max(top + 8, entry_y - 30)), f"ENTRY {_money(entry)}", fill="#38BDF8", font=small)
+
+    def reference_line(value: Any, label: str, colour: str) -> None:
+        numeric = _number(value)
+        if numeric is None:
+            return
+        raw = float(numeric)
+        clipped = min(max(raw, price_min), price_max)
+        y_value = py(clipped)
+        for start in range(int(left + 8), int(right - 8), 18):
+            draw.line((start, y_value, min(start + 9, right - 8), y_value), fill=colour, width=2)
+        suffix = " ↑" if raw > price_max else " ↓" if raw < price_min else ""
+        draw.text(
+            (left + 14, max(top + 5, min(bottom - 28, y_value - 24))),
+            f"{label} {_money(raw)}{suffix}",
+            fill=colour,
+            font=small,
+        )
+
+    reference_line(factors.get("week52_high"), "52W HIGH", "#22C55E")
+    reference_line(factors.get("week52_low"), "52W LOW", "#EF4444")
     for index, row in enumerate(bars):
         x = left + 18 + step * (index + 0.5)
         opened, high, low, close = map(float, (row["open"], row["high"], row["low"], row["close"]))
@@ -285,6 +413,25 @@ def render_entry_chart(
         draw.line((x, py(high), x, py(low)), fill=colour, width=2)
         y1, y2 = sorted((py(opened), py(close)))
         draw.rectangle((x - candle_width / 2, y1, x + candle_width / 2, max(y1 + 2, y2)), fill=colour)
+    for values, colour, line_width in (
+        (upper, "#FACC15", 2),
+        (middle, "#94A3B8", 2),
+        (lower, "#FACC15", 2),
+    ):
+        points = _line_points(values, left, step, py)
+        if len(points) >= 2:
+            draw.line(points, fill=colour, width=line_width)
+    draw.text((left + 18, top + 12), "Candles · Bollinger 20,2", fill="#F8FAFC", font=small)
+
+    vl, vt, vr, vb = volume_box
+    maximum_volume = max(max(volumes), 1.0)
+    for index, (row, volume) in enumerate(zip(bars, volumes, strict=True)):
+        x = vl + 18 + step * (index + 0.5)
+        candle_colour = "#22C55E" if float(row["close"]) >= float(row["open"]) else "#EF4444"
+        y_value = vb - 14 - volume / maximum_volume * (vb - vt - 38)
+        draw.rectangle((x - candle_width / 2, y_value, x + candle_width / 2, vb - 14), fill=candle_colour)
+    draw.text((vl + 18, vt + 10), "VOLUME", fill="#94A3B8", font=small)
+
     rsi_values = _rsi(closes)
     rl, rt, rr, rb = rsi_box
 
@@ -294,17 +441,42 @@ def render_entry_chart(
     for level, colour in ((70, "#22C55E"), (50, "#FACC15"), (30, "#EF4444")):
         draw.line((rl + 8, ry(level), rr - 8, ry(level)), fill=colour, width=1)
         draw.text((rr - 42, ry(level) - 16), str(level), fill=colour, font=small)
-    points = [
-        (rl + 18 + step * (index + 0.5), ry(value))
-        for index, value in enumerate(rsi_values)
-        if value is not None
-    ]
+    points = _line_points(rsi_values, rl, step, ry)
     if len(points) >= 2:
         draw.line(points, fill="#A78BFA", width=4)
     draw.text((rl + 18, rt + 12), "RSI 14", fill="#C4B5FD", font=small)
+
+    macd_values, signal_values, histogram = _macd(closes)
+    ml, mt, mr, mb = macd_box
+    macd_numeric = [
+        abs(value)
+        for series in (macd_values, signal_values, histogram)
+        for value in series
+        if value is not None
+    ]
+    macd_span = max(macd_numeric, default=1.0)
+
+    def my(value: float) -> float:
+        return (mt + mb) / 2 - value / macd_span * (mb - mt - 42) / 2
+
+    zero_y = my(0)
+    draw.line((ml + 8, zero_y, mr - 8, zero_y), fill="#475569", width=1)
+    for index, value in enumerate(histogram):
+        if value is None:
+            continue
+        x = ml + 18 + step * (index + 0.5)
+        draw.rectangle(
+            (x - candle_width / 2, min(zero_y, my(value)), x + candle_width / 2, max(zero_y, my(value))),
+            fill="#22C55E" if value >= 0 else "#EF4444",
+        )
+    for values, colour in ((macd_values, "#38BDF8"), (signal_values, "#F59E0B")):
+        points = _line_points(values, ml, step, my)
+        if len(points) >= 2:
+            draw.line(points, fill=colour, width=3)
+    draw.text((ml + 18, mt + 12), "MACD 12,26,9", fill="#F8FAFC", font=small)
     draw.text(
-        (58, 1025),
-        "PAPER TRADE · Intraday candles through entry · Blue line marks simulated fill",
+        (58, 1300),
+        "PAPER ENTRY · Intraday evidence through fill · 52W references are clipped when outside the visible range",
         fill="#94A3B8",
         font=small,
     )
@@ -343,6 +515,57 @@ def load_entry_evidence(db: Any, event: dict[str, Any]) -> tuple[dict[str, Any],
                 LIMIT 1""",
             (symbol, symbol, symbol, symbol, symbol),
         ).fetchone()
+        profile = conn.execute(
+            """SELECT company_name,sector,market_cap_bucket
+                 FROM public.instrument_profiles
+                WHERE upper(symbol)=upper(%s)
+                LIMIT 1""",
+            (symbol,),
+        ).fetchone()
+        range_52w = conn.execute(
+            """WITH yahoo AS (
+                   SELECT high_price * CASE WHEN close_price<>0 THEN adj_close/close_price ELSE 1 END AS high,
+                          low_price * CASE WHEN close_price<>0 THEN adj_close/close_price ELSE 1 END AS low
+                     FROM strategy_eval.stock_daily_regime
+                    WHERE upper(regexp_replace(yahoo_symbol,'\\.NS$',''))=upper(%s)
+                      AND trade_date BETWEEN
+                          ((%s::timestamptz AT TIME ZONE 'Asia/Kolkata')::date - 370)
+                          AND (%s::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
+                 ), live AS (
+                   SELECT high,low FROM public.bars_1d
+                    WHERE exchange='NSE' AND symbol_token=%s
+                      AND trade_date BETWEEN
+                          ((%s::timestamptz AT TIME ZONE 'Asia/Kolkata')::date - 370)
+                          AND (%s::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
+                 ), combined AS (
+                   SELECT high,low FROM yahoo UNION ALL SELECT high,low FROM live
+                 )
+                 SELECT max(high)::text AS week52_high,min(low)::text AS week52_low
+                   FROM combined""",
+            (
+                symbol,
+                occurred,
+                occurred,
+                instrument["symbol_token"] if instrument else None,
+                occurred,
+                occurred,
+            ),
+        ).fetchone()
+        recommendations = conn.execute(
+            """SELECT report_date,
+                      coalesce(nullif(broker_name,''),nullif(research_house,''),'Research house') AS house,
+                      recommendation,target_price::text,upside_pct::text
+                 FROM research.trendlyne_reports
+                WHERE upper(nse_symbol)=upper(%s)
+                  AND lower(coalesce(recommendation,'')) LIKE '%%buy%%'
+                  AND report_date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                  AND report_date::date BETWEEN
+                      ((%s::timestamptz AT TIME ZONE 'Asia/Kolkata')::date - 29)
+                      AND (%s::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
+                ORDER BY report_date::date DESC,coalesce(broker_name,research_house),target_price DESC NULLS LAST
+                LIMIT 3""",
+            (symbol, occurred, occurred),
+        ).fetchall()
         bars = (
             conn.execute(
                 """SELECT b.ts,b.open::text,b.high::text,b.low::text,b.close::text,b.volume
@@ -355,7 +578,19 @@ def load_entry_evidence(db: Any, event: dict[str, Any]) -> tuple[dict[str, Any],
             if instrument
             else []
         )
-    return (dict(factor) if factor else {}), [dict(row) for row in reversed(bars)]
+    evidence = dict(factor) if factor else {}
+    if profile:
+        evidence.update(dict(profile))
+    if range_52w:
+        evidence.update(dict(range_52w))
+    evidence["trendlyne_buy_recommendations"] = [dict(row) for row in recommendations]
+    entry = _number(data.get("fill_price") or data.get("entry_price"))
+    high = _number(evidence.get("week52_high"))
+    low = _number(evidence.get("week52_low"))
+    if entry is not None and high is not None and low is not None and high > low:
+        position = max(Decimal("0"), min(Decimal("100"), (entry - low) * 100 / (high - low)))
+        evidence["week52_position_pct"] = str(position)
+    return evidence, [dict(row) for row in reversed(bars)]
 
 
 def build_gateway_payload(

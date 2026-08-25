@@ -3019,3 +3019,17 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Paper entries render a 1080 x 1080 PNG from time-valid NSE one-minute candles with an entry line,
   RSI panel and O/X factor evidence. Media lookup/rendering is fail-soft, so text delivery remains.
 - Gateway and rollback contract: `services/paper_trading/docs/whatsapp-gateway-v4.md`.
+
+## 2026-08-25 — WhatsApp Paper evidence V5
+
+- Paper entry copy now bolds company name and symbol, rounds O/X/RSI to two decimals, adds
+  time-valid 52-week high/low/range position and summarises up to three Trendlyne BUY reports from
+  the prior 30 days. An explicit no-suggestion state is shown when no BUY exists.
+- Removed the repetitive simulation/no-live-order footer and MFE/MAE from WhatsApp messages; the
+  `PAPER ENTRY`, `PAPER TARGET` and `PAPER EXIT` headings remain explicit.
+- Entry PNG is now 1080 x 1350 with candlesticks, Bollinger 20/2, entry and clipped 52-week
+  reference lines, volume, RSI 14 and MACD 12/26/9.
+- The existing 16:00 Paper summary now includes open, opened/closed, intraday hit/missed, swing
+  hit/open, total target hits and net realised P&L. Existing 09:16 NIFTY and 09:20 movers jobs were
+  verified delivered and retained; O/X market-status formatting now uses two decimals.
+- Trendlyne continues its durable new-report-only delivery and now bolds company plus symbol.

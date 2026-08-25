@@ -90,10 +90,10 @@ class WebhookWorker:
             assert decision is not None
             factors: dict[str, Any] = {}
             chart = None
-            if decision and decision.kind == "ENTRY":
+            if (event_payload.get("data") or {}).get("symbol"):
                 try:
                     factors, bars = load_entry_evidence(self.db, event_payload)
-                    if self.settings.WA_ENTRY_CHART_ENABLED:
+                    if decision.kind == "ENTRY" and self.settings.WA_ENTRY_CHART_ENABLED:
                         data = event_payload.get("data") or {}
                         chart = render_entry_chart(
                             bars,
@@ -142,7 +142,10 @@ class WebhookWorker:
                     url,
                     content=body,
                     headers=headers,
-                    auth=(self.settings.N8N_BASIC_USERNAME, self.settings.N8N_BASIC_PASSWORD.get_secret_value()),
+                    auth=(
+                        self.settings.N8N_BASIC_USERNAME,
+                        self.settings.N8N_BASIC_PASSWORD.get_secret_value(),
+                    ),
                 )
             status = response.status_code
             excerpt = response.text[:1000]

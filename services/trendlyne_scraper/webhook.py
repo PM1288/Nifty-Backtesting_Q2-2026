@@ -49,13 +49,15 @@ def build_message(rows: list[dict]) -> str:
     for row in rows[:20]:
         item = row["payload"]
         symbol = str(item.get("nse_symbol") or item.get("stock_name") or "UNKNOWN").upper()
+        company_name = str(item.get("stock_name") or item.get("company_name") or symbol).strip()
+        identity = f"{company_name} ({symbol})" if company_name.upper() != symbol else symbol
         recommendation = str(item.get("recommendation") or item.get("report_type") or "REPORT").upper()
         details = [str(item.get("report_date") or "date unavailable"), str(item.get("broker_name") or "broker unavailable")]
         if _money(item.get("target_price")):
             details.append(f"Target {_money(item.get('target_price'))}")
         if _percent(item.get("upside_pct")):
             details.append(f"Upside {_percent(item.get('upside_pct'))}")
-        lines.append(f"*{symbol}* · {recommendation}")
+        lines.append(f"*{identity}* · {recommendation}")
         lines.append(" · ".join(details))
     if len(rows) > 20:
         lines.append("")

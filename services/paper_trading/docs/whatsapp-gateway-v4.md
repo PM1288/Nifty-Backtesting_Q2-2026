@@ -1,4 +1,4 @@
-# Paper Trading WhatsApp Gateway V4
+# Paper Trading WhatsApp Gateway V5
 
 ## Outcome
 
@@ -46,19 +46,46 @@ per-tick observations, horizon updates and recovery chatter remain in the
 durable event ledger but are marked `SUPPRESSED` in the delivery audit. A
 suppressed event is not retried.
 
-## Entry evidence image
+## Entry message and evidence image
+
+The `PAPER ENTRY` title is the environment disclosure; the message does not add
+a repetitive “simulation only / no live order” footer. Company name and symbol
+are bold and O factor, X factor, RSI and 52-week position use two decimals.
 
 On entry, the worker reads only evidence available at the event time:
 
 - NSE one-minute OHLCV bars through the simulated fill;
 - O factor and X factor from the latest eligible OIIS candidate snapshot;
 - stored RSI 14 and ATR 14; and
-- fill price, side, quantity and strategy from the paper event.
+- fill price, side, quantity and strategy from the paper event;
+- company identity from `public.instrument_profiles`;
+- adjusted Yahoo daily history plus newer SmartAPI daily bars for the 52-week
+  high, low and range position; and
+- up to three BUY recommendations whose Trendlyne report date is in the
+  previous 30 days and not after the entry date.
 
-It renders a 1080 x 1080 PNG with candlesticks, a blue simulated-entry line,
-RSI panel and factor labels. If evidence lookup or image rendering fails, the
-compact text alert still sends; notification enhancement never blocks the
-paper ledger.
+When no recent Trendlyne BUY exists, the message says so explicitly. MFE and MAE
+are intentionally absent from WhatsApp lifecycle messages; those analytical
+paths remain in the Paper Evidence Workbench.
+
+The worker renders a 1080 x 1350 PNG with candlesticks, Bollinger Bands 20/2, a
+blue entry line, 52-week high/low references, volume, RSI 14 and MACD 12/26/9.
+References outside the intraday price window are clipped to its boundary and
+marked with an arrow so they do not flatten the candles. If evidence lookup or
+image rendering fails, the compact text alert still sends; notification
+enhancement never blocks the paper ledger.
+
+## Scheduled messages
+
+- `09:16:05 IST`: NIFTY 50 level, point/percentage change, opening gap, move
+  from open and session range. Owned by `market-status-scheduler`.
+- `09:20:05 IST`: top NIFTY 50 gainers and losers with price and percentage
+  change against the previous official close. Requires 50/50 fresh quotes.
+- `16:00 IST`: Paper daily summary with open trades, trades opened/closed,
+  intraday hits/misses, swing hits/open observations, total target hits and net
+  realised P&L.
+- `07:00 IST` weekdays: the Trendlyne incremental scraper posts only newly
+  inserted report IDs. Existing reports are deduplicated and retained.
 
 ## Gateway contract
 

@@ -709,14 +709,17 @@ export type RollingWindowDashboard = {
   methodology: Record<string, string>;
   summary: Record<string, any> & { targets: Array<Record<string, any>> };
   rows: Array<Record<string, any>>;
+  historyLimited?: boolean;
+  historyLimit?: number | null;
   evaluations: Array<Record<string, any>>;
   warnings: string[];
 };
 
-export function fetchRollingWindowDashboard(year?: string, month?: string) {
+export function fetchRollingWindowDashboard(year?: string, month?: string, historyLimit?: number) {
   const params = new URLSearchParams();
   if (year) params.set("year", year);
   if (month) params.set("month", month);
+  if (historyLimit) params.set("historyLimit", String(historyLimit));
   const suffix = params.size ? `?${params.toString()}` : "";
   return getJson<RollingWindowDashboard>(`/v1/rolling-strategy/dashboard${suffix}`);
 }

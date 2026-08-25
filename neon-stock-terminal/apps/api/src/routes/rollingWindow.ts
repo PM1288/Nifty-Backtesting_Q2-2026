@@ -18,8 +18,13 @@ export function registerRollingWindow(app: Express, prisma: PrismaClient) {
   app.get("/v1/rolling-strategy/dashboard", async (req, res) => {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
+    const historyLimitText = clean(req.query.historyLimit, 4);
     if (year && !YEAR.test(year)) return void res.status(400).json({ error: "year must be YYYY" });
     if (month && !MONTH.test(month)) return void res.status(400).json({ error: "month must be MM" });
+    if (historyLimitText && (!/^\d+$/.test(historyLimitText) || Number(historyLimitText) < 1 || Number(historyLimitText) > 5000)) {
+      return void res.status(400).json({ error: "historyLimit must be between 1 and 5000" });
+    }
+    const historyLimit = historyLimitText ? Number(historyLimitText) : null;
 
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT c.*,
@@ -31,7 +36,8 @@ export function registerRollingWindow(app: Express, prisma: PrismaClient) {
         AND ($2='' OR extract(year FROM c.signal_date)::int=$2::int)
         AND ($3='' OR extract(month FROM c.signal_date)::int=$3::int)
       ORDER BY c.signal_date DESC,c.symbol
-    `, VERSION, year, month);
+      LIMIT $4::int
+    `, VERSION, year, month, historyLimit);
     const evaluations = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT e.*,p.company_name,p.sector,p.market_cap_bucket,p.is_nifty_50,p.is_nifty_100,
         p.is_nifty_200,p.is_nifty_largemidcap_250,p.is_nifty_500,p.is_nse_fno
@@ -88,6 +94,8 @@ export function registerRollingWindow(app: Express, prisma: PrismaClient) {
         },
       },
       rows,
+      historyLimited: historyLimit != null,
+      historyLimit,
       evaluations,
       warnings: [
         "Current index/F&O membership is applied retrospectively where point-in-time membership is unavailable.",

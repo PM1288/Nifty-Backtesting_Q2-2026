@@ -23,6 +23,7 @@ The shared causes of blank/slow Strategy and Paper Trading pages were removed an
 - Monthly Strategy loads its four sources sequentially and renders progressively.
 - Added `includeEvaluations=false` to `/v1/rolling-monthly/absolute-months`; the default selected view uses it. The complete rejection ledger loads only when the user asks for rejected/all entries.
 - Limited the rendered Strategy ledger to 250 rows at a time with a visible `Load 250 more` control. Filtering, counts, and CSV export continue to use the complete loaded population.
+- Rolling Strategy now requests the newest 250 opportunities first and paints them immediately, then hydrates the complete 5,078-row historical ledger in the background. Omitting `historyLimit` retains the full API contract, and export waits for complete hydration.
 - Applied PostgreSQL runtime limits of 2 CPU, 2 GiB memory, and 80 connections. The persistent volume and tables were not replaced.
 
 ## Validation evidence
@@ -34,6 +35,7 @@ Authenticated production API timings after deployment:
 | Header market state | full overview 15–44 s under load | 0.10 s |
 | Paper Trading | 29.9 s under contention | 3.25 s |
 | Absolute Monthly initial selected view | 18.6 s / 20.2 MB | 2.05 s / 3.1 MB |
+| Rolling Strategy first useful ledger | 15.2 s before render limiting | newest 250 rows progressively, then full history in background |
 | Health | up to 3.95 s | 0.05–0.10 s |
 
 Authenticated Playwright at 1440×900 confirmed:

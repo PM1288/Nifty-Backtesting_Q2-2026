@@ -2991,6 +2991,7 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Disabled the in-process analytical snapshot scheduler in production; snapshot-backed routes retain on-demand stale-while-revalidate behavior.
 - Monthly Strategy now renders its four sources progressively, requests the compact selected-entry Absolute Monthly payload first, and loads the all-stock rejection ledger only when requested.
 - Strategy ledgers render 250 rows at a time while filtering, counts and CSV export continue to operate on the complete loaded population.
+- Rolling Strategy progressively paints the newest 250 opportunities before hydrating the complete 5,078-row historical ledger; the complete API remains available by omitting `historyLimit`, and export waits for full hydration.
 - Replaced the full-overview per-underlying lateral instrument scan with a normalized instrument-universe pass and profile join.
 - Restored PostgreSQL to the canonical 2 CPU / 2 GiB / 80-connection runtime profile without replacing the persistent volume. Verified 57 durable paper trade groups after recreation.
 - Measured authenticated production improvements: Paper Trading 29.9 s under contention to 3.25 s; Absolute Monthly 18.6 s / 20.2 MB to 2.05 s / 3.1 MB; health up to 3.95 s to 0.05–0.10 s.

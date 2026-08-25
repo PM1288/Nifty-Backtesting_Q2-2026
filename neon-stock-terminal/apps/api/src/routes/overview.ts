@@ -158,6 +158,23 @@ type StackIndexRow = {
 
 type HeaderIndexRow = StackIndexRow;
 
+export type HeaderStockTickerRow = {
+  symbol: string;
+  last: number | null;
+  change_pct: number | null;
+  timestamp: Date | string | null;
+};
+
+export function buildHeaderStockTickerTape(rows: HeaderStockTickerRow[]): QuoteLite[] {
+  return rows
+    .filter((row) => !["NIFTY50", "BANKNIFTY", "INDIAVIX"].includes(row.symbol.toUpperCase()))
+    .map((row) => ({
+      symbol: row.symbol,
+      last: toNumber(row.last ?? 0),
+      changePct: toNumber(row.change_pct ?? 0)
+    }));
+}
+
 type FnoSummaryRow = {
   contract_count: number | string;
   underlying_count: number | string;
@@ -399,12 +416,15 @@ function marketStatusIst(now = new Date()): { isOpen: boolean; label: "OPEN" | "
  * horizon observations and derivatives depth.  Loading that payload from the
  * shell made every route compete for the same expensive query.
  *
- * This deliberately small query reads only the three index rows required by
- * the permanent header.  RSI is calculated from at most 15 daily bars per
- * index so the existing market background remains data-driven.
+ * These deliberately small queries read the three index rows required by the
+ * permanent header plus 30 liquid stock movers for the ticker rail. RSI is
+ * calculated from at most 15 daily bars per index so the existing market
+ * background remains data-driven. The ticker query reads current
+ * instrument_state only; it does not restore the full overview workload.
  */
 async function getHeaderMarketSummary(prisma: PrismaClient) {
-  const rows = await prisma.$queryRaw<HeaderIndexRow[]>(Prisma.sql`
+  const [rows, stockRows] = await Promise.all([
+    prisma.$queryRaw<HeaderIndexRow[]>(Prisma.sql`
     WITH index_targets(symbol_token, symbol, name) AS (
       VALUES
         ('99926000', 'NIFTY50', 'NIFTY 50'),
@@ -448,8 +468,39 @@ async function getHeaderMarketSummary(prisma: PrismaClient) {
     LEFT JOIN instrument_state st
       ON st.exchange = 'NSE' AND st.symbol_token = t.symbol_token
     LEFT JOIN rsi_points rp ON rp.symbol_token = t.symbol_token
-  `);
-  const asOf = rows
+  `),
+    prisma.$queryRaw<HeaderStockTickerRow[]>(Prisma.sql`
+      WITH stock_quotes AS (
+        SELECT DISTINCT ON (ip.symbol)
+          ip.symbol,
+          st.last_price::double precision AS last,
+          st.percent_change::double precision AS change_pct,
+          st.last_seen_ts AS timestamp
+        FROM instrument_profiles ip
+        CROSS JOIN LATERAL (
+          SELECT i.symbol_token
+          FROM instruments i
+          WHERE i.exchange = 'NSE'
+            AND i.tradingsymbol IN (ip.symbol, ip.symbol || '-EQ')
+          ORDER BY CASE WHEN i.tradingsymbol = ip.symbol || '-EQ' THEN 0 ELSE 1 END,
+                   i.updated_at DESC
+          LIMIT 1
+        ) equity
+        JOIN instrument_state st
+          ON st.exchange = 'NSE' AND st.symbol_token = equity.symbol_token
+        WHERE (ip.is_nifty_500 OR ip.is_nse_fno)
+          AND st.last_price IS NOT NULL
+          AND st.last_price > 0
+          AND st.percent_change IS NOT NULL
+        ORDER BY ip.symbol, st.last_seen_ts DESC
+      )
+      SELECT symbol,last,change_pct,timestamp
+      FROM stock_quotes
+      ORDER BY ABS(change_pct) DESC, symbol
+      LIMIT 30
+    `)
+  ]);
+  const asOf = [...rows, ...stockRows]
     .map((row) => row.timestamp)
     .filter((value): value is Date | string => Boolean(value))
     .map((value) => new Date(value).toISOString())
@@ -463,7 +514,7 @@ async function getHeaderMarketSummary(prisma: PrismaClient) {
     asOf,
     market: marketStatusIst(new Date()),
     indices: { nifty50, bankNifty, indiaVix },
-    tickerTape: [nifty50, bankNifty, indiaVix].map(({ symbol, last, changePct }) => ({ symbol, last, changePct }))
+    tickerTape: buildHeaderStockTickerTape(stockRows)
   };
 }
 

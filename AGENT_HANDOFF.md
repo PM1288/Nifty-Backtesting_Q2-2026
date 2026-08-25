@@ -3065,3 +3065,16 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   `+₹3.27/share` and `+₹7,939.45` gross. Both used target price rather than the higher observed price.
 - Validation: Paper 24 passed / 6 database-only skipped, portable notification policy 16 passed,
   Ruff and mypy passed, and the canonical repository gate passed.
+
+## 2026-08-25 — Permanent header stock ticker restoration
+
+- Root cause: the lightweight `/v1/overview/header` performance endpoint returned only NIFTY 50,
+  BANK NIFTY and INDIA VIX as `tickerTape`, replacing the former stock tape with index rows.
+- Restored a stock-only ticker rail containing the 30 largest absolute current movers from the
+  profiled NIFTY-500/F&O equity universe. Index quotes remain in the dedicated header context and
+  are no longer repeated as ticker items.
+- The focused stock query reads `instrument_profiles`, indexed NSE cash instruments and
+  `instrument_state`; production `EXPLAIN ANALYZE` measured 32.687 ms cold for 268 eligible stocks
+  and 30 returned rows. The expensive full overview query is not restored to the shared shell.
+- Validation: API 123/123 including a dedicated stock-only ticker contract, web 45/45, both
+  typechecks and production builds passed.

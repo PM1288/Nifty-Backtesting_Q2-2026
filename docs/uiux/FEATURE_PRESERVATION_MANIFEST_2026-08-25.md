@@ -12,7 +12,7 @@ This manifest prevents additive dashboard work from silently removing shared she
 | Latest five paper events | `GET /v1/paper/notifications?limit=5` | Authenticated response, durable `paper_trading.trade_events` source, entry/target events only |
 | Automatic event popup | notifier polling and durable event-ID deduplication | A newly intercepted browser response opens the panel; initial history stays silent |
 | Native voice mode | header `Muted`/`Speak` switch and browser `speechSynthesis` | Defaults muted, persists locally, speaks entry/target conditions, mute cancels queued speech |
-| Permanent NIFTY ticker | `HeaderTicker.tsx` and `AppShell.tsx` | Visible on every authenticated workspace and rigidly attached to the header |
+| Permanent stock ticker and NIFTY quote | `HeaderTicker.tsx`, `AppShell.tsx`, and `GET /v1/overview/header` | Dedicated NIFTY context stays visible while the rigid header ticker rail shows 30 current NIFTY-500/F&O stock movers, not index-only rows |
 | Strategy destinations | `workspaceRoutes.ts`, route catalogue and responsive navigation | Trendlyne Summary, OIIS Lab, Monthly Strategy, Rolling Strategy, Long Options and NIFTY Options remain reachable |
 | Paper evidence workbench | `/paper-trading` route and `PaperTradingCommandCenter.tsx` | Existing evidence, filters, detail inspector and market-book fields remain present |
 | Paper WhatsApp lifecycle alerts | `paper-webhook-worker`, `papertrade/whatsapp.py` and PostgreSQL outbox | Configurable chat ID; entry/target/exit events are formatted, low-noise and idempotent; entries add company/Trendlyne/52W context plus a fail-soft candles/Bollinger/volume/RSI/MACD PNG |

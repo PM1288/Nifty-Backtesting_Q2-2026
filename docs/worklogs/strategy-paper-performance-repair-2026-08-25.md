@@ -58,3 +58,32 @@ docker compose -p trading-stack-novius2 build n50-dashboard  PASS
 The dashboard is `trading-stack-novius2-n50-dashboard-1`; the database is `trading-stack-novius2-postgres-1`. Both were healthy with zero restarts after replacement.
 
 Rollback requires reverting this commit, rebuilding/recreating `n50-dashboard`, restoring the previous PostgreSQL resource values, and recreating `postgres` with the same named volume. No data migration or data rollback is required.
+
+## Three-day feature-preservation audit
+
+After deployment, the canonical preservation manifest and recent feature-specific Playwright suites were run against the public authenticated application. The following capabilities were confirmed:
+
+| Capability | Evidence |
+|---|---:|
+| Canonical shell, header ticker, strategy destinations and font mode | 8/8 |
+| Paper entry/target popup, latest-five history, sound and browser speech | 17/17 |
+| Monthly and rolling selected/rejected/incomplete ledgers and reason inspector | 12/12 |
+| Paper Trading Evidence Workbench reconciliation and responsive layouts | PASS at six viewports |
+| Paper direction and captured top-three bid/ask market-book evidence | PASS, 41/41 rows |
+| Fixed-capital and swing-only recycling scenarios | PASS |
+| Paper parallel-evidence plot and downloadable data | PASS, 12 axes, minimum tick 1 |
+| Home stock symbol/name/logo and pixel interaction | 6/6 |
+| Native cursor plus target cursor overlay | 6/6 |
+| Trendlyne Summary | 16/16 |
+| Long Options | 25/25 |
+| NIFTY weekly/monthly Options | 53/53 |
+| Command palette, shortcuts and responsive workspace navigation | 25/25 and 118/118 |
+
+Four regression scripts had stale harness assumptions rather than missing product features and were corrected:
+
+- wait for on-demand rejection reasons after selecting rejected/all monthly rows;
+- wait for lazy command-palette stock indexing;
+- accept W0=M0 on the last Tuesday when the same expiry is correctly marked as both weekly and monthly;
+- ignore the external Cloudflare analytics beacon in the Trendlyne request-cleanliness assertion.
+
+The final production log scan after deployment contained no HTTP 4xx/5xx application responses, the dashboard remained healthy with zero restarts, and its running image matched the newly built image.

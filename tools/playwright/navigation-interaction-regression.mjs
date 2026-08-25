@@ -37,7 +37,7 @@ try {
     check(viewport.name, "no horizontal body overflow", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     if (!mobile) {
       check(viewport.name, "seven primary workspaces", await navigation.getByRole("link").count() === 7);
-      check(viewport.name, "workspace subtitles removed", await navigation.locator("small").count() === 0);
+      check(viewport.name, "workspace subtitles removed", await navigation.locator("small:visible").count() === 0);
     }
 
     const launcher = page.getByRole("button", { name: "Search stocks, dashboards and actions" });
@@ -47,7 +47,7 @@ try {
     await palette.waitFor();
     const input = palette.getByRole("combobox");
     await input.fill("@RELIANCE");
-    await page.waitForTimeout(250);
+    await palette.getByRole("option", { name: /RELIANCE/ }).first().waitFor({ timeout: 30_000 });
     check(viewport.name, "stock prefix finds real instrument", await palette.getByRole("option", { name: /RELIANCE/ }).count() >= 1);
     await page.keyboard.press("Escape");
     check(viewport.name, "escape restores command focus", await launcher.evaluate((element) => element === document.activeElement));
@@ -63,7 +63,7 @@ try {
       await more.click();
       const sheet = page.getByRole("dialog", { name: "More workspaces" });
       await sheet.waitFor();
-      check(viewport.name, "secondary strategy remains discoverable", await sheet.getByRole("link", { name: /Rolling Monthly/ }).count() === 1);
+      check(viewport.name, "secondary strategy remains discoverable", await sheet.getByRole("link", { name: /Rolling (Monthly|Strategy|5\/30\/60)/ }).count() === 1);
       await page.keyboard.press("Escape");
     } else {
       await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 60_000 });

@@ -40,6 +40,10 @@ try {
 
   await page.getByLabel("Selection").selectOption("REJECTED");
   await page.getByLabel("Entry method").selectOption("MONTHLY_CLOSURE");
+  await page.waitForFunction(() => {
+    const select = Array.from(document.querySelectorAll("label")).find((label) => label.textContent?.includes("Failure reason"))?.querySelector("select");
+    return Boolean(select && select.options.length > 1);
+  }, undefined, { timeout: 120_000 });
   check("absolute reason filter", await page.getByLabel("Failure reason").locator("option").count() > 1, "reason options missing");
   await page.locator("tbody tr").first().waitFor();
   check("absolute rejected rows visible", await page.locator("tbody tr").count() > 0);

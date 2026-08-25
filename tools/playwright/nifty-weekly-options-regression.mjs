@@ -42,7 +42,16 @@ try {
     check(viewport.name, "NIFTY options summary API", payloads.nifty.status === 200, `status=${payloads.nifty.status}`);
     check(viewport.name, "independent NIFTY identity", nifty.strategyFamily === "NIFTY_WEEKLY_MONTHLY_LONG_OPTIONS", String(nifty.strategyFamily));
     check(viewport.name, "shadow safety boundary", nifty.environment === "SHADOW_NO_TRADE" && nifty.liveOrdersEnabled === false && nifty.paperSubmissionEnabled === false, JSON.stringify(nifty.safety));
-    check(viewport.name, "W0 and M0 are independently resolved", nifty.expiryRegistry?.W0 && nifty.expiryRegistry?.M0 && nifty.expiryRegistry.W0 !== nifty.expiryRegistry.M0, JSON.stringify(nifty.expiryRegistry));
+    check(
+      viewport.name,
+      "W0 and M0 are independently resolved",
+      Boolean(
+        nifty.expiryRegistry?.W0 &&
+        nifty.expiryRegistry?.M0 &&
+        (nifty.expiryRegistry.W0 !== nifty.expiryRegistry.M0 || nifty.expiryRegistry.alsoNearestWeekly === true)
+      ),
+      JSON.stringify(nifty.expiryRegistry),
+    );
     for (const [role, surface] of [["W0", nifty.weekly], ["M0", nifty.monthly]]) {
       check(viewport.name, `${role} chain captured`, surface?.snapshot?.expiryDate && surface.snapshot.spot > 0, JSON.stringify(surface?.snapshot));
       check(viewport.name, `${role} effective lot`, surface?.snapshot?.lotSize === 65, `lot=${surface?.snapshot?.lotSize}`);

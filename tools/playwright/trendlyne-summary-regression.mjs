@@ -26,7 +26,7 @@ try {
     if (message.type() === "error" && !/clarity\.ms|googletagmanager/i.test(message.text())) consoleErrors.push(message.text());
   });
   page.on("requestfailed", (request) => {
-    if (!/clarity\.ms|analytics\.google|google-analytics|googletagmanager/i.test(request.url())) failedRequests.push(`${request.url()} ${request.failure()?.errorText}`);
+    if (!/clarity\.ms|cloudflareinsights\.com|analytics\.google|google-analytics|googletagmanager/i.test(request.url())) failedRequests.push(`${request.url()} ${request.failure()?.errorText}`);
   });
 
   await page.goto(`${baseUrl}/strategy/trendlyne-summary`, { waitUntil: "domcontentloaded", timeout: 60_000 });

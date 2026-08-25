@@ -16,7 +16,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       WA_GATEWAY_URL: ${WA_GATEWAY_URL:-https://wweb.noviusrailtech.com/webhook/send}
       WA_GATEWAY_API_TOKEN_FILE: /run/secrets/whatsapp_gateway_api_token
-      WA_MYSELF_CHAT_ID: ${WA_MYSELF_CHAT_ID:-120363425559229373@g.us}
+      WA_MYSELF_CHAT_ID: ${WA_MYSELF_CHAT_ID:-120363428118961288@g.us}
     depends_on:
       postgres:
         condition: service_healthy

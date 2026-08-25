@@ -3048,3 +3048,13 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   parsed, and the canonical source gate passed. Today's 09:16 market-open and 09:20 movers events
   were independently confirmed `SENT`; the 16:00 IST Paper scheduler is enabled in the deployed
   container.
+
+## 2026-08-25 — WhatsApp target-hit timing and profit V6
+
+- Target-hit alerts now show target lifecycle, elapsed time, direction-normalised profit per share,
+  and gross target profit. Intraday elapsed time uses `HH:MM`; swing elapsed time uses rounded whole
+  calendar days.
+- Profit is calculated from the configured target price rather than the later observed bar price,
+  preventing a gap or overshoot from overstating the target milestone. Gross profit uses the durable
+  paper quantity. Long and short trades have separate tested direction handling.
+- MFE and MAE remain excluded from both the direct WhatsApp adapter and portable n8n formatter.

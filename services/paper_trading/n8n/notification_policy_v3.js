@@ -92,6 +92,19 @@ function heldDuration(openedAt, closedAt) {
   return hours ? `${hours}h${remainder ? ` ${remainder}m` : ''}` : `${minutes}m`;
 }
 
+function targetDuration(openedAt, hitAt, lifecycle) {
+  const opened = new Date(openedAt);
+  const hit = new Date(hitAt);
+  if (Number.isNaN(opened.getTime()) || Number.isNaN(hit.getTime()) || hit < opened) return null;
+  const elapsedMs = hit - opened;
+  if (String(lifecycle || '').toUpperCase() === 'SWING') {
+    const days = Math.round(elapsedMs / 86400000);
+    return `${days} ${days === 1 ? 'day' : 'days'}`;
+  }
+  const minutes = Math.floor(elapsedMs / 60000);
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
 function present(values, separator = ' · ') {
   return values.filter((value) => value !== undefined && value !== null && value !== '').join(separator);
 }
@@ -363,10 +376,28 @@ function formatTradeEvent(ctx, kind) {
     if (identity(ctx)) lines.push(identity(ctx));
     if (levels.length) lines.push(`Reached ${levels.join(' · ')}`);
     const firstTrack = object(tracks[0]);
+    const targetId = String(first(firstTrack.target_id, firstTrack.target_code, data.target_id, data.target_code, '')).toUpperCase();
+    const lifecycle = String(first(firstTrack.lifecycle, data.lifecycle, targetId.startsWith('SWING') ? 'SWING' : 'INTRADAY')).toUpperCase();
+    const targetEntry = number(first(data.entry_price, trade.entry_price));
+    const targetPrice = number(first(firstTrack.target_price, data.target_price));
+    const targetUnits = number(first(data.quantity, trade.quantity));
+    const isShort = ['SELL', 'SHORT'].includes(String(ctx.side || '').toUpperCase());
+    const profitPerShare = targetEntry !== null && targetPrice !== null
+      ? (isShort ? targetEntry - targetPrice : targetPrice - targetEntry) : null;
+    const grossProfit = profitPerShare !== null && targetUnits !== null ? profitPerShare * targetUnits : null;
     lines.push(present([
       money(first(data.entry_price, trade.entry_price), { currency: ctx.currency }) ? `Entry ${money(first(data.entry_price, trade.entry_price), { currency: ctx.currency })}` : null,
       money(first(firstTrack.target_price, data.target_price), { currency: ctx.currency }) ? `Target ${money(first(firstTrack.target_price, data.target_price), { currency: ctx.currency })}` : null,
       money(first(firstTrack.observed_price, data.current_price), { currency: ctx.currency }) ? `Observed ${money(first(firstTrack.observed_price, data.current_price), { currency: ctx.currency })}` : null,
+    ]));
+    lines.push(present([
+      `Type ${titleCase(lifecycle)}`,
+      targetDuration(first(data.opened_at, trade.opened_at), first(firstTrack.hit_at, data.hit_at, ctx.occurredAt), lifecycle)
+        ? `Time to hit ${targetDuration(first(data.opened_at, trade.opened_at), first(firstTrack.hit_at, data.hit_at, ctx.occurredAt), lifecycle)}` : null,
+    ]));
+    lines.push(present([
+      money(profitPerShare, { signed: true, currency: ctx.currency }) ? `Profit/share ${money(profitPerShare, { signed: true, currency: ctx.currency })}` : null,
+      money(grossProfit, { signed: true, currency: ctx.currency }) ? `Gross profit ${money(grossProfit, { signed: true, currency: ctx.currency })}` : null,
     ]));
     if (data.actual_execution_position_status) {
       lines.push(`Execution ${String(data.actual_execution_position_status).toUpperCase()}`);

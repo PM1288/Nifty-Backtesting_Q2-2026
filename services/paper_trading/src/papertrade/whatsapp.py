@@ -91,6 +91,50 @@ def _when(value: Any) -> str:
     return parsed.strftime("%d %b %Y · %H:%M:%S IST")
 
 
+def _parsed_time(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _target_lifecycle(target: dict[str, Any], data: dict[str, Any]) -> str:
+    explicit = _clean(target.get("lifecycle") or data.get("lifecycle"), 16).upper()
+    target_id = _clean(target.get("target_id") or target.get("target_code") or "", 40).upper()
+    return explicit or ("SWING" if target_id.startswith("SWING") else "INTRADAY")
+
+
+def _time_to_target(target: dict[str, Any], data: dict[str, Any], event_time: Any) -> str:
+    opened = _parsed_time(data.get("opened_at") or data.get("fill_time"))
+    hit = _parsed_time(target.get("hit_at") or data.get("hit_at") or event_time)
+    if opened is None or hit is None or hit < opened:
+        return "—"
+    elapsed_seconds = int((hit - opened).total_seconds())
+    if _target_lifecycle(target, data) == "SWING":
+        days = int(
+            (Decimal(elapsed_seconds) / Decimal(86400)).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
+        )
+        return f"{days} {'day' if days == 1 else 'days'}"
+    minutes = elapsed_seconds // 60
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
+
+def _target_profit(
+    target: dict[str, Any], data: dict[str, Any], side: str, quantity: Any
+) -> tuple[Decimal | None, Decimal | None]:
+    entry = _number(data.get("entry_price") or data.get("fill_price"))
+    target_price = _number(target.get("target_price") or data.get("target_price"))
+    units = _number(quantity)
+    if entry is None or target_price is None:
+        return None, None
+    per_share = entry - target_price if side == "SHORT" else target_price - entry
+    return per_share, per_share * units if units is not None else None
+
+
 def classify(event: dict[str, Any], settings: Any) -> DeliveryDecision:
     event_type = str(event.get("type") or "").lower()
     data = _data(event)
@@ -192,11 +236,17 @@ def render_message(
             else []
         )
         target = tracks[0] if tracks and isinstance(tracks[0], dict) else {}
+        lifecycle = _target_lifecycle(target, data)
+        profit_per_share, gross_profit = _target_profit(target, data, side, quantity)
         rows = [
+            ("Target type", lifecycle.title()),
             ("Entry", _money(data.get("entry_price"))),
             ("Target", _money(target.get("target_price") or data.get("target_price"))),
             ("Observed", _money(target.get("observed_price") or data.get("current_price"))),
             ("Target move", _pct(target.get("target_pct") or data.get("target_pct"), ratio=True)),
+            ("Time to hit", _time_to_target(target, data, event.get("time"))),
+            ("Profit/share", _money(profit_per_share, signed=True)),
+            ("Gross profit", _money(gross_profit, signed=True)),
             ("52W high", _money(factors.get("week52_high"))),
             ("52W low", _money(factors.get("week52_low"))),
             ("52W position", _pct(factors.get("week52_position_pct"))),

@@ -68,6 +68,14 @@ When no recent Trendlyne BUY exists, the message says so explicitly. MFE and MAE
 are intentionally absent from WhatsApp lifecycle messages; those analytical
 paths remain in the Paper Evidence Workbench.
 
+Target-hit messages identify the target lifecycle and calculate elapsed time
+from the durable paper fill timestamp to the target track's first-hit
+timestamp. Intraday targets use `HH:MM`; swing targets use whole calendar days
+rounded half-up. `Profit/share` and `Gross profit` are direction-normalised
+from the configured target price and entry price, with gross profit multiplied
+by the durable paper quantity. The later observed price is shown separately and
+never inflates the target-profit calculation.
+
 The worker renders a 1080 x 1350 PNG with candlesticks, Bollinger Bands 20/2, a
 blue entry line, 52-week high/low references, volume, RSI 14 and MACD 12/26/9.
 References outside the intraday price window are clipped to its boundary and

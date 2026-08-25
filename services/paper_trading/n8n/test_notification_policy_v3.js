@@ -144,9 +144,10 @@ test('suppresses duplicate single-leg group open and aggregates multi-leg group 
 
 test('sends one analytical target but suppresses the execution-trigger precursor', () => {
   const target = run(cloudEvent('com.papertrading.target_track.closed.v1', {
-    symbol: 'TITAN', side: 'BUY', strategy_id: 'OIIS_LIVE', entry_price: '3900',
+    symbol: 'TITAN', side: 'BUY', strategy_id: 'OIIS_LIVE', entry_price: '3900', quantity: '50',
+    opened_at: '2026-08-11T09:20:00Z',
     newly_closed_target_tracks: [
-      { target_pct: '0.003', target_price: '3911.70', observed_price: '3914.20', hypothetical_after_tax_pnl: '215.30' },
+      { target_id: 'INTRADAY_0.003', target_pct: '0.003', target_price: '3911.70', observed_price: '3914.20', hit_at: '2026-08-11T10:30:00Z', hypothetical_after_tax_pnl: '215.30' },
     ], actual_execution_position_status: 'OPEN', mfe: '0.0041', mae: '-0.0011',
   }));
   const trigger = run(cloudEvent('com.papertrading.execution_target.hit.v1', {
@@ -154,6 +155,9 @@ test('sends one analytical target but suppresses the execution-trigger precursor
   }));
   assert.equal(target.send, true);
   assert.match(target.whatsapp_message, /PAPER ANALYTICAL TARGET HIT/);
+  assert.match(target.whatsapp_message, /Time to hit 01:10/);
+  assert.match(target.whatsapp_message, /Profit\/share \+₹11\.70/);
+  assert.match(target.whatsapp_message, /Gross profit \+₹585\.00/);
   assert.doesNotMatch(target.whatsapp_message, /Simulation only|No live order|MFE|MAE/);
   assert.equal(trigger.send, false);
 });

@@ -198,8 +198,18 @@ def test_no_trendlyne_buy_is_explicit_and_target_message_uses_52_week_context() 
             "symbol": "TEST",
             "side": "BUY",
             "entry_price": "100",
-            "target_price": "101",
+            "quantity": "250",
+            "opened_at": "2026-08-25T07:58:00+00:00",
             "current_price": "101.20",
+            "newly_closed_target_tracks": [
+                {
+                    "target_id": "INTRADAY_0.010",
+                    "target_pct": "0.01",
+                    "target_price": "101",
+                    "observed_price": "101.20",
+                    "hit_at": "2026-08-25T08:33:00+00:00",
+                }
+            ],
             "mfe": "0.05",
             "mae": "-0.02",
         },
@@ -210,6 +220,37 @@ def test_no_trendlyne_buy_is_explicit_and_target_message_uses_52_week_context() 
         {"week52_high": "120", "week52_low": "80", "week52_position_pct": "53"},
     )
     assert "52W high" in target_message and "52W low" in target_message
+    assert "Time to hit" in target_message and "00:35" in target_message
+    assert "Profit/share" in target_message and "+₹1.00" in target_message
+    assert "Gross profit" in target_message and "+₹250.00" in target_message
+    assert "MFE" not in target_message and "MAE" not in target_message
+
+
+def test_swing_target_uses_rounded_days_and_short_directional_profit() -> None:
+    target_event = event(
+        "com.papertrading.target_track.closed.v1",
+        {
+            "symbol": "TEST",
+            "side": "SELL",
+            "entry_price": "200",
+            "quantity": "10",
+            "opened_at": "2026-08-23T06:00:00+00:00",
+            "newly_closed_target_tracks": [
+                {
+                    "target_id": "SWING_0.030",
+                    "target_pct": "0.03",
+                    "target_price": "194",
+                    "observed_price": "193.80",
+                    "hit_at": "2026-08-25T09:00:00+00:00",
+                }
+            ],
+        },
+    )
+    target_message = render_message(target_event, classify(target_event, SETTINGS))
+    assert "Target type" in target_message and "Swing" in target_message
+    assert "Time to hit" in target_message and "2 days" in target_message
+    assert "Profit/share" in target_message and "+₹6.00" in target_message
+    assert "Gross profit" in target_message and "+₹60.00" in target_message
     assert "MFE" not in target_message and "MAE" not in target_message
 
 

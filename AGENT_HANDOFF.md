@@ -3058,3 +3058,10 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   preventing a gap or overshoot from overstating the target milestone. Gross profit uses the durable
   paper quantity. Long and short trades have separate tested direction handling.
 - MFE and MAE remain excluded from both the direct WhatsApp adapter and portable n8n formatter.
+- Release `4cd6603` was pushed to canonical `master` and deployed to `paper-webhook-worker`; rollback
+  image `trading-stack-paper-trading:rollback-pre-target-v6-20260825` preserves the prior renderer.
+- Production-backed render reconciliation passed without sending or replaying events: OFSS intraday
+  +1% rendered `01:26`, `+₹116.04/share` and `+₹11,604.00` gross; ETERNAL swing +1% rendered `1 day`,
+  `+₹3.27/share` and `+₹7,939.45` gross. Both used target price rather than the higher observed price.
+- Validation: Paper 24 passed / 6 database-only skipped, portable notification policy 16 passed,
+  Ruff and mypy passed, and the canonical repository gate passed.

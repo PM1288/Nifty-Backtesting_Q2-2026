@@ -372,6 +372,67 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
     res.json(TRADE_QUALITY_POLICY);
   });
 
+  app.get("/v1/workspace/paper-trading/bootstrap", async (req, res, next) => {
+    try {
+      const session = await auth.getSession(req);
+      const canComment = canManagePaperTradeComments(session?.user);
+      // This endpoint is the durable first paint. Keep it independent of the
+      // bars_1m, stop-path, OIIS-evidence and capital-simulation work used by
+      // the complete ledger so the workspace can always explain what is
+      // loading instead of showing an empty page or expiring a client timer.
+      const [summary, recent] = await runWithConcurrency([
+        () => paperPrisma.$queryRawUnsafe<Row[]>(`
+          select
+            (select count(*)::int from paper_trading.trade_groups) as total_groups,
+            (select count(*)::int from paper_trading.trade_groups where status in ('OPEN','PARTIALLY_OPEN','PARTIALLY_CLOSED','PENDING_ENTRY')) as active_groups,
+            (select count(*)::int from paper_trading.trade_groups where status='CLOSED') as closed_groups,
+            (select count(*)::int from paper_trading.trade_groups where status='PENDING_ENTRY') as pending_entry_groups,
+            (select count(*)::int from paper_trading.positions where remaining_quantity > 0) as open_positions,
+            (select coalesce(sum(realised_pnl),0)::text from paper_trading.positions) as realised_pnl,
+            (select coalesce(sum(amount),0)::text from paper_trading.pnl_ledger where entry_kind='REALISED_GROSS') as realised_gross_pnl,
+            (select coalesce(sum(unrealised_pnl),0)::text from paper_trading.positions) as unrealised_pnl,
+            (select max(last_mark_at) from paper_trading.positions) as latest_mark_at,
+            (select count(*)::int from paper_trading.target_tracks where status in ('ACTIVE','PENDING_ENTRY')) as active_target_tracks,
+            (select count(*)::int from paper_trading.data_quality_incidents where status not in ('RECOVERED','RESOLVED','CLOSED')) as open_data_incidents
+        `),
+        () => paperPrisma.$queryRawUnsafe<Row[]>(`
+          select g.trade_group_id::text,g.strategy_id,g.status,g.created_at,
+                 coalesce(sum(p.realised_pnl),0)::text as realised_pnl,
+                 coalesce(sum(p.unrealised_pnl),0)::text as unrealised_pnl
+          from paper_trading.trade_groups g
+          left join paper_trading.trade_legs l using(trade_group_id)
+          left join paper_trading.positions p using(trade_leg_id)
+          group by g.trade_group_id
+          order by g.created_at desc limit 5
+        `)
+      ], 2);
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json({
+        asOf: new Date().toISOString(),
+        environment: "PAPER",
+        detailState: "LOADING",
+        summary: {
+          ...(summary[0] ?? {}),
+          quality_policy_version: TRADE_QUALITY_POLICY.version
+        },
+        recent,
+        statuses: [],
+        openPositions: [],
+        stockTrades: [],
+        targetConversion: [],
+        targetExitScenarios: [],
+        fixedCapitalPortfolioScenarios: [],
+        fixedCapitalPortfolioStrategyComparisons: [],
+        fixedCapitalSwingOnlyScenarios: [],
+        fixedCapitalSwingOnlyStrategyComparisons: [],
+        tradeQualityPolicy: TRADE_QUALITY_POLICY,
+        targetStatuses: [],
+        incidents: [],
+        permissions: { can_manage_comments: canComment, can_manage_trade_quality: canComment }
+      });
+    } catch (error) { next(error); }
+  });
+
   app.get("/v1/workspace/paper-trading", async (req, res, next) => {
     try {
       const session = await auth.getSession(req);

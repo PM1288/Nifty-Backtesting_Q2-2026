@@ -204,59 +204,74 @@ function downloadPaperCsv(trades: AnyRow[], context: PaperWorkbenchContext, asOf
 function usePaperData(authReady: boolean, authenticatedUserId?: string) {
   const [data, setData] = useState<AnyRow | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [loadingSlow, setLoadingSlow] = useState(false);
   const [key, setKey] = useState(0);
   useEffect(() => {
     if (!authReady || !authenticatedUserId) {
       setData(null);
       setError(null);
+      setDetailError(null);
+      setDetailsLoading(false);
       setLoadingSlow(false);
       return;
     }
     const controller = new AbortController();
     let active = true;
     setError(null);
+    setDetailError(null);
+    setDetailsLoading(true);
     setLoadingSlow(false);
     const slowTimer = window.setTimeout(() => {
       if (active) setLoadingSlow(true);
     }, 3_000);
-    const timeoutTimer = window.setTimeout(() => {
-      if (!active) return;
-      controller.abort();
-      setError("Paper observations took longer than 60 seconds. The request was stopped safely; retry without reloading the application.");
-    }, 60_000);
-    fetch(`${API_BASE_URL}/v1/workspace/paper-trading`, {
-      credentials: "include",
-      signal: controller.signal,
-      headers: { Accept: "application/json" },
-    })
-      .then(async (response) => {
-        if (!response.ok)
-          throw new Error(`API ${response.status}: ${await response.text()}`);
-        return response.json();
-      })
-      .then((payload) => {
-        window.clearTimeout(slowTimer);
-        window.clearTimeout(timeoutTimer);
-        if (active) {
-          setLoadingSlow(false);
-          setData(payload);
-        }
-      })
-      .catch((reason) => {
-        window.clearTimeout(slowTimer);
-        window.clearTimeout(timeoutTimer);
-        if (active && reason?.name !== "AbortError")
-          setError(String(reason?.message ?? reason));
+    const fetchPayload = async (pathname: string) => {
+      const response = await fetch(`${API_BASE_URL}${pathname}`, {
+        credentials: "include",
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
       });
+      if (!response.ok) throw new Error(`API ${response.status}: ${await response.text()}`);
+      return response.json();
+    };
+    const load = async () => {
+      let bootstrapLoaded = false;
+      try {
+        const bootstrap = await fetchPayload("/v1/workspace/paper-trading/bootstrap");
+        if (!active) return;
+        bootstrapLoaded = true;
+        setData(bootstrap);
+      } catch (reason) {
+        if (reason instanceof DOMException && reason.name === "AbortError") return;
+        if (active) setDetailError(`Summary bootstrap delayed: ${reason instanceof Error ? reason.message : String(reason)}`);
+      }
+      try {
+        const payload = await fetchPayload("/v1/workspace/paper-trading");
+        if (!active) return;
+        window.clearTimeout(slowTimer);
+        setLoadingSlow(false);
+        setDetailError(null);
+        setData(payload);
+      } catch (reason) {
+        if (reason instanceof DOMException && reason.name === "AbortError") return;
+        window.clearTimeout(slowTimer);
+        if (!active) return;
+        const message = reason instanceof Error ? reason.message : String(reason);
+        if (bootstrapLoaded || data) setDetailError(message);
+        else setError(message);
+      } finally {
+        if (active) setDetailsLoading(false);
+      }
+    };
+    void load();
     return () => {
       active = false;
       window.clearTimeout(slowTimer);
-      window.clearTimeout(timeoutTimer);
       controller.abort();
     };
   }, [authReady, authenticatedUserId, key]);
-  return { data, error, loadingSlow, reload: () => setKey((value) => value + 1) };
+  return { data, error, detailError, detailsLoading, loadingSlow, reload: () => setKey((value) => value + 1) };
 }
 
 export function PaperTradingCommandCenter() {
@@ -340,7 +355,7 @@ export function PaperTradingCommandCenter() {
     if (trade) setSelectedTrade(trade);
   }, [query.data?.stockTrades, routeParams]);
 
-  if (query.error)
+  if (query.error && !query.data)
     return (
       <div className={styles.state}>
         <strong>Paper evaluation unavailable</strong>
@@ -457,7 +472,7 @@ export function PaperTradingCommandCenter() {
   return (
     <div className={styles.page} data-calm={calm ? "true" : "false"}>
       <PaperWorkbenchHeader
-        tradeCount={trades.length}
+        tradeCount={trades.length || number(summary.total_groups)}
         openCount={number(summary.open_positions)}
         trackCount={number(summary.active_target_tracks)}
         incidentCount={number(summary.open_data_incidents)}
@@ -469,6 +484,19 @@ export function PaperTradingCommandCenter() {
         calm={calm}
         onCalm={() => setCalm((value) => !value)}
       />
+
+      {query.detailsLoading ? (
+        <section className={styles.hydrationNotice} role="status">
+          <strong>Portfolio summary ready</strong>
+          <span>Loading complete trade paths, targets, quality evidence and simulations in the background. This request will continue beyond 60 seconds if necessary.</span>
+        </section>
+      ) : query.detailError || query.error ? (
+        <section className={styles.hydrationNotice} data-error="true" role="alert">
+          <strong>Summary remains available</strong>
+          <span>{query.detailError ?? query.error}</span>
+          <button type="button" onClick={query.reload}>Retry detailed evidence</button>
+        </section>
+      ) : null}
 
       <nav className={styles.pageTabs} aria-label="Paper Trading views">
         <button type="button" data-active={pageView === "PORTFOLIO"} onClick={() => setPageView("PORTFOLIO")}>
@@ -530,7 +558,13 @@ export function PaperTradingCommandCenter() {
       ) : (
       <>
 
-      {trades.length === 0 ? (
+      {trades.length === 0 && query.detailsLoading ? (
+        <section className={styles.emptyPortfolio} aria-busy="true">
+          <span>DETAILED EVIDENCE LOADING</span>
+          <h1>{number(summary.total_groups)} durable paper trades found</h1>
+          <p>The accounting summary is ready. Complete targets, horizons, reward/pain paths and simulations are still being assembled.</p>
+        </section>
+      ) : trades.length === 0 ? (
         <section className={styles.emptyPortfolio}>
           <span>PAPER ONLY</span>
           <h1>No filled paper observations yet</h1>

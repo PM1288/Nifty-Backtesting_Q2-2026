@@ -1,12 +1,23 @@
 openapi: 3.1.0
 info:
   title: NIFTY 50 Trader Paper Entry Market Evidence API
-  version: 1.0.0
+  version: 1.1.0
   description: >-
     Read-only Paper Trading projections for entry-time SmartAPI quote and
     top-three order-book evidence. This evidence is informational and does not
     alter the governed BAR_OPEN_CONSERVATIVE_V1 paper fill model.
 paths:
+  /v1/workspace/paper-trading/bootstrap:
+    get:
+      summary: Fast Paper Trading workspace bootstrap
+      description: Returns authoritative portfolio counts and accounting totals without waiting for detailed bar-path, stop, target, quality or simulation hydration.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Lightweight first-paint payload with `detailState` set to `LOADING`.
+        '401':
+          description: Active session required.
   /v1/workspace/paper-trading:
     get:
       summary: List paper trades with entry market evidence

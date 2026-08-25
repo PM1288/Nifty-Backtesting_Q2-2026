@@ -44,6 +44,30 @@
   font-weight: 750;
   cursor: pointer;
 }
+.hydrationNotice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid #b9d4fa;
+  border-radius: 10px;
+  background: #eef6ff;
+  color: #31577f;
+}
+.hydrationNotice strong { color: #174f96; }
+.hydrationNotice span { flex: 1; }
+.hydrationNotice[data-error="true"] { border-color: #e8c77b; background: #fff8e7; }
+.hydrationNotice button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #2463cf;
+  border-radius: 7px;
+  background: #fff;
+  color: #174f96;
+  font-weight: 650;
+  cursor: pointer;
+}
 .commandBar {
   position: sticky;
   top: 0;

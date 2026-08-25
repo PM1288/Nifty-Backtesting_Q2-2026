@@ -2997,3 +2997,11 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Measured authenticated production improvements: Paper Trading 29.9 s under contention to 3.25 s; Absolute Monthly 18.6 s / 20.2 MB to 2.05 s / 3.1 MB; health up to 3.95 s to 0.05–0.10 s.
 - API tests 122/122, web tests 45/45, both typechecks/builds and the canonical preservation gate pass. Full evidence and rollback: `docs/worklogs/strategy-paper-performance-repair-2026-08-25.md`.
 - A subsequent three-day feature-preservation audit passed the notifier/voice controls, monthly and rolling rejection ledgers, Paper Workbench and market book, fixed-capital/swing simulations, parallel evidence export, logos, native/target cursor, Trendlyne, Long Options, NIFTY Options, command palette and responsive navigation. Stale Playwright timing/calendar assumptions were updated; no production feature was removed to satisfy a test.
+
+## 2026-08-25 — Paper Trading progressive loading
+
+- Removed the browser's terminal 60-second abort for the canonical Paper evidence request.
+- Added fast authenticated `/v1/workspace/paper-trading/bootstrap`; portfolio counts and accounting totals render first while complete paths, targets, quality evidence and simulations continue in the background.
+- Slow/full hydration cannot erase the valid summary. Failures retain usable information and expose a detailed-evidence retry.
+- Applied additive read indexes in `db/sql/054_paper_workspace_read_indexes.sql`; the per-trade OIIS entry-evidence lookup improved from about 1.35 seconds to 0.19 seconds for the current ledger.
+- No trading data, formulas, execution semantics or paper/live permissions changed. Full evidence: `docs/worklogs/paper-progressive-loading-2026-08-25.md`.

@@ -101,21 +101,22 @@ export const PAPER_SIMPLE_EXPORT_COLUMNS = [
 
 function exportValues(row: PaperSimpleRow): Array<string | number | null> {
   const opened = paperSimpleIstDateTime(row.openedAt);
+  const rounded = (value: number | null) => value == null ? null : Number(value.toFixed(2));
   return [
     row.stockName,
     row.symbol,
     opened.date,
     opened.time,
-    row.entryPrice,
-    row.oFactor,
-    row.xFactor,
-    row.dayHigh,
-    row.dayLow,
-    row.dayMaxDrawdown,
-    row.dayMaxDrawdownPct,
-    row.currentPrice,
-    row.currentPnl,
-    row.currentPnlPct,
+    rounded(row.entryPrice),
+    rounded(row.oFactor),
+    rounded(row.xFactor),
+    rounded(row.dayHigh),
+    rounded(row.dayLow),
+    rounded(row.dayMaxDrawdown),
+    rounded(row.dayMaxDrawdownPct),
+    rounded(row.currentPrice),
+    rounded(row.currentPnl),
+    rounded(row.currentPnlPct),
     row.currentPnlBasis,
   ];
 }

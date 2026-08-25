@@ -55,6 +55,8 @@ test("simple exports contain exactly the visible evidence fields", () => {
   const excel = buildPaperSimpleExcel([row]);
   assert.match(csv, /"Stock Name","Symbol","Date bought at \(IST\)"/);
   assert.match(csv, /"One 97 Communications Ltd","PAYTM"/);
+  assert.match(csv, /"7.12","8.57"/);
+  assert.doesNotMatch(csv, /1825\.000000/);
   assert.match(excel, /<th>Current P\/L Basis<\/th>/);
   assert.match(excel, /<td>OPEN_ACTUAL_GROSS<\/td>/);
 });

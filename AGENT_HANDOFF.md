@@ -3093,8 +3093,8 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   factors, D0 high, D0 low and direction-normalised maximum drawdown, plus current price and P/L.
 - Open trades label current P/L as open actual gross. Closed trades label the latest price path as
   hypothetical gross, preventing current counterfactual evidence from being presented as booked P/L.
-- CSV and Excel-compatible exports contain the visible fields as separate raw columns. Missing
-  evidence remains blank rather than becoming zero.
+- CSV and Excel-compatible exports contain the visible fields as separate columns with two-decimal
+  numeric precision. Missing evidence remains blank rather than becoming zero.
 - Live ledger validation found 44/44 trades populated for every requested source field. Web
   typecheck, production build, 50/50 web tests, targeted lint and the canonical source gate passed;
   the repository-wide lint remains blocked by 193 pre-existing errors outside this change.

@@ -3100,3 +3100,10 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   the repository-wide lint remains blocked by 193 pre-existing errors outside this change.
 - Browser acceptance is implemented in `tools/playwright/paper-simple-view-regression.mjs`; it checks
   the additive tab, all requested columns, contained scrolling, canonical drawer and both downloads.
+- Releases `2e9ba28` and export-precision follow-up `bd206fb` were pushed to canonical `master`.
+  The dashboard is deployed healthy as image
+  `sha256:2909ded08fbe5eb8862d64fab3769395f2bdffbf9f416c153083ac19a6ff4e34`; rollback image
+  `trading-stack-n50-dashboard:rollback-pre-paper-simple-view-20260825` preserves the prior release.
+- Authenticated production Playwright passed 19/19 checks and generated valid UTF-8 CSV and
+  Excel-compatible `.xls` downloads. Evidence is in
+  `output/playwright/paper-simple-view-live-20260825-final/` (ignored runtime output).

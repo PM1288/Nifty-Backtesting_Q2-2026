@@ -3078,3 +3078,9 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   and 30 returned rows. The expensive full overview query is not restored to the shared shell.
 - Validation: API 123/123 including a dedicated stock-only ticker contract, web 45/45, both
   typechecks and production builds passed.
+- Release `60e71e6` was pushed to canonical `master` and deployed as dashboard image
+  `sha256:26ccc40a150991eb0dbb5d93079f6fa3e2ff0e5be5d1efe20e895622842a12b3`; rollback image
+  `trading-stack-n50-dashboard:rollback-pre-stock-ticker-20260825` preserves the prior build.
+- Authenticated public verification returned 30 stock rows in 78.9 ms, beginning with IDEA,
+  PAYTM, ANGELONE, IREDA and ADANIENT. All rows had positive prices and numeric percentage
+  changes; NIFTY50, BANKNIFTY and INDIAVIX were absent from `tickerTape` as required.

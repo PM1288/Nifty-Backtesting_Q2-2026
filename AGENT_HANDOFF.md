@@ -3109,3 +3109,8 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   `output/playwright/paper-simple-view-live-20260825-final/` (ignored runtime output).
 - The Max Price cell and exports additionally show direction-normalised P/L in rupees and percent
   at the entry-session high, matching the Low / Max Drawdown cell's price-plus-economics layout.
+- Release `ec13201` was pushed to canonical `master` and deployed healthy as dashboard image
+  `sha256:6977621dc9f98479ce8883b06d77193c225aa3c205e532a45a3a15a8e0633642`; rollback image
+  `trading-stack-n50-dashboard:rollback-pre-simple-high-pnl-20260825` preserves the earlier Simple View.
+- Authenticated production Playwright again passed 19/19 checks. The downloaded CSV reconciled the
+  first IDEA row at a ₹15.29 session high to +₹2,859 and +0.26% for its captured quantity.

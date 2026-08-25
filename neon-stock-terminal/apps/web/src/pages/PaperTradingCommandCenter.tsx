@@ -1038,7 +1038,7 @@ function PaperSimpleView({
               <th>Entry Strike Price</th>
               <th>O Factor</th>
               <th>X Factor</th>
-              <th>Max Price <small>High that day</small></th>
+              <th>Max Price · P/L <small>High that day</small></th>
               <th>Low · Max Drawdown <small>That day</small></th>
               <th>Current Price · P/L</th>
               <th aria-label="Open trade evidence" />
@@ -1067,7 +1067,12 @@ function PaperSimpleView({
                   <td className={styles.simpleNumber}><strong>{simpleMoney(row.entryPrice)}</strong></td>
                   <td className={styles.simpleNumber}><strong>{simpleFactor(row.oFactor)}</strong></td>
                   <td className={styles.simpleNumber}><strong>{simpleFactor(row.xFactor)}</strong></td>
-                  <td className={styles.simpleNumber}><strong>{simpleMoney(row.dayHigh)}</strong></td>
+                  <td className={styles.simpleNumber}>
+                    <strong>{simpleMoney(row.dayHigh)}</strong>
+                    <small data-sign={row.dayHighPnl != null && row.dayHighPnl >= 0 ? "positive" : "negative"}>
+                      {simpleMoney(row.dayHighPnl)} · {simplePercent(row.dayHighPnlPct)}
+                    </small>
+                  </td>
                   <td className={styles.simpleNumber}>
                     <strong>{simpleMoney(row.dayLow)}</strong>
                     <small data-sign={row.dayMaxDrawdown != null && row.dayMaxDrawdown >= 0 ? "positive" : "negative"}>

@@ -9,6 +9,8 @@ export type PaperSimpleRow = {
   oFactor: number | null;
   xFactor: number | null;
   dayHigh: number | null;
+  dayHighPnl: number | null;
+  dayHighPnlPct: number | null;
   dayLow: number | null;
   dayMaxDrawdown: number | null;
   dayMaxDrawdownPct: number | null;
@@ -50,6 +52,7 @@ export function buildPaperSimpleRow(trade: PaperSimpleSource, stockName?: string
   const quantity = optionalNumber(trade.opened_quantity);
   const remainingQuantity = optionalNumber(trade.remaining_quantity) ?? 0;
   const currentPrice = optionalNumber(trade.hypothetical_carry_mark) ?? optionalNumber(trade.last_mark);
+  const dayHigh = optionalNumber(trade.intraday_session_high);
   const direction = String(trade.side).toUpperCase() === "SELL" ? -1 : 1;
   const derivedCurrentPnl = currentPrice != null && entryPrice != null && quantity != null
     ? direction * (currentPrice - entryPrice) * quantity
@@ -67,7 +70,13 @@ export function buildPaperSimpleRow(trade: PaperSimpleSource, stockName?: string
     entryPrice,
     oFactor: optionalNumber(trade.evidence_ofactor),
     xFactor: optionalNumber(trade.evidence_xfactor),
-    dayHigh: optionalNumber(trade.intraday_session_high),
+    dayHigh,
+    dayHighPnl: dayHigh != null && entryPrice != null && quantity != null
+      ? direction * (dayHigh - entryPrice) * quantity
+      : null,
+    dayHighPnlPct: dayHigh != null && entryPrice != null && entryPrice > 0
+      ? direction * (dayHigh / entryPrice - 1) * 100
+      : null,
     dayLow: optionalNumber(trade.intraday_session_low),
     dayMaxDrawdown: optionalNumber(trade.intraday_max_drawdown),
     dayMaxDrawdownPct: entryNotional && entryNotional > 0 && trade.intraday_max_drawdown != null
@@ -90,6 +99,8 @@ export const PAPER_SIMPLE_EXPORT_COLUMNS = [
   "O Factor",
   "X Factor",
   "Max Price (High) of Entry Day",
+  "P/L at Entry-day High (INR)",
+  "P/L at Entry-day High (%)",
   "Low of Entry Day",
   "Max Drawdown That Day (INR)",
   "Max Drawdown That Day (%)",
@@ -111,6 +122,8 @@ function exportValues(row: PaperSimpleRow): Array<string | number | null> {
     rounded(row.oFactor),
     rounded(row.xFactor),
     rounded(row.dayHigh),
+    rounded(row.dayHighPnl),
+    rounded(row.dayHighPnlPct),
     rounded(row.dayLow),
     rounded(row.dayMaxDrawdown),
     rounded(row.dayMaxDrawdownPct),

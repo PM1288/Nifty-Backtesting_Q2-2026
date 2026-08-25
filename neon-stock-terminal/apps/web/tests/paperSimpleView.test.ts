@@ -30,6 +30,8 @@ test("simple paper row preserves canonical entry, factors and D0 extremes", () =
   assert.equal(row.entryPrice, 1348.25);
   assert.equal(row.oFactor, 7.1234);
   assert.equal(row.dayHigh, 1360.5);
+  assert.equal(row.dayHighPnl, 1225);
+  assert.equal(Number(row.dayHighPnlPct?.toFixed(2)), 0.91);
   assert.equal(row.dayLow, 1330);
   assert.equal(row.currentPnl, 1000);
   assert.equal(row.currentPnlBasis, "OPEN_ACTUAL_GROSS");
@@ -56,6 +58,7 @@ test("simple exports contain exactly the visible evidence fields", () => {
   assert.match(csv, /"Stock Name","Symbol","Date bought at \(IST\)"/);
   assert.match(csv, /"One 97 Communications Ltd","PAYTM"/);
   assert.match(csv, /"7.12","8.57"/);
+  assert.match(csv, /"1360.5","1225","0.91"/);
   assert.doesNotMatch(csv, /1825\.000000/);
   assert.match(excel, /<th>Current P\/L Basis<\/th>/);
   assert.match(excel, /<td>OPEN_ACTUAL_GROSS<\/td>/);

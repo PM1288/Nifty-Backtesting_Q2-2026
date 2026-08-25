@@ -32,7 +32,7 @@ try {
   check("simple tab active", await page.getByRole("button", { name: "Simple view", exact: true }).getAttribute("data-active") === "true");
 
   const headers = await page.locator("table thead").innerText();
-  for (const label of ["STOCK NAME", "DATE BOUGHT AT", "TIME BOUGHT AT", "ENTRY STRIKE PRICE", "O FACTOR", "X FACTOR", "MAX PRICE", "LOW · MAX DRAWDOWN", "CURRENT PRICE · P/L"]) {
+  for (const label of ["STOCK NAME", "DATE BOUGHT AT", "TIME BOUGHT AT", "ENTRY STRIKE PRICE", "O FACTOR", "X FACTOR", "MAX PRICE · P/L", "LOW · MAX DRAWDOWN", "CURRENT PRICE · P/L"]) {
     check(`column ${label}`, headers.toUpperCase().includes(label), headers);
   }
   const rows = page.locator("table tbody tr");

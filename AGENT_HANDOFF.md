@@ -3107,3 +3107,5 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Authenticated production Playwright passed 19/19 checks and generated valid UTF-8 CSV and
   Excel-compatible `.xls` downloads. Evidence is in
   `output/playwright/paper-simple-view-live-20260825-final/` (ignored runtime output).
+- The Max Price cell and exports additionally show direction-normalised P/L in rupees and percent
+  at the entry-session high, matching the Low / Max Drawdown cell's price-plus-economics layout.

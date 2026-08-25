@@ -74,6 +74,12 @@ class Settings(BaseSettings):
                 )
             if not Path(self.WA_GATEWAY_API_TOKEN_FILE).is_file():
                 raise ValueError("WA_GATEWAY_API_TOKEN_FILE does not exist")
+            try:
+                token = Path(self.WA_GATEWAY_API_TOKEN_FILE).read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                raise ValueError("WA_GATEWAY_API_TOKEN_FILE is not readable by the service user") from exc
+            if not token:
+                raise ValueError("WA_GATEWAY_API_TOKEN_FILE is empty")
         elif self.N8N_WEBHOOK_URL is None:
             raise ValueError("N8N_WEBHOOK_URL is mandatory when the direct WhatsApp gateway is disabled")
         if not (Decimal("0") <= self.DEFAULT_INCOME_TAX_RATE <= Decimal("1")):

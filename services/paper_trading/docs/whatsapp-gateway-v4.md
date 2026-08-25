@@ -20,10 +20,14 @@ subscriptions and rollback.
 | `WA_DATA_ALERT_MIN_AFFECTED` | Minimum affected instruments for an immediate stale-data alert |
 | `WA_DATA_ALERT_MIN_DURATION_SECONDS` | Minimum outage duration; default is 1,200 seconds |
 
-The token must be stored at `secrets/whatsapp_gateway_api_token`, mode `0600`,
-or supplied using `WA_GATEWAY_API_TOKEN_FILE`. It must never be committed or
-printed in logs. Change `WA_MYSELF_CHAT_ID` in the deployment environment to
-replace the destination; no source or workflow export needs editing.
+The token must be stored at `secrets/whatsapp_gateway_api_token` or supplied
+using `WA_GATEWAY_API_TOKEN_FILE`. With the local Compose bind mount, use owner
+`root`, group `10001` (the Paper service group), and mode `0640`; it remains
+unreadable to other users while the non-root worker can load it. The service
+fails configuration validation when the secret is absent, empty or unreadable.
+It must never be committed or printed in logs. Change `WA_MYSELF_CHAT_ID` in the
+deployment environment to replace the destination; no source or workflow export
+needs editing.
 
 ## Low-noise policy
 

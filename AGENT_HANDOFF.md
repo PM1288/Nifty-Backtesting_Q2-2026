@@ -3141,3 +3141,27 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   Rollback image `trading-stack-n50-dashboard:rollback-pre-simple-month-path-20260825` preserves the
   previous Simple View. Browser evidence is under
   `output/playwright/paper-simple-view-month-path-20260825/` (ignored runtime output).
+
+## 2026-08-25 — Automatic client refresh after UI deployments
+
+- Added a build-version guard to the shared web entry point. Production clients fetch
+  `/n50/app-version.json` at startup, every 30 seconds, and when the tab becomes visible, focused or
+  returns online. A different Vite entry fingerprint triggers an accessible update notice followed
+  by a same-route reload, so query parameters, selected tabs and filters remain intact.
+- The API derives the version from the built `index.html`; no release number is hard-coded. The
+  version endpoint and SPA HTML are explicitly non-cacheable while hashed assets remain immutable.
+  `BroadcastChannel` propagates a detected release between open tabs.
+- Reload-loop protection retries a still-mismatched release after two minutes, allowing recovery
+  from a transient failed reload without continuously refreshing a healthy client. Version-check
+  network failures never interrupt the existing screen.
+- API 126/126 and web 54/54 tests passed, along with both typechecks, production builds and targeted
+  ESLint. Live Playwright regression passed 6/6 checks, including a simulated deployment mismatch,
+  automatic reload, loop suppression and preservation of `tab=simple&period=30D`.
+- Releases `74f68da` and retry follow-up `0ea065d` were pushed to canonical `master`. The final
+  dashboard is deployed healthy as image
+  `sha256:abb029c6b58bb11cccad0830b763144f00b3dcec3fb095ba6390545c12074653`; rollback image
+  `trading-stack-n50-dashboard:rollback-pre-ui-auto-refresh-20260825` preserves the prior release.
+- Browser evidence is under `output/playwright/app-version-regression-20260825-final/` (ignored
+  runtime output). A browser tab loaded before this guard existed cannot execute code it never
+  downloaded; it needs one navigation or manual refresh to join the new baseline. All subsequent UI
+  deployments are then detected automatically.

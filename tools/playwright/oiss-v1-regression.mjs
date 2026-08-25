@@ -5,6 +5,7 @@ import { chromium } from "playwright";
 const origin = (process.env.PLAYWRIGHT_ORIGIN ?? "http://127.0.0.1:19090").replace(/\/$/, "");
 const appBase = `${origin}/n50`;
 const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD;
+const identifier = process.env.PLAYWRIGHT_ADMIN_IDENTIFIER ?? "admin";
 const outputDir = path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR ?? "output/playwright/oiss-v1-202608");
 if (!password) throw new Error("PLAYWRIGHT_ADMIN_PASSWORD is required.");
 
@@ -18,7 +19,7 @@ function check(name, passed, detail = "") {
 
 try {
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  const login = await context.request.post(`${origin}/auth/session/dev-login`, { data: { identifier: "admin", password } });
+  const login = await context.request.post(`${origin}/auth/session/dev-login`, { data: { identifier, password } });
   check("admin login", login.ok(), `status=${login.status()}`);
   const page = await context.newPage();
   const consoleErrors = [];
@@ -49,14 +50,20 @@ try {
   check("31-section contract", await page.locator("ol li").count() === 31, `count=${await page.locator("ol li").count()}`);
 
   const runId = new URL(page.url()).searchParams.get("runId") ?? await page.locator('[aria-label="OISS run context"] div').first().locator("strong").innerText();
-  const dashboard = await context.request.get(`${origin}/v1/oiss-v1/runs`);
-  check("run history api", dashboard.ok(), `status=${dashboard.status()}`);
-  const runPayload = await dashboard.json();
+  const dashboard = await page.evaluate(async () => {
+    const response = await fetch("/n50/v1/oiss-v1/runs", { credentials: "include" });
+    return { status: response.status, payload: await response.json() };
+  });
+  check("run history api", dashboard.status === 200, `status=${dashboard.status}`);
+  const runPayload = dashboard.payload;
   const canonicalRunId = runPayload.runs[0].run_id;
-  const excel = await context.request.get(`${origin}/v1/oiss-v1/export?runId=${canonicalRunId}&format=xlsx`);
-  check("excel export", excel.ok() && /application\/vnd\.ms-excel/.test(excel.headers()["content-type"] ?? ""), `status=${excel.status()}`);
-  const json = await context.request.get(`${origin}/v1/oiss-v1/export?runId=${canonicalRunId}&format=json`);
-  check("json export", json.ok(), `status=${json.status()}`);
+  const exports = await page.evaluate(async (id) => {
+    const excel = await fetch(`/n50/v1/oiss-v1/export?runId=${id}&format=xlsx`, { credentials: "include" });
+    const json = await fetch(`/n50/v1/oiss-v1/export?runId=${id}&format=json`, { credentials: "include" });
+    return { excelStatus: excel.status, excelType: excel.headers.get("content-type"), excelText: (await excel.text()).slice(0, 200), jsonStatus: json.status };
+  }, canonicalRunId);
+  check("excel export", exports.excelStatus === 200 && /application\/vnd\.ms-excel/.test(exports.excelType ?? "") && exports.excelText.includes("Workbook"), JSON.stringify(exports));
+  check("json export", exports.jsonStatus === 200, `status=${exports.jsonStatus}`);
   check("console clean", consoleErrors.length === 0, consoleErrors.join(" | "));
   check("page errors clean", pageErrors.length === 0, pageErrors.join(" | "));
   check("api responses clean", failedResponses.length === 0, failedResponses.join(" | "));

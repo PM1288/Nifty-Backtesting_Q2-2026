@@ -18,4 +18,4 @@ Pre-deployment results on 25 August 2026:
 | Point-in-time leakage violations | 0 |
 | Duplicate run/symbol rows | 0 |
 
-The authenticated production Playwright result and deployed commit/image are recorded in `AGENT_HANDOFF.md` after release verification.
+Authenticated production Playwright passed **25/25** checks across the 13 URL-addressable lenses, 208-row radar, immutable 31-section contract, execution inspector, API history, JSON export and multi-sheet Excel export. Visual evidence is retained in the ignored runtime directory `output/playwright/oiss-v1-live-20260825-final/`.

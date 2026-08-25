@@ -3165,3 +3165,34 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   runtime output). A browser tab loaded before this guard existed cannot execute code it never
   downloaded; it needs one navigation or manual refresh to join the new baseline. All subsequent UI
   deployments are then detected automatically.
+
+## 2026-08-25 — Independent OISS v1.202608 strategy and evidence workbench
+
+- Added `OISS_V1_202608` as an independent, additive strategy. Existing OIIS source tables, routes,
+  schedules and paper behavior were not renamed or modified. OISS reuses immutable governed OIIS
+  snapshots and persists its own versioned run/candidate/sector/change/outcome records under schema
+  `oiss` using migration `055_oiss_v1_202608.sql`.
+- Deployed the dedicated `/strategy/oiss-v1-202608` workbench with 13 URL-addressable lenses: Now,
+  Market, Sectors, Radar, Entry, Options, Carry, Rejected, Risk, Open Positions, Changes, Backtest
+  and Audit. CSV, JSON and multi-sheet Excel exports operate on the complete persisted run.
+- Bootstrap replay covers 11–25 August 2026: 132/132 governed scans, 27,456 stock observations,
+  208 symbols, 11 actionable observations, 27,439 rejected/no-chase/data-insufficient observations,
+  27,456 forward-outcome rows and 5,782 point-in-time option selections. Validation found zero
+  source-time leakage violations and zero duplicate run/symbol rows.
+- OISS unit tests passed 6/6 with Ruff clean; API passed 128/128 tests plus typecheck/build; web
+  passed 54/54 tests plus typecheck/build; the canonical preservation gate passed. Authenticated
+  production Playwright passed 25/25 checks and verified all lenses, the 31-section contract,
+  populated radar, execution inspector, API history and JSON/Excel downloads. Evidence is under
+  `output/playwright/oiss-v1-live-20260825-final/` (ignored runtime output).
+- Release `c21bb2d` was pushed to the feature branch and canonical `master`, then deployed. Dashboard
+  image `sha256:e691e3dfecfac71051e055f3ad072552b08172e91bbc40bf63807f0b3ed43a8f`
+  and OISS image `sha256:b3b4b099bb5aff8600d899d8ec282621561371dc3b270a4f5ec701707e2de039`
+  are healthy. Rollback image `trading-stack-n50-dashboard:rollback-pre-oiss-v1-202608-20260825`
+  preserves the prior dashboard.
+- Safety state: scheduler, paper intent emission, assisted mode and live-candidate mode remain OFF.
+  Production OISS is intelligence/shadow only until the documented shadow-validation period and
+  paper-risk reconciliation pass. There is no real broker-order path in this release.
+- Known evidence limits remain explicit: point-in-time F&O membership is unavailable (possible
+  survivorship bias); macro event snapshots are unavailable; current outcome bootstrap has daily
+  D+1..D+5 closes and daily MFE/MAE but not a complete 15/30/60-minute or intrabar target-before-stop
+  reconstruction. These states are not replaced with zero.

@@ -7,10 +7,11 @@ test("current version is derived from the loaded Vite entry script", () => {
 });
 
 test("version guard reloads only for a different valid deployment", () => {
-  assert.equal(shouldReloadForVersion("index-old.js", "index-new.js", null), true);
-  assert.equal(shouldReloadForVersion("index-new.js", "index-new.js", null), false);
-  assert.equal(shouldReloadForVersion("index-old.js", "index-new.js", "index-new.js"), false);
-  assert.equal(shouldReloadForVersion(null, "index-new.js", null), false);
+  assert.equal(shouldReloadForVersion("index-old.js", "index-new.js", null, 200_000), true);
+  assert.equal(shouldReloadForVersion("index-new.js", "index-new.js", null, 200_000), false);
+  assert.equal(shouldReloadForVersion("index-old.js", "index-new.js", "index-new.js@150000", 200_000), false);
+  assert.equal(shouldReloadForVersion("index-old.js", "index-new.js", "index-new.js@1000", 200_000), true);
+  assert.equal(shouldReloadForVersion(null, "index-new.js", null, 200_000), false);
 });
 
 test("version response accepts only a Vite entry fingerprint", () => {

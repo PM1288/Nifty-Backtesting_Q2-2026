@@ -1,6 +1,7 @@
 const RELOAD_TARGET_KEY = "n50.ui-version.reload-target";
 const VERSION_CHANNEL = "n50-ui-version";
 const DEFAULT_POLL_MS = 30_000;
+const RELOAD_RETRY_MS = 120_000;
 
 export type AppVersionPayload = {
   version?: unknown;
@@ -25,8 +26,13 @@ export function remoteClientBuildVersion(payload: AppVersionPayload): string | n
     : null;
 }
 
-export function shouldReloadForVersion(current: string | null, remote: string | null, reloadTarget: string | null): boolean {
-  return Boolean(current && remote && current !== remote && reloadTarget !== remote);
+export function shouldReloadForVersion(current: string | null, remote: string | null, reloadTarget: string | null, nowMs = Date.now()): boolean {
+  if (!current || !remote || current === remote) return false;
+  const [attemptedVersion, attemptedAt] = String(reloadTarget ?? "").split("@");
+  const recentAttempt = attemptedVersion === remote
+    && Number.isFinite(Number(attemptedAt))
+    && nowMs - Number(attemptedAt) < RELOAD_RETRY_MS;
+  return !recentAttempt;
 }
 
 function showUpdatingNotice() {
@@ -66,7 +72,7 @@ export function startAppVersionGuard(options: { pollMs?: number } = {}): () => v
   const reloadInto = (version: string) => {
     if (reloadQueued || !shouldReloadForVersion(current, version, sessionStorage.getItem(RELOAD_TARGET_KEY))) return;
     reloadQueued = true;
-    sessionStorage.setItem(RELOAD_TARGET_KEY, version);
+    sessionStorage.setItem(RELOAD_TARGET_KEY, `${version}@${Date.now()}`);
     showUpdatingNotice();
     channel?.postMessage({ version });
     window.setTimeout(() => window.location.reload(), 350);

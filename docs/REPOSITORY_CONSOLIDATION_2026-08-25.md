@@ -32,7 +32,7 @@ The former checkout held 82 GB of historical strategy artifacts. They were merge
 
 `/home/novius2/trading-stack/platform/nifty_stratlab/outputs/`
 
-The directory contains 70,746 files after consolidation. The dashboard now mounts that canonical directory at `/var/lib/nifty-stratlab/h30`; no Compose service depends on another source checkout.
+The directory contains 70,776 files after consolidation, including the former root-level strategy outputs. The dashboard now mounts that canonical directory at `/var/lib/nifty-stratlab/h30`; no Compose service depends on another source checkout.
 
 Generated archives and screenshot binaries that are unsuitable for Git were retained under the ignored canonical path `archive/retired-mirror-evidence-20260825/` (527 MB). Former root-level strategy outputs were retained under the ignored canonical strategy-artifact tree. They are data/evidence, not a second repository.
 

@@ -1,7 +1,7 @@
 import "dotenv/config";
 import http from "http";
 import { randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import express from "express";
 import cors from "cors";
@@ -19,6 +19,7 @@ import { startSnapshotScheduler } from "./lib/snapshotRegistry";
 import { validateApiRuntimeEnv } from "./lib/runtimeConfig";
 import { ensureRateLimitStoreReady } from "./security/rateLimit";
 import { startMobileNotificationDispatcher, stopMobileNotificationDispatcher } from "./services/mobileNotificationDispatcher";
+import { extractClientBuildVersion } from "./lib/clientBuildVersion";
 
 const SLOW_QUERY_MS = Number(process.env.SLOW_QUERY_MS ?? 250);
 
@@ -397,9 +398,25 @@ async function main() {
     const clientDist = candidates.find((p) => existsSync(path.join(p, "index.html")));
     if (clientDist) {
       const indexFile = path.join(clientDist, "index.html");
-      app.use(express.static(clientDist));
+      const clientBuildVersion = extractClientBuildVersion(readFileSync(indexFile, "utf8"));
+      app.get("/app-version.json", (_req, res) => {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+        return res.json({ version: clientBuildVersion });
+      });
+      app.use(express.static(clientDist, {
+        setHeaders: (res, filePath) => {
+          if (path.basename(filePath) === "index.html") {
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+          } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          }
+        }
+      }));
       app.get("*", (req, res, next) => {
         if (req.path.startsWith("/v1") || req.path === "/health") return next();
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
         return res.sendFile(indexFile);
       });
     }

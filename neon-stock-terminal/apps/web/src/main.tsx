@@ -7,6 +7,7 @@ import { AuthGateProvider } from "./auth/AuthGateProvider";
 import { LocaleProvider } from "./i18n/LocaleProvider";
 import { analytics } from "./analytics";
 import { applyFontMode, readFontMode } from "./lib/fontMode";
+import { startAppVersionGuard } from "./lib/appVersion";
 import "./styles/global.css";
 
 const queryClient = new QueryClient({
@@ -25,6 +26,7 @@ function resolveRouterBasename(): string {
 if (typeof window !== "undefined") {
   applyFontMode(readFontMode());
   analytics.init();
+  startAppVersionGuard();
   window.addEventListener("contextmenu", (event) => {
     event.preventDefault();
   });

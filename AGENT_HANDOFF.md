@@ -3114,3 +3114,30 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   `trading-stack-n50-dashboard:rollback-pre-simple-high-pnl-20260825` preserves the earlier Simple View.
 - Authenticated production Playwright again passed 19/19 checks. The downloaded CSV reconciled the
   first IDEA row at a ₹15.29 session high to +₹2,859 and +0.26% for its captured quantity.
+
+## 2026-08-25 — Simple View entry-month path, column sorting and filters
+
+- Extended `/paper-trading?tab=simple` without changing the Portfolio or quality workbenches. Each
+  row now exposes the raw maximum price and direction-normalised maximum drawdown from the actual
+  buy timestamp through the end of that calendar month. An unfinished entry month is explicitly
+  labelled `TRACKING_TO_DATE`; a past entry month freezes as `MONTH_END_COMPLETE`.
+- The API combines post-entry `public.bars_1m` evidence for D0 with indexed `public.bars_1d` rows for
+  later sessions in the same calendar month. It does not reuse D+30, include pre-entry prices or stop
+  observing when the governed execution closes.
+- Added captured-quantity gross P/L and percentage values for the month high and maximum drawdown,
+  plus observed-through/session metadata. CSV and Excel-compatible exports contain these fields and
+  export only the currently filtered and sorted rows.
+- Every data header now sorts ascending/descending and has a compact per-column filter. The existing
+  shared search, stock-universe filters, sticky header, contained scrolling and canonical trade
+  inspector remain available.
+- Validation: API 124/124, web 51/51, both production builds and typechecks, targeted ESLint and the
+  canonical repository gate passed. Authenticated production Playwright passed 21/21 checks with 44
+  rows, working header filtering/sorting, contained scrolling, drawer inspection and both downloads.
+- All 44 production rows had populated entry-month high, adverse price, P/L, drawdown and state in
+  the downloaded CSV. PETRONET independently reconciled at entry ₹286.35 × 1,900 shares: month high
+  ₹296.80, +₹19,855.00 (+3.65%), adverse price ₹286.35 and ₹0 drawdown across five sessions.
+- Release `2ff99df` was pushed to canonical `master` and deployed healthy as dashboard image
+  `sha256:fd7ce5faffb1798615d8724f02014fd008c3b6b78215dbe578898e03e2e92df9`.
+  Rollback image `trading-stack-n50-dashboard:rollback-pre-simple-month-path-20260825` preserves the
+  previous Simple View. Browser evidence is under
+  `output/playwright/paper-simple-view-month-path-20260825/` (ignored runtime output).

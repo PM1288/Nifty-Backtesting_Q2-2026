@@ -182,6 +182,25 @@ test("long paper projection derives completed D0 EOD and intraday extrema", () =
   assert.equal(projected.closed_in_intraday, false);
 });
 
+test("paper projection combines post-entry D0 evidence with later daily bars through entry-month end", () => {
+  const projected = paperTradeProjection({
+    ...base,
+    intraday_session_high: "106",
+    intraday_session_low: "98",
+    entry_month_later_high: "114",
+    entry_month_later_low: "91",
+    entry_month_observed_through: "2026-08-25T12:00:00.000Z",
+    entry_month_daily_sessions: 9,
+    entry_month_complete: false,
+    horizons: []
+  });
+  assert.equal(projected.entry_month_high, 114);
+  assert.equal(projected.entry_month_low, 91);
+  assert.equal(projected.entry_month_daily_sessions, 10);
+  assert.equal(projected.entry_month_complete, false);
+  assert.equal(projected.entry_month_observed_through, "2026-08-25T12:00:00.000Z");
+});
+
 test("short paper projection normalises D0 EOD reward and pain", () => {
   const projected = paperTradeProjection({
     ...base,

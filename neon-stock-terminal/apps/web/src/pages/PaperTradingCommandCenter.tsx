@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -996,10 +997,84 @@ function PaperSimpleView({
   onSort: (value: string) => void;
   onSelect: (trade: AnyRow) => void;
 }) {
-  const rows: PaperSimpleRow[] = trades.map((trade) => {
+  type SimpleColumn = "stock" | "openedDate" | "openedTime" | "entry" | "oFactor" | "xFactor" | "dayHigh" | "dayLow" | "monthHigh" | "monthDrawdown" | "current";
+  const [columnSort, setColumnSort] = useState<{ column: SimpleColumn; direction: "asc" | "desc" }>({ column: "openedDate", direction: "desc" });
+  const [columnFilters, setColumnFilters] = useState<Partial<Record<SimpleColumn, string>>>({});
+  const sourceRows: PaperSimpleRow[] = useMemo(() => trades.map((trade) => {
     const profile = profiles.get(String(trade.symbol).toUpperCase());
     return buildPaperSimpleRow(trade, profile?.name);
-  });
+  }), [profiles, trades]);
+  const filterValue = (row: PaperSimpleRow, column: SimpleColumn) => {
+    const opened = paperSimpleIstDateTime(row.openedAt);
+    const values: Record<SimpleColumn, unknown[]> = {
+      stock: [row.stockName, row.symbol],
+      openedDate: [opened.date, row.openedAt],
+      openedTime: [opened.time],
+      entry: [row.entryPrice],
+      oFactor: [row.oFactor],
+      xFactor: [row.xFactor],
+      dayHigh: [row.dayHigh, row.dayHighPnl, row.dayHighPnlPct],
+      dayLow: [row.dayLow, row.dayMaxDrawdown, row.dayMaxDrawdownPct],
+      monthHigh: [row.monthHigh, row.monthHighPnl, row.monthHighPnlPct, row.monthPathState],
+      monthDrawdown: [row.monthAdversePrice, row.monthMaxDrawdown, row.monthMaxDrawdownPct, row.monthPathState],
+      current: [row.currentPrice, row.currentPnl, row.currentPnlPct, row.currentPnlBasis],
+    };
+    return values[column].filter((value) => value != null).join(" ").toUpperCase();
+  };
+  const sortValue = (row: PaperSimpleRow, column: SimpleColumn): string | number | null => {
+    if (column === "stock") return `${row.stockName} ${row.symbol}`.toUpperCase();
+    if (column === "openedDate" || column === "openedTime") return row.openedAt ? new Date(row.openedAt).getTime() : null;
+    if (column === "entry") return row.entryPrice;
+    if (column === "oFactor") return row.oFactor;
+    if (column === "xFactor") return row.xFactor;
+    if (column === "dayHigh") return row.dayHigh;
+    if (column === "dayLow") return row.dayMaxDrawdown;
+    if (column === "monthHigh") return row.monthHigh;
+    if (column === "monthDrawdown") return row.monthMaxDrawdown;
+    return row.currentPnl;
+  };
+  const rows = useMemo(() => sourceRows
+    .filter((row) => (Object.entries(columnFilters) as Array<[SimpleColumn, string]>).every(([column, value]) => (
+      !value.trim() || filterValue(row, column).includes(value.trim().toUpperCase())
+    )))
+    .sort((left, right) => {
+      const a = sortValue(left, columnSort.column);
+      const b = sortValue(right, columnSort.column);
+      if (a == null && b == null) return 0;
+      if (a == null) return 1;
+      if (b == null) return -1;
+      const comparison = typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b));
+      return columnSort.direction === "asc" ? comparison : -comparison;
+    }), [columnFilters, columnSort, sourceRows]);
+  const changePresetSort = (value: string) => {
+    onSort(value);
+    const presets: Record<string, { column: SimpleColumn; direction: "asc" | "desc" }> = {
+      NEWEST: { column: "openedDate", direction: "desc" },
+      PNL: { column: "current", direction: "desc" },
+      MFE: { column: "dayHigh", direction: "desc" },
+      MAE: { column: "dayLow", direction: "asc" },
+      QUALITY: { column: "oFactor", direction: "desc" },
+    };
+    setColumnSort(presets[value] ?? presets.NEWEST);
+  };
+  const toggleColumnSort = (column: SimpleColumn) => setColumnSort((current) => ({
+    column,
+    direction: current.column === column && current.direction === "asc" ? "desc" : "asc",
+  }));
+  const header = (column: SimpleColumn, label: string, detail?: string) => (
+    <th aria-sort={columnSort.column === column ? (columnSort.direction === "asc" ? "ascending" : "descending") : "none"}>
+      <button type="button" className={styles.simpleHeaderSort} onClick={() => toggleColumnSort(column)}>
+        <span>{label}{detail ? <small>{detail}</small> : null}</span>
+        <i aria-hidden="true">{columnSort.column === column ? (columnSort.direction === "asc" ? "▲" : "▼") : "↕"}</i>
+      </button>
+      <input
+        aria-label={`Filter ${label}`}
+        value={columnFilters[column] ?? ""}
+        onChange={(event) => setColumnFilters((current) => ({ ...current, [column]: event.target.value }))}
+        placeholder="Filter"
+      />
+    </th>
+  );
   const downloadCsv = () => downloadPaperSimpleFile(buildPaperSimpleCsv(rows), "text/csv", "csv");
   const downloadExcel = () => downloadPaperSimpleFile(buildPaperSimpleExcel(rows), "application/vnd.ms-excel", "xls");
 
@@ -1008,15 +1083,15 @@ function PaperSimpleView({
       <header className={styles.simpleViewHeader}>
         <div>
           <span>PAPER TRADING · SIMPLE VIEW</span>
-          <h2 id="paper-simple-view-title">Entry-day price and current P/L</h2>
-          <p>Compact canonical trade data. Select any row to open the unchanged full evidence inspector.</p>
+          <h2 id="paper-simple-view-title">Entry-day, entry-month path and current P/L</h2>
+          <p>Month evidence runs from the buy timestamp to that month end, or to date while the entry month is still active.</p>
         </div>
         <div className={styles.simpleViewActions}>
           <label>
             <span>Find</span>
             <input value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Stock or strategy" />
           </label>
-          <select aria-label="Sort simple paper trades" value={sort} onChange={(event) => onSort(event.target.value)}>
+          <select aria-label="Sort simple paper trades" value={sort} onChange={(event) => changePresetSort(event.target.value)}>
             <option value="NEWEST">Newest first</option>
             <option value="PNL">Highest current P/L</option>
             <option value="MFE">Highest D0 opportunity</option>
@@ -1032,15 +1107,17 @@ function PaperSimpleView({
           <caption>{rows.length} filtered paper trades. Prices and factors remain blank when canonical evidence is unavailable.</caption>
           <thead>
             <tr>
-              <th>Stock Name <small>Symbol</small></th>
-              <th>Date bought at <small>IST</small></th>
-              <th>Time bought at <small>IST</small></th>
-              <th>Entry Strike Price</th>
-              <th>O Factor</th>
-              <th>X Factor</th>
-              <th>Max Price · P/L <small>High that day</small></th>
-              <th>Low · Max Drawdown <small>That day</small></th>
-              <th>Current Price · P/L</th>
+              {header("stock", "Stock Name", "Symbol")}
+              {header("openedDate", "Date bought at", "IST")}
+              {header("openedTime", "Time bought at", "IST")}
+              {header("entry", "Entry Strike Price")}
+              {header("oFactor", "O Factor")}
+              {header("xFactor", "X Factor")}
+              {header("dayHigh", "Max Price · P/L", "Entry day")}
+              {header("dayLow", "Low · Max Drawdown", "Entry day")}
+              {header("monthHigh", "Max Price · P/L", "Buy → month end / to date")}
+              {header("monthDrawdown", "Adverse · Max Drawdown", "Buy → month end / to date")}
+              {header("current", "Current Price · P/L")}
               <th aria-label="Open trade evidence" />
             </tr>
           </thead>
@@ -1078,6 +1155,20 @@ function PaperSimpleView({
                     <small data-sign={row.dayMaxDrawdown != null && row.dayMaxDrawdown >= 0 ? "positive" : "negative"}>
                       {simpleMoney(row.dayMaxDrawdown)} · {simplePercent(row.dayMaxDrawdownPct)}
                     </small>
+                  </td>
+                  <td className={styles.simpleNumber}>
+                    <strong>{simpleMoney(row.monthHigh)}</strong>
+                    <small data-sign={row.monthHighPnl != null && row.monthHighPnl >= 0 ? "positive" : "negative"}>
+                      {simpleMoney(row.monthHighPnl)} · {simplePercent(row.monthHighPnlPct)}
+                    </small>
+                    <em>{row.monthPathState === "MONTH_END_COMPLETE" ? "Month end complete" : "Tracking to date"}</em>
+                  </td>
+                  <td className={styles.simpleNumber}>
+                    <strong>{simpleMoney(row.monthAdversePrice)}</strong>
+                    <small data-sign={row.monthMaxDrawdown != null && row.monthMaxDrawdown >= 0 ? "positive" : "negative"}>
+                      {simpleMoney(row.monthMaxDrawdown)} · {simplePercent(row.monthMaxDrawdownPct)}
+                    </small>
+                    <em>{row.monthSessions == null ? "—" : `${row.monthSessions} session${row.monthSessions === 1 ? "" : "s"}`}</em>
                   </td>
                   <td className={styles.simpleNumber}>
                     <strong>{simpleMoney(row.currentPrice)}</strong>

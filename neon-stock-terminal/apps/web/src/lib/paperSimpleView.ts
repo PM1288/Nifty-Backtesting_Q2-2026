@@ -14,6 +14,15 @@ export type PaperSimpleRow = {
   dayLow: number | null;
   dayMaxDrawdown: number | null;
   dayMaxDrawdownPct: number | null;
+  monthHigh: number | null;
+  monthHighPnl: number | null;
+  monthHighPnlPct: number | null;
+  monthAdversePrice: number | null;
+  monthMaxDrawdown: number | null;
+  monthMaxDrawdownPct: number | null;
+  monthPathState: "MONTH_END_COMPLETE" | "TRACKING_TO_DATE";
+  monthObservedThrough: string | null;
+  monthSessions: number | null;
   currentPrice: number | null;
   currentPnl: number | null;
   currentPnlPct: number | null;
@@ -54,6 +63,9 @@ export function buildPaperSimpleRow(trade: PaperSimpleSource, stockName?: string
   const currentPrice = optionalNumber(trade.hypothetical_carry_mark) ?? optionalNumber(trade.last_mark);
   const dayHigh = optionalNumber(trade.intraday_session_high);
   const direction = String(trade.side).toUpperCase() === "SELL" ? -1 : 1;
+  const monthHigh = optionalNumber(trade.entry_month_high);
+  const monthLow = optionalNumber(trade.entry_month_low);
+  const monthAdversePrice = direction > 0 ? monthLow : monthHigh;
   const derivedCurrentPnl = currentPrice != null && entryPrice != null && quantity != null
     ? direction * (currentPrice - entryPrice) * quantity
     : null;
@@ -82,6 +94,23 @@ export function buildPaperSimpleRow(trade: PaperSimpleSource, stockName?: string
     dayMaxDrawdownPct: entryNotional && entryNotional > 0 && trade.intraday_max_drawdown != null
       ? optionalNumber(trade.intraday_max_drawdown)! / entryNotional * 100
       : null,
+    monthHigh,
+    monthHighPnl: monthHigh != null && entryPrice != null && quantity != null
+      ? direction * (monthHigh - entryPrice) * quantity
+      : null,
+    monthHighPnlPct: monthHigh != null && entryPrice != null && entryPrice > 0
+      ? direction * (monthHigh / entryPrice - 1) * 100
+      : null,
+    monthAdversePrice,
+    monthMaxDrawdown: monthAdversePrice != null && entryPrice != null && quantity != null
+      ? Math.min(0, direction * (monthAdversePrice - entryPrice) * quantity)
+      : null,
+    monthMaxDrawdownPct: monthAdversePrice != null && entryPrice != null && entryPrice > 0
+      ? Math.min(0, direction * (monthAdversePrice / entryPrice - 1) * 100)
+      : null,
+    monthPathState: trade.entry_month_complete === true ? "MONTH_END_COMPLETE" : "TRACKING_TO_DATE",
+    monthObservedThrough: trade.entry_month_observed_through ? String(trade.entry_month_observed_through) : null,
+    monthSessions: optionalNumber(trade.entry_month_daily_sessions),
     currentPrice,
     currentPnl,
     currentPnlPct: entryNotional && entryNotional > 0 && currentPnl != null ? currentPnl / entryNotional * 100 : null,
@@ -104,6 +133,15 @@ export const PAPER_SIMPLE_EXPORT_COLUMNS = [
   "Low of Entry Day",
   "Max Drawdown That Day (INR)",
   "Max Drawdown That Day (%)",
+  "Max Price Since Buy Through Entry-Month End / To Date",
+  "P/L at Entry-Month High (INR)",
+  "P/L at Entry-Month High (%)",
+  "Adverse Price Since Buy Through Entry-Month End / To Date",
+  "Max Drawdown Through Entry-Month End / To Date (INR)",
+  "Max Drawdown Through Entry-Month End / To Date (%)",
+  "Entry-Month Path State",
+  "Entry-Month Observed Through",
+  "Entry-Month Sessions Observed",
   "Current Price",
   "Current P/L (INR)",
   "Current P/L (%)",
@@ -127,6 +165,15 @@ function exportValues(row: PaperSimpleRow): Array<string | number | null> {
     rounded(row.dayLow),
     rounded(row.dayMaxDrawdown),
     rounded(row.dayMaxDrawdownPct),
+    rounded(row.monthHigh),
+    rounded(row.monthHighPnl),
+    rounded(row.monthHighPnlPct),
+    rounded(row.monthAdversePrice),
+    rounded(row.monthMaxDrawdown),
+    rounded(row.monthMaxDrawdownPct),
+    row.monthPathState,
+    row.monthObservedThrough,
+    rounded(row.monthSessions),
     rounded(row.currentPrice),
     rounded(row.currentPnl),
     rounded(row.currentPnlPct),

@@ -109,6 +109,10 @@ export function paperTradeProjection(row: Row) {
     : null;
   const intradayHigh = row.intraday_session_high == null ? null : finiteNumber(row.intraday_session_high);
   const intradayLow = row.intraday_session_low == null ? null : finiteNumber(row.intraday_session_low);
+  const laterMonthHigh = row.entry_month_later_high == null ? null : finiteNumber(row.entry_month_later_high);
+  const laterMonthLow = row.entry_month_later_low == null ? null : finiteNumber(row.entry_month_later_low);
+  const entryMonthHigh = intradayHigh == null ? laterMonthHigh : laterMonthHigh == null ? intradayHigh : Math.max(intradayHigh, laterMonthHigh);
+  const entryMonthLow = intradayLow == null ? laterMonthLow : laterMonthLow == null ? intradayLow : Math.min(intradayLow, laterMonthLow);
   const direction = String(row.side).toUpperCase() === "SELL" ? -1 : 1;
   const intradayEodPnl = intradayEodMark != null && entryPrice > 0 && openedQuantity > 0
     ? direction * (intradayEodMark - entryPrice) * openedQuantity
@@ -223,6 +227,11 @@ export function paperTradeProjection(row: Row) {
     intraday_eod_return_pct: intradayEodReturnPct,
     intraday_max_profit: intradayMaxProfit,
     intraday_max_drawdown: intradayMaxDrawdown,
+    entry_month_high: entryMonthHigh,
+    entry_month_low: entryMonthLow,
+    entry_month_observed_through: row.entry_month_observed_through ?? row.intraday_eod_mark_at ?? null,
+    entry_month_daily_sessions: finiteNumber(row.entry_month_daily_sessions) + (intradayHigh != null || intradayLow != null ? 1 : 0),
+    entry_month_complete: Boolean(row.entry_month_complete),
     intraday_bar_count: finiteNumber(row.intraday_bar_count),
     intraday_eod_complete: intradayEodMark != null,
     closed_in_intraday: row.closed_in_intraday === true,
@@ -531,6 +540,13 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                  entry_day.eod_close::text as intraday_eod_mark,entry_day.eod_mark_at as intraday_eod_mark_at,
                  entry_day.session_high::text as intraday_session_high,entry_day.session_low::text as intraday_session_low,
                  entry_day.bar_count::int as intraday_bar_count,entry_day.eod_complete as intraday_eod_complete,
+                 entry_month_later.daily_high::text as entry_month_later_high,
+                 entry_month_later.daily_low::text as entry_month_later_low,
+                 entry_month_later.observed_through as entry_month_observed_through,
+                 entry_month_later.daily_sessions::int as entry_month_daily_sessions,
+                 ((now() at time zone 'Asia/Kolkata')::date >=
+                   (date_trunc('month',l.opened_at at time zone 'Asia/Kolkata')+interval '1 month')::date
+                 ) as entry_month_complete,
                  stop_rule.stop_price::text as stop_loss_price,stop_hit.hit_at as stop_loss_hit_at,
                  stop_hit.exit_price::text as stop_loss_exit_price,
                  coalesce((select sum(e.amount) from paper_trading.pnl_ledger e
@@ -591,6 +607,17 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
               and b.ts>=l.opened_at
               and b.ts<=(((l.opened_at at time zone 'Asia/Kolkata')::date+time '15:30:59') at time zone 'Asia/Kolkata')
           ) entry_day on true
+          left join lateral (
+            select max(d.high) as daily_high,min(d.low) as daily_low,
+                   max(d.created_at) as observed_through,count(*)::int as daily_sessions
+            from public.bars_1d d
+            where d.exchange=i.exchange and d.symbol_token=i.instrument_token
+              and d.trade_date>(l.opened_at at time zone 'Asia/Kolkata')::date
+              and d.trade_date<least(
+                (date_trunc('month',l.opened_at at time zone 'Asia/Kolkata')+interval '1 month')::date,
+                (now() at time zone 'Asia/Kolkata')::date+1
+              )
+          ) entry_month_later on true
           left join lateral (
             select case when l.side='SELL'
               then p.average_entry_price+(6000::numeric/nullif(p.opened_quantity,0))

@@ -1951,11 +1951,15 @@
   border: 1px solid #dbe5ef;
   border-radius: 9px;
 }
-.simpleTableFrame table { width: 100%; min-width: 1320px; border-collapse: collapse; font-variant-numeric: tabular-nums lining-nums; }
+.simpleTableFrame table { width: 100%; min-width: 1840px; border-collapse: collapse; font-variant-numeric: tabular-nums lining-nums; }
 .simpleTableFrame caption { padding: 7px 9px; color: #5f7187; background: #f7f9fc; text-align: left; font-size: 10px; }
 .simpleTableFrame thead { position: sticky; top: 0; z-index: 4; background: #edf3f9; box-shadow: 0 1px #c9d6e4; }
-.simpleTableFrame th { height: 40px; padding: 5px 8px; color: #425b79; text-align: left; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.simpleTableFrame th { height: 58px; padding: 4px 6px; color: #425b79; text-align: left; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .simpleTableFrame th small { display: block; color: #708198; font-size: 9px; font-weight: 500; }
+.simpleHeaderSort { display: flex; width: 100%; min-height: 25px; align-items: center; justify-content: space-between; gap: 5px; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.simpleHeaderSort i { color: #617895; font-size: 9px; font-style: normal; }
+.simpleTableFrame th > input { width: 100%; min-width: 76px; height: 22px; margin-top: 3px; padding: 0 6px; border: 1px solid #c8d6e5; border-radius: 5px; color: #29445f; background: #fff; font-size: 9px; font-weight: 500; }
+.simpleTableFrame th > input:focus { outline: 2px solid #76aaf0; outline-offset: 0; }
 .simpleTableFrame td { height: 48px; padding: 5px 8px; border-bottom: 1px solid #e7edf4; color: #263d58; font-size: 11px; vertical-align: middle; }
 .simpleTableFrame tbody tr { cursor: pointer; background: #fff; }
 .simpleTableFrame tbody tr:nth-child(even) { background: #f9fbfd; }

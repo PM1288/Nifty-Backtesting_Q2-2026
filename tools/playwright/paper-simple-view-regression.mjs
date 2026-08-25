@@ -28,16 +28,24 @@ try {
   page.on("pageerror", (error) => errors.push(String(error)));
   const response = await page.goto(`${appBase}/paper-trading?tab=simple&prefetch=off`, { waitUntil: "networkidle", timeout: 90_000 });
   check("route response", Boolean(response?.ok()), `status=${response?.status()}`);
-  await page.getByRole("heading", { name: "Entry-day price and current P/L", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Entry-day, entry-month path and current P/L", exact: true }).waitFor();
   check("simple tab active", await page.getByRole("button", { name: "Simple view", exact: true }).getAttribute("data-active") === "true");
 
   const headers = await page.locator("table thead").innerText();
-  for (const label of ["STOCK NAME", "DATE BOUGHT AT", "TIME BOUGHT AT", "ENTRY STRIKE PRICE", "O FACTOR", "X FACTOR", "MAX PRICE · P/L", "LOW · MAX DRAWDOWN", "CURRENT PRICE · P/L"]) {
+  for (const label of ["STOCK NAME", "DATE BOUGHT AT", "TIME BOUGHT AT", "ENTRY STRIKE PRICE", "O FACTOR", "X FACTOR", "MAX PRICE · P/L", "LOW · MAX DRAWDOWN", "BUY → MONTH END / TO DATE", "ADVERSE · MAX DRAWDOWN", "CURRENT PRICE · P/L"]) {
     check(`column ${label}`, headers.toUpperCase().includes(label), headers);
   }
   const rows = page.locator("table tbody tr");
-  check("table populated", await rows.count() > 0, "no paper rows rendered");
+  const initialRowCount = await rows.count();
+  check("table populated", initialRowCount > 0, "no paper rows rendered");
   check("default newest sort", await page.getByLabel("Sort simple paper trades").inputValue() === "NEWEST");
+  const firstSymbol = (await rows.first().innerText()).split("\n")[0].trim();
+  await page.getByLabel("Filter Stock Name").fill(firstSymbol);
+  const filteredRowCount = await rows.count();
+  check("column filter narrows rows", filteredRowCount >= 1 && filteredRowCount <= initialRowCount, `${initialRowCount} -> ${filteredRowCount}`);
+  await page.getByLabel("Filter Stock Name").fill("");
+  await page.getByRole("button", { name: /O Factor/ }).click();
+  check("header sort is active", await page.getByRole("columnheader", { name: /O Factor/ }).getAttribute("aria-sort") === "ascending");
   check("contained table scroll", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), "viewport has horizontal overflow");
 
   await rows.first().click();

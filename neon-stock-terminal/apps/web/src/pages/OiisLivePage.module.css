@@ -156,7 +156,7 @@
 .toolbar select:focus,.editor input:focus { border-color: #3c78b4; outline: 3px solid rgba(60,120,180,.12); }
 .editor { display: grid; grid-template-columns: 1.1fr repeat(3,minmax(105px,.8fr)) auto auto auto; align-items: end; gap: 8px; margin-top: 12px; }
 .check { display: flex!important; align-items: center; gap: 6px!important; min-height: 38px; }
-.check input { min-height: auto; }
+.check input { width: 24px; height: 24px; min-height: 24px; margin: 0; }
 .button,.buttonSecondary { min-height: 38px; border: 0; border-radius: 8px; padding: 8px 12px; background: #1d659f; color: #fff; font-weight: 800; cursor: pointer; }
 .buttonSecondary { background: #53667a; }
 .button:disabled,.buttonSecondary:disabled,.editor input:disabled { cursor: not-allowed; opacity: .48; }
@@ -168,6 +168,115 @@
 .historyMetrics span,.freshnessGrid span { color: #52647a; font-size: .63rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .historyMetrics strong { color: #183552; font-size: 1.25rem; }
 .historyFootnote { margin: 11px 0 0; color: #52647a; font-size: .69rem; line-height: 1.45; }
+
+:global([data-ui-compact-v5="true"]) .page {
+  gap: var(--space-4);
+  min-height: 0;
+  margin: 0;
+  padding: var(--page-pad-desktop);
+}
+:global([data-ui-compact-v5="true"]) .workspaceHeader {
+  align-items: center;
+  min-height: 34px;
+  gap: 8px;
+  padding: 0;
+}
+:global([data-ui-compact-v5="true"]) .workspaceHeader h1 {
+  display: inline;
+  margin: 0 8px 0 0;
+  font-size: 18px;
+}
+:global([data-ui-compact-v5="true"]) .workspaceHeader p {
+  display: none;
+}
+:global([data-ui-compact-v5="true"]) .tabs {
+  gap: 4px;
+}
+:global([data-ui-compact-v5="true"]) .tab,
+:global([data-ui-compact-v5="true"]) .tabActive,
+:global([data-ui-compact-v5="true"]) .viewTab,
+:global([data-ui-compact-v5="true"]) .viewTabActive {
+  min-height: var(--tab-h);
+  padding: 4px 8px;
+}
+:global([data-ui-compact-v5="true"]) .decisionHero {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 10px;
+  border-radius: var(--radius-panel);
+}
+:global([data-ui-compact-v5="true"]) .decisionLabel {
+  margin-bottom: 2px;
+}
+:global([data-ui-compact-v5="true"]) .decisionHero h2 {
+  font-size: 17px;
+}
+:global([data-ui-compact-v5="true"]) .decisionHero p {
+  margin-top: 3px;
+  line-height: 1.35;
+}
+:global([data-ui-compact-v5="true"]) .decisionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+:global([data-ui-compact-v5="true"]) .decisionMeta span {
+  min-width: 92px;
+  gap: 1px;
+  padding: 4px 6px;
+  border-radius: var(--radius-control);
+}
+:global([data-ui-compact-v5="true"]) .funnelSection,
+:global([data-ui-compact-v5="true"]) .panel {
+  padding: var(--panel-pad-dense);
+  border-radius: var(--radius-panel);
+}
+:global([data-ui-compact-v5="true"]) .sectionHeading {
+  align-items: center;
+  margin-bottom: 6px;
+}
+:global([data-ui-compact-v5="true"]) .sectionHeading h2 {
+  margin-top: 1px;
+  font-size: 14px;
+}
+:global([data-ui-compact-v5="true"]) .funnel {
+  gap: 0;
+  border: 1px solid #e0e7ef;
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+}
+:global([data-ui-compact-v5="true"]) .funnelCard {
+  min-height: 54px;
+  padding: 5px 8px;
+  border: 0;
+  border-right: 1px solid #e0e7ef;
+  border-radius: 0;
+}
+:global([data-ui-compact-v5="true"]) .funnelCard::after,
+:global([data-ui-compact-v5="true"]) .funnelCard p {
+  display: none;
+}
+:global([data-ui-compact-v5="true"]) .funnelCard strong {
+  display: inline;
+  margin: 0 5px 0 0;
+  font-size: 18px;
+}
+:global([data-ui-compact-v5="true"]) .funnelCard h3 {
+  display: inline;
+  font-size: 11px;
+}
+:global([data-ui-compact-v5="true"]) .table th,
+:global([data-ui-compact-v5="true"]) .table td {
+  padding: 4px 6px;
+}
+:global([data-ui-compact-v5="true"]) .table th {
+  height: var(--table-head-h);
+}
+:global([data-ui-compact-v5="true"]) .table td {
+  height: var(--table-row-two-line);
+}
 
 .healthGrid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 9px; }
 .healthItem { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #e1e8f0; border-radius: 10px; padding: 11px; }

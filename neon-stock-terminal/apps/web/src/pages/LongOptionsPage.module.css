@@ -70,3 +70,24 @@
   .drawer { width: 100%; padding: 20px 16px calc(28px + env(safe-area-inset-bottom)); }
   .drawer ul { columns: 1; }
 }
+
+:global([data-ui-compact-v5="true"]) .page { gap:6px; padding:0 0 14px; }
+:global([data-ui-compact-v5="true"]) .router,
+:global([data-ui-compact-v5="true"]) .surface,
+:global([data-ui-compact-v5="true"]) .failures { padding:7px; border-radius:7px; box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .router h2,
+:global([data-ui-compact-v5="true"]) .surface h2,
+:global([data-ui-compact-v5="true"]) .failures h2 { margin:1px 0; font-size:14px; }
+:global([data-ui-compact-v5="true"]) .router p,
+:global([data-ui-compact-v5="true"]) .surface p { font-size:10.5px; line-height:1.25; }
+:global([data-ui-compact-v5="true"]) .routeGrid { display:flex; gap:0; margin-top:5px; border:1px solid #d5dee9; border-radius:6px; overflow-x:auto; }
+:global([data-ui-compact-v5="true"]) .routeGrid article { flex:1 0 190px; min-height:52px; gap:2px; padding:5px 7px; border-left-width:2px; border-radius:0; }
+:global([data-ui-compact-v5="true"]) .routeGrid strong { font-size:12px; }
+:global([data-ui-compact-v5="true"]) .surface > header { margin-bottom:5px; }
+:global([data-ui-compact-v5="true"]) .filters { gap:3px; }
+:global([data-ui-compact-v5="true"]) .filters button { min-height:28px; padding:0 7px; border-radius:5px; font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .tableWrap { max-height:calc(100dvh - 290px); border-radius:6px; }
+:global([data-ui-compact-v5="true"]) .tableWrap th { height:32px; padding:3px 6px; }
+:global([data-ui-compact-v5="true"]) .tableWrap td { height:42px; padding:4px 6px; }
+:global([data-ui-compact-v5="true"]) .failures > div { gap:3px; margin-top:5px; }
+:global([data-ui-compact-v5="true"]) .failures article { padding:4px 6px; border-radius:4px; }

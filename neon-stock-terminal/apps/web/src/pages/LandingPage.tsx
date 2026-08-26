@@ -21,7 +21,7 @@ import { useDeferredBusyState } from "../lib/useDeferredBusyState";
 import { PerformanceDebugPanel } from "../analytics/PerformanceDebugPanel";
 import type { AnalyticsParams } from "../analytics/types";
 import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
-import { StockDistribution, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
+import { StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 
 function mergeQuote<T extends Quote>(
   quote: T,
@@ -663,9 +663,8 @@ export function LandingPage() {
               {tr("Calm mode")}
             </button>
           </div>
+          <StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={visibleProfiles.length} compact />
         </div>
-        <StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={visibleProfiles.length} />
-        <StockDistribution profiles={visibleProfiles} />
         <div className={styles.sectorSummaryStrip}>
           <div className={styles.storyPoint}>
             <span className={styles.storyPointLabel}>{tr("Advancers / decliners")}</span>

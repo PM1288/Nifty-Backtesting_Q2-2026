@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   PAPER_METRIC_DEFINITIONS,
   PAPER_WORKBENCH_SECTIONS,
@@ -78,7 +78,7 @@ export function PaperWorkbenchSubnav({ active, counts, onSelect }: { active: Pap
   );
 }
 
-export function AnalysisContextBar({ context, strategyOptions, appliedCount, asOf, onChange, onClear, onLoadSaved, onCopy, onExport }: { context: PaperWorkbenchContext; strategyOptions: string[]; appliedCount: number; asOf: string; onChange: <K extends keyof PaperWorkbenchContext>(key: K, value: PaperWorkbenchContext[K]) => void; onClear: () => void; onLoadSaved: () => void; onCopy: () => void; onExport: () => void }) {
+export function AnalysisContextBar({ context, strategyOptions, appliedCount, asOf, classificationFilters, onChange, onClear, onLoadSaved, onCopy, onExport }: { context: PaperWorkbenchContext; strategyOptions: string[]; appliedCount: number; asOf: string; classificationFilters?: ReactNode; onChange: <K extends keyof PaperWorkbenchContext>(key: K, value: PaperWorkbenchContext[K]) => void; onClear: () => void; onLoadSaved: () => void; onCopy: () => void; onExport: () => void }) {
   return (
     <section className={styles.contextBar} aria-label="Analysis context">
       <div className={styles.contextTitle}><span>ANALYSIS CONTEXT</span><strong>{appliedCount ? `${appliedCount} filters applied` : "All canonical paper evidence"}</strong><small>As of {asOf} IST</small></div>
@@ -90,6 +90,7 @@ export function AnalysisContextBar({ context, strategyOptions, appliedCount, asO
       <label><span>Accounting</span><select value={context.accounting} onChange={(event) => onChange("accounting", event.target.value as PaperWorkbenchContext["accounting"])}><option value="ALL">All classes</option><option value="BOOKED">Booked</option><option value="OPEN_ACTUAL">Open actual</option><option value="OBSERVED">Observed</option><option value="HYPOTHETICAL">Hypothetical</option><option value="SIMULATED">Simulated</option><option value="DATA_QUALITY">Data quality</option></select></label>
       <label><span>Capital</span><select value={context.capital} onChange={(event) => onChange("capital", event.target.value as PaperWorkbenchContext["capital"])}><option value="ALL">All bases</option><option value="FNO_QTY">F&amp;O quantity</option><option value="FIXED_2L">Fixed ₹2L</option><option value="FIXED_10L">Fixed ₹10L</option></select></label>
       <label><span>Costs</span><select value={context.basis} onChange={(event) => onChange("basis", event.target.value as PaperWorkbenchContext["basis"])}><option value="ALL">Gross + net</option><option value="GROSS">Gross</option><option value="NET">Net</option></select></label>
+      {classificationFilters}
       <div className={styles.contextActions}><button type="button" onClick={onClear}>Clear</button><button type="button" onClick={onLoadSaved}>Load saved</button><button type="button" onClick={onCopy}>Copy link</button><button type="button" onClick={onExport}>Export</button><MetricDefinitionPopover definition={PAPER_METRIC_DEFINITIONS.dataFreshness} /></div>
     </section>
   );

@@ -13,7 +13,7 @@ import {
 } from "../components/navigation/StrategicPrimitives";
 import styles from "./OiisLivePage.module.css";
 import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
-import { StockDistribution, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
+import { StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 
 const empty = {
   symbol: "",
@@ -353,8 +353,7 @@ export function OiisLivePage() {
 
   const detailsView = (
     <section className={styles.panel}>
-      <StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={filteredCandidates.length} />
-      <StockDistribution profiles={filteredCandidates.map((row) => profiles.bySymbol.get(String(row.symbol).toUpperCase())).filter((item): item is NonNullable<typeof item> => Boolean(item))} />
+      <StockUniverseFilterBar compact profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={filteredCandidates.length} />
       <div className={styles.sectionHeading}>
         <div>
           <span className={styles.kicker}>Full evidence ledger</span>

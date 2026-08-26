@@ -8,6 +8,49 @@
   isolation: isolate;
 }
 
+.shell[data-ui-compact-v5="true"] {
+  --app-header-height: calc(var(--app-header-height-compact) + var(--ticker-strip-height-compact));
+  --workspace-nav-height: var(--primary-nav-height-compact);
+  --app-sticky-content-top: calc(var(--app-header-height) + var(--workspace-nav-height));
+}
+
+.shell[data-ui-compact-v5="true"] .topBar {
+  height: var(--app-header-height-compact);
+  min-height: var(--app-header-height-compact);
+  gap: 8px;
+  padding-inline: var(--page-pad-desktop-compact);
+}
+
+.shell[data-ui-compact-v5="true"] .tickerRail {
+  height: var(--ticker-strip-height-compact);
+}
+
+.shell[data-ui-compact-v5="true"] .body {
+  padding: 0 var(--page-pad-desktop-compact) 16px;
+}
+
+.shell[data-ui-compact-v5="true"] .contentColumn {
+  width: 100%;
+  max-width: none;
+}
+
+.shell[data-ui-compact-v5="true"] .workspaceTabs {
+  min-height: var(--secondary-nav-height-compact);
+  gap: 3px;
+  padding: 2px 0;
+}
+
+.shell[data-ui-compact-v5="true"] .workspaceTab {
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: var(--radius-control-compact);
+  font-size: 11.5px;
+}
+
+.shell[data-ui-compact-v5="true"] .main { padding-top: 6px; }
+.shell[data-ui-compact-v5="true"] .niftyHeaderQuote { min-height: 26px; border-radius: var(--radius-control-compact); }
+.shell[data-ui-compact-v5="true"] .paperVoiceToggle { min-height: 28px; border-radius: var(--radius-control-compact); }
+
 .shell[data-workspace-theme="light"] {
   --white: #10233f;
   --green: #087a50;

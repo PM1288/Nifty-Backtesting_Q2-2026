@@ -24,6 +24,7 @@ This manifest prevents additive dashboard work from silently removing shared she
 | Home stock identity | `StockPill.tsx` and stock-profile assets | Symbol, name and logo remain visible; pixel interaction cannot obscure text |
 | Trendlyne Summary | `/strategy/trendlyne-summary` plus `trendlyneSummary.ts` | Six-month ledger, fund-house/stock summaries and inspector remain reachable without fixed-count assumptions |
 | OISS v1.202608 | `/strategy/oiss-v1-202608`, `OissV1Page.tsx`, `oissV1.ts`, `services/oiss_v1` | Independent from OIIS; 13 URL lenses, immutable run identity, radar/rejected/carry/change/backtest evidence and full JSON/CSV/Excel exports remain reachable; scheduler and paper stay gated |
+| Compact UI V5 | `VITE_UI_COMPACT_V5`, shared shell/workspace primitives and `docs/uiux/v5` | Presentation-only flag; all route data, calculations, filters, inspectors, comments, audit and full-data exports remain canonical; heavy Paper lenses mount only when selected |
 
 ## Mandatory regression commands
 

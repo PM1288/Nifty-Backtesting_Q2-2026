@@ -8,6 +8,12 @@
   padding: 0 clamp(12px, 2vw, 28px);
 }
 
+:global([data-ui-compact-v5="true"]) .header {
+  width: 100%;
+  max-width: none;
+  padding-inline: var(--page-pad-desktop-compact);
+}
+
 .tickerWrap {
   min-width: 0;
   height: 100%;

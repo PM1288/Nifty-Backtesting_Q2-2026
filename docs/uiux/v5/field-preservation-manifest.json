@@ -1,0 +1,31 @@
+{
+  "version": "v5-baseline-1",
+  "policy": "Presentation-only migration. Raw API values and selectors remain canonical.",
+  "global": [
+    {"id":"brand","oldLocation":"app header","newLocation":"AppShell compact header (consolidated CompactAppHeader role)","availability":"default"},
+    {"id":"commandSearch","oldLocation":"app header","newLocation":"AppShell compact header (consolidated CompactAppHeader role)","availability":"default"},
+    {"id":"environmentMode","oldLocation":"app header","newLocation":"AppShell compact header (consolidated CompactAppHeader role)","availability":"default"},
+    {"id":"nifty50Mark","oldLocation":"app header","newLocation":"AppShell compact header (consolidated CompactAppHeader role)","availability":"default"},
+    {"id":"tickerTape","oldLocation":"header ticker rail","newLocation":"compact ticker rail","availability":"default"},
+    {"id":"freshnessAndTransport","oldLocation":"header badges and occasional route sentence","newLocation":"header status chip and inspector","availability":"default+info"},
+    {"id":"paperVoice","oldLocation":"header","newLocation":"AppShell compact header (consolidated CompactAppHeader role)","availability":"default"},
+    {"id":"paperNotifier","oldLocation":"bottom-right","newLocation":"unchanged bottom-right","availability":"event-driven"},
+    {"id":"userAuth","oldLocation":"app header","newLocation":"CompactAppHeader","availability":"default"}
+  ],
+  "paperTrading": {
+    "modes":["Portfolio & trades","Simple view","What good looks like"],
+    "lenses":["Overview","Trade Evidence","Path Through Time","Reward & Pain","Factor Analysis","Capital Recycling","Scenario Analysis","Methodology & Audit"],
+    "accountingClasses":["BOOKED","OPEN_ACTUAL","OBSERVED","HYPOTHETICAL","SIMULATED","DATA_QUALITY"],
+    "preservedEvidence":["trade identity","entry strategy","long/short","entry price/time","F&O quantity","investment required","fixed ₹2 lakh quantity/economics","booked realised net","open unrealised","D0 15:30","intraday targets","swing targets","5D MFE/MAE","30D MFE/MAE","never-closed carry","capture efficiency","quality","comments","audit","calculation trace","market depth at entry","stock profile/logo"],
+    "exports":["current filtered CSV","Simple View CSV","Simple View Excel-compatible export","parallel HTML","full evidence"]
+  },
+  "monthlyRolling": {
+    "preservedPopulations":["opportunities","selected","qualified continuation","rejected/not selected","incomplete","all-stock latest"],
+    "preservedEvidence":["symbol/profile","entry method","period","entry date/price","as-of/end return","max profit","max drawdown","1%/3%/5% hit","₹10k P&L","EMA9/body-above context","rolling 5/10/30/60 evidence","state","failed criteria and reasons","full row inspector"],
+    "exports":["filtered CSV"]
+  },
+  "strategy": {
+    "preservedEvidence":["run identity","policy/formula version","source/as-of/freshness","funnel counts","candidate state","blockers","hard gates","quality","targets","history","audit"],
+    "rule":"No formula, selection, ranking, target or paper-intent code may change."
+  }
+}

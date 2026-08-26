@@ -1,0 +1,65 @@
+{
+  "capturedAt": "2026-08-26T00:00:00Z",
+  "featureFlag": "VITE_UI_COMPACT_V5=true",
+  "candidateBuild": "index-CwgqpGFY.js",
+  "measurementSource": "tools/playwright/compact-v5-audit.mjs",
+  "shell": {
+    "desktopChromePx": 95,
+    "desktopTargetPx": "94-104",
+    "mobileChromePx": 59,
+    "desktopOuterOverflow": false
+  },
+  "representativeRoutes": {
+    "/": {
+      "desktop1440": { "pageHeightPx": 4351, "contentStartY": 96, "canvasCount": 0, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 3381, "contentStartY": 96, "canvasCount": 0, "bodyOverflow": false },
+      "change": "The stock-mix panel and duplicate transport band are removed; sector controls and coverage now share the heatmap toolbar."
+    },
+    "/strategy/oiis-live": {
+      "desktop1440": { "pageHeightPx": 3571, "contentStartY": 129, "visibleTableRows": 37, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 2153, "contentStartY": 129, "visibleTableRows": 7, "bodyOverflow": false },
+      "change": "The title, decision and six funnel stages are compact bands; candidate evidence follows immediately."
+    },
+    "/strategy/trendlyne-summary": {
+      "desktop1440": { "pageHeightPx": 2998, "contentStartY": 129, "canvasCount": 2, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 2998, "contentStartY": 129, "canvasCount": 2, "bodyOverflow": false },
+      "change": "Filters and four KPIs use one row each; both primary charts begin in the first viewport."
+    },
+    "/strategy/monthly": {
+      "desktop1440": { "beforePageHeightPx": 2021, "pageHeightPx": 1209, "contentStartY": 129, "visibleTableRows": 250, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 1389, "contentStartY": 129, "visibleTableRows": 250, "bodyOverflow": false },
+      "change": "One context row, one KPI strip and a contained all-stock evidence ledger replace separate filter and concentration rows."
+    },
+    "/strategy/rolling-monthly": {
+      "desktop1440": { "beforePageHeightPx": 1816, "pageHeightPx": 1058, "contentStartY": 129, "visibleTableRows": 250, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 1238, "contentStartY": 129, "visibleTableRows": 250, "bodyOverflow": false },
+      "change": "The Rolling view now uses the same compact grammar and table system as Monthly."
+    },
+    "/strategy/long-options": {
+      "desktop1440": { "beforePageHeightPx": 3783, "pageHeightPx": 1587, "contentStartY": 129, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 1587, "contentStartY": 129, "bodyOverflow": false },
+      "change": "Policy, no-trade state, funnel and route states are compressed ahead of executable evidence."
+    },
+    "/paper-trading": {
+      "desktop1440": { "beforePageHeightPx": 8603, "pageHeightPx": 900, "contentStartY": 96, "mountedHeavySections": 1, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 1080, "contentStartY": 96, "mountedHeavySections": 1, "bodyOverflow": false },
+      "change": "Overview mounts current-state evidence only; Factor, Capital, Path, Reward/Pain, Scenario and Methodology are independent lenses."
+    },
+    "/paper-trading?tab=simple": {
+      "desktop1440": { "pageHeightPx": 1040, "contentStartY": 96, "visibleTableRows": 44, "bodyOverflow": false },
+      "desktop1920": { "pageHeightPx": 1215, "contentStartY": 96, "visibleTableRows": 44, "bodyOverflow": false },
+      "change": "The additional Simple View keeps its sortable/filterable full dataset and canonical inspector in a compact monitoring table."
+    }
+  },
+  "completeSweep": {
+    "routeCount": 55,
+    "viewportCount": 4,
+    "expectedChecks": 220,
+    "evidenceFile": "full-route-screenshots/results.json",
+    "status": "PASS_220_OF_220"
+  },
+  "notes": [
+    "Visible table row counts are DOM evidence-row counts; virtualised surfaces may retain more canonical rows than are painted.",
+    "Screenshots and runtime result JSON remain local and Git-ignored under repository policy."
+  ]
+}

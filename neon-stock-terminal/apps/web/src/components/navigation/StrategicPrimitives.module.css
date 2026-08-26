@@ -4,3 +4,12 @@
 .returnLink,.external,.source{display:inline-flex;align-items:center;gap:6px}.returnLink,.external{color:#175ec8;font-size:12px;font-weight:700;text-decoration:none}.source{color:var(--text-3);font-size:11.5px}
 @media(max-width:900px){.related>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.pageHeader{display:grid;gap:12px;padding-top:12px}.actions{justify-content:flex-start}.related>div{grid-template-columns:1fr}.learn{padding-bottom:92px}}
+
+:global([data-ui-compact-v5="true"]) .pageHeader{align-items:center;gap:8px;min-height:38px;padding:3px 2px}
+:global([data-ui-compact-v5="true"]) .pageCopy{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+:global([data-ui-compact-v5="true"]) .pageHeader h1{margin:0;font-size:18px;line-height:1.2}
+:global([data-ui-compact-v5="true"]) .pageHeader p{display:none}
+:global([data-ui-compact-v5="true"]) .quality{margin:0}
+:global([data-ui-compact-v5="true"]) .actions{gap:4px}
+:global([data-ui-compact-v5="true"]) .actions button,
+:global([data-ui-compact-v5="true"]) .actions a{min-height:var(--control-h-standard);height:var(--control-h-standard);padding:0 8px;border-radius:var(--radius-control);font-size:11.5px}

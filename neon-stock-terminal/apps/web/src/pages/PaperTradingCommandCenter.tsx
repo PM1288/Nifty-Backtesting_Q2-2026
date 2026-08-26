@@ -57,7 +57,7 @@ import {
   type PaperSimpleRow,
 } from "../lib/paperSimpleView";
 import { matchesStockProfile, type StockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
-import { StockDistribution, StockIdentity, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
+import { StockIdentity, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 type AnyRow = Record<string, any>;
@@ -572,8 +572,8 @@ export function PaperTradingCommandCenter() {
           }}
           onCopy={copyCurrentLink}
           onExport={exportCurrentView}
+          classificationFilters={<StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={filtered.length} compact />}
         />
-        <StockUniverseFilterBar profiles={profiles.payload?.records ?? []} filters={profileFilters} onChange={setProfileFilters} count={filtered.length} />
       </> : null}
 
       {pageView === "WHAT_GOOD_LOOKS_LIKE" ? (
@@ -614,7 +614,7 @@ export function PaperTradingCommandCenter() {
         </section>
       ) : (
         <>
-          <div id="overview" className={styles.workbenchSection}>
+          {workbenchContext.section === "overview" ? <div id="overview" className={styles.workbenchSection}>
             <header className={styles.workbenchSectionHeader}><span>OVERVIEW</span><h2>What is happening now?</h2><p>Execution accounting, path evidence, simulations and trust state remain in separate lanes.</p></header>
           <section className={styles.sessionNotice}>
             <i />
@@ -625,7 +625,6 @@ export function PaperTradingCommandCenter() {
             </span>
           </section>
           <AccountingLaneOverview summary={overviewSummary} tradeCount={trades.length} asOf={String(data.asOf)} accounting={workbenchContext.accounting} onTrace={openTrace} onNavigate={selectWorkbenchSection} />
-          <StockDistribution profiles={filtered.map((trade) => profiles.bySymbol.get(String(trade.symbol).toUpperCase())).filter((item): item is NonNullable<typeof item> => Boolean(item))} />
           <section id="executive" className={styles.summaryGrid}>
             <article className={styles.maturityBanner}>
               <span>EVIDENCE MATURITY</span>
@@ -666,9 +665,9 @@ export function PaperTradingCommandCenter() {
               tone="negative"
             />
           </section>
-          </div>
+          </div> : null}
 
-          <div id="factor-analysis" className={styles.workbenchSection}>
+          {workbenchContext.section === "factor-analysis" ? <div id="factor-analysis" className={styles.workbenchSection}>
             <header className={styles.workbenchSectionHeader}><span>FACTOR ANALYSIS</span><h2>How do entry conditions connect to every outcome horizon?</h2><p>The primary view now follows each stock across O/X factors, entry indicators, entry point and D0, swing, 5D and 30D evidence in one parallel-coordinates plot.</p></header>
             <PaperParallelEvidencePlot trades={filtered} onSelect={openSelectedTrade} />
             <details className={styles.legacyFactorSurface}>
@@ -676,20 +675,20 @@ export function PaperTradingCommandCenter() {
               <p>The prior pairwise contour view remains available as secondary evidence; it is no longer the main Paper Trading factor chart.</p>
               <OiisContourSurface trades={filtered} onSelect={openSelectedTrade} />
             </details>
-          </div>
+          </div> : null}
 
-          <div id="capital-recycling" className={styles.workbenchSection}>
+          {workbenchContext.section === "capital-recycling" ? <div id="capital-recycling" className={styles.workbenchSection}>
             <header className={styles.workbenchSectionHeader}><span>CAPITAL RECYCLING</span><h2>How did fixed-capital allocation behave?</h2><p>Each entry strategy runs in its own ledger. First-governed and swing-only exit policies remain separate simulations.</p></header>
           <FixedCapitalPortfolioSimulator mode="FIRST_GOVERNED" comparisons={fixedCapitalStrategyComparisons} fallbackScenarios={fixedCapitalScenarios} trades={trades} onSelect={openSelectedTrade} />
           <FixedCapitalPortfolioSimulator mode="SWING_ONLY" comparisons={fixedCapitalSwingOnlyStrategyComparisons} fallbackScenarios={fixedCapitalSwingOnlyScenarios} trades={trades} onSelect={openSelectedTrade} />
-          </div>
+          </div> : null}
 
-          <div id="path-through-time" className={styles.workbenchSection}>
+          {workbenchContext.section === "path-through-time" ? <div id="path-through-time" className={styles.workbenchSection}>
             <header className={styles.workbenchSectionHeader}><span>PATH THROUGH TIME</span><h2>When did evidence mature, improve or deteriorate?</h2><p>Market-closed, no-event, missing and ineligible states remain distinct.</p></header>
             <TradePerformanceHeatmap trades={filtered} />
-          </div>
+          </div> : null}
 
-          <div id="reward-pain" className={styles.workbenchSection}>
+          {workbenchContext.section === "reward-pain" ? <div id="reward-pain" className={styles.workbenchSection}>
             <header className={styles.workbenchSectionHeader}><span>REWARD &amp; PAIN</span><h2>How much favourable and adverse path did each trade experience?</h2><p>Observed excursions are evidence, not booked execution and not proof of an executable extreme.</p></header>
           <section id="atlas" className={styles.analyticsGrid}>
             <article className={styles.atlasPanel}>
@@ -736,9 +735,9 @@ export function PaperTradingCommandCenter() {
               <AttentionList trades={trades} onSelect={openSelectedTrade} />
             </article>
           </section>
-          </div>
+          </div> : null}
 
-          <section id="trade-evidence" className={`${styles.tradeMatrixPanel} ${styles.workbenchSection}`}>
+          {workbenchContext.section === "trade-evidence" ? <section id="trade-evidence" className={`${styles.tradeMatrixPanel} ${styles.workbenchSection}`}>
             <header>
               <div>
                 <span>ALL PAPER TRADES</span>
@@ -800,12 +799,12 @@ export function PaperTradingCommandCenter() {
               showComments={canManageComments}
               profiles={profiles.bySymbol}
             />
-          </section>
+          </section> : null}
 
-          <div id="scenario-analysis" className={styles.workbenchSection}>
+          {workbenchContext.section === "scenario-analysis" ? <div id="scenario-analysis" className={styles.workbenchSection}>
             <header className={styles.workbenchSectionHeader}><span>SCENARIO ANALYSIS</span><h2>How do governed and counterfactual exits differ?</h2><p>Low, medium and high target scenarios remain hypothetical and never overwrite the canonical ledger.</p></header>
             <TargetScenarioStrip scenarios={scenarios} />
-          </div>
+          </div> : null}
           <section id="open-monitor" className={styles.monitorStrip}>
             <strong>Observation monitor</strong>
             <span>
@@ -822,7 +821,7 @@ export function PaperTradingCommandCenter() {
       </>
       )}
 
-      {pageView !== "SIMPLE" ? <div id="methodology-audit" className={styles.workbenchSection}>
+      {pageView !== "SIMPLE" && (pageView === "WHAT_GOOD_LOOKS_LIKE" || workbenchContext.section === "methodology-audit") ? <div id="methodology-audit" className={styles.workbenchSection}>
       <header className={styles.workbenchSectionHeader}><span>METHODOLOGY, DATA QUALITY &amp; AUDIT</span><h2>Can this evidence be trusted and reproduced?</h2><p>Definitions, source freshness, versioned formula ownership and direct links to affected evidence are kept together.</p></header>
       <PaperDataQualityPanel data={data} trades={trades} />
       <RelatedJourney
@@ -1102,7 +1101,7 @@ function PaperSimpleView({
           <button type="button" onClick={downloadExcel}>Download Excel</button>
         </div>
       </header>
-      <div className={styles.simpleTableFrame}>
+      <div className={styles.simpleTableFrame} tabIndex={0} aria-label="Scrollable simple paper-trading evidence table">
         <table>
           <caption>{rows.length} filtered paper trades. Prices and factors remain blank when canonical evidence is unavailable.</caption>
           <thead>

@@ -1734,6 +1734,10 @@
   color: #9a5600;
 }
 
+.backtestContextItem[data-state="true"] span {
+  color: #4f5f73;
+}
+
 .decisionBrief {
   display: grid;
   grid-template-columns: minmax(190px, 0.32fr) minmax(0, 1fr);
@@ -1770,7 +1774,7 @@
 }
 
 .decisionStatus {
-  color: #b26000;
+  color: #884700;
   font-size: 18px;
   letter-spacing: 0.02em;
 }
@@ -1842,6 +1846,41 @@
 .evidenceCard strong {
   color: #0b1f3a;
 }
+
+/* Shared Analytics/Backtesting family density for Compact V5. */
+:global([data-ui-compact-v5="true"]) .page { width:100%; max-width:none; gap:6px; }
+:global([data-ui-compact-v5="true"]) .state { max-width:none; padding:10px 0; }
+:global([data-ui-compact-v5="true"]) .analyticsHeader { gap:4px; }
+:global([data-ui-compact-v5="true"]) .pageHeaderBand { min-height:36px; align-items:center; gap:6px; padding:4px 6px; border-radius:7px; }
+:global([data-ui-compact-v5="true"]) .pageHeaderCopy { display:flex; align-items:center; gap:6px; }
+:global([data-ui-compact-v5="true"]) .pageMetaRow { gap:4px; }
+:global([data-ui-compact-v5="true"]) .pageEyebrow,
+:global([data-ui-compact-v5="true"]) .pageMeta { font-size:9.5px; }
+:global([data-ui-compact-v5="true"]) .pageTitle { font-size:16px; white-space:nowrap; }
+:global([data-ui-compact-v5="true"]) .pageSubtitle,
+:global([data-ui-compact-v5="true"]) .pageQuestion { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+:global([data-ui-compact-v5="true"]) :where(.back,.routeLink,.modeButton,.primaryButton) { min-height:28px; height:28px; padding:0 7px; border-radius:5px; font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .analyticsToolbar,
+:global([data-ui-compact-v5="true"]) .analyticsNav,
+:global([data-ui-compact-v5="true"]) .navLinks { gap:3px; }
+:global([data-ui-compact-v5="true"]) .backtestContextStrip { top:var(--app-sticky-content-top); border-radius:7px; box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .backtestContextItem { min-height:42px; gap:1px; padding:4px 6px; }
+:global([data-ui-compact-v5="true"]) .backtestContextItem span { font-size:8.5px; }
+:global([data-ui-compact-v5="true"]) .backtestContextItem strong { font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .decisionBrief { min-height:46px; grid-template-columns:minmax(130px,.25fr) minmax(0,1fr); border-left-width:3px; border-radius:7px; box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .decisionStatusColumn,
+:global([data-ui-compact-v5="true"]) .decisionNarrative { gap:2px; padding:5px 7px; }
+:global([data-ui-compact-v5="true"]) .decisionStatus { font-size:13px; }
+:global([data-ui-compact-v5="true"]) .decisionQualifier { font-size:9px; line-height:1.2; }
+:global([data-ui-compact-v5="true"]) .decisionNarrative h2 { font-size:12.5px; }
+:global([data-ui-compact-v5="true"]) .decisionNarrative p { font-size:9.5px; line-height:1.25; }
+:global([data-ui-compact-v5="true"]) :global([class*="_sectionEyebrow_"]) { color:#4f5f73; }
+:global([data-ui-compact-v5="true"]) .evidenceTriptych { display:flex; gap:0; border:1px solid #dce4ee; border-radius:7px; overflow-x:auto; }
+:global([data-ui-compact-v5="true"]) .evidenceCard { flex:1 0 210px; min-height:58px; gap:2px; padding:5px 7px; border:0; border-right:1px solid #dce4ee; border-top:2px solid #2563a6; border-radius:0; }
+:global([data-ui-compact-v5="true"]) .evidenceCard h3 { font-size:11px; }
+:global([data-ui-compact-v5="true"]) .evidenceCard p { font-size:9.5px; line-height:1.25; }
+:global([data-ui-compact-v5="true"]) .stockTechnicalChart { min-height:420px; }
+:global([data-ui-compact-v5="true"]) :global([data-clarity-region="details_table"]) :where(th,td) { padding:4px 6px; }
 
 .strategyJourney {
   display: grid;

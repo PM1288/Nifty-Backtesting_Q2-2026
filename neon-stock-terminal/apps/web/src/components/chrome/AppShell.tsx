@@ -140,6 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pageTitle = tr(workspaceRoute.label);
   const authState = authReady && user ? "signed_in" : "guest";
   const prefetchDashboardRoute = useDashboardPrefetch(authReady);
+  const compactV5 = import.meta.env.VITE_UI_COMPACT_V5 === "true";
   const commandItems = useMemo<CommandPaletteItem[]>(() => routeCommandItems(user?.role === "admin"), [user?.role]);
 
   const loadCommandEntities = useCallback(async (): Promise<CommandPaletteItem[]> => {
@@ -224,6 +225,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       data-ui-generation="trading-v2"
       data-workspace-theme="light"
       data-has-ticker="true"
+      data-ui-compact-v5={compactV5 ? "true" : "false"}
       data-admin-shell={isAdminRoute ? "true" : "false"}
       data-presentation-mode={presentationMode ? "true" : "false"}
     >

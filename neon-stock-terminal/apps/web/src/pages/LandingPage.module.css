@@ -430,6 +430,21 @@
   gap: 8px;
 }
 
+:global([data-ui-compact-v5="true"]) .layout { width:100%; max-width:none; gap:6px; }
+:global([data-ui-compact-v5="true"]) .sectorBlock { gap:4px; padding:3px; border-radius:7px; }
+:global([data-ui-compact-v5="true"]) .sectionToolbar { gap:5px; }
+:global([data-ui-compact-v5="true"]) .sectionIntro { display:flex; align-items:center; gap:6px; }
+:global([data-ui-compact-v5="true"]) .sectionTitle { font-size:11px; }
+:global([data-ui-compact-v5="true"]) .sectionSubtitle { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+:global([data-ui-compact-v5="true"]) .heroActions { gap:4px; }
+:global([data-ui-compact-v5="true"]) .helpButton { min-height:28px; height:28px; padding:0 7px; border-radius:5px; }
+:global([data-ui-compact-v5="true"]) .canvasControls { gap:4px; padding:2px; }
+:global([data-ui-compact-v5="true"]) .lensControl,
+:global([data-ui-compact-v5="true"]) .canvasTools { gap:2px; }
+:global([data-ui-compact-v5="true"]) :where(.lensButton,.calmButton,.sortSelect,.stockSearch input) { min-height:28px; height:28px; border-radius:5px; font-size:10px; }
+:global([data-ui-compact-v5="true"]) .sectorSummaryStrip { gap:0; border:1px solid #dbe4ef; border-radius:6px; overflow:hidden; }
+:global([data-ui-compact-v5="true"]) .sectorSummaryStrip .storyPoint { min-height:38px; padding:4px 6px; border:0; border-right:1px solid #dbe4ef; border-radius:0; box-shadow:none; }
+
 .sectionToolbar {
   display: flex;
   align-items: center;

@@ -1,0 +1,25 @@
+{
+  "version": "v5-baseline-1",
+  "charts": [
+    {"id":"home-sector-board","route":"/","action":"retain; move upward; controls unified"},
+    {"id":"paper-parallel-evidence","route":"/paper-trading","action":"retain in Factor Analysis lens; HTML export retained"},
+    {"id":"paper-oiis-contour","route":"/paper-trading","action":"retain as secondary Factor Analysis evidence"},
+    {"id":"paper-capital-allocation-timeline","route":"/paper-trading","action":"retain in Capital Recycling lens"},
+    {"id":"paper-path-heatmaps","route":"/paper-trading","action":"retain in Path Through Time lens; minimum numeric axis interval remains 1"},
+    {"id":"paper-reward-pain","route":"/paper-trading","action":"retain in Reward & Pain lens"},
+    {"id":"paper-scenario-strip","route":"/paper-trading","action":"retain in Scenario Analysis lens"},
+    {"id":"monthly-outcome-chart","route":"/strategy/monthly","action":"retain after context/KPI strip or secondary lens"},
+    {"id":"rolling-outcome-chart","route":"/strategy/rolling-monthly","action":"retain after context/KPI strip or secondary lens"},
+    {"id":"trendlyne-summary-charts","route":"/strategy/trendlyne-summary","action":"retain in balanced split below KPI strip"},
+    {"id":"long-options-chart","route":"/strategy/long-options","action":"retain in active evidence lens"}
+  ],
+  "tables": [
+    {"id":"paper-full-evidence","route":"/paper-trading","preservation":"all columns and raw precision in Full Evidence/inspector/export","target":"sticky grouped header, pinned identity/action, internal scroll"},
+    {"id":"paper-simple-view","route":"/paper-trading","preservation":"all current Simple View fields and filtered exports","target":"compact sortable/filterable table"},
+    {"id":"monthly-complete-evidence","route":"/strategy/monthly","preservation":"all selected/rejected/developing rows and reasons","target":"dense internal-scroll table"},
+    {"id":"rolling-complete-evidence","route":"/strategy/rolling-monthly","preservation":"all transitions and all-stock review rows","target":"dense internal-scroll table"},
+    {"id":"long-options-hard-gates","route":"/strategy/long-options","preservation":"all structures and failed gates","target":"first-viewport evidence table"},
+    {"id":"trendlyne-report-ledger","route":"/strategy/trendlyne-summary","preservation":"all report fields and filters","target":"dense evidence table"}
+  ],
+  "inactiveLensPolicy":"Heavy chart/table sections are unmounted when their URL lens is inactive; their data and export remain reachable in the named lens."
+}

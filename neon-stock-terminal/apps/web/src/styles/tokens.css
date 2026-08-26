@@ -139,6 +139,27 @@
   --z-content: 10;
   --z-header: 20;
   --z-footer: 20;
+
+  /* Compact workstation V5. These semantic tokens are intentionally additive
+     so the feature flag can be rolled back without changing business views. */
+  --app-header-height-compact: 34px;
+  --ticker-strip-height-compact: 24px;
+  --primary-nav-height-compact: 36px;
+  --secondary-nav-height-compact: 30px;
+  --page-pad-desktop-compact: 10px;
+  --panel-pad-dense: 8px;
+  --panel-pad-standard-compact: 10px;
+  --control-h-dense: 28px;
+  --control-h-standard-compact: 30px;
+  --tab-h-compact: 30px;
+  --context-bar-h-compact: 34px;
+  --kpi-strip-h-compact: 58px;
+  --table-head-h-compact: 32px;
+  --table-row-single-compact: 32px;
+  --table-row-two-line-compact: 42px;
+  --table-row-evidence-compact: 46px;
+  --radius-control-compact: 5px;
+  --radius-panel-compact: 7px;
 }
 
 :root[data-ui-language="hi"],

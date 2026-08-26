@@ -1,0 +1,19 @@
+{
+  "capturedAt": "2026-08-26T00:00:00Z",
+  "sourceCommit": "6722e5ae8046206cea6152bdf75a2d233ab798bf",
+  "deployedBuild": "index-Da3mAz6Z.js",
+  "annotationPdf": {"status": "UNVERIFIED", "reason": "Updates-required_260825_232528.pdf is absent from the workspace"},
+  "testBaseline": {"frontendTests": {"passed": 54, "failed": 0}, "typecheck": "PASS"},
+  "shell": {"declaredHeaderPx": 81, "declaredWorkspaceNavPx": 40, "combinedStickyChromePx": 121, "targetPx": "94-104"},
+  "routes": {
+    "/": {"viewport": "1440x900", "fullPageHeightPx": 4681, "canvasCount": 209, "tableCount": 0, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"},
+    "/paper-trading": {"viewport": "1440x900", "fullPageHeightPx": 8603, "canvasCount": 1, "tableCount": 4, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"},
+    "/strategy/monthly": {"viewport": "1440x900", "fullPageHeightPx": 2021, "medianLoadMs": 22700, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"},
+    "/strategy/rolling-monthly": {"viewport": "1440x900", "fullPageHeightPx": 1816, "medianLoadMs": 24400, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"},
+    "/strategy/rolling-monthly/legacy": {"viewport": "1440x900", "fullPageHeightPx": 2968, "medianLoadMs": 4800, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"},
+    "/strategy/oiis-live": {"viewport": "1440x900", "fullPageHeightPx": 2941, "medianLoadMs": 2900, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"},
+    "/strategy/long-options": {"viewport": "1440x900", "fullPageHeightPx": 3783, "medianLoadMs": 3600, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"},
+    "/strategy/nifty-options": {"viewport": "1440x900", "fullPageHeightPx": 2050, "medianLoadMs": 3100, "source": "V4 runtime audit", "currentCapture": "PENDING_AUTHENTICATED_CAPTURE"}
+  },
+  "measurementNote": "Prior reproducible audit values are retained as baseline. Current authenticated screenshots and DOM geometry are pending because the named PDF was absent and the running UI requires the repository's supported auth bootstrap. No layout code had been modified when this file was created."
+}

@@ -10,14 +10,22 @@ export function StockLogo({ symbol, profile, size = 28 }: { symbol: string; prof
 export function StockIdentity({ symbol, profile, compact = false }: { symbol: string; profile?: StockProfile; compact?: boolean }) {
   return <span className={styles.identity} data-stock-identity-symbol={symbol}><StockLogo symbol={symbol} profile={profile} size={compact ? 22 : 30} /><span><strong>{symbol}</strong>{!compact && profile ? <small>{profile.name}</small> : null}</span></span>;
 }
-export function StockUniverseFilterBar({ profiles, filters, onChange, count }: { profiles: StockProfile[]; filters: StockProfileFilters; onChange: (next: StockProfileFilters) => void; count: number }) {
+export function StockUniverseFilterBar({ profiles, filters, onChange, count, compact = false }: { profiles: StockProfile[]; filters: StockProfileFilters; onChange: (next: StockProfileFilters) => void; count: number; compact?: boolean }) {
   const sectors = useMemo(() => Array.from(new Set(profiles.map((item) => item.sector).filter(Boolean))).sort(), [profiles]);
-  return <div className={styles.stickyFilters} aria-label="Stock classification filters">
+  const coverage = useMemo(() => [
+    { label: "NIFTY 50", value: profiles.filter((profile) => profile.nifty50).length },
+    { label: "NIFTY 100", value: profiles.filter((profile) => profile.nifty100).length },
+    { label: "LargeMidcap 250", value: profiles.filter((profile) => profile.largeMidcap250).length },
+    { label: "F&O", value: profiles.filter((profile) => profile.fno).length },
+    ...["Large Cap", "Mid Cap", "Small Cap"].map((label) => ({ label, value: profiles.filter((profile) => profile.capBucket === label).length })),
+  ], [profiles]);
+  return <div className={styles.stickyFilters} data-compact={compact ? "true" : "false"} aria-label="Stock classification filters">
     <strong>{count} visible</strong>
     <label>Universe<select value={filters.universe} onChange={(event) => onChange({ ...filters, universe: event.target.value })}><option value="ALL">All covered stocks</option><option value="FNO">NSE F&amp;O</option><option value="NIFTY50">NIFTY 50</option><option value="NIFTY100">NIFTY 100</option><option value="NIFTY250">NIFTY LargeMidcap 250</option><option value="NIFTY500">NIFTY 500</option></select></label>
     <label>Market cap<select value={filters.capBucket} onChange={(event) => onChange({ ...filters, capBucket: event.target.value })}><option value="ALL">All caps</option><option>Large Cap</option><option>Mid Cap</option><option>Small Cap</option></select></label>
     <label>Sector<select value={filters.sector} onChange={(event) => onChange({ ...filters, sector: event.target.value })}><option value="ALL">All sectors</option>{sectors.map((sector) => <option key={sector}>{sector}</option>)}</select></label>
     <button type="button" onClick={() => onChange({ universe: "ALL", capBucket: "ALL", sector: "ALL" })}>Clear</button>
+    {compact ? <details className={styles.coverageDetails}><summary>Mix</summary><div>{coverage.map((item) => <span key={item.label}><b>{item.value}</b> {item.label}</span>)}</div></details> : null}
   </div>;
 }
 export function StockDistribution({ profiles }: { profiles: StockProfile[] }) {

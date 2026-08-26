@@ -8,6 +8,26 @@
   backdrop-filter: blur(16px);
 }
 
+:global([data-ui-compact-v5="true"]) .desktopWrap {
+  padding-inline: var(--page-pad-desktop-compact);
+}
+
+:global([data-ui-compact-v5="true"]) .desktopDock {
+  width: 100%;
+  max-width: none;
+  min-height: var(--primary-nav-height-compact);
+  padding: 2px;
+}
+
+:global([data-ui-compact-v5="true"]) .desktopItem {
+  min-height: 32px;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-control-compact);
+}
+
+:global([data-ui-compact-v5="true"]) .desktopItem[data-active="true"] { box-shadow: none; }
+
 .desktopDock {
   width: min(100%, 1880px);
   margin: 0 auto;

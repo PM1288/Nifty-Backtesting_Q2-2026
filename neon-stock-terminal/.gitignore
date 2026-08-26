@@ -12,6 +12,7 @@ apps/**/.env.*
 apps/**/node_modules
 apps/**/dist
 apps/**/build
+apps/**/storybook-static
 apps/**/.turbo
 apps/**/.vite
 apps/**/.parcel-cache

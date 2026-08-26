@@ -23,3 +23,17 @@
 @media (max-width:900px) { .kpiStrip { grid-template-columns:repeat(2,minmax(0,1fr)); }.decisionHero { flex-direction:column; }.heroAction { align-self:flex-start; } }
 @media (max-width:520px) { .kpiStrip { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; }.metricTile { flex:0 0 78%; scroll-snap-align:start; }.qualitySummary > div { grid-template-columns:1fr; gap:4px; }.statusStrip { gap:8px; }.drawer { width:100%; } }
 @media (prefers-reduced-motion:reduce) { .loading svg,.loading span,.drawer { animation:none; } }
+
+:global([data-ui-compact-v5="true"]) .statusStrip { min-height:30px; gap:8px; padding:3px 0; font-size:11px; }
+:global([data-ui-compact-v5="true"]) .decisionHero { align-items:center; gap:10px; min-height:58px; padding:7px 10px; border-radius:var(--radius-panel); box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .heroTitleRow { align-items:center; gap:7px; }
+:global([data-ui-compact-v5="true"]) .heroTitleRow h1 { max-width:none; font-size:17px; line-height:1.2; }
+:global([data-ui-compact-v5="true"]) .decisionMark { flex-basis:24px; width:24px; height:24px; margin:0; }
+:global([data-ui-compact-v5="true"]) .heroReasons { margin-top:3px; max-width:none; font-size:12px; }
+:global([data-ui-compact-v5="true"]) .heroEvidence { margin-top:3px; }
+:global([data-ui-compact-v5="true"]) .kpiStrip { min-height:var(--kpi-strip-h); }
+:global([data-ui-compact-v5="true"]) .metricTile { min-height:var(--kpi-strip-h); padding:6px 10px; }
+:global([data-ui-compact-v5="true"]) .metricValue { margin:2px 0; font-size:19px; }
+:global([data-ui-compact-v5="true"]) .metricLabel,
+:global([data-ui-compact-v5="true"]) .metricScope { font-size:11px; }
+:global([data-ui-compact-v5="true"]) .loading { gap:6px; padding:8px 0; }

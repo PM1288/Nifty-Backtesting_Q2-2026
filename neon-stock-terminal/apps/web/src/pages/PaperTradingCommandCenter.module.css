@@ -1955,7 +1955,7 @@
 .simpleTableFrame caption { padding: 7px 9px; color: #5f7187; background: #f7f9fc; text-align: left; font-size: 10px; }
 .simpleTableFrame thead { position: sticky; top: 0; z-index: 4; background: #edf3f9; box-shadow: 0 1px #c9d6e4; }
 .simpleTableFrame th { height: 58px; padding: 4px 6px; color: #425b79; text-align: left; font-size: 11px; font-weight: 700; white-space: nowrap; }
-.simpleTableFrame th small { display: block; color: #708198; font-size: 9px; font-weight: 500; }
+.simpleTableFrame th small { display: block; color: #4e627b; font-size: 9px; font-weight: 600; }
 .simpleHeaderSort { display: flex; width: 100%; min-height: 25px; align-items: center; justify-content: space-between; gap: 5px; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; font: inherit; cursor: pointer; }
 .simpleHeaderSort i { color: #617895; font-size: 9px; font-style: normal; }
 .simpleTableFrame th > input { width: 100%; min-width: 76px; height: 22px; margin-top: 3px; padding: 0 6px; border: 1px solid #c8d6e5; border-radius: 5px; color: #29445f; background: #fff; font-size: 9px; font-weight: 500; }
@@ -1972,13 +1972,53 @@
 .simpleTableFrame td small,
 .simpleTableFrame td em { display: block; }
 .simpleTableFrame td small { margin-top: 2px; font-size: 10px; }
-.simpleTableFrame td em { margin-top: 2px; color: #6b7c91; font-size: 9px; font-style: normal; }
+.simpleTableFrame td em { margin-top: 2px; color: #4e627b; font-size: 9px; font-style: normal; }
 .simpleTableFrame [data-sign="positive"] { color: #087a55; }
 .simpleTableFrame [data-sign="negative"] { color: #bd3048; }
 .simpleNumber { text-align: right; }
 .simpleNumber strong { font-family: Inter, system-ui, sans-serif; font-weight: 650; }
 .simpleStockCell :global([data-stock-identity-symbol]) { min-width: 0; }
 .simpleTableFrame td:last-child button { min-height: 30px; padding: 0 9px; border: 1px solid #bcd0ea; border-radius: 7px; color: #235dbe; background: #f3f7ff; font-size: 10px; font-weight: 750; cursor: pointer; }
+
+.compactDisclosure { margin-top:6px; border:1px solid #d5e0ec; border-radius:7px; background:#fff; }
+.compactDisclosure > summary { min-height:28px; display:flex; align-items:center; padding:0 8px; color:#355173; font-size:11px; font-weight:750; cursor:pointer; }
+
+:global([data-ui-compact-v5="true"]) .page { max-width:none; padding:0 0 12px; background:transparent; }
+:global([data-ui-compact-v5="true"]) .pageTabs { min-height:30px; gap:2px; margin:4px 0; padding:2px; border-radius:7px; }
+:global([data-ui-compact-v5="true"]) .pageTabs button { min-height:28px; padding:0 8px; border-radius:5px; font-size:11px; }
+:global([data-ui-compact-v5="true"]) .hydrationNotice { min-height:34px; margin:4px 0; padding:4px 8px; border-radius:6px; font-size:11px; }
+:global([data-ui-compact-v5="true"]) .workbenchSection { min-height:0; margin-top:6px; scroll-margin-top:166px; }
+:global([data-ui-compact-v5="true"]) .workbenchSectionHeader { margin:0 0 4px; }
+:global([data-ui-compact-v5="true"]) .workbenchSectionHeader > span { font-size:9px; }
+:global([data-ui-compact-v5="true"]) .workbenchSectionHeader h2 { margin:1px 0; font-size:14px; }
+:global([data-ui-compact-v5="true"]) .workbenchSectionHeader p { margin:0; font-size:10.5px; line-height:1.25; }
+:global([data-ui-compact-v5="true"]) .sessionNotice { min-height:34px; padding:5px 8px; border-radius:6px; font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .summaryGrid { display:flex; gap:0; overflow-x:auto; margin-top:5px; border:1px solid #d5e0ec; border-radius:7px; }
+:global([data-ui-compact-v5="true"]) .maturityBanner,
+:global([data-ui-compact-v5="true"]) .summaryMetric { flex:1 0 190px; min-height:58px; padding:6px 8px; border:0; border-right:1px solid #d5e0ec; border-radius:0; box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .maturityBanner h2 { margin:2px 0; font-size:13px; }
+:global([data-ui-compact-v5="true"]) .maturityBanner p { margin:0; font-size:9.5px; line-height:1.2; }
+:global([data-ui-compact-v5="true"]) .maturityBanner div { margin-top:2px; gap:3px; }
+:global([data-ui-compact-v5="true"]) .maturityBanner div b { padding:1px 4px; font-size:8.5px; }
+:global([data-ui-compact-v5="true"]) .summaryMetric strong { font-size:17px; }
+:global([data-ui-compact-v5="true"]) .tradeMatrixPanel { margin-top:6px; padding:6px; border-radius:7px; box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .tradeMatrixPanel > header { gap:6px; padding:0 0 4px; }
+:global([data-ui-compact-v5="true"]) .tradeMatrixPanel h2 { margin:1px 0; font-size:14px; }
+:global([data-ui-compact-v5="true"]) .tradeMatrixPanel header p { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+:global([data-ui-compact-v5="true"]) .matrixTools { gap:3px; }
+:global([data-ui-compact-v5="true"]) .matrixTools input,
+:global([data-ui-compact-v5="true"]) .matrixTools select { min-height:28px; height:28px; border-radius:5px; font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .simpleView { padding:6px; border-radius:7px; }
+:global([data-ui-compact-v5="true"]) .simpleViewHeader { gap:6px; margin-bottom:4px; }
+:global([data-ui-compact-v5="true"]) .simpleViewHeader h2 { margin:1px 0; font-size:14px; }
+:global([data-ui-compact-v5="true"]) .simpleViewHeader p { font-size:10px; }
+:global([data-ui-compact-v5="true"]) .simpleViewActions { gap:3px; }
+:global([data-ui-compact-v5="true"]) .simpleViewActions input,
+:global([data-ui-compact-v5="true"]) .simpleViewActions select,
+:global([data-ui-compact-v5="true"]) .simpleViewActions button { min-height:28px; height:28px; border-radius:5px; font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .simpleTableFrame { max-height:calc(100dvh - 230px); border-radius:6px; }
+:global([data-ui-compact-v5="true"]) .simpleTableFrame th { height:50px; padding:3px 5px; }
+:global([data-ui-compact-v5="true"]) .simpleTableFrame td { height:42px; padding:3px 6px; }
 
 @media (max-width: 900px) {
   .simpleViewHeader { align-items: stretch; flex-direction: column; }

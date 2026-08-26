@@ -73,3 +73,47 @@
 @media (max-width:1100px) { .workbenchHeader { grid-template-columns:1fr; } .headerFacts { min-width:0; } .accountingLanes { grid-template-columns:repeat(2,minmax(0,1fr)); } .subnav { top:88px; } .contextBar { top:146px; } }
 @media (max-width:720px) { .workbenchHeader { padding:16px; border-radius:12px; } .headerFacts { grid-template-columns:1fr 1fr; } .headerActions { justify-content:stretch; } .headerActions button { flex:1 1 130px; } .subnav { position:relative; top:auto; } .contextBar { position:relative; top:auto; align-items:start; } .accountingLanes { grid-template-columns:1fr; } .traceDrawer { width:100%; } }
 @media (prefers-reduced-motion:reduce) { .subnav,.contextBar,.traceDrawer { scroll-behavior:auto; } }
+
+/* Compact V5 is scoped to the shell flag so the previous workbench remains a
+   one-variable rollback. No value or data mapping changes in this layer. */
+:global([data-ui-compact-v5="true"]) .workbenchHeader {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:38px;
+  padding:4px 6px;
+  border-radius:var(--radius-panel-compact);
+  box-shadow:none;
+  background:#fff;
+}
+:global([data-ui-compact-v5="true"]) .workbenchHeader > div:first-child { display:flex; align-items:center; gap:7px; min-width:0; }
+:global([data-ui-compact-v5="true"]) .workbenchHeader h1 { margin:0; font-size:16px; letter-spacing:-.01em; white-space:nowrap; }
+:global([data-ui-compact-v5="true"]) .workbenchHeader p { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+:global([data-ui-compact-v5="true"]) .paperBoundary { padding:3px 6px; border-radius:var(--radius-control-compact); font-size:9.5px; }
+:global([data-ui-compact-v5="true"]) .headerFacts { min-width:0; display:flex; align-items:center; gap:3px; }
+:global([data-ui-compact-v5="true"]) .headerFacts span { padding:3px 6px; border-radius:var(--radius-control-compact); font-size:10px; white-space:nowrap; }
+:global([data-ui-compact-v5="true"]) .headerFacts b { font-size:12px; }
+:global([data-ui-compact-v5="true"]) .headerFacts small { max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9.5px; }
+:global([data-ui-compact-v5="true"]) .headerActions { margin-left:auto; display:flex; flex-wrap:nowrap; gap:3px; }
+:global([data-ui-compact-v5="true"]) .headerActions button,
+:global([data-ui-compact-v5="true"]) .contextActions button { min-height:var(--control-h-dense); height:var(--control-h-dense); padding:0 7px; border-radius:var(--radius-control-compact); font-size:10.5px; white-space:nowrap; }
+:global([data-ui-compact-v5="true"]) .subnav { top:var(--app-sticky-content-top); gap:2px; padding:2px 4px; border-radius:var(--radius-panel-compact); box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .subnav button { min-height:var(--tab-h-compact); padding:2px 7px; border-radius:var(--radius-control-compact); font-size:11px; }
+:global([data-ui-compact-v5="true"]) .subnav small { padding:1px 4px; font-size:9px; }
+:global([data-ui-compact-v5="true"]) .contextBar { top:calc(var(--app-sticky-content-top) + var(--tab-h-compact) + 5px); align-items:center; gap:4px; padding:3px 5px; border-radius:var(--radius-panel-compact); box-shadow:none; }
+:global([data-ui-compact-v5="true"]) .contextTitle { flex-basis:124px; }
+:global([data-ui-compact-v5="true"]) .contextTitle span { font-size:8.5px; }
+:global([data-ui-compact-v5="true"]) .contextTitle strong { font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .contextTitle small { font-size:9px; }
+:global([data-ui-compact-v5="true"]) .contextBar label { gap:1px; }
+:global([data-ui-compact-v5="true"]) .contextBar label span { font-size:9px; }
+:global([data-ui-compact-v5="true"]) .contextBar select { min-height:var(--control-h-dense); height:var(--control-h-dense); max-width:126px; padding:2px 20px 2px 5px; border-radius:var(--radius-control-compact); font-size:10.5px; }
+:global([data-ui-compact-v5="true"]) .accountingLanes { display:flex; gap:0; overflow-x:auto; border:1px solid var(--border-subtle); border-radius:var(--radius-panel-compact); background:#fff; }
+:global([data-ui-compact-v5="true"]) .workbenchMetric { flex:1 0 180px; min-height:58px; padding:6px 8px; border:0; border-right:1px solid var(--border-subtle); border-top:2px solid #52647a; border-radius:0; }
+:global([data-ui-compact-v5="true"]) .workbenchMetric > header { font-size:10px; }
+:global([data-ui-compact-v5="true"]) .workbenchMetric > strong { margin:3px 0 0; font:700 17px/1.1 var(--font-numeric); }
+:global([data-ui-compact-v5="true"]) .workbenchMetric > p { min-height:0; margin:2px 0; font-size:9.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+:global([data-ui-compact-v5="true"]) .workbenchMetric > footer { padding-top:2px; }
+:global([data-ui-compact-v5="true"]) .workbenchMetric > footer small { font-size:8.5px; }
+:global([data-ui-compact-v5="true"]) .accountingBadge { margin-top:2px; padding:1px 4px; font-size:8px; }
+:global([data-ui-compact-v5="true"]) .definitionPopover > summary { width:20px; height:20px; }

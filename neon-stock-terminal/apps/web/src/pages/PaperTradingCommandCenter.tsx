@@ -33,6 +33,7 @@ import {
 } from "../lib/paperWorkbench";
 import styles from "./PaperTradingCommandCenter.module.css";
 import { isPaperExecutionClosed } from "../lib/paperAtlas";
+import { PAPER_EVIDENCE_DENSITIES, PAPER_EVIDENCE_PRESETS } from "../lib/paperEvidenceGeometry";
 import {
   buildOiisSurfaceGrid,
   oiisAxisDefinitions,
@@ -58,6 +59,22 @@ import {
 } from "../lib/paperSimpleView";
 import { matchesStockProfile, type StockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
 import { StockIdentity, StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
+import { StockLogo } from "../components/stocks/StockProfileControls";
+import {
+  ActionCell,
+  CapitalCell,
+  CarryCell,
+  CommentsCell,
+  DirectionCell,
+  EconomicsCell,
+  HorizonCell,
+  QualityCell,
+  RewardPainCell,
+  StrategyCell,
+  TargetOutcomeCell,
+  TimeInTradeCell,
+  TradeIdentityCell,
+} from "../components/paper/PaperEvidenceCells";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 type AnyRow = Record<string, any>;
@@ -82,6 +99,10 @@ const compact = (value: unknown) =>
   }).format(number(value));
 const money = (value: unknown) =>
   `${number(value) < 0 ? "−" : ""}₹${Math.abs(number(value)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+const moneyOrDash = (value: unknown) =>
+  value == null || !Number.isFinite(Number(value)) ? "—" : money(value);
+const compactOrDash = (value: unknown) =>
+  value == null || !Number.isFinite(Number(value)) ? "—" : compact(value);
 const percent = (value: unknown, digits = 2) =>
   value == null || !Number.isFinite(Number(value))
     ? "—"
@@ -2397,21 +2418,6 @@ function entryStrategyDetail(value: unknown) {
   return "No governed method recorded";
 }
 
-function TradeIdentity({ trade, profile }: { trade: AnyRow; profile?: StockProfile }) {
-  return (
-    <>
-      <StockIdentity symbol={String(trade.symbol)} profile={profile} />
-      <small>
-        {trade.strategy_id} ·{" "}
-        {trade.side === "BUY"
-          ? "LONG · BUY then SELL"
-          : "SHORT · SELL then BUY"}
-      </small>
-      <small>Opened {time(trade.opened_at)}</small>
-    </>
-  );
-}
-
 function highestTarget(trade: AnyRow, lifecycle: string, values: number[]) {
   const targets = values
     .map((value) =>
@@ -2509,21 +2515,25 @@ function EvidenceTargetCell({
   trade,
   lifecycle,
   value,
+  groupStart,
 }: {
   trade: AnyRow;
   lifecycle: string;
   value: number;
+  groupStart?: boolean;
 }) {
   const target = targetRecord(trade, lifecycle, value);
   const state = target ? targetState(target) : "PENDING";
   const profit = target && state === "HIT" ? targetProfit(target, trade) : null;
   return (
-    <td className={styles.targetOutcomeCell} data-target-state={state.toLowerCase()}>
-      <b>{state === "HIT" ? "✓ HIT" : state === "FAILED" ? "× NOT HIT" : "○ OPEN"}</b>
-      <small>{target?.first_hit_at ? time(target.first_hit_at) : state === "FAILED" ? "Window closed" : "Tracking"}</small>
-      {profit ? <strong>{money(profit.total)}</strong> : null}
-      {profit?.fixedTotal != null ? <small>₹2L: {money(profit.fixedTotal)}</small> : null}
-    </td>
+    <TargetOutcomeCell
+      groupStart={groupStart}
+      state={state === "HIT" ? "HIT" : state === "FAILED" ? "FAILED" : "OPEN"}
+      primary={state === "HIT" ? "✓ HIT" : state === "FAILED" ? "× NOT HIT" : "○ OPEN"}
+      secondary={target?.first_hit_at ? time(target.first_hit_at) : state === "FAILED" ? "Window closed" : "Tracking"}
+      detail={profit ? money(profit.total) : "—"}
+      supporting={profit?.fixedTotal != null ? `₹2L: ${money(profit.fixedTotal)}` : "—"}
+    />
   );
 }
 
@@ -2538,13 +2548,16 @@ function HorizonOutcomeCell({ trade, sessions }: { trade: AnyRow; sessions: 5 | 
     ? null
     : number(trade.fixed_investment_deployed) * returnPct / 100;
   return (
-    <td className={styles.horizonOutcomeCell} data-horizon-state={completed ? (positive ? "positive" : "negative") : "developing"}>
-      <b>{completed ? (sessions === 30 ? "TIME UP" : "MATURE") : `${Math.min(observed, sessions)}/${sessions} DAYS`}</b>
-      <small>MFE {percent(trade[`mfe_${sessions}d_pct`])}</small>
-      <small>MAE {percent(trade[`mae_${sessions}d_pct`])}</small>
-      {pnl != null ? <strong>{money(pnl)}</strong> : null}
-      {fixedPnl != null ? <small>₹2L: {money(fixedPnl)}</small> : null}
-    </td>
+    <HorizonCell
+      groupStart={sessions === 5}
+      state={completed ? "mature" : "developing"}
+      tone={completed ? (positive ? "positive" : "negative") : "info"}
+      primary={completed ? (sessions === 30 ? "TIME UP" : "MATURE") : `${Math.min(observed, sessions)}/${sessions} DAYS`}
+      secondary={`MFE ${percent(trade[`mfe_${sessions}d_pct`])}`}
+      detail={`MAE ${percent(trade[`mae_${sessions}d_pct`])}`}
+      supporting={pnl != null ? money(pnl) : "—"}
+      metadata={fixedPnl != null ? `₹2L: ${money(fixedPnl)}` : "—"}
+    />
   );
 }
 
@@ -2846,12 +2859,21 @@ function UnifiedTradeMatrix({
   return (
     <>
       <div className={styles.gridViewControls}>
-        <div><span>Column view</span>{(["ALL", "EXECUTION", "TARGETS", "HORIZON", "RISK", "QUALITY"] as const).map((item) => <button type="button" key={item} data-active={preset === item} onClick={() => setPreset(item)}>{item === "ALL" ? "All fields" : item[0] + item.slice(1).toLowerCase()}</button>)}</div>
-        <div><span>Density</span>{(["COMFORTABLE", "DENSE", "AUDIT"] as const).map((item) => <button type="button" key={item} data-active={density === item} onClick={() => setDensity(item)}>{item[0] + item.slice(1).toLowerCase()}</button>)}</div>
+        <div><span>Column view</span>{PAPER_EVIDENCE_PRESETS.map((item) => <button type="button" key={item} data-active={preset === item} onClick={() => setPreset(item)}>{item === "ALL" ? "All fields" : item[0] + item.slice(1).toLowerCase()}</button>)}</div>
+        <div><span>Density</span>{PAPER_EVIDENCE_DENSITIES.map((item) => <button type="button" key={item} data-active={density === item} onClick={() => setDensity(item)}>{item[0] + item.slice(1).toLowerCase()}</button>)}</div>
         <small>{preset === "ALL" ? "Every current field is visible." : `The ${preset.toLowerCase()} preset is active; switch to All fields to restore hidden groups.`}</small>
       </div>
       <div className={styles.unifiedTable} data-density={density.toLowerCase()}>
         <table>
+          <colgroup>
+            <col className={styles.colTrade} /><col className={styles.colDirection} /><col className={styles.colStrategy} />
+            {visible("EXECUTION") ? <><col className={styles.colCapital} /><col className={styles.colEconomics} /><col className={styles.colEconomics} /></> : null}
+            {visible("TARGETS") ? evidenceTargets.map((definition) => <col className={styles.colTarget} key={`col-${definition.lifecycle}-${definition.value}`} />) : null}
+            {visible("HORIZON") ? <><col className={styles.colHorizon} /><col className={styles.colHorizon} /><col className={styles.colTime} /></> : null}
+            {visible("RISK") ? <><col className={styles.colRewardPain} /><col className={styles.colRewardPain} /><col className={styles.colCarry} /></> : null}
+            {visible("QUALITY") ? <><col className={styles.colQuality} />{showComments ? <col className={styles.colComments} /> : null}</> : null}
+            <col className={styles.colAction} />
+          </colgroup>
           <caption>
             Target and horizon cells are observational evidence. Booked execution and
             the never-closed carry scenario remain separate. Select a row for its audit trail.
@@ -2859,26 +2881,26 @@ function UnifiedTradeMatrix({
           <thead>
             <tr className={styles.groupHeaderRow}>
               <th colSpan={3}>Trade &amp; Entry</th>
-              {visible("EXECUTION") ? <th colSpan={3}>Capital &amp; Actual Economics</th> : null}
-              {visible("TARGETS") ? <th colSpan={evidenceTargets.length}>Target Outcomes</th> : null}
-              {visible("HORIZON") ? <th colSpan={3}>Horizon Evidence</th> : null}
-              {visible("RISK") ? <th colSpan={3}>Reward, Pain &amp; Carry</th> : null}
-              {visible("QUALITY") ? <th colSpan={showComments ? 2 : 1}>Quality &amp; Governance</th> : null}
-              <th rowSpan={2} aria-label="Action" />
+              {visible("EXECUTION") ? <th className={styles.tableGroupStart} colSpan={3}>Capital &amp; Actual Economics</th> : null}
+              {visible("TARGETS") ? <th className={styles.tableGroupStart} colSpan={evidenceTargets.length}>Target Outcomes</th> : null}
+              {visible("HORIZON") ? <th className={styles.tableGroupStart} colSpan={3}>Horizon Evidence</th> : null}
+              {visible("RISK") ? <th className={styles.tableGroupStart} colSpan={3}>Reward, Pain &amp; Carry</th> : null}
+              {visible("QUALITY") ? <th className={styles.tableGroupStart} colSpan={showComments ? 2 : 1}>Quality &amp; Governance</th> : null}
+              <th className={styles.stickyActionHeader} rowSpan={2} aria-label="Action" />
             </tr>
             <tr>
               <th>Trade</th>
               <th>Direction</th>
               <th>Entry strategy</th>
-              {visible("EXECUTION") ? <><th>Investment required</th><th>Actual economics</th><th>D0 15:30 P/L</th></> : null}
-              {visible("TARGETS") ? evidenceTargets.map((definition) => (
-                <th key={`${definition.lifecycle}-${definition.value}`}>
+              {visible("EXECUTION") ? <><th className={styles.tableGroupStart}>Investment required</th><th>Actual economics</th><th>D0 15:30 P/L</th></> : null}
+              {visible("TARGETS") ? evidenceTargets.map((definition, index) => (
+                <th className={index === 0 ? styles.tableGroupStart : undefined} key={`${definition.lifecycle}-${definition.value}`}>
                   <span>{definition.group}</span><b>{definition.label}</b>
                 </th>
               )) : null}
-              {visible("HORIZON") ? <><th><span>Horizon</span><b>5D</b></th><th><span>Horizon</span><b>30D</b></th><th>Time since entry</th></> : null}
-              {visible("RISK") ? <><th>Maximum profit</th><th>Maximum drawdown</th><th>Never-closed carry</th></> : null}
-              {visible("QUALITY") ? <><th>Quality</th>{showComments ? <th>Admin comments</th> : null}</> : null}
+              {visible("HORIZON") ? <><th className={styles.tableGroupStart}><span>Horizon</span><b>5D</b></th><th><span>Horizon</span><b>30D</b></th><th>Time since entry</th></> : null}
+              {visible("RISK") ? <><th className={styles.tableGroupStart}>Maximum profit</th><th>Maximum drawdown</th><th>Never-closed carry</th></> : null}
+              {visible("QUALITY") ? <><th className={styles.tableGroupStart}>Quality</th>{showComments ? <th>Admin comments</th> : null}</> : null}
             </tr>
           </thead>
           <tbody>
@@ -2902,84 +2924,86 @@ function UnifiedTradeMatrix({
                   key={trade.trade_group_id}
                   tabIndex={0}
                   data-target-result={allHit ? "all-hit" : allFailed ? "all-failed" : "mixed"}
-                  style={{ "--target-row-tint": `hsl(${rowHue} 70% 96%)`, "--target-row-edge": `hsl(${rowHue} 63% 42%)` } as CSSProperties}
+                  style={{ "--target-row-tint": `hsl(${rowHue} 45% 98.5%)`, "--target-row-edge": `hsl(${rowHue} 58% 43%)` } as CSSProperties}
                   onClick={() => rowAction(trade)}
                   onKeyDown={(event) => rowAction(trade, event)}
                 >
-                  <td>
-                    <TradeIdentity trade={trade} profile={profiles.get(String(trade.symbol).toUpperCase())} />
-                  </td>
-                  <td className={styles.directionCell}>
-                    <b className={styles.directionBadge} data-direction={trade.trade_direction === "SHORT" ? "short" : "long"}>
-                      {trade.trade_direction === "SHORT" ? "SHORT" : "LONG"}
-                    </b>
-                    <small>{trade.trade_direction === "SHORT" ? "Sold first" : "Bought first"}</small>
-                  </td>
-                  <td className={styles.entryStrategyCell}>
-                    <b>{entryStrategyLabel(trade.entry_strategy)}</b>
-                    <small>{entryStrategyDetail(trade.entry_strategy)}</small>
-                  </td>
-                  {visible("EXECUTION") ? <td className={styles.investmentCell}>
-                    <strong>{money(trade.fno_quantity_investment_required)}</strong>
-                    <small>F&amp;O qty: {compact(trade.investment_quantity_basis)} × {money(trade.investment_price_basis)}</small>
-                    <b>{money(trade.fixed_investment_deployed)}</b>
-                    <small>₹2L: {compact(trade.fixed_investment_quantity)} shares · {money(trade.fixed_investment_cash_remaining)} cash</small>
-                  </td> : null}
-                  {visible("EXECUTION") ? <td>
-                    <strong data-sign={actual >= 0 ? "positive" : "negative"}>{money(actual)}</strong>
-                    <small>
-                      {number(trade.remaining_quantity) > 0 ? "Open unrealised gross" : "Booked realised net"}
-                    </small>
-                    <small>{compact(trade.remaining_quantity)} / {compact(trade.opened_quantity)} qty remains</small>
-                    <small>₹2L scaled: {money(trade.fixed_investment_actual_pnl)}</small>
-                  </td> : null}
-                  {visible("EXECUTION") ? <td className={styles.eodPnlCell}>
-                    {trade.intraday_eod_pnl == null ? <strong>—</strong> : <strong data-sign={number(trade.intraday_eod_pnl) >= 0 ? "positive" : "negative"}>{money(trade.intraday_eod_pnl)}</strong>}
-                    <small>{trade.intraday_eod_mark == null ? "Final close unavailable" : `Close ${money(trade.intraday_eod_mark)}`}</small>
-                    <small>{trade.intraday_eod_mark_at ? time(trade.intraday_eod_mark_at) : "Not final"}</small>
-                    {trade.fixed_investment_intraday_eod_pnl != null ? <small>₹2L: {money(trade.fixed_investment_intraday_eod_pnl)}</small> : null}
-                  </td> : null}
-                  {visible("TARGETS") ? evidenceTargets.map((definition) => <EvidenceTargetCell key={`${definition.lifecycle}-${definition.value}`} trade={trade} lifecycle={definition.lifecycle} value={definition.value} />) : null}
+                  <TradeIdentityCell
+                    title={`${String(trade.symbol)} · ${profiles.get(String(trade.symbol).toUpperCase())?.name ?? "Name unavailable"} · ${trade.strategy_id ?? "Strategy unavailable"} · ${time(trade.opened_at)}`}
+                    primary={<span className={styles.evidenceSymbol}><StockLogo symbol={String(trade.symbol)} profile={profiles.get(String(trade.symbol).toUpperCase())} size={14} />{String(trade.symbol)}</span>}
+                    secondary={profiles.get(String(trade.symbol).toUpperCase())?.name ?? "—"}
+                    detail={`${trade.strategy_id ?? "—"} · ${trade.side === "BUY" ? "LONG" : "SHORT"}`}
+                    supporting={trade.side === "BUY" ? "BUY then SELL" : "SELL then BUY"}
+                    metadata={`Opened ${time(trade.opened_at)}`}
+                  />
+                  <DirectionCell
+                    direction={trade.trade_direction === "SHORT" ? "SHORT" : "LONG"}
+                    primary={trade.trade_direction === "SHORT" ? "SHORT" : "LONG"}
+                    secondary={trade.trade_direction === "SHORT" ? "Sold first" : "Bought first"}
+                  />
+                  <StrategyCell
+                    title={`${entryStrategyLabel(trade.entry_strategy)} · ${entryStrategyDetail(trade.entry_strategy)} · ${trade.entry_strategy ?? "No governed method recorded"}`}
+                    primary={entryStrategyLabel(trade.entry_strategy)}
+                    secondary={entryStrategyDetail(trade.entry_strategy)}
+                    detail={trade.entry_strategy ?? "—"}
+                  />
+                  {visible("EXECUTION") ? <CapitalCell
+                    groupStart
+                    primary={moneyOrDash(trade.fno_quantity_investment_required)}
+                    secondary={`F&O qty: ${compactOrDash(trade.investment_quantity_basis)} × ${moneyOrDash(trade.investment_price_basis)}`}
+                    detail={moneyOrDash(trade.fixed_investment_deployed)}
+                    supporting={`₹2L: ${compactOrDash(trade.fixed_investment_quantity)} shares`}
+                    metadata={`${moneyOrDash(trade.fixed_investment_cash_remaining)} cash`}
+                  /> : null}
+                  {visible("EXECUTION") ? <EconomicsCell
+                    tone={actual >= 0 ? "positive" : "negative"}
+                    primary={money(actual)}
+                    secondary={number(trade.remaining_quantity) > 0 ? "OPEN" : "BOOKED"}
+                    detail={number(trade.remaining_quantity) > 0 ? "Open unrealised gross" : "Booked realised net"}
+                    supporting={`${compactOrDash(trade.remaining_quantity)} / ${compactOrDash(trade.opened_quantity)} qty remains`}
+                    metadata={`₹2L scaled: ${moneyOrDash(trade.fixed_investment_actual_pnl)}`}
+                  /> : null}
+                  {visible("EXECUTION") ? <EconomicsCell
+                    tone={trade.intraday_eod_pnl == null ? "neutral" : number(trade.intraday_eod_pnl) >= 0 ? "positive" : "negative"}
+                    primary={moneyOrDash(trade.intraday_eod_pnl)}
+                    secondary={trade.intraday_eod_mark == null ? "FINAL CLOSE UNAVAILABLE" : `Close ${money(trade.intraday_eod_mark)}`}
+                    detail={trade.intraday_eod_mark_at ? time(trade.intraday_eod_mark_at) : "Not final"}
+                    supporting={trade.fixed_investment_intraday_eod_pnl != null ? `₹2L: ${money(trade.fixed_investment_intraday_eod_pnl)}` : "—"}
+                  /> : null}
+                  {visible("TARGETS") ? evidenceTargets.map((definition, index) => <EvidenceTargetCell key={`${definition.lifecycle}-${definition.value}`} trade={trade} lifecycle={definition.lifecycle} value={definition.value} groupStart={index === 0} />) : null}
                   {visible("HORIZON") ? <HorizonOutcomeCell trade={trade} sessions={5} /> : null}
                   {visible("HORIZON") ? <HorizonOutcomeCell trade={trade} sessions={30} /> : null}
-                  {visible("HORIZON") ? <td className={styles.timeOpenCell} data-time-up={number(trade.sessions_observed) >= 30 ? "true" : "false"}>
-                    <b>{number(trade.sessions_observed) >= 30 ? "TIME UP" : elapsedDays === 0 ? "D0" : `${elapsedDays ?? "—"} DAYS`}</b>
-                    <small>{number(trade.sessions_observed)} trading sessions</small>
-                    <small>Since {time(trade.opened_at)}</small>
-                  </td> : null}
-                  {visible("RISK") ? <td><strong data-sign="positive">{money(maxProfit)}</strong><small>{percent(trade.mfe_30d_pct)} to date</small><small>₹2L: {money(trade.fixed_investment_mfe_30d_pnl)}</small></td> : null}
-                  {visible("RISK") ? <td><strong data-sign="negative">−{money(maxDrawdown).replace("−", "")}</strong><small>{percent(trade.mae_30d_pct)} to date</small><small>₹2L: {money(trade.fixed_investment_mae_30d_pnl)}</small></td> : null}
-                  {visible("RISK") ? <td className={styles.carryPnlCell}>
-                    <strong data-sign={carry != null && carry >= 0 ? "positive" : "negative"}>{carry == null ? "—" : money(carry)}</strong>
-                    <small>{trade.hypothetical_carry_mark == null ? "No current mark" : `At ${money(trade.hypothetical_carry_mark)}`}</small>
-                    <small>{trade.hypothetical_carry_mark_at ? `Marked ${time(trade.hypothetical_carry_mark_at)}` : "—"}</small>
-                    {fixedCarry != null ? <small>₹2L: {money(fixedCarry)}</small> : null}
-                  </td> : null}
-                  {visible("QUALITY") ? <td>
-                    <b data-grade={trade.quality_label}>
-                      {trade.quality_score == null ? "—" : `${number(trade.quality_score).toFixed(2)}%`} · {trade.quality_label}
-                    </b>
-                    <small>
-                      {completion.hits}/{completion.total} targets hit · {completion.pending} open
-                    </small>
-                    <small>Analytical horizon: {trade.analytical_grade}</small>
-                  </td> : null}
+                  {visible("HORIZON") ? <TimeInTradeCell
+                    primary={number(trade.sessions_observed) >= 30 ? "TIME UP" : elapsedDays === 0 ? "D0" : `${elapsedDays ?? "—"} DAYS`}
+                    secondary={`${number(trade.sessions_observed)} trading sessions`}
+                    detail={`Since ${time(trade.opened_at)}`}
+                  /> : null}
+                  {visible("RISK") ? <RewardPainCell groupStart tone="positive" primary={money(maxProfit)} secondary={`${percent(trade.mfe_30d_pct)} to date`} detail={`₹2L: ${moneyOrDash(trade.fixed_investment_mfe_30d_pnl)}`} /> : null}
+                  {visible("RISK") ? <RewardPainCell tone="negative" primary={`−${money(maxDrawdown).replace("−", "")}`} secondary={`${percent(trade.mae_30d_pct)} to date`} detail={`₹2L: ${moneyOrDash(trade.fixed_investment_mae_30d_pnl)}`} /> : null}
+                  {visible("RISK") ? <CarryCell
+                    tone={carry == null ? "neutral" : carry >= 0 ? "positive" : "negative"}
+                    primary={carry == null ? "—" : money(carry)}
+                    secondary={trade.hypothetical_carry_mark == null ? "No current mark" : `At ${money(trade.hypothetical_carry_mark)}`}
+                    detail={trade.hypothetical_carry_mark_at ? `Marked ${time(trade.hypothetical_carry_mark_at)}` : "—"}
+                    supporting={fixedCarry != null ? `₹2L: ${money(fixedCarry)}` : "—"}
+                  /> : null}
+                  {visible("QUALITY") ? <QualityCell
+                    groupStart
+                    grade={trade.quality_label}
+                    tone={["GOOD", "EXCELLENT"].includes(String(trade.quality_label)) ? "positive" : ["BAD", "AT_RISK"].includes(String(trade.quality_label)) ? "negative" : "info"}
+                    primary={`${trade.quality_score == null ? "—" : `${number(trade.quality_score).toFixed(2)}%`} · ${trade.quality_label ?? "—"}`}
+                    secondary={`${completion.hits} / ${completion.total} targets hit`}
+                    detail={`${completion.pending} open`}
+                    supporting={`Analytical horizon: ${trade.analytical_grade ?? "—"}`}
+                  /> : null}
                   {visible("QUALITY") && showComments ? (
-                    <td className={styles.commentCell}>
-                      <strong>
-                        {number(trade.comment_count)}{" "}
-                        {number(trade.comment_count) === 1
-                          ? "comment"
-                          : "comments"}
-                      </strong>
-                      <small>
-                        {trade.latest_comment
-                          ? String(trade.latest_comment)
-                          : "Add an admin note"}
-                      </small>
-                    </td>
+                    <CommentsCell
+                      primary={`${number(trade.comment_count)} ${number(trade.comment_count) === 1 ? "comment" : "comments"}`}
+                      secondary={trade.latest_comment ? String(trade.latest_comment) : "+ Add note"}
+                      title={trade.latest_comment ? String(trade.latest_comment) : "Add an admin note"}
+                    />
                   ) : null}
-                  <td>
+                  <ActionCell>
                     <button
                       type="button"
                       onClick={(event) => {
@@ -2990,7 +3014,7 @@ function UnifiedTradeMatrix({
                     >
                       View
                     </button>
-                  </td>
+                  </ActionCell>
                 </tr>
               );
             })}

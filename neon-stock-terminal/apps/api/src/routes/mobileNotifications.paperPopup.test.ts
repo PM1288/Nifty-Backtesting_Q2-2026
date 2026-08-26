@@ -16,7 +16,13 @@ test("paper popup feed returns only durable entry and target rows", async () => 
         aggregate_id: "trade-5",
         event_type: "com.papertrading.target_track.closed.v1",
         event_time: "2026-08-23T10:30:00.000Z",
-        payload: { data: { symbol: "RELIANCE", trade_group_id: "trade-5", notification: { title: "ANALYTICAL TARGET HIT", message: "ANALYTICAL TARGET HIT\nRELIANCE reached +0.5%" } } },
+        payload: { data: { symbol: "RELIANCE", stock_name: "Reliance Industries", trade_group_id: "trade-5", notification: { title: "ANALYTICAL TARGET HIT", message: "ANALYTICAL TARGET HIT\nRELIANCE reached +0.5%" } } },
+      }, {
+        event_id: "event-4",
+        aggregate_id: "trade-4",
+        event_type: "com.papertrading.trade_leg.opened.v1",
+        event_time: "2026-08-23T10:20:00.000Z",
+        payload: { data: { symbol: "TCS", stock_name: "Tata Consultancy Services", trade_group_id: "trade-4", fill_price: 3210, active_exit_target: { target_price: 3250.25 }, notification: { title: "PAPER ENTRY", message: "PAPER ENTRY\nTCS entered" } } },
       }];
     },
   } as any;
@@ -35,7 +41,10 @@ test("paper popup feed returns only durable entry and target rows", async () => 
     assert.equal(payload.source, "paper_trading.trade_events");
     assert.equal(payload.items[0].kind, "TARGET_HIT");
     assert.equal(payload.items[0].deepLink, "/paper-trading?tradeId=trade-5&source=paper-alert");
-    assert.match(payload.items[0].speechText, /target condition hit for RELIANCE/i);
+    assert.equal(payload.items[0].speechText, "Target hit. Reliance Industries.");
+    assert.equal(payload.items[1].speechText, "Tata Consultancy Services. Entry price 3,210.00 rupees. Target price 3,250.25 rupees.");
+    assert.equal(payload.items[1].entryPrice, 3210);
+    assert.equal(payload.items[1].targetPrice, 3250.25);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }

@@ -72,36 +72,26 @@ function paperPopupEvent(row: Row) {
   const tradeId = text(data.trade_group_id ?? data.client_group_id ?? row.aggregate_id, "", 80);
   const eventType = String(row.event_type ?? "");
   const kind = eventType.endsWith("trade_leg.opened.v1") ? "ENTRY" : "TARGET_HIT";
+  const symbol = text(data.symbol, "Paper trade", 24);
+  const stockName = text(data.stock_name ?? data.company_name ?? data.name ?? row.company_name, symbol, 80);
   const body = event.body.startsWith(event.title)
     ? event.body.slice(event.title.length).replace(/^\s+/, "")
     : event.body;
   const numberText = (value: unknown) => {
     const parsed = finite(value);
-    return parsed === null ? null : parsed.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    return parsed === null ? null : parsed.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
   const activeTarget = (data.active_exit_target && typeof data.active_exit_target === "object" ? data.active_exit_target : {}) as Record<string, unknown>;
-  const swingTarget = (data.swing_exit_target && typeof data.swing_exit_target === "object" ? data.swing_exit_target : {}) as Record<string, unknown>;
-  const tracks = Array.isArray(data.newly_closed_target_tracks) ? data.newly_closed_target_tracks as Array<Record<string, unknown>> : [];
-  const targetLevels = tracks.map((track) => {
-    const pct = finite(track.target_pct);
-    if (pct === null) return null;
-    return `${(Math.abs(pct) < 0.1 ? pct * 100 : pct).toLocaleString("en-IN", { maximumFractionDigits: 2 })} percent`;
-  }).filter(Boolean);
+  const entryPrice = finite(data.fill_price ?? data.entry_price);
+  const targetPrice = finite(activeTarget.target_price);
   const speechParts = kind === "ENTRY"
     ? [
-        `Paper trade entry. ${text(data.symbol, "Paper trade", 24)} ${text(data.side, "", 12)} position entered.`,
-        numberText(data.fill_price ?? data.entry_price) ? `Entry price ${numberText(data.fill_price ?? data.entry_price)} rupees.` : null,
-        numberText(data.fill_quantity ?? data.quantity) ? `Quantity ${numberText(data.fill_quantity ?? data.quantity)}.` : null,
-        data.strategy_name ?? data.strategy_id ? `Entry conditions satisfied by ${text(data.strategy_name ?? data.strategy_id, "the configured strategy", 80)}.` : "Configured entry conditions were satisfied.",
-        numberText(activeTarget.target_price) ? `First governed exit condition is the intraday target at ${numberText(activeTarget.target_price)} rupees.` : "Governed exit conditions remain active.",
-        numberText(swingTarget.target_price) ? `Swing exit condition is ${numberText(swingTarget.target_price)} rupees.` : null,
+        `${stockName}.`,
+        numberText(entryPrice) ? `Entry price ${numberText(entryPrice)} rupees.` : null,
+        numberText(targetPrice) ? `Target price ${numberText(targetPrice)} rupees.` : null,
       ]
     : [
-        `Paper trade target condition hit for ${text(data.symbol, "paper trade", 24)}.`,
-        targetLevels.length ? `Target levels reached: ${targetLevels.join(", ")}.` : "A configured target level was reached.",
-        numberText(data.current_price) ? `Observed price ${numberText(data.current_price)} rupees.` : null,
-        data.actual_execution_position_status ? `Actual paper execution position is ${text(data.actual_execution_position_status, "unchanged", 24)}.` : null,
-        data.higher_tracks_remain_active ? "Higher analytical targets remain active." : "No higher analytical target is currently reported by this event.",
+        `Target hit. ${stockName}.`,
       ];
   return {
     id: String(row.event_id),
@@ -109,7 +99,10 @@ function paperPopupEvent(row: Row) {
     kind,
     title: event.title,
     body,
-    symbol: text(data.symbol, "Paper trade", 24),
+    symbol,
+    stockName,
+    entryPrice,
+    targetPrice,
     occurredAt: event.occurredAt,
     tradeId: tradeId || null,
     deepLink: tradeId
@@ -166,8 +159,11 @@ export function registerMobileNotifications(app: Express, prisma: PrismaClient) 
       const limit = Math.min(limitSchema.parse(req.query.limit), 5);
       const rows = await prisma.$queryRawUnsafe<Row[]>(`
         select e.event_id::text,e.aggregate_id::text,e.event_type,e.event_time,e.payload,
+               p.company_name,
                null::timestamptz as read_at,null::timestamptz as acknowledged_at
         from paper_trading.trade_events e
+        left join public.instrument_profiles p
+          on p.symbol=upper(e.payload->'data'->>'symbol')
         where e.payload->'data'->'notification' is not null
           and e.event_type in (
             'com.papertrading.trade_leg.opened.v1',

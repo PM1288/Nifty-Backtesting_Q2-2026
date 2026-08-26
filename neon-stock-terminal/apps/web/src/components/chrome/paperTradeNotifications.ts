@@ -7,11 +7,36 @@ export type PaperTradeNotification = {
   title: string;
   body: string;
   symbol: string;
+  stockName?: string;
+  entryPrice?: number | null;
+  targetPrice?: number | null;
   occurredAt: string;
   tradeId: string | null;
   deepLink: string;
   speechText: string;
 };
+
+function spokenPrice(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : null;
+}
+
+export function paperTradeSpeechText(item: PaperTradeNotification) {
+  const stockName = item.stockName?.trim() || item.symbol;
+  if (item.kind === "TARGET_HIT") return `Target hit. ${stockName}.`;
+  const entry = spokenPrice(item.entryPrice);
+  const target = spokenPrice(item.targetPrice);
+  return [
+    `${stockName}.`,
+    entry ? `Entry price ${entry} rupees.` : null,
+    target ? `Target price ${target} rupees.` : null,
+  ].filter(Boolean).join(" ");
+}
+
+export function paperVoiceEnabledByDefault(storedPreference: string | null) {
+  return storedPreference !== "mute";
+}
 
 export type PaperTradeNotificationResponse = {
   asOf: string;

@@ -16,6 +16,7 @@ test("paper popup feed returns only the durable rows selected by the focused que
         aggregate_id: "trade-5",
         event_type: "com.papertrading.target_track.closed.v1",
         event_time: "2026-08-23T10:30:00.000Z",
+        company_name: "Reliance Industries",
         payload: { data: { symbol: "RELIANCE", trade_group_id: "trade-5", notification: { title: "ANALYTICAL TARGET HIT", message: "ANALYTICAL TARGET HIT\nRELIANCE reached +0.5%" } } },
       }];
     },
@@ -32,11 +33,12 @@ test("paper popup feed returns only the durable rows selected by the focused que
     assert.equal(queryLimit, 5);
     assert.match(sql, /trade_leg\.opened\.v1/);
     assert.match(sql, /target_track\.closed\.v1/);
+    assert.match(sql, /instrument_profiles/);
     assert.equal(payload.source, "paper_trading.trade_events");
     assert.equal(payload.items.length, 1);
     assert.equal(payload.items[0].kind, "TARGET_HIT");
     assert.equal(payload.items[0].deepLink, "/paper-trading?tradeId=trade-5&source=paper-alert");
-    assert.match(payload.items[0].speechText, /target condition hit for RELIANCE/i);
+    assert.equal(payload.items[0].speechText, "Target hit. Reliance Industries.");
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }

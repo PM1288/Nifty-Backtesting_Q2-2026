@@ -14,16 +14,16 @@ import { useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
 import { AuthGateModal } from "../auth/AuthGateModal";
 import { AuthStatus } from "./AuthStatus";
 import { CommandPalette, type CommandPaletteItem } from "./CommandPalette";
-import { HeaderTicker } from "./HeaderTicker";
 import { ResponsiveWorkspaceNavigation } from "./ResponsiveWorkspaceNavigation";
 import { resolveWorkspaceRoute } from "./workspaceRoutes";
-import { routeCommandItems, type CommandItem } from "../../interaction/routeCatalog";
+import { routeCommandItems } from "../../interaction/routeCatalog";
 import { NavigationStateManager } from "../../interaction/NavigationStateManager";
 import { MarketGradientWaves } from "../visual/MarketGradientWaves";
 import { MarketTargetCursor } from "../visual/MarketTargetCursor";
 import { MarketRsiParticles } from "../visual/MarketRsiParticles";
 import { pctClass } from "../utils/pctClass";
 import { PaperTradeNotifier } from "./PaperTradeNotifier";
+import { paperVoiceEnabledByDefault } from "./paperTradeNotifications";
 import styles from "./AppShell.module.css";
 
 type WorkspaceLink = { label: string; to: string; match?: (pathname: string) => boolean };
@@ -112,25 +112,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { authReady, user } = useAuthGate();
   const { mode: analyticsMode } = useAnalyticsExperienceMode();
   const [presentationMode, setPresentationMode] = useState(false);
-  const [paperVoiceEnabled, setPaperVoiceEnabled] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("n50.paper-alert-voice") === "speak");
+  const [paperVoiceEnabled, setPaperVoiceEnabled] = useState(() => typeof window !== "undefined" && paperVoiceEnabledByDefault(window.localStorage.getItem("n50.paper-alert-voice")));
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
   const sessionEnabled = authReady && Boolean(user);
   const overview = useHeaderMarketSummary(sessionEnabled);
   const liveFeed = useLiveQuotesWithStatus(["NIFTY50", "BANKNIFTY", "INDIAVIX"], sessionEnabled);
   const live = liveFeed.quotes;
-  const tickerItems = useMemo(() => (overview.data?.tickerTape ?? []).map((item) => {
-    const quote = live[item.symbol];
-    return quote ? { ...item, last: quote.price, changePct: quote.changePct } : item;
-  }), [live, overview.data?.tickerTape]);
   const niftyChangePct =
     live.NIFTY50?.changePct ??
     overview.data?.indices?.nifty50?.changePct ??
-    tickerItems.find((item) => item.symbol.toUpperCase() === "NIFTY50")?.changePct ??
     null;
   const niftyLevel =
     live.NIFTY50?.price ??
     overview.data?.indices?.nifty50?.last ??
-    tickerItems.find((item) => item.symbol.toUpperCase() === "NIFTY50")?.last ??
     null;
   const niftyRsi = overview.data?.indices?.nifty50?.rsi ?? null;
   const workspaceRoute = resolveWorkspaceRoute(location.pathname);
@@ -224,7 +218,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       className={styles.shell}
       data-ui-generation="trading-v2"
       data-workspace-theme="light"
-      data-has-ticker="true"
+      data-has-ticker="false"
       data-ui-compact-v5={compactV5 ? "true" : "false"}
       data-admin-shell={isAdminRoute ? "true" : "false"}
       data-presentation-mode={presentationMode ? "true" : "false"}
@@ -277,8 +271,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className={styles.paperVoiceToggle}
                 data-active={paperVoiceEnabled ? "true" : "false"}
                 aria-pressed={paperVoiceEnabled}
-                aria-label={paperVoiceEnabled ? "Mute paper trade voice alerts" : "Speak paper trade entry and exit conditions"}
-                title={speechSupported ? (paperVoiceEnabled ? "Mute paper trade voice alerts" : "Read paper trade entry and exit conditions using this browser") : "Browser speech is unavailable"}
+                aria-label={paperVoiceEnabled ? "Mute paper trade voice alerts" : "Enable concise paper trade voice alerts"}
+                title={speechSupported ? (paperVoiceEnabled ? "Mute paper trade voice alerts" : "Speak stock, entry and target using this browser") : "Browser speech is unavailable"}
                 disabled={!speechSupported}
                 onClick={() => setPaperVoiceEnabled((current) => {
                   const next = !current;
@@ -292,23 +286,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
               <div className={styles.sessionStatus}><AuthStatus /></div>
             </div>
-          </div>
-          <div className={styles.tickerRail} data-clarity-unmask="true" data-clarity-region="top_ticker">
-            <HeaderTicker
-              items={tickerItems}
-              leadingSlot={(
-                <div
-                  className={styles.mobileNiftyQuote}
-                  data-testid="nifty-header-quote-mobile"
-                  data-tone={niftyChangePct == null ? "neutral" : niftyChangePct > 0 ? "positive" : niftyChangePct < 0 ? "negative" : "neutral"}
-                  aria-hidden="true"
-                >
-                  <span>N50</span>
-                  <strong>{niftyLevel == null ? "—" : fmtPrice(niftyLevel)}</strong>
-                  <em>{niftyChangePct == null ? "Pending" : `${arrow(niftyChangePct)} ${fmtPct(niftyChangePct)}`}</em>
-                </div>
-              )}
-            />
           </div>
         </header>
 

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing, CheckCircle2, Crosshair, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { fetchPaperTradeNotifications } from "../../lib/api";
-import { unseenNotificationIds, validPaperTradeNotifications } from "./paperTradeNotifications";
+import { paperTradeSpeechText, unseenNotificationIds, validPaperTradeNotifications } from "./paperTradeNotifications";
 import styles from "./PaperTradeNotifier.module.css";
 
 const AUTO_CLOSE_MS = 9_000;
@@ -56,7 +56,7 @@ export function PaperTradeNotifier({ enabled, audible }: { enabled: boolean; aud
     };
   }, [enabled]);
 
-  const playPop = () => {
+  const playPop = useCallback(() => {
     if (!audible) return;
     const context = audioContextRef.current;
     if (!context || context.state !== "running") return;
@@ -74,20 +74,20 @@ export function PaperTradeNotifier({ enabled, audible }: { enabled: boolean; aud
       oscillator.start(now + index * 0.055);
       oscillator.stop(now + 0.2 + index * 0.055);
     });
-  };
+  }, [audible]);
 
-  const speakEvents = (eventIds: string[]) => {
+  const speakEvents = useCallback((eventIds: string[]) => {
     if (!audible || typeof window === "undefined" || !("speechSynthesis" in window)) return;
     const selected = items.filter((item) => eventIds.includes(item.id)).reverse();
     for (const item of selected) {
-      const utterance = new SpeechSynthesisUtterance(item.speechText || `${item.title}. ${item.body}`);
+      const utterance = new SpeechSynthesisUtterance(paperTradeSpeechText(item));
       utterance.lang = "en-IN";
       utterance.rate = 0.96;
       utterance.pitch = 1;
       utterance.volume = 0.9;
       window.speechSynthesis.speak(utterance);
     }
-  };
+  }, [audible, items]);
 
   useEffect(() => {
     if (!query.data) return;
@@ -104,8 +104,9 @@ export function PaperTradeNotifier({ enabled, audible }: { enabled: boolean; aud
     autoOpenedRef.current = true;
     playPop();
     speakEvents(newIds);
-  }, [items, query.data]);
+  }, [items, playPop, query.data, speakEvents]);
 
+  const latestItemId = items[0]?.id;
   useEffect(() => {
     if (!audible && typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
   }, [audible]);
@@ -119,7 +120,7 @@ export function PaperTradeNotifier({ enabled, audible }: { enabled: boolean; aud
       }
     }, AUTO_CLOSE_MS);
     return () => window.clearTimeout(timer);
-  }, [open, items[0]?.id]);
+  }, [latestItemId, open]);
 
   useEffect(() => {
     if (!open) return;

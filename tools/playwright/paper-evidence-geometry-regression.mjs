@@ -37,9 +37,17 @@ try {
   page.on("pageerror", (error) => errors.push(String(error)));
   const response = await page.goto(`${origin}/n50/paper-trading?prefetch=off`, { waitUntil: "networkidle", timeout: 60_000 });
   check("route response", Boolean(response?.ok()), `status=${response?.status()}`);
+  await page.getByRole("button", { name:/^Trade Evidence/ }).click();
   await page.getByRole("heading", { name: "Complete trade evidence", exact: true }).waitFor();
   await page.getByRole("button", { name: "Dense", exact: true }).click();
   await assertGeometry(page, "dense", 82);
+
+  const payload = await page.evaluate(async () => {
+    const response = await fetch("/n50/v1/workspace/paper-trading", { credentials:"include" });
+    return { status:response.status, body:await response.json() };
+  });
+  check("paper evidence API", payload.status === 200, `status=${payload.status}`);
+  check("all API trades retained", await page.locator('[data-density="dense"] tbody tr').count() === payload.body.stockTrades.length, `ui=${await page.locator('[data-density="dense"] tbody tr').count()} api=${payload.body.stockTrades.length}`);
 
   const firstRow = page.locator('[data-density="dense"] tbody tr').first();
   const cellKinds = await firstRow.locator("td[data-cell-kind]").evaluateAll((cells) => cells.map((cell) => cell.getAttribute("data-cell-kind")));
@@ -48,6 +56,10 @@ try {
   }
   const slotCounts = await firstRow.locator("td[data-cell-kind]").evaluateAll((cells) => cells.map((cell) => cell.querySelectorAll("[data-slot]").length));
   check("five-slot anatomy", slotCounts.every((count) => count === 5), JSON.stringify(slotCounts));
+  check("seven target columns retained", await firstRow.locator('td[data-cell-kind="target"]').count() === 7, "target ladder changed");
+  check("two horizon columns retained", await firstRow.locator('td[data-cell-kind="horizon"]').count() === 2, "horizon evidence changed");
+  const groupBorders = await firstRow.locator('td[data-cell-kind="capital"],td[data-cell-kind="target"],td[data-cell-kind="horizon"],td[data-cell-kind="rewardPain"],td[data-cell-kind="quality"]').evaluateAll((cells) => cells.map((cell) => ({kind:cell.getAttribute("data-cell-kind"),border:getComputedStyle(cell).borderLeftWidth})));
+  check("group dividers", ["capital","target","horizon","rewardPain","quality"].every((kind) => groupBorders.find((item) => item.kind === kind)?.border === "2px"), JSON.stringify(groupBorders));
 
   const alignment = await firstRow.evaluate((row) => Object.fromEntries([...row.querySelectorAll("td[data-cell-kind]")].map((cell) => {
     const kind = cell.getAttribute("data-cell-kind");
@@ -77,7 +89,8 @@ try {
   await tableFrame.screenshot({ path:path.join(outputDir,"paper-evidence-table-1920x1080.png") });
 
   await page.setViewportSize({ width:1440, height:900 });
-  await page.reload({ waitUntil:"networkidle" });
+  await page.reload({ waitUntil:"domcontentloaded", timeout:60_000 });
+  await page.getByRole("button", { name:/^Trade Evidence/ }).click();
   await page.getByRole("heading", { name:"Complete trade evidence", exact:true }).waitFor();
   await page.getByRole("button", { name:"Dense", exact:true }).click();
   await assertGeometry(page,"dense",82);

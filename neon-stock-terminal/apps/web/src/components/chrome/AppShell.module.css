@@ -86,7 +86,7 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--z-header, 90);
   background: rgba(255, 255, 255, 0.96);
   border-bottom: 1px solid var(--border-subtle);
   backdrop-filter: blur(16px);
@@ -253,7 +253,7 @@
 .workspaceTabs {
   position: sticky;
   top: var(--app-sticky-content-top);
-  z-index: 14;
+  z-index: var(--z-sticky-content, 20);
   display: flex;
   gap: 6px;
   overflow-x: auto;
@@ -385,7 +385,7 @@
 .adminNavigation {
   position: sticky;
   top: var(--app-header-height, 54px);
-  z-index: 19;
+  z-index: var(--z-primary-navigation, 80);
   display: flex;
   align-items: center;
   justify-content: space-between;

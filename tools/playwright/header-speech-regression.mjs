@@ -55,6 +55,64 @@ try {
       check(`${viewport.name} ${name} exists`, Boolean(box));
       check(`${viewport.name} ${name} contained`, Boolean(header && box && box.top >= header.top - 0.5 && box.bottom <= header.bottom + 0.5), JSON.stringify({ header, box }));
     }
+
+    if (viewport.width > 720) {
+      await page.goto(`${appBase}/strategy/monthly`, { waitUntil: "domcontentloaded", timeout: 90_000 });
+      const strategyLink = page
+        .getByRole("navigation", { name: "Workspace navigation" })
+        .getByRole("link", { name: /Strategy/ })
+        .first();
+      await strategyLink.hover();
+      const strategyMenu = page.getByRole("menu", { name: "Strategy dashboards" });
+      await strategyMenu.waitFor({ state: "visible" });
+      const strategyStack = await strategyMenu.evaluate((menu) => {
+        const rect = menu.getBoundingClientRect();
+        const points = [
+          [rect.left + 12, rect.top + 12],
+          [rect.left + rect.width / 2, rect.top + rect.height / 2],
+          [rect.right - 12, rect.bottom - 12],
+        ];
+        return {
+          zIndex: getComputedStyle(menu).zIndex,
+          points: points.map(([x, y]) => {
+            const top = document.elementFromPoint(x, y);
+            return Boolean(top && (top === menu || menu.contains(top)));
+          }),
+        };
+      });
+      check(
+        `${viewport.name} Strategy menu above frozen filters`,
+        strategyStack.points.every(Boolean),
+        JSON.stringify(strategyStack),
+      );
+
+      const userButton = page.locator('header button[aria-haspopup="menu"]');
+      await userButton.click();
+      const userMenuItem = page.getByRole("menuitemcheckbox", { name: /High-legibility font/ });
+      await userMenuItem.waitFor({ state: "visible" });
+      const userMenu = userMenuItem.locator("xpath=ancestor::*[@role='menu'][1]");
+      const userStack = await userMenu.evaluate((menu) => {
+        const rect = menu.getBoundingClientRect();
+        const points = [
+          [rect.left + 12, rect.top + 12],
+          [rect.left + rect.width / 2, rect.top + rect.height / 2],
+          [rect.right - 12, rect.bottom - 12],
+        ];
+        return {
+          zIndex: getComputedStyle(menu).zIndex,
+          points: points.map(([x, y]) => {
+            const top = document.elementFromPoint(x, y);
+            return Boolean(top && (top === menu || menu.contains(top)));
+          }),
+        };
+      });
+      check(
+        `${viewport.name} user menu above frozen filters`,
+        userStack.points.every(Boolean),
+        JSON.stringify(userStack),
+      );
+      await page.screenshot({ path: path.join(outputDir, `${viewport.name}-dropdown-stacking.png`), fullPage: false });
+    }
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: false });
     await context.close();
   }

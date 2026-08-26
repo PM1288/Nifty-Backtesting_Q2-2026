@@ -1,7 +1,8 @@
 .desktopWrap {
   position: sticky;
   top: var(--app-header-height, 98px);
-  z-index: 19;
+  z-index: var(--z-primary-navigation, 80);
+  overflow: visible;
   padding: 0 clamp(12px, 2vw, 28px);
   border-bottom: 1px solid rgba(153, 169, 190, 0.28);
   background: rgba(238, 243, 249, 0.92);
@@ -83,7 +84,7 @@
   position: absolute;
   top: calc(100% + 6px);
   left: 50%;
-  z-index: 45;
+  z-index: var(--z-header-dropdown, 100);
   width: 320px;
   display: grid;
   gap: 5px;
@@ -219,19 +220,15 @@
 @media (max-width: 1260px) and (min-width: 721px) {
   .desktopDock {
     display: flex;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: thin;
-    scroll-snap-type: x proximity;
+    overflow: visible;
   }
 
   .desktopItem {
-    flex: 0 0 132px;
-    scroll-snap-align: center;
+    flex: 1 1 0;
   }
 
   .desktopMenu {
-    flex: 0 0 132px;
+    flex: 1 1 0;
   }
 
   .desktopMenu .desktopItem {
@@ -241,11 +238,11 @@
 
 @media (max-width: 860px) and (min-width: 721px) {
   .desktopItem {
-    flex-basis: 116px;
+    flex-basis: 0;
   }
 
   .desktopMenu {
-    flex-basis: 116px;
+    flex-basis: 0;
   }
 }
 

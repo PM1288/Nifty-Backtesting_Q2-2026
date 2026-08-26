@@ -21,7 +21,7 @@ export function CompactStatusBand({ state, title, reason, metadata, action, info
 }
 
 export function KpiStrip({ label = "Key metrics", children }: { label?: string; children: ReactNode }) {
-  return <section className={styles.kpiStrip} aria-label={label}>{children}</section>;
+  return <section className={styles.kpiStrip} aria-label={label} tabIndex={0}>{children}</section>;
 }
 
 export function KpiCell({ label, value, basis, delta, info }: { label: string; value: ReactNode; basis?: ReactNode; delta?: ReactNode; info?: ReactNode }) {

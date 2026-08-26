@@ -981,7 +981,7 @@ export function MonthlyStrategyPage() {
             Download filtered CSV
           </button>
         </div>
-        <section className={styles.kpis}>
+        <section className={styles.kpis} aria-label="Monthly strategy key metrics" tabIndex={0}>
           <Kpi
             label="Evaluable entries"
             value={String(eligible.length)}
@@ -1283,7 +1283,7 @@ export function RollingWindowStrategyPage() {
               Download filtered CSV
             </button>
           </div>
-          <section className={styles.kpis}>
+          <section className={styles.kpis} aria-label="Rolling strategy key metrics" tabIndex={0}>
             <Kpi
               label="Opportunities"
               value={String(summary.opportunities ?? allRows.length)}

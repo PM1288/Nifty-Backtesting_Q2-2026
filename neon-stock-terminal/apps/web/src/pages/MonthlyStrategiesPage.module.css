@@ -525,3 +525,10 @@
 :global([data-ui-compact-v5="true"]) .ledger th button { height:32px; padding:3px 6px; }
 :global([data-ui-compact-v5="true"]) .ledger td { height:42px; padding:4px 6px; }
 :global([data-ui-compact-v5="true"]) .ledger > footer { padding:4px 7px; }
+
+@media (max-width: 767px) {
+  :global([data-ui-compact-v5="true"]) .hero nav a {
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+}

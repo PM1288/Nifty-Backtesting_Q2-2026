@@ -271,7 +271,7 @@ export function LongOptionsPage() {
             governed live shortlist, not the total F&O universe.
           </p>
         </div>
-        <div className={styles.routeGrid}>
+        <div className={styles.routeGrid} tabIndex={0} aria-label="Scrollable option route statuses">
           <article>
             <strong>ATM straddle</strong>
             <em className={styles.paper}>PAPER</em>

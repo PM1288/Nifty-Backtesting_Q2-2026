@@ -89,5 +89,6 @@
 :global([data-ui-compact-v5="true"]) .tableWrap { max-height:calc(100dvh - 290px); border-radius:6px; }
 :global([data-ui-compact-v5="true"]) .tableWrap th { height:32px; padding:3px 6px; }
 :global([data-ui-compact-v5="true"]) .tableWrap td { height:42px; padding:4px 6px; }
+:global([data-ui-compact-v5="true"]) .tableWrap td:last-child small { color:#475569; }
 :global([data-ui-compact-v5="true"]) .failures > div { gap:3px; margin-top:5px; }
 :global([data-ui-compact-v5="true"]) .failures article { padding:4px 6px; border-radius:4px; }

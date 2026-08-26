@@ -625,7 +625,7 @@ export function PaperTradingCommandCenter() {
             </span>
           </section>
           <AccountingLaneOverview summary={overviewSummary} tradeCount={trades.length} asOf={String(data.asOf)} accounting={workbenchContext.accounting} onTrace={openTrace} onNavigate={selectWorkbenchSection} />
-          <section id="executive" className={styles.summaryGrid}>
+          <section id="executive" className={styles.summaryGrid} aria-label="Paper trading evidence summary" tabIndex={0}>
             <article className={styles.maturityBanner}>
               <span>EVIDENCE MATURITY</span>
               <h2>{evidenceTitle}</h2>

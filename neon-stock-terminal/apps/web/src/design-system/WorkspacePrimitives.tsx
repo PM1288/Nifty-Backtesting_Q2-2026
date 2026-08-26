@@ -37,7 +37,7 @@ export function DecisionHero({ eyebrow, title, state, reasons, action, evidence 
 }
 
 export function ExecutiveKpiStrip({ children }: { children: ReactNode }) {
-  return <section className={styles.kpiStrip} aria-label="Executive metrics">{children}</section>;
+  return <section className={styles.kpiStrip} aria-label="Executive metrics" tabIndex={0}>{children}</section>;
 }
 
 export function MetricTile({ label, value, unit, scope, definition, tone = "neutral", drilldown }: { label: string; value: ReactNode; unit?: string; scope: string; definition?: string; tone?: QualityTone; drilldown?: ReactNode }) {

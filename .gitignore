@@ -4,6 +4,7 @@
 backups/
 state/
 output/
+/.venv-oiss-experiment/
 services/nse_ingestor/.env
 secrets/
 services/nse_ingestor/runtime/inbound/*

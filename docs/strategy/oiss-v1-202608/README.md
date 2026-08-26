@@ -14,3 +14,7 @@ OISS reuses immutable OIIS point-in-time feature snapshots but applies its own d
 See the linked documents in this directory for data lineage, formulas, operation, validation and limitations.
 
 For the dated handoff snapshot, working/not-working matrix, available source coverage and CSV inventory, read `OISS_CURRENT_STATE_AND_LIMITATIONS_2026-08-26.md`.
+
+The independent offline fitness audit is under
+[`experiment-20260826/`](experiment-20260826/README.md). It confirms that paper activation remains
+NO-GO and distinguishes production results from engineering-only reconstructions.

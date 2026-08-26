@@ -1,0 +1,12 @@
+stage,rows_remaining,pct_all
+candidate_dq_ab,16702,60.8319
+ofactor_ge_75,903,3.2889
+xfactor_ge_75,202,0.7357
+tqs_ge_78,135,0.4917
+not_extreme,135,0.4917
+valid_triggered_setup,135,0.4917
+rr_available,11,0.0401
+rr_ge_1_5,11,0.0401
+option_selected,11,0.0401
+option_spread_le_3pct,6,0.0219
+final_lots_ge_1,0,0.0

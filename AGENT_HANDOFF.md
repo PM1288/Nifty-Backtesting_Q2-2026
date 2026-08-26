@@ -3250,3 +3250,30 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   `sha256:d5245b31cf9fa2c63e650cd2cf848c98b9ec48b2c67bba85f2dc141a96ebace4`.
   Rollback image `trading-stack-n50-dashboard:rollback-pre-header-dropdown-z-20260826` preserves
   the prior dashboard release.
+
+## 2026-08-26 — OISS evidence-fitness and gate-attribution experiment
+
+- Ran the isolated `OISS-EXPERIMENT-20260826` against 27,456 decisions, 27,456 outcomes, 132 runs,
+  208 symbols and 1,160,984 exact-universe one-minute bars. The experiment did not update OISS
+  tables, Formula/Config `.0`, scheduler state, paper state or broker integrations.
+- Confirmed the execution-critical inconsistencies: 11/11 BUY NOW rows have zero lots and occur in
+  run DQ F; 1,943/5,782 selected options exceed a decimal 3% spread gate; all 5,782 selected options
+  are OTM; 405/805 comparable option-risk rows exceed full premium; and 1,296 MATURE_D5 rows lack
+  required values. Only one of the 11 actionable planned entries was touched after its decision.
+- Collapsed the 11 actionable scan observations into three SWIGGY opportunity episodes. Rebuilt
+  1,252 minute paths, 1,190 structural-R:R observations, horizon component coverage, 2,376
+  sector/run diagnostics, 132 incomplete market-regime diagnostics and 396 index-level diagnostics.
+  All reconstructed policy surfaces remain engineering-only and were not written to production.
+- Generated 17 validated analytical CSVs, a 27,456-row/32-column Zstandard Parquet file, five PNG
+  charts, raw stock/index bars, source coverage, a manifest and a detailed RED/AMBER/GREEN/GREY
+  report under `output/oiss_experiment_20260826/`. CSV width/count validation and Parquet validation
+  passed.
+- Durable report and reproducibility guidance are under
+  `docs/strategy/oiss-v1-202608/experiment-20260826/`; reproducible tooling is
+  `tools/oiss_evidence_fitness_experiment.py` with pinned requirements.
+- Handoff archive: `/home/novius2/trading-stack/OISS_EVIDENCE_FITNESS_HANDOFF_2026-08-26.zip`,
+  41 MiB, 58 archive entries, SHA-256
+  `e5dc4f9c366f9a84cd289a999d37dd82f20bd591708405ab1d3cc3e008d6b728`.
+  `unzip -tq` passed and duplicate archive-name count was zero.
+- Final activation verdict remains **NO-GO**. Scheduler and paper mode remain OFF; no production
+  service was rebuilt or redeployed for this research task.

@@ -12,3 +12,5 @@ OISS reuses immutable OIIS point-in-time feature snapshots but applies its own d
 - Modes at initial rollout: intelligence on; scheduler, paper, assisted and live-candidate off.
 
 See the linked documents in this directory for data lineage, formulas, operation, validation and limitations.
+
+For the dated handoff snapshot, working/not-working matrix, available source coverage and CSV inventory, read `OISS_CURRENT_STATE_AND_LIMITATIONS_2026-08-26.md`.

@@ -3196,3 +3196,20 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   survivorship bias); macro event snapshots are unavailable; current outcome bootstrap has daily
   D+1..D+5 closes and daily MFE/MAE but not a complete 15/30/60-minute or intrabar target-before-stop
   reconstruction. These states are not replaced with zero.
+
+## 2026-08-26 — OISS current-state documentation and database export handoff
+
+- Added `OISS_CURRENT_STATE_AND_LIMITATIONS_2026-08-26.md` beside the existing OISS documents. It
+  distinguishes working, partial, unavailable, disabled and not-yet-implemented capabilities and
+  records exact source coverage as of the handoff.
+- Exported eight canonical CSV datasets into `docs/strategy/oiss-v1-202608/`: latest run, latest
+  208-stock radar, sector rotation, scan changes, 132 historical runs, 27,456 decision snapshots,
+  27,456 separate outcomes and a grouped status/maturity summary.
+- Validated every CSV with Python's CSV parser. All 55,492 data rows matched their header width;
+  database reconciliation remained 132 runs, 27,456 decisions and 27,456 outcomes.
+- Added `OISS_EXPORT_MANIFEST_2026-08-26.md` with row/column counts, byte sizes and SHA-256 hashes.
+  CSVs are runtime evidence and are locally Git-excluded in accordance with repository policy.
+- Created `/home/novius2/trading-stack/OISS_V1_202608_HANDOFF_2026-08-26.zip`: 24 files plus its
+  directory entry, 24 MiB, SHA-256
+  `3fd2fbeae767b53dc117385ecd998f3dacf36b9fb2bbce18a9608f8a8b67e7f9`.
+  `unzip -tq` passed and duplicate archive-name count was zero.

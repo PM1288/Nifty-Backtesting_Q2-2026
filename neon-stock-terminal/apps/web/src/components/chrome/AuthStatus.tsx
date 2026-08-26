@@ -67,7 +67,7 @@ export function AuthStatus() {
 
   return (
     <div ref={wrapRef} className={styles.wrap}>
-      <button type="button" className={styles.identity} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>
+      <button type="button" className={styles.identity} aria-label={`${primaryLabel}, ${status}, open user menu`} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>
         <UserRound size={16} aria-hidden="true" /><span className={styles.labels}>
         <span className={styles.primary}>{primaryLabel}</span>
         <span className={styles.secondary} data-auth={user ? "yes" : requiresEmailVerification ? "pending" : "no"}>

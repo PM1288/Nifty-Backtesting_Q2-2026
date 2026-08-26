@@ -21,7 +21,7 @@
 .contextTitle strong { color:#0f172a; font-size:12px; }
 .contextTitle small { color:#64748b; font-size:10px; }
 .contextBar label { flex:0 0 auto; display:flex; flex-direction:column; gap:3px; }
-.contextBar label span { color:#64748b; font-size:10px; font-weight:800; }
+.contextBar label span { color:#334155; font-size:10px; font-weight:800; }
 .contextBar select { min-height:34px; max-width:150px; padding:5px 25px 5px 8px; border:1px solid #aebdce; border-radius:7px; background:#fff; color:#17263a; font-size:12px; }
 .contextActions { display:flex; gap:5px; align-items:center; margin-left:auto; }
 .contextActions button { min-height:34px; padding:5px 8px; font-size:11px; }

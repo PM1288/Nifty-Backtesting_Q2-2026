@@ -3213,3 +3213,12 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   directory entry, 24 MiB, SHA-256
   `3fd2fbeae767b53dc117385ecd998f3dacf36b9fb2bbce18a9608f8a8b67e7f9`.
   `unzip -tq` passed and duplicate archive-name count was zero.
+
+## 2026-08-26 — Compact UI Standardisation V5
+
+- Implemented the Compact V5 presentation system behind `VITE_UI_COMPACT_V5`: a 95 px desktop shell, semantic density tokens, compact lens/context/status/KPI primitives, dense evidence grids and accessible information surfaces.
+- Migrated the annotated Home, OIIS, Trendlyne, Monthly, Rolling, Long Options and Paper Trading routes. Paper Overview now mounts only current-state evidence; Factor, Path, Reward/Pain, Capital, Scenario and Audit remain URL-addressable independent lenses. Simple View and all Full Evidence data/exports remain intact.
+- Generated the V5 audit package under `docs/uiux/v5/`: all 19 transcribed PDF pages, 55 rendered route dispositions, density baselines/results, field/chart/table preservation manifests, route sign-off, accessibility, export and performance evidence. The source PDF itself was absent and is explicitly marked `UNVERIFIED`.
+- Validation passed: web 54/54, API 128/128, both typechecks, Storybook build, canonical repository gate, 220/220 local canonical route/viewport checks, 21/21 lens/deep-link checks, all 32 public core render/API/overflow checks, corrected public mobile accessibility checks and 23/23 public Paper Simple View/export checks.
+- Releases `ccf5f7c`, `d9ce119` and `bff1e20` were pushed to canonical `master`. Production is healthy on bundle `index-C386_BEo.js`, image `sha256:43dddbb4dfe22356ef07afd8b03bf3c74cfe990b6e9a1190477e970ae0ea2876`; rollback is `trading-stack-n50-dashboard:rollback-pre-compact-v5-20260826`.
+- No strategy, ranking, target, P&L, paper lifecycle, API meaning, database value or ingestion logic changed. Remaining material limits: missing source PDF, two pre-existing explicit H30 artifact 404 states, pre-existing repository lint/dependency-audit debt, and pending independent three-user human UAT.

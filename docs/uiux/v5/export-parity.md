@@ -17,6 +17,6 @@ V5 changes presentation only. Export functions continue to consume the filtered 
 
 Existing unit coverage confirms that Simple View exports contain exactly the declared evidence fields and do not convert missing observations to zero. No export selector or calculation was changed by V5.
 
-## Remaining verification
+## Production verification
 
-Server-generated export byte-for-byte comparison is covered by the existing route regression suite and must be repeated after production deployment. Runtime screenshots are deliberately excluded from Git under repository policy.
+The authenticated deployed Paper Simple View regression passed **23/23** checks. It verified all declared columns, filtering, header sorting, contained scrolling, canonical inspector opening and successful download of the complete filtered CSV and Excel-compatible datasets. Runtime downloads and screenshots are deliberately excluded from Git under repository policy.

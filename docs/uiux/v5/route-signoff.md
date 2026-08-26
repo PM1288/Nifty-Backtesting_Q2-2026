@@ -4,7 +4,7 @@
 
 - Source commit audited: `6722e5ae8046206cea6152bdf75a2d233ab798bf`.
 - Deployed baseline bundle: `index-Da3mAz6Z.js`.
-- Candidate bundle is built with `VITE_UI_COMPACT_V5=true`.
+- Production bundle `index-C386_BEo.js` is deployed with `VITE_UI_COMPACT_V5=true` from image `sha256:43dddbb4dfe22356ef07afd8b03bf3c74cfe990b6e9a1190477e970ae0ea2876`.
 - The named 19-page PDF remains `UNVERIFIED` because it is absent from the workspace. Every transcribed page instruction in the V5 prompt is mapped in `annotated-comment-matrix.md`.
 - Strategy, selection, target, P&L, accounting, paper lifecycle, API and database code are unchanged.
 
@@ -31,7 +31,7 @@ All additional canonical routes inherit compact shell, compact shared page heade
 - Viewport-level horizontal overflow: **0/220**.
 - Feature flag present and true: **220/220**.
 - Unexpected same-origin HTTP failures: **0/220**.
-- Serious/critical Axe findings across 12 representative page-family routes: **0**; timeouts: **0**.
+- Serious/critical Axe findings across 12 representative page-family routes: **0**; timeouts: **0**. A production mobile sweep found and then verified corrections for scroll-region focusability, two strategy-tab hit targets and option-table metadata contrast.
 - Paper Overview mounted heavy workbench sections: **1**; inactive Factor, Capital, Path, Reward/Pain, Scenario and Audit lenses: **0**.
 - Supplemental lens/deep-link sweep: **21/21**, covering every Paper heavy lens, all 13 OISS lenses and the NIFTY weekly-options alias.
 - Settled Simple View sweep: **4/4**, with all **44** filtered canonical records rendered at every required viewport.
@@ -49,4 +49,4 @@ Detailed automated results are generated in `full-route-screenshots/results.json
 
 ## Gate status
 
-The candidate gate has passed type-check, 54/54 web tests, 128/128 API tests, Storybook build, canonical repository check and the complete 220-check Playwright sweep. Production post-deployment smoke and focused export regressions remain the final cutover gate. Material exceptions are listed rather than converted to PASS.
+The release gate passed type-check, 54/54 web tests, 128/128 API tests, Storybook build, canonical repository check and the complete 220-check Playwright sweep. The deployed public build additionally passed all 32 authenticated core route render/API/overflow checks; four mobile accessibility findings were corrected and verified through three passing focused cases plus the final passing Long Options recheck. Paper Simple View/export passed 23/23. Material exceptions are listed rather than converted to PASS.

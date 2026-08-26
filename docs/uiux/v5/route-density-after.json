@@ -1,7 +1,8 @@
 {
   "capturedAt": "2026-08-26T00:00:00Z",
   "featureFlag": "VITE_UI_COMPACT_V5=true",
-  "candidateBuild": "index-CwgqpGFY.js",
+  "candidateBuild": "index-C386_BEo.js",
+  "deployedImage": "sha256:43dddbb4dfe22356ef07afd8b03bf3c74cfe990b6e9a1190477e970ae0ea2876",
   "measurementSource": "tools/playwright/compact-v5-audit.mjs",
   "shell": {
     "desktopChromePx": 95,

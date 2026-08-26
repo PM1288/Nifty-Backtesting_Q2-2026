@@ -3230,3 +3230,23 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Removed the stock ticker rail from the shared shell on every dashboard while retaining the compact NIFTY 50 level and percentage mark. Search, speech and user controls now have bounded header dimensions; the narrow layout shows search, NIFTY, speech and user icons without overlap.
 - Validation passed: web 57/57, API 128/128, both typechecks, targeted ESLint, canonical repository gate, 60/60 authenticated production header/speech checks, and 8/8 production mobile core route/Axe checks. The regression script is `tools/playwright/header-speech-regression.mjs`.
 - Code releases `255b1e7` and `ffab283` were pushed to canonical `master`. Production is healthy on bundle `index-C1xhASNP.js`, image `sha256:1062868f88e10cd45039bb7bb7f309b0704a4def61dc9a54ebf724f30cf4a555`; rollback is `trading-stack-n50-dashboard:rollback-pre-header-speech-20260826`.
+
+## 2026-08-26 — Header dropdown stacking over frozen filters
+
+- Corrected the shared stacking hierarchy so the fixed application header, primary workspace
+  navigation, Strategy flyout and user menu remain above secondary workspace tabs and page-level
+  frozen filter bars. The hierarchy now uses semantic tokens rather than unrelated route-local
+  `z-index` values.
+- Removed the 721–1260 px navigation scroll container that clipped absolutely positioned flyouts.
+  The seven navigation items now share the available width at tablet/compact-desktop sizes while
+  retaining visible dropdown overflow.
+- Extended `tools/playwright/header-speech-regression.mjs` with hit-testing at the top, centre and
+  bottom of both dropdowns on the Monthly Strategy route. This verifies that the menu itself is the
+  topmost element where it overlaps sticky page controls.
+- Validation passed: web 57/57, production build, ESLint, and 66/66 authenticated production
+  Playwright checks at 1920x1080, 1440x900, 1024x768 and 390x844. Screenshots and machine-readable
+  results are under `output/playwright/header-dropdown-z/` (ignored runtime evidence).
+- Release `dae2707` was pushed to canonical `master` and deployed healthy as image
+  `sha256:d5245b31cf9fa2c63e650cd2cf848c98b9ec48b2c67bba85f2dc141a96ebace4`.
+  Rollback image `trading-stack-n50-dashboard:rollback-pre-header-dropdown-z-20260826` preserves
+  the prior dashboard release.

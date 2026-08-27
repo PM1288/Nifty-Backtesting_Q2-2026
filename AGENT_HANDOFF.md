@@ -3295,3 +3295,13 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   footer. It retains the explicit `PAPER ENTRY` heading and actual entry facts;
   no simulation/no-live-order warning or footnote is emitted. Other lifecycle
   messages are unchanged.
+- Delivery commit `f3bd255` was fast-forwarded and pushed to canonical `master`.
+  Only `n50-dashboard` and `paper-webhook-worker` were rebuilt/recreated under
+  the `trading-stack-novius2` Compose project. PostgreSQL, collectors, Paper API,
+  monitor, scheduler and unrelated services were not recreated.
+- Validation: WhatsApp formatter 8/8, Paper service 24 passed/6 integration
+  tests skipped without a test DSN, web 60/60, API 128/128, Ruff, web/API
+  typecheck and builds, canonical repository gate, public login HTTP 200 and
+  authenticated entry-book browser regression all passed. Production contains
+  six entry-book records; all six are CAPTURED with three bid and ask levels.
+- Browser evidence: `/tmp/paper-entry-market-book-f3bd255/desktop-entry-book.png`.

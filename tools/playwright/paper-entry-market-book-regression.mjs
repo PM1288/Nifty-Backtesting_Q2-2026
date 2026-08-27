@@ -47,12 +47,12 @@ try {
       consoleErrors.push(message.text());
     }
   });
-  const route = await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+  const route = await page.goto(`${baseUrl}/paper-trading?section=trade-evidence`, { waitUntil: "domcontentloaded", timeout: 120_000 });
   if (!route?.ok()) throw new Error(`paper route failed: ${route?.status()}`);
   await page.getByText("Complete trade evidence", { exact: true }).waitFor({ state: "attached", timeout: 120_000 });
   await page.getByRole("columnheader", { name: "Direction" }).waitFor({ state: "attached" });
   await page.locator("#trade-evidence tbody tr").first().getByRole("button", { name: /Open .* evidence/ }).click();
-  await page.getByRole("button", { name: "Evidence", exact: true }).click();
+  await page.getByRole("button", { name: "Market Book", exact: true }).click();
   await page.getByRole("heading", { name: "Entry-time SmartAPI market book" }).waitFor({ timeout: 120_000 });
   await page.screenshot({ path: path.join(outputDir, "desktop-entry-book.png"), fullPage: true });
   if (consoleErrors.length) throw new Error(`browser console errors: ${consoleErrors.join(" | ")}`);

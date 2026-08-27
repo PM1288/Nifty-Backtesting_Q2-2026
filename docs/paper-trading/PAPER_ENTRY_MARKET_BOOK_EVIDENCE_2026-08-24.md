@@ -154,7 +154,8 @@ SHA-256:
 - Authenticated production API regression: 40/40 paper rows had a correct
   `LONG` or `SHORT` projection.
 - Authenticated browser regression: passed; the Direction column and historical
-  unavailable market-book state were inspected in the canonical drawer.
+  unavailable market-book state were inspected in the canonical drawer. The
+  regression now selects the dedicated `Market Book` tab directly.
 - Browser evidence:
   `output/playwright/paper-entry-market-book/desktop-entry-book.png`
 - Screenshot SHA-256:

@@ -92,8 +92,29 @@ zero and unavailable are separate states.
 
 The complete Paper Trading ledger now places a color-coded `LONG`/`SHORT`
 column between Trade and Entry strategy. The same direction appears in the
-trade inspector. Its Evidence tab shows the frozen quote, reference touch,
-spread, volume fields and top-three bid/ask ladders.
+trade inspector. The inspector has a dedicated `Market Book` tab showing the
+frozen quote, reference touch, spread, volume fields and top-three bid/ask
+ladders. The general Evidence tab remains unchanged for calculation evidence.
+
+## WhatsApp entry alert
+
+The direct WhatsApp gateway formatter resolves the immutable
+`entry_market_evidence` row by the event's `trade_leg_id`. A new Paper Entry
+message includes, when captured:
+
+- LTP, last-traded quantity and cumulative day volume;
+- total buy and sell quantities;
+- best bid/ask price and quantity;
+- derived touch spread and spread percentage;
+- top-three bid and ask price, quantity and order count;
+- quote timestamp and age at the paper fill.
+
+The message never substitutes a later live quote for the entry snapshot.
+Unavailable historical depth is omitted from WhatsApp rather than fabricated.
+The Paper Entry message no longer adds a generic monitoring sentence, strategy
+footer, simulation warning or no-live-order footnote; it contains the explicit
+`PAPER ENTRY` identity and the actual captured facts. Existing target, exit and
+summary formats are not changed by this update.
 
 ## Rollback
 

@@ -177,6 +177,53 @@ def _rows_table(rows: list[tuple[str, str]]) -> str:
     return "```\n" + "\n".join(f"{label:<{width}}  {value}" for label, value in rows) + "\n```"
 
 
+def _entry_book_lines(book: Any) -> list[str]:
+    """Render the immutable entry-time SmartAPI touch and top-three ladder."""
+    if not isinstance(book, dict) or book.get("availability_status") not in {
+        "CAPTURED",
+        "PARTIAL_DEPTH",
+        "NO_TWO_SIDED_BOOK",
+    }:
+        return []
+    bids = book.get("bid_levels") if isinstance(book.get("bid_levels"), list) else []
+    asks = book.get("ask_levels") if isinstance(book.get("ask_levels"), list) else []
+    best_bid = _number(book.get("best_bid_price"))
+    best_ask = _number(book.get("best_ask_price"))
+    spread = best_ask - best_bid if best_bid is not None and best_ask is not None else None
+    midpoint = (best_ask + best_bid) / 2 if best_bid is not None and best_ask is not None else None
+    spread_pct = spread * 100 / midpoint if spread is not None and midpoint else None
+    age_ms = _number(book.get("quote_age_ms"))
+    lines = ["", "*MARKET BOOK AT ENTRY*"]
+    metrics = [
+        ("LTP", _money(book.get("ltp"))),
+        ("Last trade qty", _qty(book.get("last_trade_qty"))),
+        ("Day volume", _qty(book.get("cumulative_volume"))),
+        ("Total buy qty", _qty(book.get("total_buy_qty"))),
+        ("Total sell qty", _qty(book.get("total_sell_qty"))),
+        ("Best bid", f"{_money(book.get('best_bid_price'))} × {_qty(book.get('best_bid_qty'))}"),
+        ("Best ask", f"{_money(book.get('best_ask_price'))} × {_qty(book.get('best_ask_qty'))}"),
+        ("Spread", f"{_money(spread)} ({_pct(spread_pct)})" if spread is not None else "—"),
+    ]
+    lines.append(_rows_table(metrics))
+    if bids or asks:
+        lines.append("*TOP 3 BID / ASK*  _(price × qty · orders)_")
+        ladder: list[str] = []
+        for index in range(3):
+            bid = bids[index] if index < len(bids) and isinstance(bids[index], dict) else {}
+            ask = asks[index] if index < len(asks) and isinstance(asks[index], dict) else {}
+            ladder.append(
+                f"L{index + 1}  "
+                f"BID {_money(bid.get('price'))} × {_qty(bid.get('quantity'))} · {_qty(bid.get('orders'))}  |  "
+                f"ASK {_money(ask.get('price'))} × {_qty(ask.get('quantity'))} · {_qty(ask.get('orders'))}"
+            )
+        lines.append("```\n" + "\n".join(ladder) + "\n```")
+    context = [f"Book {_when(book.get('quote_ts'))}"]
+    if age_ms is not None:
+        context.append(f"age {(age_ms / Decimal('1000')).quantize(Decimal('0.01'))} s")
+    lines.append(" · ".join(context))
+    return lines
+
+
 def render_message(
     event: dict[str, Any], decision: DeliveryDecision, factors: dict[str, Any] | None = None
 ) -> str:
@@ -228,7 +275,7 @@ def render_message(
             ("52W low", _money(factors.get("week52_low"))),
             ("52W position", _pct(factors.get("week52_position_pct"))),
         ]
-        reason = data.get("entry_reason") or "Paper fill recorded; monitoring targets and risk path."
+        reason = None
     elif decision.kind == "TARGET":
         tracks = (
             data.get("newly_closed_target_tracks")
@@ -287,6 +334,7 @@ def render_message(
     if rows:
         lines.extend(["", _rows_table(rows)])
     if decision.kind == "ENTRY":
+        lines.extend(_entry_book_lines(factors.get("entry_market_book")))
         recommendations = factors.get("trendlyne_buy_recommendations")
         lines.extend(["", "*Trendlyne · previous 30 days*"])
         if isinstance(recommendations, list) and recommendations:
@@ -301,7 +349,7 @@ def render_message(
             lines.append("- No BUY suggestions found for this stock in the previous 30 days.")
     if reason:
         lines.extend(["", f"> {_clean(reason, 240)}"])
-    if strategy:
+    if strategy and decision.kind != "ENTRY":
         lines.extend(["", f"Strategy `{strategy}`"])
     lines.append(f"`{_when(event.get('time'))}`")
     return "\n".join(lines)
@@ -616,6 +664,21 @@ def load_entry_evidence(db: Any, event: dict[str, Any]) -> tuple[dict[str, Any],
                 LIMIT 3""",
             (symbol, occurred, occurred),
         ).fetchall()
+        market_book = None
+        trade_leg_id = data.get("trade_leg_id")
+        if trade_leg_id:
+            market_book = conn.execute(
+                """SELECT availability_status,quote_ts,quote_age_ms::text,quote_source,
+                          ltp::text,last_trade_qty::text,cumulative_volume::text,
+                          total_buy_qty::text,total_sell_qty::text,
+                          best_bid_price::text,best_bid_qty::text,
+                          best_ask_price::text,best_ask_qty::text,
+                          bid_levels,ask_levels,bid_level_count,ask_level_count
+                     FROM paper_trading.entry_market_evidence
+                    WHERE trade_leg_id=%s::uuid
+                    ORDER BY fill_at DESC LIMIT 1""",
+                (trade_leg_id,),
+            ).fetchone()
         bars = (
             conn.execute(
                 """SELECT b.ts,b.open::text,b.high::text,b.low::text,b.close::text,b.volume
@@ -634,6 +697,7 @@ def load_entry_evidence(db: Any, event: dict[str, Any]) -> tuple[dict[str, Any],
     if range_52w:
         evidence.update(dict(range_52w))
     evidence["trendlyne_buy_recommendations"] = [dict(row) for row in recommendations]
+    evidence["entry_market_book"] = dict(market_book) if market_book else None
     entry = _number(data.get("fill_price") or data.get("entry_price"))
     high = _number(evidence.get("week52_high"))
     low = _number(evidence.get("week52_low"))

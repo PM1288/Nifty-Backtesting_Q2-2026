@@ -81,6 +81,30 @@ def test_entry_message_is_compact_explicit_and_factor_aware() -> None:
             "trendlyne_buy_recommendations": [
                 {"house": "Axis Direct", "report_date": "2026-08-20", "target_price": "12500"}
             ],
+            "entry_market_book": {
+                "availability_status": "CAPTURED",
+                "quote_ts": "2026-08-25T08:32:59+00:00",
+                "quote_age_ms": "2000",
+                "ltp": "11603.50",
+                "last_trade_qty": "3",
+                "cumulative_volume": "554982",
+                "total_buy_qty": "146149",
+                "total_sell_qty": "155900",
+                "best_bid_price": "11603.00",
+                "best_bid_qty": "7",
+                "best_ask_price": "11604.00",
+                "best_ask_qty": "8",
+                "bid_levels": [
+                    {"price": "11603", "quantity": "7", "orders": "1"},
+                    {"price": "11602.5", "quantity": "113", "orders": "3"},
+                    {"price": "11602", "quantity": "33", "orders": "1"},
+                ],
+                "ask_levels": [
+                    {"price": "11604", "quantity": "8", "orders": "1"},
+                    {"price": "11604.5", "quantity": "87", "orders": "1"},
+                    {"price": "11605", "quantity": "20", "orders": "1"},
+                ],
+            },
         },
     )
     assert "*PAPER ENTRY*" in message
@@ -91,6 +115,13 @@ def test_entry_message_is_compact_explicit_and_factor_aware() -> None:
     assert "RSI 14" in message and "61.88" in message
     assert "52W high" in message and "52W position" in message
     assert "*BUY* · Axis Direct" in message and "target ₹12,500.00" in message
+    assert "*MARKET BOOK AT ENTRY*" in message
+    assert "Best bid" in message and "₹11,603.00 × 7" in message
+    assert "Best ask" in message and "₹11,604.00 × 8" in message
+    assert "*TOP 3 BID / ASK*" in message
+    assert "L3  BID ₹11,602.00 × 33 · 1" in message
+    assert "Strategy `" not in message
+    assert "monitoring targets" not in message
     assert "Simulation only" not in message and "No live order" not in message
     assert "MFE" not in message and "MAE" not in message
     assert "₹11,604.00" in message
@@ -143,6 +174,15 @@ def test_entry_evidence_accepts_nse_cash_symbols_with_eq_suffix() -> None:
     instrument_row = {"symbol_token": "10738"}
     profile_row = {"company_name": "Oracle Financial Services Software Ltd."}
     range_row = {"week52_high": "13220", "week52_low": "7042.20"}
+    market_book_row = {
+        "availability_status": "CAPTURED",
+        "best_bid_price": "11603",
+        "best_bid_qty": "7",
+        "best_ask_price": "11604",
+        "best_ask_qty": "8",
+        "bid_levels": [{"level": 1, "price": "11603", "quantity": "7", "orders": "1"}],
+        "ask_levels": [{"level": 1, "price": "11604", "quantity": "8", "orders": "1"}],
+    }
     recommendations = [{"report_date": "2026-08-20", "house": "Axis Direct", "target_price": "12500"}]
     bar_rows = [{"open": "100", "high": "101", "low": "99", "close": "100.5"}]
     connection = MagicMock()
@@ -151,6 +191,7 @@ def test_entry_evidence_accepts_nse_cash_symbols_with_eq_suffix() -> None:
         instrument_row,
         profile_row,
         range_row,
+        market_book_row,
     ]
     connection.execute.return_value.fetchall.side_effect = [recommendations, bar_rows]
     context = MagicMock()
@@ -167,6 +208,7 @@ def test_entry_evidence_accepts_nse_cash_symbols_with_eq_suffix() -> None:
                 "side": "BUY",
                 "fill_price": "11604",
                 "fill_time": "2026-08-25T08:32:00+00:00",
+                "trade_leg_id": "11111111-1111-1111-1111-111111111111",
             },
         ),
     )
@@ -174,6 +216,7 @@ def test_entry_evidence_accepts_nse_cash_symbols_with_eq_suffix() -> None:
     assert factors["ofactor"] == "80"
     assert factors["company_name"].startswith("Oracle")
     assert factors["trendlyne_buy_recommendations"] == recommendations
+    assert factors["entry_market_book"] == market_book_row
     assert round(float(factors["week52_position_pct"]), 2) == 73.84
     assert bars == bar_rows
     instrument_sql = str(connection.execute.call_args_list[1].args[0])

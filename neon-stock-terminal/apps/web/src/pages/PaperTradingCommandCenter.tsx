@@ -78,7 +78,7 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 type AnyRow = Record<string, any>;
-type DrawerTab = "Journey" | "Targets" | "Evidence" | "Economics" | "Comments" | "Audit" | "Calculation Trace";
+type DrawerTab = "Journey" | "Targets" | "Market Book" | "Evidence" | "Economics" | "Comments" | "Audit" | "Calculation Trace";
 type AtlasLens = "Intraday" | "5D" | "30D";
 type PageView = "PORTFOLIO" | "SIMPLE" | "WHAT_GOOD_LOOKS_LIKE";
 type HeatmapView = "YEAR" | "WEEK" | "INTRADAY";
@@ -3154,8 +3154,8 @@ function TradeDrawer({
   const commentsAvailable =
     canManageComments && detail?.permissions?.can_manage_comments === true;
   const tabs: DrawerTab[] = commentsAvailable
-    ? ["Journey", "Targets", "Evidence", "Economics", "Comments", "Audit", "Calculation Trace"]
-    : ["Journey", "Targets", "Evidence", "Economics", "Audit", "Calculation Trace"];
+    ? ["Journey", "Targets", "Market Book", "Evidence", "Economics", "Comments", "Audit", "Calculation Trace"]
+    : ["Journey", "Targets", "Market Book", "Evidence", "Economics", "Audit", "Calculation Trace"];
   return (
     <div
       className={styles.drawerBackdrop}
@@ -3243,8 +3243,10 @@ function TradeDrawer({
               <Journey detail={detail} />
             ) : tab === "Targets" ? (
               <DrawerTargets detail={detail} />
+            ) : tab === "Market Book" ? (
+              <EntryMarketBook trade={detail.trade} />
             ) : tab === "Evidence" ? (
-              <Evidence evidence={detail.evidence} quality={detail.trade.trade_quality} trade={detail.trade} />
+              <Evidence evidence={detail.evidence} quality={detail.trade.trade_quality} />
             ) : tab === "Economics" ? (
               <DrawerEconomics trade={detail.trade} scenarios={detail.horizons ?? []} />
             ) : tab === "Comments" && commentsAvailable ? (
@@ -3460,10 +3462,9 @@ function EntryMarketBook({ trade }: { trade: AnyRow }) {
   );
 }
 
-function Evidence({ evidence, quality, trade }: { evidence: AnyRow; quality: AnyRow; trade: AnyRow }) {
+function Evidence({ evidence, quality }: { evidence: AnyRow; quality: AnyRow }) {
   return (
     <section className={styles.evidence}>
-      <EntryMarketBook trade={trade} />
       <h3>Trade quality · {quality?.policyVersion ?? "—"}</h3>
       <div><span>Total score</span><strong>{quality?.totalScore == null ? "Awaiting entry evidence" : `${number(quality.totalScore).toFixed(2)}% · ${quality.label}`}</strong></div>
       <div><span>Process evidence</span><strong>{number(quality?.process?.coveragePct).toFixed(2)}% covered · {quality?.process?.scorePct == null ? "—" : `${number(quality.process.scorePct).toFixed(2)}% observed score`}</strong></div>

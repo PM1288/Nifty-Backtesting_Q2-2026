@@ -3277,3 +3277,21 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   `unzip -tq` passed and duplicate archive-name count was zero.
 - Final activation verdict remains **NO-GO**. Scheduler and paper mode remain OFF; no production
   service was rebuilt or redeployed for this research task.
+## Paper entry SmartAPI book in drawer and WhatsApp — 2026-08-27
+
+- Canonical branch: `feature/paper-entry-book-whatsapp-20260827`.
+- Existing entry capture remains authoritative: `paper_trading.entry_market_evidence`
+  freezes the nearest pre-fill SmartAPI quote and top-three bid/ask ladders at
+  every new opening fill. No fill, target, quantity or trading rule changed.
+- The Paper Trading side inspector now exposes this evidence through a dedicated
+  `Market Book` tab. The calculation Evidence tab and all existing drawer tabs
+  remain available.
+- Direct WhatsApp Paper Entry messages now load the immutable book row by
+  `trade_leg_id` and include LTP, last quantity, day volume, total buy/sell,
+  best bid/ask, spread, top-three bid/ask price/quantity/order count and quote
+  timestamp/age. Missing historical depth is omitted, never backfilled or shown
+  as zero.
+- Paper Entry WhatsApp copy removes the generic monitoring reason and strategy
+  footer. It retains the explicit `PAPER ENTRY` heading and actual entry facts;
+  no simulation/no-live-order warning or footnote is emitted. Other lifecycle
+  messages are unchanged.

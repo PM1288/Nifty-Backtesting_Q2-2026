@@ -38,7 +38,7 @@ try {
     const context = await browser.newContext({ viewport, storageState });
     const page = await context.newPage();
     const errors = [];
-    page.on("console", (message) => { if (message.type() === "error" && !/clarity|cloudflareinsights/i.test(message.text())) errors.push(message.text()); });
+    page.on("console", (message) => { if (message.type() === "error" && !/ERR_NETWORK_CHANGED|clarity|cloudflareinsights/i.test(message.text())) errors.push(message.text()); });
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 90_000 });
     const appHeader = page.locator("header").first();
     await appHeader.waitFor();

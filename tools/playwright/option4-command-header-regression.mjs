@@ -95,7 +95,7 @@ try {
     const commandPalette = page.locator('[role="dialog"][aria-labelledby="command-palette-title"]');
     await commandPalette.waitFor({ state: "visible" });
     check(viewport, "Ctrl K command palette retained", await commandPalette.isVisible());
-    await page.keyboard.press("Escape");
+    await commandPalette.getByRole("button", { name: "Close search and commands" }).click();
     await commandPalette.waitFor({ state: "detached" });
     check(viewport, "no console errors", errors.length === 0, errors.join(" | "));
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: false });

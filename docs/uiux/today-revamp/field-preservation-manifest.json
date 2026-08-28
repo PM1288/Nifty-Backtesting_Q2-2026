@@ -1,0 +1,23 @@
+{
+  "route": "/",
+  "legacyComponent": "pages/LandingPage.tsx",
+  "featureFlag": "VITE_TODAY_SUMMARY_DETAIL_V1",
+  "preserved": [
+    {"field": "NIFTY 50 quote", "old": "index strip", "new": "MarketSummaryStrip", "default": true},
+    {"field": "BANK NIFTY quote", "old": "index strip", "new": "MarketSummaryStrip", "default": true},
+    {"field": "INDIA VIX quote", "old": "index strip", "new": "MarketSummaryStrip", "default": true},
+    {"field": "market status/as-of/freshness", "old": "status strip", "new": "shared shell plus page story timestamp", "default": true},
+    {"field": "all sector groups", "old": "sector heatmap", "new": "Sector Matrix and Full Market Board", "default": true},
+    {"field": "all covered stock symbol/name/logo/LTP/change", "old": "StockPill", "new": "Full Market Board StockTile and Stock Quick View", "default": true},
+    {"field": "Price 1D/Price 5D/Volume/RSI/Williams/OIIS/30D Opportunity", "old": "heatmap lenses", "new": "stock quick view/full canonical analytical routes", "default": false},
+    {"field": "universe/market-cap/sector/search/sort filters", "old": "heatmap toolbar", "new": "FullBoardToolbar URL state", "default": true},
+    {"field": "F&O anomaly counts", "old": "anomaly flash/radar", "new": "RiskAlertsStrip and FullBoardFooter", "default": true},
+    {"field": "F&O anomaly contracts", "old": "contract radar cards", "new": "top anomaly rows plus canonical F&O radar link", "default": true},
+    {"field": "supporting macro metrics", "old": "supporting metrics board", "new": "canonical Markets/supporting metrics route link", "default": false},
+    {"field": "stock navigation", "old": "StockPill click", "new": "Stock Quick View then Open Stock 360", "default": true},
+    {"field": "OIIS selection badges/scores", "old": "StockPill", "new": "opportunity rows/stock tiles/quick view", "default": true},
+    {"field": "calm/reduced motion", "old": "Calm mode", "new": "prefers-reduced-motion and existing global preference", "default": true}
+  ],
+  "routesPreserved": ["/", "/dashboard/home", "/analytics/stock/:symbol", "/options/intelligence", "/analytics/supporting-metrics"],
+  "calculationChanges": []
+}

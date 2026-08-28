@@ -58,8 +58,10 @@ existing page-local navigation.
 - `apps/web/src/components/chrome/workspaceRoutes.ts`
 - `apps/web/src/components/chrome/CommandPalette.module.css`
 - `apps/web/src/components/chrome/AuthStatus.module.css`
+- `apps/web/src/design-system/WorkspacePrimitives.tsx`
 - `apps/web/src/styles/tokens.css`
 - `apps/web/tests/navigationInteraction.test.ts`
+- `tools/playwright/option4-command-header-regression.mjs`
 
 ## Validation
 
@@ -69,8 +71,12 @@ Passed:
 - API typecheck, 128/128 tests and build;
 - focused ESLint for every changed TypeScript/test file;
 - canonical repository source gate;
-- 118/118 authenticated browser checks at 1920, 1440, 1280, 1024, 430, 390 and 360 px;
+- 125/125 authenticated browser checks at 1920, 1440, 1280, 1024, 430, 390 and 360 px;
 - public route/asset smoke checks and healthy deployed container.
+
+The operational badge is severity-consistent: positive is `READY`, warning is `CAUTION`, negative
+is `DEGRADED` and an indeterminate state is `UNKNOWN`. The browser suite verifies this mapping at
+every viewport.
 
 Browser screenshots and machine-readable results are in
 `output/playwright/option4-command-header-final/` (ignored runtime evidence). Repository-wide web
@@ -83,3 +89,7 @@ Revert the delivery commit and rebuild only `n50-dashboard`. There is no databas
 contract change or data rollback.
 
 Pre-change image: `trading-stack-n50-dashboard:rollback-pre-option4-header-20260828`.
+
+Final deployed image: `sha256:7b133561c4d0ebbe5725a1d1d618a2c6d7afc7399d1c2e1be5469d54593a7b44`.
+
+Final entry bundle: `index-BvzfpuHB.js`.

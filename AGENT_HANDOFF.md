@@ -3320,10 +3320,10 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - No API, database, strategy, paper-trade, formula, route meaning or permission semantics changed.
   Detailed mapping and rollback are in
   `docs/uiux/OPTION_4_SINGLE_LINE_COMMAND_HEADER_2026-08-28.md`.
-- Final delivery commit `21b059d` is pushed on `ui/single-line-command-header`. Web 64/64 and API
+- Final delivery commit `14e67c3` is pushed on `ui/single-line-command-header`. Web 64/64 and API
   128/128 tests passed with both typechecks/builds, focused ESLint and the canonical repository gate.
-  Authenticated deployed regression passed 118/118 checks at seven viewport sizes; evidence is in
+  Authenticated deployed regression passed 125/125 checks at seven viewport sizes; evidence is in
   `output/playwright/option4-command-header-final/`.
 - Only `n50-dashboard` was rebuilt/recreated. It is healthy on image
-  `sha256:cb644d602a54aea12f1494fb3fd54b6eab9399ae9658b169d8cabe25b43a7195` and entry bundle
-  `index-DqTp04rA.js`. Rollback is `trading-stack-n50-dashboard:rollback-pre-option4-header-20260828`.
+  `sha256:7b133561c4d0ebbe5725a1d1d618a2c6d7afc7399d1c2e1be5469d54593a7b44` and entry bundle
+  `index-BvzfpuHB.js`. Rollback is `trading-stack-n50-dashboard:rollback-pre-option4-header-20260828`.

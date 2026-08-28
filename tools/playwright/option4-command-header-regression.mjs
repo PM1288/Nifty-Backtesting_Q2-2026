@@ -49,9 +49,13 @@ try {
     check(viewport, "no ticker rail", await page.locator('[aria-label="Market ticker tape"], [data-clarity-region="top_ticker"]').count() === 0);
     check(viewport, "NIFTY context retained", await page.getByTestId("nifty-header-quote").isVisible());
     if (viewport.width < 768) check(viewport, "mobile PAPER context retained", await appHeader.getByText("PAPER", { exact: true }).isVisible());
-    const operationalState = appHeader.locator('[data-tone]').filter({ hasText: /^(READY|CAUTION|DEGRADED|UNKNOWN)$/ }).first();
-    const operationalTone = await operationalState.getAttribute("data-tone");
-    const operationalText = (await operationalState.textContent())?.replace(/[^A-Z]/g, "") ?? "";
+    const operationalStates = await appHeader.locator('[data-tone]').evaluateAll((nodes) => nodes.map((node) => ({
+      tone: node.getAttribute("data-tone"),
+      text: (node.textContent ?? "").replace(/[^A-Z]/g, "")
+    })));
+    const operationalState = operationalStates.find(({ text }) => ["READY", "CAUTION", "DEGRADED", "UNKNOWN"].includes(text));
+    const operationalTone = operationalState?.tone ?? null;
+    const operationalText = operationalState?.text ?? "";
     const expectedOperationalLabel = operationalTone === "positive"
       ? "READY"
       : operationalTone === "warning"
@@ -100,6 +104,8 @@ try {
       check(viewport, "drawer locks body", await page.evaluate(() => document.body.style.overflow === "hidden"));
       for (const label of ["Today", "Markets", "Strategy", "Paper Trading", "More"]) check(viewport, `drawer ${label}`, await drawer.getByText(label, { exact: true }).first().isVisible());
       await page.keyboard.press("Escape");
+      await drawer.waitFor({ state: "detached" });
+      await page.waitForTimeout(50);
       check(viewport, "Escape closes drawer and restores focus", await drawer.count() === 0 && await trigger.evaluate((node) => node === document.activeElement));
     }
 

@@ -1,7 +1,10 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
   BarChart3,
   ClipboardList,
+  Database,
+  FileClock,
   FlaskConical,
   Globe2,
   Home,
@@ -9,6 +12,7 @@ import {
   ShieldCheck,
   TrendingUp,
   LibraryBig,
+  Network,
 } from "lucide-react";
 
 export type WorkspaceRouteId =
@@ -88,6 +92,51 @@ export const STRATEGY_MENU_ROUTES = [
     path: "/strategy/nifty-options",
     icon: BarChart3,
   },
+] as const;
+
+export type HeaderNavigationItem = {
+  id: string;
+  label: string;
+  description: string;
+  path: string;
+  icon: LucideIcon;
+  section?: "LIVE & CURRENT" | "RESEARCH" | "DERIVATIVE STRATEGIES";
+  adminOnly?: boolean;
+};
+
+/**
+ * Option 4 navigation taxonomy. Desktop menus and the responsive sheet render
+ * from these same collections so routes cannot silently drift between modes.
+ */
+export const MARKETS_MENU_ROUTES: readonly HeaderNavigationItem[] = [
+  { id: "market-overview", label: "Market Overview", description: "Market breadth, indices, sectors and regimes", path: "/analytics", icon: Globe2 },
+  { id: "stocks", label: "Stocks", description: "Stock universe, scanner, watchlists and stock research", path: "/analytics/stock/RELIANCE", icon: TrendingUp },
+  { id: "derivatives", label: "Derivatives", description: "F&O contracts, option chains, open interest and derivatives analytics", path: "/options/intelligence", icon: BarChart3 },
+] as const;
+
+const strategyRouteById = new Map(STRATEGY_MENU_ROUTES.map((item) => [item.id, item]));
+
+const strategyHeaderOrder = [
+  ["oiis", "LIVE & CURRENT"],
+  ["oiss-v1-202608", "LIVE & CURRENT"],
+  ["trendlyne-summary", "RESEARCH"],
+  ["monthly-strategy", "RESEARCH"],
+  ["rolling-monthly", "RESEARCH"],
+  ["long-options", "DERIVATIVE STRATEGIES"],
+  ["nifty-weekly-options", "DERIVATIVE STRATEGIES"],
+] as const;
+
+export const STRATEGY_HEADER_ROUTES: readonly HeaderNavigationItem[] = strategyHeaderOrder.map(([id, section]) => ({
+  ...strategyRouteById.get(id)!,
+  section,
+}));
+
+export const MORE_MENU_ROUTES: readonly HeaderNavigationItem[] = [
+  { id: "data-operations", label: "Data & Operations", description: "Data feeds, universe, data quality and system controls", path: "/analytics/system/quality", icon: Database },
+  { id: "system-health", label: "System Health", description: "Sources, services, runtime status and provenance", path: "/analytics/system/map", icon: Activity },
+  { id: "run-monitor", label: "Run Monitor", description: "Active, completed and failed processing runs", path: "/backtesting/runs", icon: FileClock },
+  { id: "nse-intelligence", label: "NSE Intelligence", description: "Official reports, market activity and ingestion health", path: "/institutional/nse-intelligence", icon: Network },
+  { id: "administration", label: "Administration", description: "Authorised database and system controls", path: "/control-plane", icon: ShieldCheck, adminOnly: true },
 ] as const;
 
 export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [

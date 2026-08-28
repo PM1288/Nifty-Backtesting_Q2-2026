@@ -229,14 +229,19 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className={styles.chrome}>
         <MarketTargetCursor changePct={niftyChangePct} />
         <header className={styles.header}>
-          <div className={styles.topBar}>
-            <div className={styles.topBarLeft}>
+          <ResponsiveWorkspaceNavigation
+            pathname={location.pathname}
+            isAdmin={user.role === "admin"}
+            presentationMode={presentationMode}
+            onPresentationModeChange={setPresentationMode}
+            onPrefetch={prefetchDashboardRoute}
+            brandSlot={
               <Link to="/" className={styles.brandLink} onMouseEnter={() => prefetchDashboardRoute("/")} onFocus={() => prefetchDashboardRoute("/")}>
                 <span className={styles.brandMark}>{isAdminRoute ? "NIFTY 50 ADMIN" : "NIFTY 50 TRADER"}</span>
               </Link>
-              <CommandPalette items={commandItems} loadItems={loadCommandEntities} />
-            </div>
-            <div className={styles.topBarCenter}>
+            }
+            searchSlot={<CommandPalette items={commandItems} loadItems={loadCommandEntities} />}
+            statusSlot={
               <div className={styles.headerContext}>
                 <EnvironmentBadge value={isAdminRoute ? "ADMIN" : "PAPER"} />
                 <div
@@ -264,8 +269,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 ) : null}
                 <DataQualityBadge quality={feedQuality} compact />
               </div>
-            </div>
-            <div className={styles.topBarRight}>
+            }
+            voiceSlot={
               <button
                 type="button"
                 className={styles.paperVoiceToggle}
@@ -284,25 +289,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {paperVoiceEnabled ? <AudioLines size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
                 <span>{paperVoiceEnabled ? "Speak" : "Muted"}</span>
               </button>
-              <div className={styles.sessionStatus}><AuthStatus /></div>
-            </div>
-          </div>
-        </header>
-
-        {isAdminRoute ? (
-          <nav className={styles.adminNavigation} aria-label="Administration navigation">
-            <Link to="/analytics/system/quality">← Data &amp; Operations</Link>
-            <strong>Authorised administration</strong>
-          </nav>
-        ) : (
-          <ResponsiveWorkspaceNavigation
-            pathname={location.pathname}
-            isAdmin={user.role === "admin"}
-            presentationMode={presentationMode}
-            onPresentationModeChange={setPresentationMode}
-            onPrefetch={prefetchDashboardRoute}
+            }
+            userSlot={<div className={styles.sessionStatus}><AuthStatus /></div>}
           />
-        )}
+        </header>
 
         <div className={styles.body}>
           <div className={styles.contentColumn}>

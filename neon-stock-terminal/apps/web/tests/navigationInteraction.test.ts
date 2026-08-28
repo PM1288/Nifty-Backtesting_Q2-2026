@@ -6,7 +6,14 @@ import {
   safeReturnPath,
 } from "../src/interaction/navigationContext";
 import { routeCommandItems } from "../src/interaction/routeCatalog";
-import { STRATEGY_MENU_ROUTES, WORKSPACE_ROUTES, resolveWorkspaceRoute } from "../src/components/chrome/workspaceRoutes";
+import {
+  MARKETS_MENU_ROUTES,
+  MORE_MENU_ROUTES,
+  STRATEGY_HEADER_ROUTES,
+  STRATEGY_MENU_ROUTES,
+  WORKSPACE_ROUTES,
+  resolveWorkspaceRoute,
+} from "../src/components/chrome/workspaceRoutes";
 
 test("strategic context survives URL serialisation", () => {
   const path = contextualPath(
@@ -66,4 +73,27 @@ test("top Strategy workspace groups independent strategy dashboards without merg
   assert.equal(resolveWorkspaceRoute("/strategy/oiss-v1-202608").id, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/rolling-monthly").parentId, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/nifty-options").parentId, "oiis-lab");
+});
+
+test("single-line command header keeps the Option 4 taxonomy in one central configuration", () => {
+  assert.deepEqual(MARKETS_MENU_ROUTES.map((route) => route.label), [
+    "Market Overview",
+    "Stocks",
+    "Derivatives",
+  ]);
+  assert.deepEqual(STRATEGY_HEADER_ROUTES.map((route) => route.label), [
+    "OIIS Lab",
+    "OISS v1.202608",
+    "Trendlyne Summary",
+    "Monthly Strategy",
+    "Rolling Strategy",
+    "Long Options",
+    "NIFTY Options",
+  ]);
+  assert.equal(STRATEGY_HEADER_ROUTES[0]?.section, "LIVE & CURRENT");
+  assert.equal(STRATEGY_HEADER_ROUTES[2]?.section, "RESEARCH");
+  assert.equal(STRATEGY_HEADER_ROUTES[5]?.section, "DERIVATIVE STRATEGIES");
+  assert.equal(MORE_MENU_ROUTES.some((route) => route.label === "Stocks"), false);
+  assert.equal(MORE_MENU_ROUTES.some((route) => route.label === "Derivatives"), false);
+  assert.equal(MORE_MENU_ROUTES.some((route) => route.label === "Data & Operations"), true);
 });

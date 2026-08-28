@@ -1,7 +1,7 @@
 .shell {
-  --app-header-height: 44px;
-  --workspace-nav-height: 40px;
-  --app-sticky-content-top: calc(var(--app-header-height) + var(--workspace-nav-height));
+  --app-header-height: 56px;
+  --workspace-nav-height: 0px;
+  --app-sticky-content-top: var(--app-header-height);
   min-height: 100vh;
   background: transparent;
   color: var(--text-1, #10233f);
@@ -9,16 +9,9 @@
 }
 
 .shell[data-ui-compact-v5="true"] {
-  --app-header-height: var(--app-header-height-compact);
-  --workspace-nav-height: var(--primary-nav-height-compact);
-  --app-sticky-content-top: calc(var(--app-header-height) + var(--workspace-nav-height));
-}
-
-.shell[data-ui-compact-v5="true"] .topBar {
-  height: var(--app-header-height-compact);
-  min-height: var(--app-header-height-compact);
-  gap: 8px;
-  padding-inline: var(--page-pad-desktop-compact);
+  --app-header-height: 56px;
+  --workspace-nav-height: 0px;
+  --app-sticky-content-top: var(--app-header-height);
 }
 
 .shell[data-ui-compact-v5="true"] .body {
@@ -45,7 +38,7 @@
 
 .shell[data-ui-compact-v5="true"] .main { padding-top: 6px; }
 .shell[data-ui-compact-v5="true"] .niftyHeaderQuote { min-height: 26px; border-radius: var(--radius-control-compact); }
-.shell[data-ui-compact-v5="true"] .paperVoiceToggle { min-height: 28px; border-radius: var(--radius-control-compact); }
+.shell[data-ui-compact-v5="true"] .paperVoiceToggle { min-height: 34px; border-radius: var(--radius-control-compact); }
 
 .shell[data-workspace-theme="light"] {
   --white: #10233f;
@@ -86,41 +79,11 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: var(--z-header, 90);
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.96);
   border-bottom: 1px solid var(--border-subtle);
-  backdrop-filter: blur(16px);
-}
-
-.topBar {
-  height: 44px;
-  min-height: 38px;
-  display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(360px, auto) minmax(190px, 1fr);
-  align-items: center;
-  gap: 16px;
-  padding: 0 clamp(12px, 2vw, 28px);
-}
-
-.topBarLeft,
-.topBarCenter,
-.topBarRight {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  max-height: 100%;
-}
-
-.topBarLeft {
-  gap: 10px;
-}
-
-.topBarCenter {
-  justify-content: center;
-}
-
-.topBarRight {
-  justify-content: flex-end;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(12px);
 }
 
 .brandLink {
@@ -138,9 +101,10 @@
 .brandMark {
   display: block;
   overflow: hidden;
-  font-size: 12px;
-  font-weight: 820;
-  letter-spacing: 0.08em;
+  max-width: 165px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -149,8 +113,8 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 5px;
 }
 
 .niftyHeaderQuote,
@@ -165,7 +129,7 @@
 }
 
 .niftyHeaderQuote {
-  min-height: 28px;
+  min-height: 30px;
   padding: 0 8px;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -203,7 +167,7 @@
 }
 
 .marketSession {
-  max-width: 190px;
+  max-width: 110px;
   overflow: hidden;
   color: var(--text-1);
   font-size: 12px;
@@ -215,17 +179,18 @@
 .sessionStatus {
   min-width: 0;
   max-height: 100%;
+  max-width: 145px;
 }
 
 .paperVoiceToggle {
-  min-height: 32px;
+  min-height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 0 9px;
   border: 1px solid var(--border-subtle);
-  border-radius: 9px;
+  border-radius: 8px;
   background: #fff;
   color: var(--text-2);
   font-size: 11.5px;
@@ -302,70 +267,35 @@
   padding-top: 10px;
 }
 
-.shell[data-presentation-mode="true"] .header,
 .shell[data-presentation-mode="true"] .workspaceTabs {
   display: none;
+}
+
+.shell[data-presentation-mode="true"] .header {
+  height: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .shell[data-presentation-mode="true"] .body {
   padding-top: 12px;
 }
 
-@media (max-width: 1020px) {
-  .topBar {
-    grid-template-columns: minmax(240px, 1fr) minmax(180px, auto) minmax(120px, auto);
-    gap: 8px;
-  }
-
-  .headerContext > :not(.marketSession):not(.niftyHeaderQuote) {
-    display: none;
-  }
+@media (max-width: 1599px) {
+  .headerContext > :nth-child(4) { display: none; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1279px) {
   .shell {
-    --workspace-nav-height: 0px;
+    --app-header-height: 52px;
     --app-sticky-content-top: var(--app-header-height);
   }
-
-  .topBar,
-  .shell[data-ui-compact-v5="true"] .topBar {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    height: 44px;
-    min-height: 44px;
-    padding-inline: 12px;
-  }
-
-  .topBarCenter {
-    display: flex;
-  }
-
-  .topBarRight { gap: 4px; }
-  .topBarLeft { gap: 0; }
-  .brandLink { display: none; }
-
-  .headerContext > :not(.niftyHeaderQuote) { display: none; }
+  .headerContext > :not(.niftyHeaderQuote):not(:last-child) { display: none; }
   .niftyHeaderQuote { min-height: 28px; gap: 4px; padding-inline: 5px; }
-  .niftyHeaderQuote span { display: none; }
   .niftyHeaderQuote strong,
   .niftyHeaderQuote em { font-size: 10.5px; }
-
-  .paperVoiceToggle span { display: none; }
-  .paperVoiceToggle { width: 34px; padding: 0; }
-
-  .brandMark {
-    font-size: 11px;
-    max-width: 90px;
-  }
-
-  .shell,
-  .shell[data-ui-compact-v5="true"] {
-    --app-header-height: 44px;
-  }
-
-  .body {
-    padding: 0 10px calc(94px + env(safe-area-inset-bottom));
-  }
+  .body { padding: 0 10px 20px; }
 
   .workspaceTabs {
     margin-inline: -10px;
@@ -377,23 +307,17 @@
   }
 }
 
-@media (max-width: 420px) {
-  .brandMark {
-    max-width: 76px;
+@media (max-width: 767px) {
+  .shell,
+  .shell[data-ui-compact-v5="true"] {
+    --app-header-height: 84px;
   }
-}
-.adminNavigation {
-  position: sticky;
-  top: var(--app-header-height, 54px);
-  z-index: var(--z-primary-navigation, 80);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px clamp(16px, 3vw, 42px);
-  border-bottom: 1px solid var(--border-subtle);
-  background: rgba(255,255,255,.96);
+  .brandMark { max-width: 150px; font-size: 12px; }
+  .headerContext { width: max-content; justify-content: flex-start; }
+  .headerContext > :not(.niftyHeaderQuote):not(:first-child):not(:last-child) { display: none; }
+  .body { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 
-.adminNavigation a { color: var(--accent-blue); text-decoration: none; font-weight: 700; }
-.adminNavigation strong { color: var(--accent-violet); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+@media (max-width: 390px) {
+  .brandMark { max-width: 128px; font-size: 11.5px; }
+}

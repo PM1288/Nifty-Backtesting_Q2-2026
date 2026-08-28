@@ -11,9 +11,9 @@ This manifest prevents additive dashboard work from silently removing shared she
 | Paper alert launcher | `PaperTradeNotifier.tsx` mounted once by `AppShell.tsx` | Visible on authenticated desktop and mobile routes |
 | Latest five paper events | `GET /v1/paper/notifications?limit=5` | Authenticated response, durable `paper_trading.trade_events` source, entry/target events only |
 | Automatic event popup | notifier polling and durable event-ID deduplication | A newly intercepted browser response opens the panel; initial history stays silent |
-| Native voice mode | header `Muted`/`Speak` switch and browser `speechSynthesis` | Defaults muted, persists locally, speaks entry/target conditions, mute cancels queued speech |
-| Permanent stock ticker and NIFTY quote | `HeaderTicker.tsx`, `AppShell.tsx`, and `GET /v1/overview/header` | Dedicated NIFTY context stays visible while the rigid header ticker rail shows 30 current NIFTY-500/F&O stock movers, not index-only rows |
-| Strategy destinations | `workspaceRoutes.ts`, route catalogue and responsive navigation | Trendlyne Summary, OIIS Lab, Monthly Strategy, Rolling Strategy, Long Options and NIFTY Options remain reachable |
+| Native voice mode | header `Muted`/`Speak` switch and browser `speechSynthesis` | Defaults on unless explicitly muted, persists locally, speaks only governed entry/target phrases, mute cancels queued speech |
+| Single-line market context | `AppShell.tsx`, `ResponsiveWorkspaceNavigation.tsx`, and `GET /v1/overview/header` | Dedicated PAPER mode, NIFTY mark, market state, data time and readiness stay visible in the single command header; the retired ticker rail stays absent |
+| Global and Strategy destinations | `workspaceRoutes.ts`, route catalogue and responsive navigation | Today, Markets, Strategy and Paper remain primary; Stocks/Derivatives remain under Markets; Data & Operations remains under More; all seven Strategy workspaces remain reachable |
 | Paper evidence workbench | `/paper-trading` route and `PaperTradingCommandCenter.tsx` | Existing evidence, filters and detail inspector remain present; dedicated Market Book tab exposes the immutable entry quote and top-three bid/ask ladder |
 | Paper Simple View | `/paper-trading?tab=simple` | Additive compact table retains shared filters and opens the canonical trade inspector; existing Portfolio and What good looks like views remain unchanged |
 | Paper WhatsApp lifecycle alerts | `paper-webhook-worker`, `papertrade/whatsapp.py` and PostgreSQL outbox | Configurable chat ID; entry/target/exit events are formatted, low-noise and idempotent; entries add company/Trendlyne/52W context, immutable SmartAPI entry touch/top-three book, plus a fail-soft candles/Bollinger/volume/RSI/MACD PNG |
@@ -25,6 +25,7 @@ This manifest prevents additive dashboard work from silently removing shared she
 | Trendlyne Summary | `/strategy/trendlyne-summary` plus `trendlyneSummary.ts` | Six-month ledger, fund-house/stock summaries and inspector remain reachable without fixed-count assumptions |
 | OISS v1.202608 | `/strategy/oiss-v1-202608`, `OissV1Page.tsx`, `oissV1.ts`, `services/oiss_v1` | Independent from OIIS; 13 URL lenses, immutable run identity, radar/rejected/carry/change/backtest evidence and full JSON/CSV/Excel exports remain reachable; scheduler and paper stay gated |
 | Compact UI V5 | `VITE_UI_COMPACT_V5`, shared shell/workspace primitives and `docs/uiux/v5` | Presentation-only flag; all route data, calculations, filters, inspectors, comments, audit and full-data exports remain canonical; heavy Paper lenses mount only when selected |
+| Option 4 command header | `AppShell.tsx`, `ResponsiveWorkspaceNavigation.tsx`, `workspaceRoutes.ts` | One 56 px desktop header, no second global rail, permission-filtered menus, responsive drawer, Ctrl+K, local page tabs, status, voice and user controls preserved |
 
 ## Mandatory regression commands
 

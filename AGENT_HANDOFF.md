@@ -3305,3 +3305,18 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   authenticated entry-book browser regression all passed. Production contains
   six entry-book records; all six are CAPTURED with three bid and ask levels.
 - Browser evidence: `/tmp/paper-entry-market-book-f3bd255/desktop-entry-book.png`.
+
+## 2026-08-28 — Option 4 single-line command header
+
+- Replaced the utility header plus second seven-item global navigation rail with one sticky 56 px
+  command header. Desktop exposes Today, Markets, Strategy and Paper Trading; Stocks and Derivatives
+  are grouped under Markets, and Data/Operations destinations use the three-dot More menu.
+- Both desktop menus and the responsive navigation drawer use the same central route configuration.
+  Existing page-local Strategy/market tabs, command palette, PAPER/NIFTY/data-quality context,
+  concise paper speech, account menu, presentation mode and Paper notifier remain intact.
+- Dropdowns are click/keyboard operated, close on outside click or Escape, restore trigger focus and
+  render at z-index 1100 above frozen page filters. Tablet uses a side drawer; mobile uses a
+  two-row 84 px shell with a 52 px command row and 32 px status row.
+- No API, database, strategy, paper-trade, formula, route meaning or permission semantics changed.
+  Detailed mapping and rollback are in
+  `docs/uiux/OPTION_4_SINGLE_LINE_COMMAND_HEADER_2026-08-28.md`.

@@ -1,6 +1,6 @@
 .commandHeader {
   width: 100%;
-  height: 56px;
+  height: 55px;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -188,7 +188,7 @@
 }
 
 @media (max-width: 1279px) {
-  .commandHeader { height: 52px; gap: 5px; }
+  .commandHeader { height: 51px; gap: 5px; }
   .mobileMenuTrigger { display: inline-flex; flex: 0 0 36px; }
   .primaryNavigation,
   .voiceSlot,
@@ -255,10 +255,10 @@
 
 @media (max-width: 767px) {
   .commandHeader {
-    height: 84px;
+    height: 83px;
     display: grid;
     grid-template-columns: 36px minmax(0, 1fr) 36px auto;
-    grid-template-rows: 52px 32px;
+    grid-template-rows: 51px 32px;
     padding: 0 8px;
   }
   .brandSlot { min-width: 0; }

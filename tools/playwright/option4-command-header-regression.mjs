@@ -48,7 +48,7 @@ try {
     check(viewport, "no page horizontal overflow", await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
     check(viewport, "no ticker rail", await page.locator('[aria-label="Market ticker tape"], [data-clarity-region="top_ticker"]').count() === 0);
     check(viewport, "NIFTY context retained", await page.getByTestId("nifty-header-quote").isVisible());
-    check(viewport, "one global navigation implementation", await page.getByRole("navigation", { name: "Primary navigation" }).count() === 1);
+    check(viewport, "one global navigation implementation", await page.locator('nav[aria-label="Primary navigation"]').count() === 1);
 
     if (viewport.width >= 1280) {
       const primary = page.getByRole("navigation", { name: "Primary navigation" });
@@ -92,8 +92,11 @@ try {
     }
 
     await page.keyboard.press("Control+k");
-    check(viewport, "Ctrl K command palette retained", await page.getByRole("dialog", { name: "Search stocks, dashboards & actions" }).isVisible());
+    const commandPalette = page.locator('[role="dialog"][aria-labelledby="command-palette-title"]');
+    await commandPalette.waitFor({ state: "visible" });
+    check(viewport, "Ctrl K command palette retained", await commandPalette.isVisible());
     await page.keyboard.press("Escape");
+    await commandPalette.waitFor({ state: "detached" });
     check(viewport, "no console errors", errors.length === 0, errors.join(" | "));
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: false });
     await context.close();

@@ -21,3 +21,7 @@
 ## Conditional sign-off
 
 UI implementation, production build, deterministic data-state and accessibility automation pass. Production cutover remains conditional on authenticated real-data UAT in the deployed environment. Do not remove the legacy page yet.
+
+## Deployment
+
+Production cutover completed on 28 August 2026. The live `trading-stack-novius2-n50-dashboard-1` container is healthy and the gateway serves the enabled build. See `deployment-validation.md` for the bundle fingerprint and route checks. Authenticated user workflow UAT remains recommended; the legacy page remains available through the flag rollback.

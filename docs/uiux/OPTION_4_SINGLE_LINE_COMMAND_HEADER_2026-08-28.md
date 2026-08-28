@@ -63,11 +63,23 @@ existing page-local navigation.
 
 ## Validation
 
-The implementation is accepted only after web/API typechecks, complete web/API tests, production
-builds and the canonical repository gate pass. Repository-wide web lint has inherited unrelated
-failures; changed TypeScript files are linted separately and must pass.
+Passed:
+
+- web typecheck, 64/64 tests and production build;
+- API typecheck, 128/128 tests and build;
+- focused ESLint for every changed TypeScript/test file;
+- canonical repository source gate;
+- 118/118 authenticated browser checks at 1920, 1440, 1280, 1024, 430, 390 and 360 px;
+- public route/asset smoke checks and healthy deployed container.
+
+Browser screenshots and machine-readable results are in
+`output/playwright/option4-command-header-final/` (ignored runtime evidence). Repository-wide web
+lint remains blocked by inherited unrelated files and generated output; it was not represented as
+passing.
 
 ## Rollback
 
 Revert the delivery commit and rebuild only `n50-dashboard`. There is no database migration, API
 contract change or data rollback.
+
+Pre-change image: `trading-stack-n50-dashboard:rollback-pre-option4-header-20260828`.

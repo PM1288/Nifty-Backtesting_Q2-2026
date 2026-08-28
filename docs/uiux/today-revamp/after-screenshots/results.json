@@ -1,0 +1,62 @@
+[
+  {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "summaryBrowserScroll": 0,
+    "boardBrowserScroll": 0,
+    "mountedTiles": 96,
+    "totalStocks": 152,
+    "seriousOrCriticalAxe": {
+      "story": [],
+      "board": []
+    },
+    "fixtureTransportErrors": 19
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "summaryBrowserScroll": 0,
+    "boardBrowserScroll": 0,
+    "mountedTiles": 72,
+    "totalStocks": 152,
+    "seriousOrCriticalAxe": {
+      "story": [],
+      "board": []
+    },
+    "fixtureTransportErrors": 19
+  },
+  {
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "summaryBrowserScroll": 10,
+    "boardBrowserScroll": 0,
+    "mountedTiles": 40,
+    "totalStocks": 152,
+    "seriousOrCriticalAxe": {
+      "story": [],
+      "board": []
+    },
+    "fixtureTransportErrors": 19
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "summaryBrowserScroll": 1143,
+    "boardBrowserScroll": 103,
+    "mountedTiles": 32,
+    "totalStocks": 152,
+    "seriousOrCriticalAxe": {
+      "story": [],
+      "board": []
+    },
+    "fixtureTransportErrors": 19
+  }
+]

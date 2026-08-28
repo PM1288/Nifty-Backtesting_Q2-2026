@@ -100,7 +100,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     icon: Home,
     primaryDesktop: true,
     primaryMobile: true,
-    match: (pathname) => pathname === "/",
+    match: (pathname) => pathname === "/" || pathname === "/full-board",
   },
   {
     id: "markets",

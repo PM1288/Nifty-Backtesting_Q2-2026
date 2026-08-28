@@ -98,6 +98,9 @@ const PaperTradingPage = lazy(async () => ({ default: (await import("./pages/Pap
 const Nifty500Page = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).Nifty500Page }));
 const FuturesPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).FuturesPage }));
 const AdminPage = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).AdminPage }));
+const TodaySummaryPage = lazy(async () => ({ default: (await import("./features/today/TodaySummaryPage")).TodaySummaryPage }));
+const TodayFullBoardPage = lazy(async () => ({ default: (await import("./features/today/TodayFullBoardPage")).TodayFullBoardPage }));
+const todayRevampEnabled = import.meta.env.VITE_TODAY_SUMMARY_DETAIL_V1 === "true";
 
 function RouteFallback() {
   const { t } = useI18n();
@@ -116,7 +119,8 @@ export default function App() {
       <AppShell>
         <Suspense fallback={<RouteFallback />}>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={todayRevampEnabled ? <TodaySummaryPage /> : <LandingPage />} />
+          <Route path="/full-board" element={todayRevampEnabled ? <TodayFullBoardPage /> : <Navigate to="/" replace />} />
           <Route path="/dashboard/home" element={<Navigate to="/" replace />} />
           <Route path="/dashboard/market" element={<Navigate to="/analytics" replace />} />
           <Route path="/dashboard/market/state" element={<Navigate to="/analytics/market-state" replace />} />

@@ -775,6 +775,7 @@ services:
         VITE_DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
         VITE_AUTO_AUTH_GATE: ${N50_AUTO_AUTH_GATE:-true}
         VITE_UI_COMPACT_V5: ${N50_UI_COMPACT_V5:-true}
+        VITE_TODAY_SUMMARY_DETAIL_V1: ${N50_TODAY_SUMMARY_DETAIL_V1:-false}
     env_file: .env
     environment:
       PORT: "18184"
@@ -946,6 +947,7 @@ services:
         VITE_DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
         VITE_AUTO_AUTH_GATE: ${N50_AUTO_AUTH_GATE:-false}
         VITE_UI_COMPACT_V5: ${N50_UI_COMPACT_V5_STAGE:-true}
+        VITE_TODAY_SUMMARY_DETAIL_V1: ${N50_TODAY_SUMMARY_DETAIL_V1_STAGE:-false}
     env_file: .env
     environment:
       PORT: "18184"

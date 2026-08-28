@@ -315,7 +315,7 @@
   .brandMark { max-width: 150px; font-size: 12px; }
   .headerContext { width: max-content; justify-content: flex-start; }
   .headerContext > :not(.niftyHeaderQuote):not(:first-child):not(:last-child) { display: none; }
-  .headerContext > :first-child { display: inline-flex; }
+  .headerContext > :first-child:first-child { display: inline-flex; }
   .body { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 

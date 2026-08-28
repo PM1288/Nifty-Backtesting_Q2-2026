@@ -267,7 +267,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     hour12: false
                   })}</DataAge>
                 ) : null}
-                <DataQualityBadge quality={feedQuality} compact />
+                <DataQualityBadge quality={feedQuality} compact operationalLabel />
               </div>
             }
             voiceSlot={

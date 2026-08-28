@@ -49,6 +49,17 @@ try {
     check(viewport, "no ticker rail", await page.locator('[aria-label="Market ticker tape"], [data-clarity-region="top_ticker"]').count() === 0);
     check(viewport, "NIFTY context retained", await page.getByTestId("nifty-header-quote").isVisible());
     if (viewport.width < 768) check(viewport, "mobile PAPER context retained", await appHeader.getByText("PAPER", { exact: true }).isVisible());
+    const operationalState = appHeader.locator('[data-tone]').filter({ hasText: /^(READY|CAUTION|DEGRADED|UNKNOWN)$/ }).first();
+    const operationalTone = await operationalState.getAttribute("data-tone");
+    const operationalText = (await operationalState.textContent())?.replace(/[^A-Z]/g, "") ?? "";
+    const expectedOperationalLabel = operationalTone === "positive"
+      ? "READY"
+      : operationalTone === "warning"
+        ? "CAUTION"
+        : operationalTone === "negative"
+          ? "DEGRADED"
+          : "UNKNOWN";
+    check(viewport, "operational status label matches semantic tone", operationalText === expectedOperationalLabel, `${operationalTone}:${operationalText}`);
     check(viewport, "one global navigation implementation", await page.locator('nav[aria-label="Primary navigation"]').count() === 1);
 
     if (viewport.width >= 1280) {

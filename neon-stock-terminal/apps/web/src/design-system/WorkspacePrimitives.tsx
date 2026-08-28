@@ -1,9 +1,16 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, ChevronRight, CircleSlash2, Database, LoaderCircle, X } from "lucide-react";
+import { AlertTriangle, ChevronRight, CircleSlash2, Database, LoaderCircle, X } from "lucide-react";
 import { qualitySummary, qualityTone, type ModuleQualityState, type QualityTone } from "./quality";
 import styles from "./WorkspacePrimitives.module.css";
 
 export type DecisionState = "APPROVED" | "BLOCKED" | "INCOMPLETE" | "DEVELOPING" | "NEUTRAL";
+
+function operationalQualityLabel(tone: QualityTone) {
+  if (tone === "positive") return "READY";
+  if (tone === "warning") return "CAUTION";
+  if (tone === "negative") return "DEGRADED";
+  return "UNKNOWN";
+}
 
 export function ModuleStatusStrip({ environment = "PAPER", quality, context }: { environment?: "PAPER" | "LIVE" | "REPLAY"; quality: ModuleQualityState; context?: ReactNode }) {
   return <section className={styles.statusStrip} aria-label="Workspace context and data quality">
@@ -15,9 +22,11 @@ export function ModuleStatusStrip({ environment = "PAPER", quality, context }: {
   </section>;
 }
 
-export function DataQualityBadge({ quality, compact = false }: { quality: ModuleQualityState; compact?: boolean }) {
+export function DataQualityBadge({ quality, compact = false, operationalLabel = false }: { quality: ModuleQualityState; compact?: boolean; operationalLabel?: boolean }) {
   const tone = qualityTone(quality);
-  const label = compact ? quality.readiness.replaceAll("_", " ") : qualitySummary(quality);
+  const label = operationalLabel
+    ? operationalQualityLabel(tone)
+    : compact ? quality.readiness.replaceAll("_", " ") : qualitySummary(quality);
   return <span className={styles.qualityBadge} data-tone={tone} title={quality.message}>
     <span className={styles.stateMark} aria-hidden="true">{tone === "positive" ? "✓" : tone === "negative" ? "!" : tone === "warning" ? "△" : "—"}</span>
     {label}

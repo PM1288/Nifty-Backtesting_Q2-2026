@@ -110,7 +110,7 @@ try {
   for (const heading of ["CLAUDE", "QWEN", "DEEPSEEK"]) check(await page.getByRole("columnheader", { name: heading }).count() === 1, `${heading} provider column renders`);
   check(await page.getByText("O 0 · X 71.5", { exact: true }).count() === 1, "numeric zero is preserved");
 
-  const search = page.getByLabel("Search");
+  const search = page.getByRole("textbox", { name: "Search", exact: true });
   await search.fill("OISS");
   check(await page.locator("tbody tr").count() === 1, "strategy search filters to one row");
   check(await page.getByText("INFY", { exact: true }).count() >= 1, "filtered INFY remains visible");

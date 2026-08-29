@@ -3394,3 +3394,7 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   the origin in 0.10 seconds. The remaining fault is the shared authenticated send/WhatsApp path,
   not the AI formatter. No delivery acknowledgement was received. Full evidence is in
   `docs/notifications/AI_STOCK_RESEARCH_PROMPT_WHATSAPP_V3_2026-08-29.md`.
+- Recovery retest: after the gateway was re-enabled, one production-path test from the deployed
+  `1.1.0` worker returned HTTP 200 in 496 ms with `ok=true` and `status=sent` (gateway record 6257).
+  Both worker enablement flags and container health were verified. The direct transport test did
+  not fabricate an AI evaluation or create an outbox row.

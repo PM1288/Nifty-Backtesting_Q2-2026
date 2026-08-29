@@ -67,9 +67,21 @@ remain internal; they do not create another WhatsApp message.
 - Post-deployment authenticated retry: 20-second `ReadTimeout`; delivery was not
   acknowledged and must not be treated as delivered.
 
-## External action still required
+## Gateway blocker observed before recovery
 
-Restore the authenticated send/WhatsApp session behind
-`wweb.noviusrailtech.com`. Once `POST /webhook/send` returns a valid successful
-JSON acknowledgement, queued production messages retry automatically. No
-application URL, token, chat ID or webhook route change is required.
+The authenticated send/WhatsApp session behind `wweb.noviusrailtech.com` needed
+restoration. The recovery retest below confirms that this external action was
+subsequently completed; no application URL, token, chat ID or route change was
+required.
+
+## Recovery retest
+
+At 29 August 2026 after the gateway was re-enabled, the deployed `1.1.0` worker
+sent one concise end-to-end test through its production URL, Docker secret and
+configured group. The gateway returned HTTP 200 in 496 ms with `ok=true` and
+`status=sent` (gateway record 6257). Worker research and delivery flags were both
+enabled, its container remained healthy, and no diagnostic/error text was sent.
+
+This direct transport test intentionally did not create a synthetic stock
+evaluation or outbox row. Normal AI messages will be created only by a genuine
+first-session or newly appearing OIIS/OISS candidate.

@@ -40,6 +40,7 @@ import { registerMobileNotifications } from "./mobileNotifications";
 import { registerStockProfiles } from "./stockProfiles";
 import { registerTrendlyneSummary } from "./trendlyneSummary";
 import { registerOissV1 } from "./oissV1";
+import { registerAiTrackedStockRoutes } from "./aiTrackedStocks";
 
 export function registerRoutes(
   app: Express,
@@ -92,5 +93,6 @@ export function registerRoutes(
   registerStockProfiles(app, prisma);
   registerTrendlyneSummary(app, prisma);
   registerOissV1(app, prisma);
+  registerAiTrackedStockRoutes(app, paperPrisma);
   registerWorkspaceRoutes(app, prisma, authRuntime, paperPrisma);
 }

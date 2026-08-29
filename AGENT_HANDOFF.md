@@ -3351,3 +3351,26 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   gate passed. Detailed architecture, operations, rollback and test evidence are in
   `/home/novius2/NIFTY50/AI-API-CHECK/DEPLOYMENT_AND_TEST_REPORT_2026-08-29.md` and the service
   `README.md`.
+
+## 2026-08-29 — Paper Trading tracked-stock AI evidence lens
+
+- Added the URL-addressable `Stocks being tracked today` Paper Trading lens at
+  `/paper-trading?tab=tracked`. Existing Portfolio, Simple View, quality and analytical lenses are
+  preserved.
+- Added authenticated read-only endpoint
+  `/v1/workspace/paper-trading/tracked-stocks?date=YYYY-MM-DD`. It reads the additive
+  `ai_stock_research` schema and returns one row per stock/day with every OIIS/OISS source,
+  O Factor, X Factor, reference price, immutable 30-session OHLCV input and separate Claude, Qwen
+  and DeepSeek evidence. It does not recalculate decisions or create paper orders.
+- The dense table exposes provider status, verdict, confidence, news state, summary and WhatsApp
+  delivery state. Its side inspector retains driver, risk, entry view, invalidation, source links
+  and all available OHLCV rows. Filtered CSV export keeps provider fields separate and preserves
+  numeric zero versus missing data.
+- Requested non-trading dates explicitly fall back to the latest recorded session on or before the
+  date. Raw model responses, stack traces, credentials and provider error text are not exposed to
+  the browser.
+- Validation passed: API 130/130, web 66/66, both typechecks and production builds, focused ESLint
+  on the new UI modules, JavaScript syntax check, Git whitespace check and canonical repository
+  gate. A three-stock authenticated browser regression is
+  `tools/playwright/paper-ai-tracked-stocks-regression.mjs`; durable feature details are in
+  `docs/paper-trading/AI_TRACKED_STOCKS_TAB_2026-08-29.md`.

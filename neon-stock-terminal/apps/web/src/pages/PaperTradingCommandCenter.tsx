@@ -75,12 +75,13 @@ import {
   TimeInTradeCell,
   TradeIdentityCell,
 } from "../components/paper/PaperEvidenceCells";
+import { PaperTrackedStocks } from "../components/paper/PaperTrackedStocks";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 type AnyRow = Record<string, any>;
 type DrawerTab = "Journey" | "Targets" | "Market Book" | "Evidence" | "Economics" | "Comments" | "Audit" | "Calculation Trace";
 type AtlasLens = "Intraday" | "5D" | "30D";
-type PageView = "PORTFOLIO" | "SIMPLE" | "WHAT_GOOD_LOOKS_LIKE";
+type PageView = "PORTFOLIO" | "SIMPLE" | "TRACKED" | "WHAT_GOOD_LOOKS_LIKE";
 type HeatmapView = "YEAR" | "WEEK" | "INTRADAY";
 type HeatmapMetric = "EOD_PNL" | "MAX_PROFIT" | "MAX_DRAWDOWN" | "TARGET_HITS";
 type IntradayEventFilter = "ALL" | "ENTRY" | "TARGET" | "EOD";
@@ -321,7 +322,9 @@ export function PaperTradingCommandCenter() {
   const [workbenchContext, setWorkbenchContext] = useState<PaperWorkbenchContext>(() => parsePaperWorkbenchContext(routeParams));
   const [calculationTrace, setCalculationTrace] = useState<CalculationTrace | null>(null);
   const [pageView, setPageView] = useState<PageView>(
-    routeParams.get("tab") === "quality"
+    routeParams.get("tab") === "tracked"
+      ? "TRACKED"
+      : routeParams.get("tab") === "quality"
       ? "WHAT_GOOD_LOOKS_LIKE"
       : routeParams.get("tab") === "simple"
         ? "SIMPLE"
@@ -350,7 +353,7 @@ export function PaperTradingCommandCenter() {
   }, [routeParams]);
   useEffect(() => {
     const tab = routeParams.get("tab");
-    setPageView(tab === "quality" ? "WHAT_GOOD_LOOKS_LIKE" : tab === "simple" ? "SIMPLE" : "PORTFOLIO");
+    setPageView(tab === "tracked" ? "TRACKED" : tab === "quality" ? "WHAT_GOOD_LOOKS_LIKE" : tab === "simple" ? "SIMPLE" : "PORTFOLIO");
   }, [routeParams]);
   useEffect(() => {
     setFilter(workbenchContext.status);
@@ -370,7 +373,8 @@ export function PaperTradingCommandCenter() {
   const changePageView = (view: PageView) => {
     setPageView(view);
     const next = new URLSearchParams(routeParams);
-    if (view === "SIMPLE") next.set("tab", "simple");
+    if (view === "TRACKED") next.set("tab", "tracked");
+    else if (view === "SIMPLE") next.set("tab", "simple");
     else if (view === "WHAT_GOOD_LOOKS_LIKE") next.set("tab", "quality");
     else next.delete("tab");
     setRouteParams(next, { replace: true });
@@ -551,12 +555,15 @@ export function PaperTradingCommandCenter() {
         <button type="button" data-active={pageView === "SIMPLE"} onClick={() => changePageView("SIMPLE")}>
           Simple view
         </button>
+        <button type="button" data-active={pageView === "TRACKED"} onClick={() => changePageView("TRACKED")}>
+          Stocks being tracked today
+        </button>
         <button type="button" data-active={pageView === "WHAT_GOOD_LOOKS_LIKE"} onClick={() => changePageView("WHAT_GOOD_LOOKS_LIKE")}>
           What good looks like
         </button>
       </nav>
 
-      {pageView !== "WHAT_GOOD_LOOKS_LIKE" ? <>
+      {pageView !== "WHAT_GOOD_LOOKS_LIKE" && pageView !== "TRACKED" ? <>
         {pageView === "PORTFOLIO" ? <PaperWorkbenchSubnav
           active={workbenchContext.section}
           onSelect={selectWorkbenchSection}
@@ -614,6 +621,8 @@ export function PaperTradingCommandCenter() {
           onSort={setSort}
           onSelect={openSelectedTrade}
         />
+      ) : pageView === "TRACKED" ? (
+        <PaperTrackedStocks />
       ) : (
       <>
 

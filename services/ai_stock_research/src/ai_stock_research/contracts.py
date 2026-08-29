@@ -165,23 +165,38 @@ def render_whatsapp_message(
     strategy = snapshot["strategy_snapshot"]
     stock = snapshot["stock"]
     sessions = len(snapshot.get("history_30d") or [])
-    message = "\n".join(
-        [
-            f"{PROVIDER_ICONS[provider]} *{provider} · {source_strategy}*",
-            (
-                f"*{stock['symbol']}* · {strategy.get('direction') or '—'} · "
-                f"O {_number(strategy.get('ofactor'))} · X {_number(strategy.get('xfactor'))} · "
-                f"₹{_number(strategy.get('reference_price'))}"
-            ),
-            (
-                f"*{result['verdict'].replace('_', ' ')} · {result['confidence']}% · "
-                f"{result['news_signal']} NEWS*"
-            ),
-            f"*Why:* {result['summary']}",
-            f"*Driver:* {result['key_driver']}",
-            f"*Risk:* {result['key_risk']}",
-            f"*Entry:* {result['entry_view']}",
-            f"As of {result['analysis_date']} · {sessions} sessions",
-        ]
-    )
-    return message[:950]
+    lines = [
+        f"{PROVIDER_ICONS[provider]} *{provider} RESEARCH · {source_strategy}*",
+        f"*{stock['symbol']} · {stock.get('company_name') or stock['symbol']}*",
+        (
+            f"{strategy.get('direction') or '—'} · {strategy.get('status') or '—'} · "
+            f"O {_number(strategy.get('ofactor'))} · X {_number(strategy.get('xfactor'))} · "
+            f"₹{_number(strategy.get('reference_price'))}"
+        ),
+        "",
+        (
+            f"*Decision:* {result['verdict'].replace('_', ' ')} · {result['confidence']}% confidence · "
+            f"{result['news_signal']} news"
+        ),
+        f"*Summary:* {result['summary']}",
+        f"*Driver:* {result['key_driver']}",
+        f"*Risk:* {result['key_risk']}",
+        f"*Entry trigger:* {result['entry_view']}",
+        f"*Invalidation:* {result['invalidation']}",
+    ]
+    evidence = result.get("evidence") or []
+    if evidence:
+        lines.extend(["", "*Verified sources:*"])
+        for index, item in enumerate(evidence[:3], start=1):
+            source = " · ".join(
+                value for value in (item.get("date"), item.get("publisher")) if value
+            )
+            headline = item.get("headline") or "Source evidence"
+            lines.append(f"{index}. {source}: {headline}" if source else f"{index}. {headline}")
+            if item.get("url"):
+                lines.append(item["url"])
+    if result.get("data_quality_note"):
+        lines.extend(["", f"*Data quality:* {result['data_quality_note']}"])
+    lines.append(f"*As of:* {result['analysis_date']} · {sessions} completed sessions")
+    message = "\n".join(lines)
+    return message if len(message) <= 3500 else message[:3499].rstrip() + "…"

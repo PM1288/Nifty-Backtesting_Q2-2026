@@ -4,9 +4,10 @@ This isolated worker evaluates each new daily OIIS/OISS stock once with Claude,
 Qwen and DeepSeek, persists the immutable input and each provider result, and
 queues one concise WhatsApp message per successful provider result.
 
-The WhatsApp research message includes the decision summary, strongest driver,
-principal risk and entry/revalidation condition. It remains intentionally brief
-and never includes the raw provider response or operational diagnostics.
+The WhatsApp research brief includes company and strategy context, decision,
+summary, strongest driver, principal risk, entry trigger, invalidation, up to
+three dated sources with links, data-quality note and session coverage. It never
+includes the raw provider response, input JSON or operational diagnostics.
 
 Provider wire output uses the prompt-versioned V3 labelled-line contract rather
 than raw JSON. The worker validates and normalises those lines into PostgreSQL;

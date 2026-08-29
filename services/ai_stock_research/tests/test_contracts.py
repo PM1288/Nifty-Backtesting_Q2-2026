@@ -42,6 +42,7 @@ def evaluation() -> dict:
             "stock": {"symbol": "SBIN", "company_name": "State Bank of India"},
             "strategy_snapshot": {
                 "direction": "LONG",
+                "status": "WAIT_FOR_XFACTOR",
                 "ofactor": 78.345,
                 "xfactor": 74.126,
                 "reference_price": 1082.4,
@@ -114,14 +115,20 @@ def test_output_validation_truncates_for_low_noise_delivery() -> None:
 def test_whatsapp_message_is_concise_consistent_and_contains_no_operational_footer() -> None:
     result = validate_output(valid_output(), "SBIN", date(2026, 8, 29))
     message = render_whatsapp_message("CLAUDE", "OIIS", evaluation(), result)
-    assert "CLAUDE · OIIS" in message
+    assert "CLAUDE RESEARCH · OIIS" in message
+    assert "SBIN · State Bank of India" in message
+    assert "WAIT_FOR_XFACTOR" in message
     assert "O 78.34" in message and "X 74.13" in message
-    assert "*WAIT · 72% · MIXED NEWS*" in message
-    assert "30 sessions" in message
+    assert "*Decision:* WAIT · 72% confidence · MIXED news" in message
+    assert "*Invalidation:* Material asset-quality deterioration." in message
+    assert "*Verified sources:*" in message
+    assert "https://www.nseindia.com/" in message
+    assert "*Data quality:* Thirty completed sessions supplied." in message
+    assert "30 completed sessions" in message
     assert "*Driver:* Credit growth and asset quality remain supportive." in message
-    assert "*Entry:* Wait for confirmation after the pending disclosure." in message
+    assert "*Entry trigger:* Wait for confirmation after the pending disclosure." in message
     assert "{" not in message and "}" not in message
-    assert len(message) < 850
+    assert len(message) < 3500
     assert "stack trace" not in message.lower()
     assert "retry" not in message.lower()
     assert "warning" not in message.lower()

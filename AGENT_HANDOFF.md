@@ -3327,3 +3327,27 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Only `n50-dashboard` was rebuilt/recreated. It is healthy on image
   `sha256:7b133561c4d0ebbe5725a1d1d618a2c6d7afc7399d1c2e1be5469d54593a7b44` and entry bundle
   `index-BvzfpuHB.js`. Rollback is `trading-stack-n50-dashboard:rollback-pre-option4-header-20260828`.
+
+## 2026-08-29 — OIIS/OISS multi-model stock research automation
+
+- Added isolated `ai-stock-research` worker and additive `ai_stock_research` PostgreSQL schema.
+  It consumes completed OIIS recommended candidates and OISS selected candidates, stores one
+  immutable evaluation per trading date/symbol plus all OIIS/OISS lineage, and invokes Claude,
+  Qwen and DeepSeek at Tailscale host `100.120.233.3`. ChatGPT is intentionally excluded.
+- Each input includes source/run identity, symbol/company, direction/status, O Factor, X Factor,
+  reference price and up to 30 completed canonical daily OHLCV sessions. Fewer than 20 sessions is
+  retained as `DATA_INSUFFICIENT` without a provider or WhatsApp call.
+- Provider jobs and WhatsApp delivery use separate idempotent queues, leases and capped backoff.
+  Only a successful, schema-validated model result can insert into the delivery outbox. Provider,
+  gateway and orchestration errors remain in PostgreSQL/structured logs and are never messaged.
+- Deployment is non-retroactive from 2026-08-29. The Saturday deployment therefore created no
+  Friday replay/flood; the first production candidate acceptance is the next OIIS market session.
+  The OISS scheduler remains independently disabled.
+- Service is healthy and PostgreSQL heartbeat is `OK`. Claude, Qwen and DeepSeek health endpoints
+  return HTTP 200. A real SAIL/30-session probe passed Claude and DeepSeek output validation. The
+  remote Qwen stock-query browser agent currently captures `... Skip`; the local worker correctly
+  rejects/retries it and sends nothing. Remote Qwen repair needs an approved SSH account/key.
+- Validation: 11/11 Python tests, Ruff, Compose config, Git whitespace check and canonical source
+  gate passed. Detailed architecture, operations, rollback and test evidence are in
+  `/home/novius2/NIFTY50/AI-API-CHECK/DEPLOYMENT_AND_TEST_REPORT_2026-08-29.md` and the service
+  `README.md`.

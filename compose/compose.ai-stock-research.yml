@@ -1,0 +1,57 @@
+services:
+  ai-stock-research:
+    image: trading-stack-ai-stock-research:1.0.0
+    build:
+      context: ..
+      dockerfile: services/ai_stock_research/Dockerfile
+    env_file:
+      - ../.env
+      - ../.env.paper-trading
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      AI_STOCK_RESEARCH_ENABLED: ${AI_STOCK_RESEARCH_ENABLED:-true}
+      AI_STOCK_RESEARCH_DELIVERY_ENABLED: ${AI_STOCK_RESEARCH_DELIVERY_ENABLED:-true}
+      AI_RESEARCH_START_DATE: ${AI_RESEARCH_START_DATE:-2026-08-29}
+      AI_RESEARCH_PROMPT_PATH: /app/prompts/system_prompt.md
+      AI_RESEARCH_CLAUDE_URL: http://100.120.233.3:8009/query
+      AI_RESEARCH_QWEN_URL: http://100.120.233.3:8010/query
+      AI_RESEARCH_DEEPSEEK_URL: http://100.120.233.3:8011/query
+      AI_RESEARCH_CLAUDE_MODEL: ${AI_RESEARCH_CLAUDE_MODEL:-Sonnet 5}
+      AI_RESEARCH_QWEN_MODEL: ${AI_RESEARCH_QWEN_MODEL:-Qwen3.7-Plus}
+      AI_RESEARCH_POLL_SECONDS: ${AI_RESEARCH_POLL_SECONDS:-15}
+      AI_RESEARCH_REQUEST_TIMEOUT_SECONDS: ${AI_RESEARCH_REQUEST_TIMEOUT_SECONDS:-240}
+      AI_RESEARCH_PROVIDER_MAX_ATTEMPTS: ${AI_RESEARCH_PROVIDER_MAX_ATTEMPTS:-5}
+      AI_RESEARCH_DELIVERY_MAX_ATTEMPTS: ${AI_RESEARCH_DELIVERY_MAX_ATTEMPTS:-8}
+      WA_GATEWAY_URL: ${WA_GATEWAY_URL:-https://wweb.noviusrailtech.com/webhook/send}
+      WA_GATEWAY_API_TOKEN_FILE: /run/secrets/whatsapp_gateway_api_token
+      WA_MYSELF_CHAT_ID: ${WA_MYSELF_CHAT_ID:-120363428118961288@g.us}
+      LOG_LEVEL: ${AI_RESEARCH_LOG_LEVEL:-INFO}
+      TZ: Asia/Kolkata
+    depends_on:
+      postgres:
+        condition: service_healthy
+    secrets:
+      - whatsapp_gateway_api_token
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ai-stock-research", "validate"]
+      interval: 60s
+      timeout: 40s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768m
+
+secrets:
+  whatsapp_gateway_api_token:
+    file: ${WA_GATEWAY_API_TOKEN_FILE:-../secrets/whatsapp_gateway_api_token}

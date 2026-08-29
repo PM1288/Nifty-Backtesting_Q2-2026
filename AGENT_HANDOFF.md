@@ -3410,3 +3410,8 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   replay delivered the richer Claude and DeepSeek messages via HTTP 200 (gateway records 6261 and
   6260). Qwen again exhausted five invalid-format attempts and correctly emitted no message. Full
   retest evidence is at `/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_RETEST_20260829_HYUNDAI/`.
+- Service `1.1.2` expands validated WhatsApp output into a fuller research brief with company and
+  strategy context, decision, summary, driver, risk, entry trigger, invalidation, up to three dated
+  source links, data quality and history coverage. It remains below WhatsApp limits and still omits
+  JSON/logs/errors. The 1,566-character HYUNDAI Claude production retest was acknowledged HTTP 200
+  as gateway record 6264. Tests passed 16/16 plus Ruff, compilation and canonical source gate.

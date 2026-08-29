@@ -116,3 +116,12 @@ HYUNDAI and its 30-session snapshot. Claude (`WAIT`, 55%) and DeepSeek (`WAIT`,
 the gateway acknowledged them as records 6261 and 6260. Qwen again failed all
 five contract attempts and produced no message. Evidence is under
 `/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_RETEST_20260829_HYUNDAI/`.
+
+## Full research brief format
+
+Service `1.1.2` expands each validated WhatsApp result into a readable research
+brief: company and strategy state, O/X/reference price, decision/confidence/news,
+summary, driver, risk, entry trigger, invalidation, up to three dated sources
+with links, data-quality note and history coverage. Raw JSON, logs and failure
+details remain excluded. The production HYUNDAI Claude brief measured 1,566
+characters and was acknowledged HTTP 200 as gateway record 6264.

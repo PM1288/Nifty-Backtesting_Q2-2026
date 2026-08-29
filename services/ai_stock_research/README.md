@@ -4,6 +4,12 @@ This isolated worker evaluates each new daily OIIS/OISS stock once with Claude,
 Qwen and DeepSeek, persists the immutable input and each provider result, and
 queues one concise WhatsApp message per successful provider result.
 
+Provider wire output uses the prompt-versioned V3 labelled-line contract rather
+than raw JSON. The worker validates and normalises those lines into PostgreSQL;
+the raw provider response is never forwarded to WhatsApp. Legacy JSON remains
+parseable only so an otherwise valid browser-agent response fails safely during
+the transition.
+
 ## Safety contract
 
 - ChatGPT is not called.
@@ -73,6 +79,11 @@ GROUP BY status;
 
 Operational detail remains in structured container logs and PostgreSQL. It is
 deliberately absent from WhatsApp.
+
+The direct gateway is shared with Paper Trading at
+`https://wweb.noviusrailtech.com/webhook/send`. A Cloudflare `530` is an upstream
+gateway/tunnel outage, not a successful delivery. It remains in the retry audit
+and never becomes a WhatsApp error message.
 
 ## Tests
 

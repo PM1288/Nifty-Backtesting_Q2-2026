@@ -42,6 +42,59 @@ def extract_json_object(output: str) -> dict[str, Any]:
     return value
 
 
+def extract_provider_output(output: str) -> dict[str, Any]:
+    """Parse the V3 labelled wire format while retaining V2 JSON compatibility."""
+    cleaned = output.strip()
+    if not cleaned:
+        raise OutputValidationError("provider output is empty")
+    if "{" in cleaned and "}" in cleaned:
+        try:
+            return extract_json_object(cleaned)
+        except OutputValidationError:
+            pass
+
+    aliases = {
+        "SYMBOL": "symbol",
+        "DATE": "analysis_date",
+        "VERDICT": "verdict",
+        "CONFIDENCE": "confidence",
+        "NEWS": "news_signal",
+        "SUMMARY": "summary",
+        "DRIVER": "key_driver",
+        "RISK": "key_risk",
+        "ENTRY": "entry_view",
+        "INVALIDATION": "invalidation",
+        "QUALITY": "data_quality_note",
+    }
+    parsed: dict[str, Any] = {"schema_version": "1.0", "evidence": []}
+    for raw_line in cleaned.splitlines():
+        line = raw_line.strip().lstrip("-* ").replace("**", "").strip()
+        match = re.match(r"^(?:\*\*)?([A-Za-z0-9_ ]+?)(?:\*\*)?\s*:\s*(.*)$", line)
+        if not match:
+            continue
+        label = match.group(1).strip().upper().replace(" ", "_")
+        text = match.group(2).strip()
+        if label.startswith("SOURCE"):
+            pieces = [piece.strip() for piece in text.split("|", 3)]
+            while len(pieces) < 4:
+                pieces.append("")
+            parsed["evidence"].append(
+                {"date": pieces[0], "publisher": pieces[1], "headline": pieces[2], "url": pieces[3]}
+            )
+            continue
+        field = aliases.get(label)
+        if field:
+            parsed[field] = text
+    if isinstance(parsed.get("confidence"), str):
+        match = re.search(r"\d+(?:\.\d+)?", parsed["confidence"])
+        if match:
+            parsed["confidence"] = float(match.group(0))
+    required = {"symbol", "analysis_date", "verdict", "confidence", "news_signal", "summary"}
+    if not required.issubset(parsed):
+        raise OutputValidationError("provider output does not follow the labelled response contract")
+    return parsed
+
+
 def _short(value: Any, field: str, maximum: int, *, required: bool = True) -> str:
     text = " ".join(str(value or "").split())
     if required and not text:
@@ -114,19 +167,19 @@ def render_whatsapp_message(
     sessions = len(snapshot.get("history_30d") or [])
     message = "\n".join(
         [
-            f"{PROVIDER_ICONS[provider]} *{provider} · {source_strategy} RESEARCH*",
+            f"{PROVIDER_ICONS[provider]} *{provider} · {source_strategy}*",
             (
                 f"*{stock['symbol']}* · {strategy.get('direction') or '—'} · "
                 f"O {_number(strategy.get('ofactor'))} · X {_number(strategy.get('xfactor'))} · "
                 f"₹{_number(strategy.get('reference_price'))}"
             ),
             (
-                f"*View:* {result['verdict'].replace('_', ' ')} · {result['confidence']}% · "
-                f"News {result['news_signal']}"
+                f"*{result['verdict'].replace('_', ' ')} · {result['confidence']}% · "
+                f"{result['news_signal']} NEWS*"
             ),
             f"*Why:* {result['summary']}",
             f"*Risk:* {result['key_risk']}",
-            f"`As of {result['analysis_date']} · {sessions} sessions`",
+            f"As of {result['analysis_date']} · {sessions} sessions",
         ]
     )
     return message[:950]

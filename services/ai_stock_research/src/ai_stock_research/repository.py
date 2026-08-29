@@ -359,8 +359,13 @@ class Repository:
         max_attempts: int,
     ) -> str:
         attempt = int(row["attempt_count"])
-        success = status_code is not None and 200 <= status_code < 300
-        retryable = status_code is None or status_code in {408, 425, 429} or status_code >= 500
+        success = status_code is not None and 200 <= status_code < 300 and error_class is None
+        retryable = (
+            error_class in {"GATEWAY_REJECTED", "INVALID_GATEWAY_RESPONSE"}
+            or status_code is None
+            or status_code in {408, 425, 429}
+            or status_code >= 500
+        )
         terminal = not success and (not retryable or attempt >= max_attempts)
         state = "DELIVERED" if success else "DEAD" if terminal else "RETRY"
         retry_seconds = min(3600, 15 * (2 ** max(0, attempt - 1)))

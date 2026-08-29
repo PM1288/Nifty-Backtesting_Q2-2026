@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
@@ -32,7 +33,18 @@ def send_message(
         )
         status_code = response.status_code
         excerpt = response.text[:500]
-        if not 200 <= response.status_code < 300:
+        if 200 <= response.status_code < 300:
+            try:
+                body = response.json()
+            except json.JSONDecodeError:
+                body = None
+            if not isinstance(body, dict):
+                error_class = "INVALID_GATEWAY_RESPONSE"
+            elif body.get("ok") is False or str(body.get("status", "")).lower() in {
+                "failed", "error", "rejected"
+            }:
+                error_class = "GATEWAY_REJECTED"
+        else:
             error_class = f"HTTP_{response.status_code}"
     except httpx.HTTPError as exc:
         error_class = type(exc).__name__

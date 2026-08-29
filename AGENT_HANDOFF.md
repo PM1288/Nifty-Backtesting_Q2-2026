@@ -3374,3 +3374,22 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   gate. A three-stock authenticated browser regression is
   `tools/playwright/paper-ai-tracked-stocks-regression.mjs`; durable feature details are in
   `docs/paper-trading/AI_TRACKED_STOCKS_TAB_2026-08-29.md`.
+
+## 2026-08-29 — AI research prompt V3 and WhatsApp delivery diagnosis
+
+- Replaced JSON-only prompt V2 with `AI-STOCK-RESEARCH-PROMPT-3.0.0`. Providers now receive a
+  concise objective and return deterministic labelled plain-text fields. Legacy JSON remains
+  parser-compatible during transition, but raw provider output is never the WhatsApp body.
+- WhatsApp is formatted independently into six short evidence lines with provider/source, stock,
+  direction, price, O/X, verdict/confidence/news, why, risk and as-of context. JSON, warnings,
+  footnotes, retries, logs and error details are excluded.
+- Hardened gateway semantics: HTTP 2xx with `ok=false`, a failed status or a non-JSON body is no
+  longer marked delivered. It remains retryable in PostgreSQL without producing an error message.
+- Validation passed with 16/16 tests, Ruff and compilation. DeepSeek returned and passed the V3
+  labelled format; Claude returned the required fields after introductory chatter and remains
+  parseable; Qwen still fails closed on the remote `Skip` defect.
+- A real test against the exact shared `/webhook/send` route returned Cloudflare HTTP 530. The
+  48-hour Paper Trading audit also contains 24 HTTP 530 failures, establishing a shared external
+  WhatsApp gateway origin/tunnel outage. No test message was delivered. Full evidence and the
+  external restoration action are in
+  `docs/notifications/AI_STOCK_RESEARCH_PROMPT_WHATSAPP_V3_2026-08-29.md`.

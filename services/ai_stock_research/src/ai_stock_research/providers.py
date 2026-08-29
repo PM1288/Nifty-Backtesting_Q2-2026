@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from .contracts import extract_json_object, validate_output
+from .contracts import extract_provider_output, validate_output
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,8 @@ def build_request(
 ) -> dict[str, Any]:
     user_prompt = (
         "Evaluate this immutable OIIS/OISS candidate snapshot. Research current public information "
-        "and return only the required JSON object.\nINPUT_JSON:\n"
+        "and return only the short labelled lines required by the system instruction. Do not return "
+        "JSON or Markdown.\nCANDIDATE_SNAPSHOT:\n"
         + json.dumps(stock_input, separators=(",", ":"), default=str)
     )
     common: dict[str, Any] = {"prompt": user_prompt, "system_instruction": prompt}
@@ -66,7 +67,7 @@ def call_provider(
     if not isinstance(output, str) or not output.strip():
         raise RuntimeError("provider returned no output text")
     parsed = validate_output(
-        extract_json_object(output),
+        extract_provider_output(output),
         str(stock_input["stock"]["symbol"]),
         date_from_input(stock_input),
     )

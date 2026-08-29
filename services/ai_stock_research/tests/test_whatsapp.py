@@ -43,3 +43,41 @@ def test_delivery_failure_returns_an_error_but_never_builds_an_error_message() -
         )
     assert status == 530 and error == "HTTP_530"
     assert excerpt == "gateway unavailable"
+
+
+def test_delivery_rejects_a_false_success_envelope() -> None:
+    with httpx.Client(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json={"ok": False, "status": "failed"})
+        )
+    ) as client:
+        status, _, error, _ = send_message(
+            "https://gateway.test/send",
+            "secret",
+            {
+                "chat_id": "group@g.us",
+                "message": "research output",
+                "provider_evaluation_id": "provider-1",
+                "delivery_id": "delivery-1",
+            },
+            client=client,
+        )
+    assert status == 200 and error == "GATEWAY_REJECTED"
+
+
+def test_delivery_rejects_non_json_success_response() -> None:
+    with httpx.Client(
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, text="accepted"))
+    ) as client:
+        status, _, error, _ = send_message(
+            "https://gateway.test/send",
+            "secret",
+            {
+                "chat_id": "group@g.us",
+                "message": "research output",
+                "provider_evaluation_id": "provider-1",
+                "delivery_id": "delivery-1",
+            },
+            client=client,
+        )
+    assert status == 200 and error == "INVALID_GATEWAY_RESPONSE"

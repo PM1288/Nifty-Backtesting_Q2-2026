@@ -3388,8 +3388,9 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 - Validation passed with 16/16 tests, Ruff and compilation. DeepSeek returned and passed the V3
   labelled format; Claude returned the required fields after introductory chatter and remains
   parseable; Qwen still fails closed on the remote `Skip` defect.
-- A real test against the exact shared `/webhook/send` route returned Cloudflare HTTP 530. The
-  48-hour Paper Trading audit also contains 24 HTTP 530 failures, establishing a shared external
-  WhatsApp gateway origin/tunnel outage. No test message was delivered. Full evidence and the
-  external restoration action are in
+- The first real test against the exact shared `/webhook/send` route returned Cloudflare HTTP 530,
+  and the 48-hour Paper Trading audit contains 24 matching failures. After the origin resumed,
+  the post-deployment authenticated send still timed out after 20 seconds while a plain GET reached
+  the origin in 0.10 seconds. The remaining fault is the shared authenticated send/WhatsApp path,
+  not the AI formatter. No delivery acknowledgement was received. Full evidence is in
   `docs/notifications/AI_STOCK_RESEARCH_PROMPT_WHATSAPP_V3_2026-08-29.md`.

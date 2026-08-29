@@ -40,12 +40,15 @@ The AI worker, Paper Trading and Trendlyne use the same configured endpoint:
 https://wweb.noviusrailtech.com/webhook/send
 ```
 
-The live labelled test request on 29 August reached Cloudflare but received HTTP
-`530` before WhatsApp. The same 48-hour Paper Trading delivery audit contains 24
-HTTP 530 failures, proving this is a shared gateway-origin/tunnel outage rather
-than an AI-specific payload problem. Production AI tables currently contain zero
-evaluations and zero outbox rows because Saturday enablement was deliberately
-non-retroactive.
+The first live labelled test request on 29 August reached Cloudflare but received
+HTTP `530` before WhatsApp. The same 48-hour Paper Trading delivery audit contains
+24 HTTP 530 failures, proving this is a shared gateway problem rather than an
+AI-specific payload problem. After the public origin resumed answering, an
+authenticated production `POST /webhook/send` still timed out after 20 seconds;
+an unauthenticated `GET` reached the origin and returned its expected JSON 404 in
+0.10 seconds. This narrows the remaining failure to the gateway's authenticated
+send/WhatsApp path. Production AI tables currently contain zero evaluations and
+zero outbox rows because Saturday enablement was deliberately non-retroactive.
 
 The gateway adapter now also rejects false 2xx envelopes (`ok=false`, failed
 status) and non-JSON 2xx responses. These states retry through PostgreSQL and
@@ -60,10 +63,13 @@ remain internal; they do not create another WhatsApp message.
   sentence; the parser ignores non-field chatter and validates the fields.
 - Qwen continues to return the remote browser-agent `Skip` placeholder and
   correctly fails closed.
-- Direct shared-gateway test: HTTP 530; no WhatsApp message was delivered.
+- Initial shared-gateway test: HTTP 530.
+- Post-deployment authenticated retry: 20-second `ReadTimeout`; delivery was not
+  acknowledged and must not be treated as delivered.
 
 ## External action still required
 
-Restore the Cloudflare origin/tunnel for `wweb.noviusrailtech.com`. Once the
-endpoint stops returning 530, queued production messages retry automatically.
-No application URL, token, chat ID or webhook route change is required.
+Restore the authenticated send/WhatsApp session behind
+`wweb.noviusrailtech.com`. Once `POST /webhook/send` returns a valid successful
+JSON acknowledgement, queued production messages retry automatically. No
+application URL, token, chat ID or webhook route change is required.

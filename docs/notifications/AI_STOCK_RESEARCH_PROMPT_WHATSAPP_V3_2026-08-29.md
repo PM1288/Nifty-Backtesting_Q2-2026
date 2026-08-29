@@ -85,3 +85,24 @@ enabled, its container remained healthy, and no diagnostic/error text was sent.
 This direct transport test intentionally did not create a synthetic stock
 evaluation or outbox row. Normal AI messages will be created only by a genuine
 first-session or newly appearing OIIS/OISS candidate.
+
+## Full provider-chain test
+
+A controlled replay then used the genuine 28 August OIIS `OPEN_0930` rank-1
+candidate SAIL with its exact O/X/reference values and 30 completed daily bars.
+Evaluation `f8f4d9f7-489a-46b1-9944-27782e9f15ec` persisted the V3 prompt and
+immutable JSON input hash
+`dc4a12df56fa31188fdaedf8b4ef844973b37c7177e09a6bc566dcea41189e93`.
+
+- DeepSeek passed attempt 1 (`WAIT`, 70%, mixed) and WhatsApp acknowledged HTTP
+  200 as gateway record 6258.
+- Claude's first response failed the immutable-date gate; attempt 2 passed
+  (`WAIT`, 62%, mixed) and WhatsApp acknowledged HTTP 200 as gateway record 6259.
+- Qwen failed all five governed attempts. Four responses did not satisfy the
+  labelled contract; attempt 5 returned HTTP 500 from the remote query service,
+  and a diagnostic call then timed out connecting to port 8010. No Qwen or error
+  message was sent.
+
+The durable evaluation is correctly `PARTIAL`, with two delivered provider
+messages and one explicit Qwen failure. Exact evidence and a validated ZIP are
+under `/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_TEST_20260829_SAIL/`.

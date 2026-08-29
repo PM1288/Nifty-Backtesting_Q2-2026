@@ -3398,3 +3398,10 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   `1.1.0` worker returned HTTP 200 in 496 ms with `ok=true` and `status=sent` (gateway record 6257).
   Both worker enablement flags and container health were verified. The direct transport test did
   not fabricate an AI evaluation or create an outbox row.
+- Full-chain controlled replay used genuine OIIS 28 August `OPEN_0930` rank-1 SAIL with 30 immutable
+  pre-decision sessions. DeepSeek passed on attempt 1 and Claude on attempt 2; separate WhatsApp
+  sends were acknowledged HTTP 200 as gateway records 6258 and 6259. Qwen exhausted five attempts
+  (format failures followed by remote HTTP 500/connection timeout), so no Qwen/error message was
+  sent and the durable evaluation is correctly `PARTIAL`. The complete prompt, input JSON, provider
+  results, receipts, report, checksums and validated ZIP are under
+  `/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_TEST_20260829_SAIL/` and its sibling ZIP.

@@ -106,3 +106,13 @@ immutable JSON input hash
 The durable evaluation is correctly `PARTIAL`, with two delivered provider
 messages and one explicit Qwen failure. Exact evidence and a validated ZIP are
 under `/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_TEST_20260829_SAIL/`.
+
+## Richer message retest
+
+Service `1.1.1` adds the verified `Driver` and `Entry` condition to the concise
+WhatsApp body. A fresh controlled replay used genuine OIIS morning rank-2
+HYUNDAI and its 30-session snapshot. Claude (`WAIT`, 55%) and DeepSeek (`WAIT`,
+65%) both produced expanded messages containing Why, Driver, Risk and Entry;
+the gateway acknowledged them as records 6261 and 6260. Qwen again failed all
+five contract attempts and produced no message. Evidence is under
+`/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_RETEST_20260829_HYUNDAI/`.

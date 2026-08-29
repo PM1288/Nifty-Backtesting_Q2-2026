@@ -3405,3 +3405,8 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   sent and the durable evaluation is correctly `PARTIAL`. The complete prompt, input JSON, provider
   results, receipts, report, checksums and validated ZIP are under
   `/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_TEST_20260829_SAIL/` and its sibling ZIP.
+- Service `1.1.1` modestly expanded the WhatsApp research body with verified `Driver` and `Entry`
+  lines. Tests remain 16/16 plus Ruff, compilation and canonical gate. A new genuine OIIS HYUNDAI
+  replay delivered the richer Claude and DeepSeek messages via HTTP 200 (gateway records 6261 and
+  6260). Qwen again exhausted five invalid-format attempts and correctly emitted no message. Full
+  retest evidence is at `/home/novius2/NIFTY50/AI-API-CHECK/FULL_E2E_RETEST_20260829_HYUNDAI/`.

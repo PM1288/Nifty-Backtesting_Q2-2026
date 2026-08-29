@@ -118,8 +118,10 @@ def test_whatsapp_message_is_concise_consistent_and_contains_no_operational_foot
     assert "O 78.34" in message and "X 74.13" in message
     assert "*WAIT · 72% · MIXED NEWS*" in message
     assert "30 sessions" in message
+    assert "*Driver:* Credit growth and asset quality remain supportive." in message
+    assert "*Entry:* Wait for confirmation after the pending disclosure." in message
     assert "{" not in message and "}" not in message
-    assert len(message) < 700
+    assert len(message) < 850
     assert "stack trace" not in message.lower()
     assert "retry" not in message.lower()
     assert "warning" not in message.lower()

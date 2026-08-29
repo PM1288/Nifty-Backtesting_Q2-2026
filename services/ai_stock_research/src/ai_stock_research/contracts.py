@@ -178,7 +178,9 @@ def render_whatsapp_message(
                 f"{result['news_signal']} NEWS*"
             ),
             f"*Why:* {result['summary']}",
+            f"*Driver:* {result['key_driver']}",
             f"*Risk:* {result['key_risk']}",
+            f"*Entry:* {result['entry_view']}",
             f"As of {result['analysis_date']} · {sessions} sessions",
         ]
     )

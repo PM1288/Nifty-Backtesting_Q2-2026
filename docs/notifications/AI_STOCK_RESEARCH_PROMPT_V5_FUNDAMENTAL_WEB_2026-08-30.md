@@ -84,8 +84,39 @@ same-chat recovery. No provider thinking was stored, and the three formatted
 messages contained no warning, footnote, traceback, exception, `Skip` or
 `Thought stopped` text.
 
-WhatsApp delivery did not complete: the shared gateway returned HTTP 500 with
-`Cannot read properties of undefined (reading 'getChat')` on each retry. This
-indicates an uninitialised WhatsApp client/session behind the shared webhook,
-not a prompt or message-format failure. The durable outbox remains retryable and
-no operational error was sent to WhatsApp.
+The shared WhatsApp gateway initially returned HTTP 500 with
+`Cannot read properties of undefined (reading 'getChat')`. After the gateway
+session recovered, the same three durable outbox records were reopened; no
+provider research was rerun and no duplicate delivery identities were created.
+All three attempt-9 deliveries then returned HTTP 200 with gateway
+`status=sent`:
+
+| Provider | Delivery ID | Delivered UTC | Gateway record | Duration |
+|---|---|---|---:|---:|
+| Claude | `6c504c15-6b90-4983-8cbc-e36baf9c86d0` | 2026-08-30 11:55:27.187 | 6329 | 5,212 ms |
+| DeepSeek | `42ef2e88-9e18-474e-875c-e3cb6bdbaacf` | 2026-08-30 11:55:13.979 | 6327 | 2,498 ms |
+| Qwen | `2e9d6db0-f7c7-4211-9de0-5d655753b6f1` | 2026-08-30 11:55:21.961 | 6328 | 7,968 ms |
+
+The gateway response did not expose a `sentMessageId`, but each response was
+`ok=true`, carried the configured group chat ID, provided a durable gateway
+record ID and reported `sent`. The research database records all three outbox
+rows as `DELIVERED`.
+
+## Final authenticated UI/API retest
+
+The deployed Paper Trading tracked-stock surface was tested through a real
+authenticated Chromium session against `http://127.0.0.1:19090/n50`:
+
+- login: HTTP 200;
+- page-owned tracked-stock request: HTTP 200;
+- authenticated in-page request for `2026-08-28`: HTTP 200;
+- effective session: `2026-08-28`;
+- CROMPTON present with Claude, DeepSeek and Qwen all `SUCCEEDED` and
+  `DELIVERED`;
+- search reduced the table to the single CROMPTON row;
+- inspector exposed three Earnings state fields and three Web sentiment fields;
+- browser console errors: 0.
+
+Final controlled end-to-end verdict: **PASS** for immutable OIIS input, Prompt
+V5 research across all three providers, validated concise formatting, durable
+storage, WhatsApp delivery and Paper Trading API/UI visibility.

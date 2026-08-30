@@ -3473,7 +3473,18 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   Qwen all passed V5 and stored three sources: WAIT 55% / IMPROVING / MIXED,
   WAIT 72% / MIXED / MIXED, and WAIT 75% / MIXED / MIXED respectively. Qwen
   recovered in the same chat and no thinking or operational noise was stored.
-  WhatsApp delivery is currently retrying because the shared gateway returns
-  HTTP 500 `Cannot read properties of undefined (reading 'getChat')`; no error
-  message reached WhatsApp. The provider/prompt pipeline is healthy, while the
-  external WhatsApp client/session requires restoration.
+  The shared gateway initially returned HTTP 500
+  `Cannot read properties of undefined (reading 'getChat')`; no operational
+  error reached WhatsApp. After the session recovered, the same durable rows
+  were reopened without rerunning research or creating new delivery identities.
+  All three attempt-9 sends returned HTTP 200 and gateway `status=sent`:
+  DeepSeek record 6327 at 11:55:13.979 UTC, Qwen record 6328 at
+  11:55:21.961 UTC and Claude record 6329 at 11:55:27.187 UTC. Their outbox
+  rows are now `DELIVERED`.
+- Final authenticated deployed validation passed: login HTTP 200, the
+  page-owned tracked-stock request HTTP 200, an authenticated in-page request
+  for 2026-08-28 HTTP 200, and CROMPTON appeared with all three providers
+  `SUCCEEDED`/`DELIVERED`. Search produced one CROMPTON row; its inspector
+  rendered all three Earnings state and Web sentiment fields; console errors
+  were zero. Exact delivery IDs, durations and gateway receipts are recorded in
+  `docs/notifications/AI_STOCK_RESEARCH_PROMPT_V5_FUNDAMENTAL_WEB_2026-08-30.md`.

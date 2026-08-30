@@ -13,6 +13,24 @@ VERDICTS = {
     "DATA_INSUFFICIENT",
 }
 NEWS_SIGNALS = {"POSITIVE", "MIXED", "NEUTRAL", "NEGATIVE", "UNVERIFIED"}
+EARNINGS_STATES = {
+    "STRONG",
+    "IMPROVING",
+    "STABLE",
+    "MIXED",
+    "WEAKENING",
+    "NOT_RECENTLY_REPORTED",
+    "UNVERIFIED",
+}
+WEB_SENTIMENTS = {
+    "BULLISH",
+    "SLIGHTLY_BULLISH",
+    "NEUTRAL",
+    "MIXED",
+    "SLIGHTLY_BEARISH",
+    "BEARISH",
+    "UNVERIFIED",
+}
 PROVIDER_ICONS = {"CLAUDE": "🟠", "QWEN": "🟣", "DEEPSEEK": "🔵"}
 
 
@@ -43,7 +61,7 @@ def extract_json_object(output: str) -> dict[str, Any]:
 
 
 def extract_provider_output(output: str) -> dict[str, Any]:
-    """Parse the V4 labelled wire format while retaining legacy JSON compatibility."""
+    """Parse the V5 labelled wire format while retaining JSON transport compatibility."""
     cleaned = output.strip()
     if not cleaned:
         raise OutputValidationError("provider output is empty")
@@ -57,8 +75,9 @@ def extract_provider_output(output: str) -> dict[str, Any]:
     # some line breaks. Restore boundaries only before exact uppercase contract
     # labels; prose and values remain untouched and still face strict validation.
     cleaned = re.sub(
-        r"(?<!^)(?=(?:SYMBOL|DATE|VERDICT|CONFIDENCE|NEWS|SUMMARY|TECHNICAL|"
-        r"FUNDAMENTAL|CATALYST|DRIVER|RISK|ENTRY|INVALIDATION|SOURCE[1-3]|QUALITY):)",
+        r"(?<!^)(?<!_)(?=(?:SYMBOL|DATE|VERDICT|CONFIDENCE|NEWS|EARNINGS|WEB_SENTIMENT|"
+        r"SUMMARY|POSITIVE|NEGATIVE|UPCOMING_RISK|EARNINGS_VIEW|MARKET_VIEW|"
+        r"PRICE_NEWS_ALIGNMENT|CATALYST|RISK|SOURCE[1-3]|QUALITY):)",
         "\n",
         cleaned,
     )
@@ -68,14 +87,17 @@ def extract_provider_output(output: str) -> dict[str, Any]:
         "VERDICT": "verdict",
         "CONFIDENCE": "confidence",
         "NEWS": "news_signal",
+        "EARNINGS": "earnings_state",
+        "WEB_SENTIMENT": "web_sentiment",
         "SUMMARY": "summary",
-        "TECHNICAL": "technical_view",
-        "FUNDAMENTAL": "fundamental_view",
+        "POSITIVE": "positive_evidence",
+        "NEGATIVE": "negative_evidence",
+        "UPCOMING_RISK": "upcoming_risk",
+        "EARNINGS_VIEW": "earnings_view",
+        "MARKET_VIEW": "market_view",
+        "PRICE_NEWS_ALIGNMENT": "price_news_alignment",
         "CATALYST": "key_driver",
-        "DRIVER": "key_driver",
         "RISK": "key_risk",
-        "ENTRY": "entry_view",
-        "INVALIDATION": "invalidation",
         "QUALITY": "data_quality_note",
     }
     parsed: dict[str, Any] = {"schema_version": "1.0", "evidence": []}
@@ -101,7 +123,25 @@ def extract_provider_output(output: str) -> dict[str, Any]:
         match = re.search(r"\d+(?:\.\d+)?", parsed["confidence"])
         if match:
             parsed["confidence"] = float(match.group(0))
-    required = {"symbol", "analysis_date", "verdict", "confidence", "news_signal", "summary"}
+    required = {
+        "symbol",
+        "analysis_date",
+        "verdict",
+        "confidence",
+        "news_signal",
+        "earnings_state",
+        "web_sentiment",
+        "summary",
+        "positive_evidence",
+        "negative_evidence",
+        "upcoming_risk",
+        "earnings_view",
+        "market_view",
+        "price_news_alignment",
+        "key_driver",
+        "key_risk",
+        "data_quality_note",
+    }
     if not required.issubset(parsed):
         raise OutputValidationError("provider output does not follow the labelled response contract")
     return parsed
@@ -123,10 +163,16 @@ def validate_output(value: dict[str, Any], symbol: str, analysis_date: date) -> 
         raise OutputValidationError("provider analysis_date does not match the evaluation")
     verdict = str(value.get("verdict", "")).strip().upper()
     news_signal = str(value.get("news_signal", "")).strip().upper()
+    earnings_state = str(value.get("earnings_state", "")).strip().upper()
+    web_sentiment = str(value.get("web_sentiment", "")).strip().upper()
     if verdict not in VERDICTS:
         raise OutputValidationError("provider verdict is not allowed")
     if news_signal not in NEWS_SIGNALS:
         raise OutputValidationError("provider news_signal is not allowed")
+    if earnings_state not in EARNINGS_STATES:
+        raise OutputValidationError("provider earnings_state is not allowed")
+    if web_sentiment not in WEB_SENTIMENTS:
+        raise OutputValidationError("provider web_sentiment is not allowed")
     confidence = value.get("confidence")
     if isinstance(confidence, bool) or not isinstance(confidence, (int, float)):
         raise OutputValidationError("provider confidence must be numeric")
@@ -152,16 +198,22 @@ def validate_output(value: dict[str, Any], symbol: str, analysis_date: date) -> 
         "verdict": verdict,
         "confidence": confidence,
         "news_signal": news_signal,
+        "earnings_state": earnings_state,
+        "web_sentiment": web_sentiment,
         "summary": _short(value.get("summary"), "summary", 220),
-        "technical_view": _short(value.get("technical_view"), "technical_view", 180),
-        "fundamental_view": _short(value.get("fundamental_view"), "fundamental_view", 180),
+        "positive_evidence": _short(value.get("positive_evidence"), "positive_evidence", 180),
+        "negative_evidence": _short(value.get("negative_evidence"), "negative_evidence", 180),
+        "upcoming_risk": _short(value.get("upcoming_risk"), "upcoming_risk", 180),
+        "earnings_view": _short(value.get("earnings_view"), "earnings_view", 180),
+        "market_view": _short(value.get("market_view"), "market_view", 180),
+        "price_news_alignment": _short(
+            value.get("price_news_alignment"), "price_news_alignment", 150
+        ),
         "key_driver": _short(value.get("key_driver"), "key_driver", 140),
         "key_risk": _short(value.get("key_risk"), "key_risk", 140),
-        "entry_view": _short(value.get("entry_view"), "entry_view", 140),
-        "invalidation": _short(value.get("invalidation"), "invalidation", 140),
         "evidence": evidence,
         "data_quality_note": _short(
-            value.get("data_quality_note"), "data_quality_note", 180, required=False
+            value.get("data_quality_note"), "data_quality_note", 160
         ),
     }
 
@@ -193,13 +245,16 @@ def render_whatsapp_message(
             f"*Decision:* {result['verdict'].replace('_', ' ')} · {result['confidence']}% confidence · "
             f"{result['news_signal']} news"
         ),
+        f"*Earnings / sentiment:* {result['earnings_state']} · {result['web_sentiment']}",
         f"*Summary:* {result['summary']}",
-        f"*Technical:* {result['technical_view']}",
-        f"*Fundamental:* {result['fundamental_view']}",
+        f"*Positive:* {result['positive_evidence']}",
+        f"*Negative:* {result['negative_evidence']}",
+        f"*Upcoming risk:* {result['upcoming_risk']}",
+        f"*Earnings view:* {result['earnings_view']}",
+        f"*Market view:* {result['market_view']}",
+        f"*Price/news alignment:* {result['price_news_alignment']}",
         f"*Catalyst:* {result['key_driver']}",
         f"*Risk:* {result['key_risk']}",
-        f"*Entry trigger:* {result['entry_view']}",
-        f"*Invalidation:* {result['invalidation']}",
     ]
     evidence = result.get("evidence") or []
     if evidence:

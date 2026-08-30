@@ -10,7 +10,15 @@ export type TrackedStockProvider = {
   verdict: string | null;
   confidence: number | null;
   newsSignal: string | null;
+  earningsState: string | null;
+  webSentiment: string | null;
   summary: string | null;
+  positiveEvidence: string | null;
+  negativeEvidence: string | null;
+  upcomingRisk: string | null;
+  earningsView: string | null;
+  marketView: string | null;
+  priceNewsAlignment: string | null;
   technicalView: string | null;
   fundamentalView: string | null;
   keyDriver: string | null;
@@ -109,7 +117,15 @@ export function registerAiTrackedStockRoutes(app: Express, prisma: PrismaClient)
                      else null
                    end,
                    'newsSignal',p.parsed_output->>'news_signal',
+                   'earningsState',p.parsed_output->>'earnings_state',
+                   'webSentiment',p.parsed_output->>'web_sentiment',
                    'summary',p.parsed_output->>'summary',
+                   'positiveEvidence',p.parsed_output->>'positive_evidence',
+                   'negativeEvidence',p.parsed_output->>'negative_evidence',
+                   'upcomingRisk',p.parsed_output->>'upcoming_risk',
+                   'earningsView',p.parsed_output->>'earnings_view',
+                   'marketView',p.parsed_output->>'market_view',
+                   'priceNewsAlignment',p.parsed_output->>'price_news_alignment',
                    'technicalView',p.parsed_output->>'technical_view',
                    'fundamentalView',p.parsed_output->>'fundamental_view',
                    'keyDriver',p.parsed_output->>'key_driver',

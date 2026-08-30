@@ -29,7 +29,7 @@ def build_request(
 ) -> dict[str, Any]:
     strategy = stock_input.get("strategy_snapshot") or {}
     independent_input = {
-        "schema_version": "2.0",
+        "schema_version": "2.1",
         "analysis_date": stock_input.get("analysis_date"),
         "stock": stock_input.get("stock") or {},
         "reference_price": strategy.get("reference_price"),
@@ -39,9 +39,10 @@ def build_request(
         },
     }
     user_prompt = (
-        "Independently research this stock. Use the compact one-year OHLCV matrix and current "
-        "public evidence, then return exactly the labelled fields required by the system instruction. "
-        "Do not return JSON or Markdown.\nRESEARCH_INPUT_JSON:\n"
+        "Independently research this stock using current public web evidence. Treat the compact "
+        "one-year OHLCV matrix only as price/volume context; do not calculate technical indicators "
+        "or invent chart levels. Return exactly the labelled fields required by the system "
+        "instruction. Do not return JSON or Markdown.\nRESEARCH_INPUT_JSON:\n"
         + json.dumps(independent_input, separators=(",", ":"), default=str)
     )
     common: dict[str, Any] = {"prompt": user_prompt, "system_instruction": prompt}

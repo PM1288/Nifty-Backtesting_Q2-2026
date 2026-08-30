@@ -7,7 +7,16 @@ export interface AiTrackedProviderResult {
   verdict: string | null;
   confidence: number | null;
   newsSignal: string | null;
+  earningsState: string | null;
+  webSentiment: string | null;
   summary: string | null;
+  positiveEvidence: string | null;
+  negativeEvidence: string | null;
+  upcomingRisk: string | null;
+  earningsView: string | null;
+  marketView: string | null;
+  priceNewsAlignment: string | null;
+  // Retained for read-only display compatibility with pre-V5 historical records.
   technicalView: string | null;
   fundamentalView: string | null;
   keyDriver: string | null;
@@ -87,8 +96,11 @@ export function filterTrackedStocks(stocks: AiTrackedStock[], search: string) {
     || AI_PROVIDER_ORDER.some((provider) => {
       const result = stock.providers[provider];
       return [
-        result?.verdict, result?.newsSignal, result?.summary, result?.technicalView,
-        result?.fundamentalView, result?.keyDriver, result?.keyRisk,
+        result?.verdict, result?.newsSignal, result?.earningsState, result?.webSentiment,
+        result?.summary, result?.positiveEvidence, result?.negativeEvidence,
+        result?.upcomingRisk, result?.earningsView, result?.marketView,
+        result?.priceNewsAlignment, result?.technicalView, result?.fundamentalView,
+        result?.keyDriver, result?.keyRisk,
       ]
         .some((value) => String(value ?? "").toUpperCase().includes(term));
     })
@@ -107,10 +119,12 @@ export function trackedStocksCsv(stocks: AiTrackedStock[]) {
     ...AI_PROVIDER_ORDER.flatMap((provider) => [
       `${provider.toLowerCase()}_status`, `${provider.toLowerCase()}_verdict`,
       `${provider.toLowerCase()}_confidence`, `${provider.toLowerCase()}_news_signal`,
-      `${provider.toLowerCase()}_summary`, `${provider.toLowerCase()}_technical_view`,
-      `${provider.toLowerCase()}_fundamental_view`, `${provider.toLowerCase()}_catalyst`,
-      `${provider.toLowerCase()}_key_risk`, `${provider.toLowerCase()}_entry_view`,
-      `${provider.toLowerCase()}_invalidation`, `${provider.toLowerCase()}_evidence`,
+      `${provider.toLowerCase()}_earnings_state`, `${provider.toLowerCase()}_web_sentiment`,
+      `${provider.toLowerCase()}_summary`, `${provider.toLowerCase()}_positive_evidence`,
+      `${provider.toLowerCase()}_negative_evidence`, `${provider.toLowerCase()}_upcoming_risk`,
+      `${provider.toLowerCase()}_earnings_view`, `${provider.toLowerCase()}_market_view`,
+      `${provider.toLowerCase()}_price_news_alignment`, `${provider.toLowerCase()}_catalyst`,
+      `${provider.toLowerCase()}_key_risk`, `${provider.toLowerCase()}_evidence`,
       `${provider.toLowerCase()}_delivery_status`,
     ]),
   ];
@@ -129,8 +143,10 @@ export function trackedStocksCsv(stocks: AiTrackedStock[]) {
     ...AI_PROVIDER_ORDER.flatMap((provider) => {
       const result = stock.providers[provider];
       return [result?.status, result?.verdict, result?.confidence, result?.newsSignal,
-        result?.summary, result?.technicalView, result?.fundamentalView, result?.keyDriver,
-        result?.keyRisk, result?.entryView, result?.invalidation, result?.evidence,
+        result?.earningsState, result?.webSentiment, result?.summary,
+        result?.positiveEvidence, result?.negativeEvidence, result?.upcomingRisk,
+        result?.earningsView, result?.marketView, result?.priceNewsAlignment,
+        result?.keyDriver, result?.keyRisk, result?.evidence,
         result?.deliveryStatus];
     }),
   ]);

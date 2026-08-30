@@ -38,6 +38,7 @@ function ProviderCell({ provider, result }: { provider: AiProviderName; result?:
         {result.confidence == null ? "Confidence —" : `${result.confidence}%`}
         {result.newsSignal ? ` · ${result.newsSignal}` : ""}
       </small>
+      <small>{[result.earningsState, result.webSentiment].filter(Boolean).join(" · ") || "Research pending"}</small>
       <p>{result.summary ?? (result.status === "DEAD" ? `Unavailable · ${result.errorClass ?? "provider response failed"}` : "Evaluation in progress")}</p>
       <em>{result.deliveryStatus ? `WhatsApp ${result.deliveryStatus}` : result.status === "SUCCEEDED" ? "Delivery disabled/pending" : "No message sent"}</em>
     </div>
@@ -71,19 +72,31 @@ function TrackedStockInspector({ stock, onClose }: { stock: AiTrackedStock; onCl
       </section>
       {AI_PROVIDER_ORDER.map((provider) => {
         const result = stock.providers[provider];
+        const usesResearchV5 = Boolean(result?.earningsState || result?.webSentiment);
         return <section key={provider} className={styles.providerDetail}>
           <h3>{provider}</h3>
           {result ? <>
             <b>{result.verdict?.replaceAll("_", " ") ?? result.status} · {result.confidence ?? "—"}% · {result.newsSignal ?? "—"}</b>
             <p>{result.summary ?? "No validated conclusion."}</p>
-            <dl>
-              <div><dt>Technical</dt><dd>{result.technicalView ?? "—"}</dd></div>
-              <div><dt>Fundamental</dt><dd>{result.fundamentalView ?? "—"}</dd></div>
+            {usesResearchV5 ? <dl>
+              <div><dt>Earnings state</dt><dd>{result.earningsState ?? "—"}</dd></div>
+              <div><dt>Web sentiment</dt><dd>{result.webSentiment ?? "—"}</dd></div>
+              <div><dt>Positive evidence</dt><dd>{result.positiveEvidence ?? "—"}</dd></div>
+              <div><dt>Negative evidence</dt><dd>{result.negativeEvidence ?? "—"}</dd></div>
+              <div><dt>Upcoming risk</dt><dd>{result.upcomingRisk ?? "—"}</dd></div>
+              <div><dt>Earnings view</dt><dd>{result.earningsView ?? "—"}</dd></div>
+              <div><dt>Market view</dt><dd>{result.marketView ?? "—"}</dd></div>
+              <div><dt>Price/news alignment</dt><dd>{result.priceNewsAlignment ?? "—"}</dd></div>
               <div><dt>Catalyst</dt><dd>{result.keyDriver ?? "—"}</dd></div>
               <div><dt>Risk</dt><dd>{result.keyRisk ?? "—"}</dd></div>
-              <div><dt>Entry view</dt><dd>{result.entryView ?? "—"}</dd></div>
-              <div><dt>Invalidation</dt><dd>{result.invalidation ?? "—"}</dd></div>
-            </dl>
+            </dl> : <dl>
+              <div><dt>Historical technical view</dt><dd>{result.technicalView ?? "—"}</dd></div>
+              <div><dt>Historical fundamental view</dt><dd>{result.fundamentalView ?? "—"}</dd></div>
+              <div><dt>Catalyst</dt><dd>{result.keyDriver ?? "—"}</dd></div>
+              <div><dt>Risk</dt><dd>{result.keyRisk ?? "—"}</dd></div>
+              <div><dt>Historical entry view</dt><dd>{result.entryView ?? "—"}</dd></div>
+              <div><dt>Historical invalidation</dt><dd>{result.invalidation ?? "—"}</dd></div>
+            </dl>}
             {result.evidence.length ? <ul>{result.evidence.map((item, index) => {
               const safeUrl = item.url?.startsWith("https://") || item.url?.startsWith("http://") ? item.url : undefined;
               return <li key={`${item.url ?? item.headline}-${index}`}>

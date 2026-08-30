@@ -19,13 +19,17 @@ def valid_output() -> dict:
         "verdict": "WAIT",
         "confidence": 72,
         "news_signal": "MIXED",
+        "earnings_state": "STABLE",
+        "web_sentiment": "MIXED",
         "summary": "Earnings are resilient, but the immediate entry has mixed event evidence.",
-        "technical_view": "Price is consolidating above its medium-term range with normal volume.",
-        "fundamental_view": "Asset quality is stable while margins remain the key earnings variable.",
+        "positive_evidence": "Asset quality and credit growth remain supportive.",
+        "negative_evidence": "Margin pressure remains unresolved.",
+        "upcoming_risk": "The next earnings update could change the margin outlook.",
+        "earnings_view": "Earnings are stable, with asset quality offset by margin pressure.",
+        "market_view": "Published research is mixed pending clearer margin direction.",
+        "price_news_alignment": "Recent price and volume are NEUTRAL to the mixed research view.",
         "key_driver": "Credit growth and asset quality remain supportive.",
         "key_risk": "Margin pressure could weaken near-term earnings momentum.",
-        "entry_view": "Wait for confirmation after the pending disclosure.",
-        "invalidation": "Material asset-quality deterioration.",
         "evidence": [
             {
                 "date": "2026-08-28",
@@ -76,13 +80,17 @@ DATE: 2026-08-29
 VERDICT: WAIT
 CONFIDENCE: 72%
 NEWS: MIXED
+EARNINGS: STABLE
+WEB_SENTIMENT: MIXED
 SUMMARY: Current evidence is mixed.
-TECHNICAL: Price is above its medium-term range on normal volume.
-FUNDAMENTAL: Asset quality remains stable while margins are mixed.
+POSITIVE: Asset quality remains stable.
+NEGATIVE: Margins remain mixed.
+UPCOMING_RISK: Next earnings may change the margin outlook.
+EARNINGS_VIEW: Earnings are stable with mixed margins.
+MARKET_VIEW: Research sentiment is mixed.
+PRICE_NEWS_ALIGNMENT: Recent price and volume are NEUTRAL to sentiment.
 CATALYST: Asset quality remains supportive.
 RISK: Margin pressure remains the key risk.
-ENTRY: Wait for price confirmation.
-INVALIDATION: Material asset-quality deterioration.
 SOURCE1: 2026-08-28 | NSE | Current filing | https://www.nseindia.com/
 QUALITY: One calendar year supplied."""
     parsed = extract_provider_output(output)
@@ -107,16 +115,17 @@ def test_labelled_output_rejects_unstructured_model_chatter() -> None:
 def test_labelled_output_restores_qwen_contract_boundaries_without_changing_values() -> None:
     output = (
         "SYMBOL: SBIN\nDATE: 2026-08-29VERDICT: WAITCONFIDENCE: 68NEWS: MIXED"
-        "SUMMARY: Evidence remains balanced.TECHNICAL: Price is range-bound."
-        "FUNDAMENTAL: Earnings are stable.CATALYST: Credit growth."
-        "RISK: Margin pressure.ENTRY: Breakout confirmation."
-        "INVALIDATION: Material deterioration.QUALITY: Current sources checked."
+        "EARNINGS: STABLEWEB_SENTIMENT: MIXEDSUMMARY: Evidence remains balanced."
+        "POSITIVE: Asset quality is stable.NEGATIVE: Margin pressure."
+        "UPCOMING_RISK: NONE IDENTIFIEDEARNINGS_VIEW: Earnings are stable."
+        "MARKET_VIEW: Research is mixed.PRICE_NEWS_ALIGNMENT: NEUTRAL to sentiment."
+        "CATALYST: Credit growth.RISK: Margin pressure.QUALITY: Current sources checked."
     )
     parsed = extract_provider_output(output)
     validated = validate_output(parsed, "SBIN", date(2026, 8, 29))
     assert validated["confidence"] == 68
-    assert validated["technical_view"] == "Price is range-bound."
-    assert validated["fundamental_view"] == "Earnings are stable."
+    assert validated["earnings_state"] == "STABLE"
+    assert validated["market_view"] == "Research is mixed."
 
 
 def test_output_validation_enforces_symbol_date_and_enums() -> None:
@@ -142,15 +151,15 @@ def test_whatsapp_message_is_concise_consistent_and_contains_no_operational_foot
     assert "WAIT_FOR_XFACTOR" in message
     assert "O 78.34" in message and "X 74.13" in message
     assert "*Decision:* WAIT · 72% confidence · MIXED news" in message
-    assert "*Invalidation:* Material asset-quality deterioration." in message
+    assert "*Earnings / sentiment:* STABLE · MIXED" in message
     assert "*Verified sources:*" in message
     assert "https://www.nseindia.com/" in message
     assert "*Data quality:* One calendar year of completed sessions supplied." in message
     assert "20 completed sessions" in message
-    assert "*Technical:* Price is consolidating above its medium-term range" in message
-    assert "*Fundamental:* Asset quality is stable" in message
+    assert "*Positive:* Asset quality and credit growth remain supportive." in message
+    assert "*Earnings view:* Earnings are stable" in message
+    assert "*Market view:* Published research is mixed" in message
     assert "*Catalyst:* Credit growth and asset quality remain supportive." in message
-    assert "*Entry trigger:* Wait for confirmation after the pending disclosure." in message
     assert "{" not in message and "}" not in message
     assert len(message) < 3500
     assert "stack trace" not in message.lower()

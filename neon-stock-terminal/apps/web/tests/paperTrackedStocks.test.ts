@@ -27,7 +27,11 @@ const stocks: AiTrackedStock[] = ["SBIN", "INFY", "RELIANCE"].map((symbol, index
   providers: {
     CLAUDE: {
       provider: "CLAUDE", model: "Sonnet 5", status: "SUCCEEDED", verdict: "WAIT",
-      confidence: 72, newsSignal: "MIXED", summary: "Wait for confirmation.",
+      confidence: 72, newsSignal: "MIXED", earningsState: "STABLE", webSentiment: "MIXED",
+      summary: "Wait for confirmation.", positiveEvidence: "Asset quality is stable.",
+      negativeEvidence: "Margin pressure remains.", upcomingRisk: "Next earnings update.",
+      earningsView: "Earnings are stable.", marketView: "Research is mixed.",
+      priceNewsAlignment: "Recent price and volume are NEUTRAL to sentiment.",
       technicalView: "Price is consolidating.", fundamentalView: "Earnings are stable.",
       keyDriver: "Current filing.", keyRisk: "Event risk.", entryView: "Wait.",
       invalidation: "Evidence weakens.", evidence: [], completedAt: null,
@@ -62,7 +66,9 @@ test("tracked-stock CSV exports every stock and keeps numeric zero distinct from
   assert.match(csv, /"RELIANCE"/);
   assert.match(csv, /"0"/);
   assert.match(csv, /"claude_verdict"/);
-  assert.match(csv, /"claude_technical_view"/);
+  assert.match(csv, /"claude_earnings_state"/);
+  assert.match(csv, /"claude_web_sentiment"/);
+  assert.match(csv, /"claude_price_news_alignment"/);
   assert.match(csv, /"Earnings are stable\."/);
   assert.equal(csv.split("\n").length, 4);
 });

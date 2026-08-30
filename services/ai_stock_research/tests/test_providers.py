@@ -25,15 +25,19 @@ OUTPUT = {
     "verdict": "WAIT",
     "confidence": 65,
     "news_signal": "MIXED",
+    "earnings_state": "MIXED",
+    "web_sentiment": "MIXED",
     "summary": "Mixed current evidence.",
-    "technical_view": "Price is range-bound on normal volume.",
-    "fundamental_view": "Current business evidence is mixed.",
+    "positive_evidence": "Business conditions remain stable.",
+    "negative_evidence": "Margin evidence is mixed.",
+    "upcoming_risk": "A pending event may change the outlook.",
+    "earnings_view": "Latest earnings evidence is mixed.",
+    "market_view": "Published research is mixed.",
+    "price_news_alignment": "Recent price and volume are NEUTRAL to sentiment.",
     "key_driver": "Stable business trend.",
     "key_risk": "Pending event risk.",
-    "entry_view": "Wait for confirmation.",
-    "invalidation": "Material deterioration.",
     "evidence": [],
-    "data_quality_note": "",
+    "data_quality_note": "No material evidence gaps identified.",
 }
 
 
@@ -46,7 +50,7 @@ def test_provider_payloads_use_each_verified_api_contract() -> None:
     assert deepseek["search"] is True and deepseek["deep_think"] is False
     assert "Do not return JSON or Markdown" in claude["prompt"]
     model_input = json.loads(claude["prompt"].split("RESEARCH_INPUT_JSON:\n", 1)[1])
-    assert model_input["schema_version"] == "2.0"
+    assert model_input["schema_version"] == "2.1"
     assert model_input["reference_price"] == 1082.4
     assert model_input["price_history_1y"]["columns"] == [
         "date", "open", "high", "low", "close", "volume"
@@ -93,13 +97,17 @@ DATE: 2026-08-29
 VERDICT: WAIT
 CONFIDENCE: 65
 NEWS: MIXED
+EARNINGS: MIXED
+WEB_SENTIMENT: MIXED
 SUMMARY: Mixed current evidence.
-TECHNICAL: Price is range-bound on normal volume.
-FUNDAMENTAL: Current business evidence is mixed.
+POSITIVE: Business conditions remain stable.
+NEGATIVE: Margin evidence is mixed.
+UPCOMING_RISK: A pending event may change the outlook.
+EARNINGS_VIEW: Latest earnings evidence is mixed.
+MARKET_VIEW: Published research is mixed.
+PRICE_NEWS_ALIGNMENT: Recent price and volume are NEUTRAL to sentiment.
 CATALYST: Stable business trend.
 RISK: Pending event risk.
-ENTRY: Wait for confirmation.
-INVALIDATION: Material deterioration.
 QUALITY: Current sources checked."""
     with httpx.Client(
         transport=httpx.MockTransport(
@@ -128,11 +136,12 @@ def test_qwen_skip_placeholder_uses_delayed_same_chat_final_answer() -> None:
         return httpx.Response(200, json={
             "status": "success", "chat_id": "qwen-chat-1",
             "output": """SYMBOL: SBIN
-DATE: 2026-08-29VERDICT: WAITCONFIDENCE: 65NEWS: MIXED
-SUMMARY: Mixed current evidence.TECHNICAL: Price is range-bound on normal volume.
-FUNDAMENTAL: Current business evidence is mixed.CATALYST: Stable business trend.
-RISK: Pending event risk.ENTRY: Wait for confirmation.
-INVALIDATION: Material deterioration.QUALITY: Current sources checked.""",
+DATE: 2026-08-29VERDICT: WAITCONFIDENCE: 65NEWS: MIXEDEARNINGS: MIXED
+WEB_SENTIMENT: MIXEDSUMMARY: Mixed current evidence.POSITIVE: Business conditions remain stable.
+NEGATIVE: Margin evidence is mixed.UPCOMING_RISK: A pending event may change the outlook.
+EARNINGS_VIEW: Latest earnings evidence is mixed.MARKET_VIEW: Published research is mixed.
+PRICE_NEWS_ALIGNMENT: Recent price and volume are NEUTRAL to sentiment.
+CATALYST: Stable business trend.RISK: Pending event risk.QUALITY: Current sources checked.""",
             "thinking": "private trace",
         })
 
@@ -145,6 +154,6 @@ INVALIDATION: Material deterioration.QUALITY: Current sources checked.""",
     assert len(requests) == 2
     assert requests[1]["chat_id"] == "qwen-chat-1"
     assert requests[1]["prompt"].startswith("The research task has had time to complete")
-    assert result.parsed_output["fundamental_view"] == "Current business evidence is mixed."
+    assert result.parsed_output["earnings_view"] == "Latest earnings evidence is mixed."
     assert result.stored_response["qwen_recovery_used"] is True
     assert "thinking" not in result.stored_response

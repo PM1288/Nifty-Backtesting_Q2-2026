@@ -1,6 +1,6 @@
 services:
   ai-stock-research:
-    image: trading-stack-ai-stock-research:1.2.1
+    image: trading-stack-ai-stock-research:1.3.0
     build:
       context: ..
       dockerfile: services/ai_stock_research/Dockerfile

@@ -3415,3 +3415,29 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   source links, data quality and history coverage. It remains below WhatsApp limits and still omits
   JSON/logs/errors. The 1,566-character HYUNDAI Claude production retest was acknowledged HTTP 200
   as gateway record 6264. Tests passed 16/16 plus Ruff, compilation and canonical source gate.
+
+## 2026-08-30 — Independent one-year AI research and Qwen recovery
+
+- Prompt V4 (`AI-STOCK-RESEARCH-PROMPT-4.0.0`) asks Claude, Qwen and DeepSeek to research the stock
+  independently. Provider-facing input no longer contains OIIS/OISS direction, status, O Factor or
+  X Factor. It contains stock identity, reference price and a compact point-in-time one-year OHLCV
+  matrix (`date/open/high/low/close/volume`). Strategy fields remain only in the immutable audit
+  snapshot and tracked-stock UI for lineage.
+- Provider output uses a strict labelled research contract covering verdict/confidence, news,
+  technical and fundamental views, catalyst, risk, entry, invalidation, dated sources and data
+  quality. WhatsApp receives the validated formatted research brief only; provider reasoning,
+  JSON, warnings, footnotes, retries, logs and errors remain excluded.
+- The remote Qwen browser service still initially returns its UI `Skip` control for a long prompt.
+  Worker `1.2.1` now narrowly detects only that exact placeholder, waits 90 seconds, and retrieves
+  the completed answer from the same `chat_id`. It never reads, stores or sends Qwen `thinking`.
+  Strict contract validation still fails closed for any other malformed output.
+- Genuine OIIS 28 August JINDALSTEL replay proved all three providers end to end. Each received 248
+  completed OHLCV sessions in a 13,016-byte prompt with no strategy guidance. Claude returned WAIT
+  55%, DeepSeek WAIT 70%, and recovered Qwen WAIT 75%. All three stored structured evidence and
+  delivered separate clean WhatsApp messages; Qwen's message was 1,976 characters and contained no
+  warning, footnote, traceback, exception, `Skip` or `Thought stopped` text.
+- Deployed production code commits are `b83795e` and `4c77be6`; service image reports `1.2.1` and is
+  healthy. Validation passed: 18/18 worker tests, Ruff, compileall, web 67/67, API 130/130, both
+  frontend/backend typechecks and production builds, and the canonical repository gate. Durable
+  implementation evidence is in
+  `docs/notifications/AI_STOCK_RESEARCH_PROMPT_V4_ONE_YEAR_2026-08-30.md`.

@@ -58,3 +58,14 @@ Existing V3 evaluations remain immutable and readable. The dashboard decoder
 accepts both legacy `history_30d` objects and the V4 `price_history_1y` compact
 matrix. Rollback uses the previous `1.1.2` worker image; the widened database
 constraint is additive and does not rewrite prior snapshots.
+
+## Qwen browser recovery
+
+The remote Qwen Docker may return the visible thinking control `... Skip` as
+its first `output` while the model is still working. Service `1.2.1` recognizes
+only this exact placeholder, waits 90 seconds, and requests the completed final
+answer from the same returned `chat_id`. It never reads the gateway's private
+`thinking` field. Qwen's occasional missing line breaks between uppercase
+contract labels are restored before the same strict field validation used by
+Claude and DeepSeek. A continuation that is still unstructured fails closed and
+creates no WhatsApp message.

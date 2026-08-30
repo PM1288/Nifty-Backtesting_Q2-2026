@@ -104,6 +104,21 @@ def test_labelled_output_rejects_unstructured_model_chatter() -> None:
         extract_provider_output("The stock looks interesting, perhaps buy it.")
 
 
+def test_labelled_output_restores_qwen_contract_boundaries_without_changing_values() -> None:
+    output = (
+        "SYMBOL: SBIN\nDATE: 2026-08-29VERDICT: WAITCONFIDENCE: 68NEWS: MIXED"
+        "SUMMARY: Evidence remains balanced.TECHNICAL: Price is range-bound."
+        "FUNDAMENTAL: Earnings are stable.CATALYST: Credit growth."
+        "RISK: Margin pressure.ENTRY: Breakout confirmation."
+        "INVALIDATION: Material deterioration.QUALITY: Current sources checked."
+    )
+    parsed = extract_provider_output(output)
+    validated = validate_output(parsed, "SBIN", date(2026, 8, 29))
+    assert validated["confidence"] == 68
+    assert validated["technical_view"] == "Price is range-bound."
+    assert validated["fundamental_view"] == "Earnings are stable."
+
+
 def test_output_validation_enforces_symbol_date_and_enums() -> None:
     result = validate_output(valid_output(), "SBIN", date(2026, 8, 29))
     assert result["confidence"] == 72

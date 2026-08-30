@@ -53,6 +53,15 @@ def extract_provider_output(output: str) -> dict[str, Any]:
         except OutputValidationError:
             pass
 
+    # Qwen's browser extractor can preserve the requested labels while losing
+    # some line breaks. Restore boundaries only before exact uppercase contract
+    # labels; prose and values remain untouched and still face strict validation.
+    cleaned = re.sub(
+        r"(?<!^)(?=(?:SYMBOL|DATE|VERDICT|CONFIDENCE|NEWS|SUMMARY|TECHNICAL|"
+        r"FUNDAMENTAL|CATALYST|DRIVER|RISK|ENTRY|INVALIDATION|SOURCE[1-3]|QUALITY):)",
+        "\n",
+        cleaned,
+    )
     aliases = {
         "SYMBOL": "symbol",
         "DATE": "analysis_date",

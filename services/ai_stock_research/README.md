@@ -32,6 +32,10 @@ fail-safe transition.
 - Every provider has its own idempotent result row.
 - Only a `SUCCEEDED` provider row can create a delivery-outbox row. Exceptions,
   retries, logs and stack traces are never transformed into WhatsApp messages.
+- The remote Qwen browser agent can expose its `Skip` thinking control before
+  the final answer. On that exact placeholder only, the worker waits 90 seconds
+  and asks the same `chat_id` for its completed labelled answer. Private
+  `thinking` content remains unread, unstored and undelivered.
 - A minimum of 20 completed daily bars is required; up to one calendar year is
   included in the compact matrix without repeating field names per session.
 - The prompt is immutable by version and SHA-256 hash.

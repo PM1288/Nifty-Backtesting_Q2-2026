@@ -46,6 +46,7 @@ class Settings:
     provider_endpoints: dict[str, str]
     claude_model: str
     qwen_model: str
+    qwen_recovery_wait_seconds: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -75,6 +76,9 @@ class Settings:
             },
             claude_model=os.getenv("AI_RESEARCH_CLAUDE_MODEL", "Sonnet 5").strip(),
             qwen_model=os.getenv("AI_RESEARCH_QWEN_MODEL", "Qwen3.7-Plus").strip(),
+            qwen_recovery_wait_seconds=max(
+                30, int(os.getenv("AI_RESEARCH_QWEN_RECOVERY_WAIT_SECONDS", "90"))
+            ),
         )
         settings.validate()
         return settings

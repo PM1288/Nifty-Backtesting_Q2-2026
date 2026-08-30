@@ -63,6 +63,7 @@ class Runtime:
                 self.settings.claude_model,
                 self.settings.qwen_model,
                 self.settings.request_timeout_seconds,
+                qwen_recovery_wait_seconds=self.settings.qwen_recovery_wait_seconds,
             )
             message = render_whatsapp_message(
                 provider, row["source_strategy"], row, result.parsed_output

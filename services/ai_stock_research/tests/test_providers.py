@@ -112,3 +112,39 @@ QUALITY: Current sources checked."""
         )
     assert result.output_text == output
     assert result.parsed_output["verdict"] == "WAIT"
+
+
+def test_qwen_skip_placeholder_uses_delayed_same_chat_final_answer() -> None:
+    requests: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        requests.append(payload)
+        if len(requests) == 1:
+            return httpx.Response(200, json={
+                "status": "success", "chat_id": "qwen-chat-1",
+                "output": "...\nSkip", "thinking": "private trace",
+            })
+        return httpx.Response(200, json={
+            "status": "success", "chat_id": "qwen-chat-1",
+            "output": """SYMBOL: SBIN
+DATE: 2026-08-29VERDICT: WAITCONFIDENCE: 65NEWS: MIXED
+SUMMARY: Mixed current evidence.TECHNICAL: Price is range-bound on normal volume.
+FUNDAMENTAL: Current business evidence is mixed.CATALYST: Stable business trend.
+RISK: Pending event risk.ENTRY: Wait for confirmation.
+INVALIDATION: Material deterioration.QUALITY: Current sources checked.""",
+            "thinking": "private trace",
+        })
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        result = call_provider(
+            "QWEN", "http://100.120.233.3:8010/query", PROMPT, INPUT,
+            "Sonnet 5", "Qwen3.7-Plus", 30, client,
+            qwen_recovery_wait_seconds=0,
+        )
+    assert len(requests) == 2
+    assert requests[1]["chat_id"] == "qwen-chat-1"
+    assert requests[1]["prompt"].startswith("The research task has had time to complete")
+    assert result.parsed_output["fundamental_view"] == "Current business evidence is mixed."
+    assert result.stored_response["qwen_recovery_used"] is True
+    assert "thinking" not in result.stored_response

@@ -66,3 +66,26 @@ as versioned JSONB and prior records are not rewritten.
 - No WhatsApp message was created for the validation replay, avoiding a duplicate
   stock/day notification. The production WhatsApp formatter is covered by the
   contract suite and remains enabled for the next new daily candidate.
+
+## Production retest: CROMPTON
+
+A second controlled test created the normal one-stock/day evaluation
+`0665ce75-379c-4b3a-9928-2e66d383e878` from genuine OIIS 28 August CROMPTON
+evidence. It used 248 point-in-time sessions and Prompt V5.
+
+| Provider | Provider attempts | Verdict | Confidence | Earnings | Web sentiment | Sources |
+|---|---:|---|---:|---|---|---:|
+| Claude | 2 | WAIT | 55 | IMPROVING | MIXED | 3 |
+| DeepSeek | 1 | WAIT | 72 | MIXED | MIXED | 3 |
+| Qwen | 1 | WAIT | 75 | MIXED | MIXED | 3 |
+
+All three model inputs excluded O/X, direction and strategy status. Qwen used
+same-chat recovery. No provider thinking was stored, and the three formatted
+messages contained no warning, footnote, traceback, exception, `Skip` or
+`Thought stopped` text.
+
+WhatsApp delivery did not complete: the shared gateway returned HTTP 500 with
+`Cannot read properties of undefined (reading 'getChat')` on each retry. This
+indicates an uninitialised WhatsApp client/session behind the shared webhook,
+not a prompt or message-format failure. The durable outbox remains retryable and
+no operational error was sent to WhatsApp.

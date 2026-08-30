@@ -3468,3 +3468,12 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   replay. Evidence is in
   `docs/notifications/AI_STOCK_RESEARCH_PROMPT_V5_FUNDAMENTAL_WEB_2026-08-30.md`
   and `output/playwright/paper-ai-tracked-stocks-v5/`.
+- Repeat production test used genuine OIIS CROMPTON evaluation
+  `0665ce75-379c-4b3a-9928-2e66d383e878` with 248 sessions. Claude, DeepSeek and
+  Qwen all passed V5 and stored three sources: WAIT 55% / IMPROVING / MIXED,
+  WAIT 72% / MIXED / MIXED, and WAIT 75% / MIXED / MIXED respectively. Qwen
+  recovered in the same chat and no thinking or operational noise was stored.
+  WhatsApp delivery is currently retrying because the shared gateway returns
+  HTTP 500 `Cannot read properties of undefined (reading 'getChat')`; no error
+  message reached WhatsApp. The provider/prompt pipeline is healthy, while the
+  external WhatsApp client/session requires restoration.

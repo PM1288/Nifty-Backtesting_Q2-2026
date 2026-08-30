@@ -28,7 +28,7 @@ The requested date defaults to the current India trading date. If that date has 
 
 ## Tests
 
-- API serializer tests cover SBIN, INFY and RELIANCE, provider separation, numeric zero, 30-session history and date fallback.
+- API serializer tests cover SBIN, INFY and RELIANCE, provider separation, numeric zero, compact one-year history and date fallback.
 - Web unit tests cover three-stock filtering, full CSV export and missing-versus-zero preservation.
 - Authenticated Playwright regression uses three test-only intercepted records to verify the live route, table, all provider columns, search, inspector, 30 OHLCV rows, Escape close and CSV download. No fixture data is compiled into production.
 

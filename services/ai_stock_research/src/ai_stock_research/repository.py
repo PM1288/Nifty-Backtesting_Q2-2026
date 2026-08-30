@@ -96,16 +96,30 @@ class Repository:
         ).fetchall()
         return list(oiis) + list(oiss)
 
-    def _history(self, conn: Any, token: str | None, through: date) -> list[dict[str, Any]]:
+    def _history(self, conn: Any, token: str | None, through: date) -> dict[str, list[Any]]:
         if not token:
-            return []
+            return {"columns": ["date", "open", "high", "low", "close", "volume"], "rows": []}
         rows = conn.execute(
-            """SELECT trade_date,open,high,low,close,volume,source
+            """SELECT trade_date,open,high,low,close,volume
               FROM public.bars_1d WHERE exchange='NSE' AND symbol_token=%s AND trade_date<=%s
-              ORDER BY trade_date DESC LIMIT 30""",
-            (str(token), through),
+                AND trade_date > %s::date - interval '1 year'
+              ORDER BY trade_date""",
+            (str(token), through, through),
         ).fetchall()
-        return [_json_value(dict(row)) for row in reversed(rows)]
+        return {
+            "columns": ["date", "open", "high", "low", "close", "volume"],
+            "rows": [
+                [
+                    _json_value(row["trade_date"]),
+                    _json_value(row["open"]),
+                    _json_value(row["high"]),
+                    _json_value(row["low"]),
+                    _json_value(row["close"]),
+                    _json_value(row["volume"]),
+                ]
+                for row in rows
+            ],
+        }
 
     def discover(
         self, start_date: date, models: dict[str, dict[str, str]]
@@ -125,6 +139,7 @@ class Repository:
                 else:
                     through = source["signal_date"] or (source["trade_date"] - timedelta(days=1))
                     history = self._history(conn, source["instrument_token"], through)
+                    history_count = len(history["rows"])
                     snapshot = {
                         "schema_version": "1.0",
                         "analysis_date": source["trade_date"].isoformat(),
@@ -148,10 +163,10 @@ class Repository:
                             "xfactor": _json_value(source["xfactor"]),
                             "reference_price": _json_value(source["reference_price"]),
                         },
-                        "history_30d": history,
+                        "price_history_1y": history,
                     }
                     encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"))
-                    status = "PENDING" if len(history) >= 20 else "DATA_INSUFFICIENT"
+                    status = "PENDING" if history_count >= 20 else "DATA_INSUFFICIENT"
                     inserted = conn.execute(
                         """INSERT INTO ai_stock_research.evaluation(
                           trade_date,symbol,company_name,direction,strategy_status,ofactor,xfactor,
@@ -170,7 +185,7 @@ class Repository:
                             source["xfactor"],
                             source["reference_price"],
                             through,
-                            len(history),
+                            history_count,
                             encoded,
                             hashlib.sha256(encoded.encode()).hexdigest(),
                             PROMPT_VERSION,

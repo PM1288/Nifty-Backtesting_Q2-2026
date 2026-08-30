@@ -3,6 +3,7 @@ import { StockLogo } from "../stocks/StockProfileControls";
 import {
   AI_PROVIDER_ORDER,
   filterTrackedStocks,
+  trackedHistoryRows,
   trackedStocksCsv,
   type AiProviderName,
   type AiTrackedProviderResult,
@@ -44,7 +45,7 @@ function ProviderCell({ provider, result }: { provider: AiProviderName; result?:
 }
 
 function TrackedStockInspector({ stock, onClose }: { stock: AiTrackedStock; onClose: () => void }) {
-  const history = stock.inputSnapshot.history_30d ?? [];
+  const history = trackedHistoryRows(stock.inputSnapshot);
   useEffect(() => {
     const close = (event: KeyboardEvent) => event.key === "Escape" && onClose();
     window.addEventListener("keydown", close);
@@ -76,7 +77,9 @@ function TrackedStockInspector({ stock, onClose }: { stock: AiTrackedStock; onCl
             <b>{result.verdict?.replaceAll("_", " ") ?? result.status} · {result.confidence ?? "—"}% · {result.newsSignal ?? "—"}</b>
             <p>{result.summary ?? "No validated conclusion."}</p>
             <dl>
-              <div><dt>Driver</dt><dd>{result.keyDriver ?? "—"}</dd></div>
+              <div><dt>Technical</dt><dd>{result.technicalView ?? "—"}</dd></div>
+              <div><dt>Fundamental</dt><dd>{result.fundamentalView ?? "—"}</dd></div>
+              <div><dt>Catalyst</dt><dd>{result.keyDriver ?? "—"}</dd></div>
               <div><dt>Risk</dt><dd>{result.keyRisk ?? "—"}</dd></div>
               <div><dt>Entry view</dt><dd>{result.entryView ?? "—"}</dd></div>
               <div><dt>Invalidation</dt><dd>{result.invalidation ?? "—"}</dd></div>
@@ -92,7 +95,7 @@ function TrackedStockInspector({ stock, onClose }: { stock: AiTrackedStock; onCl
         </section>;
       })}
       <section className={styles.historySection}>
-        <h3>Immutable daily OHLCV input · {history.length} sessions</h3>
+        <h3>Immutable one-year daily OHLCV input · {history.length} sessions</h3>
         <div><table><thead><tr><th>Date</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th></tr></thead>
           <tbody>{history.map((bar, index) => <tr key={String(bar.date ?? index)}>
             <td>{String(bar.date ?? "—")}</td>
@@ -151,9 +154,9 @@ export function PaperTrackedStocks() {
     {loading && !payload ? <div className={styles.state}>Loading tracked stocks…</div> : error ? <div className={styles.state} data-error="true"><strong>Tracked-stock evidence unavailable</strong><span>{error}</span><button type="button" onClick={() => setRefreshKey((key) => key + 1)}>Retry</button></div> : !visible.length ? <div className={styles.state}><strong>No stocks tracked for this session</strong><span>The next completed OIIS/OISS selection will appear automatically. Missing data is not shown as zero.</span></div> : <>
       <div className={styles.countRow}><strong>{visible.length} stocks</strong><span>Evaluated {payload?.asOf ? new Date(payload.asOf).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "—"}</span></div>
       <div className={styles.tableViewport}><table className={styles.table}>
-        <thead><tr><th>Stock</th><th>Source / strategy</th><th>O / X / reference</th><th>30D input</th>{AI_PROVIDER_ORDER.map((provider) => <th key={provider}>{provider}</th>)}<th>Audit</th></tr></thead>
+        <thead><tr><th>Stock</th><th>Source / strategy</th><th>O / X / reference</th><th>1Y input</th>{AI_PROVIDER_ORDER.map((provider) => <th key={provider}>{provider}</th>)}<th>Audit</th></tr></thead>
         <tbody>{visible.map((stock) => {
-          const latest = stock.inputSnapshot.history_30d?.at(-1);
+          const latest = trackedHistoryRows(stock.inputSnapshot).at(-1);
           return <tr key={stock.evaluationId}>
             <td><div className={styles.identity}><StockLogo symbol={stock.symbol} size={24} /><div><strong>{stock.symbol}</strong><span>{stock.companyName ?? "—"}</span><small>{stock.evaluationStatus}</small></div></div></td>
             <td><strong>{stock.sources.map((source) => source.strategy).filter(Boolean).join(" + ") || "—"}</strong><span>{stock.direction ?? "—"} · {stock.strategyStatus ?? "—"}</span><small>{stock.sources.map((source) => source.slot).filter(Boolean).join(", ") || "—"}</small></td>

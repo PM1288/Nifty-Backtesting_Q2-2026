@@ -20,6 +20,8 @@ def valid_output() -> dict:
         "confidence": 72,
         "news_signal": "MIXED",
         "summary": "Earnings are resilient, but the immediate entry has mixed event evidence.",
+        "technical_view": "Price is consolidating above its medium-term range with normal volume.",
+        "fundamental_view": "Asset quality is stable while margins remain the key earnings variable.",
         "key_driver": "Credit growth and asset quality remain supportive.",
         "key_risk": "Margin pressure could weaken near-term earnings momentum.",
         "entry_view": "Wait for confirmation after the pending disclosure.",
@@ -32,7 +34,7 @@ def valid_output() -> dict:
                 "url": "https://www.nseindia.com/",
             }
         ],
-        "data_quality_note": "Thirty completed sessions supplied.",
+        "data_quality_note": "One calendar year of completed sessions supplied.",
     }
 
 
@@ -47,7 +49,10 @@ def evaluation() -> dict:
                 "xfactor": 74.126,
                 "reference_price": 1082.4,
             },
-            "history_30d": [{"date": index} for index in range(30)],
+            "price_history_1y": {
+                "columns": ["date", "open", "high", "low", "close", "volume"],
+                "rows": [[f"2026-01-{index + 1:02d}", 100, 102, 99, 101, 1000] for index in range(20)],
+            },
         }
     }
 
@@ -72,12 +77,14 @@ VERDICT: WAIT
 CONFIDENCE: 72%
 NEWS: MIXED
 SUMMARY: Current evidence is mixed.
-DRIVER: Asset quality remains supportive.
+TECHNICAL: Price is above its medium-term range on normal volume.
+FUNDAMENTAL: Asset quality remains stable while margins are mixed.
+CATALYST: Asset quality remains supportive.
 RISK: Margin pressure remains the key risk.
 ENTRY: Wait for price confirmation.
 INVALIDATION: Material asset-quality deterioration.
 SOURCE1: 2026-08-28 | NSE | Current filing | https://www.nseindia.com/
-QUALITY: Thirty completed sessions supplied."""
+QUALITY: One calendar year supplied."""
     parsed = extract_provider_output(output)
     assert parsed["symbol"] == "SBIN"
     assert parsed["confidence"] == 72
@@ -109,7 +116,7 @@ def test_output_validation_enforces_symbol_date_and_enums() -> None:
 def test_output_validation_truncates_for_low_noise_delivery() -> None:
     value = valid_output()
     value["summary"] = "x" * 400
-    assert len(validate_output(value, "SBIN", date(2026, 8, 29))["summary"]) == 180
+    assert len(validate_output(value, "SBIN", date(2026, 8, 29))["summary"]) == 220
 
 
 def test_whatsapp_message_is_concise_consistent_and_contains_no_operational_footer() -> None:
@@ -123,9 +130,11 @@ def test_whatsapp_message_is_concise_consistent_and_contains_no_operational_foot
     assert "*Invalidation:* Material asset-quality deterioration." in message
     assert "*Verified sources:*" in message
     assert "https://www.nseindia.com/" in message
-    assert "*Data quality:* Thirty completed sessions supplied." in message
-    assert "30 completed sessions" in message
-    assert "*Driver:* Credit growth and asset quality remain supportive." in message
+    assert "*Data quality:* One calendar year of completed sessions supplied." in message
+    assert "20 completed sessions" in message
+    assert "*Technical:* Price is consolidating above its medium-term range" in message
+    assert "*Fundamental:* Asset quality is stable" in message
+    assert "*Catalyst:* Credit growth and asset quality remain supportive." in message
     assert "*Entry trigger:* Wait for confirmation after the pending disclosure." in message
     assert "{" not in message and "}" not in message
     assert len(message) < 3500

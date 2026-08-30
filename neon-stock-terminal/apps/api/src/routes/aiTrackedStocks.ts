@@ -11,6 +11,8 @@ export type TrackedStockProvider = {
   confidence: number | null;
   newsSignal: string | null;
   summary: string | null;
+  technicalView: string | null;
+  fundamentalView: string | null;
   keyDriver: string | null;
   keyRisk: string | null;
   entryView: string | null;
@@ -108,6 +110,8 @@ export function registerAiTrackedStockRoutes(app: Express, prisma: PrismaClient)
                    end,
                    'newsSignal',p.parsed_output->>'news_signal',
                    'summary',p.parsed_output->>'summary',
+                   'technicalView',p.parsed_output->>'technical_view',
+                   'fundamentalView',p.parsed_output->>'fundamental_view',
                    'keyDriver',p.parsed_output->>'key_driver',
                    'keyRisk',p.parsed_output->>'key_risk',
                    'entryView',p.parsed_output->>'entry_view',

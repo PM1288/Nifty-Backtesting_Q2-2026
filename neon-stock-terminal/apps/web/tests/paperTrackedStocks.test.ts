@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   filterTrackedStocks,
+  trackedHistoryRows,
   trackedStocksCsv,
   type AiTrackedStock,
 } from "../src/lib/paperTrackedStocks";
@@ -18,7 +19,7 @@ const stocks: AiTrackedStock[] = ["SBIN", "INFY", "RELIANCE"].map((symbol, index
   xfactor: 75.25,
   referencePrice: 100,
   sourceDataThrough: "2026-08-28",
-  historySessionCount: 30,
+  historySessionCount: 248,
   evaluationStatus: "COMPLETED",
   discoveredAt: "2026-08-31T04:00:00.000Z",
   completedAt: "2026-08-31T04:02:00.000Z",
@@ -27,13 +28,25 @@ const stocks: AiTrackedStock[] = ["SBIN", "INFY", "RELIANCE"].map((symbol, index
     CLAUDE: {
       provider: "CLAUDE", model: "Sonnet 5", status: "SUCCEEDED", verdict: "WAIT",
       confidence: 72, newsSignal: "MIXED", summary: "Wait for confirmation.",
+      technicalView: "Price is consolidating.", fundamentalView: "Earnings are stable.",
       keyDriver: "Current filing.", keyRisk: "Event risk.", entryView: "Wait.",
       invalidation: "Evidence weakens.", evidence: [], completedAt: null,
       durationMs: 1000, errorClass: null, deliveryStatus: "DELIVERED",
     },
   },
-  inputSnapshot: { history_30d: [{ date: "2026-08-28", close: 100, volume: 1000 }] },
+  inputSnapshot: {
+    price_history_1y: {
+      columns: ["date", "open", "high", "low", "close", "volume"],
+      rows: [["2026-08-28", 98, 102, 97, 100, 1000]],
+    },
+  },
 }));
+
+test("compact one-year OHLCV is decoded without repeating field names per session", () => {
+  assert.deepEqual(trackedHistoryRows(stocks[0]!.inputSnapshot), [{
+    date: "2026-08-28", open: 98, high: 102, low: 97, close: 100, volume: 1000,
+  }]);
+});
 
 test("tracked-stock filtering searches identity, strategy and AI conclusions", () => {
   assert.equal(filterTrackedStocks(stocks, "").length, 3);
@@ -49,5 +62,7 @@ test("tracked-stock CSV exports every stock and keeps numeric zero distinct from
   assert.match(csv, /"RELIANCE"/);
   assert.match(csv, /"0"/);
   assert.match(csv, /"claude_verdict"/);
+  assert.match(csv, /"claude_technical_view"/);
+  assert.match(csv, /"Earnings are stable\."/);
   assert.equal(csv.split("\n").length, 4);
 });

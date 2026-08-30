@@ -5,15 +5,19 @@ Qwen and DeepSeek, persists the immutable input and each provider result, and
 queues one concise WhatsApp message per successful provider result.
 
 The WhatsApp research brief includes company and strategy context, decision,
-summary, strongest driver, principal risk, entry trigger, invalidation, up to
-three dated sources with links, data-quality note and session coverage. It never
-includes the raw provider response, input JSON or operational diagnostics.
+summary, technical view, fundamental view, catalyst, principal risk, entry
+trigger, invalidation, up to three dated sources with links, data-quality note
+and session coverage. It never includes the raw provider response, input JSON or
+operational diagnostics.
 
-Provider wire output uses the prompt-versioned V3 labelled-line contract rather
-than raw JSON. The worker validates and normalises those lines into PostgreSQL;
-the raw provider response is never forwarded to WhatsApp. Legacy JSON remains
-parseable only so an otherwise valid browser-agent response fails safely during
-the transition.
+Provider wire output uses the prompt-versioned V4 labelled-line contract rather
+than raw JSON. The model-facing request contains only stock identity, reference
+price and a compact column-plus-row matrix holding up to one calendar year of
+completed daily OHLCV. It deliberately excludes strategy direction, status,
+OFactor and XFactor so each provider forms an independent research view. The
+worker validates and normalises the labelled lines into PostgreSQL; raw provider
+responses are never forwarded to WhatsApp. Legacy JSON remains parseable for a
+fail-safe transition.
 
 ## Safety contract
 
@@ -28,7 +32,8 @@ the transition.
 - Every provider has its own idempotent result row.
 - Only a `SUCCEEDED` provider row can create a delivery-outbox row. Exceptions,
   retries, logs and stack traces are never transformed into WhatsApp messages.
-- A minimum of 20 completed daily bars is required; up to 30 are included.
+- A minimum of 20 completed daily bars is required; up to one calendar year is
+  included in the compact matrix without repeating field names per session.
 - The prompt is immutable by version and SHA-256 hash.
 
 ## Operations

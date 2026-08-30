@@ -33,8 +33,16 @@ CREATE TABLE IF NOT EXISTS ai_stock_research.evaluation (
   completed_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (trade_date, symbol),
-  CHECK (history_session_count >= 0 AND history_session_count <= 30)
+  CHECK (history_session_count >= 0 AND history_session_count <= 270)
 );
+
+-- Existing deployments used a 30-session ceiling. Widen only this check so new
+-- immutable inputs can retain a full calendar year of completed NSE sessions.
+ALTER TABLE ai_stock_research.evaluation
+  DROP CONSTRAINT IF EXISTS evaluation_history_session_count_check;
+ALTER TABLE ai_stock_research.evaluation
+  ADD CONSTRAINT evaluation_history_session_count_check
+  CHECK (history_session_count >= 0 AND history_session_count <= 270);
 
 CREATE INDEX IF NOT EXISTS ai_stock_research_evaluation_status_idx
   ON ai_stock_research.evaluation(status,trade_date,discovered_at);

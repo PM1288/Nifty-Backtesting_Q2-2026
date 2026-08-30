@@ -43,7 +43,7 @@ def extract_json_object(output: str) -> dict[str, Any]:
 
 
 def extract_provider_output(output: str) -> dict[str, Any]:
-    """Parse the V3 labelled wire format while retaining V2 JSON compatibility."""
+    """Parse the V4 labelled wire format while retaining legacy JSON compatibility."""
     cleaned = output.strip()
     if not cleaned:
         raise OutputValidationError("provider output is empty")
@@ -60,6 +60,9 @@ def extract_provider_output(output: str) -> dict[str, Any]:
         "CONFIDENCE": "confidence",
         "NEWS": "news_signal",
         "SUMMARY": "summary",
+        "TECHNICAL": "technical_view",
+        "FUNDAMENTAL": "fundamental_view",
+        "CATALYST": "key_driver",
         "DRIVER": "key_driver",
         "RISK": "key_risk",
         "ENTRY": "entry_view",
@@ -140,14 +143,16 @@ def validate_output(value: dict[str, Any], symbol: str, analysis_date: date) -> 
         "verdict": verdict,
         "confidence": confidence,
         "news_signal": news_signal,
-        "summary": _short(value.get("summary"), "summary", 180),
-        "key_driver": _short(value.get("key_driver"), "key_driver", 120),
-        "key_risk": _short(value.get("key_risk"), "key_risk", 120),
-        "entry_view": _short(value.get("entry_view"), "entry_view", 120),
-        "invalidation": _short(value.get("invalidation"), "invalidation", 120),
+        "summary": _short(value.get("summary"), "summary", 220),
+        "technical_view": _short(value.get("technical_view"), "technical_view", 180),
+        "fundamental_view": _short(value.get("fundamental_view"), "fundamental_view", 180),
+        "key_driver": _short(value.get("key_driver"), "key_driver", 140),
+        "key_risk": _short(value.get("key_risk"), "key_risk", 140),
+        "entry_view": _short(value.get("entry_view"), "entry_view", 140),
+        "invalidation": _short(value.get("invalidation"), "invalidation", 140),
         "evidence": evidence,
         "data_quality_note": _short(
-            value.get("data_quality_note"), "data_quality_note", 160, required=False
+            value.get("data_quality_note"), "data_quality_note", 180, required=False
         ),
     }
 
@@ -164,7 +169,8 @@ def render_whatsapp_message(
     snapshot = evaluation["input_snapshot"]
     strategy = snapshot["strategy_snapshot"]
     stock = snapshot["stock"]
-    sessions = len(snapshot.get("history_30d") or [])
+    history = snapshot.get("price_history_1y") or {}
+    sessions = len(history.get("rows") or snapshot.get("history_30d") or [])
     lines = [
         f"{PROVIDER_ICONS[provider]} *{provider} RESEARCH · {source_strategy}*",
         f"*{stock['symbol']} · {stock.get('company_name') or stock['symbol']}*",
@@ -179,7 +185,9 @@ def render_whatsapp_message(
             f"{result['news_signal']} news"
         ),
         f"*Summary:* {result['summary']}",
-        f"*Driver:* {result['key_driver']}",
+        f"*Technical:* {result['technical_view']}",
+        f"*Fundamental:* {result['fundamental_view']}",
+        f"*Catalyst:* {result['key_driver']}",
         f"*Risk:* {result['key_risk']}",
         f"*Entry trigger:* {result['entry_view']}",
         f"*Invalidation:* {result['invalidation']}",

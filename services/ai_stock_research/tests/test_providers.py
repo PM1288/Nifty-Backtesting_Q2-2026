@@ -8,9 +8,15 @@ from ai_stock_research.providers import build_request, call_provider
 PROMPT = "Return labelled lines only."
 INPUT = {
     "analysis_date": "2026-08-29",
-    "stock": {"symbol": "SBIN"},
-    "strategy_snapshot": {"ofactor": 78, "xfactor": 74},
-    "history_30d": [],
+    "stock": {"symbol": "SBIN", "company_name": "State Bank of India", "exchange": "NSE"},
+    "strategy_snapshot": {
+        "direction": "LONG", "status": "WAIT_FOR_XFACTOR",
+        "ofactor": 78, "xfactor": 74, "reference_price": 1082.4,
+    },
+    "price_history_1y": {
+        "columns": ["date", "open", "high", "low", "close", "volume"],
+        "rows": [["2026-08-28", 1080, 1090, 1070, 1082, 1200000]],
+    },
 }
 OUTPUT = {
     "schema_version": "1.0",
@@ -20,6 +26,8 @@ OUTPUT = {
     "confidence": 65,
     "news_signal": "MIXED",
     "summary": "Mixed current evidence.",
+    "technical_view": "Price is range-bound on normal volume.",
+    "fundamental_view": "Current business evidence is mixed.",
     "key_driver": "Stable business trend.",
     "key_risk": "Pending event risk.",
     "entry_view": "Wait for confirmation.",
@@ -37,6 +45,16 @@ def test_provider_payloads_use_each_verified_api_contract() -> None:
     assert qwen["model"] == "Qwen3.7-Plus" and "reasoning_effort" not in qwen
     assert deepseek["search"] is True and deepseek["deep_think"] is False
     assert "Do not return JSON or Markdown" in claude["prompt"]
+    model_input = json.loads(claude["prompt"].split("RESEARCH_INPUT_JSON:\n", 1)[1])
+    assert model_input["schema_version"] == "2.0"
+    assert model_input["reference_price"] == 1082.4
+    assert model_input["price_history_1y"]["columns"] == [
+        "date", "open", "high", "low", "close", "volume"
+    ]
+    assert model_input["price_history_1y"]["rows"][0][-1] == 1200000
+    serialized = json.dumps(model_input)
+    assert "ofactor" not in serialized and "xfactor" not in serialized
+    assert "direction" not in serialized and "WAIT_FOR_XFACTOR" not in serialized
 
 
 def test_provider_response_is_validated_and_private_thinking_is_not_stored() -> None:
@@ -76,7 +94,9 @@ VERDICT: WAIT
 CONFIDENCE: 65
 NEWS: MIXED
 SUMMARY: Mixed current evidence.
-DRIVER: Stable business trend.
+TECHNICAL: Price is range-bound on normal volume.
+FUNDAMENTAL: Current business evidence is mixed.
+CATALYST: Stable business trend.
 RISK: Pending event risk.
 ENTRY: Wait for confirmation.
 INVALIDATION: Material deterioration.

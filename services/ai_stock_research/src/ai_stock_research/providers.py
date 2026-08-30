@@ -25,11 +25,22 @@ def build_request(
     claude_model: str,
     qwen_model: str,
 ) -> dict[str, Any]:
+    strategy = stock_input.get("strategy_snapshot") or {}
+    independent_input = {
+        "schema_version": "2.0",
+        "analysis_date": stock_input.get("analysis_date"),
+        "stock": stock_input.get("stock") or {},
+        "reference_price": strategy.get("reference_price"),
+        "price_history_1y": stock_input.get("price_history_1y") or {
+            "columns": ["date", "open", "high", "low", "close", "volume"],
+            "rows": [],
+        },
+    }
     user_prompt = (
-        "Evaluate this immutable OIIS/OISS candidate snapshot. Research current public information "
-        "and return only the short labelled lines required by the system instruction. Do not return "
-        "JSON or Markdown.\nCANDIDATE_SNAPSHOT:\n"
-        + json.dumps(stock_input, separators=(",", ":"), default=str)
+        "Independently research this stock. Use the compact one-year OHLCV matrix and current "
+        "public evidence, then return exactly the labelled fields required by the system instruction. "
+        "Do not return JSON or Markdown.\nRESEARCH_INPUT_JSON:\n"
+        + json.dumps(independent_input, separators=(",", ":"), default=str)
     )
     common: dict[str, Any] = {"prompt": user_prompt, "system_instruction": prompt}
     if provider == "CLAUDE":

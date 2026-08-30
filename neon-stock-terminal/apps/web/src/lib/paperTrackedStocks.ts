@@ -8,6 +8,8 @@ export interface AiTrackedProviderResult {
   confidence: number | null;
   newsSignal: string | null;
   summary: string | null;
+  technicalView: string | null;
+  fundamentalView: string | null;
   keyDriver: string | null;
   keyRisk: string | null;
   entryView: string | null;
@@ -46,6 +48,10 @@ export interface AiTrackedStock {
   providers: Partial<Record<AiProviderName, AiTrackedProviderResult>>;
   inputSnapshot: {
     history_30d?: Array<Record<string, unknown>>;
+    price_history_1y?: {
+      columns?: string[];
+      rows?: unknown[][];
+    };
     [key: string]: unknown;
   };
 }
@@ -61,6 +67,16 @@ export interface AiTrackedStocksPayload {
 
 export const AI_PROVIDER_ORDER: AiProviderName[] = ["CLAUDE", "QWEN", "DEEPSEEK"];
 
+export function trackedHistoryRows(snapshot: AiTrackedStock["inputSnapshot"]) {
+  const compact = snapshot.price_history_1y;
+  if (Array.isArray(compact?.columns) && Array.isArray(compact.rows)) {
+    return compact.rows.map((row) => Object.fromEntries(
+      compact.columns!.map((column, index) => [column, row[index] ?? null]),
+    ));
+  }
+  return Array.isArray(snapshot.history_30d) ? snapshot.history_30d : [];
+}
+
 export function filterTrackedStocks(stocks: AiTrackedStock[], search: string) {
   const term = search.trim().toUpperCase();
   if (!term) return stocks;
@@ -70,7 +86,10 @@ export function filterTrackedStocks(stocks: AiTrackedStock[], search: string) {
     || stock.sources.some((source) => String(source.strategy ?? "").toUpperCase().includes(term))
     || AI_PROVIDER_ORDER.some((provider) => {
       const result = stock.providers[provider];
-      return [result?.verdict, result?.newsSignal, result?.summary, result?.keyDriver, result?.keyRisk]
+      return [
+        result?.verdict, result?.newsSignal, result?.summary, result?.technicalView,
+        result?.fundamentalView, result?.keyDriver, result?.keyRisk,
+      ]
         .some((value) => String(value ?? "").toUpperCase().includes(term));
     })
   );
@@ -88,7 +107,10 @@ export function trackedStocksCsv(stocks: AiTrackedStock[]) {
     ...AI_PROVIDER_ORDER.flatMap((provider) => [
       `${provider.toLowerCase()}_status`, `${provider.toLowerCase()}_verdict`,
       `${provider.toLowerCase()}_confidence`, `${provider.toLowerCase()}_news_signal`,
-      `${provider.toLowerCase()}_summary`, `${provider.toLowerCase()}_key_risk`,
+      `${provider.toLowerCase()}_summary`, `${provider.toLowerCase()}_technical_view`,
+      `${provider.toLowerCase()}_fundamental_view`, `${provider.toLowerCase()}_catalyst`,
+      `${provider.toLowerCase()}_key_risk`, `${provider.toLowerCase()}_entry_view`,
+      `${provider.toLowerCase()}_invalidation`, `${provider.toLowerCase()}_evidence`,
       `${provider.toLowerCase()}_delivery_status`,
     ]),
   ];
@@ -107,7 +129,9 @@ export function trackedStocksCsv(stocks: AiTrackedStock[]) {
     ...AI_PROVIDER_ORDER.flatMap((provider) => {
       const result = stock.providers[provider];
       return [result?.status, result?.verdict, result?.confidence, result?.newsSignal,
-        result?.summary, result?.keyRisk, result?.deliveryStatus];
+        result?.summary, result?.technicalView, result?.fundamentalView, result?.keyDriver,
+        result?.keyRisk, result?.entryView, result?.invalidation, result?.evidence,
+        result?.deliveryStatus];
     }),
   ]);
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");

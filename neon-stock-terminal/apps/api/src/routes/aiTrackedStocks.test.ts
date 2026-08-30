@@ -15,7 +15,7 @@ test("tracked stocks payload preserves three stocks and separate provider result
     xfactor: "75.25",
     reference_price: "100.00",
     source_data_through: "2026-08-28",
-    history_session_count: 30,
+    history_session_count: 248,
     evaluation_status: "COMPLETED",
     discovered_at: "2026-08-31T04:00:00.000Z",
     completed_at: "2026-08-31T04:02:00.000Z",
@@ -25,14 +25,19 @@ test("tracked stocks payload preserves three stocks and separate provider result
       QWEN: { status: "DEAD", errorClass: "OutputValidationError" },
       DEEPSEEK: { status: "SUCCEEDED", verdict: "RESEARCH_SUPPORTS_ENTRY", confidence: 81 },
     },
-    input_snapshot: { history_30d: [{ date: "2026-08-28", close: 100, volume: 1000 }] },
+    input_snapshot: {
+      price_history_1y: {
+        columns: ["date", "open", "high", "low", "close", "volume"],
+        rows: [["2026-08-28", 98, 102, 97, 100, 1000]],
+      },
+    },
   }));
   const payload = trackedStocksPayload(rows, "2026-08-31", "2026-08-31");
   assert.equal(payload.count, 3);
   assert.equal(payload.usedLatestSession, false);
   assert.equal(payload.stocks[1]?.ofactor, 0);
   assert.equal((payload.stocks[0]?.providers as Record<string, { verdict: string }>).CLAUDE.verdict, "WAIT");
-  assert.equal(payload.stocks[0]?.historySessionCount, 30);
+  assert.equal(payload.stocks[0]?.historySessionCount, 248);
 });
 
 test("tracked stocks payload reports latest-session fallback without inventing rows", () => {

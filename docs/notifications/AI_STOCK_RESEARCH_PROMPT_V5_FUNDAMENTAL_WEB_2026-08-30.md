@@ -52,3 +52,17 @@ thinking field remains unread and unstored.
 Restore service image `trading-stack-ai-stock-research:1.2.1` and the prior
 prompt version. No schema rollback is required because provider output is stored
 as versioned JSONB and prior records are not rewritten.
+
+## Validation evidence
+
+- Worker contract/provider tests: 18/18 passed.
+- Web tests: 67/67 passed; API tests: 130/130 passed.
+- Ruff, compileall, web/API typechecks and production builds, canonical source
+  gate and the 25-check authenticated tracked-stock browser regression passed.
+- Delivery-disabled live validation used the immutable 28 August JINDALSTEL
+  248-session input. Claude, Qwen and DeepSeek all returned valid V5 results
+  with earnings state, web sentiment and three sources. Qwen completed through
+  the existing same-chat recovery and no private thinking was stored.
+- No WhatsApp message was created for the validation replay, avoiding a duplicate
+  stock/day notification. The production WhatsApp formatter is covered by the
+  contract suite and remains enabled for the next new daily candidate.

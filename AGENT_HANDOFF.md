@@ -3441,3 +3441,30 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   frontend/backend typechecks and production builds, and the canonical repository gate. Durable
   implementation evidence is in
   `docs/notifications/AI_STOCK_RESEARCH_PROMPT_V4_ONE_YEAR_2026-08-30.md`.
+
+## 2026-08-30 — V5 fundamental/news/web research contract
+
+- Replaced the active V4 system prompt with user-approved
+  `AI-STOCK-RESEARCH-PROMPT-5.0.0`. Providers are explicitly prohibited from
+  recalculating RSI/MACD/moving averages, inventing support/resistance or
+  producing chart-entry analysis. The compact 248-session OHLCV input is used
+  only to assess price/volume alignment with independently researched sentiment.
+- V5 requires news and earnings states, web sentiment, verified positive and
+  negative evidence, upcoming risk, earnings and market views, price/news
+  alignment, catalyst, risk, up to three sources and data quality. The Paper
+  tracked-stock inspector, filtering and complete CSV export expose these fields.
+  Immutable pre-V5 rows remain readable through clearly labelled historical
+  fields and were not rewritten.
+- Worker `1.3.0` and the dashboard/API are deployed healthy from pushed commit
+  `b7f2d28`. Images are `sha256:cef6a4ccee178fa88a5a422e56adc7beea6876ddc59763e4ace64afcc3726512`
+  and `sha256:ed645baf570151f67c5f78dc8aeac7187c1980453e147b5e1f39a43dc1167e39`;
+  dashboard rollback is `trading-stack-n50-dashboard:rollback-pre-ai-research-v5-20260830`
+  and the prior worker image is `trading-stack-ai-stock-research:1.2.1`.
+- Validation passed: worker 18/18, web 67/67, API 130/130, Ruff, compileall,
+  both typechecks/builds, canonical gate and an authenticated 25-check browser
+  regression. Delivery-disabled live JINDALSTEL research passed Claude, Qwen and
+  DeepSeek with all new fields and three sources; Qwen used same-chat recovery
+  and stored no thinking. No duplicate WhatsApp message was created by this
+  replay. Evidence is in
+  `docs/notifications/AI_STOCK_RESEARCH_PROMPT_V5_FUNDAMENTAL_WEB_2026-08-30.md`
+  and `output/playwright/paper-ai-tracked-stocks-v5/`.

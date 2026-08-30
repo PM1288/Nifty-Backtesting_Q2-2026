@@ -15,7 +15,15 @@ const provider = (name, verdict, confidence, summary) => ({
   verdict,
   confidence,
   newsSignal: "NEUTRAL",
+  earningsState: "STABLE",
+  webSentiment: "MIXED",
   summary,
+  positiveEvidence: `${name} verified the strongest positive evidence`,
+  negativeEvidence: `${name} verified the strongest negative evidence`,
+  upcomingRisk: "No material near-term event identified",
+  earningsView: "Latest earnings are stable",
+  marketView: "Published research sentiment is mixed",
+  priceNewsAlignment: "Recent price and volume are NEUTRAL to sentiment",
   keyDriver: `${name} verified the principal driver`,
   keyRisk: `${name} identified the principal risk`,
   entryView: "Wait for the governed entry condition",
@@ -122,6 +130,9 @@ try {
   check(await inspector.getByRole("heading", { name: "CLAUDE", exact: true }).count() === 1, "Claude inspector detail renders");
   check(await inspector.getByRole("heading", { name: "QWEN", exact: true }).count() === 1, "Qwen inspector detail renders");
   check(await inspector.getByRole("heading", { name: "DEEPSEEK", exact: true }).count() === 1, "DeepSeek inspector detail renders");
+  check(await inspector.getByText("Earnings state", { exact: true }).count() === 3, "V5 earnings state renders for every provider");
+  check(await inspector.getByText("Web sentiment", { exact: true }).count() === 3, "V5 web sentiment renders for every provider");
+  check(await inspector.getByText("Price/news alignment", { exact: true }).count() === 3, "V5 price/news alignment renders for every provider");
   check(await inspector.locator("tbody tr").count() === 30, "30 immutable OHLCV sessions render");
   await page.keyboard.press("Escape");
   check(await inspector.count() === 0, "Escape closes inspector");
@@ -134,6 +145,7 @@ try {
   const csv = await fs.readFile(downloadPath, "utf8");
   check(["SBIN", "INFY", "RELIANCE"].every((symbol) => csv.includes(`\"${symbol}\"`)), "CSV exports all three filtered rows");
   check(csv.includes("claude_verdict") && csv.includes("qwen_verdict") && csv.includes("deepseek_verdict"), "CSV preserves all provider columns");
+  check(csv.includes("claude_earnings_state") && csv.includes("claude_web_sentiment") && csv.includes("claude_price_news_alignment"), "CSV preserves V5 research fields");
 
   await page.screenshot({ path: path.join(outputDir, "desktop-1920x1080.png"), fullPage: true });
   check(consoleErrors.length === 0, `browser console errors: ${consoleErrors.join(" | ") || "none"}`);

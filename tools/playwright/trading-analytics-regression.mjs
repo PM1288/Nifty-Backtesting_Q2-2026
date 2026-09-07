@@ -157,6 +157,28 @@ try {
       ),
     );
     await downloaded.saveAs(path.join(out, `${width}-option-export.csv`));
+    await fs.writeFile(
+      path.join(out, `${width}-evidence.json`),
+      JSON.stringify(d, null, 2),
+    );
+    await page
+      .getByRole("navigation", { name: "Trading analytics lenses" })
+      .getByRole("button", { name: "SmartAPI OI & Quotes", exact: true })
+      .click();
+    const smartDownloadPending = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Export source rows CSV", exact: true })
+      .click();
+    const smartDownload = await smartDownloadPending;
+    const smartCsv = await fs.readFile(await smartDownload.path(), "utf8");
+    check(
+      `${width} SmartAPI CSV contracts and OI`,
+      smartCsv.includes("open_interest") &&
+        d.smartapi.legs.every((l) =>
+          smartCsv.includes(l.instrument_identifier),
+        ),
+    );
+    await smartDownload.saveAs(path.join(out, `${width}-smartapi-export.csv`));
     const accessible = await new AxeBuilder({ page }).include("main").analyze();
     await fs.writeFile(
       path.join(out, `${width}-axe.json`),

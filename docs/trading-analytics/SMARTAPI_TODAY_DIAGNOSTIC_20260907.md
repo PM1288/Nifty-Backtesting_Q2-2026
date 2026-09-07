@@ -47,3 +47,13 @@ Nearest ten paired strikes, one selected expiry, exact master identities, OI, vo
 The adapter reads recent quotes with `ts <= asOf`; every leg keeps its own timestamp and missingness. This is an asynchronous quote view, not an atomic exchange snapshot. Session-close labels require calendar close and exchange timestamp alignment; older quotes remain STALE. No provider preference changed elsewhere and no order path added.
 
 Live database validation: report date 2026-09-07, 20 SmartAPI legs with 20 OI values, zero source query errors, completed daily candle 2026-09-07. Greek fields are not joined into this new quote view; successful Greek collection does not imply every contract has verified Greeks. SmartAPI interface review: https://raw.githubusercontent.com/angel-one/smartapi-python/main/SmartApi/smartConnect.py (FULL market quotes, historical OI, Greeks, PCR interfaces).
+
+## Deployed validation
+
+- Runtime commit `2689f95`, pushed master before build; image `sha256:02d717de5fa8d32b9675fbe65061ba6368d8413c24e7c84b8615e652c2ef6466`.
+- API 160 passed / 0 failed; frontend 69 passed / 0 failed; both typechecks and builds passed; canonical repository gate passed.
+- Public authenticated browser: 128 assertions passed / 0 failed across 1920×1080, 1440×900, 1024×768, 390×844; nine lenses; source CSV contracts/OI checked; zero axe violations in SmartAPI main region at each size.
+- 36 screenshots, four complete evidence JSONs, four SmartAPI CSVs, four NSE CSVs and results/axe files at `/home/novius2/trading-stack/output/playwright/trading-analytics-smartapi-20260907/`.
+- Physical raw NSE report location: `/var/lib/docker/volumes/trading-stack-novius2_nse_fii_reports_data/_data/latest_daily/2026-09-07/`.
+- FII index futures today: 34,987 long, 285,080 short. These participant contract counts are separate from the provider-native per-option OI above.
+- Institutional scheduler remains disabled; ongoing automatic report refresh is an unresolved operational dependency, not repaired by this manual pull. Other collectors/strategy/paper services remain unchanged.

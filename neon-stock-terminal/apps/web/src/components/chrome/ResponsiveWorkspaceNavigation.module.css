@@ -31,6 +31,7 @@
 .searchSlot { flex: 0 0 auto; min-width: 0; }
 
 .primaryNavigation {
+  flex: 0 0 auto;
   min-width: 0;
   display: flex;
   align-items: center;

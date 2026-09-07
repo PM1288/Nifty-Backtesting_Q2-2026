@@ -77,6 +77,8 @@ try {
 
     if (viewport.width >= 1280) {
       const primary = page.getByRole("navigation", { name: "Primary navigation" });
+      const navBox = await primary.boundingBox(), shortcutBox = await shortcut.boundingBox();
+      check(viewport, "shortcut does not overlap primary navigation", Boolean(navBox && shortcutBox && navBox.x + navBox.width <= shortcutBox.x));
       check(viewport, "four primary destinations", await primary.locator(":scope > a, :scope > div > button").count() === 4);
       for (const label of ["Today", "Markets", "Strategy", /Paper/]) check(viewport, `primary ${String(label)}`, await primary.getByRole(label === "Markets" || label === "Strategy" ? "button" : "link", { name: label }).isVisible());
 

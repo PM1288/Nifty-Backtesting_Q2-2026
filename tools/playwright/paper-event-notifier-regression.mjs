@@ -33,7 +33,7 @@ try {
   await page.goto(`${origin}/n50/analytics`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const launcher = page.getByRole("button", { name: /Paper trade notifications/ });
   await launcher.waitFor({ state: "visible", timeout: 60_000 });
-  check("header defaults muted", await page.getByRole("button", { name: "Speak paper trade entry and exit conditions" }).count() === 1);
+  check("header speech defaults on", await page.getByRole("button", { name: "Mute paper trade voice alerts" }).getAttribute("aria-pressed") === "true");
   check("launcher is compact", await launcher.evaluate((node) => node.getBoundingClientRect().width === 42));
   await launcher.click();
   const panel = page.getByRole("region", { name: "Latest five paper trade notifications" });
@@ -65,18 +65,18 @@ try {
       title: "ANALYTICAL TARGET HIT", body: "Regression-only browser response; production data was not changed.",
       symbol: "RELIANCE", occurredAt: new Date().toISOString(), tradeId: "regression-only",
       deepLink: "/paper-trading?tradeId=regression-only&source=paper-alert",
-      speechText: "Paper trade target condition hit for RELIANCE. Higher analytical targets remain active.",
+      speechText: "Target hit. RELIANCE.",
     });
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ...payload, items: items.slice(0, 5) }) });
   });
   const autoPage = await simulated.newPage();
   await autoPage.goto(`${origin}/n50/`, { waitUntil: "domcontentloaded", timeout: 90_000 });
-  await autoPage.getByRole("button", { name: "Speak paper trade entry and exit conditions" }).click();
+  await autoPage.getByRole("button", { name: "Mute paper trade voice alerts" }).waitFor();
   await autoPage.getByRole("button", { name: /Paper trade notifications/ }).click();
   await autoPage.keyboard.press("Escape");
   await autoPage.getByRole("region", { name: "Latest five paper trade notifications" }).waitFor({ state: "visible", timeout: 12_000 });
   check("new event auto-opens", await autoPage.getByText("Regression-only browser response", { exact: false }).count() === 1, `pollCalls=${calls}`);
-  check("native speech receives event", await autoPage.evaluate(() => window.__n50Spoken.some((text) => text.includes("target condition hit for RELIANCE"))));
+  check("native speech receives concise event", await autoPage.evaluate(() => window.__n50Spoken.some((text) => /target hit.*RELIANCE/i.test(text))));
   await autoPage.getByRole("button", { name: "Mute paper trade voice alerts" }).click();
   check("mute cancels speech", await autoPage.evaluate(() => window.__n50Spoken.at(-1) === "CANCELLED"));
   await simulated.close();

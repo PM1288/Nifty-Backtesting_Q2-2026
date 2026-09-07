@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getJson } from "../lib/api";
 import type { EChartsOption } from "echarts";
 import styles from "./TradingAnalyticsPage.module.css";
+import { candleColors } from "../lib/tradingAnalyticsChartView";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
@@ -34,8 +35,8 @@ export function AnalyticsPricePane({
     animation: false,
     textStyle: { fontSize: 12 },
     tooltip: { trigger: "axis" },
-    legend: {data:[label,'9 EMA'],textStyle:{fontSize:12}},
-    dataZoom: [{type:'inside'},{type:'slider',bottom:0,height:22}],
+    legend: { data: [label, "9 EMA"], textStyle: { fontSize: 12 } },
+    dataZoom: [{ type: "inside" }, { type: "slider", bottom: 0, height: 22 }],
     grid: { left: 75, right: 70, top: 35, bottom: 65 },
     xAxis: {
       type: "category",
@@ -67,12 +68,7 @@ export function AnalyticsPricePane({
       {
         name: label,
         type: "candlestick",
-        itemStyle: {
-          color: "#fff",
-          borderColor: "#6478D9",
-          color0: "#6478D9",
-          borderColor0: "#6478D9",
-        },
+        itemStyle: candleColors,
         data: bars.map((b) =>
           ["open", "close", "low", "high"].map((k) =>
             b[k] == null ? NaN : Number(b[k]),
@@ -104,7 +100,7 @@ export function AnalyticsPricePane({
           />{" "}
           9 EMA
         </label>
-        <span>Hollow blue: rising · filled blue: falling</span>
+        <span>Green: rising · red: falling</span>
       </header>
       <p>
         Levels / OI price profile unavailable until approved source/level

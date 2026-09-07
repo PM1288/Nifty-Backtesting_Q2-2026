@@ -31,6 +31,15 @@ export function periodCandles(
       );
       return {
         date,
+        end: end.toISOString(),
+        knownAt: items.every((r) => r.created_at != null)
+          ? new Date(
+              Math.max(
+                ...items.map((r) => new Date(String(r.created_at)).getTime()),
+                end.getTime(),
+              ),
+            ).toISOString()
+          : null,
         open: valid ? numeric(items[0].open) : null,
         close: valid ? numeric(items.at(-1)?.close) : null,
         high: valid ? Math.max(...items.map((r) => numeric(r.high)!)) : null,

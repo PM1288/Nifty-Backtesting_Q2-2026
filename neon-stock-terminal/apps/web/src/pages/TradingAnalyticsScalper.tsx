@@ -5,6 +5,12 @@ import type { EChartsOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { oiTimeline } from "../lib/tradingAnalyticsOiTimeline";
+import {
+  candleColors,
+  chartInterval,
+  istDay,
+  dayRows,
+} from "../lib/tradingAnalyticsChartView";
 import styles from "./TradingAnalyticsPage.module.css";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
@@ -16,17 +22,25 @@ export function TradingAnalyticsScalper({
   strikes,
   spot,
   legs = [],
+  resistance = [],
 }: {
   asOf: string;
   expiry: string;
   strikes: number[];
   spot: number | null;
   legs?: Row[];
+  resistance?: Row[];
 }) {
   const [params, setParams] = useSearchParams();
-  const interval = [5, 15, 60].includes(Number(params.get("interval")))
-    ? Number(params.get("interval"))
-    : 15;
+  const interval = chartInterval(params.get("interval"));
+  const [showLevels, setShowLevels] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
+  const updateView = (key: string, value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setParams(next);
+  };
   const strike = params.get("strike") ?? "";
   const setInterval = (v: number) => {
     const next = new URLSearchParams(params);
@@ -79,7 +93,28 @@ export function TradingAnalyticsScalper({
     staleTime: 30000,
     retry: 1,
   });
-  const panes = q.data?.panes;
+  const days = [
+    ...new Set(
+      (q.data?.panes[0]?.bars ?? []).map((b) => istDay(b.end)).filter(Boolean),
+    ),
+  ]
+    .sort()
+    .reverse();
+  const day = days.includes(params.get("day") ?? "")
+    ? params.get("day")!
+    : (days[0] ?? "");
+  const oneDay = params.get("range") !== "all";
+  const panes = useMemo(
+    () =>
+      q.data?.panes.map((p) => ({
+        ...p,
+        bars: oneDay ? dayRows(p.bars, day, "end") : p.bars,
+        oiHistory: oneDay
+          ? dayRows(p.oiHistory ?? [], day, "event_time")
+          : p.oiHistory,
+      })),
+    [q.data, oneDay, day],
+  );
   const option = useMemo<EChartsOption>(() => {
     const rows = panes ?? [];
     const times = [
@@ -129,6 +164,7 @@ export function TradingAnalyticsScalper({
         type: "value",
         gridIndex: i,
         scale: true,
+        interval: i === 0 && showGrid ? 50 : undefined,
         position: "right",
         axisLabel: { fontSize: 12 },
         splitLine: { lineStyle: { color: "#E8EBEF" } },
@@ -145,12 +181,22 @@ export function TradingAnalyticsScalper({
           {
             name: String(p.identity.tradingsymbol),
             type: "candlestick" as const,
-            itemStyle: {
-              color: "#fff",
-              color0: "#6478D9",
-              borderColor: "#6478D9",
-              borderColor0: "#6478D9",
-            },
+            itemStyle: candleColors,
+            markLine:
+              i === 0 && showLevels
+                ? {
+                    symbol: "none",
+                    silent: true,
+                    label: { position: "insideEndTop", formatter: "{b}" },
+                    data: resistance
+                      .filter((r) => r.selected != null)
+                      .map((r) => ({
+                        name: `${String(r.timeframe).toUpperCase()} R · preview`,
+                        yAxis: Number((r.selected as Row).resistance),
+                      })),
+                    lineStyle: { type: "dashed", color: "#969B45" },
+                  }
+                : undefined,
             xAxisIndex: i,
             yAxisIndex: i,
             data: times.map((t) => {
@@ -180,11 +226,34 @@ export function TradingAnalyticsScalper({
         ];
       }),
     };
-  }, [panes, narrow, showEma]);
+  }, [panes, narrow, showEma, showLevels, showGrid, resistance]);
   return (
     <>
       <div className={styles.toolbar}>
         <h2>Underlying / exact CE / exact PE</h2>
+        <label>
+          Chart range{" "}
+          <select
+            value={oneDay ? "day" : "all"}
+            onChange={(e) => updateView("range", e.target.value)}
+          >
+            <option value="day">One day only</option>
+            <option value="all">All retained days</option>
+          </select>
+        </label>
+        {oneDay && (
+          <label>
+            Trading day (IST){" "}
+            <select
+              value={day}
+              onChange={(e) => updateView("day", e.target.value)}
+            >
+              {days.map((d) => (
+                <option key={d}>{d}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label>
           Interval{" "}
           <select
@@ -240,6 +309,84 @@ export function TradingAnalyticsScalper({
           </button>
         )}
       </div>
+      <div className={styles.toolbar}>
+        <label>
+          <input
+            type="checkbox"
+            checked={showGrid}
+            onChange={(e) => setShowGrid(e.target.checked)}
+          />
+          NIFTY 50-point grid
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showLevels}
+            onChange={(e) => setShowLevels(e.target.checked)}
+          />
+          Monthly / weekly / daily R
+        </label>
+        {["daily", "weekly"].map((timeframe) => (
+          <label key={timeframe}>
+            {timeframe} R lookback{" "}
+            <input
+              key={params.get(`${timeframe}Lookback`) ?? "unset"}
+              type="number"
+              min={1}
+              max={timeframe === "daily" ? 400 : 100}
+              placeholder="Required"
+              defaultValue={params.get(`${timeframe}Lookback`) ?? ""}
+              style={{ width: 90 }}
+              onBlur={(e) => {
+                const v = Number(e.target.value);
+                if (
+                  !e.target.value ||
+                  (Number.isInteger(v) &&
+                    v >= 1 &&
+                    v <= (timeframe === "daily" ? 400 : 100))
+                )
+                  updateView(`${timeframe}Lookback`, e.target.value);
+                else e.target.reportValidity();
+              }}
+            />
+          </label>
+        ))}
+      </div>
+      <p>
+        Green = rising; red = falling. One-day view uses the latest recorded
+        underlying session unless another day is selected; EMA retains its
+        historical warm-up. Grid spacing is 50 NIFTY points only, not option
+        premium levels.
+      </p>
+      <div className={styles.kpis}>
+        {resistance.map((r) => (
+          <span key={String(r.timeframe)}>
+            {String(r.timeframe).toUpperCase()} R ·{" "}
+            {String(r.lookback ?? "choose")} completed bars
+            <strong>
+              {r.selected == null
+                ? "—"
+                : Number((r.selected as Row).resistance).toLocaleString(
+                    "en-IN",
+                  )}
+            </strong>
+            {String(r.state).replaceAll("_", " ")}
+          </span>
+        ))}
+      </div>
+      <details>
+        <summary>Resistance rule / origin and break evidence</summary>
+        <p>
+          Preview: open of unbroken bearish candle; largest open-minus-close
+          body, then latest origin. A later completed same-timeframe close
+          strictly above breaks R permanently; equality is a touch. Monthly: 12
+          completed bars. Daily and weekly counts are user-configured because
+          source notes do not specify them. Only resistance above the as-of
+          price is selected. Research overlays, not approved trade signals.
+          Far-away levels may be outside the visible price range.
+        </p>
+        <pre tabIndex={0}>{JSON.stringify(resistance, null, 2)}</pre>
+      </details>
       <p>
         Shared time cursor, independent price scales. Exact contracts are never
         spliced into a rotating ATM series. Only fully observed closed bars are
@@ -383,7 +530,7 @@ export function TradingAnalyticsScalper({
         <p>
           Own-series 9 EMA · aligned completed intervals required · 70%
           range/body and put confirmation remain unapproved. No paper
-          eligibility. Hollow blue = rising; filled blue = falling.
+          eligibility. Green = rising; red = falling.
         </p>
       </section>
       {(panes?.length ?? 0) < 3 && (
@@ -396,7 +543,8 @@ export function TradingAnalyticsScalper({
         <details key={String(p.identity.tradingsymbol)}>
           <summary>
             {String(p.identity.tradingsymbol)} · {p.sourceMinuteCount} source
-            minutes · {p.bars.filter((b) => b.closed).length} complete bars
+            minutes in retained archive ·{" "}
+            {p.bars.filter((b) => b.closed).length} complete bars in view
           </summary>
           <div
             className={styles.tableWrap}

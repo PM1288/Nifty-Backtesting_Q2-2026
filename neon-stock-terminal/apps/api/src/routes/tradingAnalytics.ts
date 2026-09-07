@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { loadSmartApiNifty } from "../services/tradingAnalyticsSmartApi";
 import { periodCandles } from "../services/tradingAnalyticsPeriods";
+import { resistanceViews } from "../services/tradingAnalyticsResistance";
 import {
   activity,
   participant,
@@ -20,6 +21,8 @@ import {
 } from "../services/tradingAnalytics";
 
 const querySchema = z.object({
+  dailyLookback: z.coerce.number().int().min(1).max(400).optional(),
+  weeklyLookback: z.coerce.number().int().min(1).max(100).optional(),
   asOf: z.string().datetime({ offset: true }).optional(),
   date: z
     .string()
@@ -35,6 +38,8 @@ export async function loadTradingAnalytics(
   asOf: string,
   date?: string,
   expiry?: string,
+  dailyLookback?: number,
+  weeklyLookback?: number,
 ) {
   const errors: { source: string; state: string }[] = [];
   const read = async (source: string, sql: string, ...args: unknown[]) => {
@@ -206,6 +211,13 @@ export async function loadTradingAnalytics(
     issues,
     errors,
     candles,
+    resistance: resistanceViews(
+      daily,
+      asOf,
+      numeric(smartapi.spot?.ltp),
+      dailyLookback,
+      weeklyLookback,
+    ),
     periods: {
       weekly: periodCandles(daily, "week", asOf),
       monthly: periodCandles(daily, "month", asOf),
@@ -401,6 +413,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
           asOf,
           parsed.data.date,
           parsed.data.expiry,
+          parsed.data.dailyLookback,
+          parsed.data.weeklyLookback,
         ),
       );
     } catch {

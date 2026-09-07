@@ -38,6 +38,7 @@ type Payload = {
   issues: Row[];
   errors: Row[];
   candles: Row[];
+  resistance?: Row[];
   periods?: { weekly: Row[]; monthly: Row[] };
   smartapi: {
     source: string;
@@ -284,7 +285,7 @@ export function TradingAnalyticsPage() {
         : "morning";
   const [replayInput, setReplayInput] = useState(params.get("asOf") ?? "");
   const query = new URLSearchParams();
-  for (const k of ["date", "expiry", "asOf"])
+  for (const k of ["date", "expiry", "asOf", "dailyLookback", "weeklyLookback"])
     if (params.get(k)) query.set(k, params.get(k)!);
   const q = useQuery({
     queryKey: ["trading-analytics", query.toString()],
@@ -909,6 +910,7 @@ export function TradingAnalyticsPage() {
                     : d.chain.strikes
                 }
                 legs={d.smartapi.legs}
+                resistance={d.resistance}
                 spot={
                   d.smartapi.spot?.ltp == null
                     ? null
@@ -976,7 +978,27 @@ export function TradingAnalyticsPage() {
               Formula {d.version} · Report {d.reportDate} · As-of {d.asOf}
             </p>
             <p>Evidence digest: {d.evidenceId}</p>
-            {drawer==='source'&&inspected?.strike!=null&&<button onClick={()=>{const next=new URLSearchParams(params);next.set('view','scalper');next.set('strike',String(inspected.strike));next.set('pin','true');const expiry=inspected.expiry??inspected.expiry_date??(tab==='options'?d.chain.snapshot?.expiry_date:d.smartapi.expiry);if(expiry)next.set('expiry',String(expiry).slice(0,10));setParams(next);setDrawer(null);}}>Open exact pair in Scalper</button>}
+            {drawer === "source" && inspected?.strike != null && (
+              <button
+                onClick={() => {
+                  const next = new URLSearchParams(params);
+                  next.set("view", "scalper");
+                  next.set("strike", String(inspected.strike));
+                  next.set("pin", "true");
+                  const expiry =
+                    inspected.expiry ??
+                    inspected.expiry_date ??
+                    (tab === "options"
+                      ? d.chain.snapshot?.expiry_date
+                      : d.smartapi.expiry);
+                  if (expiry) next.set("expiry", String(expiry).slice(0, 10));
+                  setParams(next);
+                  setDrawer(null);
+                }}
+              >
+                Open exact pair in Scalper
+              </button>
+            )}
             {drawer === "source" ? (
               <>
                 <p>

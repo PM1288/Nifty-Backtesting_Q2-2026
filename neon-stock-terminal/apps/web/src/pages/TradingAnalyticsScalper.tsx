@@ -20,6 +20,23 @@ const Chart = lazy(async () => ({
 type Row = Record<string, unknown>;
 const measurementChartOpts = { notMerge: false, replaceMerge: ["series", "grid", "xAxis", "yAxis"] };
 const valueText = (v: number | null) => v == null ? "—" : v.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+const htmlText = (v: unknown) => String(v ?? "—").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
+function scalpTooltip(input: unknown) {
+  const entries = (Array.isArray(input) ? input : [input]) as Row[];
+  return entries.map((p, i) => {
+    const v=p.value;
+    const text=p.seriesType === "candlestick" && Array.isArray(v)
+      ? ["O","C","L","H"].map((label,j)=>`${label} ${valueText(typeof v.slice(-4)[j] === "number" && Number.isFinite(v.slice(-4)[j]) ? v.slice(-4)[j] : null)}`).join(" · ")
+      : valueText(typeof v === "number" && Number.isFinite(v) ? v : null);
+    return `${i===0?`${htmlText(p.axisValueLabel)}<br/>`:""}${htmlText(p.seriesName)}: ${htmlText(text)}`;
+  }).join("<br/>");
+}
+function IndicatorEvidence({times, indicators}:{times:string[];indicators:Map<string,ReturnType<typeof scalperIndicators>[number]>}) {
+  return <details><summary>RSI / MACD values and calculation</summary>
+    <p>Display-only, selected interval, completed closes with retained-history warm-up. RSI14 uses the platform’s rolling average gains/losses (not Wilder smoothing). MACD12/26 and signal9 use SMA-seeded EMA. Partial candles reset warm-up; unavailable values remain —. These do not change strategy signals.</p>
+    <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Indicator values scroll area"><table aria-label="Underlying RSI and MACD values"><thead><tr><th>End (UTC)</th><th>RSI14</th><th>MACD</th><th>Signal9</th><th>Histogram</th></tr></thead><tbody>{times.map(t=>{const r=indicators.get(t);return <tr key={t}><td>{t}</td><td>{valueText(r?.rsi??null)}</td><td>{valueText(r?.macd??null)}</td><td>{valueText(r?.signal??null)}</td><td>{valueText(r?.histogram??null)}</td></tr>;})}</tbody></table></div>
+  </details>;
+}
 export function TradingAnalyticsScalper({
   symbol='NIFTY',label='NIFTY 50',
   asOf,
@@ -133,7 +150,7 @@ export function TradingAnalyticsScalper({
   const measured = points.length === 2 ? measurePanes(panes ?? [], points[0], points[1], Number(quantity)) : null;
   const pickPoint = (index:number) => {
     if (!fixedPair || !selecting || !times[index]) return;
-    if (points.length === 1) { setPoints([points[0],times[index]]); setSelecting(false); }
+    if (points.length === 1) { setPoints([points[0],times[index]].sort()); setSelecting(false); }
     else setPoints([times[index]]);
   };
   const option = useMemo<EChartsOption>(() => {
@@ -143,7 +160,7 @@ export function TradingAnalyticsScalper({
     ].sort();
     return {
       animation: false,
-      tooltip: { trigger: "axis" },
+      tooltip: { trigger: "axis", transitionDuration:0, hideDelay:0, formatter:scalpTooltip },
       axisPointer: { link: [{ xAxisIndex: "all" }] },
       textStyle: { fontSize: 12 },
       dataZoom: [{type:"inside",xAxisIndex: rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]), zoomOnMouseWheel:true, moveOnMouseMove: !selecting}, {type:"slider",xAxisIndex:rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]),bottom:5,height:18}],
@@ -317,7 +334,7 @@ export function TradingAnalyticsScalper({
         <span>Expiry {effectiveExpiry || "—"}</span>
         <button disabled={!!fixedPair} onClick={() => setStrike(selected)}>Pin selected pair</button>
         <button disabled={!!fixedPair} onClick={() => setStrike("")}>Reset to ATM auto-follow</button>
-        <strong>{strike ? "PINNED" : "ATM AUTO-FOLLOW"}</strong>
+        <strong>{fixedPair ? "VISUAL PAIR FIXED" : strike ? "PINNED" : "ATM AUTO-FOLLOW"}</strong>
         <label>
           <input
             type="checkbox"
@@ -357,14 +374,14 @@ export function TradingAnalyticsScalper({
           <label><input type="checkbox" checked={showIndicators} onChange={e=>setShowIndicators(e.target.checked)}/>Underlying RSI / MACD</label>
         </div>
         <p role="status">{fixedPair?`VISUAL PAIR FIXED · ${symbol} ${fixedPair.strike} · ${fixedPair.expiry}`:"Fix the pair to begin."} {selecting?`Click ${points.length?"B (last)":"A (first)"} on any price pane, or use the time controls below.`:"Scroll to zoom; drag to pan."}</p>
-        {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A start time":"B end time"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>i===0?[e.target.value]:[old[0]??times[0],e.target.value]);setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
+        {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A start time":"B end time"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>!e.target.value?[]:i===0?[e.target.value]:[old[0]??times[0],e.target.value].sort());setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
         {measured && <>
           <strong data-testid="measurement-pnl">Illustrative long CE + PE P&amp;L: ₹{valueText(measured.pnl)}</strong>
-          <div className={styles.tableWrap}><table aria-label="Synchronized price changes"><thead><tr><th>Instrument</th><th>A close</th><th>B close</th><th>Δ price</th><th>Δ × quantity</th></tr></thead><tbody>{measured.rows.map(r=><tr key={r.symbol}><th>{r.symbol}</th><td>{valueText(r.from)}</td><td>{valueText(r.to)}</td><td>{valueText(r.delta)}</td><td>{r.kind==="UNDERLYING"?"—":valueText(r.delta==null||!Number.isSafeInteger(Number(quantity))||Number(quantity)<=0?null:r.delta*Number(quantity))}</td></tr>)}<tr><th>CE + PE</th><td>—</td><td>—</td><td>{valueText(measured.combined)}</td><td>{valueText(measured.pnl)}</td></tr></tbody></table></div>
+          <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Measurement values scroll area"><table aria-label="Synchronized price changes"><thead><tr><th>Instrument</th><th>A close</th><th>B close</th><th>Δ price</th><th>Δ × quantity</th></tr></thead><tbody>{measured.rows.map(r=><tr key={r.symbol}><th>{r.symbol}</th><td>{valueText(r.from)}</td><td>{valueText(r.to)}</td><td>{valueText(r.delta)}</td><td>{r.kind==="UNDERLYING"?"—":valueText(r.delta==null||!Number.isSafeInteger(Number(quantity))||Number(quantity)<=0?null:r.delta*Number(quantity))}</td></tr>)}<tr><th>CE + PE</th><td>—</td><td>—</td><td>{valueText(measured.combined)}</td><td>{valueText(measured.pnl)}</td></tr></tbody></table></div>
           <p>{measured.start} → {measured.end} · UTC source times. Missing matching closes: — (no nearest-time substitution).</p>
         </>}
         <small>Browser memory only; cleared on reload or leaving this view. Quantity 65 is an editable visual default, not verified lot size. Close-to-close price delta, not Greek Delta. Long both legs, before costs/slippage; not a trade, order or booked P&amp;L.</small>
-        <details><summary>RSI / MACD values and calculation</summary><p>Display-only, selected interval, completed closes with retained-history warm-up. RSI14 uses the platform’s rolling average gains/losses (not Wilder smoothing). MACD12/26 and signal9 use SMA-seeded EMA. Partial candles reset warm-up; unavailable values remain —. These do not change strategy signals.</p><div className={styles.tableWrap}><table aria-label="Underlying RSI and MACD values"><thead><tr><th>End (UTC)</th><th>RSI14</th><th>MACD</th><th>Signal9</th><th>Histogram</th></tr></thead><tbody>{times.map(t=>{const r=indicators.get(t);return <tr key={t}><td>{t}</td><td>{valueText(r?.rsi??null)}</td><td>{valueText(r?.macd??null)}</td><td>{valueText(r?.signal??null)}</td><td>{valueText(r?.histogram??null)}</td></tr>;})}</tbody></table></div></details>
+        <IndicatorEvidence times={times} indicators={indicators}/>
       </section>
       <div className={styles.toolbar}>
         <label>
@@ -455,7 +472,7 @@ export function TradingAnalyticsScalper({
         {panes?.map((p) => (
           <strong key={String(p.identity.tradingsymbol)}>
             {String(p.identity.tradingsymbol)} · {interval}m ·{" "}
-            {strike ? "Pinned pair" : "Auto pair"}
+            {fixedPair ? "Visual pair fixed" : strike ? "Pinned pair" : "Auto pair"}
           </strong>
         ))}
       </div>

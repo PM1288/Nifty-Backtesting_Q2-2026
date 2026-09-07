@@ -33,10 +33,11 @@ try{
  const chart=page.getByRole('img',{name:'Time-linked underlying and exact option candles with independent price scales'});await chart.scrollIntoViewIfNeeded();
  const box=await chart.boundingBox();await page.mouse.click(box.x+box.width*.22,box.y+box.height*.2);check('first chart click selects A',Boolean(await start.inputValue()));
  await page.mouse.click(box.x+box.width*.4,box.y+box.height*.27);check('second chart click selects B',Boolean(await end.inputValue()));
+ await page.mouse.move(0,0);await page.waitForTimeout(200);
  await page.screenshot({path:`${out}/measurement-desktop.png`,fullPage:true});
  await chart.hover();await page.mouse.wheel(0,-100);check('measurement retained during zoom',await page.getByTestId('measurement-pnl').isVisible());
  await page.getByText('RSI / MACD values and calculation',{exact:true}).click();check('indicator evidence available',await page.getByRole('table',{name:'Underlying RSI and MACD values'}).isVisible());
- for(const width of [1440,390]){await page.setViewportSize({width,height:1000});const a=await new AxeBuilder({page}).include('main').analyze();await fs.writeFile(`${out}/axe-${width}.json`,JSON.stringify(a.violations,null,2));check(`${width} accessibility`,a.violations.length===0);check(`${width} no page overflow`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:`${out}/measurement-${width}.png`,fullPage:true});}
+ for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await page.mouse.move(0,0);await page.waitForTimeout(200);const a=await new AxeBuilder({page}).include('main').analyze();await fs.writeFile(`${out}/axe-${width}.json`,JSON.stringify(a.violations,null,2));check(`${width} accessibility`,a.violations.length===0);check(`${width} no page overflow`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:`${out}/measurement-${width}.png`,fullPage:true});}
  await page.reload();await fix.waitFor({timeout:60000});check('reload clears visual pair',await fix.isVisible());check('reload clears measurement',await page.getByTestId('measurement-pnl').count()===0);check('reload resets quantity',await page.getByRole('spinbutton',{name:'Measurement quantity'}).inputValue()==='65');check('no JS errors',errors.length===0);
 }finally{await browser.close();await fs.writeFile(`${out}/results.json`,JSON.stringify(results,null,2));}
 console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,total:results.length}));

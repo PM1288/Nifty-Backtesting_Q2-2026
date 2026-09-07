@@ -32,8 +32,47 @@ The header harness checks seven widths (1920, 1440, 1280, 1024, 430, 390, 360),
 shortcut destination/style/fit, header geometry and existing menu interactions.
 Browser synthetic notifier events are intercepted responses, not stored trades.
 
-Release results will be appended after deployment validation. Do not interpret
-this document as full strategy acceptance.
+## Final release evidence
+
+Deployed pushed-master application commit `c17b25c`. Image:
+`sha256:6c0b4c1c2e21554565d32051bb9709eb5a30754dc04f520eddeeb9bfd2314553`.
+Only dashboard recreated; final health healthy, zero restarts observed.
+
+- Web 79/79 and API 180/180 unit tests pass; typechecks/builds pass.
+- Canonical repository and whitespace gates pass.
+- Final public header browser run: **184/184**, seven widths, actual shortcut
+  clicks, solid pink/white, no gradient/animation, no navigation overlap,
+  no page horizontal overflow, menu stacking and keyboard/search preserved.
+- Paper notifier: **17/17**, durable endpoint, intercepted-only synthetic target,
+  concise speech default on, mute cancellation, desktop/mobile popup preserved.
+- Final Trading Analytics public retest: **53/53**, NIFTY/BANKNIFTY/RELIANCE/SBIN,
+  5m/day defaults, exact instruments, selection reset, three populated PCR/window
+  max-pain samples, charts ready and desktop/mobile axe checks.
+- All four sampled evidence requests HTTP 200, 400 daily bars, no query errors.
+  BANKNIFTY still has zero sampled quoted options; this is a real missing-data
+  limitation, not a passing coverage claim. All 265 instruments were not tested.
+
+Screenshot inspection caught an intermediate squeezed Paper label at 1280px;
+fixed primary navigation flex sizing and added a no-overlap assertion. Final
+1280 screenshot visually inspected: Paper and MANEESH both fully readable.
+The old notifier harness expected muted/default verbose speech; updated to the
+already-requested concise/default-on semantics, without changing runtime speech.
+An initial header run recorded two analytics-dashboard HTTP 503 responses at
+approximately ten seconds; final complete run had no console errors. A rerun
+started before container readiness encountered login 502; after health became
+healthy all three complete suites passed. These transient failures are retained
+here rather than omitted; broad long-duration reliability is not certified.
+
+Evidence under `/home/novius2/trading-stack/`:
+
+- `output/playwright/option4-command-header/`: results.json and seven screenshots.
+- `output/paper-event-notifier/`: results.json and desktop/mobile screenshots.
+- `output/playwright/trading-analytics-fno-coverage/`: results.json, source
+  coverage, screenshots and axe JSON.
+
+No new flag: existing Trading Analytics flag controls the destination. To use,
+click MANEESH on any authenticated page. Existing strategy menu remains intact.
+Do not interpret this as full executable-strategy acceptance.
 
 ## Rollback
 

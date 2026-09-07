@@ -74,6 +74,8 @@ test("top Strategy workspace groups independent strategy dashboards without merg
   assert.equal(resolveWorkspaceRoute("/strategy/oiss-v1-202608").id, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/rolling-monthly").parentId, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/nifty-options").parentId, "oiis-lab");
+  assert.equal(resolveWorkspaceRoute("/strategy/trading-analytics").id, "trading-analytics");
+  assert.equal(resolveWorkspaceRoute("/strategy/trading-analytics").parentId, "oiis-lab");
 });
 
 test("single-line command header keeps the Option 4 taxonomy in one central configuration", () => {

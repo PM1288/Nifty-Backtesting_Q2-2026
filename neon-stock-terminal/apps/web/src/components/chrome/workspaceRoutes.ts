@@ -25,6 +25,7 @@ export type WorkspaceRouteId =
   | "trendlyne-summary"
   | "long-options"
   | "nifty-weekly-options"
+  | "trading-analytics"
   | "paper-trading"
   | "derivatives"
   | "data-operations";
@@ -212,6 +213,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
         !pathname.startsWith("/strategy/trendlyne-summary") &&
         !pathname.startsWith("/strategy/long-options") &&
         !pathname.startsWith("/strategy/nifty-weekly-options") &&
+        !pathname.startsWith("/strategy/trading-analytics") &&
         !pathname.startsWith("/strategy/nifty-options")) ||
       (pathname.startsWith("/backtesting") &&
         !pathname.startsWith("/backtesting/runs")) ||
@@ -278,6 +280,18 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     primaryMobile: false,
     parentId: "oiis-lab",
     match: (pathname) => pathname.startsWith("/strategy/nifty-options") || pathname.startsWith("/strategy/nifty-weekly-options"),
+  },
+  {
+    id: "trading-analytics",
+    label: "Trading Analytics",
+    compactLabel: "Trading Analytics",
+    description: "Read-only institutional and NIFTY evidence",
+    path: "/strategy/trading-analytics",
+    icon: BarChart3,
+    primaryDesktop: false,
+    primaryMobile: false,
+    parentId: "oiis-lab",
+    match: (pathname) => pathname.startsWith("/strategy/trading-analytics"),
   },
   {
     id: "paper-trading",

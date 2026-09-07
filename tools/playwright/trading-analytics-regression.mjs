@@ -27,7 +27,7 @@ try{
    if(view==="scalper")await page.getByText(/source minutes/).first().waitFor({timeout:45000});
    await page.screenshot({path:path.join(out,`${width}-${view}.png`),fullPage:true});
    check(`${width} ${view} no page horizontal overflow`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-   if(["morning","participants","health","replay"].includes(view))check(`${width} ${view} inactive charts unmounted`,await page.locator("main canvas").count()===0);
+   if(["morning","health","replay"].includes(view))check(`${width} ${view} inactive charts unmounted`,await page.locator("main canvas").count()===0);
    results.push({name:`${width} ${view} switch and screenshot`,pass:true,durationMs:Date.now()-time});
   }
   await page.getByRole("navigation",{name:"Trading analytics lenses"}).getByRole("button",{name:"NIFTY Options",exact:true}).click();

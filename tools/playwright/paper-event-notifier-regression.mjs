@@ -85,7 +85,11 @@ try {
   const mobilePage = await mobile.newPage();
   await mobilePage.goto(`${origin}/n50/analytics`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const mobileLauncher = mobilePage.getByRole("button", { name: /Paper trade notifications/ });
-  await mobileLauncher.waitFor({ state: "visible", timeout: 60_000 });
+  await mobileLauncher.waitFor({ state: "visible", timeout: 60_000 }).catch(async (error) => {
+    await mobilePage.screenshot({ path: path.join(outputDir, "mobile-launcher-timeout.png") });
+    console.error(`Mobile launcher timeout at ${new URL(mobilePage.url()).pathname}`);
+    throw error;
+  });
   const box = await mobileLauncher.boundingBox();
   check("mobile clears bottom navigation", Boolean(box && box.y + box.height < 774), JSON.stringify(box));
   await mobileLauncher.click();

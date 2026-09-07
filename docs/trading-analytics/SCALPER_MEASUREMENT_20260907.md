@@ -61,3 +61,45 @@ no test orders. Output: `output/playwright/scalper-measurement/`.
 Release evidence appended after actual validation. Existing missing option data
 and incomplete executable-strategy policies still apply; this tool does not
 remove those gates or certify all instruments.
+
+## Deployed acceptance
+
+Application commit `9bd6683` (pushed master), image
+`sha256:4a898de5eaa7e20eee767164dce9aa0c80674877b76fe6b1cfc0620670324fc1`.
+Dashboard only recreated, healthy with zero observed restarts. Previous image
+retained as `trading-stack-n50-dashboard:before-scalper-measurement-20260907`.
+Rollback: revert the scoped frontend commits on master, rerun gates and rebuild
+dashboard; no database rollback or migration needed.
+
+- Web83/83 and API180/180; typechecks/builds pass, repository/whitespace gates pass.
+- Measurement22/22 final authenticated production checks. Numeric reconciliation
+  uses real API closes at the exact same timestamps. Both UI chart clicks and
+  accessible dropdown selection tested; quantity65→130 doubles P&L; zero quantity
+  renders unavailable. Reload resets lock/endpoints/quantity. No measurement URL
+  writes. All three valid source deltas and rectangles captured.
+- Desktop1440 and mobile390 axe: zero violations. No page horizontal overflow.
+- Existing Trading Analytics F&O regression53/53 on final deployed image.
+- Paper notifier final isolated production run17/17: endpoint, automatic popup,
+  concise speech/mute and mobile launcher. Two earlier concurrent runs timed out
+  waiting for the existing mobile Analytics launcher; isolated rerun passed.
+  Added failure screenshot capture for future diagnosis. No notifier runtime
+  changes; these timing failures are not a long-duration reliability certification.
+- Initial measurement runs exposed a scroll-focus issue on indicator evidence
+  and the disabled strike ladder, plus fading/default undefined tooltips. Fixed
+  and rerun, not suppressed. Both tabular scroll areas and ladder remain focusable.
+
+Example captured NIFTY paired23800 comparison, 7September source timestamps
+05:15Z→10:10Z: underlying23799.30→23779.15 (−20.15points), CE92.85→57.40
+(−35.45), PE57.10→70.30 (+13.20). Combined−22.25 ×65 = **−₹1,446.25**,
+illustrative gross long-pair change only. Candle/source times are retained as
+provided; this tool does not certify collection latency or exchange-session coverage.
+
+Open source limitations: partial/missing endpoints legitimately produce — and
+cannot draw that pane's rectangle. RSI/MACD warm-up may be unavailable after
+partial candles (signal needs34 consecutive valid closes under this policy).
+No nearest-price substitution. Switch off resistance overlays for a closer price
+scale if their existing higher levels compress the underlying rectangle.
+
+Evidence root `/home/novius2/trading-stack/output/playwright/scalper-measurement/`:
+`results.json`, `measurement-desktop.png`, `measurement-1440.png`,
+`measurement-390.png`, `axe-1440.json`, `axe-390.json`.

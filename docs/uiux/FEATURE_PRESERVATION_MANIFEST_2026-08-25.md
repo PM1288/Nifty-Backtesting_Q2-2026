@@ -72,3 +72,6 @@ A new dashboard is additive only when this manifest still passes. Removing a sha
 - Institutional/option/price charts are read-only previews with visible missing
   data and policy gates. Feature rollback: `N50_TRADING_ANALYTICS_ENABLED=false`.
 - Evidence and unimplemented stages: `docs/trading-analytics/IMPLEMENTATION_REPORT.md`.
+# 2026-09-07 additive Trading Analytics IO navigation
+
+`/strategy/trading-analytics` now groups nine historical query views into six primary workspaces. Old `activity`, `participants`, `options`, `smartapi`, `health` query links remain accepted. Data Health, Source / Formula and Condition Evidence are shared right drawers. All existing source JSON/CSV fields remain; weekly/monthly and exact OI history are additive read-only views. Existing NIFTY strategy, shared header, authentication, permissions and orders remain unchanged. Detailed mapping: `docs/trading-analytics/IO_UI_REVIEW_20260907.md`.

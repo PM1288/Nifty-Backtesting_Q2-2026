@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { loadSmartApiNifty } from "../services/tradingAnalyticsSmartApi";
+import { periodCandles } from "../services/tradingAnalyticsPeriods";
 import {
   activity,
   participant,
@@ -193,6 +194,8 @@ export async function loadTradingAnalytics(
     morning: {
       matrix: matrix(sign, at("INDEX FUTURES"), at("INDEX OPTIONS")),
       cash,
+      cashNet,
+      cashSign: sign,
       knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
       reportLagDays: Math.floor(
         (Date.parse(asOf) - Date.parse(selected)) / 86400000,
@@ -203,6 +206,10 @@ export async function loadTradingAnalytics(
     issues,
     errors,
     candles,
+    periods: {
+      weekly: periodCandles(daily, "week", asOf),
+      monthly: periodCandles(daily, "month", asOf),
+    },
     smartapi,
     chain: {
       snapshot,
@@ -340,6 +347,15 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
             identity,
             bars: sessionBars(minutes, sessions, q.data.interval, asOf),
             sourceMinuteCount: minutes.length,
+            oiHistory:
+              identity.exchange === "NFO"
+                ? await prisma.$queryRawUnsafe<Facts[]>(
+                    `WITH points AS (SELECT DISTINCT ON (date_bin(interval '15 minutes',exch_feed_time,timestamptz '2000-01-01')) exch_feed_time event_time,ts collected_at,oi::text oi FROM quote_snapshots WHERE exchange=$2 AND symbol_token=$3 AND ts BETWEEN $1::timestamptz-interval '10 days' AND $1::timestamptz AND exch_feed_time<=$1::timestamptz AND oi IS NOT NULL ORDER BY date_bin(interval '15 minutes',exch_feed_time,timestamptz '2000-01-01'),exch_feed_time DESC,ts DESC) SELECT * FROM (SELECT * FROM points ORDER BY event_time DESC LIMIT 600) r ORDER BY event_time`,
+                    asOf,
+                    identity.exchange,
+                    identity.symbol_token,
+                  )
+                : [],
           };
         }),
       );

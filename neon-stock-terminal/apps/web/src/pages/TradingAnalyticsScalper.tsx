@@ -1,4 +1,5 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
 import { getJson } from "../lib/api";
@@ -13,14 +14,43 @@ export function TradingAnalyticsScalper({
   expiry,
   strikes,
   spot,
+  legs = [],
 }: {
   asOf: string;
   expiry: string;
   strikes: number[];
   spot: number | null;
+  legs?: Row[];
 }) {
-  const [interval, setInterval] = useState(15);
-  const [strike, setStrike] = useState("");
+  const [params, setParams] = useSearchParams();
+  const interval = [5, 15, 60].includes(Number(params.get("interval")))
+    ? Number(params.get("interval"))
+    : 15;
+  const strike = params.get("strike") ?? "";
+  const setInterval = (v: number) => {
+    const next = new URLSearchParams(params);
+    next.set("interval", String(v));
+    setParams(next);
+  };
+  const setStrike = (v: string) => {
+    const next = new URLSearchParams(params);
+    if (v) {
+      next.set("strike", v);
+      next.set("pin", "true");
+    } else {
+      next.delete("strike");
+      next.delete("pin");
+    }
+    setParams(next);
+  };
+  const [narrow, setNarrow] = useState(() => window.innerWidth < 1100);
+  useEffect(() => {
+    const m = matchMedia("(max-width:1099px)");
+    const listener = () => setNarrow(m.matches);
+    m.addEventListener("change", listener);
+    return () => m.removeEventListener("change", listener);
+  }, []);
+  const [showEma, setShowEma] = useState(true);
   const defaultStrike =
     spot == null
       ? null
@@ -37,7 +67,12 @@ export function TradingAnalyticsScalper({
     queryKey: ["trading-analytics-charts", query.toString()],
     queryFn: () =>
       getJson<{
-        panes: { identity: Row; bars: Row[]; sourceMinuteCount: number }[];
+        panes: {
+          identity: Row;
+          bars: Row[];
+          sourceMinuteCount: number;
+          oiHistory: Row[];
+        }[];
         limitations: string[];
       }>(`/v1/trading-analytics/charts?${query}`),
     staleTime: 30000,
@@ -53,18 +88,32 @@ export function TradingAnalyticsScalper({
       animation: false,
       tooltip: { trigger: "axis" },
       axisPointer: { link: [{ xAxisIndex: "all" }] },
-      grid: rows.map((_, i) => ({
-        left: 70,
-        right: 30,
-        top: `${5 + i * 31}%`,
-        height: "22%",
-      })),
+      textStyle: { fontSize: 12 },
+      grid: rows.map((_, i) =>
+        narrow
+          ? {
+              left: 70,
+              right: 30,
+              top: `${5 + i * 31}%`,
+              height: "22%",
+            }
+          : i === 0
+            ? { left: 70, right: "43%", top: 45, bottom: 65 }
+            : {
+                left: "66%",
+                right: 60,
+                top: i === 1 ? 45 : "56%",
+                height: "32%",
+              },
+      ),
       xAxis: rows.map((_, i) => ({
         type: "category",
         gridIndex: i,
         data: times,
         axisLabel: {
-          show: i === rows.length - 1,
+          show: !narrow || i === rows.length - 1,
+          fontSize: 12,
+          hideOverlap: true,
           formatter: (s: string) =>
             new Date(s).toLocaleString("en-IN", {
               timeZone: "Asia/Kolkata",
@@ -79,7 +128,13 @@ export function TradingAnalyticsScalper({
         type: "value",
         gridIndex: i,
         scale: true,
-        name: p.identity.exchange === "NSE" ? "NIFTY · points" : `${p.identity.strike} ${String(p.identity.tradingsymbol).slice(-2)} · ₹`,
+        position: "right",
+        axisLabel: { fontSize: 12 },
+        splitLine: { lineStyle: { color: "#E8EBEF" } },
+        name:
+          p.identity.exchange === "NSE"
+            ? "NIFTY · points"
+            : `${p.identity.strike} ${String(p.identity.tradingsymbol).slice(-2)} · ₹`,
       })),
       series: rows.flatMap((p, i) => {
         const bars = new Map(
@@ -89,6 +144,12 @@ export function TradingAnalyticsScalper({
           {
             name: String(p.identity.tradingsymbol),
             type: "candlestick" as const,
+            itemStyle: {
+              color: "#fff",
+              color0: "#6478D9",
+              borderColor: "#6478D9",
+              borderColor0: "#6478D9",
+            },
             xAxisIndex: i,
             yAxisIndex: i,
             data: times.map((t) => {
@@ -111,14 +172,14 @@ export function TradingAnalyticsScalper({
             showSymbol: false,
             data: times.map((t) => {
               const b = bars.get(t);
-              return b?.ema9 == null ? null : Number(b.ema9);
+              return !showEma || b?.ema9 == null ? null : Number(b.ema9);
             }),
-            lineStyle: { color: "#d97706", width: 1.5 },
+            lineStyle: { color: "#C78F3E", width: 1.5 },
           },
         ];
       }),
     };
-  }, [panes]);
+  }, [panes, narrow, showEma]);
   return (
     <>
       <div className={styles.toolbar}>
@@ -137,12 +198,25 @@ export function TradingAnalyticsScalper({
         <label>
           Pinned paired strike{" "}
           <select value={selected} onChange={(e) => setStrike(e.target.value)}>
-            {strikes.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
+            {[...new Set([...strikes, ...(selected ? [Number(selected)] : [])])]
+              .sort((a, b) => a - b)
+              .map((s) => (
+                <option key={s}>{s}</option>
+              ))}
           </select>
         </label>
         <span>Expiry {expiry || "—"}</span>
+        <button onClick={() => setStrike(selected)}>Pin selected pair</button>
+        <button onClick={() => setStrike("")}>Reset to ATM auto-follow</button>
+        <strong>{strike ? "PINNED" : "ATM AUTO-FOLLOW"}</strong>
+        <label>
+          <input
+            type="checkbox"
+            checked={showEma}
+            onChange={(e) => setShowEma(e.target.checked)}
+          />
+          9 EMA
+        </label>
         {q.data && (
           <button
             onClick={() => {
@@ -172,15 +246,121 @@ export function TradingAnalyticsScalper({
       </p>
       {q.isFetching && <p role="status">Loading retained minute paths…</p>}
       {q.error && <p role="alert">Exact-contract chart source unavailable.</p>}
-      {panes && panes.length > 0 && (
-        <Suspense fallback={<p>Loading chart…</p>}>
-          <Chart
-            className={styles.scalperChart}
-            ariaLabel="Time-linked underlying and exact option candles with independent price scales"
-            option={option}
-          />
-        </Suspense>
-      )}
+      <div className={styles.contractHeaders}>
+        {panes?.map((p) => (
+          <strong key={String(p.identity.tradingsymbol)}>
+            {String(p.identity.tradingsymbol)} · {interval}m ·{" "}
+            {strike ? "Pinned pair" : "Auto pair"}
+          </strong>
+        ))}
+      </div>
+      <div className={styles.scalperWorkspace}>
+        {panes && panes.length > 0 && (
+          <Suspense fallback={<p>Loading chart…</p>}>
+            <Chart
+              className={styles.scalperChart}
+              ariaLabel="Time-linked underlying and exact option candles with independent price scales"
+              option={option}
+            />
+          </Suspense>
+        )}
+        <aside className={styles.ladder}>
+          <h3>Nearest 10 pairs</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>CE ₹</th>
+                <th>Strike</th>
+                <th>PE ₹</th>
+              </tr>
+            </thead>
+            <tbody>
+              {strikes.map((s) => (
+                <tr key={s} aria-selected={String(s) === selected}>
+                  <td>
+                    {String(
+                      legs.find(
+                        (l) => Number(l.strike) === s && l.option_type === "CE",
+                      )?.last_price ?? "—",
+                    )}
+                  </td>
+                  <th>
+                    <button onClick={() => setStrike(String(s))}>
+                      {s}
+                      {s === defaultStrike ? " · ATM" : ""}
+                    </button>
+                  </th>
+                  <td>
+                    {String(
+                      legs.find(
+                        (l) => Number(l.strike) === s && l.option_type === "PE",
+                      )?.last_price ?? "—",
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p>
+            One expiry · provider-native quotes · selection pins both exact
+            contracts.
+          </p>
+        </aside>
+      </div>
+      <section className={styles.plot}>
+        <h3>Exact selected contracts · OI through time</h3>
+        <p>
+          Time axis · SmartAPI raw OI, last recorded quote per 15-minute bin.
+          Not previous-session or session-open change. Gaps and asynchronous
+          source timestamps retained.
+        </p>
+        {panes?.some((p) => p.oiHistory?.length) ? (
+          <Suspense fallback={<p>Loading OI chart…</p>}>
+            <Chart
+              className={styles.chart}
+              ariaLabel="Exact CE and PE OI through time"
+              option={{
+                animation: false,
+                tooltip: { trigger: "axis" },
+                legend: { textStyle: { fontSize: 12 } },
+                grid: { left: 95, right: 30, top: 45, bottom: 70 },
+                xAxis: { type: "time", name:"IST", axisLabel: { fontSize: 12, formatter:(value:number)=>new Date(value).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) } },
+                yAxis: {
+                  type: "value",
+                  name: "Provider-native OI",
+                  min: 0,
+                  axisLabel: { fontSize: 12 },
+                },
+                series: panes
+                  .filter((p) => p.identity.exchange === "NFO")
+                  .map((p, i) => ({
+                    name: String(p.identity.tradingsymbol),
+                    type: "line",
+                    showSymbol: false,
+                    lineStyle: { color: i ? "#659E8B" : "#BE7869" },
+                    data: p.oiHistory.map((r) => [
+                      String(r.event_time),
+                      r.oi == null ? null : Number(r.oi),
+                    ]),
+                  })),
+              }}
+            />
+          </Suspense>
+        ) : (
+          <p>
+            Recorded OI history unavailable. No zero baseline is synthesized.
+          </p>
+        )}
+        <details><summary>Exact OI observations / source timestamps</summary><pre>{JSON.stringify(panes?.map(p=>({identity:p.identity,oiHistory:p.oiHistory}))??[],null,2)}</pre></details>
+      </section>
+      <section className={styles.warning}>
+        <h3>Closed-candle evidence · POLICY INCOMPLETE</h3>
+        <p>
+          Own-series 9 EMA · aligned completed intervals required · 70%
+          range/body and put confirmation remain unapproved. No paper
+          eligibility. Hollow blue = rising; filled blue = falling.
+        </p>
+      </section>
       {(panes?.length ?? 0) < 3 && (
         <p className={styles.warning}>
           Exact CE/PE metadata or archive unavailable for this known-at time. No

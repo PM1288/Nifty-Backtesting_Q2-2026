@@ -169,3 +169,286 @@
   min-height: calc(100dvh - 56px);
   align-content: start;
 }
+
+/* IO visual contract: scoped to this workspace; canonical shell is unchanged. */
+.page {
+  background: #f5f6f8;
+  color: #263343;
+  font-size: 14px;
+  padding: 12px;
+  gap: 10px;
+  --analytics-blue: #3d588d;
+}
+.page button,
+.page select,
+.page input {
+  font-size: 14px;
+  border-radius: 3px;
+  min-height: 34px;
+}
+.page h3 {
+  font-size: 15px;
+  margin: 0;
+  padding: 9px 10px;
+}
+.page table {
+  font-size: 13px;
+}
+.page th,
+.page td {
+  height: 34px;
+  border: 1px solid #d2dae3;
+  padding: 6px 8px;
+}
+.page thead th {
+  background: #3d588d;
+  color: #fff;
+}
+.page tbody th {
+  background: #ddeaf4;
+  color: #263343;
+  position: static;
+  text-align: left;
+}
+.page tbody td:first-child {
+  background: #ddeaf4;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.page .metricButton {
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  padding: 0;
+  min-height: 22px;
+  color: inherit;
+  font: inherit;
+}
+.positive {
+  background: #d9eedd !important;
+  color: #263343 !important;
+}
+.negative {
+  background: #f3d2d2 !important;
+  color: #263343 !important;
+}
+.missing {
+  background: #fff0bf !important;
+}
+.page .warning {
+  border-radius: 3px;
+  background: #fff0bf;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.tabs {
+  position: sticky;
+  top: 56px;
+  z-index: 40;
+  background: #fff;
+  padding: 6px 0;
+  gap: 2px;
+}
+.tabs button {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+.tabs [aria-current="page"] {
+  background: #eef2f7;
+  border-color: #3d588d;
+  color: #3d588d;
+  font-weight: 700;
+}
+.toolbar [aria-current="page"] {
+  background: #3d588d;
+  color: white;
+}
+.context {
+  padding: 6px 0;
+  border-bottom: 1px solid #d2dae3;
+  font-size: 13px;
+}
+.morningSheet {
+  padding: 12px;
+  background: #fff8da;
+  border: 1px solid #dfd7ae;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.morningSheet section {
+  border: 1px solid #d2dae3;
+  background: white;
+  min-width: 0;
+  overflow: auto;
+}
+.morningSheet h3,
+.ladder h3 {
+  background: #3d588d;
+  color: white;
+}
+.morningSheet p {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.morningSheet td {
+  white-space: normal;
+}
+.morningSheet [aria-selected="true"] {
+  outline: 2px solid #3d588d;
+  outline-offset: -2px;
+}
+.drawer {
+  inset: 0 0 0 auto;
+  margin: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: min(720px, 94vw);
+  max-width: 94vw;
+  border: 0;
+  border-left: 1px solid #bcc9dc;
+  padding: 16px;
+  color: #263343;
+  background: white;
+  overflow: auto;
+}
+.drawer::backdrop {
+  background: rgba(20, 36, 58, 0.25);
+}
+.drawer header {
+  position: sticky;
+  top: -16px;
+  background: #fff;
+  z-index: 3;
+  padding: 8px 0;
+  justify-content: space-between;
+}
+.drawer pre {
+  font-size: 13px;
+}
+.scalperWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 10px;
+  min-width: 0;
+}
+.scalperChart {
+  height: 610px;
+}
+.ladder {
+  min-width: 0;
+  border: 1px solid #d2dae3;
+  overflow: auto;
+  background: white;
+}
+.ladder button {
+  font-size: 13px;
+  padding: 3px;
+}
+.ladder p {
+  font-size: 13px;
+  padding: 8px;
+}
+.ladder td,
+.ladder th {
+  padding: 4px !important;
+}
+.ladder [aria-selected="true"] {
+  outline: 2px solid #3d588d;
+  outline-offset: -2px;
+  background: #e8edf8;
+}
+.contractHeaders {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  padding: 6px;
+}
+.structureLarge {
+  height: 460px;
+  min-width: 0;
+  width: 100%;
+}
+.structureSmall {
+  height: 290px;
+  min-width: 0;
+  width: 100%;
+}
+.periodPane {
+  padding: 0 !important;
+}
+.periodPane > summary {
+  padding: 10px;
+  font-weight: 600;
+  background: #ddeaf4;
+}
+.plot .toolbar {
+  padding: 6px;
+}
+.plot p {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.kpis {
+  border: 1px solid #d2dae3;
+  background: #fff;
+  border-radius: 3px;
+}
+.page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+@media (max-width: 1099px) {
+  .scalperWorkspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .scalperChart {
+    height: 980px;
+  }
+  .ladder {
+    max-height: 360px;
+  }
+  .tabs {
+    top: 52px;
+  }
+  .morningSheet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 759px) {
+  .page {
+    padding: 8px;
+  }
+  .page button,
+  .page select,
+  .page input {
+    min-height: 44px;
+  }
+  .tabs {
+    position: static;
+  }
+  .structureLarge {
+    height: 420px;
+  }
+  .structureSmall {
+    height: 300px;
+  }
+  .morningSheet {
+    padding: 6px;
+  }
+  .page .metricButton {
+    min-height: 32px;
+  }
+  .drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  .contractHeaders {
+    display: grid;
+    gap: 6px;
+  }
+}

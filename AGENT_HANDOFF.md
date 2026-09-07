@@ -3513,3 +3513,6 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
   rendered all three Earnings state and Web sentiment fields; console errors
   were zero. Exact delivery IDs, durations and gateway receipts are recorded in
   `docs/notifications/AI_STOCK_RESEARCH_PROMPT_V5_FUNDAMENTAL_WEB_2026-08-30.md`.
+# 2026-09-07 — Trading Analytics IO UI
+
+Source review: `/home/novius2/NIFTY50/IO for this`; implementation branch `ui/trading-analytics-io-20260907`. See `docs/trading-analytics/IO_UI_REVIEW_20260907.md` for preservation mapping, source gaps, tests and rollback. Scoped six-lens UI and additive read-only chart views; no ingestion, execution, strategy or ledger changes. API 162/162 and web 72/72 tests, both typechecks/builds and canonical gate pass. Authenticated browser acceptance recorded separately after deployment.

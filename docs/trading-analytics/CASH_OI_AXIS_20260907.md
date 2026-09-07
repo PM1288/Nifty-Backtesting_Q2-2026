@@ -19,6 +19,17 @@ Repository source: institutional dataset registry/normalizer, Go FULL-quote pars
 
 ## Validation / rollout
 
-Results and deployed identity will be appended after validation. Run both application typechecks/tests/builds and `bash scripts/verify/canonical-repository-gate.sh`. Authenticated browser harness: `node tools/playwright/trading-analytics-cash-oi.mjs`, using protected `PLAYWRIGHT_ADMIN_PASSWORD`. It checks current real rows, CSV parity, missingness, arithmetic, desktop/mobile display and accessibility. Artifacts are ignored under `output/playwright/cash-oi-20260907/`.
+Application commits `5b6dee5` and `738934f` were pushed and merged to master before build. Final deployed dashboard image: `sha256:343894630f5d029872394aa685eb955d74bd10892ce3f4679de59ec22c054ebb`. Only `n50-dashboard` was recreated, with all unrelated runtime containers and untracked reports preserved.
+
+- API: 168 tests passed, zero failed; web: 78 passed, zero failed. Both typechecks and builds passed. Canonical repository gate passed.
+- Final authenticated cash/OI harness: 28/28 passed, at 1440×900 and 390×900. Real retained rows, complete 126-row CSV parity, OI arithmetic, no fabricated day OI/Greek Delta, no page overflow and no uncaught JS. Main-content axe reports: zero violations at both widths. This does not certify unrelated application routes.
+- Supplemental Scalper harness: 22/22 passed on `5b6dee5` before the final OI-only top-margin fix. Five-minute/day controls and resistance are preserved. Artifacts: `output/playwright/scalper-5m-20260907/`.
+- Visual review found the inherited unspecified grid top could clip the OI axis title. Final commit sets explicit top/left/right/bottom chart margins. Desktop/mobile screenshots verify the vertical scale; compact axis names can shorten on mobile, with the full selected measure remaining above the chart.
+- Evidence: `/home/novius2/trading-stack/output/playwright/cash-oi-20260907/` contains `results.json`, `1440-cash.png`, `390-cash.png`, `1440-oi-change.png`, `390-oi-change.png`, per-width source JSON, CSV and axe reports.
+- Build/test command logs: `/tmp/cash-api-tests.log`, `/tmp/cash-web-tests.log`, `/tmp/cash-api-build.log`, `/tmp/cash-web-build.log`, `/tmp/cash-dashboard-final-build.log` (ephemeral).
+
+Rerun both application typechecks/tests/builds and `bash scripts/verify/canonical-repository-gate.sh`. Authenticated browser harness: `node tools/playwright/trading-analytics-cash-oi.mjs`, using protected `PLAYWRIGHT_ADMIN_PASSWORD` without printing it.
+
+Open [Morning View](https://n50.nifty50today.co.in/n50/strategy/trading-analytics?view=morning) for cash history; [SmartAPI OI & Quotes](https://n50.nifty50today.co.in/n50/strategy/trading-analytics?view=smartapi) for restored OI/Delta fields and measure selector. Daily cash ingestion recovery and blank-symbol Greeks persistence correction remain open source-level work; no fresh data collection or historical reconstruction is claimed.
 
 Deploy only pushed master with `docker compose -p trading-stack-novius2 build n50-dashboard` then `docker compose -p trading-stack-novius2 up -d --no-deps n50-dashboard`. Do not remove orphan services. Rollback is scoped source revert and dashboard rebuild; no database migration is involved.

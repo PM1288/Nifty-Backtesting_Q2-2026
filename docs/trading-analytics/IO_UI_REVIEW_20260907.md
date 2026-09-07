@@ -39,3 +39,33 @@ Follow-up browser review identified and corrected the Morning heading hierarchy,
 Browser regression command: run `node tools/playwright/trading-analytics-io-regression.mjs` from the repository with `PLAYWRIGHT_ADMIN_PASSWORD` supplied from the protected runtime environment (never written to a file). Optional `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_OUTPUT_DIR`. Tests cover 1920, 1440, 1366, 1024 and 390 widths, six lenses, old query aliases, CSV row parity, drawer accessibility/focus, exact contracts, OI knowledge cutoffs and retained strike selection. Generated screenshots/data stay untracked in `output/playwright/trading-analytics-io-20260907/`.
 
 Rollback uses the prior pushed application commit `2689f95` via a reviewed revert on master and dashboard-only rebuild. `TRADING_ANALYTICS_ENABLED=false` remains the existing module disable switch. No DB rollback is necessary; this change contains no migrations or writes.
+
+## Final deployment and acceptance — 2026-09-07
+
+- Deployed application commit: `1d85eae`, pushed on `ui/trading-analytics-io-20260907` and fast-forwarded/pushed to canonical `master` before image build. Earlier implementation commits: `0a69930`, `624de39`.
+- Running dashboard image: `sha256:7d4a027b13f4742b82dc5619731e61a66a74b2b2877099472b64ffdf019cc2b0`.
+- Live route: `https://n50.nifty50today.co.in/n50/strategy/trading-analytics`.
+- Both typechecks/builds pass; API **162/162**, web **74/74**, canonical preservation gate passes. No failed or skipped unit tests.
+- Authenticated public-route regression: **215/215** assertions at 1920×1080, 1440×900, 1366×768, 1024×768 and 390×844. All six views, three drawers, old query aliases, CSV row parity, pin persistence, known-at OI data and safety flags passed. Axe found zero violations in the tested main workspaces and dialogs; no uncaught JavaScript errors or page-level horizontal overflow.
+- Additional deployed-gateway interaction test: **6/6**, including actual 5m/60m requests, complete bars versus calendar-derived duration and chart unmount on collapse. Default 15m is covered by the full regression. Test script: `tools/playwright/trading-analytics-io-timeframes.mjs` (same protected password environment; accepts `PLAYWRIGHT_BASE_URL`). Its final run used `http://127.0.0.1:19090/n50`, the same deployed dashboard. Initial public-network retry and an overly exact test label were corrected; those failed attempts are not counted as successful runs.
+- Original daily chart zoom/legend interactions are retained in the new price panes; EMA visibility remains separately controllable.
+- **46 screenshots**, source CSVs, complete run/chart JSON and machine-readable results: `/home/novius2/trading-stack/output/playwright/trading-analytics-io-20260907/`. Main results `results.json`; supplemental `timeframe-results.json`; `*-axe.json`; representative `1920-morning.png`, `1920-scalper.png`, `1440-structure.png`, `390-morning.png`, `timeframe-controls.png`. These generated artifacts are not committed.
+
+### Real data verified
+
+September 7 report: 16 activity rows, five participant rows, 400 daily bars, 85 weekly and 21 monthly read-view bars. Twenty SmartAPI option legs all contain current OI. The verified pair was `NIFTY08SEP2623800CE` / `NIFTY08SEP2623800PE`; each has 120 retained OI timeline observations. Underlying / CE / PE source-minute counts were 3,020 / 1,433 / 1,435. Missing minutes remain missing, and only complete closed bars are plotted as such. Zero source-query errors; reconciliation/policy issues remain visible. No paper or real order was enabled or sent.
+
+### Performance evidence, not an optimization claim
+
+Final authenticated first-useful-evidence times were 1,366 / 1,261 / 1,348 / 1,363 / 894 ms across the five widths above. Earlier four-width baseline was 1,035 / 621 / 620 / 862 ms. These are single network-inclusive observations with changed read payloads, not controlled benchmarks; no speed-up claim is made. Per-view timings include screenshot and axe work and are explicitly labelled that way. FPS, React commit counts and synchronized-cursor latency have not been benchmarked. Inactive main lenses have no mounted charts; collapsed higher-period charts are explicitly tested to unmount.
+
+### Rerun / rollout
+
+From `/home/novius2/trading-stack`, run the mandatory checks listed in `AGENTS.md`, then the two Playwright scripts using protected runtime credentials. Build only a pushed master commit:
+
+```bash
+docker compose -p trading-stack-novius2 build n50-dashboard
+docker compose -p trading-stack-novius2 up -d --no-deps n50-dashboard
+```
+
+Do not use `--remove-orphans`; other trading and notification containers are intentionally preserved. No database migration, collector restart, new polling timer or notification delivery is part of this UI change. Existing API and frontend module-disable flags remain unchanged; do not interpret module enablement as permission to execute trades.

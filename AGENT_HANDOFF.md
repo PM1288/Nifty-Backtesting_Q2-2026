@@ -3516,3 +3516,5 @@ Dashboard login sessions now use a 43,200-second idle timeout, 43,200-second abs
 # 2026-09-07 — Trading Analytics IO UI
 
 Source review: `/home/novius2/NIFTY50/IO for this`; implementation branch `ui/trading-analytics-io-20260907`. See `docs/trading-analytics/IO_UI_REVIEW_20260907.md` for preservation mapping, source gaps, tests and rollback. Scoped six-lens UI and additive read-only chart views; no ingestion, execution, strategy or ledger changes. API 162/162 and web 72/72 tests, both typechecks/builds and canonical gate pass. Authenticated browser acceptance recorded separately after deployment.
+
+Final acceptance: application `1d85eae` deployed from pushed master, image `sha256:7d4a027b13f4742b82dc5619731e61a66a74b2b2877099472b64ffdf019cc2b0`. API 162/162, web 74/74, public five-size browser 215/215, supplemental deployed-gateway timeframe/collapse 6/6. Forty-six screenshots and raw evidence in `output/playwright/trading-analytics-io-20260907/`; final report above includes source gaps and honest network-inclusive timing comparison. No execution enablement or other-container changes.

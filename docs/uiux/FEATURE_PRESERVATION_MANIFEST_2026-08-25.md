@@ -6,6 +6,11 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-07 Scalper measurement: opt-in chart click callback/rectangle support,
+browser-memory-only endpoints/quantity and fixed exact pair; RSI/MACD on selected
+underlying. Existing chart consumers, source bars/CSV, OI, EMA9, resistance,
+orders and paper data are unchanged. Evidence: SCALPER_MEASUREMENT_20260907.md.
+
 2026-09-07: temporary MANEESH header link opens the existing Trading Analytics
 Scalper (5m default); original Strategy menu destination remains. Pink/white
 styling is scoped to this shortcut only. Desktop and mobile retain navigation,

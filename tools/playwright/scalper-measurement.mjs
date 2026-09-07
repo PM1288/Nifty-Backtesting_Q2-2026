@@ -1,0 +1,42 @@
+import fs from 'node:fs/promises';
+import {chromium} from 'playwright';
+import AxeBuilder from '@axe-core/playwright';
+const base=process.env.PLAYWRIGHT_BASE_URL??'https://n50.nifty50today.co.in/n50';
+const out='output/playwright/scalper-measurement';await fs.mkdir(out,{recursive:true});
+const results=[];const check=(name,pass)=>{results.push({name,pass});if(!pass)throw Error(name);};
+const browser=await chromium.launch();
+try{
+ const context=await browser.newContext({viewport:{width:1440,height:1000}});
+ const login=await context.request.post(`${base}/auth/session/dev-login`,{data:{identifier:'admin',password:process.env.PLAYWRIGHT_ADMIN_PASSWORD},headers:{Origin:new URL(base).origin}});check('login',login.ok());
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ let payload;page.on('response',async r=>{if(r.url().includes('/v1/trading-analytics/charts?')&&r.ok())payload=await r.json();});
+ await page.goto(`${base}/strategy/trading-analytics?view=scalper`);
+ const fix=page.getByRole('button',{name:'Fix pair for measurement',exact:true});await fix.waitFor({timeout:60000});
+ await page.getByText('Loading retained minute paths…',{exact:true}).waitFor({state:'hidden',timeout:60000});
+ check('5m default',await page.getByRole('combobox',{name:'Interval',exact:true}).inputValue()==='5');
+ check('quantity defaults 65',await page.getByRole('spinbutton',{name:'Measurement quantity'}).inputValue()==='65');
+ const url=page.url();await fix.click();check('fix pair does not write URL',page.url()===url);
+ check('pair selector locked',await page.getByRole('combobox',{name:'Pinned paired strike'}).isDisabled());
+ const start=page.getByRole('combobox',{name:'Measurement start time'}),end=page.getByRole('combobox',{name:'Measurement end time'});
+ const times=await start.locator('option').evaluateAll(ns=>ns.map(n=>n.value).filter(Boolean));
+ const common=times.filter(t=>payload.panes.length===3&&payload.panes.every(p=>p.bars.some(b=>b.end===t&&b.closed&&b.close!=null)));
+ check('real synchronized samples',common.length>=2);
+ await start.selectOption(common[0]);await end.selectOption(common.at(-1));
+ const difference=p=>p.bars.find(b=>b.end===common.at(-1)).close-p.bars.find(b=>b.end===common[0]).close;
+ const expected=(difference(payload.panes[1])+difference(payload.panes[2]))*65;
+ const fmt=v=>v.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ check('PnL equals exact matched source closes', (await page.getByTestId('measurement-pnl').innerText()).includes(fmt(expected)));
+ await page.getByRole('spinbutton',{name:'Measurement quantity'}).fill('130');check('quantity scales PnL',(await page.getByTestId('measurement-pnl').innerText()).includes(fmt(expected*2)));
+ await page.getByRole('spinbutton',{name:'Measurement quantity'}).fill('0');check('invalid quantity not zero PnL',(await page.getByTestId('measurement-pnl').innerText()).includes('—'));
+ await page.getByRole('spinbutton',{name:'Measurement quantity'}).fill('65');
+ await page.getByRole('button',{name:'Select A → B on chart'}).click();
+ const chart=page.getByRole('img',{name:'Time-linked underlying and exact option candles with independent price scales'});await chart.scrollIntoViewIfNeeded();
+ const box=await chart.boundingBox();await page.mouse.click(box.x+box.width*.22,box.y+box.height*.2);check('first chart click selects A',Boolean(await start.inputValue()));
+ await page.mouse.click(box.x+box.width*.4,box.y+box.height*.27);check('second chart click selects B',Boolean(await end.inputValue()));
+ await page.screenshot({path:`${out}/measurement-desktop.png`,fullPage:true});
+ await chart.hover();await page.mouse.wheel(0,-100);check('measurement retained during zoom',await page.getByTestId('measurement-pnl').isVisible());
+ await page.getByText('RSI / MACD values and calculation',{exact:true}).click();check('indicator evidence available',await page.getByRole('table',{name:'Underlying RSI and MACD values'}).isVisible());
+ for(const width of [1440,390]){await page.setViewportSize({width,height:1000});const a=await new AxeBuilder({page}).include('main').analyze();await fs.writeFile(`${out}/axe-${width}.json`,JSON.stringify(a.violations,null,2));check(`${width} accessibility`,a.violations.length===0);check(`${width} no page overflow`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:`${out}/measurement-${width}.png`,fullPage:true});}
+ await page.reload();await fix.waitFor({timeout:60000});check('reload clears visual pair',await fix.isVisible());check('reload clears measurement',await page.getByTestId('measurement-pnl').count()===0);check('reload resets quantity',await page.getByRole('spinbutton',{name:'Measurement quantity'}).inputValue()==='65');check('no JS errors',errors.length===0);
+}finally{await browser.close();await fs.writeFile(`${out}/results.json`,JSON.stringify(results,null,2));}
+console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,total:results.length}));

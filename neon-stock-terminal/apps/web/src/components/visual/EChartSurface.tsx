@@ -8,6 +8,7 @@ import {
   GridComponent,
   LegendComponent,
   MarkLineComponent,
+  MarkAreaComponent,
   MarkPointComponent,
   TooltipComponent,
   VisualMapComponent
@@ -57,6 +58,7 @@ echarts.use([
   GridComponent,
   LegendComponent,
   MarkLineComponent,
+  MarkAreaComponent,
   MarkPointComponent,
   TooltipComponent,
   VisualMapComponent,
@@ -466,12 +468,14 @@ export function EChartSurface({
   className,
   option,
   setOptionOpts,
+  onCategoryClick,
   appearance = "light"
 }: {
   ariaLabel: string;
   className?: string;
   option: EChartsOption;
   setOptionOpts?: SetOptionOpts;
+  onCategoryClick?: (index: number, gridIndex: number) => void;
   appearance?: ChartAppearance;
 }) {
   const { tr } = useI18n();
@@ -479,6 +483,8 @@ export function EChartSurface({
   const [fontMode] = useFontMode();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<ReturnType<typeof echarts.init> | null>(null);
+  const clickRef = useRef(onCategoryClick);
+  clickRef.current = onCategoryClick;
   const fontFamily = useMemo(
     () =>
       fontMode === "high-legibility" && language === "en" && digits === "latn"
@@ -499,6 +505,17 @@ export function EChartSurface({
 
     const chart = echarts.init(host, undefined, { renderer: "canvas" });
     chartRef.current = chart;
+    chart.getZr().on("click", (event) => {
+      if (!clickRef.current) return;
+      const grids = asArray(chart.getOption().grid);
+      for (let i=0; i<grids.length; i++) {
+        const point=[event.offsetX,event.offsetY];
+        if (!chart.containPixel({gridIndex:i},point)) continue;
+        const value=chart.convertFromPixel({gridIndex:i},point);
+        if (Array.isArray(value) && Number.isFinite(value[0])) clickRef.current(Math.round(value[0]), i);
+        break;
+      }
+    });
 
     const resize = () => {
       chart.resize();

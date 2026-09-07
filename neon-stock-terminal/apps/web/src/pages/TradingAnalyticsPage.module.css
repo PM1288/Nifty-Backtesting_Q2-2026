@@ -338,6 +338,9 @@
   gap: 10px;
   min-width: 0;
 }
+.measurement { padding: 10px; border: 1px solid #be185d; border-radius: 6px; background: #fff; margin-block: 8px; }
+.measurement p { margin-block: 6px; }
+.measurement small { display: block; color: #475569; font-size: 12px; }
 .scalperChart {
   height: 610px;
 }

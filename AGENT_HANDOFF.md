@@ -1,5 +1,12 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-07 scalper visual measurement
+
+Browser-only fixed-pair A/B rectangles and synchronous price deltas/long-pair
+hypothetical P&L, editable 65-unit default. Underlying RSI/MACD display mirrors
+existing indicator conventions, no signal/order/database changes. See
+`docs/trading-analytics/SCALPER_MEASUREMENT_20260907.md` and browser harness.
+
 ## 2026-09-07 temporary MANEESH header shortcut
 
 Direct shortcut to `/strategy/trading-analytics?view=scalper`, solid accessible

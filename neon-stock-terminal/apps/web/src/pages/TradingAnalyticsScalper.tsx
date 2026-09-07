@@ -1,10 +1,11 @@
 import { lazy, Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import type { EChartsOption } from "echarts";
+import type { EChartsOption, SeriesOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { oiTimeline } from "../lib/tradingAnalyticsOiTimeline";
+import { closeAt, measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import {
   candleColors,
   evidenceValueAxis,
@@ -17,6 +18,8 @@ const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
 type Row = Record<string, unknown>;
+const measurementChartOpts = { notMerge: false, replaceMerge: ["series", "grid", "xAxis", "yAxis"] };
+const valueText = (v: number | null) => v == null ? "—" : v.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
 export function TradingAnalyticsScalper({
   symbol='NIFTY',label='NIFTY 50',
   asOf,
@@ -38,6 +41,11 @@ export function TradingAnalyticsScalper({
   const interval = chartInterval(params.get("interval"));
   const [showLevels, setShowLevels] = useState(true);
   const [showGrid, setShowGrid] = useState(symbol==='NIFTY');
+  const [fixedPair, setFixedPair] = useState<{strike:string;expiry:string}|null>(null);
+  const [points, setPoints] = useState<string[]>([]);
+  const [selecting, setSelecting] = useState(false);
+  const [quantity, setQuantity] = useState("65");
+  const [showIndicators, setShowIndicators] = useState(true);
   const updateView = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
@@ -75,10 +83,11 @@ export function TradingAnalyticsScalper({
       : [...strikes].sort(
           (a, b) => Math.abs(a - spot) - Math.abs(b - spot) || a - b,
         )[0];
-  const selected = strike || String(defaultStrike ?? "");
+  const selected = fixedPair?.strike ?? (strike || String(defaultStrike ?? ""));
+  const effectiveExpiry = fixedPair?.expiry ?? expiry;
   const query = new URLSearchParams({ symbol, asOf, interval: String(interval) });
-  if (expiry && selected) {
-    query.set("expiry", expiry);
+  if (effectiveExpiry && selected) {
+    query.set("expiry", effectiveExpiry);
     query.set("strike", selected);
   }
   const q = useQuery({
@@ -118,6 +127,15 @@ export function TradingAnalyticsScalper({
       })),
     [q.data, oneDay, day],
   );
+  useEffect(() => { setPoints([]); setSelecting(false); }, [interval, day, oneDay, selected, effectiveExpiry]);
+  const times = useMemo(() => [...new Set((panes ?? []).flatMap(p => p.bars.map(b => String(b.end))))].sort(), [panes]);
+  const indicators = useMemo(() => new Map(scalperIndicators(q.data?.panes[0]?.bars ?? []).map(r => [r.time,r])), [q.data]);
+  const measured = points.length === 2 ? measurePanes(panes ?? [], points[0], points[1], Number(quantity)) : null;
+  const pickPoint = (index:number) => {
+    if (!fixedPair || !selecting || !times[index]) return;
+    if (points.length === 1) { setPoints([points[0],times[index]]); setSelecting(false); }
+    else setPoints([times[index]]);
+  };
   const option = useMemo<EChartsOption>(() => {
     const rows = panes ?? [];
     const times = [
@@ -128,24 +146,28 @@ export function TradingAnalyticsScalper({
       tooltip: { trigger: "axis" },
       axisPointer: { link: [{ xAxisIndex: "all" }] },
       textStyle: { fontSize: 12 },
-      grid: rows.map((_, i) =>
+      dataZoom: [{type:"inside",xAxisIndex: rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]), zoomOnMouseWheel:true, moveOnMouseMove: !selecting}, {type:"slider",xAxisIndex:rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]),bottom:5,height:18}],
+      grid: [...rows.map((_, i) =>
         narrow
           ? {
               left: 70,
               right: 30,
-              top: `${5 + i * 31}%`,
-              height: "22%",
+              top: `${4 + i * (showIndicators?20:29)}%`,
+              height: showIndicators?"15%":"22%",
             }
           : i === 0
-            ? { left: 70, right: "43%", top: 45, bottom: 65 }
+            ? { left: 70, right: "43%", top: 45, bottom: showIndicators?"46%":65 }
             : {
                 left: "66%",
                 right: 60,
                 top: i === 1 ? 45 : "56%",
                 height: "32%",
               },
-      ),
-      xAxis: rows.map((_, i) => ({
+      ), ...(showIndicators ? [
+        {left:70,right:narrow?30:"43%",top:narrow?"65%":"60%",height:"11%"},
+        {left:70,right:narrow?30:"43%",top:narrow?"80%":"78%",height:"11%"},
+      ] : [])],
+      xAxis: [...rows, ...(showIndicators?[rows[0],rows[0]]:[])].map((_, i) => ({
         type: "category",
         gridIndex: i,
         data: times,
@@ -163,23 +185,26 @@ export function TradingAnalyticsScalper({
             }),
         },
       })),
-      yAxis: rows.map((p, i) => ({
+      yAxis: [...rows.map((p, i) => ({
         ...evidenceValueAxis,
-        type: "value",
+        type: "value" as const,
         gridIndex: i,
         scale: true,
         interval: i === 0 && showGrid ? 50 : undefined,
         min: i===0&&showGrid ? (v:{min:number})=>Math.floor(v.min/50)*50 : undefined,
         max: i===0 ? (v:{max:number})=>{const top=Math.max(v.max,...(showLevels?resistance.filter(r=>r.selected!=null).map(r=>Number((r.selected as Row).resistance)):[]));return showGrid?Math.ceil(top/50)*50:top;} : undefined,
-        position: "right",
+        position: "right" as const,
         axisLabel: { fontSize: 12 },
         splitLine: { lineStyle: { color: "#E8EBEF" } },
         name:
           p.identity.exchange === "NSE"
             ? `${label} · price`
             : `${p.identity.strike} ${String(p.identity.tradingsymbol).slice(-2)} · ₹`,
-      })),
-      series: rows.flatMap((p, i) => {
+      })), ...(showIndicators ? [
+        {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length,min:0,max:100,name:"RSI (14)",position:"right" as const},
+        {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length+1,scale:true,name:"MACD (12,26,9)",position:"right" as const},
+      ] : [])],
+      series: [...rows.flatMap<SeriesOption>((p, i) => {
         const bars = new Map(
           p.bars.filter((b) => b.closed).map((b) => [String(b.end), b]),
         );
@@ -188,19 +213,24 @@ export function TradingAnalyticsScalper({
             name: String(p.identity.tradingsymbol),
             type: "candlestick" as const,
             itemStyle: candleColors,
+            markArea: measured && closeAt(p.bars, measured.start)!=null && closeAt(p.bars, measured.end)!=null ? {
+              silent:true,itemStyle:{color:"rgba(190,24,93,0.09)",borderWidth:1,borderColor:"#be185d"},
+              data:[[{xAxis:measured.start,yAxis:Math.min(closeAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)},{xAxis:measured.end,yAxis:Math.max(closeAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)}]],
+            } : {data:[]},
+            markPoint: {symbol:"circle",symbolSize:8,label:{show:true,formatter:"{b}"},data:points.flatMap((t,j)=>{const v=closeAt(p.bars,t);return v==null?[]:[{name:j===0?"A":"B",coord:[t,v]}];})},
             markLine:
               i === 0 && showLevels
                 ? {
                     symbol: "none",
                     silent: true,
-                    label: { position: "insideEndTop", formatter: "{b}" },
+                    label: { position: "insideEndTop" as const, formatter: "{b}" },
                     data: resistance
                       .filter((r) => r.selected != null)
                       .map((r) => ({
                         name: `${String(r.timeframe).toUpperCase()} R · preview`,
                         yAxis: Number((r.selected as Row).resistance),
                       })),
-                    lineStyle: { type: "dashed", color: "#969B45" },
+                    lineStyle: { type: "dashed" as const, color: "#969B45" },
                   }
                 : undefined,
             xAxisIndex: i,
@@ -230,9 +260,12 @@ export function TradingAnalyticsScalper({
             lineStyle: { color: "#C78F3E", width: 1.5 },
           },
         ];
-      }),
+      }), ...(showIndicators ? [
+        {name:"RSI (14)",type:"line" as const,xAxisIndex:rows.length,yAxisIndex:rows.length,showSymbol:false,connectNulls:false,lineStyle:{color:"#7c3aed"},data:times.map(t=>indicators.get(t)?.rsi??null)},
+        ...(["macd","signal","histogram"] as const).map((key,i)=>({name:key==="macd"?"MACD":key==="signal"?"Signal":"Histogram",type:key==="histogram"?"bar" as const:"line" as const,xAxisIndex:rows.length+1,yAxisIndex:rows.length+1,showSymbol:false,connectNulls:false,itemStyle:{color:["#2563eb","#d97706","#64748b"][i]},data:times.map(t=>indicators.get(t)?.[key]??null)})),
+      ]:[])],
     };
-  }, [panes, narrow, showEma, showLevels, showGrid, resistance]);
+  }, [panes, narrow, showEma, showLevels, showGrid, resistance, showIndicators, indicators, selecting, points, quantity, label]);
   return (
     <>
       <div className={styles.toolbar}>
@@ -273,7 +306,7 @@ export function TradingAnalyticsScalper({
         </label>
         <label>
           Pinned paired strike{" "}
-          <select value={selected} onChange={(e) => setStrike(e.target.value)}>
+          <select disabled={!!fixedPair} value={selected} onChange={(e) => setStrike(e.target.value)}>
             {[...new Set([...strikes, ...(selected ? [Number(selected)] : [])])]
               .sort((a, b) => a - b)
               .map((s) => (
@@ -281,9 +314,9 @@ export function TradingAnalyticsScalper({
               ))}
           </select>
         </label>
-        <span>Expiry {expiry || "—"}</span>
-        <button onClick={() => setStrike(selected)}>Pin selected pair</button>
-        <button onClick={() => setStrike("")}>Reset to ATM auto-follow</button>
+        <span>Expiry {effectiveExpiry || "—"}</span>
+        <button disabled={!!fixedPair} onClick={() => setStrike(selected)}>Pin selected pair</button>
+        <button disabled={!!fixedPair} onClick={() => setStrike("")}>Reset to ATM auto-follow</button>
         <strong>{strike ? "PINNED" : "ATM AUTO-FOLLOW"}</strong>
         <label>
           <input
@@ -315,6 +348,24 @@ export function TradingAnalyticsScalper({
           </button>
         )}
       </div>
+      <section className={styles.measurement} aria-label="Browser-only position measurement">
+        <div className={styles.toolbar}>
+          <button disabled={!selected || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{strike:selected,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock visual pair":"Fix pair for measurement"}</button>
+          <label>Quantity (units)<input aria-label="Measurement quantity" type="number" min={1} step={1} value={quantity} onChange={e=>setQuantity(e.target.value)} style={{width:90}} /></label>
+          <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Select A → B on chart</button>
+          <button onClick={()=>{setPoints([]);setSelecting(false);}}>Clear measurement</button>
+          <label><input type="checkbox" checked={showIndicators} onChange={e=>setShowIndicators(e.target.checked)}/>Underlying RSI / MACD</label>
+        </div>
+        <p role="status">{fixedPair?`VISUAL PAIR FIXED · ${symbol} ${fixedPair.strike} · ${fixedPair.expiry}`:"Fix the pair to begin."} {selecting?`Click ${points.length?"B (last)":"A (first)"} on any price pane, or use the time controls below.`:"Scroll to zoom; drag to pan."}</p>
+        {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A start time":"B end time"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>i===0?[e.target.value]:[old[0]??times[0],e.target.value]);setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
+        {measured && <>
+          <strong data-testid="measurement-pnl">Illustrative long CE + PE P&amp;L: ₹{valueText(measured.pnl)}</strong>
+          <div className={styles.tableWrap}><table aria-label="Synchronized price changes"><thead><tr><th>Instrument</th><th>A close</th><th>B close</th><th>Δ price</th><th>Δ × quantity</th></tr></thead><tbody>{measured.rows.map(r=><tr key={r.symbol}><th>{r.symbol}</th><td>{valueText(r.from)}</td><td>{valueText(r.to)}</td><td>{valueText(r.delta)}</td><td>{r.kind==="UNDERLYING"?"—":valueText(r.delta==null||!Number.isSafeInteger(Number(quantity))||Number(quantity)<=0?null:r.delta*Number(quantity))}</td></tr>)}<tr><th>CE + PE</th><td>—</td><td>—</td><td>{valueText(measured.combined)}</td><td>{valueText(measured.pnl)}</td></tr></tbody></table></div>
+          <p>{measured.start} → {measured.end} · UTC source times. Missing matching closes: — (no nearest-time substitution).</p>
+        </>}
+        <small>Browser memory only; cleared on reload or leaving this view. Quantity 65 is an editable visual default, not verified lot size. Close-to-close price delta, not Greek Delta. Long both legs, before costs/slippage; not a trade, order or booked P&amp;L.</small>
+        <details><summary>RSI / MACD values and calculation</summary><p>Display-only, selected interval, completed closes with retained-history warm-up. RSI14 uses the platform’s rolling average gains/losses (not Wilder smoothing). MACD12/26 and signal9 use SMA-seeded EMA. Partial candles reset warm-up; unavailable values remain —. These do not change strategy signals.</p><div className={styles.tableWrap}><table aria-label="Underlying RSI and MACD values"><thead><tr><th>End (UTC)</th><th>RSI14</th><th>MACD</th><th>Signal9</th><th>Histogram</th></tr></thead><tbody>{times.map(t=>{const r=indicators.get(t);return <tr key={t}><td>{t}</td><td>{valueText(r?.rsi??null)}</td><td>{valueText(r?.macd??null)}</td><td>{valueText(r?.signal??null)}</td><td>{valueText(r?.histogram??null)}</td></tr>;})}</tbody></table></div></details>
+      </section>
       <div className={styles.toolbar}>
         <label>
           <input
@@ -415,6 +466,8 @@ export function TradingAnalyticsScalper({
               className={styles.scalperChart}
               ariaLabel="Time-linked underlying and exact option candles with independent price scales"
               option={option}
+              setOptionOpts={measurementChartOpts}
+              onCategoryClick={(index,grid)=>{if(grid<(panes?.length??0))pickPoint(index);}}
             />
           </Suspense>
         )}
@@ -434,12 +487,12 @@ export function TradingAnalyticsScalper({
                   <td>
                     {String(
                       legs.find(
-                        (l) => Number(l.strike) === s && l.option_type === "CE",
+                        (l) => effectiveExpiry === expiry && Number(l.strike) === s && l.option_type === "CE",
                       )?.last_price ?? "—",
                     )}
                   </td>
                   <th>
-                    <button onClick={() => setStrike(String(s))}>
+                    <button disabled={!!fixedPair} onClick={() => setStrike(String(s))}>
                       {s}
                       {s === defaultStrike ? " · ATM" : ""}
                     </button>
@@ -447,7 +500,7 @@ export function TradingAnalyticsScalper({
                   <td>
                     {String(
                       legs.find(
-                        (l) => Number(l.strike) === s && l.option_type === "PE",
+                        (l) => effectiveExpiry === expiry && Number(l.strike) === s && l.option_type === "PE",
                       )?.last_price ?? "—",
                     )}
                   </td>

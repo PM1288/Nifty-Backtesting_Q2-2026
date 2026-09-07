@@ -1,4 +1,171 @@
-.page{padding:10px;display:grid;gap:8px;min-width:0;color:var(--n50-text-1,#14243a);font-size:13px}.page h1{font-size:18px;margin:0}.page h2{font-size:15px;margin:5px 0}.page p{margin:5px 0;line-height:1.5}.toolbar,.tabs,.kpis,.journey{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.page button,.page select,.page input{min-height:30px;border:1px solid #bcc9dc;border-radius:5px;padding:4px 8px;background:white;color:#14243a}.page button{cursor:pointer}.page button:focus-visible,.page a:focus-visible{outline:2px solid #315ad7;outline-offset:2px}.tabs{border-bottom:1px solid #dce4ef;padding-bottom:6px}.tabs [aria-current=page]{background:#eaf0ff;border-color:#315ad7}.warning{background:#fff7df;border:1px solid #e8ca80;padding:8px;border-radius:6px;line-height:1.6}.tableWrap{overflow:auto;max-height:490px;border:1px solid #dce4ef;background:white}.page table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums lining-nums;font-size:12px}.page th,.page td{padding:6px 8px;border-bottom:1px solid #e4eaf2;text-align:right;white-space:nowrap;max-width:420px}.page th:first-child,.page td:first-child{text-align:left}.page th{position:sticky;top:0;background:#eef3fa;z-index:1}.page td:last-child{white-space:normal;min-width:100px}.plot{background:white;border:1px solid #dce4ef;min-width:0}.chart{height:340px;width:100%}.kpis{background:#f8faff;padding:10px}.kpis span{padding-right:20px;border-right:1px solid #dce4ef}.kpis strong{display:block;font-size:18px}.journey button{flex:1;min-width:140px;text-align:left}.page pre{max-height:450px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}.page details{padding:8px;border:1px solid #dce4ef}.page summary{cursor:pointer}@media(max-width:768px){.page button,.page select,.page input{min-height:44px}.chart{height:270px}.toolbar{align-items:flex-start}.tableWrap{max-height:420px}.page{overflow:hidden}}
-.scalperChart{height:700px;min-width:0;width:100%;background:#fff}
-.page p{overflow-wrap:anywhere}.page>button{justify-self:start}
-.page{background:#f4f7fb;min-height:calc(100dvh - 56px);align-content:start}
+.page {
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: var(--n50-text-1, #14243a);
+  font-size: 13px;
+}
+.page h1 {
+  font-size: 18px;
+  margin: 0;
+}
+.page h2 {
+  font-size: 15px;
+  margin: 5px 0;
+}
+.page p {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+.toolbar,
+.tabs,
+.kpis,
+.journey {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.page button,
+.page select,
+.page input {
+  min-height: 30px;
+  border: 1px solid #bcc9dc;
+  border-radius: 5px;
+  padding: 4px 8px;
+  background: white;
+  color: #14243a;
+}
+.page button {
+  cursor: pointer;
+}
+.page button:focus-visible,
+.page a:focus-visible {
+  outline: 2px solid #315ad7;
+  outline-offset: 2px;
+}
+.tabs {
+  border-bottom: 1px solid #dce4ef;
+  padding-bottom: 6px;
+}
+.tabs [aria-current="page"] {
+  background: #eaf0ff;
+  border-color: #315ad7;
+}
+.warning {
+  background: #fff7df;
+  border: 1px solid #e8ca80;
+  padding: 8px;
+  border-radius: 6px;
+  line-height: 1.6;
+}
+.tableWrap {
+  overflow: auto;
+  max-height: 490px;
+  border: 1px solid #dce4ef;
+  background: white;
+}
+.page table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: 12px;
+}
+.page th,
+.page td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e4eaf2;
+  text-align: right;
+  white-space: nowrap;
+  max-width: 420px;
+}
+.page th:first-child,
+.page td:first-child {
+  text-align: left;
+}
+.page th {
+  position: sticky;
+  top: 0;
+  background: #eef3fa;
+  z-index: 1;
+}
+.page td:last-child {
+  white-space: normal;
+  min-width: 100px;
+}
+.plot {
+  background: white;
+  border: 1px solid #dce4ef;
+  min-width: 0;
+}
+.chart {
+  height: 340px;
+  width: 100%;
+}
+.kpis {
+  background: #f8faff;
+  padding: 10px;
+}
+.kpis span {
+  padding-right: 20px;
+  border-right: 1px solid #dce4ef;
+}
+.kpis strong {
+  display: block;
+  font-size: 18px;
+}
+.journey button {
+  flex: 1;
+  min-width: 140px;
+  text-align: left;
+}
+.page pre {
+  max-height: 450px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.page details {
+  padding: 8px;
+  border: 1px solid #dce4ef;
+}
+.page summary {
+  cursor: pointer;
+}
+@media (max-width: 768px) {
+  .page button,
+  .page select,
+  .page input {
+    min-height: 44px;
+  }
+  .chart {
+    height: 270px;
+  }
+  .toolbar {
+    align-items: flex-start;
+  }
+  .tableWrap {
+    max-height: 420px;
+  }
+  .page {
+    overflow: hidden;
+  }
+}
+.scalperChart {
+  height: 700px;
+  min-width: 0;
+  width: 100%;
+  background: #fff;
+}
+.page p {
+  overflow-wrap: anywhere;
+}
+.page > button {
+  justify-self: start;
+}
+.page {
+  background: #f4f7fb;
+  min-height: calc(100dvh - 56px);
+  align-content: start;
+}

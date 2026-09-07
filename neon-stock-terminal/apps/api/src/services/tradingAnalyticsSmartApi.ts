@@ -149,7 +149,9 @@ export async function loadSmartApiNifty(
         WHERE underlying=$2 AND expiry=$3::date AND ts BETWEEN $1::timestamptz-interval '7 days' AND $1::timestamptz)
       AND (source_quote_ts IS NULL OR source_quote_ts<=$1::timestamptz) ORDER BY strike,"right"`,asOf,underlying.symbol,expiry)
     : [];
-  const fallbackSpot=numeric(fallback[0]?.spot_price);
+  // Some real stock cohorts have complete OI but no embedded spot. The already
+  // observed, as-of-filtered underlying quote is a valid strike-window reference.
+  const fallbackSpot=spot??numeric(fallback[0]?.spot_price);
   const cohort=fallback.length && fallbackSpot!=null ? nearestPairs(fallback.map(r=>({...r,
     quote_state:smartApiQuoteState(r,asOf,calendar[0]?.market_close_ts),oi_unit:'PROVIDER_NATIVE_UNVERIFIED'})),fallbackSpot):paired;
   const hasCohort=fallback.length>0 && fallbackSpot!=null;

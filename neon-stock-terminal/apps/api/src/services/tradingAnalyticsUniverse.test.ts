@@ -46,7 +46,7 @@ test('partial FULL quotes remain visible while metrics use a separate complete c
   if(source==='smartapi_spot')return [{ltp:110}];
   if(source==='smartapi_expiries')return [{expiry:'2026-09-29'}];
   if(source==='smartapi_contracts')return legs.map((l,i)=>({...l,last_price:9,open_interest:i?10:null}));
-  if(source==='smartapi_stock_chain')return legs.map(l=>({...l,spot_price:110,last_price:null,collected_at:'2026-09-07T10:00:00Z'}));
+  if(source==='smartapi_stock_chain')return legs.map(l=>({...l,spot_price:null,last_price:null,collected_at:'2026-09-07T10:00:00Z'}));
   return [];
  },'2026-09-07T12:00:00Z',undefined,stock);
  assert.equal(d.source,'smartapi');assert.equal(d.legs[0].last_price,9);

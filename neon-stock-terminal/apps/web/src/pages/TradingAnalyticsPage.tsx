@@ -23,6 +23,17 @@ type Payload = {
   issues: Row[];
   errors: Row[];
   candles: Row[];
+  smartapi: {
+    source: string;
+    asOf: string;
+    expiry: string | null;
+    expiries: string[];
+    legs: Row[];
+    strikes: number[];
+    shortfall: number;
+    note: string;
+    metrics: { oiPcr: number | null; volumePcr: number | null };
+  };
   policies: Row[];
   limitations: string[];
   morning: {
@@ -55,6 +66,7 @@ const tabs = {
   activity: "FII Activity",
   participants: "Participant OI",
   options: "NIFTY Options",
+  smartapi: "SmartAPI OI & Quotes",
   scalper: "Scalper / Exact Contracts",
   structure: "Price & EMA",
   replay: "History / Replay",
@@ -292,15 +304,17 @@ export function TradingAnalyticsPage() {
         <button
           onClick={() => {
             const rows =
-              tab === "options"
-                ? d.chain.legs
-                : tab === "participants"
-                  ? d.participants
-                  : tab === "structure"
-                    ? d.candles
-                    : tab === "health"
-                      ? d.issues
-                      : d.activity;
+              tab === "smartapi"
+                ? d.smartapi.legs
+                : tab === "options"
+                  ? d.chain.legs
+                  : tab === "participants"
+                    ? d.participants
+                    : tab === "structure"
+                      ? d.candles
+                      : tab === "health"
+                        ? d.issues
+                        : d.activity;
             download(
               `trading-analytics-${tab}-${d.reportDate}.csv`,
               evidenceCsv(rows),
@@ -328,11 +342,81 @@ export function TradingAnalyticsPage() {
         <>
           <section className={styles.warning}>
             <strong>{d.state}</strong> · No paper or broker orders. Report{" "}
-            {d.reportDate} ({d.morning.reportLagDays} calendar days old) · Chain{" "}
-            {d.chain.state} · {d.issues.length} reconciliation issues ·{" "}
+            {d.reportDate} ({d.morning.reportLagDays} calendar days old) · NSE
+            chain {d.chain.state} · {d.issues.length} reconciliation issues ·{" "}
             {d.errors.length} source query failures.{" "}
             <Link to="?view=health">Inspect blockers</Link>
+            {" · "}
+            <Link to="?view=smartapi">
+              SmartAPI OI & Quotes (
+              {d.smartapi.legs.filter((r) => r.open_interest != null).length} OI
+              observations)
+            </Link>
           </section>
+          {tab === "smartapi" && (
+            <>
+              <div className={styles.toolbar}>
+                <h2>NIFTY SmartAPI OI & Quotes</h2>
+                <label>
+                  Expiry{" "}
+                  <select
+                    value={d.smartapi.expiry ?? ""}
+                    onChange={(e) => change("expiry", e.target.value)}
+                  >
+                    {d.smartapi.expiries.map((e) => (
+                      <option key={e}>{e}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <p>{d.smartapi.note}</p>
+              <div className={styles.kpis}>
+                <span>
+                  Paired strikes <strong>{d.smartapi.strikes.length}/10</strong>
+                </span>
+                <span>
+                  OI available{" "}
+                  <strong>
+                    {
+                      d.smartapi.legs.filter((r) => r.open_interest != null)
+                        .length
+                    }
+                    /{d.smartapi.legs.length}
+                  </strong>
+                </span>
+                <span>
+                  Window OI PCR{" "}
+                  <strong>{display(d.smartapi.metrics.oiPcr)}</strong>
+                </span>
+                <span>
+                  Window volume PCR{" "}
+                  <strong>{display(d.smartapi.metrics.volumePcr)}</strong>
+                </span>
+              </div>
+              <Table
+                label="SmartAPI exact-contract OI and quotes"
+                rows={d.smartapi.legs}
+                columns={[
+                  ...optionColumns.slice(0, 10),
+                  ["lotsize", "Master lot size"],
+                  ["quote_state", "Market data state"],
+                  ["exchange_feed_at", "Exchange time UTC"],
+                  ["collected_at", "Collected UTC"],
+                  ["day_open", "Open ₹"],
+                  ["day_high", "High ₹"],
+                  ["day_low", "Low ₹"],
+                  ["total_buy_qty", "Total buy qty"],
+                  ["total_sell_qty", "Total sell qty"],
+                ]}
+              />
+              {d.smartapi.legs.length > 0 && <OiChart legs={d.smartapi.legs} />}
+              <p>
+                Provider-day ΔOI and participant positions are different data.
+                No missing ΔOI is inferred as zero. Raw bid/ask depth and all
+                source fields remain in Full evidence JSON and this tab’s CSV.
+              </p>
+            </>
+          )}
           {tab === "morning" && (
             <>
               <div className={styles.journey}>
@@ -563,7 +647,8 @@ export function TradingAnalyticsPage() {
                 SMA of first nine retained closes seeds EMA9; warm-up remains
                 blank. Range and body fractions are descriptive previews.
                 Daily/weekly level policies remain unapproved. The Scalper lens
-                shows synchronized exact-option intraday panes and their coverage.
+                shows synchronized exact-option intraday panes and their
+                coverage.
               </p>
               <Plot
                 label="NIFTY daily OHLC and EMA9; underlying scale in points"

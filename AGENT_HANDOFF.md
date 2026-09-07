@@ -1,5 +1,14 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-07 SmartAPI today/OI correction
+
+See `docs/trading-analytics/SMARTAPI_TODAY_DIAGNOSTIC_20260907.md`.
+Today's FII report manually pulled/loaded without truncation (16 activity,
+5 participant OI, 5 volume). Additive SmartAPI OI lens reads the existing
+collector's FULL quotes because the SmartAPI chain archive covers OPTSTK only.
+Collection time and exchange-close timestamps remain separate; no second login,
+no source blending, no paper/live orders. Calendar-completed daily candle included.
+
 ## 2026-09-07 Trading Analytics read-only vertical slice
 
 New independent `/strategy/trading-analytics` journey and NIFTY option/scalper

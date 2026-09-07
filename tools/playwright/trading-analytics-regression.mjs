@@ -78,6 +78,7 @@ try {
       ["activity", "FII Activity"],
       ["participants", "Participant OI"],
       ["options", "NIFTY Options"],
+      ["smartapi", "SmartAPI OI & Quotes"],
       ["structure", "Price & EMA"],
       ["scalper", "Scalper / Exact Contracts"],
       ["replay", "History / Replay"],
@@ -138,6 +139,21 @@ try {
         (l) =>
           l.instrument_identifier == null ||
           csv.includes(String(l.instrument_identifier)),
+      ),
+    );
+    check(
+      `${width} SmartAPI OI available`,
+      d.smartapi.legs.length > 0 &&
+        d.smartapi.legs.some((l) => l.open_interest != null),
+    );
+    check(
+      `${width} SmartAPI source times explicit`,
+      d.smartapi.legs.every(
+        (l) =>
+          l.source === "smartapi" &&
+          l.quote_state &&
+          l.collected_at &&
+          l.exchange_feed_at,
       ),
     );
     await downloaded.saveAs(path.join(out, `${width}-option-export.csv`));

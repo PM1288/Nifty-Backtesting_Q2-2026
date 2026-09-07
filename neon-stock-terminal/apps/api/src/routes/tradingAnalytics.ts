@@ -2,6 +2,7 @@ import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { loadSmartApiNifty } from "../services/tradingAnalyticsSmartApi";
 import {
   activity,
   participant,
@@ -60,36 +61,38 @@ export async function loadTradingAnalytics(
   )
     throw new Error("Future report date");
   // Select one complete load revision, never stitch rows from different ingests.
-  const [rawStats, rawPeople, cash, expiries, dayBars] = await Promise.all([
-    read(
-      "derivatives",
-      `SELECT fii_derivatives,buy_contracts::text,buy_value_in_cr::text,sell_contracts::text,sell_value_in_cr::text,open_contracts::text,open_contracts_value_in_cr::text,trade_date::text,loaded_at,run_id,source_file FROM market_data.nse_fii_derivatives_stats WHERE trade_date=$2::date AND run_id=(SELECT run_id FROM market_data.nse_fii_derivatives_stats WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1) ORDER BY fii_derivatives`,
-      asOf,
-      selected,
-    ),
-    read(
-      "participant_oi",
-      `SELECT to_jsonb(p) payload FROM market_data.nse_fii_participant_open_interest p WHERE trade_date=$2::date AND run_id=(SELECT run_id FROM market_data.nse_fii_participant_open_interest WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1) ORDER BY client_type`,
-      asOf,
-      selected,
-    ),
-    // Legacy cash has no observation timestamp. It is descriptive only, never PIT-qualified.
-    read(
-      "cash",
-      `SELECT participant_type,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date=$1::date AND source_dataset='nse_fii_dii_nse_only'`,
-      selected,
-    ),
-    read(
-      "chain_expiries",
-      `SELECT DISTINCT expiry_date::text FROM public.option_chain_snapshots WHERE symbol='NIFTY' AND captured_at<=$1::timestamptz AND expiry_date>=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY expiry_date`,
-      asOf,
-    ),
-    read(
-      "nifty_daily",
-      `SELECT trade_date::text date,open::float8,high::float8,low::float8,close::float8,source,created_at FROM public.bars_1d WHERE exchange='NSE' AND symbol_token='99926000' AND trade_date<($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date AND created_at<=$1::timestamptz ORDER BY trade_date DESC LIMIT 400`,
-      asOf,
-    ),
-  ]);
+  const [rawStats, rawPeople, cash, expiries, dayBars, smartapi] =
+    await Promise.all([
+      read(
+        "derivatives",
+        `SELECT fii_derivatives,buy_contracts::text,buy_value_in_cr::text,sell_contracts::text,sell_value_in_cr::text,open_contracts::text,open_contracts_value_in_cr::text,trade_date::text,loaded_at,run_id,source_file FROM market_data.nse_fii_derivatives_stats WHERE trade_date=$2::date AND run_id=(SELECT run_id FROM market_data.nse_fii_derivatives_stats WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1) ORDER BY fii_derivatives`,
+        asOf,
+        selected,
+      ),
+      read(
+        "participant_oi",
+        `SELECT to_jsonb(p) payload FROM market_data.nse_fii_participant_open_interest p WHERE trade_date=$2::date AND run_id=(SELECT run_id FROM market_data.nse_fii_participant_open_interest WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1) ORDER BY client_type`,
+        asOf,
+        selected,
+      ),
+      // Legacy cash has no observation timestamp. It is descriptive only, never PIT-qualified.
+      read(
+        "cash",
+        `SELECT participant_type,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date=$1::date AND source_dataset='nse_fii_dii_nse_only'`,
+        selected,
+      ),
+      read(
+        "chain_expiries",
+        `SELECT DISTINCT expiry_date::text FROM public.option_chain_snapshots WHERE symbol='NIFTY' AND captured_at<=$1::timestamptz AND expiry_date>=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY expiry_date`,
+        asOf,
+      ),
+      read(
+        "nifty_daily",
+        `SELECT b.trade_date::text date,open::float8,high::float8,low::float8,close::float8,source,created_at FROM public.bars_1d b WHERE exchange='NSE' AND symbol_token='99926000' AND (b.trade_date<($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date OR EXISTS (SELECT 1 FROM public.trading_calendar c WHERE c.trade_date=b.trade_date AND c.is_trading_day AND c.market_close_ts<=$1::timestamptz)) AND b.trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date AND created_at<=$1::timestamptz ORDER BY b.trade_date DESC LIMIT 400`,
+        asOf,
+      ),
+      loadSmartApiNifty(read, asOf, expiry),
+    ]);
   const stats = rawStats.map(activity),
     people = rawPeople.map((r) => participant(r.payload as Facts));
   const selectedExpiry =
@@ -200,6 +203,7 @@ export async function loadTradingAnalytics(
     issues,
     errors,
     candles,
+    smartapi,
     chain: {
       snapshot,
       previousSnapshot: previous,
@@ -363,14 +367,12 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = querySchema.safeParse(req.query);
     if (!parsed.success)
-      return res
-        .status(400)
-        .json({
-          error: {
-            code: "INVALID_QUERY",
-            message: "Use ISO asOf and YYYY-MM-DD date/expiry.",
-          },
-        });
+      return res.status(400).json({
+        error: {
+          code: "INVALID_QUERY",
+          message: "Use ISO asOf and YYYY-MM-DD date/expiry.",
+        },
+      });
     const asOf = parsed.data.asOf ?? new Date().toISOString();
     if (Date.parse(asOf) > Date.now())
       return res
@@ -386,15 +388,13 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         ),
       );
     } catch {
-      return res
-        .status(503)
-        .json({
-          error: {
-            code: "TRADING_ANALYTICS_UNAVAILABLE",
-            message:
-              "Research evidence could not be loaded; no orders were submitted.",
-          },
-        });
+      return res.status(503).json({
+        error: {
+          code: "TRADING_ANALYTICS_UNAVAILABLE",
+          message:
+            "Research evidence could not be loaded; no orders were submitted.",
+        },
+      });
     }
   });
 }

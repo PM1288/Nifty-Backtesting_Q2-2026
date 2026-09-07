@@ -83,3 +83,27 @@ production load or bypass preservation.
 Rollback only these two service images to the preceding intraday image
 `sha256:b8f0c179a94cc15d46ae250387b929d8039d62fe568bfbb8c97507a81846d447`.
 Keep additive archive/checkpoint data. Do not revert to pre-gate cleanup code.
+
+## Production acceptance, September 7 19:30 UTC
+
+Deployed application commit `41d2551` from pushed master. Additive SQL committed;
+only NSE intraday API and scheduler recreated. Image:
+`sha256:cd12e421335327e03d496b8ad91f2973d7e06a8dd8ab441f4f9fedda636a31bf`.
+Both running, zero restarts observed; API `/health` returns status ok with database
+connected and raw/minute retention 15 days.
+
+First manual retention run completed all 15 prior dates (August 24–September 7
+in application IST): 11 dates × 277 daily rows refreshed = 3,047 affected rows;
+four dates explicitly NO_ROWS_CHANGED. These are refreshes, not 3,047 newly
+discovered records. All five deletion families returned BLOCKED_UNVERIFIED.
+
+Immediate repeat reused all 15 checkpoints with zero rows deleted:
+`output/retention-completion-review/repeat-run.json`.
+Database checkpoint aggregate: ARCHIVED 11/3047, NO_ROWS_CHANGED 4/0.
+`operations.retention_result` still contains zero rows. No raw records, production
+tables, backups or volumes were deleted in this follow-up. The isolated test
+container created for this run was removed after fixture acceptance.
+
+All broader incomplete items above remain open. The existing August backup is a
+useful starting point for a fresh exact-object recovery workflow, not a blanket
+September purge approval.

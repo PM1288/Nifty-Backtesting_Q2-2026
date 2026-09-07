@@ -3526,6 +3526,13 @@ Final deployed acceptance: application `b2077c2`, dashboard image `sha256:58033a
 
 # 2026-09-07 — Cash FII/DII and OI/Delta axes
 
+
 Branch `ui/cash-flow-oi-axis-20260907`; report `docs/trading-analytics/CASH_OI_AXIS_20260907.md`. Additive independent cash-history panel in Morning View, full SmartAPI OI/Greek fields, timestamped prior-quote ΔOI and explicit vertical chart axes. No trading or database writes. API 168/168, web 78/78, both typechecks/builds and canonical gate pass. Cash latest retained 3 September (ingest DNS failures); near-ATM Greeks unavailable in retained source (blank symbol collision suspected). These gaps stay explicit, never synthetic zero. Browser/deployment evidence follows in report.
 
 Final application `738934f` deployed from pushed master, image `sha256:343894630f5d029872394aa685eb955d74bd10892ce3f4679de59ec22c054ebb`. Cash/OI public desktop/mobile checks 28/28, main-content axe zero violations; CSV reconciles all 126 retained rows. Supplemental Scalper controls/levels 22/22 on preceding commit (unchanged by OI-only margin fix). Evidence under `output/playwright/cash-oi-20260907/`. Latest cash/Greek source gaps remain documented; no source backfill, collector change or order activation is claimed.
+
+# 2026-09-07 — Read-only retention and reliability review
+
+Branch `audit/retention-reliability-20260907`, base `9e6b268`. Report: `docs/operations/retention-review-20260907/README.md`; catalog/CSV/screenshots: `output/retention-review-20260907/`. Measured DB 377.84 GiB / 509 physical relations, including 112.43 GiB indexes. Cleanup omits ticks/depth metrics/SmartAPI chains; month-only expiry does not enforce exact TTL. Strong conditional shortlist: old research minute indicators 43.31 GiB plus migration copies 7.24 GiB. Minute deletion blocked by daily-history view dependencies and paper path evidence. No deletions, production configuration changes or deployment performed.
+
+Broad browser review: 65 observations, 49 shell-only passes, 16 review/incomplete; not numerical parity. P2024 pool timeouts, HTTP 502 and dashboard restart at 18:33 UTC observed; stopped extended rechecks to avoid load. Dashboard recovered healthy, OOM not established. API pool 4 / timeout15s, dashboard512MiB and PG2GiB; prioritize bounded queries/failure isolation. Harness now requires explicit target and stops on 5xx. Both audit-tool syntax checks and canonical gate passed. Backup restore, exact daily coverage, external dependencies, full chart/export regression and actual cleanup remain unverified. Do not invoke existing cleanup dry-run for read-only review: it can provision partitions.

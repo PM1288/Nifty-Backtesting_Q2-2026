@@ -200,7 +200,7 @@ function OiChart({ legs }: { legs: Row[] }) {
       animation: false,
       tooltip: { trigger: "axis" },
       legend: { data: ["CE", "PE"] },
-      grid: { left: 65, right: 20, bottom: 50 },
+      grid: { left: 28, right: 28, top: 65, bottom: 55, containLabel: true },
       xAxis: {
         type: "category",
         name: "Strike",

@@ -21,6 +21,9 @@ try{for(const width of [1440,390]){
  await page.getByText('Refreshing…',{exact:true}).waitFor({state:'hidden',timeout:60000});
  const d=await configuredResponse;const data=await d.json();check(`${width} level scopes`,d.ok()&&data.resistance.length===3&&data.resistance.every(v=>v.lookback!=null));
  check(`${width} preview never enables execution`,data.liveOrdersEnabled===false&&data.paperOrdersEnabled===false&&data.resistance.every(v=>v.selected==null||v.selected.resistance>v.price));
+ await page.getByText(/source minutes in retained archive/).first().waitFor({timeout:60000});
+ await page.getByText('Loading retained minute paths…',{exact:true}).waitFor({state:'hidden',timeout:60000});
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  await page.screenshot({path:`${out}/${width}-scalper.png`,fullPage:true});
  const axe=await new AxeBuilder({page}).include('main').analyze();await fs.writeFile(`${out}/${width}-axe.json`,JSON.stringify(axe.violations,null,2));check(`${width} accessibility`,axe.violations.length===0);
  check(`${width} no overflow`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));check(`${width} no JS errors`,errors.length===0);

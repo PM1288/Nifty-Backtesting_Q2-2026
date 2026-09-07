@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';import {chromium} from 'playwright';import AxeBuilder from '@axe-core/playwright';
-const base=process.env.PLAYWRIGHT_BASE_URL??'http://127.0.0.1:19090/n50';if(!process.env.PLAYWRIGHT_ADMIN_PASSWORD)throw new Error('Protected password required');
+const base=process.env.PLAYWRIGHT_BASE_URL??'https://n50.nifty50today.co.in/n50';if(!process.env.PLAYWRIGHT_ADMIN_PASSWORD)throw new Error('Protected password required');
 const out='output/playwright/scalper-5m-20260907';await fs.mkdir(out,{recursive:true});const browser=await chromium.launch({headless:true});const results=[];
 function check(name,pass){results.push({name,pass});if(!pass)throw new Error(name);}
 try{for(const width of [1440,390]){
@@ -16,9 +16,10 @@ try{for(const width of [1440,390]){
  await page.getByRole('combobox',{name:/Chart range/}).selectOption('day');
  // Explicit test-only research counts; no default or database configuration mutation.
  await page.getByRole('spinbutton',{name:/daily R lookback/}).fill('20');await page.keyboard.press('Tab');
+ const configuredResponse=page.waitForResponse(r=>r.url().includes('/v1/trading-analytics?')&&new URL(r.url()).searchParams.get('weeklyLookback')==='12',{timeout:60000});
  await page.getByRole('spinbutton',{name:/weekly R lookback/}).fill('12');await page.keyboard.press('Tab');
  await page.getByText('Refreshing…',{exact:true}).waitFor({state:'hidden',timeout:60000});
- const d=await context.request.get(`${base}/v1/trading-analytics?dailyLookback=20&weeklyLookback=12`);const data=await d.json();check(`${width} level scopes`,d.ok()&&data.resistance.length===3&&data.resistance.every(v=>v.lookback!=null));
+ const d=await configuredResponse;const data=await d.json();check(`${width} level scopes`,d.ok()&&data.resistance.length===3&&data.resistance.every(v=>v.lookback!=null));
  check(`${width} preview never enables execution`,data.liveOrdersEnabled===false&&data.paperOrdersEnabled===false&&data.resistance.every(v=>v.selected==null||v.selected.resistance>v.price));
  await page.screenshot({path:`${out}/${width}-scalper.png`,fullPage:true});
  const axe=await new AxeBuilder({page}).include('main').analyze();await fs.writeFile(`${out}/${width}-axe.json`,JSON.stringify(axe.violations,null,2));check(`${width} accessibility`,axe.violations.length===0);

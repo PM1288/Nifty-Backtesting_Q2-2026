@@ -165,6 +165,8 @@ export function TradingAnalyticsScalper({
         gridIndex: i,
         scale: true,
         interval: i === 0 && showGrid ? 50 : undefined,
+        min: i===0&&showGrid ? (v:{min:number})=>Math.floor(v.min/50)*50 : undefined,
+        max: i===0 ? (v:{max:number})=>{const top=Math.max(v.max,...(showLevels?resistance.filter(r=>r.selected!=null).map(r=>Number((r.selected as Row).resistance)):[]));return showGrid?Math.ceil(top/50)*50:top;} : undefined,
         position: "right",
         axisLabel: { fontSize: 12 },
         splitLine: { lineStyle: { color: "#E8EBEF" } },
@@ -383,7 +385,7 @@ export function TradingAnalyticsScalper({
           completed bars. Daily and weekly counts are user-configured because
           source notes do not specify them. Only resistance above the as-of
           price is selected. Research overlays, not approved trade signals.
-          Far-away levels may be outside the visible price range.
+          Showing R expands only the NIFTY scale; switch R off for a closer price view.
         </p>
         <pre tabIndex={0}>{JSON.stringify(resistance, null, 2)}</pre>
       </details>

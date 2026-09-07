@@ -5,7 +5,16 @@ import {
   istDay,
   dayRows,
   candleColors,
+  evidenceValueAxis,
 } from "../src/lib/tradingAnalyticsChartView";
+test("evidence axes explicitly show value line, ticks and readable signed labels",()=>{
+  assert.equal(evidenceValueAxis.axisLine.show,true);
+  assert.equal(evidenceValueAxis.axisTick.show,true);
+  assert.equal(evidenceValueAxis.axisLabel.show,true);
+  assert.equal(evidenceValueAxis.axisLabel.formatter(0),"0");
+  assert.ok(evidenceValueAxis.axisLabel.formatter(-5000).startsWith("-"));
+  assert.equal(evidenceValueAxis.axisLabel.formatter(0.52),"0.52");
+});
 test("scalper defaults and invalid timeframe fallback use five minutes", () => {
   assert.equal(chartInterval(null), 5);
   assert.equal(chartInterval("bad"), 5);

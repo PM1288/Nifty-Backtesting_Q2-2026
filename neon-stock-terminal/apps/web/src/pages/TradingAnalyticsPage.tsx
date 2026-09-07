@@ -20,6 +20,8 @@ import {
 import { TradingAnalyticsDrawer } from "./TradingAnalyticsDrawer";
 import { TradingAnalyticsMorning } from "./TradingAnalyticsMorning";
 import { TradingAnalyticsStructure } from "./TradingAnalyticsStructure";
+import { TradingAnalyticsCash, type CashHistory } from "./TradingAnalyticsCash";
+import { evidenceValueAxis } from "../lib/tradingAnalyticsChartView";
 
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
@@ -38,6 +40,7 @@ type Payload = {
   issues: Row[];
   errors: Row[];
   candles: Row[];
+  cashHistory?: CashHistory;
   resistance?: Row[];
   periods?: { weekly: Row[]; monthly: Row[] };
   smartapi: {
@@ -189,36 +192,37 @@ function Plot({ option, label }: { option: EChartsOption; label: string }) {
   );
 }
 function OiChart({ legs }: { legs: Row[] }) {
+  const [metric,setMetric]=useState("open_interest");
+  const metrics: Record<string,string> = {open_interest:"OI · provider-native",previous_snapshot_delta:"Prior snapshot ΔOI · provider-native",change_in_oi:"Provider day ΔOI · provider-native",delta:"Option Delta · Greek"};
+  const strikes=[...new Set(legs.map(l=>Number(l.strike)))].sort((a,b)=>a-b);
   const option = useMemo<EChartsOption>(
     () => ({
       animation: false,
       tooltip: { trigger: "axis" },
-      legend: { data: ["CE OI", "PE OI"] },
+      legend: { data: ["CE", "PE"] },
       grid: { left: 65, right: 20, bottom: 50 },
       xAxis: {
         type: "category",
         name: "Strike",
-        data: [...new Set(legs.map((l) => String(l.strike)))],
+        data: strikes.map(String),
       },
-      yAxis: { type: "value", name: "Source OI" },
+      yAxis: { ...evidenceValueAxis, type: "value", name: metric==="delta"?"Option Delta":"Source OI / ΔOI" },
       series: ["CE", "PE"].map((t, i) => ({
-        name: `${t} OI`,
+        name: t,
         type: "bar",
-        data: legs
-          .filter((l) => l.option_type === t)
-          .map((l) =>
-            l.open_interest == null ? null : Number(l.open_interest),
-          ),
+        data: strikes.map(s=>{const l=legs.find(l=>Number(l.strike)===s&&l.option_type===t);return l?.[metric]==null?null:Number(l[metric]);}),
         itemStyle: { color: i ? "#087a55" : "#c93346" },
       })),
     }),
-    [legs],
+    [legs,metric],
   );
   return (
+    <><label>OI chart measure <select value={metric} onChange={e=>setMetric(e.target.value)}>{Object.entries(metrics).map(([key,label])=><option value={key} key={key}>{label}</option>)}</select></label>
+    {!legs.some(l=>l[metric]!=null)&&<p className={styles.warning}>Unavailable: {metrics[metric]}. No zero values are synthesized.</p>}
     <Plot
-      label="Current CE and PE OI by strike; retained display window only"
+      label={`${metrics[metric]} by strike; retained display window only`}
       option={option}
-    />
+    /></>
   );
 }
 const activityColumns: [string, string][] = [
@@ -507,7 +511,12 @@ export function TradingAnalyticsPage() {
                   label="SmartAPI exact-contract OI and quotes"
                   rows={d.smartapi.legs}
                   columns={[
-                    ...optionColumns.slice(0, 10),
+                    ...optionColumns,
+                    ["previous_open_interest", "Prior quote OI"],
+                    ["previous_collected_at", "Prior quote collected UTC"],
+                    ["previous_exchange_feed_at", "Prior exchange time UTC"],
+                    ["greeks_collected_at", "Greeks collected UTC"],
+                    ["greeks_state", "Greeks availability"],
                     ["lotsize", "Master lot size"],
                     ["quote_state", "Market data state"],
                     ["exchange_feed_at", "Exchange time UTC"],
@@ -531,6 +540,7 @@ export function TradingAnalyticsPage() {
             )}
             {tab === "morning" && (
               <>
+                <TradingAnalyticsCash data={d.cashHistory} onInspect={inspect} />
                 <TradingAnalyticsMorning
                   activity={d.activity}
                   participants={d.participants}
@@ -637,7 +647,8 @@ export function TradingAnalyticsPage() {
                         )
                         .map((r) => String(r.fii_derivatives)),
                     },
-                    yAxis: { type: "value", name: "₹ crore" },
+                    grid: { left: 28, right: 28, top: 55, bottom: 55, containLabel: true },
+                    yAxis: { ...evidenceValueAxis, type: "value", name: "₹ crore" },
                     series: [
                       {
                         type: "bar",
@@ -692,7 +703,8 @@ export function TradingAnalyticsPage() {
                         .filter((r) => r.client_type !== "TOTAL")
                         .map((r) => String(r.client_type)),
                     },
-                    yAxis: { type: "value", name: "Contracts" },
+                    grid: { left: 28, right: 28, top: 55, bottom: 55, containLabel: true },
+                    yAxis: { ...evidenceValueAxis, type: "value", name: "Contracts" },
                     tooltip: { trigger: "axis" },
                     series: [
                       {

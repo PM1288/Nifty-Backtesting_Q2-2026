@@ -3,7 +3,19 @@ import assert from "node:assert/strict";
 import express from "express";
 import type { AddressInfo } from "node:net";
 import type { PrismaClient } from "@prisma/client";
-import { registerTradingAnalytics } from "./tradingAnalytics";
+import { registerTradingAnalytics,loadTradingAnalytics } from "./tradingAnalytics";
+test("older cash history stays descriptive and does not fill missing selected-date matrix",async()=>{
+  const calls:{sql:string;args:unknown[]}[]=[];
+  const rows=[{market_date:"2026-09-03",participant_type:"DII",buy_value:10,sell_value:10,net_value:0}];
+  const prisma={$queryRawUnsafe:async(sql:string,...args:unknown[])=>{calls.push({sql,args});return sql.includes("normalized_nse_fii_dii")&&sql.includes("market_date<=")?rows:[];}} as unknown as PrismaClient;
+  const d=await loadTradingAnalytics(prisma,"2026-09-07T12:00:00Z","2026-09-07");
+  assert.equal(d.cashHistory.latestDate,"2026-09-03");
+  assert.equal(d.cashHistory.state,"OLDER_REPORT");
+  assert.equal(d.cashHistory.rows[0].net_value,0);
+  assert.equal(d.morning.cashNet,null);
+  assert.equal(d.morning.matrix,"INSUFFICIENT_DATA");
+  assert.ok(calls.some(c=>c.sql.includes("market_date<=")&&c.args[0]==="2026-09-07"));
+});
 test("read-only API validates input and reports partial source failure without leaking errors", async () => {
   const app = express();
   const prisma = {

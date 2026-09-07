@@ -67,7 +67,7 @@ export async function loadTradingAnalytics(
   )
     throw new Error("Future report date");
   // Select one complete load revision, never stitch rows from different ingests.
-  const [rawStats, rawPeople, cash, expiries, dayBars, smartapi] =
+  const [rawStats, rawPeople, cash, expiries, dayBars, smartapi, cashHistory] =
     await Promise.all([
       read(
         "derivatives",
@@ -84,7 +84,7 @@ export async function loadTradingAnalytics(
       // Legacy cash has no observation timestamp. It is descriptive only, never PIT-qualified.
       read(
         "cash",
-        `SELECT participant_type,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date=$1::date AND source_dataset='nse_fii_dii_nse_only'`,
+        `SELECT participant_type,buy_value,sell_value,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date=$1::date AND source_dataset='nse_fii_dii_nse_only'`,
         selected,
       ),
       read(
@@ -98,6 +98,11 @@ export async function loadTradingAnalytics(
         asOf,
       ),
       loadSmartApiNifty(read, asOf, expiry),
+      read(
+        "cash_history",
+        `SELECT participant_type,buy_value,sell_value,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date<=$1::date AND source_dataset='nse_fii_dii_nse_only' ORDER BY market_date DESC,participant_type LIMIT 740`,
+        selected,
+      ),
     ]);
   const stats = rawStats.map(activity),
     people = rawPeople.map((r) => participant(r.payload as Facts));
@@ -205,6 +210,16 @@ export async function loadTradingAnalytics(
       reportLagDays: Math.floor(
         (Date.parse(asOf) - Date.parse(selected)) / 86400000,
       ),
+    },
+    cashHistory: {
+      rows: cashHistory,
+      latestDate: cashHistory[0]?.market_date ?? null,
+      requestedDate: selected,
+      source: "NSE · capital market · NSE only",
+      unit: "INR_CRORE",
+      state: cashHistory.length === 0 ? "DATA_INSUFFICIENT" : cashHistory[0]?.market_date === selected ? "OBSERVED_REPORT" : "OLDER_REPORT",
+      knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
+      note: "Descriptive retained reports, not point-in-time qualified. Older cash reports do not replace the selected-date cash input in the market matrix. NSE-only and combined-exchange totals are not mixed.",
     },
     activity: stats,
     participants: people,

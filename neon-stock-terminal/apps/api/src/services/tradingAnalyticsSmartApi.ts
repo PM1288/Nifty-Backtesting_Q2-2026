@@ -11,6 +11,11 @@ export type EvidenceReader = (
   ...args: unknown[]
 ) => Promise<Facts[]>;
 
+export function observedOiChange(current: unknown, previous: unknown) {
+  const a = numeric(current), b = numeric(previous);
+  return a == null || b == null ? null : a - b;
+}
+
 export function smartApiQuoteState(
   row: Facts,
   asOf: string,
@@ -70,9 +75,12 @@ export async function loadSmartApiNifty(
     q.ts collected_at,q.exch_feed_time exchange_feed_at,q.exch_trade_time exchange_trade_at,q.ltp::float8 last_price,
     q.oi::text open_interest,q.volume::text total_traded_volume,q.bid::float8 bid_price,q.ask::float8 ask_price,q.bid_qty::text bid_qty,q.ask_qty::text ask_qty,
     q.open::float8 day_open,q.high::float8 day_high,q.low::float8 day_low,q.close::float8 previous_close,
-    q.total_buy_qty::text total_buy_qty,q.total_sell_qty::text total_sell_qty,q.raw
+    q.total_buy_qty::text total_buy_qty,q.total_sell_qty::text total_sell_qty,q.raw,
+    prev.oi::text previous_open_interest,prev.ts previous_collected_at,
+    prev.exch_feed_time previous_exchange_feed_at
     FROM public.instruments i JOIN strikes s USING(strike)
     LEFT JOIN LATERAL (SELECT * FROM public.quote_snapshots q WHERE q.exchange=i.exchange AND q.symbol_token=i.symbol_token AND q.ts BETWEEN $1::timestamptz-interval '1 day' AND $1::timestamptz ORDER BY q.ts DESC LIMIT 1) q ON true
+    LEFT JOIN LATERAL (SELECT p.oi,p.ts,p.exch_feed_time FROM public.quote_snapshots p WHERE p.exchange=i.exchange AND p.symbol_token=i.symbol_token AND p.ts<q.ts AND p.ts>=$1::timestamptz-interval '1 day' ORDER BY p.ts DESC LIMIT 1) prev ON true
     WHERE i.exchange='NFO' AND i.name='NIFTY' AND i.instrumenttype='OPTIDX' AND i.expiry=$2::date AND i.updated_at<=$1::timestamptz
     ORDER BY i.strike,option_type`,
           asOf,
@@ -80,12 +88,28 @@ export async function loadSmartApiNifty(
           spot,
         )
       : [];
+  const greeks = expiry ? await read(
+    "smartapi_greeks",
+    `SELECT DISTINCT ON (strike,"right") strike::float8 strike,"right" option_type,ts greeks_collected_at,underlying greeks_underlying,tradingsymbol greeks_source_symbol,iv::float8 implied_volatility,delta::float8,gamma::float8,theta::float8,vega::float8 FROM public.option_greeks WHERE underlying IN ('NIFTY','NIFTY50') AND expiry=$2::date AND ts BETWEEN $1::timestamptz-interval '1 day' AND $1::timestamptz ORDER BY strike,"right",ts DESC`,
+    asOf, expiry,
+  ) : [];
   const rows = contracts.map((r) => ({
     ...r,
     quote_state: smartApiQuoteState(r, asOf, calendar[0]?.market_close_ts),
     source: "smartapi",
     oi_unit: "PROVIDER_NATIVE_UNVERIFIED",
     change_in_oi: null,
+    previous_snapshot_delta: observedOiChange(r.open_interest,r.previous_open_interest),
+    ...(() => {
+      const g = greeks.find(g => numeric(g.strike) === numeric(r.strike) && g.option_type === r.option_type);
+      return {
+        implied_volatility: g?.implied_volatility ?? null,
+        delta: g?.delta ?? null, gamma: g?.gamma ?? null, theta: g?.theta ?? null, vega: g?.vega ?? null,
+        greeks_collected_at: g?.greeks_collected_at ?? null,
+        greeks_source_symbol: g?.greeks_source_symbol ?? null,
+        greeks_state: g ? "RETAINED_OBSERVATION_EXCHANGE_TIME_UNVERIFIED" : "NO_MATCHING_RETAINED_GREEKS",
+      };
+    })(),
   }));
   const paired =
     spot == null
@@ -101,6 +125,6 @@ export async function loadSmartApiNifty(
     strikes: paired.strikes,
     shortfall: paired.shortfall,
     metrics: chainMetrics(paired.legs),
-    note: "Existing collector FULL quotes, individually timestamped; not an atomic exchange-chain snapshot. After-close collection does not make prices live. OI is provider-native, not normalized lots/contracts. FII participant OI is a separate NSE report. Day change in OI is unavailable from this quote payload.",
+    note: "Existing collector FULL quotes, individually timestamped; not an atomic chain snapshot. OI uses provider-native units, not verified lots/contracts. Prior snapshot ΔOI = current OI minus the immediately preceding retained quote for the same token; not day change. Provider day ΔOI is unavailable in FULL quotes. Option Delta is a Greek, not ΔOI; Greeks match underlying/expiry/strike/right and carry their own collection time, not verified exchange freshness. Missing is never zero. FII/DII cash is a separate NSE report.",
   };
 }

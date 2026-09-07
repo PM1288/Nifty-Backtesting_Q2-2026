@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getJson } from "../lib/api";
 import type { EChartsOption } from "echarts";
 import styles from "./TradingAnalyticsPage.module.css";
-import { candleColors } from "../lib/tradingAnalyticsChartView";
+import { candleColors, evidenceValueAxis } from "../lib/tradingAnalyticsChartView";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
@@ -57,6 +57,7 @@ export function AnalyticsPricePane({
       },
     },
     yAxis: {
+      ...evidenceValueAxis,
       type: "value",
       position: "right",
       scale: true,

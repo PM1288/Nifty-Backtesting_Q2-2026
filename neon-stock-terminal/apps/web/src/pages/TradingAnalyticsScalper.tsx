@@ -7,6 +7,7 @@ import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { oiTimeline } from "../lib/tradingAnalyticsOiTimeline";
 import {
   candleColors,
+  evidenceValueAxis,
   chartInterval,
   istDay,
   dayRows,
@@ -161,6 +162,7 @@ export function TradingAnalyticsScalper({
         },
       })),
       yAxis: rows.map((p, i) => ({
+        ...evidenceValueAxis,
         type: "value",
         gridIndex: i,
         scale: true,
@@ -490,10 +492,10 @@ export function TradingAnalyticsScalper({
                   },
                 },
                 yAxis: {
+                  ...evidenceValueAxis,
                   type: "value",
                   name: "Provider-native OI",
                   min: 0,
-                  axisLabel: { fontSize: 12 },
                 },
                 series: panes
                   .filter((p) => p.identity.exchange === "NFO")

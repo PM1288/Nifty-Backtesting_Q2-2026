@@ -1,0 +1,24 @@
+# Cash FII/DII and OI axes — 7 September 2026
+
+Branch: `ui/cash-flow-oi-axis-20260907`. Scope: additive read-only Trading Analytics views, no order authority, source precedence changes, database writes or collector restart.
+
+## Findings
+
+- Cash exists in `institutional_flow.normalized_nse_fii_dii`: 126 rows / 63 reports, 2026-04-01 to 2026-09-03 at inspection. Source dataset `nse_fii_dii_nse_only`, scope NSE only. Latest FII/FPI buy 13,596.04, sell 15,941.91, net -2,345.87; DII buy 17,063.65, sell 12,086.19, net +4,977.46 (₹ crore).
+- The prior UI queried only the selected derivatives date and displayed only FII net. This hid older cash evidence and DII. New independently dated Morning View cash section includes both buy/sell/net, 30-report chart, up to 740 retained source rows, raw inspector and full history CSV. Selected-date matrix logic is unchanged: older cash is never substituted into it.
+- Ingestion registry records recent cash `ConnectError` / temporary DNS resolution failures. Latest successful normalized cash report remains 3 September. This change exposes age and does not invent newer reports or silently repair the ingest service.
+- Cash reports have no row-level publication timestamp. They remain descriptive, not certified point-in-time research features. NSE-only and combined exchange totals must not be summed/mixed.
+- SmartAPI quote UI sliced the option columns at OI, hiding ΔOI and Greeks. Full columns are restored. Prior snapshot ΔOI uses the immediately preceding retained quote for the same token within the bounded read window. Current/prior OI and both collection/feed timestamps are retained. Zero is preserved; absent baselines stay null. Repeated unchanged observations can legitimately yield zero. This is NOT previous-session change.
+- Provider day ΔOI is not supplied by the persisted FULL-quote contract and remains null. Greek Delta is a distinct dimensionless sensitivity, never substituted for OI change. Chart selector separates these measures and shows explicit unavailable state.
+- Greeks read the existing `public.option_greeks`, matched by NIFTY/NIFTY50 underlying, exact expiry, strike and right, timestamp bounded by as-of. Each carries collection time and unverified exchange-freshness state. At inspection the past-day retained NIFTY50 data contains only 25,250 PE (421 observations) with blank trading symbol, not the displayed near-ATM contracts. The store conflict identity `(ts, tradingsymbol)` and blank-symbol source mapping need separate collector correction; lost historical Greeks cannot be recreated by the UI. No wrong-strike Greek is filled into an ATM row.
+- Shared chart styling hides value-axis lines by default. Scoped overrides now explicitly show vertical axis lines/ticks and darker readable labels in Trading Analytics without altering unrelated charts. Compact OI label formatting preserves full raw values in tables/exports/tooltips; price panes retain price labels.
+
+## Source verification
+
+Repository source: institutional dataset registry/normalizer, Go FULL-quote parser, `option_greeks` schema, live PostgreSQL read-only checks. No verified SmartAPI/Yahoo cash-flow adapter was found in this path. Official references: [NSE cash report](https://www.nseindia.com/reports/fii-dii), [SmartAPI FULL market data](https://smartapi.angelone.in/docs/MarketData). The old angelbroking docs URL returned an authorization page.
+
+## Validation / rollout
+
+Results and deployed identity will be appended after validation. Run both application typechecks/tests/builds and `bash scripts/verify/canonical-repository-gate.sh`. Authenticated browser harness: `node tools/playwright/trading-analytics-cash-oi.mjs`, using protected `PLAYWRIGHT_ADMIN_PASSWORD`. It checks current real rows, CSV parity, missingness, arithmetic, desktop/mobile display and accessibility. Artifacts are ignored under `output/playwright/cash-oi-20260907/`.
+
+Deploy only pushed master with `docker compose -p trading-stack-novius2 build n50-dashboard` then `docker compose -p trading-stack-novius2 up -d --no-deps n50-dashboard`. Do not remove orphan services. Rollback is scoped source revert and dashboard rebuild; no database migration is involved.

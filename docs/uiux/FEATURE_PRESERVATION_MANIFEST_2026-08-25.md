@@ -75,3 +75,5 @@ A new dashboard is additive only when this manifest still passes. Removing a sha
 # 2026-09-07 additive Trading Analytics IO navigation
 
 `/strategy/trading-analytics` now groups nine historical query views into six primary workspaces. Old `activity`, `participants`, `options`, `smartapi`, `health` query links remain accepted. Data Health, Source / Formula and Condition Evidence are shared right drawers. All existing source JSON/CSV fields remain; weekly/monthly and exact OI history are additive read-only views. Existing NIFTY strategy, shared header, authentication, permissions and orders remain unchanged. Detailed mapping: `docs/trading-analytics/IO_UI_REVIEW_20260907.md`.
+
+Cash/axis addition: Morning View exposes independently dated NSE cash FII/FPI and DII buy/sell/net, complete retained CSV and history. Selected-date matrix inputs are unchanged. SmartAPI restores all option columns, keeps Greek Delta separate from prior-quote and provider-day ΔOI, and exposes source timestamps/missingness. Scoped value-axis overrides do not modify the shared chart skin or other dashboards. Report: `docs/trading-analytics/CASH_OI_AXIS_20260907.md`.

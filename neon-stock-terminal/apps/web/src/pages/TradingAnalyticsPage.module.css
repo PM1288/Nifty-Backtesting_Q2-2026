@@ -286,9 +286,12 @@
   overflow: auto;
 }
 .morningSheet h3,
+.page .morningSheet h2,
 .ladder h3 {
   background: #3d588d;
   color: white;
+  margin: 0;
+  padding: 9px 10px;
 }
 .morningSheet p {
   padding: 6px 10px;
@@ -355,6 +358,16 @@
 .ladder td,
 .ladder th {
   padding: 4px !important;
+  min-width: 0 !important;
+}
+.page .ladder table {
+  table-layout: fixed;
+}
+.page .ladder th:nth-child(2) {
+  width: 100px;
+}
+.page .ladder td {
+  white-space: nowrap;
 }
 .ladder [aria-selected="true"] {
   outline: 2px solid #3d588d;

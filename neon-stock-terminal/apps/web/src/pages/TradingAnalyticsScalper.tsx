@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
+import { oiTimeline } from "../lib/tradingAnalyticsOiTimeline";
 import styles from "./TradingAnalyticsPage.module.css";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
@@ -264,7 +265,7 @@ export function TradingAnalyticsScalper({
             />
           </Suspense>
         )}
-        <aside className={styles.ladder}>
+        <section className={styles.ladder} aria-label="Paired strike ladder">
           <h3>Nearest 10 pairs</h3>
           <table>
             <thead>
@@ -305,7 +306,7 @@ export function TradingAnalyticsScalper({
             One expiry · provider-native quotes · selection pins both exact
             contracts.
           </p>
-        </aside>
+        </section>
       </div>
       <section className={styles.plot}>
         <h3>Exact selected contracts · OI through time</h3>
@@ -324,7 +325,21 @@ export function TradingAnalyticsScalper({
                 tooltip: { trigger: "axis" },
                 legend: { textStyle: { fontSize: 12 } },
                 grid: { left: 95, right: 30, top: 45, bottom: 70 },
-                xAxis: { type: "time", name:"IST", axisLabel: { fontSize: 12, formatter:(value:number)=>new Date(value).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) } },
+                xAxis: {
+                  type: "time",
+                  name: "IST",
+                  axisLabel: {
+                    fontSize: 12,
+                    formatter: (value: number) =>
+                      new Date(value).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                  },
+                },
                 yAxis: {
                   type: "value",
                   name: "Provider-native OI",
@@ -338,10 +353,8 @@ export function TradingAnalyticsScalper({
                     type: "line",
                     showSymbol: false,
                     lineStyle: { color: i ? "#659E8B" : "#BE7869" },
-                    data: p.oiHistory.map((r) => [
-                      String(r.event_time),
-                      r.oi == null ? null : Number(r.oi),
-                    ]),
+                    connectNulls: false,
+                    data: oiTimeline(p.oiHistory),
                   })),
               }}
             />
@@ -351,7 +364,19 @@ export function TradingAnalyticsScalper({
             Recorded OI history unavailable. No zero baseline is synthesized.
           </p>
         )}
-        <details><summary>Exact OI observations / source timestamps</summary><pre>{JSON.stringify(panes?.map(p=>({identity:p.identity,oiHistory:p.oiHistory}))??[],null,2)}</pre></details>
+        <details>
+          <summary>Exact OI observations / source timestamps</summary>
+          <pre tabIndex={0}>
+            {JSON.stringify(
+              panes?.map((p) => ({
+                identity: p.identity,
+                oiHistory: p.oiHistory,
+              })) ?? [],
+              null,
+              2,
+            )}
+          </pre>
+        </details>
       </section>
       <section className={styles.warning}>
         <h3>Closed-candle evidence · POLICY INCOMPLETE</h3>

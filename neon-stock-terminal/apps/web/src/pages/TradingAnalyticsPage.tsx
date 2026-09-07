@@ -276,9 +276,12 @@ export function TradingAnalyticsPage() {
   >(null);
   const [inspected, setInspected] = useState<Row | null>(null);
   const [params, setParams] = useSearchParams();
-  const tab: Tab = Object.hasOwn(tabs, params.get("view") ?? "")
-    ? (params.get("view") as Tab)
-    : "morning";
+  const tab: Tab =
+    params.get("view") === "oi"
+      ? "smartapi"
+      : Object.hasOwn(tabs, params.get("view") ?? "")
+        ? (params.get("view") as Tab)
+        : "morning";
   const [replayInput, setReplayInput] = useState(params.get("asOf") ?? "");
   const query = new URLSearchParams();
   for (const k of ["date", "expiry", "asOf"])
@@ -403,7 +406,7 @@ export function TradingAnalyticsPage() {
             ))}
           </nav>
         )}
-        {d && !["scalper", "replay"].includes(tab) && (
+        {d && !["scalper", "replay", "stock"].includes(tab) && (
           <button
             onClick={() => {
               const rows =
@@ -825,7 +828,7 @@ export function TradingAnalyticsPage() {
                   provider is not connected to this workspace. Existing stock
                   research remains available.
                 </p>
-                <Link to="/stocks">
+                <Link to="/analytics/leadership">
                   Select stock in canonical stock research
                 </Link>
               </section>
@@ -890,7 +893,7 @@ export function TradingAnalyticsPage() {
                 </p>
                 <details>
                   <summary>Complete immutable export candidate</summary>
-                  <pre>{JSON.stringify(d, null, 2)}</pre>
+                  <pre tabIndex={0}>{JSON.stringify(d, null, 2)}</pre>
                 </details>
               </>
             )}
@@ -913,7 +916,7 @@ export function TradingAnalyticsPage() {
                 }
               />
             )}
-            {(drawer === "health" || tab === "health") && (
+            {(drawer === "health" || (tab === "health" && drawer == null)) && (
               <TradingAnalyticsDrawer
                 title="Data Health"
                 onClose={() => {
@@ -973,6 +976,7 @@ export function TradingAnalyticsPage() {
               Formula {d.version} · Report {d.reportDate} · As-of {d.asOf}
             </p>
             <p>Evidence digest: {d.evidenceId}</p>
+            {drawer==='source'&&inspected?.strike!=null&&<button onClick={()=>{const next=new URLSearchParams(params);next.set('view','scalper');next.set('strike',String(inspected.strike));next.set('pin','true');const expiry=inspected.expiry??inspected.expiry_date??(tab==='options'?d.chain.snapshot?.expiry_date:d.smartapi.expiry);if(expiry)next.set('expiry',String(expiry).slice(0,10));setParams(next);setDrawer(null);}}>Open exact pair in Scalper</button>}
             {drawer === "source" ? (
               <>
                 <p>
@@ -987,7 +991,7 @@ export function TradingAnalyticsPage() {
                   provider-native until units verified. Baselines not present in
                   payload remain unavailable.
                 </p>
-                <pre>
+                <pre tabIndex={0}>
                   {JSON.stringify(
                     inspected ?? {
                       activity: d.activity,
@@ -1005,7 +1009,7 @@ export function TradingAnalyticsPage() {
                   instruction. Forming/incomplete candles do not confirm the EMA
                   rule.
                 </p>
-                <pre>
+                <pre tabIndex={0}>
                   {JSON.stringify(
                     {
                       morning: d.morning,
@@ -1020,7 +1024,7 @@ export function TradingAnalyticsPage() {
             )}
             <details>
               <summary>Reconciliation and source issues</summary>
-              <pre>
+              <pre tabIndex={0}>
                 {JSON.stringify(
                   { issues: d.issues, errors: d.errors },
                   null,

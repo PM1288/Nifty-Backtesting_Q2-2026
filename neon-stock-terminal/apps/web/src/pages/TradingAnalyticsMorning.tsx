@@ -54,7 +54,7 @@ export function TradingAnalyticsMorning({
   return (
     <div className={styles.morningSheet}>
       <section>
-        <h3>NIFTY · display-window PCR / expiry</h3>
+        <h2>NIFTY · display-window PCR / expiry</h2>
         <table>
           <thead>
             <tr>
@@ -77,14 +77,14 @@ export function TradingAnalyticsMorning({
         </p>
       </section>
       <section>
-        <h3>BANKNIFTY · PCR / expiry context</h3>
+        <h2>BANKNIFTY · PCR / expiry context</h2>
         <p>
           Unavailable in this endpoint. NIFTY data is not substituted. No weekly
           expiry is invented.
         </p>
       </section>
       <section>
-        <h3>Daily activity · FII</h3>
+        <h2>Daily activity · FII</h2>
         <table>
           <thead>
             <tr>
@@ -144,7 +144,7 @@ export function TradingAnalyticsMorning({
         </p>
       </section>
       <section>
-        <h3>FII index OI · position and comparison</h3>
+        <h2>FII index OI · position and comparison</h2>
         <table>
           <thead>
             <tr>
@@ -183,7 +183,7 @@ export function TradingAnalyticsMorning({
         </p>
       </section>
       <section>
-        <h3>Original six-row market matrix</h3>
+        <h2>Original six-row market matrix</h2>
         <table>
           <thead>
             <tr>
@@ -216,7 +216,7 @@ export function TradingAnalyticsMorning({
         </table>
       </section>
       <section>
-        <h3>Morning interpretation</h3>
+        <h2>Morning interpretation</h2>
         <p className={styles.warning}>{morning.matrix.replaceAll("_", " ")}</p>
         <p>
           Activity → outstanding positions → price → exact option → OI context →

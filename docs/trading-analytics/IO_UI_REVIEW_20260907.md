@@ -25,6 +25,17 @@ Six primary workspaces, morning subviews, provider-separated OI subviews, shared
 
 Both application typechecks and builds pass. API: 162 tests passed, zero failures. Web: 72 tests passed, zero failures. Canonical repository preservation gate passes. Browser acceptance is a separate post-build step; do not interpret these checks as a complete backend or strategy release.
 
+Follow-up browser review identified and corrected the Morning heading hierarchy, nested complementary landmark, keyboard focus in raw JSON scroll areas and clipped ladder layout. OI lines now break across missing bins/closed-session gaps rather than imply an interpolated observation. Two additional OI presentation tests bring web coverage to 74 tests. The Stock Activity link reuses `/analytics/leadership`; no placeholder `/stocks` route is introduced. Selecting contract source evidence can open its pinned pair in Scalper with the same expiry.
+
+### Material remaining gaps
+
+- BANKNIFTY PCR/expiry and cash publication timing are not supplied by this endpoint; missing values stay explicit.
+- No approved/materialized price-aligned OI profile or daily/weekly structural level provider; no unsupported chart overlays.
+- The three chart panes show measured OHLC/own-series EMA and full raw evidence, but policy approval and a fully materialized condition-event provider remain incomplete. No confirmed recommendation or paper eligibility is claimed.
+- Stock turnover/delivery baseline provider and immutable original/revised playback are not connected; those panes explain the limitation and preserve existing stock research access.
+- Multi-period OHLC is a retained-source presentation view, not an exchange-session coverage certification. Historical contract master knowledge can exclude contracts. Raw OI unit verification remains separate.
+- Source reference mockups are design references only. No synthetic reference price, turnover, OI or performance data was imported.
+
 Browser regression command: run `node tools/playwright/trading-analytics-io-regression.mjs` from the repository with `PLAYWRIGHT_ADMIN_PASSWORD` supplied from the protected runtime environment (never written to a file). Optional `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_OUTPUT_DIR`. Tests cover 1920, 1440, 1366, 1024 and 390 widths, six lenses, old query aliases, CSV row parity, drawer accessibility/focus, exact contracts, OI knowledge cutoffs and retained strike selection. Generated screenshots/data stay untracked in `output/playwright/trading-analytics-io-20260907/`.
 
 Rollback uses the prior pushed application commit `2689f95` via a reviewed revert on master and dashboard-only rebuild. `TRADING_ANALYTICS_ENABLED=false` remains the existing module disable switch. No DB rollback is necessary; this change contains no migrations or writes.

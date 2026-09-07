@@ -7,9 +7,18 @@ const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
 type Row = Record<string, unknown>;
-function CollapsiblePricePane({label,bars}:{label:string;bars:Row[]}) {
-  const [open,setOpen]=useState(true);
-  return <details open={open} onToggle={e=>setOpen(e.currentTarget.open)} className={styles.periodPane}><summary>{label} context</summary>{open&&<AnalyticsPricePane label={label} bars={bars}/>}</details>;
+function CollapsiblePricePane({ label, bars }: { label: string; bars: Row[] }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <details
+      open={open}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+      className={styles.periodPane}
+    >
+      <summary>{label} context</summary>
+      {open && <AnalyticsPricePane label={label} bars={bars} />}
+    </details>
+  );
 }
 export function AnalyticsPricePane({
   label,
@@ -115,7 +124,7 @@ export function AnalyticsPricePane({
         <summary>
           {label} · exact source data ({bars.length})
         </summary>
-        <pre>{JSON.stringify(bars, null, 2)}</pre>
+        <pre tabIndex={0}>{JSON.stringify(bars, null, 2)}</pre>
       </details>
     </section>
   );
@@ -170,7 +179,11 @@ export function TradingAnalyticsStructure({
         ["Weekly", periods?.weekly ?? []],
         ["Monthly", periods?.monthly ?? []],
       ].map(([label, bars]) => (
-        <CollapsiblePricePane key={String(label)} label={String(label)} bars={bars as Row[]}/>
+        <CollapsiblePricePane
+          key={String(label)}
+          label={String(label)}
+          bars={bars as Row[]}
+        />
       ))}
     </>
   );

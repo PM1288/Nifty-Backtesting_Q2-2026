@@ -10,10 +10,17 @@ import {
   MARKETS_MENU_ROUTES,
   MORE_MENU_ROUTES,
   STRATEGY_HEADER_ROUTES,
+  MANEESH_HEADER_SHORTCUT,
   STRATEGY_MENU_ROUTES,
   WORKSPACE_ROUTES,
   resolveWorkspaceRoute,
 } from "../src/components/chrome/workspaceRoutes";
+
+test("temporary MANEESH shortcut uses the canonical scalper without replacing the strategy", () => {
+  assert.equal(MANEESH_HEADER_SHORTCUT.label, "MANEESH");
+  assert.equal(MANEESH_HEADER_SHORTCUT.path, "/strategy/trading-analytics?view=scalper");
+  assert.ok(STRATEGY_HEADER_ROUTES.some((item) => item.path === "/strategy/trading-analytics"));
+});
 
 test("strategic context survives URL serialisation", () => {
   const path = contextualPath(

@@ -42,6 +42,15 @@ try {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 90_000 });
     const appHeader = page.locator("header").first();
     await appHeader.waitFor();
+    const shortcut = appHeader.getByRole("link", { name: "MANEESH", exact: true });
+    check(viewport, "MANEESH direct shortcut visible", await shortcut.isVisible());
+    check(viewport, "MANEESH canonical scalper destination", (await shortcut.getAttribute("href"))?.endsWith("/strategy/trading-analytics?view=scalper"));
+    const shortcutStyle = await shortcut.evaluate((node) => {
+      const style = getComputedStyle(node), rect = node.getBoundingClientRect();
+      return { background: style.backgroundColor, image: style.backgroundImage, color: style.color, animation: style.animationName, right: rect.right, left: rect.left };
+    });
+    check(viewport, "MANEESH plain pink and white", shortcutStyle.background === "rgb(190, 24, 93)" && shortcutStyle.color === "rgb(255, 255, 255)" && shortcutStyle.image === "none" && shortcutStyle.animation === "none", JSON.stringify(shortcutStyle));
+    check(viewport, "MANEESH fits viewport", shortcutStyle.left >= 0 && shortcutStyle.right <= viewport.width);
     const height = await appHeader.evaluate((node) => node.getBoundingClientRect().height);
     const expectedHeight = viewport.width < 768 ? 84 : viewport.width < 1280 ? 52 : 56;
     check(viewport, "exact responsive header height", Math.abs(height - expectedHeight) <= 1, `actual=${height}, expected=${expectedHeight}`);

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { trackNavClick } from "../../analytics/events";
 import {
   MARKETS_MENU_ROUTES,
+  MANEESH_HEADER_SHORTCUT,
   MORE_MENU_ROUTES,
   STRATEGY_HEADER_ROUTES,
   WORKSPACE_ROUTES,
@@ -173,6 +174,7 @@ export function ResponsiveWorkspaceNavigation({
       </div>
       <Link to={paper.path} className={styles.primaryLink} data-active={paperActive ? "true" : "false"} aria-current={paperActive ? "page" : undefined} onClick={() => record({ path: paper.path, label: paper.label }, "desktop_header")}><PaperIcon size={18} aria-hidden="true" /><span className={styles.paperLong}>Paper Trading</span><span className={styles.paperShort}>Paper</span></Link>
     </nav>
+    <Link to={MANEESH_HEADER_SHORTCUT.path} className={styles.maneeshShortcut} title="Trading Analytics · 9 EMA scalper" onClick={() => record(MANEESH_HEADER_SHORTCUT, "desktop_header")}>{MANEESH_HEADER_SHORTCUT.label}</Link>
     <div className={styles.statusSlot}>{statusSlot}</div>
     <div className={styles.voiceSlot}>{voiceSlot}</div>
     <div className={styles.userSlot}>{userSlot}</div>

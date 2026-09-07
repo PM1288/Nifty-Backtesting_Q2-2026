@@ -1,5 +1,12 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-07 temporary MANEESH header shortcut
+
+Direct shortcut to `/strategy/trading-analytics?view=scalper`, solid accessible
+pink/white with no gradient/animation, including mobile status-row access.
+Canonical Trading Analytics menu/route and all execution/data gates retained.
+See `docs/trading-analytics/MANEESH_HEADER_20260907.md` for release evidence.
+
 ## 2026-09-07 SmartAPI today/OI correction
 
 See `docs/trading-analytics/SMARTAPI_TODAY_DIAGNOSTIC_20260907.md`.

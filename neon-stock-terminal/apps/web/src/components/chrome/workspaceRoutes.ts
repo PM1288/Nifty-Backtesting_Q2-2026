@@ -124,6 +124,12 @@ export const MARKETS_MENU_ROUTES: readonly HeaderNavigationItem[] = [
 
 const strategyRouteById = new Map(STRATEGY_MENU_ROUTES.map((item) => [item.id, item]));
 
+/** Temporary direct shortcut; the canonical strategy and its menu remain intact. */
+export const MANEESH_HEADER_SHORTCUT = {
+  label: "MANEESH",
+  path: `${strategyRouteById.get("trading-analytics")!.path}?view=scalper`,
+} as const;
+
 const strategyHeaderOrder = [
   ["oiis", "LIVE & CURRENT"],
   ["oiss-v1-202608", "LIVE & CURRENT"],

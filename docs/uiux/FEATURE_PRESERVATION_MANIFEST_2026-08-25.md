@@ -6,6 +6,11 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-07: temporary MANEESH header link opens the existing Trading Analytics
+Scalper (5m default); original Strategy menu destination remains. Pink/white
+styling is scoped to this shortcut only. Desktop and mobile retain navigation,
+NIFTY context, speech and paper notifier. No strategy/API/data changes.
+
 | Feature | Runtime ownership | Required evidence |
 |---|---|---|
 | Paper alert launcher | `PaperTradeNotifier.tsx` mounted once by `AppShell.tsx` | Visible on authenticated desktop and mobile routes |

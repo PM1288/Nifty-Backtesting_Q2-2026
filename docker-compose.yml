@@ -541,8 +541,8 @@ services:
 
   nse-intraday-api:
     build:
-      context: .
-      dockerfile: ./services/nse_intraday_intelligence/docker/Dockerfile
+      context: ./services/nse_intraday_intelligence
+      dockerfile: ./docker/Dockerfile
     env_file: .env
     environment:
       PG_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
@@ -602,8 +602,8 @@ services:
 
   nse-intraday-scheduler:
     build:
-      context: .
-      dockerfile: ./services/nse_intraday_intelligence/docker/Dockerfile
+      context: ./services/nse_intraday_intelligence
+      dockerfile: ./docker/Dockerfile
     env_file: .env
     environment:
       PG_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}

@@ -34,6 +34,8 @@ export function AnalyticsPricePane({
     animation: false,
     textStyle: { fontSize: 12 },
     tooltip: { trigger: "axis" },
+    legend: {data:[label,'9 EMA'],textStyle:{fontSize:12}},
+    dataZoom: [{type:'inside'},{type:'slider',bottom:0,height:22}],
     grid: { left: 75, right: 70, top: 35, bottom: 65 },
     xAxis: {
       type: "category",

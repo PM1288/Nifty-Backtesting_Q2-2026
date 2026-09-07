@@ -9,6 +9,12 @@ coverage, commands and unfinished stages. Additive source provenance migration
 057; verified source importer preserves all original counts and conflicts.
 Existing Python FII parser corrected for first-row loss and missing products.
 No new SmartAPI session owner. Production release must use pushed master only.
+Deployed application commit `f65d37d`: API 157/157, web 69/69, Python 5/5;
+local and public authenticated Playwright each 108/108 assertions. All eight
+lenses captured at four viewports. Exact-contract history loading remains
+approximately eight seconds; scheduled immutable morning bundles, full historical
+replay and execution policies remain unfinished. See
+`docs/trading-analytics/RELEASE_VALIDATION.md` for image digest and evidence paths.
 
 ## 2026-08-11 six-workspace UI and ui-2 integration
 

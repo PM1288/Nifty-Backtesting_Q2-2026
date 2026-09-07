@@ -3533,6 +3533,13 @@ Final application `738934f` deployed from pushed master, image `sha256:343894630
 
 # 2026-09-07 — Read-only retention and reliability review
 
+Trading Analytics F&O extension: see `docs/trading-analytics/FNO_COVERAGE_20260907.md`.
+Canonical-master underlying selection now scopes prices/EMA9/R/exact options;
+5m defaults shared across API/Scalper/Structure. Existing stock-chain cohorts
+provide a labelled fallback where FULL quote OI is absent. Shared PCR/indicative
+window max-pain strip, no full-chain/verified-unit or executable-trade claim.
+No broker orders, paper permissions, source writes or WhatsApp changes.
+
 Completion follow-up: `docs/operations/retention-review-20260907/COMPLETION_REVIEW.md`.
 Found August 9 full PostgreSQL backup and recorded isolated restore proof under
 `/home/novius2/backups/postgresql/trading-stack/20260809T144133Z/`; it does not

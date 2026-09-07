@@ -1,9 +1,10 @@
 import { lazy, Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getJson } from "../lib/api";
+import {useSearchParams} from 'react-router-dom';
 import type { EChartsOption } from "echarts";
 import styles from "./TradingAnalyticsPage.module.css";
-import { candleColors, evidenceValueAxis } from "../lib/tradingAnalyticsChartView";
+import { candleColors, evidenceValueAxis, chartInterval } from "../lib/tradingAnalyticsChartView";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
@@ -129,27 +130,31 @@ export function AnalyticsPricePane({
   );
 }
 export function TradingAnalyticsStructure({
+  symbol='NIFTY',
   asOf,
   candles,
   periods,
 }: {
+  symbol?:string;
   asOf: string;
   candles: Row[];
   periods?: { weekly: Row[]; monthly: Row[] };
 }) {
-  const [interval, setInterval] = useState(15);
+  const [params,setParams]=useSearchParams();
+  const interval=chartInterval(params.get('interval'));
+  const setInterval=(value:number)=>{const next=new URLSearchParams(params);next.set('interval',String(value));setParams(next);};
   const q = useQuery({
-    queryKey: ["trading-structure", asOf, interval],
+    queryKey: ["trading-structure", symbol, asOf, interval],
     queryFn: () =>
       getJson<{ panes: { bars: Row[] }[] }>(
-        `/v1/trading-analytics/charts?asOf=${encodeURIComponent(asOf)}&interval=${interval}`,
+        `/v1/trading-analytics/charts?symbol=${encodeURIComponent(symbol)}&asOf=${encodeURIComponent(asOf)}&interval=${interval}`,
       ),
     staleTime: 30000,
   });
   return (
     <>
       <div className={styles.toolbar}>
-        <h2>Market Structure · NIFTY</h2>
+        <h2>Market Structure · {symbol}</h2>
         <label>
           Intraday interval{" "}
           <select

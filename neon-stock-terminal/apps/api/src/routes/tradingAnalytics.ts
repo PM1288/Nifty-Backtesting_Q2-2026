@@ -5,6 +5,7 @@ import { z } from "zod";
 import { loadSmartApiNifty } from "../services/tradingAnalyticsSmartApi";
 import { periodCandles } from "../services/tradingAnalyticsPeriods";
 import { resistanceViews } from "../services/tradingAnalyticsResistance";
+import { analyticsUniverse, selectUnderlying } from '../services/tradingAnalyticsUniverse';
 import {
   activity,
   participant,
@@ -21,6 +22,7 @@ import {
 } from "../services/tradingAnalytics";
 
 const querySchema = z.object({
+  symbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/).default('NIFTY'),
   dailyLookback: z.coerce.number().int().min(1).max(400).optional(),
   weeklyLookback: z.coerce.number().int().min(1).max(100).optional(),
   asOf: z.string().datetime({ offset: true }).optional(),
@@ -40,6 +42,7 @@ export async function loadTradingAnalytics(
   expiry?: string,
   dailyLookback?: number,
   weeklyLookback?: number,
+  symbol='NIFTY',
 ) {
   const errors: { source: string; state: string }[] = [];
   const read = async (source: string, sql: string, ...args: unknown[]) => {
@@ -50,6 +53,8 @@ export async function loadTradingAnalytics(
       return [];
     }
   };
+  const universe=await analyticsUniverse(read,asOf);
+  const underlying=selectUnderlying(universe,symbol);
   const dates = await read(
     "report_dates",
     `SELECT DISTINCT trade_date::text date FROM market_data.nse_fii_derivatives_stats WHERE loaded_at<=$1::timestamptz AND trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY date DESC LIMIT 370`,
@@ -89,15 +94,17 @@ export async function loadTradingAnalytics(
       ),
       read(
         "chain_expiries",
-        `SELECT DISTINCT expiry_date::text FROM public.option_chain_snapshots WHERE symbol='NIFTY' AND captured_at<=$1::timestamptz AND expiry_date>=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY expiry_date`,
+        `SELECT DISTINCT expiry_date::text FROM public.option_chain_snapshots WHERE symbol=$2 AND captured_at<=$1::timestamptz AND expiry_date>=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY expiry_date`,
         asOf,
+        underlying.symbol,
       ),
       read(
         "nifty_daily",
-        `SELECT b.trade_date::text date,open::float8,high::float8,low::float8,close::float8,source,created_at FROM public.bars_1d b WHERE exchange='NSE' AND symbol_token='99926000' AND (b.trade_date<($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date OR EXISTS (SELECT 1 FROM public.trading_calendar c WHERE c.trade_date=b.trade_date AND c.is_trading_day AND c.market_close_ts<=$1::timestamptz)) AND b.trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date AND created_at<=$1::timestamptz ORDER BY b.trade_date DESC LIMIT 400`,
+        `SELECT b.trade_date::text date,open::float8,high::float8,low::float8,close::float8,volume::text,source,created_at FROM public.bars_1d b WHERE exchange='NSE' AND symbol_token=$2 AND (b.trade_date<($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date OR EXISTS (SELECT 1 FROM public.trading_calendar c WHERE c.trade_date=b.trade_date AND c.is_trading_day AND c.market_close_ts<=$1::timestamptz)) AND b.trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date AND created_at<=$1::timestamptz ORDER BY b.trade_date DESC LIMIT 400`,
         asOf,
+        underlying.token,
       ),
-      loadSmartApiNifty(read, asOf, expiry),
+      loadSmartApiNifty(read, asOf, expiry, underlying),
       read(
         "cash_history",
         `SELECT participant_type,buy_value,sell_value,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date<=$1::date AND source_dataset='nse_fii_dii_nse_only' ORDER BY market_date DESC,participant_type LIMIT 740`,
@@ -111,9 +118,10 @@ export async function loadTradingAnalytics(
   const snapshots = selectedExpiry
     ? await read(
         "chain",
-        `SELECT id::text,captured_at,expiry_date::text,underlying_value::float8,source,strikes_around FROM public.option_chain_snapshots WHERE symbol='NIFTY' AND expiry_date=$2::date AND captured_at<=$1::timestamptz ORDER BY captured_at DESC LIMIT 2`,
+        `SELECT id::text,captured_at,expiry_date::text,underlying_value::float8,source,strikes_around FROM public.option_chain_snapshots WHERE symbol=$3 AND expiry_date=$2::date AND captured_at<=$1::timestamptz ORDER BY captured_at DESC LIMIT 2`,
         asOf,
         selectedExpiry,
+        underlying.symbol,
       )
     : [];
   const snapshot = snapshots[0] ?? null,
@@ -194,6 +202,7 @@ export async function loadTradingAnalytics(
       1000
     : null;
   const result = {
+    underlying,universe,
     version: VERSION,
     asOf,
     reportDate: selected,
@@ -320,6 +329,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const q = z
       .object({
+        symbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/).default('NIFTY'),
         asOf: z.string().datetime({ offset: true }).optional(),
         expiry: z
           .string()
@@ -329,7 +339,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         interval: z.coerce
           .number()
           .refine((n) => [5, 15, 60].includes(n))
-          .default(15),
+          .default(5),
       })
       .safeParse(req.query);
     if (!q.success)
@@ -340,6 +350,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         .status(400)
         .json({ error: { code: "FUTURE_ASOF_NOT_ALLOWED" } });
     try {
+      const universe=await analyticsUniverse(async (_source,sql,...args)=>prisma.$queryRawUnsafe<Facts[]>(sql,...args),asOf);
+      const underlying=selectUnderlying(universe,q.data.symbol);
       const sessions = await prisma.$queryRawUnsafe<Facts[]>(
         `SELECT trade_date::text,market_open_ts,market_close_ts FROM trading_calendar WHERE is_trading_day AND trade_date BETWEEN ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date-10 AND ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date`,
         asOf,
@@ -348,17 +360,18 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       const contracts =
         q.data.expiry && q.data.strike
           ? await prisma.$queryRawUnsafe<Facts[]>(
-              `SELECT exchange,symbol_token,tradingsymbol,expiry::text,strike::float8,lotsize,updated_at FROM instruments WHERE name='NIFTY' AND exchange='NFO' AND instrumenttype='OPTIDX' AND expiry=$2::date AND strike=$3::numeric AND updated_at<=$1::timestamptz ORDER BY tradingsymbol`,
+              `SELECT exchange,symbol_token,tradingsymbol,expiry::text,strike::float8,lotsize,updated_at FROM instruments WHERE name=$4 AND exchange='NFO' AND instrumenttype=$5 AND expiry=$2::date AND strike=$3::numeric AND updated_at<=$1::timestamptz ORDER BY tradingsymbol`,
               asOf,
               q.data.expiry,
               q.data.strike,
+              underlying.symbol,underlying.optionType,
             )
           : [];
       const identities = [
         {
           exchange: "NSE",
-          symbol_token: "99926000",
-          tradingsymbol: "NIFTY 50",
+          symbol_token: underlying.token,
+          tradingsymbol: underlying.label,
         },
         ...contracts,
       ];
@@ -377,10 +390,11 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
             oiHistory:
               identity.exchange === "NFO"
                 ? await prisma.$queryRawUnsafe<Facts[]>(
-                    `WITH points AS (SELECT DISTINCT ON (date_bin(interval '15 minutes',exch_feed_time,timestamptz '2000-01-01')) exch_feed_time event_time,ts collected_at,oi::text oi FROM quote_snapshots WHERE exchange=$2 AND symbol_token=$3 AND ts BETWEEN $1::timestamptz-interval '10 days' AND $1::timestamptz AND exch_feed_time<=$1::timestamptz AND oi IS NOT NULL ORDER BY date_bin(interval '15 minutes',exch_feed_time,timestamptz '2000-01-01'),exch_feed_time DESC,ts DESC) SELECT * FROM (SELECT * FROM points ORDER BY event_time DESC LIMIT 600) r ORDER BY event_time`,
+                    `WITH points AS (SELECT DISTINCT ON (date_bin($4::interval,exch_feed_time,timestamptz '2000-01-01')) exch_feed_time event_time,ts collected_at,oi::text oi FROM quote_snapshots WHERE exchange=$2 AND symbol_token=$3 AND ts BETWEEN $1::timestamptz-interval '10 days' AND $1::timestamptz AND exch_feed_time<=$1::timestamptz AND oi IS NOT NULL ORDER BY date_bin($4::interval,exch_feed_time,timestamptz '2000-01-01'),exch_feed_time DESC,ts DESC) SELECT * FROM (SELECT * FROM points ORDER BY event_time DESC LIMIT 2000) r ORDER BY event_time`,
                     asOf,
                     identity.exchange,
                     identity.symbol_token,
+                    `${q.data.interval} minutes`,
                   )
                 : [],
           };
@@ -390,6 +404,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         version: VERSION,
         asOf,
         interval: q.data.interval,
+        underlying,
         panes,
         state: "PREVIEW_UNAPPROVED",
         limitations: [
@@ -430,6 +445,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
           parsed.data.expiry,
           parsed.data.dailyLookback,
           parsed.data.weeklyLookback,
+          parsed.data.symbol,
         ),
       );
     } catch {

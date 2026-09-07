@@ -29,6 +29,8 @@ const Chart = lazy(async () => ({
 type Row = Record<string, unknown>;
 const InspectContext = createContext<(row: Row) => void>(() => {});
 type Payload = {
+  underlying: {symbol:string;label:string;kind:string};
+  universe: {symbol:string;label:string;kind:string}[];
   version: string;
   asOf: string;
   reportDate: string;
@@ -53,7 +55,7 @@ type Payload = {
     spot: Row | null;
     shortfall: number;
     note: string;
-    metrics: { oiPcr: number | null; volumePcr: number | null };
+    metrics: { oiPcr: number | null; volumePcr: number | null; indicativeMaxPainStrikes?:number[];maxPainState?:string;maxPainScope?:string };
   };
   policies: Row[];
   limitations: string[];
@@ -88,7 +90,7 @@ const tabs = {
   morning: "Morning Brief",
   activity: "FII Activity",
   participants: "Participant OI",
-  options: "NIFTY Options",
+  options: "Option Snapshots",
   smartapi: "SmartAPI OI & Quotes",
   scalper: "Scalper / Exact Contracts",
   structure: "Price & EMA",
@@ -289,7 +291,7 @@ export function TradingAnalyticsPage() {
         : "morning";
   const [replayInput, setReplayInput] = useState(params.get("asOf") ?? "");
   const query = new URLSearchParams();
-  for (const k of ["date", "expiry", "asOf", "dailyLookback", "weeklyLookback"])
+  for (const k of ["symbol", "date", "expiry", "asOf", "dailyLookback", "weeklyLookback"])
     if (params.get(k)) query.set(k, params.get(k)!);
   const q = useQuery({
     queryKey: ["trading-analytics", query.toString()],
@@ -333,6 +335,16 @@ export function TradingAnalyticsPage() {
           </button>
           {d && (
             <>
+              <label>Underlying <select aria-label="Analytics underlying" value={d.underlying.symbol} onChange={e=>{
+                const next=new URLSearchParams(params); next.set('symbol',e.target.value);
+                for(const k of ['expiry','strike','pin','day']) next.delete(k);
+                setInspected(null);setDrawer(null);setParams(next);
+              }}>
+                {d.universe.length ? d.universe.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={d.underlying.symbol}>{d.underlying.label}</option>}
+              </select></label>
+              <label>Option expiry <select aria-label="Selected underlying expiry" value={d.smartapi.expiry??''} onChange={e=>{
+                const next=new URLSearchParams(params);next.set('expiry',e.target.value);next.delete('strike');next.delete('pin');setParams(next);
+              }}><option value="">Unavailable / automatic</option>{d.smartapi.expiries.map(e=><option key={e} value={e}>{e}</option>)}</select></label>
               <label>
                 Report{" "}
                 <select
@@ -371,13 +383,20 @@ export function TradingAnalyticsPage() {
         </nav>
         {d && (
           <p className={styles.context}>
-            Underlying: NIFTY · Report {d.reportDate} · Analysis / as-of{" "}
+            Underlying: {d.underlying.label} · Report {d.reportDate} · Analysis / as-of{" "}
             {d.asOf} · Aggregate report scope: all index derivatives ·{" "}
             {params.get("asOf")
               ? "Retained-source inspection"
               : "Current retained evidence"}
           </p>
         )}
+        {d && <section className={styles.kpis} aria-label="Selected underlying option metrics">
+          <span>{d.underlying.symbol} · {d.smartapi.expiry ?? 'Expiry unavailable'} · {d.smartapi.source} · retained window</span>
+          <span>OI PCR <strong>{display(d.smartapi.metrics.oiPcr)}</strong></span>
+          <span>Volume PCR <strong>{display(d.smartapi.metrics.volumePcr)}</strong></span>
+          <span>Indicative window max pain <strong>{d.smartapi.metrics.indicativeMaxPainStrikes?.join(', ') || '—'}</strong></span>
+          <span title={d.smartapi.metrics.maxPainScope}>{d.smartapi.metrics.maxPainState?.replaceAll('_',' ')} · Not full-chain · As-of {d.asOf}</span>
+        </section>}
         {main === "morning" && (
           <nav className={styles.toolbar} aria-label="Morning detail tabs">
             {[
@@ -399,7 +418,7 @@ export function TradingAnalyticsPage() {
           <nav className={styles.toolbar} aria-label="OI provider views">
             {[
               ["smartapi", "SmartAPI OI & Quotes"],
-              ["options", "NSE NIFTY Options"],
+              ["options", "NSE option snapshots"],
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -469,7 +488,7 @@ export function TradingAnalyticsPage() {
             {tab === "smartapi" && (
               <>
                 <div className={styles.toolbar}>
-                  <h2>NIFTY SmartAPI OI & Quotes</h2>
+                  <h2>{d.underlying.symbol} SmartAPI OI & Quotes</h2>
                   <label>
                     Expiry{" "}
                     <select
@@ -725,7 +744,7 @@ export function TradingAnalyticsPage() {
             {tab === "options" && (
               <>
                 <div className={styles.toolbar}>
-                  <h2>NIFTY option evidence</h2>
+                  <h2>{d.underlying.symbol} option evidence</h2>
                   <label>
                     Expiry{" "}
                     <select
@@ -772,7 +791,7 @@ export function TradingAnalyticsPage() {
                   This window is not the full exchange chain.
                 </p>
                 <Table
-                  label="NIFTY ten CE and ten PE contract evidence"
+                  label={`${d.underlying.symbol} ten CE and ten PE contract evidence`}
                   rows={d.chain.legs}
                   columns={optionColumns}
                 />
@@ -782,13 +801,15 @@ export function TradingAnalyticsPage() {
             {tab === "structure" && (
               <>
                 <TradingAnalyticsStructure
+                  key={d.underlying.symbol}
+                  symbol={d.underlying.symbol}
                   asOf={d.asOf}
                   candles={d.candles}
                   periods={d.periods}
                 />
                 <details>
                   <summary>Full daily evidence and original table</summary>
-                  <h2>NIFTY completed daily candles and own-series EMA9</h2>
+                  <h2>{d.underlying.symbol} completed daily candles and own-series EMA9</h2>
                   <p>
                     SMA of first nine retained closes seeds EMA9; warm-up
                     remains blank. Range and body fractions are descriptive
@@ -821,8 +842,7 @@ export function TradingAnalyticsPage() {
               <section className={styles.plot}>
                 <h2>Stock Activity</h2>
                 <p>
-                  Stock activity not applicable to NIFTY spot. No share volume
-                  or intraday delivery is fabricated.
+                  {d.underlying.kind==='INDEX' ? 'Share volume and delivery are not applicable to this index.' : `${d.underlying.symbol}: retained daily volume is available in the full evidence export. Phase-comparable turnover and delivery remain unavailable.`}
                 </p>
                 <div className={styles.kpis}>
                   <span>
@@ -912,6 +932,9 @@ export function TradingAnalyticsPage() {
             )}
             {tab === "scalper" && (
               <TradingAnalyticsScalper
+                key={d.underlying.symbol}
+                symbol={d.underlying.symbol}
+                label={d.underlying.label}
                 asOf={d.asOf}
                 expiry={String(
                   d.smartapi.expiry ?? d.chain.snapshot?.expiry_date ?? "",

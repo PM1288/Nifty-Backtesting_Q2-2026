@@ -18,6 +18,7 @@ const Chart = lazy(async () => ({
 }));
 type Row = Record<string, unknown>;
 export function TradingAnalyticsScalper({
+  symbol='NIFTY',label='NIFTY 50',
   asOf,
   expiry,
   strikes,
@@ -25,6 +26,7 @@ export function TradingAnalyticsScalper({
   legs = [],
   resistance = [],
 }: {
+  symbol?:string; label?:string;
   asOf: string;
   expiry: string;
   strikes: number[];
@@ -35,7 +37,7 @@ export function TradingAnalyticsScalper({
   const [params, setParams] = useSearchParams();
   const interval = chartInterval(params.get("interval"));
   const [showLevels, setShowLevels] = useState(true);
-  const [showGrid, setShowGrid] = useState(true);
+  const [showGrid, setShowGrid] = useState(symbol==='NIFTY');
   const updateView = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
@@ -74,7 +76,7 @@ export function TradingAnalyticsScalper({
           (a, b) => Math.abs(a - spot) - Math.abs(b - spot) || a - b,
         )[0];
   const selected = strike || String(defaultStrike ?? "");
-  const query = new URLSearchParams({ asOf, interval: String(interval) });
+  const query = new URLSearchParams({ symbol, asOf, interval: String(interval) });
   if (expiry && selected) {
     query.set("expiry", expiry);
     query.set("strike", selected);
@@ -174,7 +176,7 @@ export function TradingAnalyticsScalper({
         splitLine: { lineStyle: { color: "#E8EBEF" } },
         name:
           p.identity.exchange === "NSE"
-            ? "NIFTY · points"
+            ? `${label} · price`
             : `${p.identity.strike} ${String(p.identity.tradingsymbol).slice(-2)} · ₹`,
       })),
       series: rows.flatMap((p, i) => {
@@ -320,7 +322,7 @@ export function TradingAnalyticsScalper({
             checked={showGrid}
             onChange={(e) => setShowGrid(e.target.checked)}
           />
-          NIFTY 50-point grid
+          50-point grid (optional)
         </label>
         <label>
           <input
@@ -359,8 +361,8 @@ export function TradingAnalyticsScalper({
       <p>
         Green = rising; red = falling. One-day view uses the latest recorded
         underlying session unless another day is selected; EMA retains its
-        historical warm-up. Grid spacing is 50 NIFTY points only, not option
-        premium levels.
+        historical warm-up. The optional 50-point grid is enabled by default only
+        for NIFTY; other underlyings and option premiums use their own automatic scale.
       </p>
       <div className={styles.kpis}>
         {resistance.map((r) => (
@@ -387,7 +389,7 @@ export function TradingAnalyticsScalper({
           completed bars. Daily and weekly counts are user-configured because
           source notes do not specify them. Only resistance above the as-of
           price is selected. Research overlays, not approved trade signals.
-          Showing R expands only the NIFTY scale; switch R off for a closer price view.
+          Showing R expands only the underlying scale; switch R off for a closer price view.
         </p>
         <pre tabIndex={0}>{JSON.stringify(resistance, null, 2)}</pre>
       </details>

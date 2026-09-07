@@ -30,13 +30,13 @@ func TestDailyArchiveIsolatedDatabase(t *testing.T) {
 	}
 	exec(`CREATE TABLE public.bars_1m(ts timestamptz,exchange text,symbol_token text,open numeric,high numeric,low numeric,close numeric,volume bigint,source text);
  CREATE SCHEMA nse;CREATE SCHEMA integration;
- CREATE TABLE nse.fact_market_activity_index(trade_date date,index_name text,close_price numeric);
+ CREATE TABLE nse.fact_market_activity_index(trade_date date,index_name text,close_price numeric,high_price numeric,low_price numeric);
  CREATE VIEW integration.v_source_index_1m AS SELECT (ts AT TIME ZONE 'Asia/Kolkata')::date trade_date,'NIFTY 50'::text index_code FROM public.bars_1m;
  INSERT INTO public.bars_1m VALUES
  ('2020-01-02 03:45Z','NSE','99926000',100,103,99,102,10,'test'),
  ('2020-01-02 10:00Z','NSE','99926000',102,105,101,104,20,'test'),
  ('2020-01-03 10:00Z','NSE','99926000',104,107,102,106,30,'test');
- INSERT INTO nse.fact_market_activity_index VALUES('2020-01-02','NIFTY 50',999)`)
+ INSERT INTO nse.fact_market_activity_index VALUES('2020-01-02','NIFTY 50',999,1001,990)`)
 	load := func(path string) string {
 		b, e := os.ReadFile("../../scripts/sql/" + path)
 		if e != nil {

@@ -419,6 +419,10 @@ export function sessionBars(
     partialSessionBar: boolean;
   })[] = [];
   const cutoff = Date.parse(asOf);
+  // Parse once per source minute, not once for every target candle. This keeps
+  // multi-underlying inspection from multiplying timestamp parsing millions of times.
+  const prepared=minutes.map(row=>({row,time:new Date(String(row.ts)).getTime(),known:new Date(String(row.created_at)).getTime()}))
+    .filter(m=>m.known<=cutoff).sort((a,b)=>a.time-b.time);
   for (const session of sessions) {
     const start = new Date(String(session.market_open_ts)).getTime(),
       end = new Date(String(session.market_close_ts)).getTime();
@@ -427,16 +431,7 @@ export function sessionBars(
     for (let t = start; t < Math.min(end, cutoff); t += interval * 60000) {
       const close = Math.min(t + interval * 60000, end);
       if (close > cutoff) continue;
-      const input = minutes
-        .filter((m) => {
-          const time = new Date(String(m.ts)).getTime(),
-            known = new Date(String(m.created_at)).getTime();
-          return time >= t && time < close && known <= cutoff;
-        })
-        .sort(
-          (a, b) =>
-            new Date(String(a.ts)).getTime() - new Date(String(b.ts)).getTime(),
-        );
+      const input = prepared.filter(m=>m.time>=t&&m.time<close).map(m=>m.row);
       if (!input.length) continue;
       const expected = (close - t) / 60000;
       const complete =

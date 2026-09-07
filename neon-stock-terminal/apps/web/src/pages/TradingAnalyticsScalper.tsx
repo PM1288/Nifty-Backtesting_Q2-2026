@@ -464,7 +464,7 @@ export function TradingAnalyticsScalper({
       <section className={styles.plot}>
         <h3>Exact selected contracts · OI through time</h3>
         <p>
-          Time axis · SmartAPI raw OI, last recorded quote per 15-minute bin.
+          Time axis · SmartAPI raw OI, last recorded quote per {interval}-minute bin.
           Not previous-session or session-open change. Gaps and asynchronous
           source timestamps retained.
         </p>

@@ -55,7 +55,7 @@ type Payload = {
     spot: Row | null;
     shortfall: number;
     note: string;
-    metrics: { oiPcr: number | null; volumePcr: number | null; indicativeMaxPainStrikes?:number[];maxPainState?:string;maxPainScope?:string };
+    metrics: { oiPcr: number | null; volumePcr: number | null; indicativeMaxPainStrikes?:number[];maxPainState?:string;maxPainScope?:string;source?:string;strikes?:number[];collectedAt?:string|null };
   };
   policies: Row[];
   limitations: string[];
@@ -391,7 +391,7 @@ export function TradingAnalyticsPage() {
           </p>
         )}
         {d && <section className={styles.kpis} aria-label="Selected underlying option metrics">
-          <span>{d.underlying.symbol} · {d.smartapi.expiry ?? 'Expiry unavailable'} · {d.smartapi.source} · retained window</span>
+          <span>{d.underlying.symbol} · {d.smartapi.expiry ?? 'Expiry unavailable'} · {d.smartapi.metrics.source??d.smartapi.source} · {d.smartapi.metrics.strikes?.length??0} paired strikes{d.smartapi.metrics.collectedAt?` · Captured ${d.smartapi.metrics.collectedAt}`:''}</span>
           <span>OI PCR <strong>{display(d.smartapi.metrics.oiPcr)}</strong></span>
           <span>Volume PCR <strong>{display(d.smartapi.metrics.volumePcr)}</strong></span>
           <span>Indicative window max pain <strong>{d.smartapi.metrics.indicativeMaxPainStrikes?.join(', ') || '—'}</strong></span>

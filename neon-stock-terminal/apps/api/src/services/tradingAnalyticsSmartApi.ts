@@ -135,7 +135,7 @@ export async function loadSmartApiNifty(
   // The stock-option collector persists its own immutable chain cohort. Do not
   // stitch its rows into individually timed FULL quotes or invent a last price
   // from bid/ask midpoint. Use one whole cohort only when FULL OI is absent.
-  const fallback = expiry && !paired.legs.some(l=>numeric(l.open_interest)!=null)
+  const fallback = expiry && (!paired.legs.length || paired.legs.some(l=>numeric(l.open_interest)==null))
     ? await read('smartapi_stock_chain', `SELECT ts collected_at,source_quote_ts exchange_feed_at,
       underlying,expiry::text,symbol_token,tradingsymbol instrument_identifier,strike::float8 strike,"right" option_type,lotsize,
       spot_price::float8,oi::text open_interest,volume::text total_traded_volume,
@@ -150,9 +150,15 @@ export async function loadSmartApiNifty(
       AND (source_quote_ts IS NULL OR source_quote_ts<=$1::timestamptz) ORDER BY strike,"right"`,asOf,underlying.symbol,expiry)
     : [];
   const fallbackSpot=numeric(fallback[0]?.spot_price);
-  const chosen=fallback.length && fallbackSpot!=null ? nearestPairs(fallback.map(r=>({...r,
+  const cohort=fallback.length && fallbackSpot!=null ? nearestPairs(fallback.map(r=>({...r,
     quote_state:smartApiQuoteState(r,asOf,calendar[0]?.market_close_ts),oi_unit:'PROVIDER_NATIVE_UNVERIFIED'})),fallbackSpot):paired;
-  const selectedSource=fallback.length && fallbackSpot!=null?'smartapi_option_chain_snapshots':'smartapi';
+  const hasCohort=fallback.length>0 && fallbackSpot!=null;
+  const useCohortQuotes=hasCohort && !paired.legs.some(l=>numeric(l.open_interest)!=null);
+  const chosen=useCohortQuotes?cohort:paired;
+  const selectedSource=useCohortQuotes?'smartapi_option_chain_snapshots':'smartapi';
+  // Preserve partial FULL quote evidence, but never fill missing legs from a
+  // different observation. A complete fallback cohort gets its own metric scope.
+  const metricWindow=hasCohort?cohort:chosen;
   return {
     source: selectedSource,
     asOf,
@@ -162,7 +168,11 @@ export async function loadSmartApiNifty(
     legs: chosen.legs,
     strikes: chosen.strikes,
     shortfall: chosen.shortfall,
-    metrics: {...chainMetrics(chosen.legs),...windowMaxPain(chosen.legs)},
+    metrics: {...chainMetrics(metricWindow.legs),...windowMaxPain(metricWindow.legs),
+      source:hasCohort?'smartapi_option_chain_snapshots':selectedSource,
+      strikes:metricWindow.strikes,
+      collectedAt:hasCohort?fallback[0].collected_at:null},
+    metricLegs:metricWindow.legs,
     fallbackNote: selectedSource==='smartapi_option_chain_snapshots'?'One retained stock-chain cohort; midpoint is not LTP; missing prior OI change remains null.':null,
     note: "Existing collector FULL quotes, individually timestamped; not an atomic chain snapshot. OI uses provider-native units, not verified lots/contracts. Prior snapshot ΔOI = current OI minus the immediately preceding retained quote for the same token; not day change. Provider day ΔOI is unavailable in FULL quotes. Option Delta is a Greek, not ΔOI; Greeks match underlying/expiry/strike/right and carry their own collection time, not verified exchange freshness. Missing is never zero. FII/DII cash is a separate NSE report.",
   };

@@ -29,9 +29,12 @@ underlyings use automatic price scaling.
 ## Options and missingness
 
 Existing FULL quotes remain the primary source. When their paired-window OI is
-entirely absent, read one latest `smartapi_option_chain_snapshots` cohort for the
+incomplete, read one latest `smartapi_option_chain_snapshots` cohort for the
 selected underlying/expiry within seven days. Never merge cohorts or providers
-leg by leg. Its source and individual quote times remain exposed. Midpoint is
+leg by leg. Partial FULL quotes remain visible. A complete separate cohort supplies
+metrics with its own source, strike count, timestamp and exported `metricLegs`;
+only entirely absent FULL OI permits the whole quote table to use the cohort.
+Its source and individual quote times remain exposed. Midpoint is
 exported as midpoint, never relabelled as last-traded price. No new broker session,
 poller or option collector was added. Missing option-minute history stays missing.
 

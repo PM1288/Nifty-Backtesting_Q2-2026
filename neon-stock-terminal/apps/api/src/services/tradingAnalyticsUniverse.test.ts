@@ -41,3 +41,15 @@ test('missing FULL quotes uses one stock-chain cohort without inventing LTP',asy
  assert.equal(data.legs.length,6);assert.equal(data.legs[0].last_price,null);
  assert.deepEqual(data.metrics.indicativeMaxPainStrikes,[110]);assert.equal(data.metrics.oiPcr,1);
 });
+test('partial FULL quotes remain visible while metrics use a separate complete cohort',async()=>{
+ const d=await loadSmartApiNifty(async source=>{
+  if(source==='smartapi_spot')return [{ltp:110}];
+  if(source==='smartapi_expiries')return [{expiry:'2026-09-29'}];
+  if(source==='smartapi_contracts')return legs.map((l,i)=>({...l,last_price:9,open_interest:i?10:null}));
+  if(source==='smartapi_stock_chain')return legs.map(l=>({...l,spot_price:110,last_price:null,collected_at:'2026-09-07T10:00:00Z'}));
+  return [];
+ },'2026-09-07T12:00:00Z',undefined,stock);
+ assert.equal(d.source,'smartapi');assert.equal(d.legs[0].last_price,9);
+ assert.equal(d.metrics.source,'smartapi_option_chain_snapshots');
+ assert.equal(d.metrics.oiPcr,1);assert.equal(d.metricLegs[0].last_price,null);
+});

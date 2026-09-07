@@ -87,7 +87,9 @@ try {
 
       await primary.getByRole("button", { name: /Strategy/ }).click();
       const strategy = page.getByRole("menu", { name: "Strategy workspaces" });
-      check(viewport, "Strategy owns all seven workspaces", await strategy.getByRole("menuitem").count() === 8);
+      for (const name of ["OIIS Lab", "OISS v1.202608", "Trendlyne Summary", "Monthly Strategy", "Rolling Strategy", "Long Options", "NIFTY Options", "Trading Analytics"]) {
+        check(viewport, `Strategy retains ${name}`, await strategy.getByRole("menuitem", { name: new RegExp(name.replaceAll(".", "\\.")) }).isVisible());
+      }
       const stack = await strategy.evaluate((menu) => {
         const rect = menu.getBoundingClientRect();
         return [
@@ -126,6 +128,9 @@ try {
     await commandPalette.waitFor({ state: "detached" });
     check(viewport, "no console errors", errors.length === 0, errors.join(" | "));
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: false });
+    await shortcut.click();
+    await page.waitForURL("**/strategy/trading-analytics?view=scalper");
+    check(viewport, "MANEESH click opens scalper", new URL(page.url()).searchParams.get("view") === "scalper");
     await context.close();
   }
 } finally {

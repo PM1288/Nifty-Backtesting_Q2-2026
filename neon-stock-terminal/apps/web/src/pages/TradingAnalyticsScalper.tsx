@@ -488,7 +488,7 @@ export function TradingAnalyticsScalper({
             />
           </Suspense>
         )}
-        <section className={styles.ladder} aria-label="Paired strike ladder">
+        <section className={styles.ladder} aria-label="Paired strike ladder" tabIndex={0}>
           <h3>Nearest 10 pairs</h3>
           <table>
             <thead>

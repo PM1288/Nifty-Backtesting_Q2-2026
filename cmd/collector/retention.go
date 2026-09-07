@@ -18,7 +18,7 @@ func runRetention(ctx context.Context, cfg *config.Config, st *store.Store, loc 
 		if err != nil && logger != nil {
 			logger.Warn("retention_cleanup_failed", "err", err)
 		}
-		if logger != nil {
+		if err == nil && logger != nil {
 			logger.Info("retention_cleanup_done", "results", results, "dry_run", cfg.Retention.DryRun)
 		}
 		var next time.Time

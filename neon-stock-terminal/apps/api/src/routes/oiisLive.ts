@@ -1,5 +1,7 @@
 import type { Express, Request } from "express";
 import type { PrismaClient } from "@prisma/client";
+import { asyncRoute } from "../lib/asyncRoute";
+import { runWithConcurrency } from "../lib/boundedConcurrency";
 
 const SYMBOL = /^[A-Z0-9&-]{1,32}$/;
 const UUID =
@@ -49,7 +51,7 @@ function actor(req: Request) {
 }
 
 export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
-  app.get("/v1/oiis-live/dashboard", async (req, res) => {
+  app.get("/v1/oiis-live/dashboard", asyncRoute(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const requestedDate = text(req.query.tradeDate, 10);
     if (requestedDate && !TRADE_DATE.test(requestedDate)) {
@@ -95,41 +97,41 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
       failureBuckets,
       gateBreakdown,
       universe,
-    ] = await Promise.all([
-      prisma.$queryRawUnsafe(
+    ] = await runWithConcurrency<unknown>([
+      () => prisma.$queryRawUnsafe(
         `SELECT * FROM oiis_live.v_current_watchlist WHERE active AND ($1::date IS NULL OR trade_date=$1::date) ORDER BY rank NULLS LAST,symbol`,
         tradeDate,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT * FROM oiis_live.entry_claim WHERE ($1::date IS NULL OR trade_date=$1::date) ORDER BY signal_ts DESC`,
         tradeDate,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT * FROM oiis_live.selection_run
          WHERE ($1::date IS NULL OR trade_date=$1::date)
          ORDER BY decision_as_of DESC NULLS LAST,completed_at DESC NULLS LAST LIMIT 20`,
         tradeDate,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT * FROM oiis_live.v_service_diagnostics ORDER BY service_name`,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT severity,status,count(*)::int count,max(created_at) latest FROM oiis_live.error_outbox GROUP BY severity,status ORDER BY severity,status`,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT status,count(*)::int count FROM paper_trading.trade_groups GROUP BY status ORDER BY status`,
       ),
-      prisma.$queryRawUnsafe(`SELECT
+      () => prisma.$queryRawUnsafe(`SELECT
         (SELECT max(ts) FROM public.bars_1m) latest_minute_bar,
         (SELECT max(trade_date) FROM nse.fact_eod_prices) latest_nse_eod,
         (SELECT max(trade_date) FROM strategy_eval.stock_daily_regime) latest_stock_regime,
         (SELECT count(DISTINCT symbol_token)::int FROM public.bars_1m WHERE ts=(SELECT max(ts) FROM public.bars_1m)) latest_minute_symbols`),
-      prisma.$queryRawUnsafe(`SELECT
+      () => prisma.$queryRawUnsafe(`SELECT
         (SELECT count(*)::int FROM paper_trading.webhook_outbox WHERE status IN ('PENDING','RETRY','PROCESSING')) paper_outbox_pending,
         (SELECT count(*)::int FROM paper_trading.webhook_dead_letters) paper_dead_letters,
         (SELECT count(*)::int FROM oiis_live.error_outbox WHERE status='PENDING') oiis_errors_pending,
         (SELECT count(*)::int FROM oiis_live.entry_claim WHERE status='FAILED_RETRYABLE') entry_retries_pending`),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT
         count(*)::int evaluated,
         count(*) FILTER (WHERE data_permission='FULL')::int data_permitted,
@@ -149,7 +151,7 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
        WHERE run_id=$1::uuid`,
         latestRunId,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT reason, count(*)::int count
        FROM oiis_live.daily_candidate candidate
        CROSS JOIN LATERAL jsonb_array_elements_text(candidate.reason_codes) reason
@@ -157,7 +159,7 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
        GROUP BY reason ORDER BY count(*) DESC, reason LIMIT 8`,
         latestRunId,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT candidate_id,symbol,sector,daily_level,canonical_status,
         ofactor,xfactor_snapshot,data_quality,data_permission,directional_edge,rsi14,willr14,
         structural_direction,session_direction,direction_state,session_direction_score,
@@ -176,11 +178,11 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
        LIMIT 15`,
         latestRunId,
       ),
-      prisma.$queryRawUnsafe(`SELECT historical_run_id,start_date,end_date,status,candidate_count,
+      () => prisma.$queryRawUnsafe(`SELECT historical_run_id,start_date,end_date,status,candidate_count,
         qualified_candidate_count,triggered_trade_count,summary,completed_at
        FROM oiis_live.historical_run WHERE status='COMPLETED'
        ORDER BY completed_at DESC NULLS LAST,created_at DESC LIMIT 1`),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT candidate_id,symbol,sector,direction,ofactor,ofactor_level,
         xfactor_snapshot,directional_edge,directional_edge_level,extension_level,volume_level,
         failed_gate_count,blocking_gate_count,recommendation_rank,opportunity_rank,execution_rank,
@@ -192,14 +194,14 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
        ORDER BY opportunity_rank NULLS LAST,recommendation_rank NULLS LAST`,
         latestRunId,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT failed_gate_count,count(*)::int count
        FROM oiis_live.daily_candidate
        WHERE run_id=$1::uuid
        GROUP BY failed_gate_count ORDER BY failed_gate_count`,
         latestRunId,
       ),
-      prisma.$queryRawUnsafe(
+      () => prisma.$queryRawUnsafe(
         `SELECT reason,direction,count(*)::int count
        FROM oiis_live.daily_candidate candidate
        CROSS JOIN LATERAL jsonb_array_elements_text(candidate.reason_codes) reason
@@ -207,12 +209,12 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
        GROUP BY reason,direction ORDER BY reason,direction`,
         latestRunId,
       ),
-      prisma.$queryRawUnsafe(`SELECT count(*) FILTER (WHERE active)::int eligible,
+      () => prisma.$queryRawUnsafe(`SELECT count(*) FILTER (WHERE active)::int eligible,
         count(*) FILTER (WHERE is_fno)::int fno,
         count(*) FILTER (WHERE is_nifty50)::int nifty50,
         count(*) FILTER (WHERE is_fno AND is_nifty50)::int intersection,
         max(refreshed_at) refreshed_at FROM oiis_live.universe_member`),
-    ]);
+    ], 2);
     res.json({
       environment: "PAPER",
       policyId: "OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0",
@@ -261,9 +263,9 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
       universe: (universe as Array<unknown>)[0],
       historical: (historical as Array<unknown>)[0] ?? null,
     });
-  });
+  }));
 
-  app.get("/v1/oiis-live/run-history", async (req, res) => {
+  app.get("/v1/oiis-live/run-history", asyncRoute(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const requestedDate = text(req.query.tradeDate, 10);
     const requestedLimit = Number(req.query.limit ?? 24);
@@ -326,9 +328,9 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
       thresholdExclusive: 185,
       runs: runs.map((run) => ({ ...run, changes: byRun.get(String(run.run_id)) ?? [] })),
     });
-  });
+  }));
 
-  app.get("/v1/oiis-live/candidates", async (req, res) => {
+  app.get("/v1/oiis-live/candidates", asyncRoute(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const requestedDate = text(req.query.tradeDate, 10);
     if (requestedDate && !TRADE_DATE.test(requestedDate)) {
@@ -374,9 +376,9 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
       count: rows.length,
       candidates: rows,
     });
-  });
+  }));
 
-  app.get("/v1/oiis-live/candidates/:symbol/context", async (req, res) => {
+  app.get("/v1/oiis-live/candidates/:symbol/context", asyncRoute(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const symbol = text(req.params.symbol, 32).toUpperCase();
     if (!SYMBOL.test(symbol)) {
@@ -447,11 +449,11 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
         error: fnoError,
       },
     });
-  });
+  }));
 }
 
 export function registerOiisLive(app: Express, prisma: PrismaClient) {
-  app.post("/v1/oiis-live/watchlist", async (req, res) => {
+  app.post("/v1/oiis-live/watchlist", asyncRoute(async (req, res) => {
     const symbol = text(req.body?.symbol, 32).toUpperCase();
     const tradeDate = text(req.body?.tradeDate, 10);
     const limits = thresholds(req.body);
@@ -492,9 +494,9 @@ export function registerOiisLive(app: Express, prisma: PrismaClient) {
       actor(req),
     );
     res.status(201).json(row[0]);
-  });
+  }));
 
-  app.patch("/v1/oiis-live/watchlist/:id", async (req, res) => {
+  app.patch("/v1/oiis-live/watchlist/:id", asyncRoute(async (req, res) => {
     if (!UUID.test(req.params.id))
       return res.status(400).json({ error: "Invalid watchlist ID." });
     const limits = thresholds(req.body);
@@ -518,9 +520,9 @@ export function registerOiisLive(app: Express, prisma: PrismaClient) {
     if (!row[0])
       return res.status(404).json({ error: "Watchlist item not found." });
     res.json(row[0]);
-  });
+  }));
 
-  app.delete("/v1/oiis-live/watchlist/:id", async (req, res) => {
+  app.delete("/v1/oiis-live/watchlist/:id", asyncRoute(async (req, res) => {
     if (!UUID.test(req.params.id))
       return res.status(400).json({ error: "Invalid watchlist ID." });
     const changed = await prisma.$executeRawUnsafe(
@@ -533,9 +535,9 @@ export function registerOiisLive(app: Express, prisma: PrismaClient) {
     if (!changed)
       return res.status(404).json({ error: "Watchlist item not found." });
     res.status(204).end();
-  });
+  }));
 
-  app.post("/v1/oiis-live/commands", async (req, res) => {
+  app.post("/v1/oiis-live/commands", asyncRoute(async (req, res) => {
     const command = text(req.body?.command, 40).toUpperCase();
     if (
       ![
@@ -553,5 +555,5 @@ export function registerOiisLive(app: Express, prisma: PrismaClient) {
       JSON.stringify(req.body?.payload ?? {}),
     );
     res.status(202).json(row[0]);
-  });
+  }));
 }

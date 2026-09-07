@@ -8,7 +8,18 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"trading-stack/internal/config"
 )
+
+// Separate from cleanup so planning can remain strictly read-only.
+func (s *Store) ProvisionMarketPartitions(ctx context.Context) error {
+	for _, rule := range retentionRules(config.RetentionConfig{}) {
+		if err := s.EnsureFuturePartitions(ctx, rule.Table, 2); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (s *Store) EnsureFuturePartitions(ctx context.Context, table string, monthsAhead int) error {
 	if table == "" {

@@ -33,6 +33,7 @@ func main() {
 	dbMigrateOnly := flag.Bool("db-migrate-only", false, "Run migrations and exit")
 	dbValidateOnly := flag.Bool("db-validate-only", false, "Validate schema and exit")
 	dbCleanupOnly := flag.Bool("db-cleanup-only", false, "Run retention cleanup and exit")
+	dbCleanupPlan := flag.Bool("db-cleanup-plan", false, "Read-only retention plan; never provision or delete")
 	dbReset := flag.Bool("db-reset", false, "Drop schema and re-run migrations")
 	dbResetConfirm := flag.Bool("i-understand-this-will-delete-data", false, "Required with --db-reset")
 	flag.Parse()
@@ -88,24 +89,27 @@ func main() {
 		logger.Info("schema validation ok")
 		return
 	}
-	if *dbCleanupOnly {
-		if _, err := st.CleanupRetention(ctx, cfg.Retention, loc); err != nil {
+	if *dbCleanupOnly || *dbCleanupPlan {
+		if *dbCleanupPlan {
+			cfg.Retention.DryRun = true
+			cfg.Retention.EnableCleanup = true
+		}
+		results, err := st.CleanupRetention(ctx, cfg.Retention, loc)
+		if err != nil {
 			logger.Error("cleanup failed", "err", err)
 			os.Exit(1)
 		}
-		logger.Info("cleanup complete", "dry_run", cfg.Retention.DryRun)
+		logger.Info("cleanup complete", "dry_run", cfg.Retention.DryRun, "results", results)
 		return
 	}
 
 	if err := st.Migrate(ctx); err != nil {
-		// In environments with locally edited migration files, checksum drift can block startup.
-		// For collector runtime, continue if schema exists and only checksum metadata differs.
-		if strings.Contains(err.Error(), "migration checksum mismatch") {
-			logger.Warn("migration checksum mismatch; continuing in runtime mode", "err", err)
-		} else {
-			logger.Error("migration failed", "err", err)
-			os.Exit(1)
-		}
+		logger.Error("migration failed; refusing unverified schema", "err", err)
+		os.Exit(1)
+	}
+	if err := st.ProvisionMarketPartitions(ctx); err != nil {
+		logger.Error("partition provisioning failed", "err", err)
+		os.Exit(1)
 	}
 	if cfg.Metrics.Enable {
 		if err := st.UpsertSourceSLAs(ctx, buildSourceSLAs(cfg)); err != nil {
@@ -494,6 +498,20 @@ func main() {
 		})
 	}
 
+	eg.Go(func() error {
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-egCtx.Done():
+				return egCtx.Err()
+			case <-ticker.C:
+				if err := st.ProvisionMarketPartitions(egCtx); err != nil {
+					logger.Error("partition provisioning failed", "err", err)
+				}
+			}
+		}
+	})
 	refreshTriggers := make(chan string, 1)
 	eg.Go(func() error {
 		return subscriptionRefreshLoop(egCtx, cfg, st, insts, baseSubs, priceCache, subIndex, optionStates, wsArchiveTracker, &subsCount, logger, refreshTriggers, loc)

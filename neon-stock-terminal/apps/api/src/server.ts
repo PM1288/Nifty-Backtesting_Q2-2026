@@ -57,8 +57,7 @@ prisma.$on("query", (event) => {
     level: "warn",
     event: "slow_db_query",
     durationMs: event.duration,
-    target: event.target,
-    query: event.query
+    target: event.target
   }));
 });
 
@@ -219,7 +218,7 @@ async function main() {
           event: "http_request_completed",
           requestId,
           method: req.method,
-          path: req.originalUrl,
+          path: req.path,
           status: res.statusCode,
           durationMs: Date.now() - startedAt,
           dbQueryCount: metrics?.dbQueryCount ?? 0,
@@ -358,12 +357,14 @@ async function main() {
     if (res.headersSent) return;
 
     const rawStatus = Number((err as { status?: unknown })?.status);
-    const status = Number.isFinite(rawStatus) && rawStatus >= 400 && rawStatus < 600 ? rawStatus : 500;
+    const dbBusy = ["P2024", "P2037"].includes(String((err as { code?: unknown })?.code));
+    const status = dbBusy ? 503 : Number.isFinite(rawStatus) && rawStatus >= 400 && rawStatus < 600 ? rawStatus : 500;
     const rawCode = (err as { code?: unknown })?.code;
     const defaultCode = status >= 500 ? "INTERNAL_ERROR" : "REQUEST_ERROR";
     const code = typeof rawCode === "string" && rawCode.trim().length > 0 ? rawCode.trim() : defaultCode;
 
-    let message = status >= 500 ? "Internal server error." : "Request failed.";
+    let message = dbBusy ? "Data service is busy. Please retry shortly." : status >= 500 ? "Internal server error." : "Request failed.";
+    if(dbBusy) res.setHeader("Retry-After", "5");
     if (err instanceof SyntaxError && "body" in err) {
       message = "Invalid JSON payload.";
     } else if (status < 500) {
@@ -376,9 +377,10 @@ async function main() {
     if (status >= 500) {
       // eslint-disable-next-line no-console
       console.error("Unhandled API error", {
-        path: req.originalUrl,
+        path: req.path,
         method: req.method,
-        error: err
+        code,
+        requestId: res.getHeader("X-Request-Id")
       });
     }
 

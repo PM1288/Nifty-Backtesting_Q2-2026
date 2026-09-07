@@ -5,6 +5,7 @@ import { createClient, type RedisClientType } from "redis";
 import { marketDayIso } from "./time";
 import { annotateSnapshotMetrics, getRequestMetrics } from "./requestMetrics";
 import { allowApiRuntimeDdl } from "./runtimeConfig";
+import { WorkAdmission } from "./workAdmission";
 
 type SnapshotMeta = Record<string, unknown>;
 
@@ -59,6 +60,7 @@ let redisClient: RedisClientType | null = null;
 let redisConnectPromise: Promise<void> | null = null;
 let redisUnavailable = false;
 const inflightRefreshes = new Map<string, Promise<StoredSnapshot<unknown>>>();
+const refreshAdmission = new WorkAdmission(1, 16, 10_000);
 
 function nowIso() {
   return new Date().toISOString();
@@ -392,7 +394,7 @@ export async function materializeSnapshot<T>(
   const existing = inflightRefreshes.get(refreshId) as Promise<StoredSnapshot<T>> | undefined;
   if (existing) return existing;
 
-  const promise = (async () => {
+  const promise = refreshAdmission.run(async () => {
     const startedAt = Date.now();
     const result = await definition.build(prisma);
     const normalized = normalizeBuildResult(definition, result);
@@ -441,7 +443,7 @@ export async function materializeSnapshot<T>(
       buildMs: record.buildMs
     }));
     return record;
-  })();
+  });
 
   inflightRefreshes.set(refreshId, promise as Promise<StoredSnapshot<unknown>>);
   try {

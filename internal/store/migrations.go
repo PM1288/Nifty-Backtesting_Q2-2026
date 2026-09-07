@@ -38,10 +38,22 @@ func (s *Store) WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 func (s *Store) withAdvisoryLock(ctx context.Context, key string, fn func() error) error {
 	lockSQL := "SELECT pg_advisory_lock(hashtext($1))"
 	unlockSQL := "SELECT pg_advisory_unlock(hashtext($1))"
-	if _, err := s.exec(ctx, "advisory_lock", lockSQL, key); err != nil {
+	// A dedicated session avoids deadlocking pools of size one while fn uses Pool.
+	conn, err := pgx.ConnectConfig(ctx, s.Pool.Config().ConnConfig.Copy())
+	if err != nil {
 		return err
 	}
-	defer func() { _, _ = s.exec(ctx, "advisory_unlock", unlockSQL, key) }()
+	defer conn.Close(context.Background())
+	if _, err := conn.Exec(ctx, lockSQL, key); err != nil {
+		return err
+	}
+	defer func() {
+		unlockCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if _, err := conn.Exec(unlockCtx, unlockSQL, key); err != nil {
+			_ = conn.Close(unlockCtx)
+		}
+	}()
 	return fn()
 }
 

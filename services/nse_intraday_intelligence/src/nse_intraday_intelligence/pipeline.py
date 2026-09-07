@@ -11,7 +11,7 @@ from .alerts import send_webhook_alert
 from .config import get_settings
 from .db import execute, execute_many, fetch_all, fetch_one, fetch_val, get_conn
 from .logging_utils import get_logger
-from .partitioning import drop_monthly_partitions_older_than, ensure_monthly_partitions
+from .partitioning import ensure_monthly_partitions
 from .utils import csv_bytes, dumps_json, flatten_dict, sha256_bytes, write_bytes
 
 log = get_logger(__name__)
@@ -461,6 +461,12 @@ def sync_raw_minute(trade_date: date | None = None) -> dict:
     trade_date = trade_date or latest_source_trade_date()
     if not trade_date:
         raise RuntimeError("No trade_date found in public.bars_1m")
+    # Reject accidental historical regeneration; operator replay uses an explicit
+    # environment override, not the daily scheduler's ordinary path.
+    import os
+    oldest = datetime.now(ZoneInfo(get_settings().timezone)).date() - timedelta(days=15)
+    if trade_date < oldest and os.getenv('ALLOW_EXPIRED_INTRADAY_REPLAY') != 'true':
+        raise RuntimeError('RETENTION_WINDOW_EXPIRED: explicit replay override required')
     _ensure_partitions_for_trade_date(trade_date)
     market_tz = ZoneInfo(get_settings().timezone)
     session_start = datetime.combine(trade_date, time(9, 15), tzinfo=market_tz).astimezone(timezone.utc)
@@ -2010,26 +2016,6 @@ def run_quality_checks(trade_date: date | None = None, run_id: str | None = None
     }
 
 
-def retention_cleanup() -> dict:
-    settings = get_settings()
-    today = datetime.now(timezone.utc).date()
-    raw_cutoff = today - timedelta(days=settings.raw_retention_days)
-    feature_cutoff = today - timedelta(days=settings.feature_retention_days)
-    snapshot_cutoff = today - timedelta(days=settings.snapshot_retention_days)
-    drop_monthly_partitions_older_than(raw_cutoff)
-
-    execute("delete from nse_intraday.stock_intraday_live where trade_date < %(cutoff)s", {"cutoff": feature_cutoff})
-    execute("delete from nse_intraday.market_session_summary where trade_date < %(cutoff)s", {"cutoff": feature_cutoff})
-    execute("delete from nse_ops.dashboard_snapshot_intraday where trade_date < %(cutoff)s", {"cutoff": snapshot_cutoff})
-    execute("delete from nse_ops.dashboard_section_intraday where trade_date < %(cutoff)s", {"cutoff": snapshot_cutoff})
-    execute("delete from nse_ops.watchlist_snapshot_intraday where trade_date < %(cutoff)s", {"cutoff": snapshot_cutoff})
-    execute("delete from nse_ops.export_manifest where trade_date < %(cutoff)s and export_scope like 'intraday%%'", {"cutoff": snapshot_cutoff})
-
-    return {
-        "raw_cutoff": raw_cutoff.isoformat(),
-        "feature_cutoff": feature_cutoff.isoformat(),
-        "snapshot_cutoff": snapshot_cutoff.isoformat(),
-    }
 
 
 def backfill_history(days: int = 90, index_code: str | None = None) -> dict:
@@ -3988,34 +3974,9 @@ def run_quality_checks(trade_date: date | None = None, run_id: str | None = None
     }
 
 
-def retention_cleanup() -> dict:  # type: ignore[override]
-    settings = get_settings()
-    today = datetime.now(timezone.utc).date()
-    raw_cutoff = today - timedelta(days=settings.raw_retention_days)
-    minute_cutoff = today - timedelta(days=settings.minute_retention_days)
-    feature_cutoff = today - timedelta(days=settings.feature_retention_days)
-    snapshot_cutoff = today - timedelta(days=settings.snapshot_retention_days)
-    drop_monthly_partitions_older_than(raw_cutoff)
-
-    execute("delete from nse_intraday.raw_security_1m where trade_date < %(cutoff)s", {"cutoff": minute_cutoff})
-    execute("delete from nse_intraday.raw_index_1m where trade_date < %(cutoff)s", {"cutoff": minute_cutoff})
-    execute("delete from nse_intraday.security_minute_feature where trade_date < %(cutoff)s", {"cutoff": minute_cutoff})
-    execute("delete from nse_intraday.market_minute_feature where trade_date < %(cutoff)s", {"cutoff": minute_cutoff})
-    execute("delete from nse_intraday.stock_minute_volume_profile where trade_date < %(cutoff)s", {"cutoff": minute_cutoff})
-    execute("delete from nse_intraday.stock_intraday_live where trade_date < %(cutoff)s", {"cutoff": feature_cutoff})
-    execute("delete from nse_intraday.market_session_summary where trade_date < %(cutoff)s", {"cutoff": feature_cutoff})
-    execute("delete from nse_intraday.stock_daily_beta_profile where trade_date < %(cutoff)s", {"cutoff": feature_cutoff})
-    execute("delete from nse_ops.dashboard_snapshot_intraday where trade_date < %(cutoff)s", {"cutoff": snapshot_cutoff})
-    execute("delete from nse_ops.dashboard_section_intraday where trade_date < %(cutoff)s", {"cutoff": snapshot_cutoff})
-    execute("delete from nse_ops.watchlist_snapshot_intraday where trade_date < %(cutoff)s", {"cutoff": snapshot_cutoff})
-    execute("delete from nse_ops.export_manifest where trade_date < %(cutoff)s and export_scope like 'intraday%%'", {"cutoff": snapshot_cutoff})
-
-    return {
-        "raw_cutoff": raw_cutoff.isoformat(),
-        "minute_cutoff": minute_cutoff.isoformat(),
-        "feature_cutoff": feature_cutoff.isoformat(),
-        "snapshot_cutoff": snapshot_cutoff.isoformat(),
-    }
+def retention_cleanup() -> dict:
+    from .retention import cleanup
+    return cleanup()
 
 
 def build_stock_payload(symbol: str, trade_date: date | None = None) -> dict:  # type: ignore[override]

@@ -112,7 +112,7 @@ function resolveApiPath(path: string): string {
   return path.startsWith("/api/v1/") ? path.replace("/api/v1/", "/v1/") : path;
 }
 
-async function getJson<T>(path: string): Promise<T> {
+export async function getJson<T>(path: string): Promise<T> {
   const startedAt =
     typeof performance !== "undefined" ? performance.now() : Date.now();
   const headers: Record<string, string> = {

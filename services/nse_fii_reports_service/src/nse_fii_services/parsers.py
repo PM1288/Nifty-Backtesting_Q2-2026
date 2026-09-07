@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO, StringIO
+import csv
 import re
 from typing import Iterable
 
@@ -37,14 +38,14 @@ def parse_participant_csv(raw: bytes) -> pd.DataFrame:
     lines = [line for line in text.splitlines() if line.strip()]
     header_index = None
     for idx, line in enumerate(lines):
-        if line.startswith("Client Type"):
+        if next(csv.reader([line]))[0].strip() == "Client Type":
             header_index = idx
             break
     if header_index is None:
         raise ValueError("Could not locate CSV header row starting with 'Client Type'.")
 
     csv_text = "\n".join(lines[header_index:])
-    df = pd.read_csv(StringIO(csv_text), on_bad_lines="skip")
+    df = pd.read_csv(StringIO(csv_text), on_bad_lines="error")
     df = _clean_columns(df)
     df = _strip_empty_rows(df)
 
@@ -60,8 +61,10 @@ def parse_fii_stats_excel(raw: bytes) -> pd.DataFrame:
     The official file is served as .xls on NSE archive URLs. Pandas typically needs
     xlrd installed for .xls support.
     """
+    if not raw.startswith(bytes.fromhex("d0cf11e0a1b11ae1")):
+        raise ValueError("Expected an OLE/BIFF XLS report, not HTML or an error response")
     try:
-        df = pd.read_excel(BytesIO(raw), skiprows=3, engine="xlrd")
+        df = pd.read_excel(BytesIO(raw), header=None, engine="xlrd")
     except ImportError as exc:
         raise ImportError(
             "Parsing NSE .xls files requires xlrd. Install it with: pip install xlrd"
@@ -92,8 +95,17 @@ def parse_fii_stats_excel(raw: bytes) -> pd.DataFrame:
         "BANKNIFTY FUTURES",
         "MIDCPNIFTY FUTURES",
         "NIFTY FUTURES",
+        "NIFTYFPI FUTURES",
+        "NIFTYNXT50 FUTURES",
+        "BANKNIFTY OPTIONS",
+        "FINNIFTY OPTIONS",
+        "MIDCPNIFTY OPTIONS",
+        "NIFTY OPTIONS",
+        "NIFTYFPI OPTIONS",
+        "NIFTYNXT50 OPTIONS",
     )
     mask = df["fii_derivatives"].str.startswith(valid_prefixes, na=False)
-    if mask.any():
-        df = df[mask].reset_index(drop=True)
+    df = df[mask].reset_index(drop=True)
+    if df.empty:
+        raise ValueError("No recognized FII product rows in report")
     return df

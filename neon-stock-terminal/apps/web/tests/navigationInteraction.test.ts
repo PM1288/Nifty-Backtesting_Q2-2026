@@ -68,6 +68,7 @@ test("top Strategy workspace groups independent strategy dashboards without merg
     "Rolling Strategy",
     "Long Options",
     "NIFTY Options",
+    "Trading Analytics",
   ]);
   assert.equal(resolveWorkspaceRoute("/strategy/oiis-live").id, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/oiss-v1-202608").id, "oiis-lab");
@@ -89,6 +90,7 @@ test("single-line command header keeps the Option 4 taxonomy in one central conf
     "Rolling Strategy",
     "Long Options",
     "NIFTY Options",
+    "Trading Analytics",
   ]);
   assert.equal(STRATEGY_HEADER_ROUTES[0]?.section, "LIVE & CURRENT");
   assert.equal(STRATEGY_HEADER_ROUTES[2]?.section, "RESEARCH");

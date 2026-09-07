@@ -28,7 +28,7 @@ class ParserTests(unittest.TestCase):
                 ["Random footer", None, None, None, None, None, None],
             ]
         )
-        df = parse_fii_stats_excel(b"fake xls bytes")
+        df = parse_fii_stats_excel(bytes.fromhex("d0cf11e0a1b11ae1"))
         self.assertEqual(list(df["fii_derivatives"]), ["INDEX FUTURES", "STOCK FUTURES"])
         self.assertEqual(list(df.columns), [
             "fii_derivatives",
@@ -43,8 +43,16 @@ class ParserTests(unittest.TestCase):
     @patch("nse_fii_services.parsers.pd.read_excel", side_effect=ImportError("xlrd missing"))
     def test_parse_fii_stats_excel_gives_helpful_error(self, _mock_read_excel) -> None:
         with self.assertRaises(ImportError) as ctx:
-            parse_fii_stats_excel(b"fake xls bytes")
+            parse_fii_stats_excel(bytes.fromhex("d0cf11e0a1b11ae1"))
         self.assertIn("pip install xlrd", str(ctx.exception))
+
+    def test_html_masquerading_as_xls_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_fii_stats_excel(b"<html>Access denied</html>")
+
+    def test_quoted_padded_participant_header(self):
+        frame = parse_participant_csv(b'Preamble\n" Client Type ",Future Index Long,Future Index Short\nFII,1,2\n')
+        self.assertEqual(frame.iloc[0, 0], "FII")
 
 
 if __name__ == "__main__":

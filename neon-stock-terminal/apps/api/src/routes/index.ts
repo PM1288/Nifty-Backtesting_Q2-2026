@@ -36,6 +36,7 @@ import { registerRollingWindow } from "./rollingWindow";
 import { registerNseIntelligence } from "./nseIntelligence";
 import { registerLongOptions } from "./longOptions";
 import { registerNiftyWeeklyOptions } from "./niftyWeeklyOptions";
+import { registerTradingAnalytics } from "./tradingAnalytics";
 import { registerMobileNotifications } from "./mobileNotifications";
 import { registerStockProfiles } from "./stockProfiles";
 import { registerTrendlyneSummary } from "./trendlyneSummary";
@@ -88,6 +89,7 @@ export function registerRoutes(
   registerRollingWindow(app, prisma);
   registerLongOptions(app, prisma);
   registerNiftyWeeklyOptions(app, prisma);
+  registerTradingAnalytics(app, prisma);
   registerNseIntelligence(app, prisma);
   registerMobileNotifications(app, prisma);
   registerStockProfiles(app, prisma);

@@ -1,0 +1,844 @@
+{
+  "schema_version": "1.0",
+  "title": "NSE supplied-report golden reference and workbook reconciliation",
+  "prepared_on": "2026-09-07",
+  "report_date": "2026-09-04",
+  "status": "SOURCE_VALUES_CHECKED_WITH_KNOWN_DISCREPANCIES",
+  "purpose": "Parser and calculation acceptance fixture; not a live market snapshot, complete historical dataset or investment recommendation.",
+  "units": {
+    "contract_counts": "integer contracts as labelled in supplied NSE reports",
+    "money_fields_suffix_crore": "INR crore; decimal strings; 1 crore = 10000000 INR",
+    "percentage_fields": "0..100, not 0..1",
+    "net_position": "signed contracts; no delta or notional weighting"
+  },
+  "sources": [
+    {
+      "id": "daily_fii_stats",
+      "filename": "fii_stats_04-Sep-2026.xls",
+      "format": "OLE BIFF8 XLS",
+      "report_date": "2026-09-04",
+      "source_range": "A4:G22; 16 product records separated by blank rows",
+      "publication_timestamp": null
+    },
+    {
+      "id": "daily_participant_oi",
+      "filename": "fao_participant_oi_04092026.csv",
+      "format": "CSV with report preamble and whitespace-padded headings",
+      "report_date": "2026-09-04",
+      "publication_timestamp": null
+    },
+    {
+      "id": "legacy_workbook",
+      "filename": "FII_OI_ Stats_July_2023onwards(1).xlsx",
+      "formula_evaluation": "Formula definitions and cached values inspected; selected core formulas independently reconstructed. Whole workbook was not recalculated."
+    }
+  ],
+  "value_semantics_from_daily_xls_notes": {
+    "options_buy_sell_value": "Strike price multiplied by quantity; NOT option premium cash flow",
+    "futures_buy_sell_value": "Traded price multiplied by quantity",
+    "options_eod_value": "Underlying close price multiplied by quantity",
+    "futures_eod_value": "Closing futures price (daily settlement price) multiplied by quantity"
+  },
+  "fii_derivatives_records": [
+    {
+      "product": "INDEX FUTURES",
+      "buy_contracts": 6906,
+      "buy_crore": "1106.90",
+      "sell_contracts": 7642,
+      "sell_crore": "1229.76",
+      "oi_contracts": 303216,
+      "oi_crore": "48891.52",
+      "net_contracts": -736,
+      "net_crore": "-122.86",
+      "workbook_row": 8149,
+      "source_xls_row": 4,
+      "is_family_total": true
+    },
+    {
+      "product": "BANKNIFTY FUTURES",
+      "buy_contracts": 1090,
+      "buy_crore": "189.26",
+      "sell_contracts": 1599,
+      "sell_crore": "277.43",
+      "oi_contracts": 60146,
+      "oi_crore": "10429.26",
+      "net_contracts": -509,
+      "net_crore": "-88.17",
+      "workbook_row": 8150,
+      "source_xls_row": 5,
+      "is_family_total": false
+    },
+    {
+      "product": "FINNIFTY FUTURES",
+      "buy_contracts": 5,
+      "buy_crore": "0.79",
+      "sell_contracts": 12,
+      "sell_crore": "1.89",
+      "oi_contracts": 329,
+      "oi_crore": "51.79",
+      "net_contracts": -7,
+      "net_crore": "-1.10",
+      "workbook_row": 8151,
+      "source_xls_row": 6,
+      "is_family_total": false
+    },
+    {
+      "product": "MIDCPNIFTY FUTURES",
+      "buy_contracts": 370,
+      "buy_crore": "65.75",
+      "sell_contracts": 304,
+      "sell_crore": "54.05",
+      "oi_contracts": 20613,
+      "oi_crore": "3654.24",
+      "net_contracts": 66,
+      "net_crore": "11.70",
+      "workbook_row": 8152,
+      "source_xls_row": 7,
+      "is_family_total": false
+    },
+    {
+      "product": "NIFTY FUTURES",
+      "buy_contracts": 5441,
+      "buy_crore": "851.11",
+      "sell_contracts": 5726,
+      "sell_crore": "896.21",
+      "oi_contracts": 221648,
+      "oi_crore": "34668.40",
+      "net_contracts": -285,
+      "net_crore": "-45.10",
+      "workbook_row": 8153,
+      "source_xls_row": 8,
+      "is_family_total": false
+    },
+    {
+      "product": "NIFTYFPI FUTURES",
+      "buy_contracts": 0,
+      "buy_crore": "0.00",
+      "sell_contracts": 0,
+      "sell_crore": "0.00",
+      "oi_contracts": 0,
+      "oi_crore": "0.00",
+      "net_contracts": 0,
+      "net_crore": "0.00",
+      "workbook_row": 8154,
+      "source_xls_row": 9,
+      "is_family_total": false
+    },
+    {
+      "product": "NIFTYNXT50 FUTURES",
+      "buy_contracts": 0,
+      "buy_crore": "0.00",
+      "sell_contracts": 1,
+      "sell_crore": "0.18",
+      "oi_contracts": 480,
+      "oi_crore": "87.83",
+      "net_contracts": -1,
+      "net_crore": "-0.18",
+      "workbook_row": 8155,
+      "source_xls_row": 10,
+      "is_family_total": false
+    },
+    {
+      "product": "INDEX OPTIONS",
+      "buy_contracts": 5566210,
+      "buy_crore": "871378.46",
+      "sell_contracts": 5626595,
+      "sell_crore": "881281.75",
+      "oi_contracts": 2985686,
+      "oi_crore": "470956.48",
+      "net_contracts": -60385,
+      "net_crore": "-9903.29",
+      "workbook_row": 8157,
+      "source_xls_row": 12,
+      "is_family_total": true
+    },
+    {
+      "product": "BANKNIFTY OPTIONS",
+      "buy_contracts": 170771,
+      "buy_crore": "29809.74",
+      "sell_contracts": 171500,
+      "sell_crore": "29898.86",
+      "oi_contracts": 376812,
+      "oi_crore": "64852.72",
+      "net_contracts": -729,
+      "net_crore": "-89.12",
+      "workbook_row": 8158,
+      "source_xls_row": 13,
+      "is_family_total": false
+    },
+    {
+      "product": "FINNIFTY OPTIONS",
+      "buy_contracts": 7728,
+      "buy_crore": "1224.54",
+      "sell_contracts": 7309,
+      "sell_crore": "1159.74",
+      "oi_contracts": 8555,
+      "oi_crore": "1337.20",
+      "net_contracts": 419,
+      "net_crore": "64.80",
+      "workbook_row": 8159,
+      "source_xls_row": 14,
+      "is_family_total": false
+    },
+    {
+      "product": "MIDCPNIFTY OPTIONS",
+      "buy_contracts": 15913,
+      "buy_crore": "2831.31",
+      "sell_contracts": 17342,
+      "sell_crore": "3086.80",
+      "oi_contracts": 39669,
+      "oi_crore": "7004.11",
+      "net_contracts": -1429,
+      "net_crore": "-255.49",
+      "workbook_row": 8160,
+      "source_xls_row": 15,
+      "is_family_total": false
+    },
+    {
+      "product": "NIFTY OPTIONS",
+      "buy_contracts": 5371752,
+      "buy_crore": "837504.48",
+      "sell_contracts": 5430413,
+      "sell_crore": "847130.65",
+      "oi_contracts": 2560496,
+      "oi_crore": "397734.74",
+      "net_contracts": -58661,
+      "net_crore": "-9626.17",
+      "workbook_row": 8161,
+      "source_xls_row": 16,
+      "is_family_total": false
+    },
+    {
+      "product": "NIFTYFPI OPTIONS",
+      "buy_contracts": 1,
+      "buy_crore": "0.18",
+      "sell_contracts": 5,
+      "sell_crore": "0.80",
+      "oi_contracts": 30,
+      "oi_crore": "5.13",
+      "net_contracts": -4,
+      "net_crore": "-0.62",
+      "workbook_row": 8162,
+      "source_xls_row": 17,
+      "is_family_total": false
+    },
+    {
+      "product": "NIFTYNXT50 OPTIONS",
+      "buy_contracts": 45,
+      "buy_crore": "8.21",
+      "sell_contracts": 26,
+      "sell_crore": "4.90",
+      "oi_contracts": 124,
+      "oi_crore": "22.59",
+      "net_contracts": 19,
+      "net_crore": "3.31",
+      "workbook_row": 8163,
+      "source_xls_row": 18,
+      "is_family_total": false
+    },
+    {
+      "product": "STOCK FUTURES",
+      "buy_contracts": 238285,
+      "buy_crore": "15950.41",
+      "sell_contracts": 218039,
+      "sell_crore": "15014.49",
+      "oi_contracts": 6294845,
+      "oi_crore": "424192.51",
+      "net_contracts": 20246,
+      "net_crore": "935.92",
+      "workbook_row": 8165,
+      "source_xls_row": 20,
+      "is_family_total": true
+    },
+    {
+      "product": "STOCK OPTIONS",
+      "buy_contracts": 404072,
+      "buy_crore": "27978.89",
+      "sell_contracts": 401410,
+      "sell_crore": "27912.90",
+      "oi_contracts": 828629,
+      "oi_crore": "55098.28",
+      "net_contracts": 2662,
+      "net_crore": "65.99",
+      "workbook_row": 8167,
+      "source_xls_row": 22,
+      "is_family_total": true
+    }
+  ],
+  "participant_oi_records": [
+    {
+      "participant": "Client",
+      "workbook_row": 4121,
+      "values": {
+        "future_index_long": 261701,
+        "future_index_short": 51859,
+        "future_stock_long": 3395893,
+        "future_stock_short": 210809,
+        "option_index_call_long": 3669328,
+        "option_index_put_long": 2808996,
+        "option_index_call_short": 3443458,
+        "option_index_put_short": 3525254,
+        "option_stock_call_long": 2231728,
+        "option_stock_put_long": 766116,
+        "option_stock_call_short": 1255658,
+        "option_stock_put_short": 1158544,
+        "total_long_contracts": 13133762,
+        "total_short_contracts": 9645582
+      }
+    },
+    {
+      "participant": "DII",
+      "workbook_row": 4122,
+      "values": {
+        "future_index_long": 42445,
+        "future_index_short": 31076,
+        "future_stock_long": 325145,
+        "future_stock_short": 4600784,
+        "option_index_call_long": 5176,
+        "option_index_put_long": 32147,
+        "option_index_call_short": 1281,
+        "option_index_put_short": 40,
+        "option_stock_call_long": 4896,
+        "option_stock_put_long": 44418,
+        "option_stock_call_short": 313599,
+        "option_stock_put_short": 17817,
+        "total_long_contracts": 454227,
+        "total_short_contracts": 4964597
+      }
+    },
+    {
+      "participant": "FII",
+      "workbook_row": 4123,
+      "values": {
+        "future_index_long": 33689,
+        "future_index_short": 269527,
+        "future_stock_long": 3462494,
+        "future_stock_short": 2832351,
+        "option_index_call_long": 561316,
+        "option_index_put_long": 1070255,
+        "option_index_call_short": 864770,
+        "option_index_put_short": 489344,
+        "option_stock_call_long": 127982,
+        "option_stock_put_long": 259494,
+        "option_stock_call_short": 299828,
+        "option_stock_put_short": 141325,
+        "total_long_contracts": 5515231,
+        "total_short_contracts": 4897145
+      }
+    },
+    {
+      "participant": "Pro",
+      "workbook_row": 4124,
+      "values": {
+        "future_index_long": 46273,
+        "future_index_short": 31646,
+        "future_stock_long": 829131,
+        "future_stock_short": 368719,
+        "option_index_call_long": 1109513,
+        "option_index_put_long": 1078081,
+        "option_index_call_short": 1035824,
+        "option_index_put_short": 974841,
+        "option_stock_call_long": 814519,
+        "option_stock_put_long": 969273,
+        "option_stock_call_short": 1310040,
+        "option_stock_put_short": 721615,
+        "total_long_contracts": 4846790,
+        "total_short_contracts": 4442685
+      }
+    },
+    {
+      "participant": "TOTAL",
+      "workbook_row": 4125,
+      "values": {
+        "future_index_long": 384108,
+        "future_index_short": 384108,
+        "future_stock_long": 8012663,
+        "future_stock_short": 8012663,
+        "option_index_call_long": 5345333,
+        "option_index_put_long": 4989479,
+        "option_index_call_short": 5345333,
+        "option_index_put_short": 4989479,
+        "option_stock_call_long": 3179125,
+        "option_stock_put_long": 2039301,
+        "option_stock_call_short": 3179125,
+        "option_stock_put_short": 2039301,
+        "total_long_contracts": 23950009,
+        "total_short_contracts": 23950009
+      }
+    }
+  ],
+  "preceding_workbook_block": {
+    "header": "Sep 03",
+    "provisional_report_date": "2026-09-03",
+    "date_resolution": "Adjacent workbook block anchored to the next verified Sep 04 2026 block; prior-year date and official publication time are not independently verified.",
+    "source_rows": "FII_OI_Data!A4109:O4113",
+    "records": [
+      {
+        "participant": "Client",
+        "workbook_row": 4109,
+        "values": {
+          "future_index_long": 261619,
+          "future_index_short": 55623,
+          "future_stock_long": 3385672,
+          "future_stock_short": 209099,
+          "option_index_call_long": 3751431,
+          "option_index_put_long": 2367385,
+          "option_index_call_short": 3368894,
+          "option_index_put_short": 3169206,
+          "option_stock_call_long": 2144352,
+          "option_stock_put_long": 731510,
+          "option_stock_call_short": 1202304,
+          "option_stock_put_short": 1127862,
+          "total_long_contracts": 12641969,
+          "total_short_contracts": 9132988
+        }
+      },
+      {
+        "participant": "DII",
+        "workbook_row": 4110,
+        "values": {
+          "future_index_long": 42163,
+          "future_index_short": 28876,
+          "future_stock_long": 321637,
+          "future_stock_short": 4559199,
+          "option_index_call_long": 5176,
+          "option_index_put_long": 32079,
+          "option_index_call_short": 1066,
+          "option_index_put_short": 40,
+          "option_stock_call_long": 4678,
+          "option_stock_put_long": 43718,
+          "option_stock_call_short": 303251,
+          "option_stock_put_short": 16759,
+          "total_long_contracts": 449451,
+          "total_short_contracts": 4909191
+        }
+      },
+      {
+        "participant": "FII",
+        "workbook_row": 4111,
+        "values": {
+          "future_index_long": 33502,
+          "future_index_short": 268604,
+          "future_stock_long": 3467706,
+          "future_stock_short": 2857809,
+          "option_index_call_long": 554883,
+          "option_index_put_long": 1051305,
+          "option_index_call_short": 867090,
+          "option_index_put_short": 401256,
+          "option_stock_call_long": 114426,
+          "option_stock_put_long": 248487,
+          "option_stock_call_short": 289019,
+          "option_stock_put_short": 130233,
+          "total_long_contracts": 5470310,
+          "total_short_contracts": 4814011
+        }
+      },
+      {
+        "participant": "Pro",
+        "workbook_row": 4112,
+        "values": {
+          "future_index_long": 48193,
+          "future_index_short": 32374,
+          "future_stock_long": 814423,
+          "future_stock_short": 363331,
+          "option_index_call_long": 1079067,
+          "option_index_put_long": 964885,
+          "option_index_call_short": 1153508,
+          "option_index_put_short": 845152,
+          "option_stock_call_long": 787681,
+          "option_stock_put_long": 949540,
+          "option_stock_call_short": 1256563,
+          "option_stock_put_short": 698401,
+          "total_long_contracts": 4643789,
+          "total_short_contracts": 4349329
+        }
+      },
+      {
+        "participant": "TOTAL",
+        "workbook_row": 4113,
+        "values": {
+          "future_index_long": 385477,
+          "future_index_short": 385477,
+          "future_stock_long": 7989438,
+          "future_stock_short": 7989438,
+          "option_index_call_long": 5390558,
+          "option_index_put_long": 4415654,
+          "option_index_call_short": 5390558,
+          "option_index_put_short": 4415654,
+          "option_stock_call_long": 3051137,
+          "option_stock_put_long": 1973255,
+          "option_stock_call_short": 3051137,
+          "option_stock_put_short": 1973255,
+          "total_long_contracts": 23205519,
+          "total_short_contracts": 23205519
+        }
+      }
+    ]
+  },
+  "expected_participant_calculations": [
+    {
+      "participant": "Client",
+      "report_date_metrics": {
+        "net_index_calls": 225870,
+        "net_index_puts": -716258,
+        "index_options_directional_proxy": 942128,
+        "net_index_futures": 209842,
+        "index_futures_long_pct": "83.461219543309095547901518050772"
+      },
+      "preceding_workbook_block_metrics": {
+        "net_index_calls": 382537,
+        "net_index_puts": -801821,
+        "index_options_directional_proxy": 1184358,
+        "net_index_futures": 205996,
+        "index_futures_long_pct": "82.466697347766058718580767994150"
+      },
+      "adjacent_block_change": {
+        "net_index_calls": -156667,
+        "net_index_puts": 85563,
+        "index_options_directional_proxy": -242230,
+        "net_index_futures": 3846,
+        "index_futures_long_percentage_point_change": "0.994522195543036829320750056622"
+      },
+      "delta_provenance": "Previous block is labelled Sep 03 without year; 2026 is provisionally anchored to the next block matching the supplied 2026-09-04 report. A separate 2026-09-03 official report was not supplied."
+    },
+    {
+      "participant": "DII",
+      "report_date_metrics": {
+        "net_index_calls": 3895,
+        "net_index_puts": 32107,
+        "index_options_directional_proxy": -28212,
+        "net_index_futures": 11369,
+        "index_futures_long_pct": "57.731804518436909182410467757511"
+      },
+      "preceding_workbook_block_metrics": {
+        "net_index_calls": 4110,
+        "net_index_puts": 32039,
+        "index_options_directional_proxy": -27929,
+        "net_index_futures": 13287,
+        "index_futures_long_pct": "59.351905291459620771688790664283"
+      },
+      "adjacent_block_change": {
+        "net_index_calls": -215,
+        "net_index_puts": 68,
+        "index_options_directional_proxy": -283,
+        "net_index_futures": -1918,
+        "index_futures_long_percentage_point_change": "-1.620100773022711589278322906772"
+      },
+      "delta_provenance": "Previous block is labelled Sep 03 without year; 2026 is provisionally anchored to the next block matching the supplied 2026-09-04 report. A separate 2026-09-03 official report was not supplied."
+    },
+    {
+      "participant": "FII",
+      "report_date_metrics": {
+        "net_index_calls": -303454,
+        "net_index_puts": 580911,
+        "index_options_directional_proxy": -884365,
+        "net_index_futures": -235838,
+        "index_futures_long_pct": "11.110561447944699488153659437497"
+      },
+      "preceding_workbook_block_metrics": {
+        "net_index_calls": -312207,
+        "net_index_puts": 650049,
+        "index_options_directional_proxy": -962256,
+        "net_index_futures": -235102,
+        "index_futures_long_pct": "11.089485147597200982436628203346"
+      },
+      "adjacent_block_change": {
+        "net_index_calls": 8753,
+        "net_index_puts": -69138,
+        "index_options_directional_proxy": 77891,
+        "net_index_futures": -736,
+        "index_futures_long_percentage_point_change": "0.021076300347498505717031234151"
+      },
+      "delta_provenance": "Previous block is labelled Sep 03 without year; 2026 is provisionally anchored to the next block matching the supplied 2026-09-04 report. A separate 2026-09-03 official report was not supplied."
+    },
+    {
+      "participant": "Pro",
+      "report_date_metrics": {
+        "net_index_calls": 73689,
+        "net_index_puts": 103240,
+        "index_options_directional_proxy": -29551,
+        "net_index_futures": 14627,
+        "index_futures_long_pct": "59.386029081482051874382371437005"
+      },
+      "preceding_workbook_block_metrics": {
+        "net_index_calls": -74441,
+        "net_index_puts": 119733,
+        "index_options_directional_proxy": -194174,
+        "net_index_futures": 15819,
+        "index_futures_long_pct": "59.817294922238633683766306304070"
+      },
+      "adjacent_block_change": {
+        "net_index_calls": 148130,
+        "net_index_puts": -16493,
+        "index_options_directional_proxy": 164623,
+        "net_index_futures": -1192,
+        "index_futures_long_percentage_point_change": "-0.431265840756581809383934867065"
+      },
+      "delta_provenance": "Previous block is labelled Sep 03 without year; 2026 is provisionally anchored to the next block matching the supplied 2026-09-04 report. A separate 2026-09-03 official report was not supplied."
+    }
+  ],
+  "cross_report_reconciliation": [
+    {
+      "comparison": "INDEX FUTURES FII gross OI",
+      "participant_report_contracts": 303216,
+      "fii_stats_report_contracts": 303216,
+      "difference_stats_minus_participant_contracts": 0
+    },
+    {
+      "comparison": "STOCK FUTURES FII gross OI",
+      "participant_report_contracts": 6294845,
+      "fii_stats_report_contracts": 6294845,
+      "difference_stats_minus_participant_contracts": 0
+    },
+    {
+      "comparison": "INDEX OPTIONS FII gross OI",
+      "participant_report_contracts": 2985685,
+      "fii_stats_report_contracts": 2985686,
+      "difference_stats_minus_participant_contracts": 1
+    },
+    {
+      "comparison": "STOCK OPTIONS FII gross OI",
+      "participant_report_contracts": 828629,
+      "fii_stats_report_contracts": 828629,
+      "difference_stats_minus_participant_contracts": 0
+    }
+  ],
+  "participant_column_total_reconciliation": [
+    {
+      "field": "future_index_long",
+      "sum_participant_rows": 384108,
+      "reported_total_row": 384108,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "future_index_short",
+      "sum_participant_rows": 384108,
+      "reported_total_row": 384108,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "future_stock_long",
+      "sum_participant_rows": 8012663,
+      "reported_total_row": 8012663,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "future_stock_short",
+      "sum_participant_rows": 8012663,
+      "reported_total_row": 8012663,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_index_call_long",
+      "sum_participant_rows": 5345333,
+      "reported_total_row": 5345333,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_index_put_long",
+      "sum_participant_rows": 4989479,
+      "reported_total_row": 4989479,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_index_call_short",
+      "sum_participant_rows": 5345333,
+      "reported_total_row": 5345333,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_index_put_short",
+      "sum_participant_rows": 4989479,
+      "reported_total_row": 4989479,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_stock_call_long",
+      "sum_participant_rows": 3179125,
+      "reported_total_row": 3179125,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_stock_put_long",
+      "sum_participant_rows": 2039301,
+      "reported_total_row": 2039301,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_stock_call_short",
+      "sum_participant_rows": 3179125,
+      "reported_total_row": 3179125,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "option_stock_put_short",
+      "sum_participant_rows": 2039301,
+      "reported_total_row": 2039301,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "field": "total_long_contracts",
+      "sum_participant_rows": 23950010,
+      "reported_total_row": 23950009,
+      "difference_reported_minus_sum": -1
+    },
+    {
+      "field": "total_short_contracts",
+      "sum_participant_rows": 23950009,
+      "reported_total_row": 23950009,
+      "difference_reported_minus_sum": 0
+    }
+  ],
+  "participant_row_total_reconciliation": [
+    {
+      "participant": "Client",
+      "side": "long",
+      "sum_components": 13133762,
+      "reported_total": 13133762,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "Client",
+      "side": "short",
+      "sum_components": 9645582,
+      "reported_total": 9645582,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "DII",
+      "side": "long",
+      "sum_components": 454227,
+      "reported_total": 454227,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "DII",
+      "side": "short",
+      "sum_components": 4964597,
+      "reported_total": 4964597,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "FII",
+      "side": "long",
+      "sum_components": 5515230,
+      "reported_total": 5515231,
+      "difference_reported_minus_sum": 1
+    },
+    {
+      "participant": "FII",
+      "side": "short",
+      "sum_components": 4897145,
+      "reported_total": 4897145,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "Pro",
+      "side": "long",
+      "sum_components": 4846790,
+      "reported_total": 4846790,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "Pro",
+      "side": "short",
+      "sum_components": 4442685,
+      "reported_total": 4442685,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "TOTAL",
+      "side": "long",
+      "sum_components": 23950009,
+      "reported_total": 23950009,
+      "difference_reported_minus_sum": 0
+    },
+    {
+      "participant": "TOTAL",
+      "side": "short",
+      "sum_components": 23950009,
+      "reported_total": 23950009,
+      "difference_reported_minus_sum": 0
+    }
+  ],
+  "expected_issues": [
+    {
+      "code": "PARTICIPANT_FII_LONG_TOTAL_MISMATCH",
+      "severity": "WARNING_REQUIRES_REVIEW",
+      "scope": "FII Total Long Contracts versus six long components",
+      "reported_total_contracts": 5515231,
+      "sum_components_contracts": 5515230,
+      "difference_contracts": 1,
+      "action": "Retain all original values. This may be related to the cross-report discrepancy; the responsible component cannot be identified from supplied files."
+    },
+    {
+      "code": "PARTICIPANT_TOTAL_LONG_COLUMN_MISMATCH",
+      "severity": "WARNING_REQUIRES_REVIEW",
+      "scope": "Sum of four participant Total Long Contracts versus TOTAL row",
+      "sum_participant_totals_contracts": 23950010,
+      "reported_total_contracts": 23950009,
+      "difference_reported_minus_sum_contracts": -1,
+      "action": "Retain both totals; do not claim all participant totals reconcile."
+    },
+    {
+      "code": "CROSS_REPORT_OI_CONTRACT_MISMATCH",
+      "severity": "WARNING_REQUIRES_REVIEW",
+      "scope": "FII aggregate index options gross OI",
+      "stats_contracts": 2985686,
+      "participant_contracts": 2985685,
+      "difference_contracts": 1,
+      "action": "Retain both; publish provenance and discrepancy; do not alter integers to force parity or call this rounding."
+    },
+    {
+      "code": "HEADLINE_COMPONENT_ROUNDING_DIFFERENCE",
+      "scope": "Index futures buy amount",
+      "headline_crore": "1106.90",
+      "sum_components_crore": "1106.91",
+      "difference_crore": "-0.01",
+      "action": "Source precision warning; retain reported headline."
+    },
+    {
+      "code": "HEADLINE_COMPONENT_ROUNDING_DIFFERENCE",
+      "scope": "Index options EOD amount",
+      "headline_crore": "470956.48",
+      "sum_components_crore": "470956.49",
+      "difference_crore": "-0.01",
+      "action": "Source precision warning; retain reported headline."
+    },
+    {
+      "code": "LEGACY_FORMULA_MISSING",
+      "scope": "FII_Stats_Data!I8162:J8162",
+      "product": "NIFTYFPI OPTIONS",
+      "legacy_net_contracts": null,
+      "legacy_net_crore": null,
+      "derived_net_contracts": -4,
+      "derived_net_crore": "-0.62"
+    },
+    {
+      "code": "CASH_FLOW_INPUT_NOT_SUPPLIED",
+      "scope": "Three-factor morning matrix",
+      "cash_fii_net_crore": null,
+      "overall_matrix_state": "INSUFFICIENT_DATA"
+    },
+    {
+      "code": "PREVIOUS_REPORT_NOT_INDEPENDENTLY_SUPPLIED",
+      "scope": "2026-09-03 deltas",
+      "action": "Use these as workbook-adjacent-block reconciliation tests, not fully verified point-in-time official-report tests."
+    }
+  ],
+  "reconciliation_counts": {
+    "daily_xls_to_workbook_product_records": 16,
+    "daily_xls_to_workbook_numeric_values_checked": 96,
+    "daily_xls_to_workbook_product_labels_checked": 16,
+    "participant_csv_to_workbook_numeric_values_checked": 70,
+    "participant_rows_including_total": 5
+  },
+  "not_provided": [
+    "FII/DII cash market daily input",
+    "live spot prices or option chain",
+    "per-contract lot-size history",
+    "independently supplied prior-session report",
+    "original report publication timestamps",
+    "entry fill model, exit policy and position sizing"
+  ]
+}

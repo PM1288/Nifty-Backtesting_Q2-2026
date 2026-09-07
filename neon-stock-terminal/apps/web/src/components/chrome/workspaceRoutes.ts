@@ -92,6 +92,13 @@ export const STRATEGY_MENU_ROUTES = [
     path: "/strategy/nifty-options",
     icon: BarChart3,
   },
+  {
+    id: "trading-analytics",
+    label: "Trading Analytics",
+    description: "Institutional morning brief, NIFTY option evidence and EMA research",
+    path: "/strategy/trading-analytics",
+    icon: BarChart3,
+  },
 ] as const;
 
 export type HeaderNavigationItem = {
@@ -124,6 +131,7 @@ const strategyHeaderOrder = [
   ["rolling-monthly", "RESEARCH"],
   ["long-options", "DERIVATIVE STRATEGIES"],
   ["nifty-weekly-options", "DERIVATIVE STRATEGIES"],
+  ["trading-analytics", "DERIVATIVE STRATEGIES"],
 ] as const;
 
 export const STRATEGY_HEADER_ROUTES: readonly HeaderNavigationItem[] = strategyHeaderOrder.map(([id, section]) => ({

@@ -776,6 +776,7 @@ services:
         VITE_AUTO_AUTH_GATE: ${N50_AUTO_AUTH_GATE:-true}
         VITE_UI_COMPACT_V5: ${N50_UI_COMPACT_V5:-true}
         VITE_TODAY_SUMMARY_DETAIL_V1: ${N50_TODAY_SUMMARY_DETAIL_V1:-true}
+        VITE_TRADING_ANALYTICS_ENABLED: ${N50_TRADING_ANALYTICS_ENABLED:-true}
     env_file: .env
     environment:
       PORT: "18184"
@@ -790,6 +791,7 @@ services:
       # Running every heavy market/derivatives materializer inside the shared
       # API process starved Paper and Strategy during market hours.
       DASHBOARD_SNAPSHOT_SCHEDULER_ENABLED: "0"
+      TRADING_ANALYTICS_ENABLED: ${N50_TRADING_ANALYTICS_ENABLED:-true}
       AUTH_REQUIRED: ${N50_AUTH_REQUIRED:-1}
       DEV_LOCAL_AUTH_ENABLED: ${DEV_LOCAL_AUTH_ENABLED:-0}
       DEV_LOCAL_AUTH_EMAIL: ${DEV_LOCAL_AUTH_EMAIL:-}

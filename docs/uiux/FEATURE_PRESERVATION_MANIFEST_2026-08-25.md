@@ -63,3 +63,12 @@ The Playwright script uses browser response interception for the synthetic new-e
 ## Change rule
 
 A new dashboard is additive only when this manifest still passes. Removing a shared feature requires a separately approved product decision, an updated manifest and explicit migration notes; absence from a new page implementation is not permission to remove it from the application shell.
+# 2026-09-07 additive Trading Analytics workspace
+
+- New `/strategy/trading-analytics` route, Strategy dropdown and command search.
+- Existing NIFTY Options tabs remain unchanged; one additional journey link.
+- OIIS/OISS, paper ledger, global shell, speech, authentication and source
+  precedence preserved. New endpoints inherit the canonical `/v1` auth guard.
+- Institutional/option/price charts are read-only previews with visible missing
+  data and policy gates. Feature rollback: `N50_TRADING_ANALYTICS_ENABLED=false`.
+- Evidence and unimplemented stages: `docs/trading-analytics/IMPLEMENTATION_REPORT.md`.

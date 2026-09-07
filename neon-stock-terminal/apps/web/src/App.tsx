@@ -90,6 +90,7 @@ const RollingMonthlyLegacyRouter = lazy(async () => ({ default: (await preloadMo
 const TrendlyneSummaryPage = lazy(async () => ({ default: (await import("./pages/TrendlyneSummaryPage")).TrendlyneSummaryPage }));
 const LongOptionsPage = lazy(async () => ({ default: (await preloadLongOptionsPage()).LongOptionsPage }));
 const NiftyWeeklyOptionsPage = lazy(async () => ({ default: (await preloadNiftyWeeklyOptionsPage()).NiftyWeeklyOptionsPage }));
+const TradingAnalyticsPage = lazy(async () => ({ default: (await import("./pages/TradingAnalyticsPage")).TradingAnalyticsPage }));
 const NseIntelligencePage = lazy(async () => ({ default: (await preloadNseIntelligencePage()).NseIntelligencePage }));
 const OiisRunHistoryPage = lazy(async () => ({ default: (await import("./pages/OiisRunHistoryPage")).OiisRunHistoryPage }));
 const FnoVolatilityPage = lazy(async () => ({ default: (await import("./pages/FnoVolatilityPage")).FnoVolatilityPage }));
@@ -194,6 +195,7 @@ export default function App() {
           <Route path="/strategy/trendlyne-summary" element={<TrendlyneSummaryPage />} />
           <Route path="/strategy/long-options" element={<LongOptionsPage />} />
           <Route path="/strategy/nifty-options" element={<NiftyWeeklyOptionsPage />} />
+          <Route path="/strategy/trading-analytics" element={<TradingAnalyticsPage />} />
           <Route path="/strategy/nifty-weekly-options" element={<NiftyWeeklyOptionsPage />} />
           <Route path="/paper-trading" element={<PaperTradingPage />} />
           <Route path="/market/nifty-500" element={<Nifty500Page />} />

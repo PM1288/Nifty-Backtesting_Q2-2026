@@ -1,5 +1,15 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-07 Trading Analytics read-only vertical slice
+
+New independent `/strategy/trading-analytics` journey and NIFTY option/scalper
+lenses; no OIIS/OISS rule changes or order submission. See
+`docs/trading-analytics/IMPLEMENTATION_REPORT.md` and release validation for exact
+coverage, commands and unfinished stages. Additive source provenance migration
+057; verified source importer preserves all original counts and conflicts.
+Existing Python FII parser corrected for first-row loss and missing products.
+No new SmartAPI session owner. Production release must use pushed master only.
+
 ## 2026-08-11 six-workspace UI and ui-2 integration
 
 The deployed dashboard and versioned source now use six visible workspaces:

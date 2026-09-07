@@ -8,6 +8,12 @@ CREATE TABLE IF NOT EXISTS public.minute_daily_archive (
  sources text[] NOT NULL,archived_at timestamptz NOT NULL DEFAULT now(),
  PRIMARY KEY(exchange,symbol_token,trade_date)
 );
+-- A checkpoint records execution, not a certification of universe/session coverage.
+CREATE TABLE IF NOT EXISTS public.minute_daily_archive_run (
+ trade_date date PRIMARY KEY, completed_at timestamptz NOT NULL,
+ rows_affected bigint NOT NULL, state text NOT NULL
+ CHECK(state IN ('ARCHIVED','NO_ROWS_CHANGED'))
+);
 CREATE OR REPLACE FUNCTION public.archive_minute_session(session_date date) RETURNS bigint
 LANGUAGE plpgsql AS $$
 DECLARE affected bigint;
@@ -31,6 +37,11 @@ BEGIN
   bar_count=excluded.bar_count,sources=excluded.sources,archived_at=now()
  -- Do not replace a complete archived session with a subsequently purged partial path.
  WHERE excluded.bar_count>=minute_daily_archive.bar_count;
- GET DIAGNOSTICS affected=ROW_COUNT;RETURN affected;
+ GET DIAGNOSTICS affected=ROW_COUNT;
+ INSERT INTO public.minute_daily_archive_run VALUES(session_date,clock_timestamp(),affected,
+  CASE WHEN affected>0 THEN 'ARCHIVED' ELSE 'NO_ROWS_CHANGED' END)
+ ON CONFLICT(trade_date) DO UPDATE SET completed_at=excluded.completed_at,
+  rows_affected=excluded.rows_affected,state=excluded.state;
+ RETURN affected;
 END $$;
 COMMIT;

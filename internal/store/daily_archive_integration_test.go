@@ -66,6 +66,23 @@ func TestDailyArchiveIsolatedDatabase(t *testing.T) {
 		}
 	})
 	exec(load("index_daily_cutover_20260907.sql"))
+	t.Run("empty archive is explicit and checkpointed", func(t *testing.T) {
+		exec("SELECT public.archive_minute_session('2020-01-01')")
+		var state string
+		e := pool.QueryRow(ctx, "SELECT state FROM public.minute_daily_archive_run WHERE trade_date='2020-01-01' AND rows_affected=0").Scan(&state)
+		if e != nil || state != "NO_ROWS_CHANGED" {
+			t.Fatal(state, e)
+		}
+	})
+	t.Run("rerun preserves late correction with equal bar count", func(t *testing.T) {
+		exec("UPDATE public.bars_1m SET close=108 WHERE ts='2020-01-03 10:00Z'; SELECT public.archive_minute_session('2020-01-03')")
+		var close int
+		e := pool.QueryRow(ctx, "SELECT close FROM public.minute_daily_archive WHERE trade_date='2020-01-03'").Scan(&close)
+		if e != nil || close != 108 {
+			t.Fatal(close, e)
+		}
+		exec("UPDATE public.bars_1m SET close=106 WHERE ts='2020-01-03 10:00Z'; SELECT public.archive_minute_session('2020-01-03')")
+	})
 	t.Run("official source precedence preserved", func(t *testing.T) {
 		var n int
 		e := pool.QueryRow(ctx, "SELECT close_px FROM integration.v_index_daily_history WHERE trade_date='2020-01-02'").Scan(&n)
@@ -75,6 +92,7 @@ func TestDailyArchiveIsolatedDatabase(t *testing.T) {
 	})
 	t.Run("daily and prior close survive raw expiry", func(t *testing.T) {
 		exec("DELETE FROM public.bars_1m")
+		exec("SELECT public.archive_minute_session('2020-01-02')")
 		var prev, n int
 		e := pool.QueryRow(ctx, "SELECT prev_close FROM integration.v_prev_index_daily WHERE trade_date='2020-01-03'").Scan(&prev)
 		if e != nil || prev != 104 {

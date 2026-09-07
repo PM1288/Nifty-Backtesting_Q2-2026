@@ -3533,6 +3533,15 @@ Final application `738934f` deployed from pushed master, image `sha256:343894630
 
 # 2026-09-07 — Read-only retention and reliability review
 
+Completion follow-up: `docs/operations/retention-review-20260907/COMPLETION_REVIEW.md`.
+Found August 9 full PostgreSQL backup and recorded isolated restore proof under
+`/home/novius2/backups/postgresql/trading-stack/20260809T144133Z/`; it does not
+certify September recovery. Added resumable bounded 15-day archive catch-up,
+per-session checkpoints, fail-closed missing/incomplete archive, explicit zero-row
+states and local structured retention output. Seven Python unit tests, six daily
+PostgreSQL fixture cases and one gated cleanup fixture pass. Bulk cleanup and
+broader pending work remain uncompleted; do not blanket-authorize deletion.
+
 Implementation follow-up: branch `fix/retention-reliability-20260907`, report `docs/operations/retention-review-20260907/IMPLEMENTATION.md`. Adds fail-closed per-relation retention evidence gates, bounded/transactional cleanup, non-mutating plan, dedicated-session advisory locking, separate partition provisioning, daily archive and parity-guarded index cutover. Fixes confirmed unhandled Express 4 OIIS rejection and reduces query fan-out; bounded snapshot admission; OISS landmark/contrast/missingness repairs. API173/web78 tests, builds/typechecks pass; isolated PostgreSQL expiry and daily-preservation fixtures plus Python gated-cleanup fixture pass. No production deletion approved; off-volume backup and paper/coverage holds remain blockers. Runtime/deployment acceptance follows in implementation report; do not claim all audit findings resolved.
 
 Deployed follow-up acceptance: dashboard/collector/NSE intraday API+scheduler/analytics worker updated from pushed master; five containers only, zero observed postdeploy restarts, analytics worker now healthy. 7,697 daily archive records preserve 2,639,317 minute bars across 41 nonempty retained sessions; index cutover committed with all six deployed close/high/low columns preserved after guarded rollback/correction. Only two redundant ordinary indexes removed (184 KiB; recreation SQL saved); no historical rows/tables purged, gate table remains empty. Database still ~378.1 GiB. OISS desktop/mobile axe zero, targeted HTTP200, cash/OI regression28/28. Reports/evidence and rollback commands in IMPLEMENTATION.md. Bulk cleanup and multiple P1/P2 recommendations remain incomplete; request a verified backup destination before authorizing table/partition disposal.

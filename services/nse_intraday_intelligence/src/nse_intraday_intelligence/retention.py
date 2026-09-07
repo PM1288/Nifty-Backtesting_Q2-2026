@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from psycopg import sql
 from .db import get_conn
+from .daily_archive import archive_recent_sessions
 
 MINUTE_TABLES = (
     'raw_security_1m', 'raw_index_1m', 'security_minute_feature',
@@ -13,6 +14,11 @@ def cleanup() -> dict:
     today = datetime.now(ZoneInfo('Asia/Kolkata')).date()
     cutoff = today - timedelta(days=15)
     result = {'policy': 'RETENTION-20260907.1', 'cutoff': str(cutoff), 'tables': {}}
+    # Catch missed jobs and late arrivals before entering any delete transaction.
+    # Exceptions propagate to the existing local job error handler; never notify WhatsApp.
+    result['daily_archive'] = archive_recent_sessions(today)
+    if result['daily_archive']['state'] != 'COMPLETED':
+        return {**result, 'state': 'BLOCKED_ARCHIVE_INCOMPLETE'}
     with get_conn() as conn:
         with conn.transaction():
             conn.execute("SET LOCAL lock_timeout='1s'; SET LOCAL statement_timeout='8s'")
@@ -20,12 +26,6 @@ def cleanup() -> dict:
             locked = conn.execute("SELECT pg_try_advisory_xact_lock(hashtext('nse_intraday:cleanup')) AS locked").fetchone()['locked']
             if not locked:
                 return {**result, 'state': 'SKIPPED_BUSY'}
-            archive_ready = conn.execute("SELECT to_regprocedure('public.archive_minute_session(date)') IS NOT NULL AS present").fetchone()['present']
-            if archive_ready:
-                # Daily scheduled job; replay yesterday to include late bars without
-                # changing official EOD/source precedence. An error aborts cleanup.
-                archived = conn.execute('SELECT public.archive_minute_session(%s) AS count', (today-timedelta(days=1),)).fetchone()['count']
-                result['daily_rows_archived'] = archived
             exists = conn.execute("SELECT to_regclass('operations.retention_gate') IS NOT NULL AS present").fetchone()['present']
             if not exists:
                 return {**result, 'state': 'BLOCKED_UNVERIFIED'}

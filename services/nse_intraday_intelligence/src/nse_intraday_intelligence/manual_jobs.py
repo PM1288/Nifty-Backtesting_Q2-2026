@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from datetime import date
 
 from .logging_utils import configure_logging
@@ -69,7 +70,7 @@ def main() -> None:
         finalize_session(trade_date=trade_date, index_code=args.index_code)
         return
     if args.job == "retention":
-        retention_cleanup()
+        print(json.dumps(retention_cleanup(), default=str))
         return
     if args.job == "backfill-history":
         backfill_history(days=args.days, index_code=args.index_code)

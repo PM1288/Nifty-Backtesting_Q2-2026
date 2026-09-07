@@ -19,14 +19,20 @@ def main():
     args.output.parent.mkdir(parents=True,exist_ok=True)
     while day<=args.end:
         query=f"SELECT public.archive_minute_session('{day.isoformat()}'::date);"
-        result=subprocess.run(['docker','exec','-i','trading-stack-novius2-postgres-1','sh','-c',
+        try:
+            result=subprocess.run(['docker','exec','-i','trading-stack-novius2-postgres-1','sh','-c',
             'PGOPTIONS="-c statement_timeout=30000 -c lock_timeout=2000" psql -X -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -f -'],
-            input=query,text=True,capture_output=True,timeout=40,check=False)
+                input=query,text=True,capture_output=True,timeout=40,check=False)
+        except subprocess.TimeoutExpired:
+            rows.append({'date':str(day),'state':'FAILED_TIMEOUT','reason':'client deadline exceeded; verify server checkpoint before retry'})
+            args.output.write_text(json.dumps(rows,indent=2))
+            raise SystemExit(f'Archive stopped at {day}; no raw data was deleted')
         if result.returncode:
             rows.append({'date':str(day),'state':'FAILED','reason':'database archive failed; inspect local PostgreSQL diagnostics'})
             args.output.write_text(json.dumps(rows,indent=2))
             raise SystemExit(f'Archive stopped at {day}; no raw data was deleted')
-        rows.append({'date':str(day),'state':'ARCHIVED','rows':int(result.stdout.strip())})
+        count=int(result.stdout.strip())
+        rows.append({'date':str(day),'state':'ARCHIVED' if count else 'NO_ROWS_CHANGED','rows':count})
         args.output.write_text(json.dumps(rows,indent=2))
         print(json.dumps(rows[-1]),flush=True)
         day+=dt.timedelta(days=1)

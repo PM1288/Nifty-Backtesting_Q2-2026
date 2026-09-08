@@ -3689,7 +3689,7 @@ post-open live repopulation must be verified after deployment.
   GitHub clone passed web 93/93 and API 188/188.
 - Acceptance ZIP:
   `/home/novius2/NIFTY50/UI/ALIGNED_TERMINAL_ACCEPTANCE_PACKAGE_20260908.zip`,
-  SHA-256 `ce7087ab83705d9fdbb6496fbf8c4956841c17c37e44a5eff9be487f6ce40f6a`.
+  SHA-256 `495ffc6fdc0df39f72ada2c0e69734186dfac324f6dde111cd5f7a003dae7a04`.
 - Generated screenshots/runtime research data remain external to Git by canonical
   repository policy. No credentials, database volumes or market-data archives were
   committed.

@@ -22,7 +22,7 @@ The external screenshot package is acceptance evidence, not a second source tree
 ZIP SHA-256:
 
 ```text
-ce7087ab83705d9fdbb6496fbf8c4956841c17c37e44a5eff9be487f6ce40f6a
+495ffc6fdc0df39f72ada2c0e69734186dfac324f6dde111cd5f7a003dae7a04
 ```
 
 ## Protected prerequisites

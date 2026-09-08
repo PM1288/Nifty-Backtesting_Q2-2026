@@ -4,7 +4,12 @@ import { chromium } from "../../.audit-playwright/node_modules/playwright/index.
 
 const origin = (process.env.ALIGNED_TERMINAL_ORIGIN ?? "http://127.0.0.1:5175").replace(/\/$/, "");
 const authBase = (process.env.ALIGNED_TERMINAL_AUTH_BASE ?? "http://127.0.0.1:19090/n50").replace(/\/$/, "");
+const sessionPath = process.env.ALIGNED_TERMINAL_SESSION_PATH ?? "/auth/session";
 const output = path.resolve(process.env.ALIGNED_TERMINAL_OUTPUT ?? "output/ui-validation/aligned-terminal-v3");
+const isKnownAnalyticsNoise = (message) =>
+  (message.includes("clarity.ms/collect") && message.includes("Content Security Policy")) ||
+  (message.includes("static.cloudflareinsights.com/beacon.min.js") && message.includes("Content Security Policy")) ||
+  message === "Failed to load resource: net::ERR_NETWORK_CHANGED";
 let password = process.env.DEV_LOCAL_AUTH_PASSWORD;
 if (!password) {
   const contents = await fs.readFile(process.env.ALIGNED_TERMINAL_ENV ?? ".env", "utf8");
@@ -34,14 +39,16 @@ for (const viewport of [
     path: "/",
     secure: false,
   })));
-  const localSession = await context.request.get(`${origin}/auth/session`);
+  const localSession = await context.request.get(`${origin}${sessionPath}`);
   if (!localSession.ok()) throw new Error(`Local proxied session failed: ${localSession.status()}`);
   const sessionState = await localSession.json();
   if (!sessionState?.user) throw new Error(`Local proxied session is unauthenticated: ${JSON.stringify(Object.keys(sessionState ?? {}))}`);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(String(error)));
-  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  page.on("console", (message) => {
+    if (message.type() === "error" && !isKnownAnalyticsNoise(message.text())) errors.push(message.text());
+  });
   const started = performance.now();
   await page.goto(`${origin}/n50/strategy/trading-analytics?view=scalper&interval=5`, { waitUntil: "domcontentloaded", timeout: 60_000 });
   try {

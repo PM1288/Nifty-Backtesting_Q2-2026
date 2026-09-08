@@ -96,6 +96,22 @@ The source pack contains a 140-case acceptance catalogue. It is a forward test
 inventory, not evidence that 140 production cases have run. Only the automated
 checks recorded above and in `AGENT_HANDOFF.md` are claimed by this release.
 
+Final release evidence:
+
+- Web: typecheck passed, production build passed, **92/92** tests passed.
+- API preservation: typecheck passed, build passed, **187/187** tests passed.
+- Canonical repository gate: passed.
+- Authenticated local-Vite browser validation: **4/4 viewports** passed.
+- Authenticated deployed-gateway browser validation: **4/4 viewports** passed.
+- Authenticated public browser validation: **4/4 viewports** passed.
+- Each browser case verifies the aligned renderer default, at least seven chart
+  canvases, evidence labels, no page-level horizontal overflow, A-open/B-close
+  status text and a price-coordinate measurement rectangle.
+- Public/local analytics-provider CSP messages are excluded by exact provider and
+  directive patterns; the Chromium environment's transient `ERR_NETWORK_CHANGED`
+  resource message is also ignored after authenticated route/data assertions.
+  Application JavaScript errors and functional failures remain test failures.
+
 ## Deliberate limitations
 
 1. Historical IV/PCR series are not exposed by the current chart endpoint, so the

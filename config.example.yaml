@@ -181,12 +181,12 @@ limits:
 retention:
   enable: true
   enable_cleanup: true
-  intraday_days: 90
-  bars_1m_days: 90
-  quote_snapshots_days: 90
-  depth_5_days: 1
-  depth_5_hours: 1
-  option_greeks_days: 90
+  intraday_days: 15
+  bars_1m_days: 15
+  quote_snapshots_days: 30
+  depth_5_days: 15
+  depth_5_hours: 0
+  option_greeks_days: 30
   depth_5_max_gb: 1
   keep_instruments_forever: true
   dry_run: false

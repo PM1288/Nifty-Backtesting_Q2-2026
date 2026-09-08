@@ -433,6 +433,8 @@
 .page[data-view="scalper"] .levelStrip { order: 5; }
 .page[data-view="scalper"] .scalperOverlayBar { order: 6; }
 .page[data-view="scalper"] .scalperLegend { order: 7; }
+.page[data-view="scalper"] > .context,
+.page[data-view="scalper"] > .kpis:not(.levelStrip) { order: 7; }
 .page[data-view="scalper"] .scalperEvidence { order: 8; }
 .page[data-view="scalper"] .plot { order: 9; }
 .structureLarge {

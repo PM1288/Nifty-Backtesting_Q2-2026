@@ -4,8 +4,8 @@ import {
   analyticsMainView,
   analyticsTabs,
 } from "../src/lib/tradingAnalyticsNavigation";
-test("IO navigation has six primary workspaces", () =>
-  assert.equal(Object.keys(analyticsTabs).length, 6));
+test("IO navigation has seven primary workspaces", () =>
+  assert.equal(Object.keys(analyticsTabs).length, 7));
 test("all historical query aliases keep their owning workspace", () => {
   for (const alias of ["activity", "participants", "health"])
     assert.equal(analyticsMainView(alias), "morning");

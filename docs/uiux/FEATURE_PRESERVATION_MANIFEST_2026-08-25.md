@@ -27,6 +27,12 @@ records remain explicit. This is read-only and does not alter OIIS/OISS,
 execution, source precedence or paper trading. Evidence:
 `docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.
 
+2026-09-08 MANEESH multi-timeframe matrix: additive fixed 3-by-3 comparison of
+the underlying, exact selected CE and exact selected PE at 1m, 5m and 15m.
+Hover time is synchronized across all nine panes. The Scalper remains unchanged;
+missing bars stay explicit and the matrix has no interval selector. Evidence:
+`docs/trading-analytics/MULTI_TIMEFRAME_MATRIX_20260908.md`.
+
 2026-09-07: temporary MANEESH header link opens the existing Trading Analytics
 Scalper (5m default); original Strategy menu destination remains. Pink/white
 styling is scoped to this shortcut only. Desktop and mobile retain navigation,
@@ -54,6 +60,7 @@ NIFTY context, speech and paper notifier. No strategy/API/data changes.
 | Option 4 command header | `AppShell.tsx`, `ResponsiveWorkspaceNavigation.tsx`, `workspaceRoutes.ts` | One 56 px desktop header, no second global rail, permission-filtered menus, responsive drawer, Ctrl+K, local page tabs, status, voice and user controls preserved |
 | OIIS/OISS multi-model research | `services/ai_stock_research`, `ai_stock_research.*`, `compose.ai-stock-research.yml` and `/paper-trading?tab=tracked` | One stock/day immutable evaluation; Claude/Qwen/DeepSeek results, source lineage and compact one-year OHLCV inputs remain auditable in the dedicated Paper Trading table/inspector and complete filtered CSV; model-facing research excludes O/X/direction/status and uses OHLCV only for price/news alignment; V5 earnings, web sentiment, positive/negative evidence, upcoming risk and market view remain available; only successful validated research output enters the WhatsApp outbox; no ChatGPT call or strategy/paper mutation |
 | MANEESH aligned terminal V3 | `/strategy/trading-analytics?view=scalper`, `AlignedScalperTerminal.tsx`, `renderer=classic` rollback | Default synchronized NIFTY/exact CE/exact PE candlesticks plus OI, signed interval delta OI, RSI and MACD; strict session levels, current PCR/indicative max-pain context, provider-native missingness, exact A-open/B-close measurement, evidence inspector and all classic ECharts evidence/exports remain available; research-only and no order path |
+| MANEESH multi-timeframe matrix | `/strategy/trading-analytics?view=matrix`, `TradingAnalyticsTimeframeMatrix.tsx` | Separate no-selector 1m/5m/15m by underlying/exact CE/exact PE matrix; nine light candlestick charts share one wall-clock crosshair and latest retained IST session; original Scalper and all execution/data semantics remain unchanged |
 
 ## Mandatory regression commands
 

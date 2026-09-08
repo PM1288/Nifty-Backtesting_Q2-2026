@@ -516,7 +516,8 @@
    evidence-table rules must not turn its 1px pane separators into 34px rows or
    make its first cell sticky. Those leaked styles pushed the fifth pane out of
    the visible chart root. */
-.alignedChartHost :global(.tv-lightweight-charts) td {
+.alignedChartHost :global(.tv-lightweight-charts) td,
+.matrixChartHost :global(.tv-lightweight-charts) td {
   height: auto !important;
   min-width: 0 !important;
   max-width: none !important;
@@ -525,6 +526,195 @@
   background: transparent !important;
   position: relative !important;
   white-space: normal !important;
+}
+.page[data-view="matrix"] {
+  height: calc(100dvh - 78px);
+  min-height: 0;
+  box-sizing: border-box;
+  grid-template-rows: 34px 30px 32px minmax(0, 1fr);
+  gap: 4px;
+  padding: 4px 6px;
+  overflow: hidden;
+}
+.page[data-view="matrix"] > .context,
+.page[data-view="matrix"] > .kpis { display: none; }
+.page[data-view="matrix"] > header.toolbar,
+.page[data-view="matrix"] > .warning { margin: 0; }
+.page[data-view="matrix"] > header.toolbar {
+  height: 34px;
+  min-height: 34px;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow-x: auto;
+}
+.page[data-view="matrix"] > header.toolbar h1 {
+  flex: 0 0 auto;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.page[data-view="matrix"] > header.toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.page[data-view="matrix"] > header.toolbar select { max-width: 170px; }
+.page[data-view="matrix"] > .tabs {
+  min-height: 30px;
+  padding: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.page[data-view="matrix"] > .tabs button {
+  min-height: 27px;
+  padding-block: 1px;
+  white-space: nowrap;
+}
+.page[data-view="matrix"] > .warning {
+  min-height: 32px;
+  padding: 1px 6px;
+  line-height: 28px;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+.timeframeMatrix {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 36px 24px minmax(0, 1fr);
+  gap: 4px;
+  overflow: hidden;
+  color: #14243a;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.matrixSummary {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(180px, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #cbd5e1;
+}
+.matrixSummary > div {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: 2px 8px;
+  background: #fff;
+}
+.matrixSummary strong,
+.matrixSummary b {
+  overflow: hidden;
+  color: #14243a;
+  font: 650 11px/1.2 Inter, sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.matrixSummary span {
+  overflow: hidden;
+  color: #64748b;
+  font: 500 9px/1.2 "IBM Plex Mono", monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.matrixColumnHeaders {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.matrixColumnHeaders strong {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px 5px 0 0;
+  background: #eef3fa;
+  color: #334155;
+  font: 700 10px/1 Inter, sans-serif;
+  letter-spacing: .03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.matrixGrid {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  overflow: hidden;
+}
+.matrixChartCell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #fff;
+}
+.matrixChartCell > header {
+  position: absolute;
+  z-index: 4;
+  top: 4px;
+  left: 4px;
+  max-width: calc(100% - 70px);
+  display: grid;
+  gap: 1px;
+  padding: 3px 5px;
+  overflow: hidden;
+  border: 1px solid rgba(203, 213, 225, .9);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .92);
+  pointer-events: none;
+}
+.matrixChartCell > header strong,
+.matrixChartCell > header span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.matrixChartCell > header strong {
+  color: #334155;
+  font: 700 9px/1.1 "IBM Plex Mono", monospace;
+}
+.matrixChartCell > header span {
+  color: #64748b;
+  font: 500 8px/1.1 "IBM Plex Mono", monospace;
+}
+.matrixChartHost {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  cursor: crosshair;
+}
+.matrixMissing {
+  position: absolute;
+  z-index: 3;
+  inset: 50% auto auto 50%;
+  margin: 0;
+  padding: 5px 8px;
+  transform: translate(-50%, -50%);
+  border: 1px solid #dce4ef;
+  border-radius: 4px;
+  background: rgba(248, 250, 252, .94);
+  color: #64748b;
+  font: 600 10px/1.2 Inter, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+}
+@media (max-width: 1099px) {
+  .timeframeMatrix { overflow: auto; }
+  .matrixSummary,
+  .matrixColumnHeaders,
+  .matrixGrid { min-width: 960px; }
+  .matrixGrid { min-height: 720px; }
 }
 .alignedSelecting { cursor: cell; }
 .alignedPaneLabels {

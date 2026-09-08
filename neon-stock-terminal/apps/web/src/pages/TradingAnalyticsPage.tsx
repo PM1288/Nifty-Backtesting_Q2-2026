@@ -26,6 +26,9 @@ import { evidenceValueAxis } from "../lib/tradingAnalyticsChartView";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
+const TimeframeMatrix = lazy(async () => ({
+  default: (await import("./TradingAnalyticsTimeframeMatrix")).TradingAnalyticsTimeframeMatrix,
+}));
 type Row = Record<string, unknown>;
 const InspectContext = createContext<(row: Row) => void>(() => {});
 type Payload = {
@@ -103,6 +106,7 @@ const tabs = {
   options: "Option Snapshots",
   smartapi: "SmartAPI OI & Quotes",
   scalper: "Scalper / Exact Contracts",
+  matrix: "1m / 5m / 15m Matrix",
   structure: "Price & EMA",
   replay: "History / Replay",
   health: "Policy & Data Health",
@@ -479,7 +483,7 @@ export function TradingAnalyticsPage() {
             ))}
           </nav>
         )}
-        {d && !["scalper", "replay", "stock"].includes(tab) && (
+        {d && !["scalper", "matrix", "replay", "stock"].includes(tab) && (
           <button
             onClick={() => {
               const rows =
@@ -1017,6 +1021,19 @@ export function TradingAnalyticsPage() {
                     : Number(d.smartapi.spot.ltp)
                 }
               />
+            )}
+            {tab === "matrix" && (
+              <Suspense fallback={<p role="status">Loading synchronized timeframe matrix…</p>}>
+                <TimeframeMatrix
+                  key={d.underlying.symbol}
+                  symbol={d.underlying.symbol}
+                  label={d.underlying.label}
+                  asOf={d.asOf}
+                  expiry={String(d.smartapi.expiry ?? d.chain.snapshot?.expiry_date ?? "")}
+                  strikes={d.smartapi.strikes.length ? d.smartapi.strikes : d.chain.strikes}
+                  spot={d.smartapi.spot?.ltp == null ? null : Number(d.smartapi.spot.ltp)}
+                />
+              </Suspense>
             )}
             {(drawer === "health" || (tab === "health" && drawer == null)) && (
               <TradingAnalyticsDrawer

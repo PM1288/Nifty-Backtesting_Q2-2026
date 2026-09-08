@@ -20,6 +20,20 @@ const check = (name, pass, detail = null) => {
   if (!pass) failures.push(`${name}${detail ? `: ${detail}` : ""}`);
 };
 const knownNoise = (text) => text.includes("clarity.ms/collect") || text.includes("static.cloudflareinsights.com/beacon.min.js");
+const navigate = async (page, url) => {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!String(error).includes("ERR_NETWORK_CHANGED")) throw error;
+      await page.waitForTimeout(1_000);
+    }
+  }
+  throw lastError;
+};
 const browser = await chromium.launch({ headless: true });
 
 try {
@@ -37,10 +51,14 @@ try {
     page.on("console", (message) => {
       if (message.type() === "error" && !knownNoise(message.text())) runtimeErrors.push(message.text());
     });
-    await page.goto(`${base}/strategy/trading-analytics?view=matrix`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await navigate(page, `${base}/strategy/trading-analytics?view=matrix`);
     const matrix = page.getByTestId("multi-timeframe-matrix");
     await matrix.waitFor({ state: "visible", timeout: 60_000 });
-    await page.waitForTimeout(2_500);
+    // The first response may intentionally redirect from an empty current-chain
+    // pair to the nearest retained exact pair. Wait for that second, heavier
+    // three-interval request rather than validating its transient loading shell.
+    await matrix.getByText("Loading retained candles", { exact: true }).waitFor({ state: "hidden", timeout: 90_000 }).catch(() => {});
+    await page.waitForTimeout(1_000);
 
     check(`${tag} has exactly nine chart cells`, await matrix.locator("[data-matrix-chart]").count() === 9);
     check(`${tag} has underlying column`, await matrix.getByText(/Underlying/, { exact: false }).count() > 0);

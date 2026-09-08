@@ -57,7 +57,7 @@ const valueText = (value: unknown) => {
   const parsed = finite(value);
   return parsed == null ? "—" : parsed.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
 };
-const sideTitle = (side: MatrixSide, label: string) => side === "UNDERLYING" ? label : `Selected ${side}`;
+const sideTitle = (side: MatrixSide, label: string) => side === "UNDERLYING" ? `Underlying · ${label}` : `Selected ${side}`;
 
 function MatrixCandleChart({
   pane,

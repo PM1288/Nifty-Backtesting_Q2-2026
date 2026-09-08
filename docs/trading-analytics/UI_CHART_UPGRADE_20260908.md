@@ -115,6 +115,15 @@ build passed. Authenticated Playwright passed 42/42 checks at 1440×900 and
 390×900, including the top CE/PE strip, the lower candle OI pane, detailed OI
 chart, OI & PCR chart/table order, axe, JavaScript-error and overflow checks.
 
+**Measurement semantics:** the browser-only paired CE+PE measurement now uses
+the selected A candle's actual `open` as entry and the selected B candle's
+actual `close` as exit for the underlying and both exact option legs. Chart
+markers and the value table explicitly say `A · open` / `B · close`. It still
+requires completed, timestamp-matched source bars and never substitutes an
+adjacent candle. Authenticated production measurement regression passed 22/22,
+including the exact source open-to-close P&L calculation, desktop/mobile axe,
+overflow, reload and error checks.
+
 ## Deliberate limitations
 
 - The retained `trading_calendar` supplies session boundaries, but does not yet

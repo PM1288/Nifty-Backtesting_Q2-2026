@@ -3646,3 +3646,8 @@ post-open live repopulation must be verified after deployment.
 - Scalper now carries a compact selected-exact-pair strip above its candle workspace: CE and PE LTP, current provider-native OI, latest interval ΔOI, OI PCR and the retained endpoint time. Unknown data remains `—`.
 - The existing detailed exact-contract OI-through-time chart remains below the Scalper workspace. SmartAPI OI & Quotes and Option Snapshots now show their OI & PCR strike chart before the complete source table, rather than after it.
 - Deployed commits: `95131fc` and accessibility correction `5e5d7b2`. Authenticated production regression passed 42/42 at 1440x900 and 390x900; evidence: `output/playwright/scalper-call-put-oi-verified-20260908/results.json`, paired Scalper/OI-PCR screenshots, and axe results.
+
+# 2026-09-08 — Scalper A-open / B-close measurement semantics
+
+- The browser-only exact pair measurement now takes entry from the selected A candle's completed `open` and exit from the selected B candle's completed `close` for underlying, CE and PE. Markers/table labels make that explicit; temporal matching remains strict and missing bars remain unavailable.
+- Deployed commits: `89433a6`, `8adff03`. Authenticated production regression passed 22/22: exact source open-to-close P&L, quantity scaling, chart selection, zoom persistence, reload clearing, desktop/mobile axe, overflow and browser-error checks. Evidence: `output/playwright/scalper-measurement/results.json` and `measurement-desktop.png`.

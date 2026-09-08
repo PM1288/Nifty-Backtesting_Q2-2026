@@ -4,6 +4,7 @@ import {
   numeric,
   type Facts,
 } from "./tradingAnalytics";
+import { aggregateOi, oiLayers } from "./tradingAnalyticsOi";
 import { niftyUnderlying, type AnalyticsUnderlying } from './tradingAnalyticsUniverse';
 
 export type EvidenceReader = (
@@ -93,10 +94,16 @@ export async function loadSmartApiNifty(
     q.open::float8 day_open,q.high::float8 day_high,q.low::float8 day_low,q.close::float8 previous_close,
     q.total_buy_qty::text total_buy_qty,q.total_sell_qty::text total_sell_qty,q.raw,
     prev.oi::text previous_open_interest,prev.ts previous_collected_at,
-    prev.exch_feed_time previous_exchange_feed_at
+    prev.exch_feed_time previous_exchange_feed_at,
+    session_first.oi::text session_first_open_interest,session_first.ts session_first_collected_at,session_first.exch_feed_time session_first_exchange_feed_at,
+    prior_session.oi::text previous_session_open_interest,prior_session.ts previous_session_collected_at,prior_session.exch_feed_time previous_session_exchange_feed_at,
+    previous_day.trade_date::text previous_session_trade_date
     FROM public.instruments i JOIN strikes s USING(strike)
+    LEFT JOIN LATERAL (SELECT trade_date,market_open_ts,market_close_ts FROM public.trading_calendar WHERE is_trading_day AND trade_date<($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date DESC LIMIT 1) previous_day ON true
     LEFT JOIN LATERAL (SELECT * FROM public.quote_snapshots q WHERE q.exchange=i.exchange AND q.symbol_token=i.symbol_token AND q.ts BETWEEN $1::timestamptz-interval '1 day' AND $1::timestamptz ORDER BY q.ts DESC LIMIT 1) q ON true
     LEFT JOIN LATERAL (SELECT p.oi,p.ts,p.exch_feed_time FROM public.quote_snapshots p WHERE p.exchange=i.exchange AND p.symbol_token=i.symbol_token AND p.ts<q.ts AND p.ts>=$1::timestamptz-interval '1 day' ORDER BY p.ts DESC LIMIT 1) prev ON true
+    LEFT JOIN LATERAL (SELECT p.oi,p.ts,p.exch_feed_time FROM public.quote_snapshots p WHERE p.exchange=i.exchange AND p.symbol_token=i.symbol_token AND (p.exch_feed_time AT TIME ZONE 'Asia/Kolkata')::date=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date AND p.exch_feed_time<=$1::timestamptz AND p.oi IS NOT NULL ORDER BY p.exch_feed_time,p.ts LIMIT 1) session_first ON true
+    LEFT JOIN LATERAL (SELECT p.oi,p.ts,p.exch_feed_time FROM public.quote_snapshots p WHERE p.exchange=i.exchange AND p.symbol_token=i.symbol_token AND p.exch_feed_time BETWEEN previous_day.market_open_ts AND previous_day.market_close_ts AND p.oi IS NOT NULL ORDER BY p.exch_feed_time DESC,p.ts DESC LIMIT 1) prior_session ON true
     WHERE i.exchange='NFO' AND i.name=$4 AND i.instrumenttype=$5 AND i.expiry=$2::date AND i.updated_at<=$1::timestamptz
     ORDER BY i.strike,option_type`,
           asOf,
@@ -161,13 +168,32 @@ export async function loadSmartApiNifty(
   // Preserve partial FULL quote evidence, but never fill missing legs from a
   // different observation. A complete fallback cohort gets its own metric scope.
   const metricWindow=hasCohort?cohort:chosen;
+  const analyticLegs: Facts[] = chosen.legs.map((input) => {
+    const row=input as Facts;
+    const previousSession=numeric(row.previous_session_open_interest);
+    const firstSession=numeric(row.session_first_open_interest);
+    const baseline=previousSession??firstSession;
+    const baselineKind=previousSession!=null?'PREVIOUS_SESSION_FINAL':firstSession!=null?'FIRST_SESSION_OBSERVATION':'BASELINE_UNAVAILABLE';
+    return {...row,contractId:String(row.symbol_token??row.instrument_identifier??''),baseline_open_interest:baseline,
+      baseline_kind:baselineKind,
+      baseline_collected_at:previousSession!=null?row.previous_session_collected_at:row.session_first_collected_at,
+      baseline_exchange_feed_at:previousSession!=null?row.previous_session_exchange_feed_at:row.session_first_exchange_feed_at,
+      oi_layers:oiLayers(baseline,row.open_interest)};
+  });
+  const fixedCohort={
+    id:`${underlying.symbol}:${expiry}:${selectedSource}`,
+    expiry:expiry||null,source:selectedSource,unit:"PROVIDER_NATIVE_UNVERIFIED",
+    state:"FIXED_DISPLAY_COHORT",
+    ce:aggregateOi(analyticLegs.filter(row=>row.option_type==='CE')),
+    pe:aggregateOi(analyticLegs.filter(row=>row.option_type==='PE')),
+  };
   return {
     source: selectedSource,
     asOf,
     expiry: expiry || null,
     expiries: expiries.map((r) => r.expiry),
     spot: spotRows[0] ?? (fallbackSpot!=null?{ltp:fallbackSpot,ts:fallback[0].collected_at,source:'chain_underlying_reference'}:null),
-    legs: chosen.legs,
+    legs: analyticLegs,
     strikes: chosen.strikes,
     shortfall: chosen.shortfall,
     metrics: {...chainMetrics(metricWindow.legs),...windowMaxPain(metricWindow.legs),
@@ -175,6 +201,11 @@ export async function loadSmartApiNifty(
       strikes:metricWindow.strikes,
       collectedAt:hasCohort?fallback[0].collected_at:null},
     metricLegs:metricWindow.legs,
+    oiAnalytics:{
+      baselinePreference:["PREVIOUS_SESSION_FINAL","FIRST_SESSION_OBSERVATION"],
+      fixedCohort,
+      profile:analyticLegs.map(row=>({contractId:row.contractId,strike:row.strike,option_type:row.option_type,current:row.open_interest,baseline:row.baseline_open_interest,change:(row.oi_layers as Facts).change,state:(row.oi_layers as Facts).state})),
+    },
     fallbackNote: selectedSource==='smartapi_option_chain_snapshots'?'One retained stock-chain cohort; midpoint is not LTP; missing prior OI change remains null.':null,
     note: "Existing collector FULL quotes, individually timestamped; not an atomic chain snapshot. OI uses provider-native units, not verified lots/contracts. Prior snapshot ΔOI = current OI minus the immediately preceding retained quote for the same token; not day change. Provider day ΔOI is unavailable in FULL quotes. Option Delta is a Greek, not ΔOI; Greeks match underlying/expiry/strike/right and carry their own collection time, not verified exchange freshness. Missing is never zero. FII/DII cash is a separate NSE report.",
   };

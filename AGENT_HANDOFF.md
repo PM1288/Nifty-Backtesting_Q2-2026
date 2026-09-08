@@ -1,5 +1,26 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-08 MANEESH chart evidence completion
+
+The Trading Analytics Scalper/Structure/OI/Morning read models now provide
+calendar-qualified 1/5/15/60 minute candle/OI coverage, explicit expected
+session buckets, independent MR/MS/WR/WS/DR/DS lifecycle evidence,
+previous-session/first-session OI baselines, composite fixed-cohort CE/PE OI,
+interval/cumulative/current OI paths, a numeric strike price-aligned OI profile,
+and prior participant-report deltas. Scalper also has independent manual price
+axis lock/reset controls; auto scale remains native and `Fit levels` is
+explicit. The browser-only A/B measurement, exact contract identity, 5-minute
+and one-day defaults, CSV/JSON evidence, source missingness and all execution
+gates remain unchanged.
+
+This is a read-only, policy-incomplete upgrade. It does not create a broker
+session, place paper/live orders, change OIIS/OISS calculations, or convert a
+missing baseline/source into zero. Known remaining data limits are
+per-security/segment calendar-phase provenance, certified OI-unit normalization,
+original upstream publication revisions, and a stock delivery provider.
+Implementation and validation detail:
+`docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.
+
 ## 2026-09-07 scalper visual measurement
 
 Browser-only fixed-pair A/B rectangles and synchronous price deltas/long-pair

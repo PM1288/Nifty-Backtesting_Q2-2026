@@ -56,6 +56,16 @@ type Payload = {
     shortfall: number;
     note: string;
     metrics: { oiPcr: number | null; volumePcr: number | null; indicativeMaxPainStrikes?:number[];maxPainState?:string;maxPainScope?:string;source?:string;strikes?:number[];collectedAt?:string|null };
+    oiAnalytics?: {
+      baselinePreference: string[];
+      fixedCohort: {
+        id: string;
+        state: string;
+        ce: Row;
+        pe: Row;
+      };
+      profile: Row[];
+    };
   };
   policies: Row[];
   limitations: string[];
@@ -194,9 +204,33 @@ function Plot({ option, label }: { option: EChartsOption; label: string }) {
   );
 }
 function OiChart({ legs }: { legs: Row[] }) {
-  const [metric,setMetric]=useState("open_interest");
-  const metrics: Record<string,string> = {open_interest:"OI · provider-native",previous_snapshot_delta:"Prior snapshot ΔOI · provider-native",change_in_oi:"Provider day ΔOI · provider-native",delta:"Option Delta · Greek"};
+  const [metric,setMetric]=useState("composite");
+  const metrics: Record<string,string> = {composite:"Baseline/current OI composition",baseline_change:"Qualified baseline ΔOI",open_interest:"Current OI · provider-native",previous_snapshot_delta:"Prior snapshot ΔOI · provider-native",change_in_oi:"Provider day ΔOI · provider-native",delta:"Option Delta · Greek"};
   const strikes=[...new Set(legs.map(l=>Number(l.strike)))].sort((a,b)=>a-b);
+  const layer=(leg:Row|undefined,key:string)=> {
+    const layers=leg?.oi_layers as Row|undefined;
+    return layers?.[key] == null ? null : Number(layers[key]);
+  };
+  const compositeSeries = ["CE","PE"].flatMap((side,sideIndex)=>
+    ["retained","added","removed","current"].map((part)=>({
+      name: side + " " + (part === "current" ? "current only" : part),
+      type:"bar" as const,
+      stack:side,
+      barMaxWidth:24,
+      data:strikes.map(strike=>{
+        const leg=legs.find(row=>Number(row.strike)===strike&&row.option_type===side);
+        const state=(leg?.oi_layers as Row|undefined)?.state;
+        if(part==="current") return state==="CURRENT_ONLY_BASELINE_UNAVAILABLE" ? Number(leg?.open_interest) : 0;
+        return state==="COMPARABLE" ? layer(leg,part) : 0;
+      }),
+      itemStyle:{
+        color:part==="removed"?"#ffffff":sideIndex?"#087a55":"#c93346",
+        borderColor:sideIndex?"#087a55":"#c93346",
+        borderWidth:part==="removed"?2:0,
+        opacity:part==="added"?0.62:1,
+      },
+    }))
+  );
   const option = useMemo<EChartsOption>(
     () => ({
       animation: false,
@@ -208,19 +242,20 @@ function OiChart({ legs }: { legs: Row[] }) {
         name: "Strike",
         data: strikes.map(String),
       },
-      yAxis: { ...evidenceValueAxis, type: "value", name: metric==="delta"?"Option Delta":"Source OI / ΔOI" },
-      series: ["CE", "PE"].map((t, i) => ({
+      yAxis: { ...evidenceValueAxis, type: "value", min:["composite","open_interest"].includes(metric)?0:undefined, name: metric==="delta"?"Option Delta":metric==="baseline_change"?"Signed ΔOI":"Source OI" },
+      series: metric==="composite" ? compositeSeries : ["CE", "PE"].map((t, i) => ({
         name: t,
         type: "bar",
-        data: strikes.map(s=>{const l=legs.find(l=>Number(l.strike)===s&&l.option_type===t);return l?.[metric]==null?null:Number(l[metric]);}),
+        data: strikes.map(s=>{const l=legs.find(l=>Number(l.strike)===s&&l.option_type===t);return metric==="baseline_change"?layer(l,"change"):l?.[metric]==null?null:Number(l[metric]);}),
         itemStyle: { color: i ? "#087a55" : "#c93346" },
+        markLine:metric==="baseline_change"?{silent:true,symbol:"none",data:[{yAxis:0}],label:{show:false}}:undefined,
       })),
     }),
-    [legs,metric],
+    [legs,metric,strikes],
   );
   return (
     <><label>OI chart measure <select value={metric} onChange={e=>setMetric(e.target.value)}>{Object.entries(metrics).map(([key,label])=><option value={key} key={key}>{label}</option>)}</select></label>
-    {!legs.some(l=>l[metric]!=null)&&<p className={styles.warning}>Unavailable: {metrics[metric]}. No zero values are synthesized.</p>}
+    {!legs.some(l=>metric==="composite"?l.open_interest!=null:metric==="baseline_change"?layer(l,"change")!=null:l[metric]!=null)&&<p className={styles.warning}>Unavailable: {metrics[metric]}. No zero values are synthesized.</p>}
     <Plot
       label={`${metrics[metric]} by strike; retained display window only`}
       option={option}
@@ -252,6 +287,11 @@ const peopleColumns: [string, string][] = [
   ["net_calls", "Net calls"],
   ["net_puts", "Net puts"],
   ["options_proxy", "Options count proxy"],
+  ["previous_trade_date", "Previous report"],
+  ["delta_net_futures", "Δ net futures"],
+  ["delta_options_proxy", "Δ options proxy"],
+  ["futures_long_pct_change_pp", "Δ futures long pp"],
+  ["comparison_state", "Comparison state"],
   ["legacy_options_label", "Legacy >50 contracts"],
   ["legacy_futures_label", "Legacy >50%"],
   ["total_long_contracts", "Reported total long"],
@@ -268,6 +308,9 @@ const optionColumns: [string, string][] = [
   ["ask_qty", "Ask qty"],
   ["total_traded_volume", "Volume (source)"],
   ["open_interest", "OI (source)"],
+  ["baseline_kind", "Comparison baseline"],
+  ["baseline_open_interest", "Baseline OI"],
+  ["oi_layers", "Retained / added / reduced"],
   ["change_in_oi", "Provider day ΔOI"],
   ["previous_snapshot_delta", "Prior snapshot ΔOI"],
   ["implied_volatility", "IV (source)"],
@@ -525,12 +568,24 @@ export function TradingAnalyticsPage() {
                     Window volume PCR{" "}
                     <strong>{display(d.smartapi.metrics.volumePcr)}</strong>
                   </span>
+                  <span>
+                    Fixed-cohort CE ΔOI{" "}
+                    <strong>{display(d.smartapi.oiAnalytics?.fixedCohort.ce.change)}</strong>
+                  </span>
+                  <span>
+                    Fixed-cohort PE ΔOI{" "}
+                    <strong>{display(d.smartapi.oiAnalytics?.fixedCohort.pe.change)}</strong>
+                  </span>
                 </div>
                 <Table
                   label="SmartAPI exact-contract OI and quotes"
                   rows={d.smartapi.legs}
                   columns={[
                     ...optionColumns,
+                    ["baseline_kind", "OI baseline"],
+                    ["baseline_open_interest", "Baseline OI"],
+                    ["baseline_collected_at", "Baseline collected UTC"],
+                    ["oi_layers", "Retained / added / removed / change"],
                     ["previous_open_interest", "Prior quote OI"],
                     ["previous_collected_at", "Prior quote collected UTC"],
                     ["previous_exchange_feed_at", "Prior exchange time UTC"],
@@ -806,6 +861,7 @@ export function TradingAnalyticsPage() {
                   asOf={d.asOf}
                   candles={d.candles}
                   periods={d.periods}
+                  levels={d.resistance}
                 />
                 <details>
                   <summary>Full daily evidence and original table</summary>

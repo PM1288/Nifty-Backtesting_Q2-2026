@@ -14,7 +14,7 @@ export const evidenceValueAxis = {
   nameTextStyle: { color: "#3d506c", fontSize: 11 },
 };
 export function chartInterval(value: string | null) {
-  return [5, 15, 60].includes(Number(value)) ? Number(value) : 5;
+  return [1, 5, 15, 60].includes(Number(value)) ? Number(value) : 5;
 }
 export function istDay(value: unknown) {
   const d = new Date(String(value));

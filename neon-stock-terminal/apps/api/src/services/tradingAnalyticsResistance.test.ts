@@ -53,3 +53,12 @@ test("closed break stays broken; unavailable observations cannot confirm R", () 
     "DATA_INSUFFICIENT",
   );
 });
+test("support uses the lowest unbroken close from every candle colour",()=>{
+  const result=resistanceViews([
+    {date:"2026-09-01",open:95,high:103,low:90,close:100,created_at:"2026-09-01T10:05:00Z"},
+    {date:"2026-09-02",open:120,high:125,low:105,close:110,created_at:"2026-09-02T10:05:00Z"},
+    {date:"2026-09-03",open:108,high:116,low:104,close:115,created_at:"2026-09-03T10:05:00Z"},
+  ],"2026-09-04T00:00:00Z",115,3,2)[0];
+  assert.equal(result.support?.support,100);
+  assert.ok(String(result.codeSupport)==="DS");
+});

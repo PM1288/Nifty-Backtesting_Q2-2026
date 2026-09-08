@@ -1,5 +1,5 @@
 /** Independent research calculations. No paper/broker dependencies or order path. */
-export const VERSION = "TRADING-ANALYTICS-20260907.0";
+export const VERSION = "TRADING-ANALYTICS-20260908.1";
 export type Facts = Record<string, unknown>;
 export function numeric(v: unknown): number | null {
   if (v == null || v === "") return null;
@@ -464,4 +464,80 @@ export function sessionBars(
   const emas = ema9(completed.map((b) => b.close));
   const byEnd = new Map(completed.map((b, i) => [b.end, emas[i]]));
   return output.map((b) => ({ ...b, ema9: byEnd.get(b.end) ?? null }));
+}
+
+/**
+ * Complete expected-bucket coverage read model. This augments sessionBars
+ * without changing its established observed-candle response contract.
+ */
+export function sessionCoverage(
+  minutes: Facts[],
+  sessions: Facts[],
+  interval: number,
+  asOf: string,
+) {
+  const cutoff = Date.parse(asOf);
+  const eligible = minutes
+    .map((row) => ({
+      row,
+      time: Date.parse(String(row.ts)),
+      known: Date.parse(String(row.created_at)),
+    }))
+    .filter(
+      (item) =>
+        Number.isFinite(item.time) &&
+        Number.isFinite(item.known) &&
+        item.known <= cutoff,
+    );
+  return sessions.flatMap((session) => {
+    const open = Date.parse(String(session.market_open_ts));
+    const scheduledClose = Date.parse(String(session.market_close_ts));
+    if (
+      !Number.isFinite(open) ||
+      !Number.isFinite(scheduledClose) ||
+      scheduledClose <= open
+    )
+      return [];
+    const rows: Facts[] = [];
+    for (let start = open; start < scheduledClose; start += interval * 60_000) {
+      const end = Math.min(start + interval * 60_000, scheduledClose);
+      if (start >= cutoff) break;
+      const source = eligible.filter(
+        (item) => item.time >= start && item.time < end,
+      );
+      const expectedMinutes = (end - start) / 60_000;
+      const unique = new Set(source.map((item) => item.time)).size;
+      const valid = source.every((item) =>
+        ["open", "high", "low", "close"].every(
+          (key) => numeric(item.row[key]) != null,
+        ),
+      );
+      const periodClosed = end <= cutoff;
+      const coverageComplete =
+        periodClosed &&
+        source.length === expectedMinutes &&
+        unique === expectedMinutes &&
+        valid;
+      rows.push({
+        trade_date: session.trade_date,
+        phase_id: session.phase_id ?? "REGULAR",
+        start: new Date(start).toISOString(),
+        end: new Date(end).toISOString(),
+        periodClosed,
+        coverageComplete,
+        fullDuration: end - start === interval * 60_000,
+        sourceFinal: coverageComplete,
+        observedMinutes: source.length,
+        expectedMinutes,
+        state: !periodClosed
+          ? "FORMING"
+          : source.length === 0
+            ? "MISSING"
+            : coverageComplete
+              ? "COMPLETE"
+              : "INCOMPLETE",
+      });
+    }
+    return rows;
+  });
 }

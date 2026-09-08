@@ -9,7 +9,7 @@ const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
 type Row = Record<string, unknown>;
-function CollapsiblePricePane({ label, bars }: { label: string; bars: Row[] }) {
+function CollapsiblePricePane({ label, bars, levels=[] }: { label: string; bars: Row[]; levels?: Row[] }) {
   const [open, setOpen] = useState(true);
   return (
     <details
@@ -18,7 +18,7 @@ function CollapsiblePricePane({ label, bars }: { label: string; bars: Row[] }) {
       className={styles.periodPane}
     >
       <summary>{label} context</summary>
-      {open && <AnalyticsPricePane label={label} bars={bars} />}
+      {open && <AnalyticsPricePane label={label} bars={bars} levels={levels} />}
     </details>
   );
 }
@@ -26,10 +26,12 @@ export function AnalyticsPricePane({
   label,
   bars,
   large = false,
+  levels = [],
 }: {
   label: string;
   bars: Row[];
   large?: boolean;
+  levels?: Row[];
 }) {
   const [ema, setEma] = useState(true);
   const option: EChartsOption = {
@@ -71,6 +73,34 @@ export function AnalyticsPricePane({
         name: label,
         type: "candlestick",
         itemStyle: candleColors,
+        markLine: levels.length
+          ? {
+              silent: true,
+              symbol: "none",
+              label: { formatter: "{b}", position: "insideEndTop" },
+              data: levels.flatMap((level) => {
+                const timeframe = String(level.timeframe ?? "").toUpperCase();
+                const resistance = level.selected as Row | null | undefined;
+                const support = level.support as Row | null | undefined;
+                return [
+                  resistance?.resistance == null
+                    ? null
+                    : {
+                        name: `${timeframe}R`,
+                        yAxis: Number(resistance.resistance),
+                        lineStyle: { color: "#c93346", type: "dashed" },
+                      },
+                  support?.support == null
+                    ? null
+                    : {
+                        name: `${timeframe}S`,
+                        yAxis: Number(support.support),
+                        lineStyle: { color: "#087a55", type: "dashed" },
+                      },
+                ].filter(Boolean) as never;
+              }),
+            }
+          : undefined,
         data: bars.map((b) =>
           ["open", "close", "low", "high"].map((k) =>
             b[k] == null ? NaN : Number(b[k]),
@@ -105,9 +135,8 @@ export function AnalyticsPricePane({
         <span>Green: rising · red: falling</span>
       </header>
       <p>
-        Levels / OI price profile unavailable until approved source/level
-        overlays are materialized. Forming higher-timeframe bars carry no
-        confirmed EMA.
+        Read-only MR/MS, WR/WS and DR/DS use completed daily-derived source
+        candles. Forming or incomplete periods cannot create a confirmed level.
       </p>
       {bars.length ? (
         <Suspense fallback={<p>Loading chart…</p>}>
@@ -134,11 +163,13 @@ export function TradingAnalyticsStructure({
   asOf,
   candles,
   periods,
+  levels = [],
 }: {
   symbol?:string;
   asOf: string;
   candles: Row[];
   periods?: { weekly: Row[]; monthly: Row[] };
+  levels?: Row[];
 }) {
   const [params,setParams]=useSearchParams();
   const interval=chartInterval(params.get('interval'));
@@ -161,11 +192,28 @@ export function TradingAnalyticsStructure({
             value={interval}
             onChange={(e) => setInterval(Number(e.target.value))}
           >
+            <option value={1}>1 min</option>
             <option value={5}>5 min</option>
             <option value={15}>15 min</option>
             <option value={60}>1 hour</option>
           </select>
         </label>
+      </div>
+      <div className={styles.kpis} aria-label="Structural support and resistance levels">
+        {levels.flatMap((level) => {
+          const resistance = level.selected as Row | null | undefined;
+          const support = level.support as Row | null | undefined;
+          return [
+            <span key={String(level.timeframe) + "-r"}>
+              {String(level.codeResistance ?? "R")}{" "}
+              <strong>{resistance?.resistance == null ? "—" : Number(resistance.resistance).toLocaleString("en-IN")}</strong>
+            </span>,
+            <span key={String(level.timeframe) + "-s"}>
+              {String(level.codeSupport ?? "S")}{" "}
+              <strong>{support?.support == null ? "—" : Number(support.support).toLocaleString("en-IN")}</strong>
+            </span>,
+          ];
+        })}
       </div>
       {q.isFetching && <p role="status">Loading recorded intraday candles…</p>}
       {q.error && (
@@ -176,6 +224,7 @@ export function TradingAnalyticsStructure({
       <AnalyticsPricePane
         label={`Intraday · ${interval}m`}
         bars={(q.data?.panes[0]?.bars ?? []).filter((b) => b.closed)}
+        levels={levels}
         large
       />
       {[
@@ -187,6 +236,11 @@ export function TradingAnalyticsStructure({
           key={String(label)}
           label={String(label)}
           bars={bars as Row[]}
+          levels={levels.filter(
+            (level) =>
+              String(level.timeframe).toLowerCase() ===
+              String(label).toLowerCase(),
+          )}
         />
       ))}
     </>

@@ -18,6 +18,15 @@ charts keep the prior extent policy; exact-pair A/B, RSI/MACD, EMA9, ladder, OI,
 exports and read-only execution gates remain unchanged. Evidence:
 `docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.
 
+2026-09-08 MANEESH chart evidence completion: independent MR/MS, WR/WS and
+DR/DS lifecycle records; calendar-qualified weekly/monthly periods;
+previous-session/first-session OI baselines; fixed display-cohort composite OI;
+calendar-anchored 1/5/15/60 minute OI changes; price-aligned OI profile; and
+previous participant-report comparisons. Missing OI, calendars and comparison
+records remain explicit. This is read-only and does not alter OIIS/OISS,
+execution, source precedence or paper trading. Evidence:
+`docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.
+
 2026-09-07: temporary MANEESH header link opens the existing Trading Analytics
 Scalper (5m default); original Strategy menu destination remains. Pink/white
 styling is scoped to this shortcut only. Desktop and mobile retain navigation,

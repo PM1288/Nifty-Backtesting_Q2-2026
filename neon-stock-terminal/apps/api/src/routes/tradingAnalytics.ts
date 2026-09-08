@@ -17,9 +17,11 @@ import {
   ema9,
   fractions,
   sessionBars,
+  sessionCoverage,
   VERSION,
   type Facts,
 } from "../services/tradingAnalytics";
+import { oiLayers, participantComparison, sessionAlignedOi } from "../services/tradingAnalyticsOi";
 
 const querySchema = z.object({
   symbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/).default('NIFTY'),
@@ -111,8 +113,28 @@ export async function loadTradingAnalytics(
         selected,
       ),
     ]);
-  const stats = rawStats.map(activity),
-    people = rawPeople.map((r) => participant(r.payload as Facts));
+  const [priorPeopleRows, dailyCalendar] = await Promise.all([
+    read(
+      "participant_oi_previous",
+      `SELECT to_jsonb(p) payload FROM market_data.nse_fii_participant_open_interest p
+       WHERE trade_date=(SELECT max(trade_date) FROM market_data.nse_fii_participant_open_interest WHERE trade_date<$2::date AND loaded_at<=$1::timestamptz)
+       AND run_id=(SELECT run_id FROM market_data.nse_fii_participant_open_interest WHERE trade_date=(SELECT max(trade_date) FROM market_data.nse_fii_participant_open_interest WHERE trade_date<$2::date AND loaded_at<=$1::timestamptz) AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1)
+       ORDER BY client_type`,
+      asOf,
+      selected,
+    ),
+    read(
+      "daily_calendar",
+      `SELECT trade_date::text,market_open_ts,market_close_ts,'REGULAR'::text phase_id,updated_at
+       FROM public.trading_calendar WHERE is_trading_day AND trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
+       ORDER BY trade_date DESC LIMIT 450`,
+      asOf,
+    ),
+  ]);
+  const stats = rawStats.map(activity);
+  const currentPeople = rawPeople.map((r) => participant(r.payload as Facts));
+  const priorPeople = priorPeopleRows.map((r) => participant(r.payload as Facts));
+  const people = participantComparison(currentPeople, priorPeople);
   const selectedExpiry =
     expiry ?? (expiries[0]?.expiry_date as string | undefined);
   const snapshots = selectedExpiry
@@ -154,6 +176,10 @@ export async function loadTradingAnalytics(
     );
     return {
       ...l,
+      baseline_open_interest: p?.open_interest ?? null,
+      baseline_kind: p ? "PREVIOUS_ARCHIVED_SNAPSHOT" : "BASELINE_UNAVAILABLE",
+      baseline_collected_at: previous?.captured_at ?? null,
+      oi_layers: oiLayers(p?.open_interest, l.open_interest),
       previous_snapshot_delta:
         p &&
         numeric(p.open_interest) != null &&
@@ -239,12 +265,13 @@ export async function loadTradingAnalytics(
       daily,
       asOf,
       numeric(smartapi.spot?.ltp),
-      dailyLookback,
-      weeklyLookback,
+      dailyLookback ?? Number(process.env.TRADING_ANALYTICS_DAILY_LEVEL_LOOKBACK ?? 20),
+      weeklyLookback ?? Number(process.env.TRADING_ANALYTICS_WEEKLY_LEVEL_LOOKBACK ?? 12),
+      dailyCalendar,
     ),
     periods: {
-      weekly: periodCandles(daily, "week", asOf),
-      monthly: periodCandles(daily, "month", asOf),
+      weekly: periodCandles(daily, "week", asOf, dailyCalendar),
+      monthly: periodCandles(daily, "month", asOf, dailyCalendar),
     },
     smartapi,
     chain: {
@@ -338,8 +365,9 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         strike: z.coerce.number().positive().optional(),
         interval: z.coerce
           .number()
-          .refine((n) => [5, 15, 60].includes(n))
+          .refine((n) => [1, 5, 15, 60].includes(n))
           .default(5),
+        historyDays: z.coerce.number().int().min(1).max(15).default(15),
       })
       .safeParse(req.query);
     if (!q.success)
@@ -353,8 +381,9 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       const universe=await analyticsUniverse(async (_source,sql,...args)=>prisma.$queryRawUnsafe<Facts[]>(sql,...args),asOf);
       const underlying=selectUnderlying(universe,q.data.symbol);
       const sessions = await prisma.$queryRawUnsafe<Facts[]>(
-        `SELECT trade_date::text,market_open_ts,market_close_ts FROM trading_calendar WHERE is_trading_day AND trade_date BETWEEN ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date-10 AND ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date`,
+        `SELECT trade_date::text,market_open_ts,market_close_ts,'REGULAR'::text phase_id,updated_at FROM trading_calendar WHERE is_trading_day AND trade_date BETWEEN ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date-$2::int AND ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date`,
         asOf,
+        q.data.historyDays,
       );
       // The canonical Go master has already converted broker strike units to rupees.
       const contracts =
@@ -378,25 +407,31 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       const panes = await Promise.all(
         identities.map(async (identity) => {
           const minutes = await prisma.$queryRawUnsafe<Facts[]>(
-            `SELECT ts,created_at,open::float8,high::float8,low::float8,close::float8,source FROM bars_1m WHERE exchange=$2 AND symbol_token=$3 AND ts>=$1::timestamptz-interval '10 days' AND ts+interval '1 minute'<=$1::timestamptz AND created_at<=$1::timestamptz ORDER BY ts LIMIT 6000`,
+            `SELECT DISTINCT ON (ts) ts,created_at,open::float8,high::float8,low::float8,close::float8,volume::text,oi::text,source
+             FROM bars_1m WHERE exchange=$2 AND symbol_token=$3
+             AND ts>=$1::timestamptz-make_interval(days=>$4::int)
+             AND ts+interval '1 minute'<=$1::timestamptz AND created_at<=$1::timestamptz
+             ORDER BY ts,created_at DESC LIMIT 25000`,
             asOf,
             identity.exchange,
             identity.symbol_token,
+            q.data.historyDays,
           );
+          const rawOi = identity.exchange === "NFO"
+            ? await prisma.$queryRawUnsafe<Facts[]>(
+                `SELECT exch_feed_time event_time,ts collected_at,oi::text oi FROM quote_snapshots
+                 WHERE exchange=$2 AND symbol_token=$3
+                 AND ts BETWEEN $1::timestamptz-make_interval(days=>$4::int) AND $1::timestamptz
+                 AND exch_feed_time<=$1::timestamptz AND oi IS NOT NULL
+                 ORDER BY exch_feed_time,ts LIMIT 25000`,
+                asOf,identity.exchange,identity.symbol_token,q.data.historyDays,
+              ) : [];
           return {
             identity,
             bars: sessionBars(minutes, sessions, q.data.interval, asOf),
+            coverage: sessionCoverage(minutes, sessions, q.data.interval, asOf),
             sourceMinuteCount: minutes.length,
-            oiHistory:
-              identity.exchange === "NFO"
-                ? await prisma.$queryRawUnsafe<Facts[]>(
-                    `WITH points AS (SELECT DISTINCT ON (date_bin($4::interval,exch_feed_time,timestamptz '2000-01-01')) exch_feed_time event_time,ts collected_at,oi::text oi FROM quote_snapshots WHERE exchange=$2 AND symbol_token=$3 AND ts BETWEEN $1::timestamptz-interval '10 days' AND $1::timestamptz AND exch_feed_time<=$1::timestamptz AND oi IS NOT NULL ORDER BY date_bin($4::interval,exch_feed_time,timestamptz '2000-01-01'),exch_feed_time DESC,ts DESC) SELECT * FROM (SELECT * FROM points ORDER BY event_time DESC LIMIT 2000) r ORDER BY event_time`,
-                    asOf,
-                    identity.exchange,
-                    identity.symbol_token,
-                    `${q.data.interval} minutes`,
-                  )
-                : [],
+            oiHistory: sessionAlignedOi(rawOi,sessions,q.data.interval,asOf),
           };
         }),
       );
@@ -404,11 +439,17 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         version: VERSION,
         asOf,
         interval: q.data.interval,
+        historyDays: q.data.historyDays,
+        calendar: {
+          version: "TRADING_CALENDAR_ROWS_UPDATED_AT_V1",
+          source: "public.trading_calendar",
+          sessions: sessions.map(row=>({trade_date:row.trade_date,market_open_ts:row.market_open_ts,market_close_ts:row.market_close_ts,phase_id:row.phase_id,updated_at:row.updated_at})),
+        },
         underlying,
         panes,
         state: "PREVIEW_UNAPPROVED",
         limitations: [
-          "Calendar phase endpoints are reused; segment-specific phase audit pending.",
+          "Calendar rows are date-effective retained session boundaries; segment/security phase provenance remains explicit in the calendar payload.",
           "Incomplete minute coverage cannot confirm an EMA rule.",
           "Current master knowledge cutoff may exclude historical contracts; no replacement token used.",
           "Historical bars may be revised in source; original publication versions are unavailable.",

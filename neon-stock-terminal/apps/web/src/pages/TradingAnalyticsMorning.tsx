@@ -155,10 +155,10 @@ export function TradingAnalyticsMorning({
           </thead>
           <tbody>
             {[
-              ["Index futures", "net_futures"],
-              ["Options proxy (contracts)", "options_proxy"],
-              ["Futures long %", "futures_long_pct"],
-            ].map(([label, key]) => (
+              ["Index futures", "net_futures", "delta_net_futures"],
+              ["Options proxy (contracts)", "options_proxy", "delta_options_proxy"],
+              ["Futures long %", "futures_long_pct", "futures_long_pct_change_pp"],
+            ].map(([label, key, changeKey]) => (
               <tr key={key}>
                 <th>{label}</th>
                 <td className={key.endsWith("pct") ? "" : tint(fii?.[key])}>
@@ -172,14 +172,18 @@ export function TradingAnalyticsMorning({
                     {key.endsWith("pct") && fii?.[key] != null ? "%" : ""}
                   </button>
                 </td>
-                <td>—</td>
+                <td className={tint(fii?.[changeKey])}>
+                  {value(fii?.[changeKey])}
+                  {changeKey.endsWith("_pp") && fii?.[changeKey] != null ? " pp" : ""}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
         <p>
-          Comparison baseline not supplied by current API. Missing change is not
-          zero. Percentage is only index-futures long share.
+          Comparison uses the preceding retained trading report for the same
+          participant. Missing reports remain unavailable, never zero.
+          Percentage change is shown in percentage points.
         </p>
       </section>
       <section>

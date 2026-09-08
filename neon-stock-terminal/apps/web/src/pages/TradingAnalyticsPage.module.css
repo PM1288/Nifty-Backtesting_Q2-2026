@@ -338,6 +338,31 @@
   gap: 10px;
   min-width: 0;
 }
+.scalperSideDock {
+  display: grid;
+  grid-template-rows: 220px minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+.oiProfile {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dce4ef;
+  border-radius: 7px;
+  background: #fff;
+}
+.oiProfile header {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 3px 6px;
+  font-size: 11px;
+}
+.oiProfile select { min-width: 74px; height: 26px; }
+.oiProfile p { padding: 6px; font-size: 11px; }
+.oiProfileChart { height: 184px; }
 .measurement { padding: 10px; border: 1px solid #be185d; border-radius: 6px; background: #fff; margin-block: 8px; }
 .measurement p { margin-block: 6px; }
 .measurement small { display: block; color: #475569; font-size: 12px; }
@@ -399,6 +424,36 @@
 }
 .scalperCommandBar > *,
 .scalperOverlayBar > * { flex: 0 0 auto; }
+.axisControls {
+  position: relative;
+  white-space: normal;
+}
+.axisControls summary {
+  cursor: pointer;
+  white-space: nowrap;
+}
+.axisControls[open] {
+  min-width: 420px;
+  padding: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 4px;
+}
+.axisControls p {
+  margin: 4px 0 6px;
+  font-size: 11px;
+  color: #475569;
+}
+.axisControls > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) 104px 104px 100px auto;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+}
+.axisControls input { width: 72px; min-height: 28px; }
+.axisControls button { min-height: 28px; }
 .levelStrip {
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -480,6 +535,9 @@
   }
   .ladder {
     max-height: 360px;
+  }
+  .scalperSideDock {
+    grid-template-rows: 220px auto;
   }
   .tabs {
     top: 52px;

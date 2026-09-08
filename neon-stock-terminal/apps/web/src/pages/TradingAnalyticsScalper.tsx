@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption, SeriesOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
-import { oiTimeline } from "../lib/tradingAnalyticsOiTimeline";
 import { closeAt, measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import {
   candleColors,
@@ -40,6 +39,38 @@ function IndicatorEvidence({times, indicators}:{times:string[];indicators:Map<st
     <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Indicator values scroll area"><table aria-label="Underlying RSI and MACD values"><thead><tr><th>End (UTC)</th><th>RSI14</th><th>MACD</th><th>Signal9</th><th>Histogram</th></tr></thead><tbody>{times.map(t=>{const r=indicators.get(t);return <tr key={t}><td>{t}</td><td>{valueText(r?.rsi??null)}</td><td>{valueText(r?.macd??null)}</td><td>{valueText(r?.signal??null)}</td><td>{valueText(r?.histogram??null)}</td></tr>;})}</tbody></table></div>
   </details>;
 }
+function OiPriceProfile({legs,bounds}:{legs:Row[];bounds:{min:number;max:number}|null}) {
+  const [mode,setMode]=useState<"current"|"change">("current");
+  const points=legs.flatMap((leg)=>{
+    const raw=mode==="current"?leg.open_interest:(leg.oi_layers as Row|undefined)?.change;
+    const value=raw==null?null:Number(raw);
+    const strike=leg.strike==null?null:Number(leg.strike);
+    if(value==null||strike==null||!Number.isFinite(value)||!Number.isFinite(strike)) return [];
+    return [{side:String(leg.option_type),strike,value}];
+  });
+  return <section className={styles.oiProfile}>
+    <header>
+      <strong>Price-aligned OI profile</strong>
+      <select aria-label="OI price profile measure" value={mode} onChange={event=>setMode(event.target.value as typeof mode)}>
+        <option value="current">Current</option>
+        <option value="change">ΔOI</option>
+      </select>
+    </header>
+    {points.length&&bounds ? <Suspense fallback={<p>Loading profile…</p>}><Chart
+      className={styles.oiProfileChart}
+      ariaLabel="Option open interest aligned to actual underlying strike prices"
+      axisExtentPolicy="native"
+      option={{
+        animation:false,
+        tooltip:{trigger:"item",formatter:(input:unknown)=>{const p=input as Row;const v=Array.isArray(p.value)?p.value:[];return htmlText(p.seriesName)+" · strike "+htmlText(v[1])+"<br/>"+(mode==="current"?"OI":"ΔOI")+" "+htmlText(Math.abs(Number(v[0])));}},
+        grid:{left:8,right:45,top:8,bottom:30,containLabel:true},
+        xAxis:{type:"value",name:mode==="current"?"Mirrored OI":"Signed ΔOI",axisLabel:{formatter:(value:number)=>Math.abs(value).toLocaleString("en-IN",{notation:"compact"})}},
+        yAxis:{type:"value",name:"Strike",min:bounds.min,max:bounds.max,position:"right",axisLabel:{formatter:(value:number)=>value.toLocaleString("en-IN")}},
+        series:["CE","PE"].map((side,index)=>({name:side,type:"scatter",symbol:"rect",symbolSize:[10,7],itemStyle:{color:index?"#087a55":"#c93346"},data:points.filter(point=>point.side===side).map(point=>[(side==="CE"?-1:1)*point.value,point.strike])})),
+      }}
+    /></Suspense>:<p>Profile unavailable for the visible price/expiry context.</p>}
+  </section>;
+}
 export function TradingAnalyticsScalper({
   symbol='NIFTY',label='NIFTY 50',
   asOf,
@@ -67,6 +98,7 @@ export function TradingAnalyticsScalper({
   const [selecting, setSelecting] = useState(false);
   const [quantity, setQuantity] = useState("65");
   const [showIndicators, setShowIndicators] = useState(true);
+  const [oiMetric, setOiMetric] = useState<"current"|"interval_change"|"cumulative_change">("interval_change");
   const updateView = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
@@ -98,6 +130,7 @@ export function TradingAnalyticsScalper({
     return () => m.removeEventListener("change", listener);
   }, []);
   const [showEma, setShowEma] = useState(true);
+  const [axisBounds, setAxisBounds] = useState<Record<number, { min: string; max: string }>>({});
   const defaultStrike =
     spot == null
       ? null
@@ -118,6 +151,7 @@ export function TradingAnalyticsScalper({
         panes: {
           identity: Row;
           bars: Row[];
+          coverage: Row[];
           sourceMinuteCount: number;
           oiHistory: Row[];
         }[];
@@ -155,13 +189,23 @@ export function TradingAnalyticsScalper({
     () => financialVisibleBounds(panes?.[0]?.bars ?? []),
     [panes],
   );
+  const validManualBounds = (index: number) => {
+    const candidate = axisBounds[index];
+    if (!candidate) return null;
+    const min = Number(candidate.min);
+    const max = Number(candidate.max);
+    return Number.isFinite(min) && Number.isFinite(max) && min < max
+      ? { min, max }
+      : null;
+  };
   const selectedLevels = useMemo(
     () => resistance.flatMap((row) => {
       const selectedLevel = row.selected as Row | null | undefined;
-      const value = Number(selectedLevel?.resistance);
-      return Number.isFinite(value)
-        ? [{ row, value }]
-        : [];
+      const selectedSupport = row.support as Row | null | undefined;
+      return [
+        { row, side: "R", value: Number(selectedLevel?.resistance) },
+        { row, side: "S", value: Number(selectedSupport?.support) },
+      ].filter((level) => Number.isFinite(level.value));
     }),
     [resistance],
   );
@@ -185,7 +229,7 @@ export function TradingAnalyticsScalper({
       tooltip: { trigger: "axis", transitionDuration:0, hideDelay:0, formatter:scalpTooltip },
       axisPointer: { link: [{ xAxisIndex: "all" }] },
       textStyle: { fontSize: 12 },
-      dataZoom: [{type:"inside",xAxisIndex: rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]), zoomOnMouseWheel:true, moveOnMouseMove: !selecting}, {type:"slider",xAxisIndex:rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]),bottom:5,height:18}],
+      dataZoom: [{type:"inside",xAxisIndex: rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]), zoomOnMouseWheel:true, moveOnMouseMove: !selecting,filterMode:"filter"}, {type:"slider",xAxisIndex:rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]),bottom:5,height:18,filterMode:"filter"}],
       grid: [...rows.map((_, i) =>
         narrow
           ? {
@@ -224,17 +268,19 @@ export function TradingAnalyticsScalper({
             }),
         },
       })),
-      yAxis: [...rows.map((p, i) => ({
+      yAxis: [...rows.map((p, i) => {
+        const manual = validManualBounds(i);
+        return {
         ...evidenceValueAxis,
         type: "value" as const,
         gridIndex: i,
         scale: true,
-        min: i === 0 && fitLevels && selectedLevels.length
+        min: manual?.min ?? (i === 0 && fitLevels && selectedLevels.length
           ? (v: { min: number }) => Math.min(v.min, ...selectedLevels.map((level) => level.value))
-          : undefined,
-        max: i === 0 && fitLevels && selectedLevels.length
+          : undefined),
+        max: manual?.max ?? (i === 0 && fitLevels && selectedLevels.length
           ? (v: { max: number }) => Math.max(v.max, ...selectedLevels.map((level) => level.value))
-          : undefined,
+          : undefined),
         position: "right" as const,
         axisLabel: { fontSize: 12 },
         splitLine: { lineStyle: { color: "#E8EBEF" } },
@@ -242,7 +288,7 @@ export function TradingAnalyticsScalper({
           p.identity.exchange === "NSE"
             ? `${label} · price`
             : `${p.identity.strike} ${String(p.identity.tradingsymbol).slice(-2)} · ₹`,
-      })), ...(showIndicators ? [
+      };}), ...(showIndicators ? [
         {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length,min:0,max:100,name:"RSI (14)",position:"right" as const},
         {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length+1,scale:true,name:"MACD (12,26,9)",position:"right" as const},
       ] : [])],
@@ -267,10 +313,10 @@ export function TradingAnalyticsScalper({
                     silent: true,
                     label: { position: "insideEndTop" as const, formatter: "{b}" },
                     data: [
-                      ...(showLevels ? plottedLevels.map(({ row, value }) => ({
-                        name: `${String(row.timeframe).toUpperCase()} R · preview`,
+                      ...(showLevels ? plottedLevels.map(({ row, value, side }) => ({
+                        name: `${String(row.timeframe).toUpperCase()} ${side} · preview`,
                         yAxis: value,
-                        lineStyle: { type: "dashed" as const, color: "#969B45" },
+                        lineStyle: { type: "dashed" as const, color: side === "R" ? "#c93346" : "#087a55" },
                       })) : []),
                       ...(showGrid ? roundNumberGuides(visibleUnderlyingBounds, 50).map((value) => ({
                         name: `${value}`,
@@ -314,7 +360,7 @@ export function TradingAnalyticsScalper({
         ...(["macd","signal","histogram"] as const).map((key,i)=>({name:key==="macd"?"MACD":key==="signal"?"Signal":"Histogram",type:key==="histogram"?"bar" as const:"line" as const,xAxisIndex:rows.length+1,yAxisIndex:rows.length+1,showSymbol:false,connectNulls:false,itemStyle:{color:["#2563eb","#d97706","#64748b"][i]},data:times.map(t=>indicators.get(t)?.[key]??null)})),
       ]:[])],
     };
-  }, [panes, narrow, showEma, showLevels, showGrid, showIndicators, indicators, selecting, points, quantity, label, fitLevels, selectedLevels, plottedLevels, visibleUnderlyingBounds]);
+  }, [panes, narrow, showEma, showLevels, showGrid, showIndicators, indicators, selecting, points, quantity, label, fitLevels, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds]);
   return (
     <>
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
@@ -348,6 +394,7 @@ export function TradingAnalyticsScalper({
             value={interval}
             onChange={(e) => setInterval(Number(e.target.value))}
           >
+            <option value={1}>1 min</option>
             <option value={5}>5 min</option>
             <option value={15}>15 min</option>
             <option value={60}>1 hour</option>
@@ -375,6 +422,21 @@ export function TradingAnalyticsScalper({
           />
           9 EMA
         </label>
+        <details className={styles.axisControls}>
+          <summary>Price axes</summary>
+          <p>Auto fits visible filtered candles. Enter both limits to lock one price pane; reset restores auto scaling.</p>
+          {(panes ?? []).map((pane, index) => {
+            const bounds = axisBounds[index] ?? { min: "", max: "" };
+            const locked = validManualBounds(index) != null;
+            return <div key={String(pane.identity.tradingsymbol)}>
+              <strong>{String(pane.identity.tradingsymbol)}</strong>
+              <label>Min <input aria-label={`${String(pane.identity.tradingsymbol)} price-axis minimum`} inputMode="decimal" value={bounds.min} onChange={event=>setAxisBounds(current=>({...current,[index]:{...bounds,min:event.target.value}}))}/></label>
+              <label>Max <input aria-label={`${String(pane.identity.tradingsymbol)} price-axis maximum`} inputMode="decimal" value={bounds.max} onChange={event=>setAxisBounds(current=>({...current,[index]:{...bounds,max:event.target.value}}))}/></label>
+              <span>{locked ? "Locked" : bounds.min || bounds.max ? "Enter valid min < max" : "Auto"}</span>
+              <button type="button" disabled={!bounds.min && !bounds.max} onClick={()=>setAxisBounds(current=>{const next={...current};delete next[index];return next;})}>Reset</button>
+            </div>;
+          })}
+        </details>
         {q.data && (
           <button
             onClick={() => {
@@ -430,7 +492,7 @@ export function TradingAnalyticsScalper({
             checked={showLevels}
             onChange={(e) => setShowLevels(e.target.checked)}
           />
-          Monthly / weekly / daily R
+          Monthly / weekly / daily R &amp; S
         </label>
         <button
           type="button"
@@ -448,7 +510,7 @@ export function TradingAnalyticsScalper({
               type="number"
               min={1}
               max={timeframe === "daily" ? 400 : 100}
-              placeholder="Required"
+              placeholder={timeframe === "daily" ? "20" : "12"}
               defaultValue={params.get(`${timeframe}Lookback`) ?? ""}
               style={{ width: 90 }}
               onBlur={(e) => {
@@ -478,35 +540,45 @@ export function TradingAnalyticsScalper({
         aria-label="Structural level summary"
         tabIndex={0}
       >
-        {resistance.map((r) => (
-          <span key={String(r.timeframe)}>
-            {String(r.timeframe).toUpperCase()} R ·{" "}
-            {String(r.lookback ?? "choose")} completed bars
-            <strong>
-              {r.selected == null
-                ? "—"
-                : Number((r.selected as Row).resistance).toLocaleString(
-                    "en-IN",
-                  )}
-            </strong>
-            {String(r.state).replaceAll("_", " ")}
-            {r.selected != null && !levelIsNearVisiblePrice(Number((r.selected as Row).resistance), visibleUnderlyingBounds) && !fitLevels
-              ? Number((r.selected as Row).resistance) > (visibleUnderlyingBounds?.max ?? Number.POSITIVE_INFINITY)
-                ? " · above view ↑"
-                : " · below view ↓"
-              : ""}
-          </span>
-        ))}
+        {resistance.flatMap((row) =>
+          [
+            { side: "R", value: (row.selected as Row | null | undefined)?.resistance },
+            { side: "S", value: (row.support as Row | null | undefined)?.support },
+          ].map((level) => {
+            const value = level.value == null ? null : Number(level.value);
+            const offscreen =
+              value != null &&
+              !levelIsNearVisiblePrice(value, visibleUnderlyingBounds) &&
+              !fitLevels;
+            return (
+              <span key={String(row.timeframe) + level.side}>
+                {String(row.timeframe).toUpperCase()} {level.side} ·{" "}
+                {String(row.lookback ?? "—")} bars
+                <strong>
+                  {value == null ? "—" : value.toLocaleString("en-IN")}
+                </strong>
+                {value == null
+                  ? String(row.state).replaceAll("_", " ")
+                  : offscreen
+                    ? value > (visibleUnderlyingBounds?.max ?? Number.POSITIVE_INFINITY)
+                      ? "above view ↑"
+                      : "below view ↓"
+                    : "in view"}
+              </span>
+            );
+          }),
+        )}
       </div>
       <details className={styles.scalperEvidence}>
-        <summary>Resistance rule / origin and break evidence</summary>
+        <summary>Support/resistance rule, origin and lifecycle evidence</summary>
         <p>
           Preview: open of unbroken bearish candle; largest open-minus-close
-          body, then latest origin. A later completed same-timeframe close
-          strictly above breaks R permanently; equality is a touch. Monthly: 12
-          completed bars. Daily and weekly counts are user-configured because
-          source notes do not specify them. Only resistance above the as-of
-          price is selected. Research overlays, not approved trade signals.
+          body, then latest origin. Support is the lowest unbroken close from
+          every candle colour. A later completed same-timeframe close strictly
+          beyond a level breaks it permanently; equality is a touch. Monthly,
+          weekly and daily use 12, 12 and 20 completed bars by default; daily
+          and weekly remain configurable. Research overlays, not approved trade
+          signals.
           Auto price view excludes distant levels. Use Fit levels explicitly to include every selected level.
         </p>
         <pre tabIndex={0}>{JSON.stringify(resistance, null, 2)}</pre>
@@ -539,6 +611,8 @@ export function TradingAnalyticsScalper({
             />
           </Suspense>
         )}
+        <aside className={styles.scalperSideDock}>
+          <OiPriceProfile legs={legs} bounds={visibleUnderlyingBounds} />
         <section className={styles.ladder} aria-label="Paired strike ladder" tabIndex={0}>
           <h3>Nearest 10 pairs</h3>
           <table>
@@ -581,13 +655,25 @@ export function TradingAnalyticsScalper({
             contracts.
           </p>
         </section>
+        </aside>
       </div>
       <section className={styles.plot}>
-        <h3>Exact selected contracts · OI through time</h3>
+        <div className={styles.toolbar}>
+          <h3>Exact selected contracts · OI through time</h3>
+          <label>
+            OI view{" "}
+            <select value={oiMetric} onChange={(event)=>setOiMetric(event.target.value as typeof oiMetric)}>
+              <option value="interval_change">Interval ΔOI</option>
+              <option value="cumulative_change">Cumulative ΔOI</option>
+              <option value="current">Current OI</option>
+            </select>
+          </label>
+        </div>
         <p>
-          Time axis · SmartAPI raw OI, last recorded quote per {interval}-minute bin.
-          Not previous-session or session-open change. Gaps and asynchronous
-          source timestamps retained.
+          Session-open anchored {interval}-minute endpoints. Interval change is
+          endpoint minus the preceding comparable endpoint; cumulative change
+          is endpoint minus one fixed first-observation baseline. Missing
+          endpoints remain gaps.
         </p>
         {panes?.some((p) => p.oiHistory?.length) ? (
           <Suspense fallback={<p>Loading OI chart…</p>}>
@@ -617,8 +703,8 @@ export function TradingAnalyticsScalper({
                 yAxis: {
                   ...evidenceValueAxis,
                   type: "value",
-                  name: "Provider-native OI",
-                  min: 0,
+                  name: oiMetric==="current" ? "Provider-native OI" : "Signed provider-native ΔOI",
+                  min: oiMetric==="current" ? 0 : undefined,
                 },
                 series: panes
                   .filter((p) => p.identity.exchange === "NFO")
@@ -628,7 +714,11 @@ export function TradingAnalyticsScalper({
                     showSymbol: false,
                     lineStyle: { color: i ? "#659E8B" : "#BE7869" },
                     connectNulls: false,
-                    data: oiTimeline(p.oiHistory),
+                    data: p.oiHistory.map(row=>[
+                      String(row.event_time),
+                      row[oiMetric] == null ? null : Number(row[oiMetric]),
+                    ]),
+                    markLine:oiMetric==="current"?undefined:{silent:true,symbol:"none",data:[{yAxis:0}],label:{show:false}},
                   })),
               }}
             />

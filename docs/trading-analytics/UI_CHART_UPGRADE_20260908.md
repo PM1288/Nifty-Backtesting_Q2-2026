@@ -51,14 +51,53 @@ The v1.2 review correctly identified three material presentation defects in the 
 
 Deployed validation completed after the implementation: the canonical dashboard container is healthy, the live route and Vite asset passed gateway smoke checks, and the authenticated 1440/mobile Scalper regression passed 22/22 including axe, overflow, data, default-state and no-execution assertions. Screenshots and machine-readable results are under `output/playwright/scalper-5m-20260907/`.
 
-## Remaining v1.2 phases
+## Completed v1.2 read-model phase
 
-This delivery completes the urgent chart repair and chart-first presentation phase. The following v1.2 items require additive read-model/API work and are not represented as completed:
+The remaining chart/read-model work is now implemented as additive, read-only
+evidence. No strategy rule, execution permission, collector ownership or source
+precedence changed.
 
-- independently calculated MR/MS, WR/WS and DR/DS lifecycle records (the current API exposes resistance previews only);
-- comparable prior-session OI baselines, fixed-cohort composite OI and signed/cumulative interval OI;
-- a price-aligned strike/OI profile sharing the underlying price transform;
-- effective-dated NSE/NFO phase calendars and explicit expected missing minute buckets;
-- complete participant previous-report comparisons where a qualified previous immutable report is unavailable.
+- **Six structural levels:** independent MR/MS, WR/WS and DR/DS records now
+  include origin, strict completed-close invalidation, alternatives and explicit
+  retained-source coverage. Resistance uses unbroken bearish opens; support uses
+  the lowest unbroken close from every candle colour. Daily defaults to 20
+  completed bars and weekly/monthly to 12; daily/weekly remain configurable.
+- **Calendar-qualified periods:** weekly/monthly bars reconcile expected trading
+  sessions, final scheduled session close and a consistent price basis. A
+  missing session, mixed source basis or forming period stays unconfirmed.
+- **OI baseline family:** exact contracts now expose previous-session-final OI
+  when available, otherwise the actual first eligible session observation; the
+  API preserves baseline time/kind and never converts a missing baseline to
+  zero. The OI chart has composite retained/addition/reduction/current-only,
+  qualified baseline change, current-only, prior-snapshot and provider fields.
+- **Fixed display cohort:** the selected retained CE and PE contracts have
+  separately aggregated current/baseline/layer values. The response labels this
+  as a display cohort rather than implying trader ownership or a full chain.
+- **Time-aligned OI:** 1/5/15/60 minute OI endpoints are selected at or before
+  each calendar-anchored interval end. Interval and cumulative change modes
+  leave unavailable endpoints as gaps; a prior-session quote cannot leak into a
+  new session's first interval.
+- **Price-aligned profile:** the Scalper dock renders CE/PE current OI or signed
+  change on a numeric strike Y-axis bounded by the underlying visible price
+  range. It is explicitly provider-native and only appears for observed levels.
+- **Participant comparison:** each current participant row retains its current
+  values and adds a qualified previous-report identity and changes when one is
+  present; no prior value is synthesized.
+- **Axis controls:** each underlying/CE/PE pane retains independent native
+  financial scaling, `Fit levels`, optional NIFTY round guides, data-zoom
+  filtering and a compact manual min/max lock/reset control.
 
-Missing inputs remain unavailable rather than zero. Those phases must be implemented behind additive read-model flags and reconciled across chart, table and export before being called complete.
+## Deliberate limitations
+
+- The retained `trading_calendar` supplies session boundaries, but does not yet
+  expose per-security/per-segment phase provenance. The API labels that
+  limitation instead of inventing it.
+- OI remains provider-native because contract/lot-unit normalization has not
+  been independently certified. Window max pain remains indicative only.
+- Retained source bars and quotes can be revised upstream; historical original
+  publication revisions are not available.
+- Index turnover/delivery is not applicable. Stock phase-matched delivery needs
+  a separate retained provider before it can be displayed.
+
+Missing inputs remain unavailable rather than zero. The feature is still
+research-only and policy-incomplete; it does not submit paper or live orders.

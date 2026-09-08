@@ -472,7 +472,12 @@ export function TradingAnalyticsScalper({
         historical warm-up. The optional 50-point grid is enabled by default only
         for NIFTY; other underlyings and option premiums use their own automatic scale.
       </p>
-      <div className={`${styles.kpis} ${styles.levelStrip}`}>
+      <div
+        className={`${styles.kpis} ${styles.levelStrip}`}
+        role="region"
+        aria-label="Structural level summary"
+        tabIndex={0}
+      >
         {resistance.map((r) => (
           <span key={String(r.timeframe)}>
             {String(r.timeframe).toUpperCase()} R ·{" "}

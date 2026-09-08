@@ -390,7 +390,7 @@ export function TradingAnalyticsPage() {
               : "Current retained evidence"}
           </p>
         )}
-        {d && <section className={styles.kpis} aria-label="Selected underlying option metrics">
+        {d && <section className={styles.kpis} tabIndex={0} aria-label="Selected underlying option metrics">
           <span>{d.underlying.symbol} · {d.smartapi.expiry ?? 'Expiry unavailable'} · {d.smartapi.metrics.source??d.smartapi.source} · {d.smartapi.metrics.strikes?.length??0} paired strikes{d.smartapi.metrics.collectedAt?` · Captured ${d.smartapi.metrics.collectedAt}`:''}</span>
           <span>OI PCR <strong>{display(d.smartapi.metrics.oiPcr)}</strong></span>
           <span>Volume PCR <strong>{display(d.smartapi.metrics.volumePcr)}</strong></span>

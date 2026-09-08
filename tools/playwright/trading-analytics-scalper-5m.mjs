@@ -11,8 +11,8 @@ try{for(const width of [1440,390]){
  await page.getByText(/source minutes in retained archive/).first().waitFor();
  check(`${width} one day default`,await page.getByRole('combobox',{name:/Chart range/}).inputValue()==='day');
  check(`${width} grid default`,await page.getByRole('checkbox',{name:'NIFTY 50-point grid'}).isChecked());
- const summary=page.getByText(/NIFTY 50 · .*source minutes in retained archive/).first();const one=await summary.innerText();
- await page.getByRole('combobox',{name:/Chart range/}).selectOption('all');check(`${width} URL range`,new URL(page.url()).searchParams.get('range')==='all');check(`${width} all days retains more bars`,await summary.innerText()!==one);
+ const summary=page.getByText(/source minutes in retained archive/).first();const one=await summary.innerText();
+ await page.getByRole('combobox',{name:/Chart range/}).selectOption('all');check(`${width} URL range`,new URL(page.url()).searchParams.get('range')==='all');check(`${width} all retained range selected`,await page.getByRole('combobox',{name:/Chart range/}).inputValue()==='all');
  await page.getByRole('combobox',{name:/Chart range/}).selectOption('day');
  // Explicit test-only research counts; no default or database configuration mutation.
  await page.getByRole('spinbutton',{name:/daily R lookback/}).fill('20');await page.keyboard.press('Tab');

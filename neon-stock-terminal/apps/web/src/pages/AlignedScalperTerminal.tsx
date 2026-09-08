@@ -64,17 +64,19 @@ const closedBars = (pane: Pane): CandlestickData<Time>[] => pane.bars.flatMap((b
     : [];
 });
 
-function latestForSide(panes: Pane[], wanted: "CE" | "PE") {
+function latestForSide(panes: Pane[], legs: Row[], selectedStrike: string, wanted: "CE" | "PE") {
   const pane = panes.find((candidate) => side(candidate) === wanted);
-  if (!pane) return null;
-  const bar = [...pane.bars].filter((row) => row.closed === true).at(-1);
-  const oi = [...pane.oiHistory].sort((a, b) => String(a.event_time).localeCompare(String(b.event_time))).at(-1);
+  const leg = legs.find((candidate) => String(candidate.option_type) === wanted && String(candidate.strike) === selectedStrike);
+  if (!pane && !leg) return null;
+  const bar = [...(pane?.bars ?? [])].filter((row) => row.closed === true).at(-1);
+  const oi = [...(pane?.oiHistory ?? [])].filter((row) => number(row.current) != null).sort((a, b) => String(a.event_time).localeCompare(String(b.event_time))).at(-1);
   return {
-    symbol: String(pane.identity.tradingsymbol ?? wanted),
-    ltp: number(bar?.close),
-    oi: number(oi?.current),
-    change: number(oi?.interval_change),
-    at: oi?.event_time == null ? null : String(oi.event_time),
+    symbol: String(pane?.identity.tradingsymbol ?? leg?.tradingsymbol ?? wanted),
+    ltp: number(bar?.close) ?? number(leg?.last_price),
+    oi: number(oi?.current) ?? number(leg?.open_interest),
+    change: number(oi?.interval_change) ?? number((leg?.oi_layers as Row | undefined)?.change),
+    iv: number(leg?.implied_volatility),
+    at: String(oi?.selected_event_time ?? oi?.event_time ?? leg?.collected_at ?? leg?.exchange_feed_at ?? "") || null,
   };
 }
 
@@ -88,6 +90,7 @@ function OiStrikeOverlay({
   coordinates: Map<number, number>;
 }) {
   const points = oiProfilePoints(rows).filter((point) => levelIsInSessionRange(point.strike, bounds));
+  if (!points.length) return null;
   const maximum = Math.max(0, ...points.map((point) => point.current ?? 0));
   return <div className={styles.alignedOiProfile} aria-hidden="true">
     <span className={styles.alignedOiProfileTitle}>OI BY STRIKE · {points.length}/{oiProfilePoints(rows).length} IN RANGE</span>
@@ -162,8 +165,12 @@ export function AlignedScalperTerminal({
     width: number;
     height: number;
   }>>([]);
-  const latestCe = useMemo(() => latestForSide(panes, "CE"), [panes]);
-  const latestPe = useMemo(() => latestForSide(panes, "PE"), [panes]);
+  const latestCe = useMemo(() => latestForSide(panes, legs, selectedStrike, "CE"), [panes, legs, selectedStrike]);
+  const latestPe = useMemo(() => latestForSide(panes, legs, selectedStrike, "PE"), [panes, legs, selectedStrike]);
+  const latestIndicator = useMemo(
+    () => [...indicators.values()].sort((a, b) => a.time.localeCompare(b.time)).at(-1) ?? null,
+    [indicators],
+  );
   const currentPcr = latestCe?.oi && latestPe?.oi != null ? latestPe.oi / latestCe.oi : null;
 
   useEffect(() => {
@@ -176,27 +183,31 @@ export function AlignedScalperTerminal({
       if (at != null) timeLookup.set(Number(at), String(bar.end));
     });
     const chart = createChart(host, {
-      autoSize: true,
+      // autoSize ignores explicit chart.resize calls. This chart sits inside
+      // a shrinking CSS-grid row, so bind it to the measured host ourselves.
+      autoSize: false,
+      width: Math.max(1, host.clientWidth),
+      height: Math.max(1, host.clientHeight),
       addDefaultPane: false,
       layout: {
-        background: { type: ColorType.Solid, color: "#08111f" },
-        textColor: "#9fb0c6",
+        background: { type: ColorType.Solid, color: "#ffffff" },
+        textColor: "#475569",
         fontFamily: "IBM Plex Mono, ui-monospace, monospace",
         fontSize: 11,
-        panes: { separatorColor: "#22324a", separatorHoverColor: "#3b82f666", enableResize: true },
+        panes: { separatorColor: "#d7e0eb", separatorHoverColor: "#3b82f666", enableResize: true },
         attributionLogo: false,
       },
       grid: {
-        vertLines: { color: "#16243a", style: LineStyle.SparseDotted },
-        horzLines: { color: "#16243a", style: LineStyle.SparseDotted },
+        vertLines: { color: "#eef2f7", style: LineStyle.SparseDotted },
+        horzLines: { color: "#eef2f7", style: LineStyle.SparseDotted },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: "#94a3b8aa", width: 1, style: LineStyle.Dashed, labelBackgroundColor: "#334155" },
-        horzLine: { color: "#64748b88", width: 1, style: LineStyle.Dotted, labelBackgroundColor: "#334155" },
+        vertLine: { color: "#64748baa", width: 1, style: LineStyle.Dashed, labelBackgroundColor: "#315ad7" },
+        horzLine: { color: "#64748b88", width: 1, style: LineStyle.Dotted, labelBackgroundColor: "#315ad7" },
       },
-      rightPriceScale: { borderColor: "#30435d", scaleMargins: { top: 0.08, bottom: 0.08 } },
-      timeScale: { borderColor: "#30435d", timeVisible: true, secondsVisible: false, rightOffset: 3, barSpacing: 9, minBarSpacing: 3 },
+      rightPriceScale: { borderColor: "#cbd5e1", scaleMargins: { top: 0.08, bottom: 0.08 } },
+      timeScale: { borderColor: "#cbd5e1", timeVisible: true, secondsVisible: false, rightOffset: 3, barSpacing: 9, minBarSpacing: 3 },
       handleScroll: selecting ? false : { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
       handleScale: selecting ? false : { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
     });
@@ -300,13 +311,47 @@ export function AlignedScalperTerminal({
       }));
       const delta = chart.addSeries(HistogramSeries, {
         title: `${identity} ΔOI`, color, priceLineVisible: false, lastValueVisible: false,
-        base: 0, priceFormat: { type: "volume" },
-      }, 4);
+        base: 0, priceFormat: { type: "volume" }, priceScaleId: "delta-oi",
+      }, 3);
       delta.setData(pane.oiHistory.flatMap((row) => {
         const time = timestamp(row.event_time), value = number(row.interval_change);
         return time != null && value != null ? [{ time, value, color: value >= 0 ? `${color}bb` : `${DOWN}bb` }] : [];
       }));
     });
+
+    ([latestCe, latestPe] as const).forEach((entry, index) => {
+      const time = timestamp(entry?.at);
+      const iv = chart.addSeries(LineSeries, {
+        title: `${index === 0 ? "CE" : "PE"} IV`, color: index === 0 ? CE : PE,
+        lineWidth: 2, priceLineVisible: false, lastValueVisible: true, priceScaleId: "iv",
+      }, 4);
+      iv.setData(entry?.iv != null && time != null && timeLookup.has(Number(time)) ? [{ time, value: entry.iv }] : []);
+    });
+    const oiBySide = new Map(optionPanes.map((pane) => [side(pane), pane.oiHistory.flatMap((row) => {
+      const time = timestamp(row.event_time), value = number(row.current);
+      return time != null && value != null ? [[Number(time), value] as const] : [];
+    }).sort((a, b) => a[0] - b[0])]));
+    const oiAtOrBefore = (rows: ReadonlyArray<readonly [number, number]>, target: number) => {
+      let observed: readonly [number, number] | null = null;
+      for (const row of rows) {
+        if (row[0] > target) break;
+        observed = row;
+      }
+      // OI snapshots do not necessarily share the candle's exact second. Use
+      // the last same-window observation, but never carry an old quote across
+      // a large gap or silently turn missing evidence into zero.
+      return observed && target - observed[0] <= 30 * 60 ? observed[1] : null;
+    };
+    const pcrTimes = [...timeLookup.keys()].sort((a, b) => a - b);
+    const pcr = chart.addSeries(LineSeries, {
+      title: "OI PCR · selected pair", color: PURPLE, lineWidth: 2,
+      priceLineVisible: false, lastValueVisible: true, priceScaleId: "pcr",
+    }, 4);
+    pcr.setData(pcrTimes.flatMap((value) => {
+      const ce = oiAtOrBefore(oiBySide.get("CE") ?? [], value);
+      const pe = oiAtOrBefore(oiBySide.get("PE") ?? [], value);
+      return ce != null && pe != null && ce !== 0 ? [{ time: value as UTCTimestamp, value: pe / ce }] : [];
+    }));
 
     // Indicators keep prior sessions for warm-up in the parent calculation,
     // but the aligned time scale must contain only the currently selected
@@ -320,7 +365,7 @@ export function AlignedScalperTerminal({
       .sort((a, b) => a.time.localeCompare(b.time));
     const rsi = chart.addSeries(LineSeries, {
       title: "RSI 14", color: PURPLE, lineWidth: 2, priceLineVisible: false, lastValueVisible: true,
-    }, 5);
+    }, 4);
     rsi.setData(indicatorRows.flatMap((row) => {
       const time = timestamp(row.time);
       return time != null && row.rsi != null ? [{ time, value: row.rsi }] : [];
@@ -330,14 +375,14 @@ export function AlignedScalperTerminal({
       lineStyle: LineStyle.Dotted, axisLabelVisible: value === 50, title: value === 50 ? "RSI 50" : "",
     }));
     const macd = chart.addSeries(LineSeries, {
-      title: "MACD", color: "#60a5fa", lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
-    }, 6);
+      title: "MACD", color: "#2563eb", lineWidth: 2, priceLineVisible: false, lastValueVisible: false, priceScaleId: "macd",
+    }, 4);
     const signal = chart.addSeries(LineSeries, {
-      title: "SIGNAL", color: ORANGE, lineWidth: 1, priceLineVisible: false, lastValueVisible: false,
-    }, 6);
+      title: "SIGNAL", color: ORANGE, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, priceScaleId: "macd",
+    }, 4);
     const histogram = chart.addSeries(HistogramSeries, {
-      title: "MACD HIST", color: "#64748b", base: 0, priceLineVisible: false, lastValueVisible: false,
-    }, 6);
+      title: "MACD HIST", color: "#64748b", base: 0, priceLineVisible: false, lastValueVisible: false, priceScaleId: "macd",
+    }, 4);
     const indicatorData = (key: "macd" | "signal" | "histogram") => indicatorRows.flatMap((row) => {
       const time = timestamp(row.time), value = row[key];
       return time != null && value != null ? [{ time, value }] : [];
@@ -349,7 +394,7 @@ export function AlignedScalperTerminal({
       return time != null && value != null ? [{ time, value, color: value >= 0 ? `${UP}aa` : `${DOWN}aa` }] : [];
     }));
 
-    const heights = [300, 145, 145, 72, 72, 72, 78];
+    const paneWeights = [4.0, 1.5, 1.5, 1.1, 1.15];
     const updateProfile = () => {
       if (!underlying) return;
       const paneElement = chart.panes()[0]?.getHTMLElement();
@@ -388,14 +433,23 @@ export function AlignedScalperTerminal({
         setMeasurementBoxes([]);
       }
     };
-    chart.timeScale().fitContent();
-    requestAnimationFrame(() => {
-      chart.panes().forEach((pane, index) => pane.setHeight(heights[index] ?? 70));
-      // Pane geometry settles on the next frame. Coordinate overlays must not
-      // use the equal-height intermediate layout.
+    chart.panes().forEach((pane, index) => pane.setStretchFactor(paneWeights[index] ?? .7));
+    const resizeChart = () => {
+      // v5 renders a roughly 35px draggable separator outside the requested
+      // pane-height budget for every boundary. Reserve that space explicitly;
+      // otherwise the final indicator pane exists but is clipped below the
+      // fixed desktop workstation.
+      const separatorAllowance = Math.max(0, chart.panes().length - 1) * 35;
+      chart.resize(
+        Math.max(1, host.clientWidth),
+        Math.max(220, host.clientHeight - separatorAllowance),
+        true,
+      );
+      chart.timeScale().fitContent();
       requestAnimationFrame(updateProfile);
-    });
-    const resize = new ResizeObserver(updateProfile);
+    };
+    requestAnimationFrame(resizeChart);
+    const resize = new ResizeObserver(resizeChart);
     resize.observe(host);
     chart.timeScale().subscribeVisibleLogicalRangeChange(updateProfile);
     chart.subscribeClick((parameter) => {
@@ -421,7 +475,7 @@ export function AlignedScalperTerminal({
       chart.remove();
       chartRef.current = null;
     };
-  }, [bounds, indicators, legs, levels, maxPainStrikes, onTimeClick, panes, points, selecting, showEma, showGrid, showLevels]);
+  }, [bounds, indicators, latestCe, latestPe, legs, levels, maxPainStrikes, onTimeClick, panes, points, selecting, showEma, showGrid, showLevels]);
 
   return <div className={styles.alignedTerminal} data-testid="aligned-scalper-terminal">
     <section className={styles.alignedChartSurface} aria-label="Aligned NIFTY, exact call, exact put and evidence panes">
@@ -429,27 +483,25 @@ export function AlignedScalperTerminal({
         { label: "NIFTY · CANDLES + EMA9 + LEVELS", className: "" },
         { label: `EXACT CE · ${panes.find((pane) => side(pane) === "CE")?.bars.some((row) => row.closed === true) ? "CANDLES + EMA9" : "CANDLES UNAVAILABLE"}`, className: styles.ceText },
         { label: `EXACT PE · ${panes.find((pane) => side(pane) === "PE")?.bars.some((row) => row.closed === true) ? "CANDLES + EMA9" : "CANDLES UNAVAILABLE"}`, className: styles.peText },
-        { label: `OUTSTANDING OI · ${panes.some((pane) => side(pane) !== "NIFTY" && pane.oiHistory.some((row) => number(row.current) != null)) ? "OBSERVED" : "UNAVAILABLE"}`, className: "" },
-        { label: `SIGNED INTERVAL ΔOI · ${panes.some((pane) => side(pane) !== "NIFTY" && pane.oiHistory.some((row) => number(row.interval_change) != null)) ? "OBSERVED" : "UNAVAILABLE"}`, className: "" },
-        { label: "RSI 14", className: "" },
-        { label: "MACD 12/26/9", className: "" },
-      ].map((item, index) => <span key={item.label} className={item.className} style={{ top: paneTops[index] ?? 6 }}>{item.label}</span>)}</div>
+        { label: `OUTSTANDING OI + SIGNED INTERVAL ΔOI · ${panes.some((pane) => side(pane) !== "NIFTY" && pane.oiHistory.some((row) => number(row.current) != null)) ? "OBSERVED" : "UNAVAILABLE"}`, className: "" },
+        { label: `IMPLIED VOLATILITY ${fmt(latestCe?.iv ?? latestPe?.iv ?? null)} · OI PCR ${fmt(currentPcr)} · RSI 14 ${fmt(latestIndicator?.rsi ?? null)} · MACD 12/26/9 ${fmt(latestIndicator?.macd ?? null, 3)}`, className: "" },
+      ].map((item, index) => <span key={item.label} data-testid={`aligned-pane-label-${index}`} className={item.className} style={{ top: paneTops[index] ?? 6 }}>{item.label}</span>)}</div>
       <div ref={hostRef} className={`${styles.alignedChartHost} ${selecting ? styles.alignedSelecting : ""}`} />
       <div className={styles.alignedMeasurementOverlay} data-testid="aligned-measurement-boxes" aria-hidden="true">{measurementBoxes.map((box) => <span key={box.key} style={box} />)}</div>
       <OiStrikeOverlay rows={legs} bounds={bounds} coordinates={profileCoordinates} />
     </section>
-    <section className={styles.alignedInspector} aria-label="Aligned terminal evidence inspector">
+    <section className={styles.alignedInspector} aria-label="Aligned terminal evidence inspector" role="region" tabIndex={0}>
       <section>
         <header><strong>SELECTED PAIR</strong><span>{expiry || "—"}</span></header>
         <div className={styles.alignedPairCards}>
-          <article><b className={styles.ceText}>CE</b><strong>{fmt(latestCe?.ltp ?? null)}</strong><small>OI {compact(latestCe?.oi ?? null)} · Δ {compact(latestCe?.change ?? null)}</small></article>
-          <article><b className={styles.peText}>PE</b><strong>{fmt(latestPe?.ltp ?? null)}</strong><small>OI {compact(latestPe?.oi ?? null)} · Δ {compact(latestPe?.change ?? null)}</small></article>
+          <article><b className={styles.ceText}>CE</b><strong>{fmt(latestCe?.ltp ?? null)}</strong><small>OI {compact(latestCe?.oi ?? null)} · Δ {compact(latestCe?.change ?? null)} · IV {fmt(latestCe?.iv ?? null)}</small></article>
+          <article><b className={styles.peText}>PE</b><strong>{fmt(latestPe?.ltp ?? null)}</strong><small>OI {compact(latestPe?.oi ?? null)} · Δ {compact(latestPe?.change ?? null)} · IV {fmt(latestPe?.iv ?? null)}</small></article>
         </div>
         <p>OI PCR <strong>{fmt(currentPcr)}</strong> · selected exact contracts</p>
       </section>
       <section>
         <header><strong>NEAREST PAIRS</strong><span>provider-native</span></header>
-        <div className={styles.alignedLadderScroll}><table><thead><tr><th>CE</th><th>Strike</th><th>PE</th></tr></thead><tbody>{strikes.map((strike) => <tr key={strike} aria-selected={String(strike) === selectedStrike}><td>{fmt(number(legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "CE")?.last_price))}</td><th><button type="button" disabled={fixed} onClick={() => onStrike(String(strike))}>{strike}{strike === defaultStrike ? " · ATM" : ""}</button></th><td>{fmt(number(legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "PE")?.last_price))}</td></tr>)}</tbody></table></div>
+        {legs.length ? <div className={styles.alignedLadderScroll}><table><thead><tr><th>CE</th><th>Strike</th><th>PE</th></tr></thead><tbody>{strikes.map((strike) => <tr key={strike} aria-selected={String(strike) === selectedStrike}><td>{fmt(number(legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "CE")?.last_price))}</td><th><button type="button" disabled={fixed} onClick={() => onStrike(String(strike))}>{strike}{strike === defaultStrike ? " · ATM" : ""}</button></th><td>{fmt(number(legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "PE")?.last_price))}</td></tr>)}</tbody></table></div> : <p className={styles.alignedMuted}>Current-chain ladder is not mixed into this retained historical expiry. Exact selected CE/PE evidence remains above.</p>}
       </section>
       <section>
         <header><strong>AT CURSOR</strong><span>{cursor ? new Date(cursor.time).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }) : "move cursor"}</span></header>

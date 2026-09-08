@@ -489,24 +489,26 @@
 .scalperEvidence { content-visibility: auto; }
 .alignedTerminal {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 326px;
+  grid-template-columns: minmax(0, 1fr) 318px;
+  height: 100%;
   min-height: 0;
-  border: 1px solid #22324a;
-  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
   overflow: hidden;
-  background: #08111f;
-  color: #d8e2ef;
-  box-shadow: 0 10px 30px rgba(8, 17, 31, 0.18);
+  background: #fff;
+  color: #14243a;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
 }
 .alignedChartSurface {
   position: relative;
   min-width: 0;
   min-height: 0;
-  background: #08111f;
+  background: #fff;
   isolation: isolate;
 }
 .alignedChartHost {
-  height: clamp(760px, 78vh, 900px);
+  height: 100%;
+  min-height: 0;
   min-width: 0;
   cursor: crosshair;
 }
@@ -518,15 +520,15 @@
   pointer-events: none;
   font: 600 10px/1 "IBM Plex Mono", monospace;
   letter-spacing: .035em;
-  color: #91a4bc;
+  color: #475569;
 }
 .alignedPaneLabels span {
   position: absolute;
   left: 8px;
   padding: 4px 7px;
-  border: 1px solid #243650;
+  border: 1px solid #d7e0eb;
   border-radius: 4px;
-  background: rgba(8, 17, 31, .84);
+  background: rgba(255, 255, 255, .9);
 }
 .alignedMeasurementOverlay {
   position: absolute;
@@ -543,9 +545,9 @@
   background: rgba(244, 114, 182, .11);
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, .18);
 }
-.ceText { color: #60a5fa !important; }
-.peText { color: #fde047 !important; }
-.maxPainText { color: #c4b5fd !important; }
+.ceText { color: #2563eb !important; }
+.peText { color: #a16207 !important; }
+.maxPainText { color: #7c3aed !important; }
 .alignedOiProfile {
   position: absolute;
   z-index: 5;
@@ -553,14 +555,14 @@
   inset: 0 62px auto auto;
   width: 174px;
   height: 300px;
-  border-left: 1px solid #334a67;
-  background: linear-gradient(90deg, transparent, rgba(8, 17, 31, .74));
+  border-left: 1px solid #cbd5e1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .88));
 }
 .alignedOiProfileTitle {
   position: absolute;
   top: 7px;
   right: 5px;
-  color: #91a4bc;
+  color: #64748b;
   font: 600 9px/1 "IBM Plex Mono", monospace;
 }
 .alignedOiBarCe,
@@ -576,15 +578,16 @@
 .alignedOiBarPe { right: 82px; background: #facc15; }
 .alignedInspector {
   min-width: 0;
-  max-height: clamp(760px, 78vh, 900px);
+  height: 100%;
+  max-height: none;
   overflow: auto;
-  border-left: 1px solid #22324a;
-  background: #0b1626;
-  scrollbar-color: #334a67 #0b1626;
+  border-left: 1px solid #cbd5e1;
+  background: #f8fafc;
+  scrollbar-color: #94a3b8 #f1f5f9;
 }
 .alignedInspector section {
-  border-bottom: 1px solid #22324a;
-  padding: 8px;
+  border-bottom: 1px solid #dce4ef;
+  padding: 6px 8px;
 }
 .alignedInspector header,
 .alignedInspector p {
@@ -596,57 +599,75 @@
 }
 .alignedInspector header {
   min-height: 24px;
-  color: #91a4bc;
+  color: #475569;
   font: 600 10px/1.2 "IBM Plex Mono", monospace;
 }
-.alignedInspector header span { color: #94a3b8; font-weight: 400; }
+.alignedInspector header span { color: #64748b; font-weight: 500; }
 .alignedInspector p {
   padding: 4px 2px;
-  border-top: 1px solid rgba(34, 50, 74, .55);
-  color: #d8e2ef;
+  border-top: 1px solid #e4eaf2;
+  color: #14243a;
   font: 500 11px/1.25 "IBM Plex Mono", monospace;
 }
-.alignedInspector p small { color: #91a4bc; text-align: right; }
-.alignedInspector p strong { color: #f8fafc; font-size: 13px; }
+.alignedInspector p small { color: #52657d; text-align: right; }
+.alignedInspector p strong { color: #0f172a; font-size: 13px; }
 .alignedPairCards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .alignedPairCards article {
   display: grid;
   gap: 2px;
   padding: 7px;
-  border: 1px solid #2a3d57;
+  border: 1px solid #d7e0eb;
   border-radius: 6px;
-  background: #101e31;
+  background: #fff;
 }
 .alignedPairCards article strong { font: 700 15px/1.2 "IBM Plex Mono", monospace; }
-.alignedPairCards article small { color: #91a4bc; font: 500 9px/1.3 "IBM Plex Mono", monospace; }
+.alignedPairCards article small { color: #52657d; font: 500 9px/1.3 "IBM Plex Mono", monospace; }
 .alignedLadderScroll { max-height: 244px; overflow: auto; }
 .page .alignedLadderScroll table { width: 100%; table-layout: fixed; font: 500 10px/1.1 "IBM Plex Mono", monospace; }
 .page .alignedLadderScroll th,
-.page .alignedLadderScroll td { height: 25px; padding: 2px 4px; border-color: #22324a; background: transparent; color: #c7d3e3; text-align: right; }
+.page .alignedLadderScroll td { height: 25px; padding: 2px 4px; border-color: #dce4ef; background: transparent; color: #263343; text-align: right; }
 .page .alignedLadderScroll tbody td:first-child { background: transparent; position: static; }
 .page .alignedLadderScroll th:nth-child(2) { text-align: center; }
-.page .alignedLadderScroll thead th { background: #122137; color: #91a4bc; }
+.page .alignedLadderScroll thead th { background: #eef3fa; color: #475569; }
 .page .alignedLadderScroll button { min-height: 21px; padding: 1px 3px; border: 0; background: transparent; color: inherit; font: inherit; }
-.page .alignedLadderScroll tr[aria-selected="true"] { outline: 1px solid #3b82f6; outline-offset: -1px; background: #172d4d; }
-.alignedMuted { color: #94a3b8 !important; font-weight: 400 !important; }
-.page[data-view="scalper"] { gap: 6px; padding: 8px 10px; }
+.page .alignedLadderScroll tr[aria-selected="true"] { outline: 1px solid #315ad7; outline-offset: -1px; background: #eaf0ff; }
+.alignedMuted { color: #64748b !important; font-weight: 400 !important; }
+.page[data-view="scalper"] { gap: 3px; padding: 4px 6px; }
+.page[data-view="scalper"] {
+  /* The application shell leaves 22px of outer main/gutter geometry in
+     addition to the 56px command header. Account for it so this workstation
+     does not create browser-level scrolling at 1920x1080. */
+  height: calc(100dvh - 78px);
+  box-sizing: border-box;
+  min-height: 0;
+  grid-template-rows: 34px 30px 32px 34px 24px minmax(0, 1fr);
+  overflow: hidden;
+}
+.page[data-view="scalper"] > .context,
+.page[data-view="scalper"] > .kpis { display: none; }
 .page[data-view="scalper"] > header.toolbar,
 .page[data-view="scalper"] > .context,
 .page[data-view="scalper"] > .kpis,
 .page[data-view="scalper"] > .warning { margin: 0; }
-.page[data-view="scalper"] > header.toolbar { flex-wrap: nowrap; overflow-x: auto; min-height: 38px; }
-.page[data-view="scalper"] > header.toolbar { height: 42px; align-items: center; }
+.page[data-view="scalper"] > header.toolbar { flex-wrap: nowrap; overflow-x: auto; min-height: 30px; }
+.page[data-view="scalper"] > header.toolbar { height: 34px; align-items: center; }
 .page[data-view="scalper"] > header.toolbar h1 { flex: 0 0 auto; white-space: nowrap; font-size: 15px; }
 .page[data-view="scalper"] > header.toolbar label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .page[data-view="scalper"] > header.toolbar select { max-width: 170px; }
 .page[data-view="scalper"] > header.toolbar button,
 .page[data-view="scalper"] > header.toolbar a { white-space: nowrap; }
-.page[data-view="scalper"] > .tabs { min-height: 34px; padding: 2px 0; flex-wrap: nowrap; overflow-x: auto; }
-.page[data-view="scalper"] > .tabs button { min-height: 30px; padding-block: 2px; white-space: nowrap; }
+.page[data-view="scalper"] > .tabs { min-height: 30px; padding: 0; flex-wrap: nowrap; overflow-x: auto; }
+.page[data-view="scalper"] > .tabs button { min-height: 27px; padding-block: 1px; white-space: nowrap; }
 .page[data-view="scalper"] > .context { height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 0; line-height: 20px; }
 .page[data-view="scalper"] > .kpis { flex-wrap: nowrap; overflow-x: auto; min-height: 42px; padding: 5px 8px; }
 .page[data-view="scalper"] > .kpis strong { display: inline; font-size: 14px; }
-.page[data-view="scalper"] > .warning { min-height: 38px; padding: 3px 8px; line-height: 30px; white-space: nowrap; overflow-x: auto; }
+.page[data-view="scalper"] > .warning { min-height: 32px; padding: 1px 6px; line-height: 28px; white-space: nowrap; overflow-x: auto; }
+.page[data-view="scalper"] .scalperCommandBar { min-height: 34px; height: 34px; padding: 2px 4px; }
+.page[data-view="scalper"] .scalperCommandBar button,
+.page[data-view="scalper"] .scalperCommandBar select,
+.page[data-view="scalper"] .scalperCommandBar input,
+.page[data-view="scalper"] .scalperCompactMenu > summary { min-height: 27px; height: 27px; padding-block: 1px; }
+.page[data-view="scalper"] .scalperOiTopline { min-height: 24px; height: 24px; padding-block: 1px; overflow: hidden; white-space: nowrap; }
 .page[data-view="scalper"] .scalperCommandBar { order: 1; }
 .page[data-view="scalper"] .scalperOiTopline { order: 2; }
 .page[data-view="scalper"] .contractHeaders { order: 3; }
@@ -660,6 +681,55 @@
 .page[data-view="scalper"] > .kpis:not(.levelStrip) { order: 8; }
 .page[data-view="scalper"] .scalperEvidence { order: 9; }
 .page[data-view="scalper"] .plot { order: 10; }
+.page[data-view="scalper"] .alignedTerminal { min-height: 0; }
+.page[data-view="scalper"] > .scalperAuditOnly { display: none; }
+.scalperModule { display: contents; }
+.scalperModule[data-renderer="aligned"] .measurement,
+.scalperModule[data-renderer="aligned"] .levelStrip,
+.scalperModule[data-renderer="aligned"] .scalperOverlayBar,
+.scalperModule[data-renderer="aligned"] .scalperLegend,
+.scalperModule[data-renderer="aligned"] .scalperEvidence,
+.scalperModule[data-renderer="aligned"] .plot,
+.scalperModule[data-renderer="aligned"] .contractHeaders { display: none; }
+.scalperCompactMenu { position: relative; flex: 0 0 auto; }
+.scalperCompactMenu > summary {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1px solid #bcc9dc;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.scalperCompactMenu[open] > div {
+  position: fixed;
+  z-index: 1200;
+  top: 172px;
+  right: 12px;
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(520px, calc(100dvh - 190px));
+  overflow: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #bcc9dc;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .16);
+}
+.scalperCompactMenu.axisControls[open] { min-width: 0; padding: 0; border: 0; background: transparent; }
+.scalperCompactMenu.axisControls[open] > div { display: block; margin: 0; }
+.scalperCompactMenu.axisControls[open] > div > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 105px 105px 90px auto;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+}
 .structureLarge {
   height: 460px;
   min-width: 0;

@@ -3660,3 +3660,13 @@ post-open live repopulation must be verified after deployment.
 - Missing exact option bars/OI remain unavailable. During final validation, the selected 15 September expiry had underlying minutes but no exact CE/PE candle minutes; the deployed UI showed this explicitly and did not roll or splice another contract.
 - Validation: web typecheck/build and 92/92 tests; API typecheck/build and 187/187 tests; canonical gate passed. Authenticated responsive browser suites passed 4/4 on local Vite, 4/4 on the deployed gateway and 4/4 on the public route at 1920x1080, 1440x900, 1024x768 and 390x844. Runtime evidence is ignored under `output/ui-validation/aligned-terminal-v3{,-deployed,-public}/`.
 - Deployment rebuilt and recreated only `n50-dashboard`. Container image `sha256:0c3832a7dfa6974638f45b33ec17acac7af9c32a7213e8d27a0e3d22f630969b` is healthy with zero restarts; local and public route smokes returned HTTP 200. No database, collector, scheduler, paper trade, WhatsApp or broker execution changes were made.
+
+# 2026-09-08 — aligned terminal final critical correction
+
+- Latest user direction overrides the dark reference image: the MANEESH Scalper is now a light, compact workstation that measures exactly 1080px document height in a 1920x1080 production browser.
+- Five visible synchronized bands replace the overlong seven-pane stack: NIFTY; exact CE; exact PE; combined outstanding OI/signed interval OI change; combined IV/PCR/RSI/MACD evidence. The last band is verified inside the chart viewport, not merely mounted below a clipped canvas.
+- The terminal automatically selects the closest expiry/strike with actual retained paired CE/PE minute coverage. Current-chain ladder rows are not mixed with a different retained historical expiry.
+- Browser-only fixed-pair measurement remains A candle open to B candle close, default quantity 65, with synchronized rectangles and illustrative CE+PE P&L.
+- Final clean-build dashboard image: `sha256:018e85fdebe4cd2ae7454c6aeae248a31f12a6ee5c462a3da114fa2d9c91e2ed`; container healthy, zero restarts, public HTTP 200.
+- Validation: web 92/92, API 187/187, both typechecks; authenticated production browser 33/33; desktop/mobile axe zero; 13 screenshots.
+- Full handoff folder: `/home/novius2/NIFTY50/UI/ALIGNED_TERMINAL_ACCEPTANCE_PACKAGE_20260908`. Detailed mapping: `docs/trading-analytics/ALIGNED_TERMINAL_V3_20260908.md`.

@@ -385,6 +385,26 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         asOf,
         q.data.historyDays,
       );
+      const availableContracts = await prisma.$queryRawUnsafe<Facts[]>(
+        `SELECT i.expiry::text expiry,i.strike::float8 strike,
+                count(*) FILTER (WHERE i.tradingsymbol LIKE '%CE')::int ce_contracts,
+                count(*) FILTER (WHERE i.tradingsymbol LIKE '%PE')::int pe_contracts
+         FROM instruments i
+         WHERE i.name=$3 AND i.exchange='NFO' AND i.instrumenttype=$4
+           AND i.updated_at<=$1::timestamptz
+           AND EXISTS (
+             SELECT 1 FROM bars_1m b
+             WHERE b.exchange=i.exchange AND b.symbol_token=i.symbol_token
+               AND b.ts>=$1::timestamptz-make_interval(days=>$2::int)
+               AND b.ts+interval '1 minute'<=$1::timestamptz
+               AND b.created_at<=$1::timestamptz
+           )
+         GROUP BY i.expiry,i.strike
+         HAVING count(*) FILTER (WHERE i.tradingsymbol LIKE '%CE')>0
+            AND count(*) FILTER (WHERE i.tradingsymbol LIKE '%PE')>0
+         ORDER BY i.expiry,i.strike`,
+        asOf,q.data.historyDays,underlying.symbol,underlying.optionType,
+      );
       // The canonical Go master has already converted broker strike units to rupees.
       const contracts =
         q.data.expiry && q.data.strike
@@ -446,6 +466,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
           sessions: sessions.map(row=>({trade_date:row.trade_date,market_open_ts:row.market_open_ts,market_close_ts:row.market_close_ts,phase_id:row.phase_id,updated_at:row.updated_at})),
         },
         underlying,
+        availableContracts,
         panes,
         state: "PREVIEW_UNAPPROVED",
         limitations: [

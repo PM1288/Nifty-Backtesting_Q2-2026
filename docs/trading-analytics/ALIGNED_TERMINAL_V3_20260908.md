@@ -4,7 +4,7 @@ Date: 8 September 2026
 
 Route: `/strategy/trading-analytics?view=scalper`
 
-Branch: `ui/maneesh-terminal-v3`
+Branch: `master`
 
 Feature gate: existing `N50_TRADING_ANALYTICS_ENABLED` / `VITE_TRADING_ANALYTICS_ENABLED`
 
@@ -29,16 +29,18 @@ archive's broad third-party package inventory.
 ## Implemented visual system
 
 - The default `renderer=aligned` presents one synchronized Lightweight Charts
-  workspace with seven price/indicator panes and one shared time scale.
+  workspace with five compact evidence panes and one shared time scale. This
+  is the accepted single-desktop-viewport layout.
 - Pane 1: NIFTY green/red candlesticks, EMA9, selected-day levels, optional 50-point
   round guides, and explicitly indicative max-pain references.
 - Panes 2 and 3: exact selected CE and PE green/red candlesticks with EMA9. CE uses
   blue identity labels and PE uses yellow identity labels; identity colour does not
   override candle direction semantics.
-- Panes 4 and 5: provider-native CE/PE outstanding OI and signed interval change in
-  OI. Missing endpoints are gaps and are labelled unavailable.
-- Panes 6 and 7: RSI 14 with 30/50/70 references, and MACD 12/26/9 with signal and
-  signed histogram.
+- Pane 4: provider-native CE/PE outstanding OI and signed interval change in OI.
+  Missing endpoints are gaps and are labelled unavailable.
+- Pane 5: selected-pair IV and OI PCR plus NIFTY RSI 14 and MACD 12/26/9. The
+  compact heading always exposes the current values; unavailable IV remains an
+  em dash rather than a synthetic value.
 - A synchronized cursor exposes exact OHLC and indicator values in the evidence
   rail. Charts pan and zoom using the library's native interaction.
 - The selected CE/PE ladder, PCR, A/B measurement, setup references, strict levels,
@@ -70,11 +72,11 @@ it does not enable paper or broker execution.
 
 All values continue to come from the existing Trading Analytics API. No ingestion,
 strategy calculation, source precedence, database, paper ledger or execution policy
-changed. The current validation snapshot returned retained underlying minutes but
-zero exact CE/PE source minutes for the selected `2026-09-15` expiry. The new UI
-therefore rendered `CANDLES UNAVAILABLE`, `OI ... UNAVAILABLE`, and em dashes for
-those legs while retaining the healthy NIFTY chart. This is the intended behavior;
-the UI did not splice another option, roll ATM, or synthesize zero.
+changed. The initially selected `2026-09-15` expiry had insufficient retained paired
+minutes. The UI now selects the closest expiry/strike with actual CE and PE coverage,
+updates the URL visibly, and renders the exact retained `2026-09-08` 23650 pair. It
+does not splice a rotating ATM series. When this retained expiry differs from the
+current chain, the current-chain ladder is suppressed instead of mixing identities.
 
 Session support/resistance is plotted only when it falls inside the selected day's
 observed NIFTY low/high. Off-range levels remain listed in the inspector with their
@@ -86,8 +88,8 @@ exact value and `outside range`; they cannot flatten the candle scale.
 - Unit tests cover strict level range boundaries, OI-profile proportional width,
   CALL/PUT Body70 rules, exact next scheduled bar, strict equality failure, missing
   immediate bar, 69.99% boundary and doji rejection.
-- Authenticated browser tests cover 1920x1080, 1440x900, 1024x768 and 390x844,
-  aligned-default URL state, seven rendered panes, required evidence labels,
+- Authenticated browser tests cover desktop and mobile, aligned-default URL state,
+  five rendered/visible panes, required evidence labels,
   responsive geometry, no page-level horizontal overflow and browser errors.
 - Generated screenshots and `validation.json` remain untracked under
   `output/ui-validation/aligned-terminal-v3/`.
@@ -96,7 +98,7 @@ The source pack contains a 140-case acceptance catalogue. It is a forward test
 inventory, not evidence that 140 production cases have run. Only the automated
 checks recorded above and in `AGENT_HANDOFF.md` are claimed by this release.
 
-Final release evidence:
+Initial release evidence:
 
 - Web: typecheck passed, production build passed, **92/92** tests passed.
 - API preservation: typecheck passed, build passed, **187/187** tests passed.
@@ -114,13 +116,12 @@ Final release evidence:
 
 ## Deliberate limitations
 
-1. Historical IV/PCR series are not exposed by the current chart endpoint, so the
-   chart does not invent IV/PCR time-series panes. Current window PCR remains in the
-   evidence rail.
+1. Historical IV remains unavailable for the retained selected pair and is shown as
+   `—`. Selected-pair PCR is calculated from bounded at-or-before OI observations.
 2. Max pain is the existing selected-window indicative value, not certified full
    historical chain max pain.
-3. The current selected expiry lacks retained exact CE/PE minutes in the validation
-   snapshot. Exact option panes recover automatically when the source returns them.
+3. Current-chain quote rows are deliberately not displayed beside a different
+   historical expiry. The exact selected historical bars/OI remain visible.
 4. The OI profile uses a price-coordinate DOM overlay rather than a custom
    Lightweight Charts primitive; its source and proportional values are still
    deterministic and tested.
@@ -136,3 +137,19 @@ For a user-level rollback, add `renderer=classic` to the Scalper URL. For a rele
 rollback, revert the scoped commit and rebuild only `n50-dashboard`. The existing
 feature gate can disable the entire Trading Analytics workspace. No database or API
 rollback is required.
+
+## Final completion correction and package
+
+The final critical pass changed the dark terminal to the application light theme,
+removed browser-level desktop scrolling, and corrected Lightweight Charts sizing so
+the fifth pane is physically visible inside the 1920x1080 chart viewport. The right
+rail is keyboard-focusable. Stock Activity and History/Replay were added to the
+full-screen evidence set.
+
+Final code validation: web 92/92, API 187/187, both typechecks pass. Authenticated
+production browser acceptance: 33/33 with zero desktop/mobile axe violations and no
+application runtime errors. Deployed dashboard image:
+`sha256:018e85fdebe4cd2ae7454c6aeae248a31f12a6ee5c462a3da114fa2d9c91e2ed`.
+
+Acceptance folder:
+`/home/novius2/NIFTY50/UI/ALIGNED_TERMINAL_ACCEPTANCE_PACKAGE_20260908`

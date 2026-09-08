@@ -192,8 +192,9 @@ export function TradingAnalyticsScalper({
       : [...strikes].sort(
           (a, b) => Math.abs(a - spot) - Math.abs(b - spot) || a - b,
         )[0];
+  const chartExpiry = params.get("chartExpiry") ?? expiry;
   const selected = fixedPair?.strike ?? (strike || String(defaultStrike ?? ""));
-  const effectiveExpiry = fixedPair?.expiry ?? expiry;
+  const effectiveExpiry = fixedPair?.expiry ?? chartExpiry;
   const query = new URLSearchParams({ symbol, asOf, interval: String(interval) });
   if (effectiveExpiry && selected) {
     query.set("expiry", effectiveExpiry);
@@ -210,6 +211,7 @@ export function TradingAnalyticsScalper({
           sourceMinuteCount: number;
           oiHistory: Row[];
         }[];
+        availableContracts: Array<{ expiry: string; strike: number; ce_contracts: number; pe_contracts: number }>;
         limitations: string[];
       }>(`/v1/trading-analytics/charts?${query}`),
     staleTime: 30000,
@@ -225,6 +227,22 @@ export function TradingAnalyticsScalper({
   const day = days.includes(params.get("day") ?? "")
     ? params.get("day")!
     : (days[0] ?? "");
+  const availableContracts = q.data?.availableContracts ?? [];
+  const availableExpiries = [...new Set([expiry, ...availableContracts.map((row) => String(row.expiry))].filter(Boolean))].sort();
+  const availableStrikes = availableContracts.filter((row) => String(row.expiry) === effectiveExpiry).map((row) => Number(row.strike));
+  useEffect(() => {
+    if (!q.data || fixedPair || params.get("chartExpiry")) return;
+    const exactPanes = q.data.panes.filter((pane) => pane.identity.exchange === "NFO");
+    if (exactPanes.length === 2 && exactPanes.every((pane) => pane.sourceMinuteCount > 1)) return;
+    const candidate = [...q.data.availableContracts]
+      .sort((a, b) => Math.abs(Date.parse(a.expiry) - Date.parse(day || expiry)) - Math.abs(Date.parse(b.expiry) - Date.parse(day || expiry)) || Math.abs(Number(a.strike) - Number(spot ?? 0)) - Math.abs(Number(b.strike) - Number(spot ?? 0)))[0];
+    if (!candidate) return;
+    const next = new URLSearchParams(params);
+    next.set("chartExpiry", String(candidate.expiry));
+    next.set("strike", String(candidate.strike));
+    next.set("pin", "true");
+    setParams(next, { replace: true });
+  }, [day, expiry, fixedPair, params, q.data, setParams, spot]);
   const oneDay = params.get("range") !== "all";
   const panes = useMemo(
     () =>
@@ -417,19 +435,18 @@ export function TradingAnalyticsScalper({
     };
   }, [panes, narrow, showEma, showLevels, showGrid, lowerPane, indicators, selecting, points, quantity, label, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds]);
   return (
-    <>
+    <div className={styles.scalperModule} data-renderer={renderer}>
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
-        <h2>Underlying / exact CE / exact PE</h2>
-        <label>
-          Renderer{" "}
+        <h2>NIFTY / CE / PE</h2>
+        <label title="Chart renderer">
           <select aria-label="Scalper renderer" value={renderer} onChange={(event) => updateView("renderer", event.target.value === "classic" ? "classic" : "")}>
             <option value="aligned">Aligned terminal</option>
             <option value="classic">Classic ECharts</option>
           </select>
         </label>
-        <label>
-          Chart range{" "}
+        <label title="Chart range">
           <select
+            aria-label="Chart range"
             value={oneDay ? "day" : "all"}
             onChange={(e) => updateView("range", e.target.value)}
           >
@@ -438,9 +455,9 @@ export function TradingAnalyticsScalper({
           </select>
         </label>
         {oneDay && (
-          <label>
-            Trading day (IST){" "}
+          <label title="Trading day (IST)">
             <select
+              aria-label="Trading day (IST)"
               value={day}
               onChange={(e) => updateView("day", e.target.value)}
             >
@@ -450,54 +467,85 @@ export function TradingAnalyticsScalper({
             </select>
           </label>
         )}
-        <label>
-          Interval{" "}
+        <label title="Candle interval">
           <select
+            aria-label="Interval"
             value={interval}
             onChange={(e) => setInterval(Number(e.target.value))}
           >
-            <option value={1}>1 min</option>
-            <option value={5}>5 min</option>
-            <option value={15}>15 min</option>
-            <option value={60}>1 hour</option>
+            <option value={1}>1m</option>
+            <option value={5}>5m</option>
+            <option value={15}>15m</option>
+            <option value={60}>60m</option>
           </select>
         </label>
-        <label>
-          Pinned paired strike{" "}
-          <select disabled={!!fixedPair} value={selected} onChange={(e) => setStrike(e.target.value)}>
-            {[...new Set([...strikes, ...(selected ? [Number(selected)] : [])])]
+        <label title="Paired strike">
+          <select aria-label="Paired strike" disabled={!!fixedPair} value={selected} onChange={(e) => setStrike(e.target.value)}>
+            {[...new Set([...(availableStrikes.length ? availableStrikes : strikes), ...(selected ? [Number(selected)] : [])])]
               .sort((a, b) => a - b)
               .map((s) => (
                 <option key={s}>{s}</option>
               ))}
           </select>
         </label>
-        <span>Expiry {effectiveExpiry || "—"}</span>
-        <button disabled={!!fixedPair} onClick={() => setStrike(selected)}>Pin selected pair</button>
-        <button disabled={!!fixedPair} onClick={() => setStrike("")}>Reset to ATM auto-follow</button>
-        <strong>{fixedPair ? "VISUAL PAIR FIXED" : strike ? "PINNED" : "ATM AUTO-FOLLOW"}</strong>
-        <label>
-          <input
-            type="checkbox"
-            checked={showEma}
-            onChange={(e) => setShowEma(e.target.checked)}
-          />
-          9 EMA
+        <label title="Exact-contract expiry">
+          <select aria-label="Exact-contract expiry" disabled={!!fixedPair} value={effectiveExpiry} onChange={(event) => {
+            const nextExpiry = event.target.value;
+            const candidates = availableContracts.filter((row) => String(row.expiry) === nextExpiry).map((row) => Number(row.strike));
+            const nextStrike = [...candidates].sort((a, b) => Math.abs(a - Number(spot ?? 0)) - Math.abs(b - Number(spot ?? 0)))[0];
+            const next = new URLSearchParams(params);
+            next.set("chartExpiry", nextExpiry);
+            if (nextStrike != null) next.set("strike", String(nextStrike));
+            setParams(next);
+          }}>{availableExpiries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
         </label>
-        <details className={styles.axisControls}>
-          <summary>Price axes</summary>
-          <p>Auto fits visible filtered candles. Enter both limits to lock one price pane; reset restores auto scaling.</p>
-          {(panes ?? []).map((pane, index) => {
-            const bounds = axisBounds[index] ?? { min: "", max: "" };
-            const locked = validManualBounds(index) != null;
-            return <div key={String(pane.identity.tradingsymbol)}>
-              <strong>{String(pane.identity.tradingsymbol)}</strong>
-              <label>Min <input aria-label={`${String(pane.identity.tradingsymbol)} price-axis minimum`} inputMode="decimal" value={bounds.min} onChange={event=>setAxisBounds(current=>({...current,[index]:{...bounds,min:event.target.value}}))}/></label>
-              <label>Max <input aria-label={`${String(pane.identity.tradingsymbol)} price-axis maximum`} inputMode="decimal" value={bounds.max} onChange={event=>setAxisBounds(current=>({...current,[index]:{...bounds,max:event.target.value}}))}/></label>
-              <span>{locked ? "Locked" : bounds.min || bounds.max ? "Enter valid min < max" : "Auto"}</span>
-              <button type="button" disabled={!bounds.min && !bounds.max} onClick={()=>setAxisBounds(current=>{const next={...current};delete next[index];return next;})}>Reset</button>
-            </div>;
-          })}
+        <button disabled={!!fixedPair} onClick={() => setStrike(selected)}>Pin</button>
+        <button disabled={!!fixedPair} onClick={() => setStrike("")}>ATM</button>
+        <strong>{fixedPair ? "FIXED" : strike ? "PINNED" : "ATM AUTO"}</strong>
+        <details className={styles.scalperCompactMenu}>
+          <summary>Layers</summary>
+          <div>
+            <label><input type="checkbox" checked={showEma} onChange={(e) => setShowEma(e.target.checked)}/> EMA9</label>
+            <label><input type="checkbox" checked={showGrid} onChange={(e) => setShowGrid(e.target.checked)}/> 50-point grid</label>
+            <label><input type="checkbox" checked={showLevels} onChange={(e) => setShowLevels(e.target.checked)}/> D/W/M R&amp;S</label>
+            <span>{plottedLevels.length}/{selectedLevels.length} levels inside session range</span>
+          </div>
+        </details>
+        <details className={styles.scalperCompactMenu}>
+          <summary>Measure {measured ? `₹${valueText(measured.pnl)}` : "A→B"}</summary>
+          <div>
+            <button disabled={!selected || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{strike:selected,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock pair":"Fix pair"}</button>
+            <label>Quantity <input aria-label="Measurement quantity" type="number" min={1} step={1} value={quantity} onChange={e=>setQuantity(e.target.value)} style={{width:90}} /></label>
+            <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Pick A open → B close</button>
+            <button onClick={()=>{setPoints([]);setSelecting(false);}}>Clear</button>
+            {fixedPair && [0, 1].map((index) => <label key={index}>{index === 0 ? "A open" : "B close"}<select
+              aria-label={index === 0 ? "Measurement start time" : "Measurement end time"}
+              value={points[index] ?? ""}
+              disabled={index === 1 && !points[0]}
+              onChange={(event) => {
+                setPoints((current) => !event.target.value ? [] : index === 0 ? [event.target.value] : [current[0] ?? times[0], event.target.value].sort());
+                setSelecting(false);
+              }}
+            ><option value="">Choose candle</option>{times.map((time) => <option key={time} value={time}>{new Date(time).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}</option>)}</select></label>)}
+            <small>{selecting ? `Select ${points.length ? "B at candle close" : "A at candle open"}` : "Browser-only visual measurement; no order or booked P&L."}</small>
+          </div>
+        </details>
+        <details className={`${styles.axisControls} ${styles.scalperCompactMenu}`}>
+          <summary>Axes</summary>
+          <div>
+            <p>Auto fits visible candles. Enter both limits to lock one pane.</p>
+            {(panes ?? []).map((pane, index) => {
+              const bounds = axisBounds[index] ?? { min: "", max: "" };
+              const locked = validManualBounds(index) != null;
+              return <div key={String(pane.identity.tradingsymbol)}>
+                <strong>{String(pane.identity.tradingsymbol)}</strong>
+                <label>Min <input aria-label={`${String(pane.identity.tradingsymbol)} price-axis minimum`} inputMode="decimal" value={bounds.min} onChange={event=>setAxisBounds(current=>({...current,[index]:{...bounds,min:event.target.value}}))}/></label>
+                <label>Max <input aria-label={`${String(pane.identity.tradingsymbol)} price-axis maximum`} inputMode="decimal" value={bounds.max} onChange={event=>setAxisBounds(current=>({...current,[index]:{...bounds,max:event.target.value}}))}/></label>
+                <span>{locked ? "Locked" : bounds.min || bounds.max ? "Enter min < max" : "Auto"}</span>
+                <button type="button" disabled={!bounds.min && !bounds.max} onClick={()=>setAxisBounds(current=>{const next={...current};delete next[index];return next;})}>Reset</button>
+              </div>;
+            })}
+          </div>
         </details>
         {q.data && (
           <button
@@ -517,7 +565,7 @@ export function TradingAnalyticsScalper({
               setTimeout(() => URL.revokeObjectURL(url), 1000);
             }}
           >
-            Export exact-contract bars CSV
+            Export CSV
           </button>
         )}
       </div>
@@ -664,7 +712,7 @@ export function TradingAnalyticsScalper({
       {renderer === "aligned" && panes && panes.length > 0 ? <Suspense fallback={<p>Loading aligned terminal…</p>}>
         <AlignedTerminal
           panes={panes}
-          legs={legs}
+          legs={effectiveExpiry === expiry ? legs : []}
           levels={selectedLevels}
           bounds={visibleUnderlyingBounds}
           showEma={showEma}
@@ -685,7 +733,7 @@ export function TradingAnalyticsScalper({
           fixed={Boolean(fixedPair)}
           onStrike={setStrike}
           expiry={effectiveExpiry}
-          maxPainStrikes={maxPainStrikes}
+          maxPainStrikes={effectiveExpiry === expiry ? maxPainStrikes : []}
           signals={signals}
         />
       </Suspense> : renderer === "classic" ? <div className={styles.scalperWorkspace}>
@@ -899,6 +947,6 @@ export function TradingAnalyticsScalper({
       {q.data?.limitations.map((l) => (
         <p className={styles.scalperEvidence} key={l}>{l}</p>
       ))}
-    </>
+    </div>
   );
 }

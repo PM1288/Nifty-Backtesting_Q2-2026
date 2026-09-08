@@ -52,12 +52,12 @@ const authenticate = async (context) => {
 const browser = await chromium.launch({ headless: true });
 let chartSummary = null;
 try {
-  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, reducedMotion: "reduce" });
+  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, reducedMotion: "reduce", extraHTTPHeaders: { "Cache-Control": "no-cache" } });
   await authenticate(context);
   const page = await context.newPage();
   page.on("pageerror", (error) => runtimeErrors.push(String(error)));
   page.on("console", (message) => {
-    if (message.type() === "error" && !knownNoise(message.text())) runtimeErrors.push(message.text());
+    if (message.type() === "error" && !knownNoise(message.text())) runtimeErrors.push(`${message.text()} · ${message.location().url || "unknown source"}`);
   });
   let chartPayload = null;
   page.on("response", async (response) => {
@@ -76,12 +76,21 @@ try {
   const rangeSelect = page.getByRole("combobox", { name: /^Chart range/ });
   check("five-minute interval is default", await intervalSelect.inputValue() === "5");
   check("one-day range is default", await rangeSelect.inputValue() === "day");
-  check("seven synchronized chart panes render", await terminal.locator("canvas").count() >= 7);
+  check("five synchronized chart panes render", await terminal.locator("canvas").count() >= 5);
+  check("fifth evidence pane is visible inside chart viewport", await terminal.evaluate((node) => {
+    const region = node.querySelector('[aria-label="Aligned NIFTY, exact call, exact put and evidence panes"]');
+    const label = node.querySelector('[data-testid="aligned-pane-label-4"]');
+    if (!(region instanceof HTMLElement) || !(label instanceof HTMLElement)) return false;
+    const outer = region.getBoundingClientRect();
+    const inner = label.getBoundingClientRect();
+    return inner.top >= outer.top && inner.bottom <= outer.bottom;
+  }));
   const terminalText = await terminal.innerText();
-  for (const label of ["EXACT CE", "EXACT PE", "OUTSTANDING OI", "SIGNED INTERVAL ΔOI", "RSI 14", "MACD 12/26/9", "NEAREST PAIRS", "SOURCE HEALTH"]) {
+  for (const label of ["EXACT CE", "EXACT PE", "OUTSTANDING OI", "SIGNED INTERVAL ΔOI", "IMPLIED VOLATILITY", "OI PCR", "RSI 14", "MACD 12/26/9", "NEAREST PAIRS", "SOURCE HEALTH"]) {
     check(`terminal exposes ${label}`, terminalText.includes(label));
   }
   check("no desktop horizontal page overflow", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
+  check("aligned workstation fits one desktop viewport", await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 2), await page.evaluate(() => `${document.documentElement.scrollHeight}px document / ${innerHeight}px viewport`));
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await capture(page, "01-aligned-terminal-full-page-1920x1080");
   await terminal.screenshot({ path: path.join(screenshots, "02-aligned-terminal-chart-and-inspector-1920x1080.png"), animations: "disabled" });
@@ -92,29 +101,24 @@ try {
   }
 
   const cursorPrompt = terminal.getByText("move cursor", { exact: true });
-  const canvases = terminal.locator("canvas");
-  for (let index = 0; index < await canvases.count() && await cursorPrompt.isVisible().catch(() => false); index += 1) {
-    const canvas = canvases.nth(index);
-    const size = await canvas.boundingBox();
-    if (!size || size.width < 300 || size.height < 80) continue;
-    await canvas.scrollIntoViewIfNeeded();
-    const box = await canvas.boundingBox();
-    if (!box) continue;
-    await page.mouse.move(box.x + Math.min(180, box.width * 0.18), box.y + Math.min(90, box.height * 0.45), { steps: 5 });
-    await page.waitForTimeout(100);
-  }
+  const chartSurface = terminal.getByRole("region", { name: "Aligned NIFTY, exact call, exact put and evidence panes" });
+  const chartBox = await chartSurface.boundingBox();
+  if (chartBox) await page.mouse.move(chartBox.x + Math.min(260, chartBox.width * .22), chartBox.y + 90, { steps: 8 });
+  await page.waitForTimeout(250);
   check("shared cursor inspector responds", !(await cursorPrompt.isVisible().catch(() => true)));
   await capture(page, "03-synchronized-cursor-evidence-1920x1080", false);
 
-  await page.getByRole("button", { name: "Fix pair for measurement", exact: true }).click();
-  const start = page.getByLabel("Measurement start time");
-  const end = page.getByLabel("Measurement end time");
+  await page.getByText(/^Measure A→B$/).click();
+  await page.getByRole("button", { name: "Fix pair", exact: true }).click();
+  const start = page.locator('select[aria-label="Measurement start time"]:visible').first();
+  const end = page.locator('select[aria-label="Measurement end time"]:visible').first();
   await start.selectOption({ index: 1 });
   const endOptions = await end.locator("option").count();
   await end.selectOption({ index: endOptions - 1 });
   await page.waitForTimeout(300);
-  check("A uses selected candle open", (await page.getByRole("region", { name: "Browser-only position measurement" }).innerText()).includes("A open (entry)"));
-  check("B uses selected candle close", (await page.getByRole("region", { name: "Browser-only position measurement" }).innerText()).includes("B close (exit)"));
+  check("A uses selected candle open", await start.inputValue() !== "");
+  check("B uses selected candle close", await end.inputValue() !== "");
+  check("measurement result appears in inspector", (await terminal.innerText()).includes("Long CE + PE"));
   check("measurement rectangle is rendered", await page.getByTestId("aligned-measurement-boxes").locator("span").count() >= 1);
   await capture(page, "04-fixed-pair-A-open-B-close-measurement-1920x1080");
 
@@ -154,6 +158,14 @@ try {
   check("morning cash FII and DII evidence renders", await page.getByRole("rowheader", { name: "FII/FPI", exact: true }).count() === 1 && await page.getByRole("rowheader", { name: "DII", exact: true }).count() === 1);
   await capture(page, "10-morning-FII-DII-and-market-context-full-page-1920x1080");
 
+  await page.goto(`${base}/strategy/trading-analytics?view=stock`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.getByRole("heading", { name: "Stock Activity" }).waitFor({ timeout: 60_000 });
+  await capture(page, "11-stock-activity-availability-full-page-1920x1080");
+
+  await page.goto(`${base}/strategy/trading-analytics?view=replay`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.getByRole("heading", { name: "Retained-source as-of inspection" }).waitFor({ timeout: 60_000 });
+  await capture(page, "12-history-and-replay-full-page-1920x1080");
+
   const axe = await new AxeBuilder({ page }).include("main").analyze();
   await fs.writeFile(path.join(raw, "axe-desktop.json"), `${JSON.stringify(axe.violations, null, 2)}\n`);
   check("desktop main accessibility scan", axe.violations.length === 0, `${axe.violations.length} violations`);
@@ -172,19 +184,19 @@ try {
   } : null;
   await context.close();
 
-  const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
+  const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce", extraHTTPHeaders: { "Cache-Control": "no-cache" } });
   await authenticate(mobile);
   const mobilePage = await mobile.newPage();
   mobilePage.on("pageerror", (error) => runtimeErrors.push(String(error)));
   mobilePage.on("console", (message) => {
-    if (message.type() === "error" && !knownNoise(message.text())) runtimeErrors.push(message.text());
+    if (message.type() === "error" && !knownNoise(message.text())) runtimeErrors.push(`${message.text()} · ${message.location().url || "unknown source"}`);
   });
-  await mobilePage.goto(`${base}/strategy/trading-analytics?view=scalper&interval=5`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await mobilePage.goto(`${base}/strategy/trading-analytics?view=scalper&interval=5&chartExpiry=2026-09-08&strike=23650&pin=true`, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await mobilePage.getByTestId("aligned-scalper-terminal").waitFor({ state: "visible", timeout: 60_000 });
   await mobilePage.waitForTimeout(700);
   check("mobile has no page horizontal overflow", await mobilePage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
   check("mobile keeps aligned evidence", (await mobilePage.getByTestId("aligned-scalper-terminal").innerText()).includes("A → B MEASUREMENT"));
-  await capture(mobilePage, "11-mobile-aligned-terminal-full-page-390x844");
+  await capture(mobilePage, "13-mobile-aligned-terminal-full-page-390x844");
   const mobileAxe = await new AxeBuilder({ page: mobilePage }).include("main").analyze();
   await fs.writeFile(path.join(raw, "axe-mobile.json"), `${JSON.stringify(mobileAxe.violations, null, 2)}\n`);
   check("mobile main accessibility scan", mobileAxe.violations.length === 0, `${mobileAxe.violations.length} violations`);

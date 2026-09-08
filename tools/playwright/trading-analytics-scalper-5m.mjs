@@ -14,6 +14,10 @@ try{for(const width of [1440,390]){
  check(`${width} one day default`,await page.getByRole('combobox',{name:/Chart range/}).inputValue()==='day');
  check(`${width} grid default`,await page.getByRole('checkbox',{name:'NIFTY 50-point grid'}).isChecked());
  check(`${width} OI profile is available`,await page.getByText('Price-aligned OI profile').count()===1);
+ check(`${width} lower candle panel defaults to interval OI`,await page.getByRole('combobox',{name:'Scalper lower chart'}).inputValue()==='oi_interval');
+ await page.getByRole('combobox',{name:'Scalper lower chart'}).selectOption('oi_current');
+ check(`${width} lower candle panel exposes current OI`,await page.getByRole('combobox',{name:'Scalper lower chart'}).inputValue()==='oi_current');
+ await page.getByRole('combobox',{name:'Scalper lower chart'}).selectOption('oi_interval');
  const summary=page.getByText(/source minutes in retained archive/).first();const one=await summary.innerText();
  await page.getByRole('combobox',{name:/Chart range/}).selectOption('all');check(`${width} URL range`,new URL(page.url()).searchParams.get('range')==='all');check(`${width} all retained range selected`,await page.getByRole('combobox',{name:/Chart range/}).inputValue()==='all');
  await page.getByRole('combobox',{name:/Chart range/}).selectOption('day');

@@ -46,18 +46,19 @@ git clone https://github.com/PM1288/Nifty-Backtesting_Q2-2026.git trading-stack
 cd trading-stack
 git checkout master
 test "$(git rev-parse HEAD)" = "$(git ls-remote origin refs/heads/master | cut -f1)"
-
-cd neon-stock-terminal
-npm ci
-npm run typecheck --workspace=@app/web
-npm run typecheck --workspace=@app/api
-npm test --workspace=@app/web
-npm test --workspace=@app/api
-cd ..
+./scripts/verify_aligned_terminal_source.sh
 ```
+
+The verifier deliberately runs `prisma generate` after the locked install and before
+API compilation. A fresh clone has no generated Prisma client and API TypeScript
+checks are not meaningful until that deterministic generation step completes.
 
 Expected feature-release results are web 93/93, API 188/188 and both typechecks
 passing. Counts may increase on later commits; failures must never be ignored.
+
+This sequence was executed against a fresh shallow GitHub clone of `master` on
+8 September 2026. The clone resolved to `90a2e36c759bf7499080d2b0847553139b75fb8a`;
+after locked install and Prisma generation, both typechecks and all 281 tests passed.
 
 ## Canonical production deployment
 

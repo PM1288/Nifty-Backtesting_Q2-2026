@@ -3570,3 +3570,17 @@ Deployed follow-up acceptance: dashboard/collector/NSE intraday API+scheduler/an
 Branch `audit/retention-reliability-20260907`, base `9e6b268`. Report: `docs/operations/retention-review-20260907/README.md`; catalog/CSV/screenshots: `output/retention-review-20260907/`. Measured DB 377.84 GiB / 509 physical relations, including 112.43 GiB indexes. Cleanup omits ticks/depth metrics/SmartAPI chains; month-only expiry does not enforce exact TTL. Strong conditional shortlist: old research minute indicators 43.31 GiB plus migration copies 7.24 GiB. Minute deletion blocked by daily-history view dependencies and paper path evidence. No deletions, production configuration changes or deployment performed.
 
 Broad browser review: 65 observations, 49 shell-only passes, 16 review/incomplete; not numerical parity. P2024 pool timeouts, HTTP 502 and dashboard restart at 18:33 UTC observed; stopped extended rechecks to avoid load. Dashboard recovered healthy, OOM not established. API pool 4 / timeout15s, dashboard512MiB and PG2GiB; prioritize bounded queries/failure isolation. Harness now requires explicit target and stops on 5xx. Both audit-tool syntax checks and canonical gate passed. Backup restore, exact daily coverage, external dependencies, full chart/export regression and actual cleanup remain unverified. Do not invoke existing cleanup dry-run for read-only review: it can provision partitions.
+
+# 2026-09-08 — Trading Analytics minute-source audit
+
+Read-only production review recorded in `docs/trading-analytics/DATA_PIPELINE_AUDIT_20260908.md`.
+Confirmed SmartAPI WebSocket minute-first flow and completed-bar EMA9/RSI/MACD
+calculation. The 7 September completed session had NSE minutes for 208/210
+current master F&O-stock underlyings; all 208 subscribed stock-option
+underlyings had option minutes and 2,148/2,155 active stock-option contracts had
+minutes. NIFTY option minutes exist; BANKNIFTY/FINNIFTY/MIDCPNIFTY option
+subscriptions do not. Collector planned 3,755 instruments, activated its 3,000
+ceiling and explicitly dropped 755. Report records missing volume in the chart
+contract, degraded Greeks, current PCR/max-pain limitations and the required
+capacity/coverage work. No strategy, collector configuration, order, database
+row or deployed container was changed.

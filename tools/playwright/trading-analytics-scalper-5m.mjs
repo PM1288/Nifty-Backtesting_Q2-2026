@@ -14,6 +14,8 @@ try{for(const width of [1440,390]){
  check(`${width} one day default`,await page.getByRole('combobox',{name:/Chart range/}).inputValue()==='day');
  check(`${width} grid default`,await page.getByRole('checkbox',{name:'NIFTY 50-point grid'}).isChecked());
  check(`${width} OI profile is available`,await page.getByText('Price-aligned OI profile').count()===1);
+ check(`${width} selected CE and PE OI is visible above candles`,await page.getByTestId('scalper-call-put-oi').count()===1);
+ check(`${width} detailed OI chart remains below Scalper workspace`,await page.getByRole('heading',{name:'Exact selected contracts · OI through time'}).count()===1);
  check(`${width} lower candle panel defaults to interval OI`,await page.getByRole('combobox',{name:'Scalper lower chart'}).inputValue()==='oi_interval');
  await page.getByRole('combobox',{name:'Scalper lower chart'}).selectOption('oi_current');
  check(`${width} lower candle panel exposes current OI`,await page.getByRole('combobox',{name:'Scalper lower chart'}).inputValue()==='oi_current');
@@ -41,5 +43,11 @@ try{for(const width of [1440,390]){
  const axe=await new AxeBuilder({page}).include('main').analyze();await fs.writeFile(`${out}/${width}-axe.json`,JSON.stringify(axe.violations,null,2));check(`${width} accessibility`,axe.violations.length===0);
  check(`${width} no overflow`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));check(`${width} no JS errors`,errors.length===0);
  check(`${width} six structural level slots`,data.resistance.length===3&&data.resistance.every(v=>v.codeResistance&&v.codeSupport&&Object.hasOwn(v,'support')));
+ await page.goto(`${base}/strategy/trading-analytics?view=oi`);
+ const oiChart=page.getByRole('heading',{name:'OI & PCR · chart by strike'});const oiTable=page.getByRole('table',{name:'SmartAPI exact-contract OI and quotes'});
+ await oiChart.waitFor({timeout:60000});await oiTable.waitFor({timeout:60000});
+ check(`${width} OI and PCR chart is available`,await oiChart.count()===1);
+ check(`${width} OI and PCR table follows its chart`,await page.locator('[aria-label="OI and PCR chart"]').evaluate(chart=>{const table=document.querySelector('table[aria-label="SmartAPI exact-contract OI and quotes"]');return Boolean(table&&(chart.compareDocumentPosition(table)&Node.DOCUMENT_POSITION_FOLLOWING));}));
+ await page.screenshot({path:`${out}/${width}-oi-pcr.png`,fullPage:true});
  await fs.writeFile(`${out}/${width}-levels.json`,JSON.stringify(data.resistance,null,2));await fs.writeFile(`${out}/${width}-chart-summary.json`,JSON.stringify({calendar:initialCharts.calendar,panes:initialCharts.panes.map(p=>({identity:p.identity,coverageCount:p.coverage.length,oiEndpoints:p.oiHistory.length}))},null,2));await context.close();
 }}finally{await browser.close();await fs.writeFile(`${out}/results.json`,JSON.stringify(results,null,2));}console.log(JSON.stringify({checks:results.length,passed:results.filter(r=>r.pass).length}));

@@ -102,6 +102,13 @@ precedence changed.
   CE/PE interval ΔOI directly beneath the underlying candles. The same selector
   switches to current OI, cumulative ΔOI, RSI or MACD; the complete OI evidence
   chart below remains available for detailed inspection/export.
+- **Call / put context at the top:** Scalper now shows the selected exact CE and
+  PE LTP, current provider-native OI, latest interval ΔOI, OI PCR and the
+  retained endpoint timestamp in one compact strip above the candle workspace.
+  Missing observations remain `—`; no zero or cross-contract substitute is used.
+- **OI & PCR order:** the SmartAPI OI & Quotes and Option Snapshots views now
+  render their strike chart before the exact-contract table. The chart labels
+  the canonical window OI PCR while the table remains immediately below it.
 
 ## Deliberate limitations
 

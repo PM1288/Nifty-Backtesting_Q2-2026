@@ -203,7 +203,7 @@ function Plot({ option, label }: { option: EChartsOption; label: string }) {
     </section>
   );
 }
-function OiChart({ legs }: { legs: Row[] }) {
+function OiChart({ legs, pcr }: { legs: Row[]; pcr: number | null }) {
   const [metric,setMetric]=useState("composite");
   const metrics: Record<string,string> = {composite:"Baseline/current OI composition",baseline_change:"Qualified baseline ΔOI",open_interest:"Current OI · provider-native",previous_snapshot_delta:"Prior snapshot ΔOI · provider-native",change_in_oi:"Provider day ΔOI · provider-native",delta:"Option Delta · Greek"};
   const strikes=[...new Set(legs.map(l=>Number(l.strike)))].sort((a,b)=>a-b);
@@ -254,12 +254,18 @@ function OiChart({ legs }: { legs: Row[] }) {
     [legs,metric,strikes],
   );
   return (
-    <><label>OI chart measure <select value={metric} onChange={e=>setMetric(e.target.value)}>{Object.entries(metrics).map(([key,label])=><option value={key} key={key}>{label}</option>)}</select></label>
-    {!legs.some(l=>metric==="composite"?l.open_interest!=null:metric==="baseline_change"?layer(l,"change")!=null:l[metric]!=null)&&<p className={styles.warning}>Unavailable: {metrics[metric]}. No zero values are synthesized.</p>}
-    <Plot
-      label={`${metrics[metric]} by strike; retained display window only`}
-      option={option}
-    /></>
+    <section className={styles.oiPcrChart} aria-label="OI and PCR chart">
+      <div className={styles.toolbar}>
+        <h3>OI &amp; PCR · chart by strike</h3>
+        <span>Window OI PCR <strong>{display(pcr)}</strong></span>
+        <label>OI chart measure <select value={metric} onChange={e=>setMetric(e.target.value)}>{Object.entries(metrics).map(([key,label])=><option value={key} key={key}>{label}</option>)}</select></label>
+      </div>
+      {!legs.some(l=>metric==="composite"?l.open_interest!=null:metric==="baseline_change"?layer(l,"change")!=null:l[metric]!=null)&&<p className={styles.warning}>Unavailable: {metrics[metric]}. No zero values are synthesized.</p>}
+      <Plot
+        label={`${metrics[metric]} by strike; retained display window only`}
+        option={option}
+      />
+    </section>
   );
 }
 const activityColumns: [string, string][] = [
@@ -577,6 +583,10 @@ export function TradingAnalyticsPage() {
                     <strong>{display(d.smartapi.oiAnalytics?.fixedCohort.pe.change)}</strong>
                   </span>
                 </div>
+                {d.smartapi.legs.length > 0 && (
+                  <OiChart legs={d.smartapi.legs} pcr={d.smartapi.metrics.oiPcr} />
+                )}
+                <h3>Exact-option OI &amp; quote table</h3>
                 <Table
                   label="SmartAPI exact-contract OI and quotes"
                   rows={d.smartapi.legs}
@@ -602,9 +612,6 @@ export function TradingAnalyticsPage() {
                     ["total_sell_qty", "Total sell qty"],
                   ]}
                 />
-                {d.smartapi.legs.length > 0 && (
-                  <OiChart legs={d.smartapi.legs} />
-                )}
                 <p>
                   Provider-day ΔOI and participant positions are different data.
                   No missing ΔOI is inferred as zero. Raw bid/ask depth and all
@@ -845,12 +852,13 @@ export function TradingAnalyticsPage() {
                   {d.chain.metrics.normalizationState.replaceAll("_", " ")}.
                   This window is not the full exchange chain.
                 </p>
+                {d.chain.legs.length > 0 && <OiChart legs={d.chain.legs} pcr={d.chain.metrics.oiPcr} />}
+                <h3>Exact-option snapshot table</h3>
                 <Table
                   label={`${d.underlying.symbol} ten CE and ten PE contract evidence`}
                   rows={d.chain.legs}
                   columns={optionColumns}
                 />
-                {d.chain.legs.length > 0 && <OiChart legs={d.chain.legs} />}
               </>
             )}
             {tab === "structure" && (

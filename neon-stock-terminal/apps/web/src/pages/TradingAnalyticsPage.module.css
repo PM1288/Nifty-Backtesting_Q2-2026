@@ -413,6 +413,30 @@
   border-bottom: 0;
 }
 .contractHeaders strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scalperOiTopline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+  border: 1px solid #d2dae3;
+  background: #fff;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.scalperOiTopline > * { flex: 0 0 auto; }
+.scalperOiTopline span { padding-left: 8px; border-left: 1px solid #dce4ef; }
+.scalperOiTopline b { color: #334155; }
+.scalperOiTopline em { font-style: normal; font-weight: 650; }
+.scalperOiTopline small { color: #64748b; }
+.callOi em { color: #c93346; }
+.putOi em { color: #087a55; }
+.oiPcrChart { padding: 0; }
+.oiPcrChart > .toolbar { border-bottom: 1px solid #dce4ef; }
+.oiPcrChart h3 { margin: 0; white-space: nowrap; }
+.oiPcrChart strong { font-variant-numeric: tabular-nums lining-nums; }
 .scalperCommandBar,
 .scalperOverlayBar {
   flex-wrap: nowrap;
@@ -482,16 +506,17 @@
 .page[data-view="scalper"] > .kpis strong { display: inline; font-size: 14px; }
 .page[data-view="scalper"] > .warning { min-height: 38px; padding: 3px 8px; line-height: 30px; white-space: nowrap; overflow-x: auto; }
 .page[data-view="scalper"] .scalperCommandBar { order: 1; }
-.page[data-view="scalper"] .contractHeaders { order: 2; }
-.page[data-view="scalper"] .scalperWorkspace { order: 3; }
-.page[data-view="scalper"] .measurement { order: 4; }
-.page[data-view="scalper"] .levelStrip { order: 5; }
-.page[data-view="scalper"] .scalperOverlayBar { order: 6; }
-.page[data-view="scalper"] .scalperLegend { order: 7; }
+.page[data-view="scalper"] .scalperOiTopline { order: 2; }
+.page[data-view="scalper"] .contractHeaders { order: 3; }
+.page[data-view="scalper"] .scalperWorkspace { order: 4; }
+.page[data-view="scalper"] .measurement { order: 5; }
+.page[data-view="scalper"] .levelStrip { order: 6; }
+.page[data-view="scalper"] .scalperOverlayBar { order: 7; }
+.page[data-view="scalper"] .scalperLegend { order: 8; }
 .page[data-view="scalper"] > .context,
-.page[data-view="scalper"] > .kpis:not(.levelStrip) { order: 7; }
-.page[data-view="scalper"] .scalperEvidence { order: 8; }
-.page[data-view="scalper"] .plot { order: 9; }
+.page[data-view="scalper"] > .kpis:not(.levelStrip) { order: 8; }
+.page[data-view="scalper"] .scalperEvidence { order: 9; }
+.page[data-view="scalper"] .plot { order: 10; }
 .structureLarge {
   height: 460px;
   min-width: 0;

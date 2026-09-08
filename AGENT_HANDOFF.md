@@ -3640,3 +3640,8 @@ post-open live repopulation must be verified after deployment.
 
 - The top Scalper candle workspace now defaults to a paired CE/PE interval-change-in-OI pane directly below the NIFTY candles. Its local selector can instead show current OI, cumulative change in OI, RSI or MACD; the detailed OI-through-time chart remains lower in the evidence view.
 - Deployed implementation commit: `6a75115`. Authenticated browser regression passed 34/34 at 1440x900 and 390x900, including OI-pane selection, source/API checks, axe, JavaScript-error and overflow checks. Evidence: `output/playwright/scalper-oi-lower-20260908/results.json` and corresponding screenshots.
+
+# 2026-09-08 — Scalper CE / PE top-line and OI & PCR chart order
+
+- Scalper now carries a compact selected-exact-pair strip above its candle workspace: CE and PE LTP, current provider-native OI, latest interval ΔOI, OI PCR and the retained endpoint time. Unknown data remains `—`.
+- The existing detailed exact-contract OI-through-time chart remains below the Scalper workspace. SmartAPI OI & Quotes and Option Snapshots now show their OI & PCR strike chart before the complete source table, rather than after it.

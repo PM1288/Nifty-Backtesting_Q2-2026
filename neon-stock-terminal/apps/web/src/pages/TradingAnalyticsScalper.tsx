@@ -22,6 +22,16 @@ const Chart = lazy(async () => ({
 type Row = Record<string, unknown>;
 const measurementChartOpts = { notMerge: false, replaceMerge: ["series", "grid", "xAxis", "yAxis"] };
 const valueText = (v: number | null) => v == null ? "—" : v.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+const signedValueText = (v: number | null) => v == null ? "—" : `${v > 0 ? "+" : ""}${valueText(v)}`;
+const finiteNumber = (v: unknown): number | null => {
+  if (v == null || v === "") return null;
+  const value = Number(v);
+  return Number.isFinite(value) ? value : null;
+};
+const optionSide = (identity: Row) => {
+  const symbol = String(identity.tradingsymbol ?? "").toUpperCase();
+  return symbol.endsWith("CE") ? "CE" : symbol.endsWith("PE") ? "PE" : null;
+};
 const htmlText = (v: unknown) => String(v ?? "—").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
 function scalpTooltip(input: unknown) {
   const entries = (Array.isArray(input) ? input : [input]) as Row[];
@@ -69,6 +79,43 @@ function OiPriceProfile({legs,bounds}:{legs:Row[];bounds:{min:number;max:number}
         series:["CE","PE"].map((side,index)=>({name:side,type:"scatter",symbol:"rect",symbolSize:[10,7],itemStyle:{color:index?"#087a55":"#c93346"},data:points.filter(point=>point.side===side).map(point=>[(side==="CE"?-1:1)*point.value,point.strike])})),
       }}
     /></Suspense>:<p>Profile unavailable for the visible price/expiry context.</p>}
+  </section>;
+}
+function ScalperOiTopline({ panes }: { panes: { identity: Row; bars: Row[]; oiHistory: Row[] }[] | undefined }) {
+  const values = useMemo(() => {
+    const bySide = new Map<string, { ltp: number | null; current: number | null; change: number | null; at: string | null }>();
+    (panes ?? []).forEach((pane) => {
+      const side = optionSide(pane.identity);
+      if (!side) return;
+      const latestBar = [...pane.bars].filter((row) => row.closed).at(-1);
+      const latestOi = [...pane.oiHistory].sort((a, b) => String(a.event_time).localeCompare(String(b.event_time))).at(-1);
+      bySide.set(side, {
+        ltp: finiteNumber(latestBar?.close),
+        current: finiteNumber(latestOi?.current),
+        change: finiteNumber(latestOi?.interval_change),
+        at: latestOi?.event_time == null ? null : String(latestOi.event_time),
+      });
+    });
+    const ce = bySide.get("CE");
+    const pe = bySide.get("PE");
+    return {
+      ce,
+      pe,
+      pcr: ce?.current == null || pe?.current == null || ce.current === 0 ? null : pe.current / ce.current,
+      endpoint: [ce?.at, pe?.at].filter((value): value is string => Boolean(value)).sort().at(-1) ?? null,
+    };
+  }, [panes]);
+  const anyObserved = values.ce != null || values.pe != null;
+  return <section className={styles.scalperOiTopline} aria-label="Selected call and put OI context" data-testid="scalper-call-put-oi">
+    <strong>Selected CE / PE · retained OI endpoint</strong>
+    {(["CE", "PE"] as const).map((side) => {
+      const row = side === "CE" ? values.ce : values.pe;
+      return <span key={side} className={side === "CE" ? styles.callOi : styles.putOi}>
+        <b>{side}</b> LTP <em>{valueText(row?.ltp ?? null)}</em> · OI <em>{valueText(row?.current ?? null)}</em> · interval ΔOI <em>{signedValueText(row?.change ?? null)}</em>
+      </span>;
+    })}
+    <span><b>OI PCR</b> <em>{valueText(values.pcr)}</em></span>
+    <small>{values.endpoint ? `Endpoint ${new Date(values.endpoint).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} IST` : anyObserved ? "OI endpoint time unavailable" : "Exact CE / PE OI endpoint unavailable"}</small>
   </section>;
 }
 export function TradingAnalyticsScalper({
@@ -464,6 +511,7 @@ export function TradingAnalyticsScalper({
           </button>
         )}
       </div>
+      <ScalperOiTopline panes={panes} />
       <section className={styles.measurement} aria-label="Browser-only position measurement">
         <div className={styles.toolbar}>
           <button disabled={!selected || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{strike:selected,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock visual pair":"Fix pair for measurement"}</button>

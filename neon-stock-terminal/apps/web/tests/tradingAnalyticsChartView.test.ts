@@ -7,7 +7,10 @@ import {
   candleColors,
   evidenceValueAxis,
   financialVisibleBounds,
+  levelIsInSessionRange,
   levelIsNearVisiblePrice,
+  oiProfilePoints,
+  profileWidth,
   roundNumberGuides,
 } from "../src/lib/tradingAnalyticsChartView";
 test("evidence axes explicitly show value line, ticks and readable signed labels",()=>{
@@ -49,4 +52,27 @@ test("round-number guides stay inside price bounds and distant levels remain off
   assert.equal(levelIsNearVisiblePrice(24220, bounds), true);
   assert.equal(levelIsNearVisiblePrice(24659.25, bounds), false);
   assert.deepEqual(roundNumberGuides(bounds, 0), []);
+});
+test("terminal plots structural levels only inside the observed session range", () => {
+  const bounds = { min: 23600, max: 23800 };
+  assert.equal(levelIsInSessionRange(23600, bounds), true);
+  assert.equal(levelIsInSessionRange(23800, bounds), true);
+  assert.equal(levelIsInSessionRange(23599.99, bounds), false);
+  assert.equal(levelIsInSessionRange(23800.01, bounds), false);
+  assert.equal(levelIsInSessionRange(23700, null), false);
+});
+test("OI profile preserves side, sign and proportional magnitude", () => {
+  const points = oiProfilePoints([
+    { option_type: "CE", strike: 23700, open_interest: 100, oi_layers: { change: -25 } },
+    { option_type: "PE", strike: 23750, open_interest: 400, oi_layers: { change: 80 } },
+    { option_type: "XX", strike: 23800, open_interest: 999 },
+  ]);
+  assert.deepEqual(points, [
+    { side: "CE", strike: 23700, current: 100, change: -25 },
+    { side: "PE", strike: 23750, current: 400, change: 80 },
+  ]);
+  assert.equal(profileWidth(100, 400, 160), 40);
+  assert.equal(profileWidth(200, 400, 160), 80);
+  assert.equal(profileWidth(400, 400, 160), 160);
+  assert.equal(profileWidth(null, 400, 160), 0);
 });

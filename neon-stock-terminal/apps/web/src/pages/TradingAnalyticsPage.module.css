@@ -487,6 +487,148 @@
 .levelStrip span { min-width: 150px; font-size: 11px; }
 .levelStrip strong { font-size: 14px; }
 .scalperEvidence { content-visibility: auto; }
+.alignedTerminal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 326px;
+  min-height: 0;
+  border: 1px solid #22324a;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #08111f;
+  color: #d8e2ef;
+  box-shadow: 0 10px 30px rgba(8, 17, 31, 0.18);
+}
+.alignedChartSurface {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: #08111f;
+  isolation: isolate;
+}
+.alignedChartHost {
+  height: clamp(760px, 78vh, 900px);
+  min-width: 0;
+  cursor: crosshair;
+}
+.alignedSelecting { cursor: cell; }
+.alignedPaneLabels {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .035em;
+  color: #91a4bc;
+}
+.alignedPaneLabels span {
+  position: absolute;
+  left: 8px;
+  padding: 4px 7px;
+  border: 1px solid #243650;
+  border-radius: 4px;
+  background: rgba(8, 17, 31, .84);
+}
+.alignedMeasurementOverlay {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.alignedMeasurementOverlay span {
+  position: absolute;
+  min-width: 2px;
+  min-height: 2px;
+  border: 1px solid #f472b6;
+  background: rgba(244, 114, 182, .11);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, .18);
+}
+.ceText { color: #60a5fa !important; }
+.peText { color: #fde047 !important; }
+.maxPainText { color: #c4b5fd !important; }
+.alignedOiProfile {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  inset: 0 62px auto auto;
+  width: 174px;
+  height: 300px;
+  border-left: 1px solid #334a67;
+  background: linear-gradient(90deg, transparent, rgba(8, 17, 31, .74));
+}
+.alignedOiProfileTitle {
+  position: absolute;
+  top: 7px;
+  right: 5px;
+  color: #91a4bc;
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+}
+.alignedOiBarCe,
+.alignedOiBarPe {
+  position: absolute;
+  right: 4px;
+  height: 4px;
+  transform: translateY(-2px);
+  border-radius: 2px 0 0 2px;
+  opacity: .82;
+}
+.alignedOiBarCe { background: #3b82f6; }
+.alignedOiBarPe { right: 82px; background: #facc15; }
+.alignedInspector {
+  min-width: 0;
+  max-height: clamp(760px, 78vh, 900px);
+  overflow: auto;
+  border-left: 1px solid #22324a;
+  background: #0b1626;
+  scrollbar-color: #334a67 #0b1626;
+}
+.alignedInspector section {
+  border-bottom: 1px solid #22324a;
+  padding: 8px;
+}
+.alignedInspector header,
+.alignedInspector p {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+}
+.alignedInspector header {
+  min-height: 24px;
+  color: #91a4bc;
+  font: 600 10px/1.2 "IBM Plex Mono", monospace;
+}
+.alignedInspector header span { color: #64748b; font-weight: 400; }
+.alignedInspector p {
+  padding: 4px 2px;
+  border-top: 1px solid rgba(34, 50, 74, .55);
+  color: #d8e2ef;
+  font: 500 11px/1.25 "IBM Plex Mono", monospace;
+}
+.alignedInspector p small { color: #91a4bc; text-align: right; }
+.alignedInspector p strong { color: #f8fafc; font-size: 13px; }
+.alignedPairCards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.alignedPairCards article {
+  display: grid;
+  gap: 2px;
+  padding: 7px;
+  border: 1px solid #2a3d57;
+  border-radius: 6px;
+  background: #101e31;
+}
+.alignedPairCards article strong { font: 700 15px/1.2 "IBM Plex Mono", monospace; }
+.alignedPairCards article small { color: #91a4bc; font: 500 9px/1.3 "IBM Plex Mono", monospace; }
+.alignedLadderScroll { max-height: 244px; overflow: auto; }
+.page .alignedLadderScroll table { width: 100%; table-layout: fixed; font: 500 10px/1.1 "IBM Plex Mono", monospace; }
+.page .alignedLadderScroll th,
+.page .alignedLadderScroll td { height: 25px; padding: 2px 4px; border-color: #22324a; background: transparent; color: #c7d3e3; text-align: right; }
+.page .alignedLadderScroll tbody td:first-child { background: transparent; position: static; }
+.page .alignedLadderScroll th:nth-child(2) { text-align: center; }
+.page .alignedLadderScroll thead th { background: #122137; color: #91a4bc; }
+.page .alignedLadderScroll button { min-height: 21px; padding: 1px 3px; border: 0; background: transparent; color: inherit; font: inherit; }
+.page .alignedLadderScroll tr[aria-selected="true"] { outline: 1px solid #3b82f6; outline-offset: -1px; background: #172d4d; }
+.alignedMuted { color: #64748b !important; font-weight: 400 !important; }
 .page[data-view="scalper"] { gap: 6px; padding: 8px 10px; }
 .page[data-view="scalper"] > header.toolbar,
 .page[data-view="scalper"] > .context,
@@ -509,6 +651,7 @@
 .page[data-view="scalper"] .scalperOiTopline { order: 2; }
 .page[data-view="scalper"] .contractHeaders { order: 3; }
 .page[data-view="scalper"] .scalperWorkspace { order: 4; }
+.page[data-view="scalper"] .alignedTerminal { order: 4; }
 .page[data-view="scalper"] .measurement { order: 5; }
 .page[data-view="scalper"] .levelStrip { order: 6; }
 .page[data-view="scalper"] .scalperOverlayBar { order: 7; }
@@ -552,6 +695,9 @@
   opacity: 0.65;
 }
 @media (max-width: 1099px) {
+  .alignedTerminal { grid-template-columns: minmax(0, 1fr); }
+  .alignedInspector { max-height: none; border-left: 0; border-top: 1px solid #22324a; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .alignedChartHost { height: 860px; }
   .scalperWorkspace {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -572,6 +718,8 @@
   }
 }
 @media (max-width: 759px) {
+  .alignedInspector { grid-template-columns: minmax(0, 1fr); }
+  .alignedOiProfile { display: none; }
   .page {
     padding: 8px;
   }

@@ -1010,6 +1010,7 @@ export function TradingAnalyticsPage() {
                 }
                 legs={d.smartapi.legs}
                 resistance={d.resistance}
+                maxPainStrikes={d.smartapi.metrics.indicativeMaxPainStrikes ?? []}
                 spot={
                   d.smartapi.spot?.ltp == null
                     ? null

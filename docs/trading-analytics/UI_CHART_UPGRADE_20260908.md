@@ -10,7 +10,7 @@ Feature gate: existing `VITE_TRADING_ANALYTICS_ENABLED` / `N50_TRADING_ANALYTICS
 
 ## Audit result
 
-The requested workspace already existed behind the temporary **MANEESH** header shortcut. It already supported the 5-minute default, one-day range, red/green OHLC candles, exact CE/PE selection, browser-only pair locking, synchronized A/B selection, editable quantity 65, close-to-close CE/PE changes, illustrative combined P&L, EMA9, RSI/MACD, a ten-pair ladder, OI history, PCR/max-pain context, retained source tables and complete CSV/JSON evidence.
+The requested workspace already existed behind the temporary **MANEESH** header shortcut. It already supported the 5-minute default, one-day range, red/green OHLC candles, exact CE/PE selection, browser-only pair locking, synchronized A/B selection, editable quantity 65, A-candle-open to B-candle-close CE/PE changes, illustrative combined P&L, EMA9, RSI/MACD, a ten-pair ladder, OI history, PCR/max-pain context, retained source tables and complete CSV/JSON evidence.
 
 The v1.2 review correctly identified three material presentation defects in the current source:
 
@@ -23,7 +23,7 @@ The v1.2 review correctly identified three material presentation defects in the 
 - Added a scoped native financial-axis policy. Generic report charts retain their existing normalized extent behavior; the exact-contract terminal lets ECharts fit the active zoomed financial series.
 - Corrected candlestick extent extraction to use `[low, high]` from `[open, close, low, high]`.
 - Removed distant resistance from default automatic price bounds.
-- Added explicit **Fit levels / Fit price** control. Default Auto price shows visible candles; distant levels remain listed with `above view` or `below view` direction.
+- The V2 classic renderer retains its explicit **Fit levels / Fit price** control. The V3 aligned renderer uses strict selected-session-range level plotting; distant levels remain listed as `outside range` and never flatten visible candles.
 - Changed the NIFTY 50-point feature from a forced axis interval/min/max to optional dotted round-number guide overlays inside the visible candle range. Option premiums and non-NIFTY underlyings retain their own automatic scale.
 - Reduced the internal chart gutter, increased the underlying plot allocation, and retained independent CE/PE Y scales with a shared time cursor.
 - Converted the MANEESH Scalper surface to chart-first visual ordering: compact command/status rows, pane identities, primary chart/ladder, measurement dock, level strip, secondary controls, OI and audit evidence.

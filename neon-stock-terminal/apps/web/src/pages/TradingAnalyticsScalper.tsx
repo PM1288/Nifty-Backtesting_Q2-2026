@@ -5,6 +5,7 @@ import type { EChartsOption, SeriesOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { closeAt, measurePanes, openAt, scalperIndicators } from "../lib/scalperMeasurement";
+import { scalperBody70Signals } from "../lib/scalperSignals";
 import {
   candleColors,
   evidenceValueAxis,
@@ -12,12 +13,15 @@ import {
   istDay,
   dayRows,
   financialVisibleBounds,
-  levelIsNearVisiblePrice,
+  levelIsInSessionRange,
   roundNumberGuides,
 } from "../lib/tradingAnalyticsChartView";
 import styles from "./TradingAnalyticsPage.module.css";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
+}));
+const AlignedTerminal = lazy(async () => ({
+  default: (await import("./AlignedScalperTerminal")).AlignedScalperTerminal,
 }));
 type Row = Record<string, unknown>;
 const measurementChartOpts = { notMerge: false, replaceMerge: ["series", "grid", "xAxis", "yAxis"] };
@@ -126,6 +130,7 @@ export function TradingAnalyticsScalper({
   spot,
   legs = [],
   resistance = [],
+  maxPainStrikes = [],
 }: {
   symbol?:string; label?:string;
   asOf: string;
@@ -134,12 +139,13 @@ export function TradingAnalyticsScalper({
   spot: number | null;
   legs?: Row[];
   resistance?: Row[];
+  maxPainStrikes?: number[];
 }) {
   const [params, setParams] = useSearchParams();
   const interval = chartInterval(params.get("interval"));
   const [showLevels, setShowLevels] = useState(true);
   const [showGrid, setShowGrid] = useState(symbol==='NIFTY');
-  const [fitLevels, setFitLevels] = useState(false);
+  const renderer = params.get("renderer") === "classic" ? "classic" : "aligned";
   const [fixedPair, setFixedPair] = useState<{strike:string;expiry:string}|null>(null);
   const [points, setPoints] = useState<string[]>([]);
   const [selecting, setSelecting] = useState(false);
@@ -252,17 +258,18 @@ export function TradingAnalyticsScalper({
       const selectedLevel = row.selected as Row | null | undefined;
       const selectedSupport = row.support as Row | null | undefined;
       return [
-        { row, side: "R", value: Number(selectedLevel?.resistance) },
-        { row, side: "S", value: Number(selectedSupport?.support) },
+        { row, side: "R" as const, value: Number(selectedLevel?.resistance) },
+        { row, side: "S" as const, value: Number(selectedSupport?.support) },
       ].filter((level) => Number.isFinite(level.value));
     }),
     [resistance],
   );
   const plottedLevels = useMemo(
-    () => selectedLevels.filter(({ value }) => fitLevels || levelIsNearVisiblePrice(value, visibleUnderlyingBounds)),
-    [fitLevels, selectedLevels, visibleUnderlyingBounds],
+    () => selectedLevels.filter(({ value }) => levelIsInSessionRange(value, visibleUnderlyingBounds)),
+    [selectedLevels, visibleUnderlyingBounds],
   );
   const measured = points.length === 2 ? measurePanes(panes ?? [], points[0], points[1], Number(quantity)) : null;
+  const signals = useMemo(() => scalperBody70Signals(panes ?? [], interval), [panes, interval]);
   const pickPoint = (index:number) => {
     if (!fixedPair || !selecting || !times[index]) return;
     if (points.length === 1) { setPoints([points[0],times[index]].sort()); setSelecting(false); }
@@ -321,12 +328,8 @@ export function TradingAnalyticsScalper({
         type: "value" as const,
         gridIndex: i,
         scale: true,
-        min: manual?.min ?? (i === 0 && fitLevels && selectedLevels.length
-          ? (v: { min: number }) => Math.min(v.min, ...selectedLevels.map((level) => level.value))
-          : undefined),
-        max: manual?.max ?? (i === 0 && fitLevels && selectedLevels.length
-          ? (v: { max: number }) => Math.max(v.max, ...selectedLevels.map((level) => level.value))
-          : undefined),
+        min: manual?.min,
+        max: manual?.max,
         position: "right" as const,
         axisLabel: { fontSize: 12 },
         splitLine: { lineStyle: { color: "#E8EBEF" } },
@@ -412,11 +415,18 @@ export function TradingAnalyticsScalper({
         return {name:`${String(p.identity.tradingsymbol)} ${valueKey === "current" ? "OI" : valueKey === "interval_change" ? "ΔOI" : "Cum ΔOI"}`,type:valueKey === "current" ? "line" as const : "bar" as const,xAxisIndex:rows.length,yAxisIndex:rows.length,showSymbol:false,connectNulls:false,lineStyle:{color:i?"#087a55":"#c93346"},itemStyle:{color:i?"#087a55":"#c93346",opacity:0.65},data:times.map(t=>oiByTime.get(t)==null?null:Number(oiByTime.get(t))),markLine:valueKey === "current" ? undefined : {silent:true,symbol:"none",data:[{yAxis:0}],label:{show:false}}};
       }))],
     };
-  }, [panes, narrow, showEma, showLevels, showGrid, lowerPane, indicators, selecting, points, quantity, label, fitLevels, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds]);
+  }, [panes, narrow, showEma, showLevels, showGrid, lowerPane, indicators, selecting, points, quantity, label, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds]);
   return (
     <>
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
         <h2>Underlying / exact CE / exact PE</h2>
+        <label>
+          Renderer{" "}
+          <select aria-label="Scalper renderer" value={renderer} onChange={(event) => updateView("renderer", event.target.value === "classic" ? "classic" : "")}>
+            <option value="aligned">Aligned terminal</option>
+            <option value="classic">Classic ECharts</option>
+          </select>
+        </label>
         <label>
           Chart range{" "}
           <select
@@ -518,7 +528,7 @@ export function TradingAnalyticsScalper({
           <label>Quantity (units)<input aria-label="Measurement quantity" type="number" min={1} step={1} value={quantity} onChange={e=>setQuantity(e.target.value)} style={{width:90}} /></label>
           <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Select A entry → B exit on chart</button>
           <button onClick={()=>{setPoints([]);setSelecting(false);}}>Clear measurement</button>
-          <label>Lower chart beside candles
+          {renderer === "classic" && <label>Lower chart beside candles
             <select aria-label="Scalper lower chart" value={lowerPane} onChange={event=>setLowerPane(event.target.value as typeof lowerPane)}>
               <option value="oi_interval">CE / PE interval ΔOI</option>
               <option value="oi_current">CE / PE current OI</option>
@@ -526,7 +536,7 @@ export function TradingAnalyticsScalper({
               <option value="rsi">Underlying RSI (14)</option>
               <option value="macd">Underlying MACD (12,26,9)</option>
             </select>
-          </label>
+          </label>}
         </div>
         <p role="status">{fixedPair?`VISUAL PAIR FIXED · ${symbol} ${fixedPair.strike} · ${fixedPair.expiry}`:"Fix the pair to begin."} {selecting?`Click ${points.length?"B exit (candle close)":"A entry (candle open)"} on any price pane, or use the time controls below.`:"A measures the selected candle open; B measures the selected candle close. Scroll to zoom; drag to pan."}</p>
         {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A entry candle (open)":"B exit candle (close)"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>!e.target.value?[]:i===0?[e.target.value]:[old[0]??times[0],e.target.value].sort());setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
@@ -555,14 +565,7 @@ export function TradingAnalyticsScalper({
           />
           Monthly / weekly / daily R &amp; S
         </label>
-        <button
-          type="button"
-          disabled={!showLevels || selectedLevels.length === 0}
-          aria-pressed={fitLevels}
-          onClick={() => setFitLevels((value) => !value)}
-        >
-          {fitLevels ? "Fit price" : "Fit levels"}
-        </button>
+        <span>{plottedLevels.length}/{selectedLevels.length} levels inside selected session high–low</span>
         {["daily", "weekly"].map((timeframe) => (
           <label key={timeframe}>
             {timeframe} R lookback{" "}
@@ -609,8 +612,7 @@ export function TradingAnalyticsScalper({
             const value = level.value == null ? null : Number(level.value);
             const offscreen =
               value != null &&
-              !levelIsNearVisiblePrice(value, visibleUnderlyingBounds) &&
-              !fitLevels;
+              !levelIsInSessionRange(value, visibleUnderlyingBounds);
             return (
               <span key={String(row.timeframe) + level.side}>
                 {String(row.timeframe).toUpperCase()} {level.side} ·{" "}
@@ -640,7 +642,7 @@ export function TradingAnalyticsScalper({
           weekly and daily use 12, 12 and 20 completed bars by default; daily
           and weekly remain configurable. Research overlays, not approved trade
           signals.
-          Auto price view excludes distant levels. Use Fit levels explicitly to include every selected level.
+          The price pane renders levels only inside the selected session's actual high–low. Off-range levels remain here for inspection and never stretch the candle scale.
         </p>
         <pre tabIndex={0}>{JSON.stringify(resistance, null, 2)}</pre>
       </details>
@@ -651,15 +653,42 @@ export function TradingAnalyticsScalper({
       </p>
       {q.isFetching && <p role="status">Loading retained minute paths…</p>}
       {q.error && <p role="alert">Exact-contract chart source unavailable.</p>}
-      <div className={styles.contractHeaders}>
+      {renderer === "classic" && <div className={styles.contractHeaders}>
         {panes?.map((p) => (
           <strong key={String(p.identity.tradingsymbol)}>
             {String(p.identity.tradingsymbol)} · {interval}m ·{" "}
             {fixedPair ? "Visual pair fixed" : strike ? "Pinned pair" : "Auto pair"}
           </strong>
         ))}
-      </div>
-      <div className={styles.scalperWorkspace}>
+      </div>}
+      {renderer === "aligned" && panes && panes.length > 0 ? <Suspense fallback={<p>Loading aligned terminal…</p>}>
+        <AlignedTerminal
+          panes={panes}
+          legs={legs}
+          levels={selectedLevels}
+          bounds={visibleUnderlyingBounds}
+          showEma={showEma}
+          showLevels={showLevels}
+          showGrid={showGrid}
+          points={points}
+          selecting={selecting}
+          onTimeClick={(time) => {
+            const index = times.indexOf(time);
+            if (index >= 0) pickPoint(index);
+          }}
+          indicators={indicators}
+          measured={measured}
+          quantity={Number(quantity)}
+          strikes={strikes}
+          selectedStrike={selected}
+          defaultStrike={defaultStrike}
+          fixed={Boolean(fixedPair)}
+          onStrike={setStrike}
+          expiry={effectiveExpiry}
+          maxPainStrikes={maxPainStrikes}
+          signals={signals}
+        />
+      </Suspense> : renderer === "classic" ? <div className={styles.scalperWorkspace}>
         {panes && panes.length > 0 && (
           <Suspense fallback={<p>Loading chart…</p>}>
             <Chart
@@ -717,7 +746,7 @@ export function TradingAnalyticsScalper({
           </p>
         </section>
         </div>
-      </div>
+      </div> : null}
       <section className={styles.plot}>
         <div className={styles.toolbar}>
           <h3>Exact selected contracts · OI through time</h3>
@@ -803,12 +832,10 @@ export function TradingAnalyticsScalper({
           </pre>
         </details>
       </section>
-      <section className={`${styles.warning} ${styles.scalperEvidence}`} tabIndex={0} role="region" aria-label="Closed-candle evidence policy incomplete">
-        <h3>Closed-candle evidence · POLICY INCOMPLETE</h3>
+      <section className={`${styles.warning} ${styles.scalperEvidence}`} tabIndex={0} role="region" aria-label="Closed-candle research evidence">
+        <h3>EMA9 body70 / next-open references · RESEARCH ONLY</h3>
         <p>
-          Own-series 9 EMA · aligned completed intervals required · 70%
-          range/body and put confirmation remain unapproved. No paper
-          eligibility. Green = rising; red = falling.
+          NIFTY_EMA9_BODY70_NEXT_OPEN_V3 · {signals.length} reconstructed setup{signals.length === 1 ? "" : "s"} in the selected range. Real-body 70% is a symmetric preview; CALL precursor uses prior close below EMA, PUT precursor uses prior low above EMA. Exact next scheduled open only. No paper or broker eligibility.
         </p>
       </section>
       {(panes?.length ?? 0) < 3 && (

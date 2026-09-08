@@ -61,3 +61,51 @@ export function levelIsNearVisiblePrice(
   const span = Math.max(bounds.max - bounds.min, Math.abs(bounds.max) * 0.002, 1);
   return value >= bounds.min - span * paddingRatio && value <= bounds.max + span * paddingRatio;
 }
+
+/**
+ * Chart visibility is deliberately stricter than the legacy "near price"
+ * helper. Structural levels remain available in the inspector, but the price
+ * pane only renders values inside the selected session's observed high/low.
+ */
+export function levelIsInSessionRange(
+  value: number,
+  bounds: { min: number; max: number } | null,
+) {
+  return Boolean(
+    bounds &&
+      Number.isFinite(value) &&
+      value >= bounds.min &&
+      value <= bounds.max,
+  );
+}
+
+export type OiProfilePoint = {
+  side: "CE" | "PE";
+  strike: number;
+  current: number | null;
+  change: number | null;
+};
+
+export function oiProfilePoints(rows: Array<Record<string, unknown>>) {
+  return rows.flatMap<OiProfilePoint>((row) => {
+    const side = row.option_type === "CE" || row.option_type === "PE"
+      ? row.option_type
+      : null;
+    const strike = Number(row.strike);
+    if (!side || !Number.isFinite(strike)) return [];
+    const layers = row.oi_layers as Record<string, unknown> | null | undefined;
+    const current = row.open_interest == null ? null : Number(row.open_interest);
+    const change = layers?.change == null ? null : Number(layers.change);
+    return [{
+      side,
+      strike,
+      current: Number.isFinite(current) ? current : null,
+      change: Number.isFinite(change) ? change : null,
+    }];
+  });
+}
+
+export function profileWidth(value: number | null, maximum: number, laneWidth: number) {
+  if (value == null || !Number.isFinite(value) || maximum <= 0 || laneWidth <= 0) return 0;
+  return Math.min(laneWidth, Math.abs(value) / maximum * laneWidth);
+}

@@ -97,7 +97,9 @@ export function TradingAnalyticsScalper({
   const [points, setPoints] = useState<string[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [quantity, setQuantity] = useState("65");
-  const [showIndicators, setShowIndicators] = useState(true);
+  // Keep OI beside the candles, not only in the audit chart below the workspace.
+  // RSI/MACD remain available without permanently consuming the candle viewport.
+  const [lowerPane, setLowerPane] = useState<"oi_interval"|"oi_current"|"oi_cumulative"|"rsi"|"macd">("oi_interval");
   const [oiMetric, setOiMetric] = useState<"current"|"interval_change"|"cumulative_change">("interval_change");
   const updateView = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -229,28 +231,25 @@ export function TradingAnalyticsScalper({
       tooltip: { trigger: "axis", transitionDuration:0, hideDelay:0, formatter:scalpTooltip },
       axisPointer: { link: [{ xAxisIndex: "all" }] },
       textStyle: { fontSize: 12 },
-      dataZoom: [{type:"inside",xAxisIndex: rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]), zoomOnMouseWheel:true, moveOnMouseMove: !selecting,filterMode:"filter"}, {type:"slider",xAxisIndex:rows.map((_,i)=>i).concat(showIndicators?[rows.length,rows.length+1]:[]),bottom:5,height:18,filterMode:"filter"}],
+      dataZoom: [{type:"inside",xAxisIndex: rows.map((_,i)=>i).concat(rows.length), zoomOnMouseWheel:true, moveOnMouseMove: !selecting,filterMode:"filter"}, {type:"slider",xAxisIndex:rows.map((_,i)=>i).concat(rows.length),bottom:5,height:18,filterMode:"filter"}],
       grid: [...rows.map((_, i) =>
         narrow
           ? {
               left: 70,
               right: 30,
-              top: `${4 + i * (showIndicators?20:29)}%`,
-              height: showIndicators?"15%":"22%",
+              top: `${4 + i * 20}%`,
+              height: "15%",
             }
           : i === 0
-            ? { left: 70, right: "40%", top: 45, bottom: showIndicators?"35%":65 }
+            ? { left: 70, right: "40%", top: 45, bottom: "30%" }
             : {
                 left: "62%",
                 right: 60,
                 top: i === 1 ? 45 : "52%",
                 height: "38%",
               },
-      ), ...(showIndicators ? [
-        {left:70,right:narrow?30:"40%",top:narrow?"65%":"69%",height:"9%"},
-        {left:70,right:narrow?30:"40%",top:narrow?"80%":"82%",height:"9%"},
-      ] : [])],
-      xAxis: [...rows, ...(showIndicators?[rows[0],rows[0]]:[])].map((_, i) => ({
+      ), {left:70,right:narrow?30:"40%",top:narrow?"66%":"74%",height:narrow?"19%":"15%"}],
+      xAxis: [...rows, rows[0]].map((_, i) => ({
         type: "category",
         gridIndex: i,
         data: times,
@@ -288,10 +287,11 @@ export function TradingAnalyticsScalper({
           p.identity.exchange === "NSE"
             ? `${label} · price`
             : `${p.identity.strike} ${String(p.identity.tradingsymbol).slice(-2)} · ₹`,
-      };}), ...(showIndicators ? [
-        {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length,min:0,max:100,name:"RSI (14)",position:"right" as const},
-        {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length+1,scale:true,name:"MACD (12,26,9)",position:"right" as const},
-      ] : [])],
+      };}), lowerPane === "rsi"
+        ? {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length,min:0,max:100,name:"RSI (14)",position:"right" as const}
+        : lowerPane === "macd"
+          ? {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length,scale:true,name:"MACD (12,26,9)",position:"right" as const}
+          : {...evidenceValueAxis,type:"value" as const,gridIndex:rows.length,min:lowerPane === "oi_current" ? 0 : undefined,name:lowerPane === "oi_current" ? "Current OI" : lowerPane === "oi_cumulative" ? "Cumulative ΔOI" : "Interval ΔOI",position:"right" as const}],
       series: [...rows.flatMap<SeriesOption>((p, i) => {
         const bars = new Map(
           p.bars.filter((b) => b.closed).map((b) => [String(b.end), b]),
@@ -355,12 +355,17 @@ export function TradingAnalyticsScalper({
             lineStyle: { color: "#C78F3E", width: 1.5 },
           },
         ];
-      }), ...(showIndicators ? [
+      }), ...(lowerPane === "rsi" ? [
         {name:"RSI (14)",type:"line" as const,xAxisIndex:rows.length,yAxisIndex:rows.length,showSymbol:false,connectNulls:false,lineStyle:{color:"#7c3aed"},data:times.map(t=>indicators.get(t)?.rsi??null)},
-        ...(["macd","signal","histogram"] as const).map((key,i)=>({name:key==="macd"?"MACD":key==="signal"?"Signal":"Histogram",type:key==="histogram"?"bar" as const:"line" as const,xAxisIndex:rows.length+1,yAxisIndex:rows.length+1,showSymbol:false,connectNulls:false,itemStyle:{color:["#2563eb","#d97706","#64748b"][i]},data:times.map(t=>indicators.get(t)?.[key]??null)})),
-      ]:[])],
+      ] : lowerPane === "macd" ? [
+        ...(["macd","signal","histogram"] as const).map((key,i)=>({name:key==="macd"?"MACD":key==="signal"?"Signal":"Histogram",type:key==="histogram"?"bar" as const:"line" as const,xAxisIndex:rows.length,yAxisIndex:rows.length,showSymbol:false,connectNulls:false,itemStyle:{color:["#2563eb","#d97706","#64748b"][i]},data:times.map(t=>indicators.get(t)?.[key]??null)})),
+      ] : rows.filter(p=>p.identity.exchange === "NFO").map((p,i)=>{
+        const valueKey=lowerPane === "oi_current" ? "current" : lowerPane === "oi_cumulative" ? "cumulative_change" : "interval_change";
+        const oiByTime=new Map(p.oiHistory.map(row=>[String(row.event_time),row[valueKey]]));
+        return {name:`${String(p.identity.tradingsymbol)} ${valueKey === "current" ? "OI" : valueKey === "interval_change" ? "ΔOI" : "Cum ΔOI"}`,type:valueKey === "current" ? "line" as const : "bar" as const,xAxisIndex:rows.length,yAxisIndex:rows.length,showSymbol:false,connectNulls:false,lineStyle:{color:i?"#087a55":"#c93346"},itemStyle:{color:i?"#087a55":"#c93346",opacity:0.65},data:times.map(t=>oiByTime.get(t)==null?null:Number(oiByTime.get(t))),markLine:valueKey === "current" ? undefined : {silent:true,symbol:"none",data:[{yAxis:0}],label:{show:false}}};
+      }))],
     };
-  }, [panes, narrow, showEma, showLevels, showGrid, showIndicators, indicators, selecting, points, quantity, label, fitLevels, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds]);
+  }, [panes, narrow, showEma, showLevels, showGrid, lowerPane, indicators, selecting, points, quantity, label, fitLevels, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds]);
   return (
     <>
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
@@ -465,7 +470,15 @@ export function TradingAnalyticsScalper({
           <label>Quantity (units)<input aria-label="Measurement quantity" type="number" min={1} step={1} value={quantity} onChange={e=>setQuantity(e.target.value)} style={{width:90}} /></label>
           <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Select A → B on chart</button>
           <button onClick={()=>{setPoints([]);setSelecting(false);}}>Clear measurement</button>
-          <label><input type="checkbox" checked={showIndicators} onChange={e=>setShowIndicators(e.target.checked)}/>Underlying RSI / MACD</label>
+          <label>Lower chart beside candles
+            <select aria-label="Scalper lower chart" value={lowerPane} onChange={event=>setLowerPane(event.target.value as typeof lowerPane)}>
+              <option value="oi_interval">CE / PE interval ΔOI</option>
+              <option value="oi_current">CE / PE current OI</option>
+              <option value="oi_cumulative">CE / PE cumulative ΔOI</option>
+              <option value="rsi">Underlying RSI (14)</option>
+              <option value="macd">Underlying MACD (12,26,9)</option>
+            </select>
+          </label>
         </div>
         <p role="status">{fixedPair?`VISUAL PAIR FIXED · ${symbol} ${fixedPair.strike} · ${fixedPair.expiry}`:"Fix the pair to begin."} {selecting?`Click ${points.length?"B (last)":"A (first)"} on any price pane, or use the time controls below.`:"Scroll to zoom; drag to pan."}</p>
         {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A start time":"B end time"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>!e.target.value?[]:i===0?[e.target.value]:[old[0]??times[0],e.target.value].sort());setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
@@ -474,7 +487,7 @@ export function TradingAnalyticsScalper({
           <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Measurement values scroll area"><table aria-label="Synchronized price changes"><thead><tr><th>Instrument</th><th>A close</th><th>B close</th><th>Δ price</th><th>Δ × quantity</th></tr></thead><tbody>{measured.rows.map(r=><tr key={r.symbol}><th>{r.symbol}</th><td>{valueText(r.from)}</td><td>{valueText(r.to)}</td><td>{valueText(r.delta)}</td><td>{r.kind==="UNDERLYING"?"—":valueText(r.delta==null||!Number.isSafeInteger(Number(quantity))||Number(quantity)<=0?null:r.delta*Number(quantity))}</td></tr>)}<tr><th>CE + PE</th><td>—</td><td>—</td><td>{valueText(measured.combined)}</td><td>{valueText(measured.pnl)}</td></tr></tbody></table></div>
           <p>{measured.start} → {measured.end} · UTC source times. Missing matching closes: — (no nearest-time substitution).</p>
         </>}
-        <small>Browser memory only; cleared on reload or leaving this view. Quantity 65 is an editable visual default, not verified lot size. Close-to-close price delta, not Greek Delta. Long both legs, before costs/slippage; not a trade, order or booked P&amp;L.</small>
+        <small>Browser memory only; cleared on reload or leaving this view. Quantity 65 is an editable visual default, not verified lot size. Close-to-close price delta, not Greek Delta. Long both legs, before costs/slippage; not a trade, order or booked P&amp;L. OI lower panes use session-aligned retained quote endpoints; gaps are not zero.</small>
         <IndicatorEvidence times={times} indicators={indicators}/>
       </section>
       <div className={`${styles.toolbar} ${styles.scalperOverlayBar}`}>

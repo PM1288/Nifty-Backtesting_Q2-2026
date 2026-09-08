@@ -21,6 +21,13 @@ original upstream publication revisions, and a stock delivery provider.
 Implementation and validation detail:
 `docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.
 
+Production evidence after deployment: authenticated Scalper regression passed
+30/30 at 1440×900 and 390×900 (5m default, 1m request, session coverage, OI
+profile, levels, no overflow, browser errors or axe violations). The healthy
+deployment returned 12 calendar sessions and 879 retained buckets for the
+current NIFTY/CE/PE selection. Runtime evidence is ignored under
+`output/playwright/scalper-evidence-20260908-retest/`.
+
 ## 2026-09-07 scalper visual measurement
 
 Browser-only fixed-pair A/B rectangles and synchronous price deltas/long-pair

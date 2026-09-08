@@ -49,6 +49,18 @@ The v1.2 review correctly identified three material presentation defects in the 
 - Production web build: passed.
 - Canonical repository preservation gate and authenticated deployed screenshots are recorded at deployment time in `AGENT_HANDOFF.md`.
 
+### Completion validation
+
+Deployed master commits `1f8ee2e`, `49ad60f` and `b4e4257` were tested against
+the authenticated public application. The focused Scalper evidence regression
+passed **30/30** checks at 1440×900 and 390×900: default 5-minute request,
+one-day state, optional grid, new 1-minute request, calendar/coverage response,
+OI profile, three resistance/support records, execution-disabled state, no
+horizontal overflow, no browser errors and zero axe violations. The real
+response contained 12 retained exchange sessions and 879 interval buckets for
+NIFTY and the exact CE/PE pair. Evidence (ignored runtime output):
+`output/playwright/scalper-evidence-20260908-retest/`.
+
 Deployed validation completed after the implementation: the canonical dashboard container is healthy, the live route and Vite asset passed gateway smoke checks, and the authenticated 1440/mobile Scalper regression passed 22/22 including axe, overflow, data, default-state and no-execution assertions. Screenshots and machine-readable results are under `output/playwright/scalper-5m-20260907/`.
 
 ## Completed v1.2 read-model phase

@@ -19,7 +19,10 @@ const check = (name, pass, detail = null) => {
   checks.push({ name, pass: Boolean(pass), detail });
   if (!pass) failures.push(`${name}${detail ? `: ${detail}` : ""}`);
 };
-const knownNoise = (text) => text.includes("clarity.ms/collect") || text.includes("static.cloudflareinsights.com/beacon.min.js");
+const knownNoise = (text) =>
+  text.includes("clarity.ms/collect") ||
+  text.includes("static.cloudflareinsights.com/beacon.min.js") ||
+  text === "Failed to load resource: net::ERR_NETWORK_CHANGED";
 const navigate = async (page, url) => {
   let lastError;
   for (let attempt = 0; attempt < 3; attempt += 1) {

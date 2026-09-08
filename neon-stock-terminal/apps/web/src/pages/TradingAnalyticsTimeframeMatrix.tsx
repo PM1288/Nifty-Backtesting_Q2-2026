@@ -53,6 +53,15 @@ const isoTime = (value: Time | undefined) => {
     return new Date(Date.UTC(value.year, value.month - 1, value.day)).toISOString();
   return null;
 };
+const istTimeLabel = (value: Time) => {
+  const iso = isoTime(value);
+  return iso == null ? "—" : new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(iso));
+};
 const valueText = (value: unknown) => {
   const parsed = finite(value);
   return parsed == null ? "—" : parsed.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
@@ -87,10 +96,11 @@ function MatrixCandleChart({
     const chart = createChart(host, {
       autoSize: false,
       layout: { background: { type: ColorType.Solid, color: "#ffffff" }, textColor: "#53657d", fontFamily: "IBM Plex Mono, monospace", fontSize: 10 },
+      localization: { locale: "en-IN", timeFormatter: istTimeLabel },
       grid: { vertLines: { color: "#edf1f6" }, horzLines: { color: "#edf1f6" } },
       crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "#315ad7", width: 1, labelBackgroundColor: "#315ad7" }, horzLine: { color: "#94a3b8", width: 1 } },
       rightPriceScale: { borderColor: "#dce4ef", minimumWidth: 58 },
-      timeScale: { borderColor: "#dce4ef", timeVisible: true, secondsVisible: false, rightOffset: 1, barSpacing: 5 },
+      timeScale: { borderColor: "#dce4ef", timeVisible: true, secondsVisible: false, rightOffset: 1, barSpacing: 5, tickMarkFormatter: istTimeLabel },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
     });

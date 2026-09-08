@@ -11,9 +11,19 @@ CREATE TABLE IF NOT EXISTS operations.retention_gate (
  paper_evidence_verified boolean NOT NULL DEFAULT false,
  dependencies_verified boolean NOT NULL DEFAULT false,
  restore_verified boolean NOT NULL DEFAULT false,
+ backup_waived boolean NOT NULL DEFAULT false,
+ backup_waiver_reason text,
+ rolling_cutoff boolean NOT NULL DEFAULT false,
  evidence_uri text NOT NULL CHECK(length(evidence_uri)>0),
  approved_by text NOT NULL CHECK(length(approved_by)>0),
  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE operations.retention_gate ADD COLUMN IF NOT EXISTS backup_waived boolean NOT NULL DEFAULT false;
+ALTER TABLE operations.retention_gate ADD COLUMN IF NOT EXISTS backup_waiver_reason text;
+ALTER TABLE operations.retention_gate ADD COLUMN IF NOT EXISTS rolling_cutoff boolean NOT NULL DEFAULT false;
+ALTER TABLE operations.retention_gate DROP CONSTRAINT IF EXISTS retention_gate_backup_evidence_check;
+ALTER TABLE operations.retention_gate ADD CONSTRAINT retention_gate_backup_evidence_check CHECK (
+ restore_verified OR (backup_waived AND length(coalesce(backup_waiver_reason,''))>0)
 );
 CREATE TABLE IF NOT EXISTS operations.retention_result (
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

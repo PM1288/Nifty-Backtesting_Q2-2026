@@ -124,10 +124,12 @@ func (s *Store) cleanupGovernedTable(ctx context.Context, rule retentionRule, cu
 	}
 	var approved bool
 	var retainFrom time.Time
+	var rollingCutoff bool
 	if gatePresent {
-		err = tx.QueryRow(ctx, `SELECT true,retain_from FROM operations.retention_gate WHERE relation_name=$1
+		err = tx.QueryRow(ctx, `SELECT true,retain_from,rolling_cutoff FROM operations.retention_gate WHERE relation_name=$1
    AND expires_at>now() AND daily_coverage_verified AND paper_evidence_verified
-   AND dependencies_verified AND restore_verified AND policy_version='RETENTION-20260907.1'`, s.Schema+"."+rule.Table).Scan(&approved, &retainFrom)
+   AND dependencies_verified AND (restore_verified OR backup_waived)
+   AND policy_version='RETENTION-20260907.1'`, s.Schema+"."+rule.Table).Scan(&approved, &retainFrom, &rollingCutoff)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return counts, err
 		}
@@ -136,7 +138,7 @@ func (s *Store) cleanupGovernedTable(ctx context.Context, rule retentionRule, cu
 	if !approved {
 		counts["blocked_unverified"] = 1
 	}
-	if approved && retainFrom.Before(cutoff) {
+	if approved && !rollingCutoff && retainFrom.Before(cutoff) {
 		cutoff = retainFrom
 	}
 	if !dry && !approved {

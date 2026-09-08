@@ -31,13 +31,14 @@ def cleanup() -> dict:
                 return {**result, 'state': 'BLOCKED_UNVERIFIED'}
             for table in MINUTE_TABLES:
                 name = f'nse_intraday.{table}'
-                gate = conn.execute("""SELECT retain_from FROM operations.retention_gate WHERE relation_name=%s
+                gate = conn.execute("""SELECT retain_from,rolling_cutoff FROM operations.retention_gate WHERE relation_name=%s
                     AND expires_at>now() AND policy_version='RETENTION-20260907.1'
-                    AND daily_coverage_verified AND paper_evidence_verified AND dependencies_verified AND restore_verified""", (name,)).fetchone()
+                    AND daily_coverage_verified AND paper_evidence_verified AND dependencies_verified
+                    AND (restore_verified OR backup_waived)""", (name,)).fetchone()
                 if not gate:
                     result['tables'][name] = {'state': 'BLOCKED_UNVERIFIED', 'rows_deleted': 0}
                     continue
-                effective = min(cutoff, gate['retain_from'].astimezone(ZoneInfo('Asia/Kolkata')).date())
+                effective = cutoff if gate['rolling_cutoff'] else min(cutoff, gate['retain_from'].astimezone(ZoneInfo('Asia/Kolkata')).date())
                 # tableoid is needed because ctid values repeat between partitions.
                 query = sql.SQL('''WITH expired AS (SELECT tableoid,ctid FROM {} WHERE trade_date<%s LIMIT 10000 FOR UPDATE SKIP LOCKED)
                     DELETE FROM {} t USING expired e WHERE t.tableoid=e.tableoid AND t.ctid=e.ctid''').format(

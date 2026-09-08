@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {closeAt, measurePanes, scalperIndicators} from "../src/lib/scalperMeasurement";
-const bars=(values:number[])=>values.map((close,i)=>({end:new Date(Date.UTC(2026,8,7,4,i*5)).toISOString(),close,closed:true}));
-test("same timestamps, reverse selection, exact per-leg and combined PnL",()=>{
-  const p=[{identity:{exchange:"NSE",tradingsymbol:"NIFTY"},bars:bars([24000,24010])},{identity:{exchange:"NFO",tradingsymbol:"NIFTYCE"},bars:bars([100,112])},{identity:{exchange:"NFO",tradingsymbol:"NIFTYPE"},bars:bars([100,95])}];
+import {closeAt, openAt, measurePanes, scalperIndicators} from "../src/lib/scalperMeasurement";
+const bars=(values:Array<number|{open:number;close:number}>)=>values.map((value,i)=>{const close=typeof value==="number"?value:value.close;const open=typeof value==="number"?value:value.open;return {end:new Date(Date.UTC(2026,8,7,4,i*5)).toISOString(),open,close,closed:true};});
+test("same timestamps, reverse selection, A open/B close and exact combined PnL",()=>{
+  const p=[{identity:{exchange:"NSE",tradingsymbol:"NIFTY"},bars:bars([{open:23990,close:24000},{open:24004,close:24010}])},{identity:{exchange:"NFO",tradingsymbol:"NIFTYCE"},bars:bars([{open:95,close:100},{open:105,close:112}])},{identity:{exchange:"NFO",tradingsymbol:"NIFTYPE"},bars:bars([{open:102,close:100},{open:99,close:95}])}];
   const r=measurePanes(p,p[0].bars[1].end,p[0].bars[0].end,65);
-  assert.deepEqual(r.rows.map(x=>x.delta),[10,12,-5]);assert.equal(r.combined,7);assert.equal(r.pnl,455);
-  assert.equal(measurePanes(p,r.start,r.end,130).pnl,910);
+  assert.deepEqual(r.rows.map(x=>x.delta),[20,17,-7]);assert.equal(r.combined,10);assert.equal(r.pnl,650);
+  assert.equal(measurePanes(p,r.start,r.end,130).pnl,1300);
 });
 test("missing or partial exact bar never substitutes, zero remains zero, invalid qty is missing",()=>{
-  const b=bars([0,2]);assert.equal(closeAt(b,b[0].end),0);assert.equal(closeAt(b,"missing"),null);
+  const b=bars([0,2]);assert.equal(openAt(b,b[0].end),0);assert.equal(closeAt(b,b[0].end),0);assert.equal(closeAt(b,"missing"),null);
   assert.equal(closeAt([{...b[0],closed:false}],b[0].end),null);
   const p=[{identity:{exchange:"NFO",tradingsymbol:"CE"},bars:b}];
   assert.equal(measurePanes(p,b[0].end,b[1].end,65).pnl,null);

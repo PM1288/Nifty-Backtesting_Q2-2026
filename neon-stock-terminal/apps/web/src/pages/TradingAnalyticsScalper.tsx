@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption, SeriesOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
-import { closeAt, measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
+import { closeAt, measurePanes, openAt, scalperIndicators } from "../lib/scalperMeasurement";
 import {
   candleColors,
   evidenceValueAxis,
@@ -348,11 +348,11 @@ export function TradingAnalyticsScalper({
             name: String(p.identity.tradingsymbol),
             type: "candlestick" as const,
             itemStyle: candleColors,
-            markArea: measured && closeAt(p.bars, measured.start)!=null && closeAt(p.bars, measured.end)!=null ? {
+            markArea: measured && openAt(p.bars, measured.start)!=null && closeAt(p.bars, measured.end)!=null ? {
               silent:true,itemStyle:{color:"rgba(190,24,93,0.09)",borderWidth:1,borderColor:"#be185d"},
-              data:[[{xAxis:measured.start,yAxis:Math.min(closeAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)},{xAxis:measured.end,yAxis:Math.max(closeAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)}]],
+              data:[[{xAxis:measured.start,yAxis:Math.min(openAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)},{xAxis:measured.end,yAxis:Math.max(openAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)}]],
             } : {data:[]},
-            markPoint: {symbol:"circle",symbolSize:8,label:{show:true,formatter:"{b}"},data:points.flatMap((t,j)=>{const v=closeAt(p.bars,t);return v==null?[]:[{name:j===0?"A":"B",coord:[t,v]}];})},
+            markPoint: {symbol:"circle",symbolSize:8,label:{show:true,formatter:"{b}"},data:points.flatMap((t,j)=>{const v=j===0?openAt(p.bars,t):closeAt(p.bars,t);return v==null?[]:[{name:j===0?"A · open":"B · close",coord:[t,v]}];})},
             markLine:
               i === 0 && (showLevels || showGrid)
                 ? {
@@ -516,7 +516,7 @@ export function TradingAnalyticsScalper({
         <div className={styles.toolbar}>
           <button disabled={!selected || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{strike:selected,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock visual pair":"Fix pair for measurement"}</button>
           <label>Quantity (units)<input aria-label="Measurement quantity" type="number" min={1} step={1} value={quantity} onChange={e=>setQuantity(e.target.value)} style={{width:90}} /></label>
-          <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Select A → B on chart</button>
+          <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Select A entry → B exit on chart</button>
           <button onClick={()=>{setPoints([]);setSelecting(false);}}>Clear measurement</button>
           <label>Lower chart beside candles
             <select aria-label="Scalper lower chart" value={lowerPane} onChange={event=>setLowerPane(event.target.value as typeof lowerPane)}>
@@ -528,14 +528,14 @@ export function TradingAnalyticsScalper({
             </select>
           </label>
         </div>
-        <p role="status">{fixedPair?`VISUAL PAIR FIXED · ${symbol} ${fixedPair.strike} · ${fixedPair.expiry}`:"Fix the pair to begin."} {selecting?`Click ${points.length?"B (last)":"A (first)"} on any price pane, or use the time controls below.`:"Scroll to zoom; drag to pan."}</p>
-        {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A start time":"B end time"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>!e.target.value?[]:i===0?[e.target.value]:[old[0]??times[0],e.target.value].sort());setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
+        <p role="status">{fixedPair?`VISUAL PAIR FIXED · ${symbol} ${fixedPair.strike} · ${fixedPair.expiry}`:"Fix the pair to begin."} {selecting?`Click ${points.length?"B exit (candle close)":"A entry (candle open)"} on any price pane, or use the time controls below.`:"A measures the selected candle open; B measures the selected candle close. Scroll to zoom; drag to pan."}</p>
+        {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A entry candle (open)":"B exit candle (close)"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>!e.target.value?[]:i===0?[e.target.value]:[old[0]??times[0],e.target.value].sort());setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
         {measured && <>
           <strong data-testid="measurement-pnl">Illustrative long CE + PE P&amp;L: ₹{valueText(measured.pnl)}</strong>
-          <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Measurement values scroll area"><table aria-label="Synchronized price changes"><thead><tr><th>Instrument</th><th>A close</th><th>B close</th><th>Δ price</th><th>Δ × quantity</th></tr></thead><tbody>{measured.rows.map(r=><tr key={r.symbol}><th>{r.symbol}</th><td>{valueText(r.from)}</td><td>{valueText(r.to)}</td><td>{valueText(r.delta)}</td><td>{r.kind==="UNDERLYING"?"—":valueText(r.delta==null||!Number.isSafeInteger(Number(quantity))||Number(quantity)<=0?null:r.delta*Number(quantity))}</td></tr>)}<tr><th>CE + PE</th><td>—</td><td>—</td><td>{valueText(measured.combined)}</td><td>{valueText(measured.pnl)}</td></tr></tbody></table></div>
+          <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Measurement values scroll area"><table aria-label="Synchronized price changes"><thead><tr><th>Instrument</th><th>A open (entry)</th><th>B close (exit)</th><th>Δ price</th><th>Δ × quantity</th></tr></thead><tbody>{measured.rows.map(r=><tr key={r.symbol}><th>{r.symbol}</th><td>{valueText(r.from)}</td><td>{valueText(r.to)}</td><td>{valueText(r.delta)}</td><td>{r.kind==="UNDERLYING"?"—":valueText(r.delta==null||!Number.isSafeInteger(Number(quantity))||Number(quantity)<=0?null:r.delta*Number(quantity))}</td></tr>)}<tr><th>CE + PE</th><td>—</td><td>—</td><td>{valueText(measured.combined)}</td><td>{valueText(measured.pnl)}</td></tr></tbody></table></div>
           <p>{measured.start} → {measured.end} · UTC source times. Missing matching closes: — (no nearest-time substitution).</p>
         </>}
-        <small>Browser memory only; cleared on reload or leaving this view. Quantity 65 is an editable visual default, not verified lot size. Close-to-close price delta, not Greek Delta. Long both legs, before costs/slippage; not a trade, order or booked P&amp;L. OI lower panes use session-aligned retained quote endpoints; gaps are not zero.</small>
+        <small>Browser memory only; cleared on reload or leaving this view. Quantity 65 is an editable visual default, not verified lot size. A candle open to B candle close price delta, not Greek Delta. Long both legs, before costs/slippage; not a trade, order or booked P&amp;L. OI lower panes use session-aligned retained quote endpoints; gaps are not zero.</small>
         <IndicatorEvidence times={times} indicators={indicators}/>
       </section>
       <div className={`${styles.toolbar} ${styles.scalperOverlayBar}`}>

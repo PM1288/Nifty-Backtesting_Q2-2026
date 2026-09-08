@@ -22,14 +22,14 @@ try{
  const common=times.filter(t=>payload.panes.length===3&&payload.panes.every(p=>p.bars.some(b=>b.end===t&&b.closed&&b.close!=null)));
  check('real synchronized samples',common.length>=2);
  await start.selectOption(common[0]);await end.selectOption(common.at(-1));
- const difference=p=>p.bars.find(b=>b.end===common.at(-1)).close-p.bars.find(b=>b.end===common[0]).close;
+ const difference=p=>p.bars.find(b=>b.end===common.at(-1)).close-p.bars.find(b=>b.end===common[0]).open;
  const expected=(difference(payload.panes[1])+difference(payload.panes[2]))*65;
  const fmt=v=>v.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
- check('PnL equals exact matched source closes', (await page.getByTestId('measurement-pnl').innerText()).includes(fmt(expected)));
+ check('PnL equals A exact open to B exact close', (await page.getByTestId('measurement-pnl').innerText()).includes(fmt(expected)));
  await page.getByRole('spinbutton',{name:'Measurement quantity'}).fill('130');check('quantity scales PnL',(await page.getByTestId('measurement-pnl').innerText()).includes(fmt(expected*2)));
  await page.getByRole('spinbutton',{name:'Measurement quantity'}).fill('0');check('invalid quantity not zero PnL',(await page.getByTestId('measurement-pnl').innerText()).includes('—'));
  await page.getByRole('spinbutton',{name:'Measurement quantity'}).fill('65');
- await page.getByRole('button',{name:'Select A → B on chart'}).click();
+ await page.getByRole('button',{name:'Select A entry → B exit on chart'}).click();
  const chart=page.getByRole('img',{name:'Time-linked underlying and exact option candles with independent price scales'});await chart.scrollIntoViewIfNeeded();
  const box=await chart.boundingBox();await page.mouse.click(box.x+box.width*.22,box.y+box.height*.2);check('first chart click selects A',Boolean(await start.inputValue()));
  await page.mouse.click(box.x+box.width*.4,box.y+box.height*.27);check('second chart click selects B',Boolean(await end.inputValue()));

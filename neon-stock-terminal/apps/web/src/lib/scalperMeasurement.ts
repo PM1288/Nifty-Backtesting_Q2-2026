@@ -5,10 +5,16 @@ export function closeAt(bars: Row[], time: string) {
   const bar = bars.find(b => b.end === time && b.closed === true);
   return number(bar?.close);
 }
+export function openAt(bars: Row[], time: string) {
+  const bar = bars.find(b => b.end === time && b.closed === true);
+  return number(bar?.open);
+}
 export function measurePanes(panes: MeasurementPane[], first: string, last: string, quantity: number) {
   const [start, end] = [first, last].sort();
   const rows = panes.map(p => {
-    const from = closeAt(p.bars, start), to = closeAt(p.bars, end);
+    // Entry is the actual open of A's completed candle; exit is B's actual close.
+    // Never borrow an adjacent candle or turn an unavailable value into zero.
+    const from = openAt(p.bars, start), to = closeAt(p.bars, end);
     const delta = from == null || to == null ? null : to - from;
     const kind = p.identity.exchange === "NSE" ? "UNDERLYING" : String(p.identity.tradingsymbol).endsWith("CE") ? "CE" : "PE";
     return { kind, symbol: String(p.identity.tradingsymbol), from, to, delta };

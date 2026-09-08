@@ -100,8 +100,43 @@ The largest remaining objects are current or protected evidence:
 These were not deleted because they are current-window data or published/audit
 evidence. Monthly partition boundaries remain an efficiency limitation: current
 month raw data cannot be returned to the OS until the whole partition expires,
-unless it is rewritten. The existing cleanup stays fail-closed because its
-restore evidence gates were not falsely approved after the backup waiver.
+unless it is rewritten. The initial cleanup did not falsely mark restore
+verification as passed; the follow-up below records the user's waiver explicitly.
+
+## Recurring cleanup activation
+
+Follow-up commit `3bca92b` added an explicit, auditable alternative to lying
+about restore verification. `operations.retention_gate` now accepts either a
+verified restore or a recorded backup waiver. All 21 approved high-frequency
+families have:
+
+- `backup_waived=true` with the user's 8 September direction recorded;
+- `rolling_cutoff=true`, so the 15/30-day policy advances instead of freezing at
+  the approval date;
+- daily, paper-evidence and dependency verification flags;
+- a one-year approval expiry and evidence link.
+
+The collector remains single-flight and runs cleanup every 30 minutes in bounded
+10,000-row table batches. NSE intraday retention remains scheduled daily at
+02:25 IST and archives recent daily summaries before deletion.
+
+Production proof after deployment:
+
+- Collector startup cleanup committed automatically.
+- A separate manual collector cycle committed 40,000 expired rows.
+- NSE intraday cleanup committed 43,332 expired rows across its five families.
+- `operations.retention_result` contains the per-family committed audit rows.
+- A subsequent freshness probe found 26,717 market ticks, 3,016 minute bars,
+  11,441 quotes, 38,842 option-OI rows and 6,920 futures-OI rows in the preceding
+  15 minutes during pre-open collection.
+- Option Greeks and SmartAPI option-chain snapshots correctly remained at the
+  prior session before the derivatives market opened; this is not treated as a
+  fabricated current value.
+- Collector, PostgreSQL and dashboard were healthy; recreated collector/NSE
+  services had zero restarts.
+
+The waiver can be revoked immediately by setting `backup_waived=false` or
+expiring/removing the relevant exact gate row. Cleanup then fails closed again.
 
 ## Re-run and audit
 

@@ -110,6 +110,11 @@ precedence changed.
   render their strike chart before the exact-contract table. The chart labels
   the canonical window OI PCR while the table remains immediately below it.
 
+Validation for this addition: web typecheck and 87 unit tests passed; production
+build passed. Authenticated Playwright passed 42/42 checks at 1440×900 and
+390×900, including the top CE/PE strip, the lower candle OI pane, detailed OI
+chart, OI & PCR chart/table order, axe, JavaScript-error and overflow checks.
+
 ## Deliberate limitations
 
 - The retained `trading_calendar` supplies session boundaries, but does not yet

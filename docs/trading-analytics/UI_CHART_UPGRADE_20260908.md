@@ -26,7 +26,7 @@ The v1.2 review correctly identified three material presentation defects in the 
 - Added explicit **Fit levels / Fit price** control. Default Auto price shows visible candles; distant levels remain listed with `above view` or `below view` direction.
 - Changed the NIFTY 50-point feature from a forced axis interval/min/max to optional dotted round-number guide overlays inside the visible candle range. Option premiums and non-NIFTY underlyings retain their own automatic scale.
 - Reduced the internal chart gutter, increased the underlying plot allocation, and retained independent CE/PE Y scales with a shared time cursor.
-- Converted the MANEESH Scalper surface to chart-first visual ordering: compact command bar, level strip, pane identities, primary chart/ladder, measurement dock, secondary controls, OI and audit evidence.
+- Converted the MANEESH Scalper surface to chart-first visual ordering: compact command/status rows, pane identities, primary chart/ladder, measurement dock, level strip, secondary controls, OI and audit evidence.
 - Kept all measurement state browser-only and preserved exact-time/missing-value semantics. No order, strategy, data-source or paper-trading logic changed.
 - Added deterministic tests for candle low/high bounds, missing extrema, visible financial bounds, 50-point guide placement and off-screen level classification.
 

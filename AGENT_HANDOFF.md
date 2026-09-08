@@ -3604,4 +3604,6 @@ post-open live repopulation must be verified after deployment.
 - Chart/ladder now precede measurement detail, secondary controls, OI and audit evidence; underlying/right-option pane allocation removes the former large gutter.
 - Preserved exact pair, A/B, editable units, illustrative P&L, EMA9, RSI/MACD, OI, PCR/max pain context, source tables and exports.
 - Validation before deployment: web typecheck passed, web tests 87/87 passed, web production build passed.
+- Production deployment: pushed implementation commits through `5ed9730`; rebuilt and recreated only `trading-stack-novius2-n50-dashboard-1` (healthy, zero restarts after validation). Live route/asset smoke passed at `/n50/strategy/trading-analytics?view=scalper`.
+- Authenticated responsive Scalper regression passed 22/22 at 1440x900 and 390x900: 5-minute and one-day defaults, real chart response, optional NIFTY grid, explicit lookbacks, no order eligibility, no horizontal overflow, no JavaScript errors and zero axe violations. Evidence: `output/playwright/scalper-5m-20260907/results.json`, `1440-scalper.png`, `390-scalper.png` and matching axe/level JSON.
 - Detailed scope and deferred read-model phases: `docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.

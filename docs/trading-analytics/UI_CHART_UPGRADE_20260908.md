@@ -49,6 +49,8 @@ The v1.2 review correctly identified three material presentation defects in the 
 - Production web build: passed.
 - Canonical repository preservation gate and authenticated deployed screenshots are recorded at deployment time in `AGENT_HANDOFF.md`.
 
+Deployed validation completed after the implementation: the canonical dashboard container is healthy, the live route and Vite asset passed gateway smoke checks, and the authenticated 1440/mobile Scalper regression passed 22/22 including axe, overflow, data, default-state and no-execution assertions. Screenshots and machine-readable results are under `output/playwright/scalper-5m-20260907/`.
+
 ## Remaining v1.2 phases
 
 This delivery completes the urgent chart repair and chart-first presentation phase. The following v1.2 items require additive read-model/API work and are not represented as completed:

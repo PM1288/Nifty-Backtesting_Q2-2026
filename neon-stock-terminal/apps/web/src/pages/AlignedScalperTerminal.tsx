@@ -438,7 +438,7 @@ export function AlignedScalperTerminal({
       <div className={styles.alignedMeasurementOverlay} data-testid="aligned-measurement-boxes" aria-hidden="true">{measurementBoxes.map((box) => <span key={box.key} style={box} />)}</div>
       <OiStrikeOverlay rows={legs} bounds={bounds} coordinates={profileCoordinates} />
     </section>
-    <aside className={styles.alignedInspector} aria-label="Aligned terminal evidence inspector">
+    <section className={styles.alignedInspector} aria-label="Aligned terminal evidence inspector">
       <section>
         <header><strong>SELECTED PAIR</strong><span>{expiry || "—"}</span></header>
         <div className={styles.alignedPairCards}>
@@ -472,6 +472,6 @@ export function AlignedScalperTerminal({
         <header><strong>SOURCE HEALTH</strong><span>{panes.length === 3 ? "3/3 panes" : `${panes.length}/3 panes`}</span></header>
         {panes.map((pane) => <p key={String(pane.identity.tradingsymbol)}><b>{String(pane.identity.tradingsymbol)}</b><small>{pane.sourceMinuteCount.toLocaleString("en-IN")} retained minutes · {pane.coverage.length} coverage rows</small></p>)}
       </section>
-    </aside>
+    </section>
   </div>;
 }

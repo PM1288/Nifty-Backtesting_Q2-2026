@@ -599,7 +599,7 @@
   color: #91a4bc;
   font: 600 10px/1.2 "IBM Plex Mono", monospace;
 }
-.alignedInspector header span { color: #64748b; font-weight: 400; }
+.alignedInspector header span { color: #94a3b8; font-weight: 400; }
 .alignedInspector p {
   padding: 4px 2px;
   border-top: 1px solid rgba(34, 50, 74, .55);
@@ -628,7 +628,7 @@
 .page .alignedLadderScroll thead th { background: #122137; color: #91a4bc; }
 .page .alignedLadderScroll button { min-height: 21px; padding: 1px 3px; border: 0; background: transparent; color: inherit; font: inherit; }
 .page .alignedLadderScroll tr[aria-selected="true"] { outline: 1px solid #3b82f6; outline-offset: -1px; background: #172d4d; }
-.alignedMuted { color: #64748b !important; font-weight: 400 !important; }
+.alignedMuted { color: #94a3b8 !important; font-weight: 400 !important; }
 .page[data-view="scalper"] { gap: 6px; padding: 8px 10px; }
 .page[data-view="scalper"] > header.toolbar,
 .page[data-view="scalper"] > .context,

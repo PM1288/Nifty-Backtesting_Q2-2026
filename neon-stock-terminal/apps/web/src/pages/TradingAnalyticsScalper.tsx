@@ -106,7 +106,7 @@ function ScalperOiTopline({ panes }: { panes: { identity: Row; bars: Row[]; oiHi
     };
   }, [panes]);
   const anyObserved = values.ce != null || values.pe != null;
-  return <section className={styles.scalperOiTopline} aria-label="Selected call and put OI context" data-testid="scalper-call-put-oi">
+  return <section className={styles.scalperOiTopline} aria-label="Selected call and put OI context" data-testid="scalper-call-put-oi" tabIndex={0} role="region">
     <strong>Selected CE / PE · retained OI endpoint</strong>
     {(["CE", "PE"] as const).map((side) => {
       const row = side === "CE" ? values.ce : values.pe;

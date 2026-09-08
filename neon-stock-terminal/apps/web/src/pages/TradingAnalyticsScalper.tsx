@@ -422,7 +422,7 @@ export function TradingAnalyticsScalper({
             checked={showGrid}
             onChange={(e) => setShowGrid(e.target.checked)}
           />
-          50-point grid (optional)
+          {symbol === "NIFTY" ? "NIFTY 50-point grid (optional)" : `${symbol} round-number grid (optional)`}
         </label>
         <label>
           <input

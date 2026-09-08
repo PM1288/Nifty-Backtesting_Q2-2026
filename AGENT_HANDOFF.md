@@ -3635,3 +3635,8 @@ post-open live repopulation must be verified after deployment.
 - Production deployment: pushed implementation commits through `5ed9730`; rebuilt and recreated only `trading-stack-novius2-n50-dashboard-1` (healthy, zero restarts after validation). Live route/asset smoke passed at `/n50/strategy/trading-analytics?view=scalper`.
 - Authenticated responsive Scalper regression passed 22/22 at 1440x900 and 390x900: 5-minute and one-day defaults, real chart response, optional NIFTY grid, explicit lookbacks, no order eligibility, no horizontal overflow, no JavaScript errors and zero axe violations. Evidence: `output/playwright/scalper-5m-20260907/results.json`, `1440-scalper.png`, `390-scalper.png` and matching axe/level JSON.
 - Detailed scope and deferred read-model phases: `docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.
+
+# 2026-09-08 — Scalper OI visibility correction
+
+- The top Scalper candle workspace now defaults to a paired CE/PE interval-change-in-OI pane directly below the NIFTY candles. Its local selector can instead show current OI, cumulative change in OI, RSI or MACD; the detailed OI-through-time chart remains lower in the evidence view.
+- Deployed implementation commit: `6a75115`. Authenticated browser regression passed 34/34 at 1440x900 and 390x900, including OI-pane selection, source/API checks, axe, JavaScript-error and overflow checks. Evidence: `output/playwright/scalper-oi-lower-20260908/results.json` and corresponding screenshots.

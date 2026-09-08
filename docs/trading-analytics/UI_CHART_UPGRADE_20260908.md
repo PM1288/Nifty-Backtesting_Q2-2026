@@ -98,6 +98,10 @@ precedence changed.
 - **Axis controls:** each underlying/CE/PE pane retains independent native
   financial scaling, `Fit levels`, optional NIFTY round guides, data-zoom
   filtering and a compact manual min/max lock/reset control.
+- **OI in the candle workspace:** the Scalper lower pane now defaults to paired
+  CE/PE interval ΔOI directly beneath the underlying candles. The same selector
+  switches to current OI, cumulative ΔOI, RSI or MACD; the complete OI evidence
+  chart below remains available for detailed inspection/export.
 
 ## Deliberate limitations
 

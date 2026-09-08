@@ -3595,3 +3595,13 @@ date-sensitive expiry tests are deterministic. Report:
 `docs/derivatives/NIFTY_OI_WATCHER_INCIDENT_20260908.md`. Source tests 8/8,
 build and canonical gate pass. Deleted history was not fabricated or restored;
 post-open live repopulation must be verified after deployment.
+# 2026-09-08 — MANEESH Trading Analytics chart-first upgrade
+
+- Source reference: `/home/novius2/NIFTY50/ui upgrade/Trading_Analytics_UI_UX_and_Chart_Upgrade_20260908_v1_2.md`.
+- Canonical route remains `/strategy/trading-analytics?view=scalper`; the pink/white MANEESH shortcut is unchanged.
+- Scoped financial axis mode now avoids generic precomputed extents, candlestick bounds use both low and high, distant R levels no longer flatten Auto price, and Fit levels is explicit.
+- Optional NIFTY 50-point round guides no longer force every axis tick or affect option axes.
+- Chart/ladder now precede measurement detail, secondary controls, OI and audit evidence; underlying/right-option pane allocation removes the former large gutter.
+- Preserved exact pair, A/B, editable units, illustrative P&L, EMA9, RSI/MACD, OI, PCR/max pain context, source tables and exports.
+- Validation before deployment: web typecheck passed, web tests 87/87 passed, web production build passed.
+- Detailed scope and deferred read-model phases: `docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.

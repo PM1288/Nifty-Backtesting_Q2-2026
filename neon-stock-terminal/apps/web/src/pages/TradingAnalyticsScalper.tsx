@@ -12,6 +12,9 @@ import {
   chartInterval,
   istDay,
   dayRows,
+  financialVisibleBounds,
+  levelIsNearVisiblePrice,
+  roundNumberGuides,
 } from "../lib/tradingAnalyticsChartView";
 import styles from "./TradingAnalyticsPage.module.css";
 const Chart = lazy(async () => ({
@@ -58,6 +61,7 @@ export function TradingAnalyticsScalper({
   const interval = chartInterval(params.get("interval"));
   const [showLevels, setShowLevels] = useState(true);
   const [showGrid, setShowGrid] = useState(symbol==='NIFTY');
+  const [fitLevels, setFitLevels] = useState(false);
   const [fixedPair, setFixedPair] = useState<{strike:string;expiry:string}|null>(null);
   const [points, setPoints] = useState<string[]>([]);
   const [selecting, setSelecting] = useState(false);
@@ -147,6 +151,24 @@ export function TradingAnalyticsScalper({
   useEffect(() => { setPoints([]); setSelecting(false); }, [interval, day, oneDay, selected, effectiveExpiry]);
   const times = useMemo(() => [...new Set((panes ?? []).flatMap(p => p.bars.map(b => String(b.end))))].sort(), [panes]);
   const indicators = useMemo(() => new Map(scalperIndicators(q.data?.panes[0]?.bars ?? []).map(r => [r.time,r])), [q.data]);
+  const visibleUnderlyingBounds = useMemo(
+    () => financialVisibleBounds(panes?.[0]?.bars ?? []),
+    [panes],
+  );
+  const selectedLevels = useMemo(
+    () => resistance.flatMap((row) => {
+      const selectedLevel = row.selected as Row | null | undefined;
+      const value = Number(selectedLevel?.resistance);
+      return Number.isFinite(value)
+        ? [{ row, value }]
+        : [];
+    }),
+    [resistance],
+  );
+  const plottedLevels = useMemo(
+    () => selectedLevels.filter(({ value }) => fitLevels || levelIsNearVisiblePrice(value, visibleUnderlyingBounds)),
+    [fitLevels, selectedLevels, visibleUnderlyingBounds],
+  );
   const measured = points.length === 2 ? measurePanes(panes ?? [], points[0], points[1], Number(quantity)) : null;
   const pickPoint = (index:number) => {
     if (!fixedPair || !selecting || !times[index]) return;
@@ -173,16 +195,16 @@ export function TradingAnalyticsScalper({
               height: showIndicators?"15%":"22%",
             }
           : i === 0
-            ? { left: 70, right: "43%", top: 45, bottom: showIndicators?"46%":65 }
+            ? { left: 70, right: "40%", top: 45, bottom: showIndicators?"35%":65 }
             : {
-                left: "66%",
+                left: "62%",
                 right: 60,
-                top: i === 1 ? 45 : "56%",
-                height: "32%",
+                top: i === 1 ? 45 : "52%",
+                height: "38%",
               },
       ), ...(showIndicators ? [
-        {left:70,right:narrow?30:"43%",top:narrow?"65%":"60%",height:"11%"},
-        {left:70,right:narrow?30:"43%",top:narrow?"80%":"78%",height:"11%"},
+        {left:70,right:narrow?30:"40%",top:narrow?"65%":"69%",height:"9%"},
+        {left:70,right:narrow?30:"40%",top:narrow?"80%":"82%",height:"9%"},
       ] : [])],
       xAxis: [...rows, ...(showIndicators?[rows[0],rows[0]]:[])].map((_, i) => ({
         type: "category",
@@ -207,9 +229,12 @@ export function TradingAnalyticsScalper({
         type: "value" as const,
         gridIndex: i,
         scale: true,
-        interval: i === 0 && showGrid ? 50 : undefined,
-        min: i===0&&showGrid ? (v:{min:number})=>Math.floor(v.min/50)*50 : undefined,
-        max: i===0 ? (v:{max:number})=>{const top=Math.max(v.max,...(showLevels?resistance.filter(r=>r.selected!=null).map(r=>Number((r.selected as Row).resistance)):[]));return showGrid?Math.ceil(top/50)*50:top;} : undefined,
+        min: i === 0 && fitLevels && selectedLevels.length
+          ? (v: { min: number }) => Math.min(v.min, ...selectedLevels.map((level) => level.value))
+          : undefined,
+        max: i === 0 && fitLevels && selectedLevels.length
+          ? (v: { max: number }) => Math.max(v.max, ...selectedLevels.map((level) => level.value))
+          : undefined,
         position: "right" as const,
         axisLabel: { fontSize: 12 },
         splitLine: { lineStyle: { color: "#E8EBEF" } },
@@ -236,17 +261,24 @@ export function TradingAnalyticsScalper({
             } : {data:[]},
             markPoint: {symbol:"circle",symbolSize:8,label:{show:true,formatter:"{b}"},data:points.flatMap((t,j)=>{const v=closeAt(p.bars,t);return v==null?[]:[{name:j===0?"A":"B",coord:[t,v]}];})},
             markLine:
-              i === 0 && showLevels
+              i === 0 && (showLevels || showGrid)
                 ? {
                     symbol: "none",
                     silent: true,
                     label: { position: "insideEndTop" as const, formatter: "{b}" },
-                    data: resistance
-                      .filter((r) => r.selected != null)
-                      .map((r) => ({
-                        name: `${String(r.timeframe).toUpperCase()} R · preview`,
-                        yAxis: Number((r.selected as Row).resistance),
-                      })),
+                    data: [
+                      ...(showLevels ? plottedLevels.map(({ row, value }) => ({
+                        name: `${String(row.timeframe).toUpperCase()} R · preview`,
+                        yAxis: value,
+                        lineStyle: { type: "dashed" as const, color: "#969B45" },
+                      })) : []),
+                      ...(showGrid ? roundNumberGuides(visibleUnderlyingBounds, 50).map((value) => ({
+                        name: `${value}`,
+                        yAxis: value,
+                        label: { show: false },
+                        lineStyle: { type: "dotted" as const, color: "#cbd5e1", width: 1 },
+                      })) : []),
+                    ],
                     lineStyle: { type: "dashed" as const, color: "#969B45" },
                   }
                 : undefined,
@@ -282,10 +314,10 @@ export function TradingAnalyticsScalper({
         ...(["macd","signal","histogram"] as const).map((key,i)=>({name:key==="macd"?"MACD":key==="signal"?"Signal":"Histogram",type:key==="histogram"?"bar" as const:"line" as const,xAxisIndex:rows.length+1,yAxisIndex:rows.length+1,showSymbol:false,connectNulls:false,itemStyle:{color:["#2563eb","#d97706","#64748b"][i]},data:times.map(t=>indicators.get(t)?.[key]??null)})),
       ]:[])],
     };
-  }, [panes, narrow, showEma, showLevels, showGrid, resistance, showIndicators, indicators, selecting, points, quantity, label]);
+  }, [panes, narrow, showEma, showLevels, showGrid, showIndicators, indicators, selecting, points, quantity, label, fitLevels, selectedLevels, plottedLevels, visibleUnderlyingBounds]);
   return (
     <>
-      <div className={styles.toolbar}>
+      <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
         <h2>Underlying / exact CE / exact PE</h2>
         <label>
           Chart range{" "}
@@ -383,7 +415,7 @@ export function TradingAnalyticsScalper({
         <small>Browser memory only; cleared on reload or leaving this view. Quantity 65 is an editable visual default, not verified lot size. Close-to-close price delta, not Greek Delta. Long both legs, before costs/slippage; not a trade, order or booked P&amp;L.</small>
         <IndicatorEvidence times={times} indicators={indicators}/>
       </section>
-      <div className={styles.toolbar}>
+      <div className={`${styles.toolbar} ${styles.scalperOverlayBar}`}>
         <label>
           <input
             type="checkbox"
@@ -400,6 +432,14 @@ export function TradingAnalyticsScalper({
           />
           Monthly / weekly / daily R
         </label>
+        <button
+          type="button"
+          disabled={!showLevels || selectedLevels.length === 0}
+          aria-pressed={fitLevels}
+          onClick={() => setFitLevels((value) => !value)}
+        >
+          {fitLevels ? "Fit price" : "Fit levels"}
+        </button>
         {["daily", "weekly"].map((timeframe) => (
           <label key={timeframe}>
             {timeframe} R lookback{" "}
@@ -426,13 +466,13 @@ export function TradingAnalyticsScalper({
           </label>
         ))}
       </div>
-      <p>
+      <p className={styles.scalperLegend}>
         Green = rising; red = falling. One-day view uses the latest recorded
         underlying session unless another day is selected; EMA retains its
         historical warm-up. The optional 50-point grid is enabled by default only
         for NIFTY; other underlyings and option premiums use their own automatic scale.
       </p>
-      <div className={styles.kpis}>
+      <div className={`${styles.kpis} ${styles.levelStrip}`}>
         {resistance.map((r) => (
           <span key={String(r.timeframe)}>
             {String(r.timeframe).toUpperCase()} R ·{" "}
@@ -445,10 +485,15 @@ export function TradingAnalyticsScalper({
                   )}
             </strong>
             {String(r.state).replaceAll("_", " ")}
+            {r.selected != null && !levelIsNearVisiblePrice(Number((r.selected as Row).resistance), visibleUnderlyingBounds) && !fitLevels
+              ? Number((r.selected as Row).resistance) > (visibleUnderlyingBounds?.max ?? Number.POSITIVE_INFINITY)
+                ? " · above view ↑"
+                : " · below view ↓"
+              : ""}
           </span>
         ))}
       </div>
-      <details>
+      <details className={styles.scalperEvidence}>
         <summary>Resistance rule / origin and break evidence</summary>
         <p>
           Preview: open of unbroken bearish candle; largest open-minus-close
@@ -457,11 +502,11 @@ export function TradingAnalyticsScalper({
           completed bars. Daily and weekly counts are user-configured because
           source notes do not specify them. Only resistance above the as-of
           price is selected. Research overlays, not approved trade signals.
-          Showing R expands only the underlying scale; switch R off for a closer price view.
+          Auto price view excludes distant levels. Use Fit levels explicitly to include every selected level.
         </p>
         <pre tabIndex={0}>{JSON.stringify(resistance, null, 2)}</pre>
       </details>
-      <p>
+      <p className={styles.scalperEvidence}>
         Shared time cursor, independent price scales. Exact contracts are never
         spliced into a rotating ATM series. Only fully observed closed bars are
         plotted; partial coverage remains in the source table.
@@ -484,6 +529,7 @@ export function TradingAnalyticsScalper({
               ariaLabel="Time-linked underlying and exact option candles with independent price scales"
               option={option}
               setOptionOpts={measurementChartOpts}
+              axisExtentPolicy="native"
               onCategoryClick={(index,grid)=>{if(grid<(panes?.length??0))pickPoint(index);}}
             />
           </Suspense>
@@ -601,7 +647,7 @@ export function TradingAnalyticsScalper({
           </pre>
         </details>
       </section>
-      <section className={styles.warning}>
+      <section className={`${styles.warning} ${styles.scalperEvidence}`}>
         <h3>Closed-candle evidence · POLICY INCOMPLETE</h3>
         <p>
           Own-series 9 EMA · aligned completed intervals required · 70%
@@ -610,13 +656,13 @@ export function TradingAnalyticsScalper({
         </p>
       </section>
       {(panes?.length ?? 0) < 3 && (
-        <p className={styles.warning}>
+        <p className={`${styles.warning} ${styles.scalperEvidence}`}>
           Exact CE/PE metadata or archive unavailable for this known-at time. No
           substitute contracts are shown.
         </p>
       )}
       {panes?.map((p) => (
-        <details key={String(p.identity.tradingsymbol)}>
+        <details className={styles.scalperEvidence} key={String(p.identity.tradingsymbol)}>
           <summary>
             {String(p.identity.tradingsymbol)} · {p.sourceMinuteCount} source
             minutes in retained archive ·{" "}
@@ -668,7 +714,7 @@ export function TradingAnalyticsScalper({
         </details>
       ))}
       {q.data?.limitations.map((l) => (
-        <p key={l}>{l}</p>
+        <p className={styles.scalperEvidence} key={l}>{l}</p>
       ))}
     </>
   );

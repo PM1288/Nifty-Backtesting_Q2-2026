@@ -342,7 +342,7 @@
 .measurement p { margin-block: 6px; }
 .measurement small { display: block; color: #475569; font-size: 12px; }
 .scalperChart {
-  height: 610px;
+  height: clamp(610px, 70vh, 760px);
 }
 .ladder {
   min-width: 0;
@@ -378,12 +378,55 @@
   background: #e8edf8;
 }
 .contractHeaders {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr);
+  gap: 8px;
   font-size: 13px;
-  padding: 6px;
+  padding: 7px 10px;
+  background: #fff;
+  border: 1px solid #d2dae3;
+  border-bottom: 0;
 }
+.contractHeaders strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scalperCommandBar,
+.scalperOverlayBar {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  min-height: 42px;
+  padding: 4px 6px;
+  background: #fff;
+  border: 1px solid #d2dae3;
+}
+.scalperCommandBar > *,
+.scalperOverlayBar > * { flex: 0 0 auto; }
+.levelStrip {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  min-height: 48px;
+  padding: 5px 8px;
+}
+.levelStrip span { min-width: 150px; font-size: 11px; }
+.levelStrip strong { font-size: 14px; }
+.scalperEvidence { content-visibility: auto; }
+.page[data-view="scalper"] { gap: 6px; padding: 8px 10px; }
+.page[data-view="scalper"] > header.toolbar,
+.page[data-view="scalper"] > .context,
+.page[data-view="scalper"] > .kpis,
+.page[data-view="scalper"] > .warning { margin: 0; }
+.page[data-view="scalper"] > header.toolbar { flex-wrap: nowrap; overflow-x: auto; min-height: 38px; }
+.page[data-view="scalper"] > .context { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 3px 0; }
+.page[data-view="scalper"] > .kpis { flex-wrap: nowrap; overflow-x: auto; min-height: 42px; padding: 5px 8px; }
+.page[data-view="scalper"] > .kpis strong { display: inline; font-size: 14px; }
+.page[data-view="scalper"] > .warning { padding: 6px 8px; line-height: 1.35; }
+.page[data-view="scalper"] .scalperCommandBar { order: 1; }
+.page[data-view="scalper"] .levelStrip { order: 2; }
+.page[data-view="scalper"] .contractHeaders { order: 3; }
+.page[data-view="scalper"] .scalperWorkspace { order: 4; }
+.page[data-view="scalper"] .measurement { order: 5; }
+.page[data-view="scalper"] .scalperOverlayBar { order: 6; }
+.page[data-view="scalper"] .scalperLegend { order: 7; }
+.page[data-view="scalper"] .scalperEvidence { order: 8; }
+.page[data-view="scalper"] .plot { order: 9; }
 .structureLarge {
   height: 460px;
   min-width: 0;

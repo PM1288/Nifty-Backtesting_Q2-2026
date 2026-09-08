@@ -29,3 +29,35 @@ export function dayRows<T extends Record<string, unknown>>(
 ) {
   return rows.filter((r) => istDay(r[key]) === day);
 }
+
+export function financialVisibleBounds(
+  rows: Array<Record<string, unknown>>,
+): { min: number; max: number } | null {
+  const values = rows.flatMap((row) => [row.low, row.high]).filter(
+    (value): value is number => typeof value === "number" && Number.isFinite(value),
+  );
+  if (!values.length) return null;
+  return { min: Math.min(...values), max: Math.max(...values) };
+}
+
+export function roundNumberGuides(
+  bounds: { min: number; max: number } | null,
+  step = 50,
+): number[] {
+  if (!bounds || !Number.isFinite(step) || step <= 0) return [];
+  const start = Math.ceil(bounds.min / step) * step;
+  const end = Math.floor(bounds.max / step) * step;
+  const result: number[] = [];
+  for (let value = start; value <= end && result.length < 20; value += step) result.push(value);
+  return result;
+}
+
+export function levelIsNearVisiblePrice(
+  value: number,
+  bounds: { min: number; max: number } | null,
+  paddingRatio = 0.08,
+) {
+  if (!bounds || !Number.isFinite(value)) return false;
+  const span = Math.max(bounds.max - bounds.min, Math.abs(bounds.max) * 0.002, 1);
+  return value >= bounds.min - span * paddingRatio && value <= bounds.max + span * paddingRatio;
+}

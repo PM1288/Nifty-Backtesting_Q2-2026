@@ -16,6 +16,7 @@ import {
 import type { EChartsOption, SetOptionOpts } from "echarts";
 import { useI18n, useLocale } from "../../i18n/LocaleProvider";
 import { useFontMode } from "../../lib/fontMode";
+import { candlestickAxisValues } from "../../lib/financialChartExtent";
 import {
   normalizeChartAxisFormatter,
   normalizeChartTooltipFormatter,
@@ -268,7 +269,7 @@ function extractNumericValue(value: unknown): number[] {
   return [];
 }
 
-function extractSeriesAxisValues(series: Record<string, unknown>, axis: "x" | "y"): number[] {
+export function extractSeriesAxisValues(series: Record<string, unknown>, axis: "x" | "y"): number[] {
   const axisIndex = axis === "x" ? 0 : 1;
   const seriesType = typeof series.type === "string" ? series.type : "";
   const data = asArray<unknown>(series.data as unknown[] | unknown);
@@ -279,6 +280,11 @@ function extractSeriesAxisValues(series: Record<string, unknown>, axis: "x" | "y
       : entry;
 
     if (Array.isArray(candidate)) {
+      if (seriesType === "candlestick" && axis === "y") {
+        // ECharts financial data is [open, close, low, high].  Reading only
+        // the tail clips lows and produces invalid automatic financial bounds.
+        return candlestickAxisValues(candidate, axis) ?? [];
+      }
       if ((seriesType === "scatter" || seriesType === "line") && typeof candidate[axisIndex] === "number" && Number.isFinite(candidate[axisIndex])) {
         return [candidate[axisIndex] as number];
       }
@@ -367,7 +373,8 @@ function normalizeOption(
   option: EChartsOption,
   translate: (value: string) => string,
   fontFamily: string,
-  appearance: ChartAppearance
+  appearance: ChartAppearance,
+  axisExtentPolicy: "normalized" | "native",
 ): EChartsOption {
   const palette = chartPalette(appearance);
   const legends = option.legend != null
@@ -458,7 +465,9 @@ function normalizeOption(
     nextOption.series = (Array.isArray(option.series) ? series : series[0]) as EChartsOption["series"];
   }
 
-  nextOption = applyValueAxisExtents(nextOption);
+  // Financial workspaces let ECharts derive extents from the active dataZoom
+  // window.  Generic report charts retain the existing normalized policy.
+  if (axisExtentPolicy === "normalized") nextOption = applyValueAxisExtents(nextOption);
 
   return nextOption;
 }
@@ -469,6 +478,7 @@ export function EChartSurface({
   option,
   setOptionOpts,
   onCategoryClick,
+  axisExtentPolicy = "normalized",
   appearance = "light"
 }: {
   ariaLabel: string;
@@ -476,6 +486,7 @@ export function EChartSurface({
   option: EChartsOption;
   setOptionOpts?: SetOptionOpts;
   onCategoryClick?: (index: number, gridIndex: number) => void;
+  axisExtentPolicy?: "normalized" | "native";
   appearance?: ChartAppearance;
 }) {
   const { tr } = useI18n();
@@ -495,8 +506,8 @@ export function EChartSurface({
     [digits, fontMode, language]
   );
   const normalizedOption = useMemo(
-    () => normalizeOption(option, tr, fontFamily, appearance),
-    [appearance, fontFamily, option, tr]
+    () => normalizeOption(option, tr, fontFamily, appearance, axisExtentPolicy),
+    [appearance, axisExtentPolicy, fontFamily, option, tr]
   );
 
   useEffect(() => {

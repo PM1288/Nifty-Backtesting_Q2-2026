@@ -11,6 +11,13 @@ browser-memory-only endpoints/quantity and fixed exact pair; RSI/MACD on selecte
 underlying. Existing chart consumers, source bars/CSV, OI, EMA9, resistance,
 orders and paper data are unchanged. Evidence: SCALPER_MEASUREMENT_20260907.md.
 
+2026-09-08 MANEESH chart-first repair: financial native-axis mode, correct
+candlestick low/high extraction, explicit Fit levels, off-screen level labels,
+visible-range 50-point guides and compact underlying/CE/PE layout. Generic
+charts keep the prior extent policy; exact-pair A/B, RSI/MACD, EMA9, ladder, OI,
+exports and read-only execution gates remain unchanged. Evidence:
+`docs/trading-analytics/UI_CHART_UPGRADE_20260908.md`.
+
 2026-09-07: temporary MANEESH header link opens the existing Trading Analytics
 Scalper (5m default); original Strategy menu destination remains. Pink/white
 styling is scoped to this shortcut only. Desktop and mobile retain navigation,

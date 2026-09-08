@@ -320,7 +320,7 @@ export function TradingAnalyticsPage() {
     );
   return (
     <InspectContext.Provider value={inspect}>
-      <section className={styles.page} aria-label="Trading Analytics workspace">
+      <section className={styles.page} data-view={tab} aria-label="Trading Analytics workspace">
         <header className={styles.toolbar}>
           <h1>Trading Analytics</h1>
           <span>READ-ONLY · Research preview</span>

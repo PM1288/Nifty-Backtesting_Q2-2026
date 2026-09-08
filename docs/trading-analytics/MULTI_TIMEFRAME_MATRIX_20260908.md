@@ -56,3 +56,11 @@ The browser package is written to:
 ```text
 /home/novius2/NIFTY50/UI/MANEESH_MULTI_TIMEFRAME_MATRIX_ACCEPTANCE_20260908
 ```
+
+Production acceptance on 8 September 2026 passed `34/34` assertions at
+1920×1080 and 1440×900. It verified nine mounted chart cells, three identities
+for every interval, no interval selector, the shared cursor timestamp on all
+nine panes, one-viewport geometry, no horizontal overflow, no application
+runtime errors, and no serious/critical axe violations. The evidence used the
+retained 8 September 2026 NIFTY `23650` CE/PE pair and kept it explicitly
+separate from the 15 September current-chain context.

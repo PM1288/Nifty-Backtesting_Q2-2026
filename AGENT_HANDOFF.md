@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-08 MANEESH multi-timeframe matrix
+
+Trading Analytics has a separate `/strategy/trading-analytics?view=matrix`
+workspace showing
+NIFTY/selected underlying, exact CE and exact PE in columns and fixed 1m, 5m and
+15m rows. It has no interval selector. One hover timestamp drives all nine
+crosshairs; 5m/15m panes use the completed candle containing that wall-clock
+instant. The production view fits 1920×1080 and 1440×900 without browser scroll.
+
+This release is read-only and preserves the existing Scalper, OIIS/OISS, paper
+and broker gates.
+Authenticated public acceptance passed 34/34. Evidence and rerun commands:
+`docs/trading-analytics/MULTI_TIMEFRAME_MATRIX_20260908.md`. Screenshots/raw
+checks: `/home/novius2/NIFTY50/UI/MANEESH_MULTI_TIMEFRAME_MATRIX_ACCEPTANCE_20260908`.
+
 ## 2026-09-08 MANEESH chart evidence completion
 
 The Trading Analytics Scalper/Structure/OI/Morning read models now provide

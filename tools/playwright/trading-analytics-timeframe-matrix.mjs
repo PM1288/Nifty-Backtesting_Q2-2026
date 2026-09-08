@@ -60,7 +60,13 @@ try {
     // The first response may intentionally redirect from an empty current-chain
     // pair to the nearest retained exact pair. Wait for that second, heavier
     // three-interval request rather than validating its transient loading shell.
-    await matrix.getByText("Loading retained candles", { exact: true }).waitFor({ state: "hidden", timeout: 90_000 }).catch(() => {});
+    await page.waitForFunction(() => {
+      const cells = [...document.querySelectorAll("[data-matrix-chart]")];
+      return cells.length === 9 && cells.every((cell) => {
+        const text = cell.textContent ?? "";
+        return !text.includes("No completed retained candles") && !text.includes("O —");
+      });
+    }, undefined, { timeout: 90_000 });
     await page.waitForTimeout(1_000);
 
     check(`${tag} has exactly nine chart cells`, await matrix.locator("[data-matrix-chart]").count() === 9);

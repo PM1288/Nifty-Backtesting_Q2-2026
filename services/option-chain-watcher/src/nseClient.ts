@@ -12,8 +12,8 @@ function parseExpiryRaw(exp: string): DateTime {
   return DateTime.fromFormat(exp.trim(), 'dd-MMM-yyyy', { zone: 'Asia/Kolkata' });
 }
 
-export function pickCurrentExpiry(expiries: string[]): string {
-  const now = DateTime.now().setZone('Asia/Kolkata').startOf('day');
+export function pickCurrentExpiry(expiries: string[], asOf: DateTime<boolean> = DateTime.now()): string {
+  const now = asOf.setZone('Asia/Kolkata').startOf('day');
   const parsed = expiries
     .map(raw => ({ raw, dt: parseExpiryRaw(raw) }))
     .filter(x => x.dt.isValid)
@@ -23,8 +23,8 @@ export function pickCurrentExpiry(expiries: string[]): string {
   return (upcoming ?? parsed[0]).raw;
 }
 
-export function pickExpiryRoles(expiries: string[]): { W0: string; M0: string; alsoNearestWeekly: boolean } {
-  const now = DateTime.now().setZone('Asia/Kolkata').startOf('day');
+export function pickExpiryRoles(expiries: string[], asOf: DateTime<boolean> = DateTime.now()): { W0: string; M0: string; alsoNearestWeekly: boolean } {
+  const now = asOf.setZone('Asia/Kolkata').startOf('day');
   const parsed = expiries
     .map(raw => ({ raw, dt: parseExpiryRaw(raw) }))
     .filter(x => x.dt.isValid && x.dt >= now)

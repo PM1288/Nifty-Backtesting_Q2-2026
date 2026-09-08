@@ -19,7 +19,8 @@ Key env vars (from root `.env` + service overrides in compose):
 - `NSE_OC_SYMBOL` (default `NIFTY`)
 - `NSE_OC_STRIKES_AROUND` (default `6`)
 - `NSE_OC_KEEP_RAW` (default `false`)
-- `NSE_OC_CLEANUP_MIN_DAYS` (default `14`)
+- `NSE_OC_CLEANUP_MIN_DAYS` (default `30`); rows older than this age-based IST
+  cutoff are removed at most once per day. Cleanup is not tied to expiry weekday.
 - `NSE_OC_CLEANUP_ENABLED` (default `true`)
 - `NSE_OC_RISK_FREE_RATE` (default `0.06`) for Black-Scholes greeks
 - `NSE_OC_DIVIDEND_YIELD` (default `0`) for Black-Scholes greeks

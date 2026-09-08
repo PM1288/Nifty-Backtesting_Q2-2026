@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { marketSnapshotFingerprint, sessionSuppressionReason, ExchangeSession } from './sessionPolicy';
+import { DateTime } from 'luxon';
+import { cleanupDueToday, marketSnapshotFingerprint, retentionCutoffIst, sessionSuppressionReason, ExchangeSession } from './sessionPolicy';
 import { SelectedSnapshot } from './transform';
 
 const session: ExchangeSession = {
@@ -23,6 +24,20 @@ test('holidays and missing special-session times fail closed', () => {
   assert.equal(sessionSuppressionReason({ ...session, isTradingDay: false }, new Date('2026-08-14T05:00:00.000Z')), 'NOT_TRADING_DAY');
   assert.equal(sessionSuppressionReason({ ...session, specialSession: true, marketOpenAt: null }, new Date('2026-08-14T05:00:00.000Z')), 'SESSION_TIME_UNAVAILABLE');
   assert.equal(sessionSuppressionReason(null, new Date('2026-08-14T05:00:00.000Z')), 'TRADING_CALENDAR_MISSING');
+});
+
+test('retention cutoff uses configured age and never the current weekday', () => {
+  const now = DateTime.fromISO('2026-09-08T06:01:00', { zone: 'Asia/Kolkata' });
+  assert.equal(retentionCutoffIst(now, 30).toISO(), '2026-08-09T00:00:00.000+05:30');
+  assert.equal(retentionCutoffIst(now, 14).toISO(), '2026-08-25T00:00:00.000+05:30');
+  assert.equal(retentionCutoffIst(now, 0).toISO(), '2026-09-07T00:00:00.000+05:30');
+});
+
+test('cleanup is due no more than once per IST calendar day', () => {
+  const now = DateTime.fromISO('2026-09-08T06:01:00', { zone: 'Asia/Kolkata' });
+  assert.equal(cleanupDueToday(now, null), true);
+  assert.equal(cleanupDueToday(now, new Date('2026-09-07T00:31:00.000Z')), true);
+  assert.equal(cleanupDueToday(now, new Date('2026-09-08T00:31:00.000Z')), false);
 });
 
 function snapshot(): SelectedSnapshot {

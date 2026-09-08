@@ -3584,3 +3584,14 @@ ceiling and explicitly dropped 755. Report records missing volume in the chart
 contract, degraded Greeks, current PCR/max-pain limitations and the required
 capacity/coverage work. No strategy, collector configuration, order, database
 row or deployed container was changed.
+
+# 2026-09-08 — NIFTY NSE option-chain retention incident
+
+The separate `option-chain-watcher` remained healthy and collected 7 September
+W0/M0 NIFTY OI/change-in-OI, but its Tuesday cleanup ignored the configured age
+and deleted all 1,291 snapshots at 06:01 IST before the new session. Fix replaces
+weekday deletion with a 30-day IST age cutoff and once-per-day scheduling;
+date-sensitive expiry tests are deterministic. Report:
+`docs/derivatives/NIFTY_OI_WATCHER_INCIDENT_20260908.md`. Source tests 8/8,
+build and canonical gate pass. Deleted history was not fabricated or restored;
+post-open live repopulation must be verified after deployment.

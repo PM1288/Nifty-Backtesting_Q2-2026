@@ -60,7 +60,7 @@ export function loadConfig(): AppConfig {
     // Greeks inputs
     riskFreeRate: envFloat('NSE_OC_RISK_FREE_RATE', 0.06),
     dividendYield: envFloat('NSE_OC_DIVIDEND_YIELD', 0.0),
-    cleanupMinDays: envInt('NSE_OC_CLEANUP_MIN_DAYS', 14),
+    cleanupMinDays: envInt('NSE_OC_CLEANUP_MIN_DAYS', 30),
     cleanupEnabled: envBool('NSE_OC_CLEANUP_ENABLED', true),
     cleanupWindowStartHourIst: envInt('NSE_OC_CLEANUP_WINDOW_START_IST_HOUR', 6),
     cleanupWindowEndHourIst: envInt('NSE_OC_CLEANUP_WINDOW_END_IST_HOUR', 12),

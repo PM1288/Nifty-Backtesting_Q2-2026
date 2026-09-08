@@ -9,7 +9,7 @@ import { NseOptionChainClient, pickExpiryRoles } from './nseClient';
 import { OptionChainStore } from './store';
 import { selectAtmPlusMinus } from './transform';
 import { createPool } from './db';
-import { marketSnapshotFingerprint, sessionSuppressionReason } from './sessionPolicy';
+import { cleanupDueToday, marketSnapshotFingerprint, retentionCutoffIst, sessionSuppressionReason } from './sessionPolicy';
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -18,12 +18,6 @@ function sleep(ms: number): Promise<void> {
 function inCleanupWindowIst(nowIst: DateTime, startHour: number, endHour: number): boolean {
   const h = nowIst.hour + nowIst.minute / 60;
   return h >= startHour && h < endHour;
-}
-
-function latestTuesdayStartIst(nowIst: DateTime): DateTime {
-  const startOfToday = nowIst.startOf('day');
-  const daysSinceTuesday = (nowIst.weekday - 2 + 7) % 7;
-  return startOfToday.minus({ days: daysSinceTuesday });
 }
 
 function sendJson(res: http.ServerResponse, code: number, body: unknown): void {
@@ -1091,14 +1085,14 @@ async function main(): Promise<void> {
 
     const last = await store.getLastCleanupAt();
     const lastDt = last ? DateTime.fromJSDate(last).setZone('Asia/Kolkata') : null;
-    const cutoffIst = latestTuesdayStartIst(nowIst);
-    const due = !lastDt || lastDt < cutoffIst;
-    if (!due) return;
+    if (!cleanupDueToday(nowIst, last)) return;
+    const cutoffIst = retentionCutoffIst(nowIst, cfg.cleanupMinDays);
 
-    logger.warn('Cleanup due; pruning option chain history before latest Tuesday', {
+    logger.warn('Cleanup due; pruning option chain history before age-based cutoff', {
       lastCleanupAt: lastDt ? lastDt.toISO() : null,
       nowIst: nowIst.toISO(),
       cutoffIst: cutoffIst.toISO(),
+      retentionDays: cfg.cleanupMinDays,
     });
     const deletedSnapshots = await store.cleanupBefore(cutoffIst.toUTC().toJSDate());
     logger.warn('Cleanup completed', { deletedSnapshots });

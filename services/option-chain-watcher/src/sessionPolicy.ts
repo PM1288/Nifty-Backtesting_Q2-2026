@@ -1,4 +1,5 @@
 import { SelectedSnapshot } from './transform';
+import { DateTime } from 'luxon';
 
 export type ExchangeSession = {
   tradeDate: string;
@@ -17,6 +18,19 @@ export function sessionSuppressionReason(session: ExchangeSession | null, at: Da
   if (now < session.marketOpenAt.getTime()) return 'BEFORE_MARKET_OPEN';
   if (now > session.marketCloseAt.getTime()) return 'AFTER_MARKET_CLOSE';
   return null;
+}
+
+/** Age-based option-chain retention boundary in the configured market timezone. */
+export function retentionCutoffIst(nowIst: DateTime, minimumDays: number): DateTime {
+  const days = Math.max(1, Math.trunc(minimumDays));
+  return nowIst.setZone('Asia/Kolkata').startOf('day').minus({ days });
+}
+
+/** Cleanup runs at most once per IST calendar day while inside the cleanup window. */
+export function cleanupDueToday(nowIst: DateTime, lastCleanupAt: Date | null): boolean {
+  if (!lastCleanupAt) return true;
+  const lastIst = DateTime.fromJSDate(lastCleanupAt).setZone('Asia/Kolkata');
+  return lastIst.startOf('day') < nowIst.setZone('Asia/Kolkata').startOf('day');
 }
 
 type FingerprintSnapshot = Pick<SelectedSnapshot, 'symbol' | 'expiryDate' | 'underlyingValue' | 'atmStrike' | 'strikesAround'> & {

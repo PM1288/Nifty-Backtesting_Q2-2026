@@ -35,7 +35,6 @@ try{
  await page.mouse.click(box.x+box.width*.4,box.y+box.height*.27);check('second chart click selects B',Boolean(await end.inputValue()));
  // Capture a fully observed comparison after also exercising arbitrary chart clicks.
  await start.selectOption(common[0]);await end.selectOption(common.at(-1));
- await page.getByRole('checkbox',{name:'Monthly / weekly / daily R',exact:true}).uncheck();
  check('all three synchronized deltas available',await page.getByRole('table',{name:'Synchronized price changes'}).locator('tbody tr').evaluateAll(rows=>rows.slice(0,3).every(r=>r.cells[3].textContent!=='—')));
  await page.mouse.move(0,0);await page.waitForTimeout(200);
  await page.screenshot({path:`${out}/measurement-desktop.png`,fullPage:true});

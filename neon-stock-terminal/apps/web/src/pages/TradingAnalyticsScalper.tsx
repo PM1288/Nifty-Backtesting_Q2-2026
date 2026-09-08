@@ -803,7 +803,7 @@ export function TradingAnalyticsScalper({
           </pre>
         </details>
       </section>
-      <section className={`${styles.warning} ${styles.scalperEvidence}`}>
+      <section className={`${styles.warning} ${styles.scalperEvidence}`} tabIndex={0} role="region" aria-label="Closed-candle evidence policy incomplete">
         <h3>Closed-candle evidence · POLICY INCOMPLETE</h3>
         <p>
           Own-series 9 EMA · aligned completed intervals required · 70%

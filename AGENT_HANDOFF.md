@@ -3670,3 +3670,25 @@ post-open live repopulation must be verified after deployment.
 - Final clean-build dashboard image: `sha256:018e85fdebe4cd2ae7454c6aeae248a31f12a6ee5c462a3da114fa2d9c91e2ed`; container healthy, zero restarts, public HTTP 200.
 - Validation: web 92/92, API 187/187, both typechecks; authenticated production browser 33/33; desktop/mobile axe zero; 13 screenshots.
 - Full handoff folder: `/home/novius2/NIFTY50/UI/ALIGNED_TERMINAL_ACCEPTANCE_PACKAGE_20260908`. Detailed mapping: `docs/trading-analytics/ALIGNED_TERMINAL_V3_20260908.md`.
+# 2026-09-08 — Aligned terminal anomaly correction and reproducible release
+
+- Canonical source: `/home/novius2/trading-stack`, `master`.
+- Canonical remote: `https://github.com/PM1288/Nifty-Backtesting_Q2-2026.git`.
+- Feature commit: `b7f0e9f0bbd46c45c9a083329c2de36d3c42fc66`.
+- Fixed chart-internal table CSS leakage that clipped the fifth pane, removed PCR
+  forward-fill, optimized session OI alignment, made pair/chain expiry scope explicit,
+  and kept all 1440px command controls visible.
+- Validation: web 93/93, API 188/188, production browser 39/39, 14 screenshots,
+  desktop/mobile axe 0, runtime errors 0.
+- Production service `trading-stack-novius2-n50-dashboard-1` was healthy with zero
+  restarts after the scoped deployment.
+- Full replication, deployment, acceptance and rollback commands:
+  `docs/trading-analytics/ALIGNED_TERMINAL_REPLICATION_20260908.md`.
+- Acceptance ZIP:
+  `/home/novius2/NIFTY50/UI/ALIGNED_TERMINAL_ACCEPTANCE_PACKAGE_20260908.zip`,
+  SHA-256 `ce7087ab83705d9fdbb6496fbf8c4956841c17c37e44a5eff9be487f6ce40f6a`.
+- Generated screenshots/runtime research data remain external to Git by canonical
+  repository policy. No credentials, database volumes or market-data archives were
+  committed.
+- Separate known maintenance issue: `npm audit --omit=dev` reports 16 existing
+  dependency advisories and needs an isolated compatibility-tested security release.

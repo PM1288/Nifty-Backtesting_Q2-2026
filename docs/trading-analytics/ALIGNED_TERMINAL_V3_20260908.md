@@ -154,6 +154,9 @@ application runtime errors. Deployed dashboard image:
 Acceptance folder:
 `/home/novius2/NIFTY50/UI/ALIGNED_TERMINAL_ACCEPTANCE_PACKAGE_20260908`
 
+Replication and deployment runbook:
+`docs/trading-analytics/ALIGNED_TERMINAL_REPLICATION_20260908.md`
+
 ## Post-completion anomaly review
 
 The final rendered-DOM and pixel review found four additional defects and corrected

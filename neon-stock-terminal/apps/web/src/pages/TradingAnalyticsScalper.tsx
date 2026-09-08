@@ -611,7 +611,7 @@ export function TradingAnalyticsScalper({
             />
           </Suspense>
         )}
-        <aside className={styles.scalperSideDock}>
+        <div className={styles.scalperSideDock}>
           <OiPriceProfile legs={legs} bounds={visibleUnderlyingBounds} />
         <section className={styles.ladder} aria-label="Paired strike ladder" tabIndex={0}>
           <h3>Nearest 10 pairs</h3>
@@ -655,7 +655,7 @@ export function TradingAnalyticsScalper({
             contracts.
           </p>
         </section>
-        </aside>
+        </div>
       </div>
       <section className={styles.plot}>
         <div className={styles.toolbar}>

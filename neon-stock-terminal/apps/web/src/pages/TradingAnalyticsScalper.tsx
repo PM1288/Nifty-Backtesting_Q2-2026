@@ -228,7 +228,9 @@ export function TradingAnalyticsScalper({
     ? params.get("day")!
     : (days[0] ?? "");
   const availableContracts = q.data?.availableContracts ?? [];
-  const availableExpiries = [...new Set([expiry, ...availableContracts.map((row) => String(row.expiry))].filter(Boolean))].sort();
+  // This selector controls retained exact-pair candles, not the current chain.
+  // Never offer an expiry with no paired minute bars as if it were chartable.
+  const availableExpiries = [...new Set([...availableContracts.map((row) => String(row.expiry)), effectiveExpiry].filter(Boolean))].sort();
   const availableStrikes = availableContracts.filter((row) => String(row.expiry) === effectiveExpiry).map((row) => Number(row.strike));
   useEffect(() => {
     if (!q.data || fixedPair || params.get("chartExpiry")) return;
@@ -437,10 +439,10 @@ export function TradingAnalyticsScalper({
   return (
     <div className={styles.scalperModule} data-renderer={renderer}>
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
-        <h2>NIFTY / CE / PE</h2>
+        <h2>SCALPER</h2>
         <label title="Chart renderer">
           <select aria-label="Scalper renderer" value={renderer} onChange={(event) => updateView("renderer", event.target.value === "classic" ? "classic" : "")}>
-            <option value="aligned">Aligned terminal</option>
+            <option value="aligned">Aligned</option>
             <option value="classic">Classic ECharts</option>
           </select>
         </label>
@@ -450,7 +452,7 @@ export function TradingAnalyticsScalper({
             value={oneDay ? "day" : "all"}
             onChange={(e) => updateView("range", e.target.value)}
           >
-            <option value="day">One day only</option>
+            <option value="day">1 day</option>
             <option value="all">All retained days</option>
           </select>
         </label>
@@ -501,7 +503,15 @@ export function TradingAnalyticsScalper({
         </label>
         <button disabled={!!fixedPair} onClick={() => setStrike(selected)}>Pin</button>
         <button disabled={!!fixedPair} onClick={() => setStrike("")}>ATM</button>
-        <strong>{fixedPair ? "FIXED" : strike ? "PINNED" : "ATM AUTO"}</strong>
+        <strong
+          className={effectiveExpiry !== expiry ? styles.scalperPairScope : undefined}
+          title={effectiveExpiry !== expiry ? `Current chain ${expiry}; retained chart pair ${effectiveExpiry}. Values are not mixed.` : `Retained chart pair and current chain both use ${effectiveExpiry}.`}
+        >
+          {fixedPair ? "FIXED" : strike ? "PINNED" : "ATM AUTO"}
+          {effectiveExpiry !== expiry
+            ? ` · PAIR ${effectiveExpiry.slice(5)} ≠ CHAIN ${expiry.slice(5)}`
+            : ` · PAIR/CHAIN ${effectiveExpiry.slice(5)}`}
+        </strong>
         <details className={styles.scalperCompactMenu}>
           <summary>Layers</summary>
           <div>

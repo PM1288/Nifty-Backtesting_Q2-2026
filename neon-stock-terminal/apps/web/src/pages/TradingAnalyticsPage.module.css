@@ -512,6 +512,20 @@
   min-width: 0;
   cursor: crosshair;
 }
+/* Lightweight Charts uses an internal table for panes. The dashboard's
+   evidence-table rules must not turn its 1px pane separators into 34px rows or
+   make its first cell sticky. Those leaked styles pushed the fifth pane out of
+   the visible chart root. */
+.alignedChartHost :global(.tv-lightweight-charts) td {
+  height: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  position: relative !important;
+  white-space: normal !important;
+}
 .alignedSelecting { cursor: cell; }
 .alignedPaneLabels {
   position: absolute;
@@ -663,10 +677,19 @@
 .page[data-view="scalper"] > .kpis strong { display: inline; font-size: 14px; }
 .page[data-view="scalper"] > .warning { min-height: 32px; padding: 1px 6px; line-height: 28px; white-space: nowrap; overflow-x: auto; }
 .page[data-view="scalper"] .scalperCommandBar { min-height: 34px; height: 34px; padding: 2px 4px; }
+.scalperPairScope { color: #9a3412; font-size: 10px; white-space: nowrap; }
 .page[data-view="scalper"] .scalperCommandBar button,
 .page[data-view="scalper"] .scalperCommandBar select,
 .page[data-view="scalper"] .scalperCommandBar input,
 .page[data-view="scalper"] .scalperCompactMenu > summary { min-height: 27px; height: 27px; padding-block: 1px; }
+@media (max-width: 1500px) {
+  .page[data-view="scalper"] .scalperCommandBar { gap: 4px; }
+  .page[data-view="scalper"] .scalperCommandBar h2 { display: none; }
+  .page[data-view="scalper"] .scalperCommandBar button,
+  .page[data-view="scalper"] .scalperCommandBar select,
+  .page[data-view="scalper"] .scalperCommandBar input,
+  .page[data-view="scalper"] .scalperCompactMenu > summary { padding-inline: 5px; }
+}
 .page[data-view="scalper"] .scalperOiTopline { min-height: 24px; height: 24px; padding-block: 1px; overflow: hidden; white-space: nowrap; }
 .page[data-view="scalper"] .scalperCommandBar { order: 1; }
 .page[data-view="scalper"] .scalperOiTopline { order: 2; }

@@ -146,10 +146,33 @@ the fifth pane is physically visible inside the 1920x1080 chart viewport. The ri
 rail is keyboard-focusable. Stock Activity and History/Replay were added to the
 full-screen evidence set.
 
-Final code validation: web 92/92, API 187/187, both typechecks pass. Authenticated
-production browser acceptance: 33/33 with zero desktop/mobile axe violations and no
+Final code validation: web 93/93, API 188/188, both typechecks pass. Authenticated
+production browser acceptance: 39/39 with zero desktop/mobile axe violations and no
 application runtime errors. Deployed dashboard image:
-`sha256:018e85fdebe4cd2ae7454c6aeae248a31f12a6ee5c462a3da114fa2d9c91e2ed`.
+`sha256:5fceb721ca9bf838bc1e8e08ace1c7d5ef047ced8bdb33002eec1a374dd63b9f`.
 
 Acceptance folder:
 `/home/novius2/NIFTY50/UI/ALIGNED_TERMINAL_ACCEPTANCE_PACKAGE_20260908`
+
+## Post-completion anomaly review
+
+The final rendered-DOM and pixel review found four additional defects and corrected
+them without changing strategy, source precedence or execution behavior:
+
+1. A generic dashboard `td` height rule leaked into Lightweight Charts' internal
+   table. It expanded the library's pane separators and clipped the real fifth-pane
+   canvas even though the overlay label remained visible. The chart host now resets
+   only the library-owned cells, and the chart consumes the full measured host.
+2. Selected-pair PCR previously forward-filled OI for as much as 30 minutes. PCR now
+   exists only where CE and PE have matching, explicitly observed interval endpoints;
+   missing evidence remains missing.
+3. Session OI alignment repeatedly filtered the complete quote array for every time
+   interval. It now advances an ordered cursor once per session while retaining exact
+   end-boundary ownership and no cross-interval/cross-session carry.
+4. Current-chain and retained chart-pair expiries were not sufficiently explicit.
+   The command bar now states whether pair and chain are identical or different, and
+   only expiries with paired retained bars are offered as historical chart choices.
+
+The production suite additionally verifies coloured plot pixels in the fifth pane,
+chart-root coverage of all canvases, explicit pair/chain scope, and a completely
+visible command bar at 1440x900. Screenshot 14 records that viewport.

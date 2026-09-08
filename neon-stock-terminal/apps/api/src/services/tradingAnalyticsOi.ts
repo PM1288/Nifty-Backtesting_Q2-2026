@@ -124,14 +124,20 @@ export function sessionAlignedOi(
     const open = Date.parse(String(session.market_open_ts));
     const close = Math.min(Date.parse(String(session.market_close_ts)), cutoff);
     if (!Number.isFinite(open) || !Number.isFinite(close) || close <= open) continue;
+    // Walk the ordered observations once per session. Filtering the complete
+    // quote set for every interval made this endpoint intervals x quotes.
+    // Boundary semantics remain unchanged: an event at an interval end belongs
+    // to that interval and is not carried into the following interval.
+    let cursor = prepared.findIndex((item) => item.event >= open);
+    if (cursor < 0) cursor = prepared.length;
     for (let start = open; start < close; start += intervalMinutes * 60_000) {
       const end = Math.min(start + intervalMinutes * 60_000, close);
-      const eligible = prepared.filter(
-        (item) =>
-          item.event <= end &&
-          (item.event > start || (start === open && item.event === open)),
-      );
-      const selected = eligible.at(-1);
+      let selected: (typeof prepared)[number] | undefined;
+      while (cursor < prepared.length && prepared[cursor].event <= end) {
+        const item = prepared[cursor++];
+        if (item.event > start || (start === open && item.event === open))
+          selected = item;
+      }
       endpoints.push({
         event_time: new Date(end).toISOString(),
         interval_start: new Date(start).toISOString(),

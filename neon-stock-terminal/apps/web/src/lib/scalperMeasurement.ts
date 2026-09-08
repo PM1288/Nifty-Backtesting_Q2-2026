@@ -54,3 +54,19 @@ export function scalperIndicators(bars: Row[]) {
     return {time:String(b.end),rsi,macd,signal,histogram:macd==null||signal==null?null:macd-signal};
   });
 }
+
+/** Pair OI only at identical, explicitly observed interval endpoints.
+ * Missing endpoint evidence remains missing; it is never forward-filled.
+ */
+export function exactPairPcr(ceRows: Row[], peRows: Row[]) {
+  const observed = (rows: Row[]) => new Map(rows.flatMap((row) => {
+    const current = number(row.current);
+    const time = typeof row.event_time === "string" ? row.event_time : null;
+    return time != null && current != null ? [[time, current] as const] : [];
+  }));
+  const ce = observed(ceRows), pe = observed(peRows);
+  return [...ce.entries()].flatMap(([time, ceOi]) => {
+    const peOi = pe.get(time);
+    return peOi != null && ceOi !== 0 ? [{ time, value: peOi / ceOi }] : [];
+  }).sort((a,b)=>a.time.localeCompare(b.time));
+}

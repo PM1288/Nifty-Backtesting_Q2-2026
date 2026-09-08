@@ -85,12 +85,48 @@ try {
     const inner = label.getBoundingClientRect();
     return inner.top >= outer.top && inner.bottom <= outer.bottom;
   }));
+  check("chart root covers the fifth evidence canvas", await terminal.evaluate((node) => {
+    const host = node.querySelector('[class*="alignedChartHost"]');
+    const root = host?.firstElementChild;
+    const canvases = host ? [...host.querySelectorAll("canvas")] : [];
+    if (!(host instanceof HTMLElement) || !(root instanceof HTMLElement) || canvases.length < 5) return false;
+    const hostBox = host.getBoundingClientRect();
+    const rootBox = root.getBoundingClientRect();
+    const canvasBottom = Math.max(...canvases.map((canvas) => canvas.getBoundingClientRect().bottom));
+    return rootBox.bottom >= canvasBottom - 2 && rootBox.bottom >= hostBox.bottom - 2;
+  }));
+  check("fifth evidence pane contains plotted colour pixels", await terminal.evaluate((node) => {
+    const label = node.querySelector('[data-testid="aligned-pane-label-4"]');
+    if (!(label instanceof HTMLElement)) return false;
+    const top = label.getBoundingClientRect().top;
+    const canvases = [...node.querySelectorAll("canvas")].filter((canvas) => canvas.getBoundingClientRect().top >= top - 8);
+    return canvases.some((canvas) => {
+      const context = canvas.getContext("2d");
+      if (!context) return false;
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let index = 0; index < pixels.length; index += 4) {
+        const max = Math.max(pixels[index], pixels[index + 1], pixels[index + 2]);
+        const min = Math.min(pixels[index], pixels[index + 1], pixels[index + 2]);
+        if (pixels[index + 3] > 0 && max - min > 35) return true;
+      }
+      return false;
+    });
+  }));
   const terminalText = await terminal.innerText();
   for (const label of ["EXACT CE", "EXACT PE", "OUTSTANDING OI", "SIGNED INTERVAL ΔOI", "IMPLIED VOLATILITY", "OI PCR", "RSI 14", "MACD 12/26/9", "NEAREST PAIRS", "SOURCE HEALTH"]) {
     check(`terminal exposes ${label}`, terminalText.includes(label));
   }
   check("no desktop horizontal page overflow", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
   check("aligned workstation fits one desktop viewport", await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 2), await page.evaluate(() => `${document.documentElement.scrollHeight}px document / ${innerHeight}px viewport`));
+  const pairScope = page.locator('[class*="scalperCommandBar"] strong').filter({ hasText: /PAIR/ });
+  const pairScopeText = await pairScope.innerText();
+  const pairScopeTitle = await pairScope.getAttribute("title");
+  check("retained pair and current-chain expiry relationship is explicit",
+    pairScopeText.includes("PAIR/CHAIN") || (pairScopeText.includes("PAIR") && pairScopeText.includes("CHAIN") && pairScopeText.includes("≠")),
+    `${pairScopeText} · ${pairScopeTitle ?? "no explanation"}`);
+  if (pairScopeText.includes("≠")) {
+    check("mismatched pair and chain values are explicitly isolated", pairScopeTitle?.includes("Values are not mixed") === true, pairScopeTitle);
+  }
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await capture(page, "01-aligned-terminal-full-page-1920x1080");
   await terminal.screenshot({ path: path.join(screenshots, "02-aligned-terminal-chart-and-inspector-1920x1080.png"), animations: "disabled" });
@@ -99,6 +135,13 @@ try {
     const bytes = await fs.readFile(file);
     captures.push({ file: path.relative(root, file), bytes: bytes.length, sha256: crypto.createHash("sha256").update(bytes).digest("hex"), viewport: page.viewportSize(), fullPage: false });
   }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(300);
+  check("aligned workstation fits 1440x900 viewport", await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 2), await page.evaluate(() => `${document.documentElement.scrollHeight}px document / ${innerHeight}px viewport`));
+  check("scalper command controls fit 1440px without clipping", await page.locator('[class*="scalperCommandBar"]').evaluate((node) => node.scrollWidth <= node.clientWidth + 2), await page.locator('[class*="scalperCommandBar"]').evaluate((node) => `${node.scrollWidth}px content / ${node.clientWidth}px bar`));
+  await capture(page, "14-aligned-terminal-full-page-1440x900");
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.waitForTimeout(300);
 
   const cursorPrompt = terminal.getByText("move cursor", { exact: true });
   const chartSurface = terminal.getByRole("region", { name: "Aligned NIFTY, exact call, exact put and evidence panes" });

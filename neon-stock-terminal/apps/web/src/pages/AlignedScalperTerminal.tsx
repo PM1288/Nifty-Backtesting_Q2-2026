@@ -15,7 +15,7 @@ import {
   type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { openAt, closeAt, type MeasurementPane } from "../lib/scalperMeasurement";
+import { exactPairPcr, openAt, closeAt, type MeasurementPane } from "../lib/scalperMeasurement";
 import type { ScalperSignal } from "../lib/scalperSignals";
 import {
   levelIsInSessionRange,
@@ -171,7 +171,11 @@ export function AlignedScalperTerminal({
     () => [...indicators.values()].sort((a, b) => a.time.localeCompare(b.time)).at(-1) ?? null,
     [indicators],
   );
-  const currentPcr = latestCe?.oi && latestPe?.oi != null ? latestPe.oi / latestCe.oi : null;
+  const pcrRows = useMemo(() => exactPairPcr(
+    panes.find((pane) => side(pane) === "CE")?.oiHistory ?? [],
+    panes.find((pane) => side(pane) === "PE")?.oiHistory ?? [],
+  ), [panes]);
+  const currentPcr = pcrRows.at(-1)?.value ?? null;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -327,30 +331,14 @@ export function AlignedScalperTerminal({
       }, 4);
       iv.setData(entry?.iv != null && time != null && timeLookup.has(Number(time)) ? [{ time, value: entry.iv }] : []);
     });
-    const oiBySide = new Map(optionPanes.map((pane) => [side(pane), pane.oiHistory.flatMap((row) => {
-      const time = timestamp(row.event_time), value = number(row.current);
-      return time != null && value != null ? [[Number(time), value] as const] : [];
-    }).sort((a, b) => a[0] - b[0])]));
-    const oiAtOrBefore = (rows: ReadonlyArray<readonly [number, number]>, target: number) => {
-      let observed: readonly [number, number] | null = null;
-      for (const row of rows) {
-        if (row[0] > target) break;
-        observed = row;
-      }
-      // OI snapshots do not necessarily share the candle's exact second. Use
-      // the last same-window observation, but never carry an old quote across
-      // a large gap or silently turn missing evidence into zero.
-      return observed && target - observed[0] <= 30 * 60 ? observed[1] : null;
-    };
-    const pcrTimes = [...timeLookup.keys()].sort((a, b) => a - b);
     const pcr = chart.addSeries(LineSeries, {
       title: "OI PCR · selected pair", color: PURPLE, lineWidth: 2,
+      pointMarkersVisible: true, pointMarkersRadius: 2,
       priceLineVisible: false, lastValueVisible: true, priceScaleId: "pcr",
     }, 4);
-    pcr.setData(pcrTimes.flatMap((value) => {
-      const ce = oiAtOrBefore(oiBySide.get("CE") ?? [], value);
-      const pe = oiAtOrBefore(oiBySide.get("PE") ?? [], value);
-      return ce != null && pe != null && ce !== 0 ? [{ time: value as UTCTimestamp, value: pe / ce }] : [];
+    pcr.setData(pcrRows.flatMap((row) => {
+      const time = timestamp(row.time);
+      return time != null && timeLookup.has(Number(time)) ? [{ time, value: row.value }] : [];
     }));
 
     // Indicators keep prior sessions for warm-up in the parent calculation,
@@ -364,7 +352,8 @@ export function AlignedScalperTerminal({
       })
       .sort((a, b) => a.time.localeCompare(b.time));
     const rsi = chart.addSeries(LineSeries, {
-      title: "RSI 14", color: PURPLE, lineWidth: 2, priceLineVisible: false, lastValueVisible: true,
+      title: "RSI 14", color: "#15803d", lineWidth: 2, pointMarkersVisible: true,
+      pointMarkersRadius: 2, priceLineVisible: false, lastValueVisible: true,
     }, 4);
     rsi.setData(indicatorRows.flatMap((row) => {
       const time = timestamp(row.time);
@@ -435,14 +424,9 @@ export function AlignedScalperTerminal({
     };
     chart.panes().forEach((pane, index) => pane.setStretchFactor(paneWeights[index] ?? .7));
     const resizeChart = () => {
-      // v5 renders a roughly 35px draggable separator outside the requested
-      // pane-height budget for every boundary. Reserve that space explicitly;
-      // otherwise the final indicator pane exists but is clipped below the
-      // fixed desktop workstation.
-      const separatorAllowance = Math.max(0, chart.panes().length - 1) * 35;
       chart.resize(
         Math.max(1, host.clientWidth),
-        Math.max(220, host.clientHeight - separatorAllowance),
+        Math.max(220, host.clientHeight),
         true,
       );
       chart.timeScale().fitContent();
@@ -475,7 +459,7 @@ export function AlignedScalperTerminal({
       chart.remove();
       chartRef.current = null;
     };
-  }, [bounds, indicators, latestCe, latestPe, legs, levels, maxPainStrikes, onTimeClick, panes, points, selecting, showEma, showGrid, showLevels]);
+  }, [bounds, indicators, latestCe, latestPe, legs, levels, maxPainStrikes, onTimeClick, panes, pcrRows, points, selecting, showEma, showGrid, showLevels]);
 
   return <div className={styles.alignedTerminal} data-testid="aligned-scalper-terminal">
     <section className={styles.alignedChartSurface} aria-label="Aligned NIFTY, exact call, exact put and evidence panes">

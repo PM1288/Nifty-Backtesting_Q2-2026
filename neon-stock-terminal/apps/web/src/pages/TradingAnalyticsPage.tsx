@@ -372,26 +372,26 @@ export function TradingAnalyticsPage() {
       <section className={styles.page} data-view={tab} aria-label="Trading Analytics workspace">
         <header className={styles.toolbar}>
           <h1>Trading Analytics</h1>
-          <span>READ-ONLY · Research preview</span>
-          <Link to="/strategy/nifty-options">Existing NIFTY strategy</Link>
-          <button onClick={() => setDrawer("health")}>Data Health</button>
-          <button onClick={() => setDrawer("source")}>Source / Formula</button>
+          <span>READ-ONLY · Research</span>
+          <Link to="/strategy/nifty-options">NIFTY strategy</Link>
+          <button onClick={() => setDrawer("health")} title="Data health">Health</button>
+          <button onClick={() => setDrawer("source")} title="Source and formula">Formula</button>
           <button onClick={() => setDrawer("condition")}>
-            Condition Evidence
+            Conditions
           </button>
           <button disabled={q.isFetching} onClick={() => void q.refetch()}>
             {q.isFetching ? "Refreshing…" : "Refresh"}
           </button>
           {d && (
             <>
-              <label>Underlying <select aria-label="Analytics underlying" value={d.underlying.symbol} onChange={e=>{
+              <label>Symbol <select aria-label="Analytics underlying" value={d.underlying.symbol} onChange={e=>{
                 const next=new URLSearchParams(params); next.set('symbol',e.target.value);
                 for(const k of ['expiry','strike','pin','day']) next.delete(k);
                 setInspected(null);setDrawer(null);setParams(next);
               }}>
                 {d.universe.length ? d.universe.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={d.underlying.symbol}>{d.underlying.label}</option>}
               </select></label>
-              <label>Option expiry <select aria-label="Selected underlying expiry" value={d.smartapi.expiry??''} onChange={e=>{
+              <label>Chain <select aria-label="Selected underlying expiry" value={d.smartapi.expiry??''} onChange={e=>{
                 const next=new URLSearchParams(params);next.set('expiry',e.target.value);next.delete('strike');next.delete('pin');setParams(next);
               }}><option value="">Unavailable / automatic</option>{d.smartapi.expiries.map(e=><option key={e} value={e}>{e}</option>)}</select></label>
               <label>
@@ -414,7 +414,7 @@ export function TradingAnalyticsPage() {
                   )
                 }
               >
-                Full evidence JSON
+                Export JSON
               </button>
             </>
           )}

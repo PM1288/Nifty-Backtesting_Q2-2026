@@ -35,6 +35,17 @@ test("session OI never carries a prior-session quote into today's opening bin",(
   assert.equal((result[0] as Record<string, unknown>).state,"MISSING_ENDPOINT");
 });
 
+test("session OI preserves exact interval-boundary ownership without carrying it forward",()=>{
+  const sessions=[{market_open_ts:"2026-09-08T03:45:00Z",market_close_ts:"2026-09-08T04:00:00Z"}];
+  const result=sessionAlignedOi([
+    {event_time:"2026-09-08T03:45:00Z",collected_at:"2026-09-08T03:45:01Z",oi:90},
+    {event_time:"2026-09-08T03:50:00Z",collected_at:"2026-09-08T03:50:01Z",oi:100},
+    {event_time:"2026-09-08T03:54:59Z",collected_at:"2026-09-08T03:55:01Z",oi:110},
+  ],sessions,5,"2026-09-08T04:00:00Z");
+  assert.deepEqual(result.map(row=>row.current),[100,110,null]);
+  assert.deepEqual(result.map(row=>row.interval_change),[null,10,null]);
+});
+
 test("participant comparison keeps current net separate from previous-report change",()=>{
   const result=participantComparison([{client_type:"FII",trade_date:"2026-09-08",net_futures:-40,options_proxy:20,futures_long_pct:30}],[{client_type:"FII",trade_date:"2026-09-07",net_futures:-60,options_proxy:25,futures_long_pct:28}])[0];
   assert.equal(result.net_futures,-40); assert.equal(result.delta_net_futures,20); assert.equal(result.delta_options_proxy,-5); assert.equal(result.futures_long_pct_change_pp,2);

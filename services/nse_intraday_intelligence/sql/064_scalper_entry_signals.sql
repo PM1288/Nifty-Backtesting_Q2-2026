@@ -37,8 +37,8 @@ create index if not exists ix_scalper_entry_trade_date
   on nse_ops.scalper_entry_signal(trade_date desc, setup_end desc);
 
 insert into nse_ops.job_definition(job_key,title,cron_expr,enabled,timeout_sec,command_text,description)
-values('scalper_entry_evaluate','Paired NIFTY option EMA9 entry evaluation','*/1 9-15 * * mon-fri',true,60,
+values('scalper_entry_evaluate','Paired F&O universe EMA9 entry evaluation','*/1 9-15 * * mon-fri',true,120,
        'python -m nse_intraday_intelligence.manual_jobs scalper-entries',
-       'Evaluates complete 1-minute, 5-minute and 15-minute NIFTY and exact paired option candles; persists and delivers each confirmed entry once per timeframe')
+       'Evaluates complete 1-minute, 5-minute and 15-minute candles for every covered F&O equity/index underlying and its exact active CE/PE pair; persists and delivers each confirmed entry once per timeframe')
 on conflict(job_key) do update set title=excluded.title,cron_expr=excluded.cron_expr,enabled=excluded.enabled,
   timeout_sec=excluded.timeout_sec,command_text=excluded.command_text,description=excluded.description,updated_at=now();

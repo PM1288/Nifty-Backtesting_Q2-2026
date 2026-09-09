@@ -2,7 +2,7 @@ import { istDay } from "./tradingAnalyticsChartView";
 
 type Row = Record<string, unknown>;
 type Pane = { identity: Row; bars: Row[] };
-export const SCALPER_ENTRY_RULE = "NIFTY_EMA9_PAIRED_BODY80_NEXT_OPEN_V4";
+export const SCALPER_ENTRY_RULE = "FNO_UNDERLYING_PAIRED_BODY80_NEXT_OPEN_V5";
 export type ScalperSignal = {
   id: string;
   direction: "CALL" | "PUT";

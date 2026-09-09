@@ -17,7 +17,8 @@ from .logging_utils import get_logger
 
 log = get_logger(__name__)
 IST = ZoneInfo("Asia/Kolkata")
-RULE_VERSION = "NIFTY_EMA9_PAIRED_BODY80_NEXT_OPEN_V4"
+RULE_VERSION = "FNO_UNDERLYING_PAIRED_BODY80_NEXT_OPEN_V5"
+MIN_SIGNAL_CANDLES = 12  # EMA9 + two precursors + setup + next-open candle
 
 
 @dataclass(frozen=True)
@@ -147,15 +148,15 @@ def _signal_key(signal: dict[str, Any], option_token: str, interval: int) -> str
     return sha256(material.encode()).hexdigest()
 
 
-def render_whatsapp(signal: dict[str, Any], option_symbol: str, interval: int = 5) -> str:
+def render_whatsapp(signal: dict[str, Any], option_symbol: str, interval: int = 5, underlying_symbol: str = "NIFTY") -> str:
     at = signal["entry_end"].astimezone(IST).strftime("%d %b %Y · %H:%M IST")
     side = "CE" if signal["direction"] == "CALL" else "PE"
     return "\n".join([
-        f"NIFTY {signal['direction']} ENTRY · {interval}m",
+        f"{underlying_symbol} {signal['direction']} ENTRY · {interval}m",
         f"Time: {at}",
         f"Option: {option_symbol}",
-        f"Entry: ₹{signal['option_entry_open']:.2f} | NIFTY {signal['underlying_entry_open']:.2f}",
-        f"Confirmed: NIFTY {signal['underlying_fraction'] * 100:.1f}% {'above' if signal['direction'] == 'CALL' else 'below'} EMA9 + {side} {signal['option_fraction'] * 100:.1f}% above EMA9",
+        f"Entry: ₹{signal['option_entry_open']:.2f} | {underlying_symbol} {signal['underlying_entry_open']:.2f}",
+        f"Confirmed: {underlying_symbol} {signal['underlying_fraction'] * 100:.1f}% {'above' if signal['direction'] == 'CALL' else 'below'} EMA9 + {side} {signal['option_fraction'] * 100:.1f}% above EMA9",
         "Pattern: two precursor candles + paired 80% crossover",
     ])
 
@@ -186,36 +187,94 @@ def _send_whatsapp(signal_key: str, message: str) -> tuple[bool, int | None, str
         return False, None, type(exc).__name__
 
 
-def _evaluate_interval(trade_date: date, as_of: datetime, interval: int) -> dict[str, Any]:
+def _group_bars(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row["symbol_token"]), []).append(row)
+    return grouped
+
+
+def _load_universe(trade_date: date) -> list[dict[str, Any]]:
+    return fetch_all("""
+      select distinct on (s.name) s.name symbol,s.symbol_token underlying_token,
+        case when s.instrumenttype='AMXIDX' then 'OPTIDX' else 'OPTSTK' end option_type
+      from public.instruments s
+      where s.exchange='NSE'
+        and (s.instrumenttype='AMXIDX' or s.tradingsymbol=s.name||'-EQ')
+        and exists (
+          select 1 from public.instruments o
+          where o.exchange='NFO' and o.name=s.name
+            and o.instrumenttype=case when s.instrumenttype='AMXIDX' then 'OPTIDX' else 'OPTSTK' end
+            and o.expiry>=%(date)s
+        )
+      order by s.name,
+        case when s.instrumenttype='AMXIDX' then 0 else 1 end,
+        s.updated_at desc,s.symbol_token
+    """, {"date": trade_date})
+
+
+def _load_bars(exchange: str, tokens: list[str], start: datetime, end: datetime) -> dict[str, list[dict[str, Any]]]:
+    if not tokens:
+        return {}
+    rows = fetch_all("""
+      select distinct on(symbol_token,ts) symbol_token,ts,open,high,low,close
+      from public.bars_1m
+      where exchange=%(exchange)s and symbol_token=any(%(tokens)s)
+        and ts>=%(start)s and ts<%(end)s
+      order by symbol_token,ts,created_at desc
+    """, {"exchange": exchange, "tokens": tokens, "start": start, "end": end})
+    return _group_bars(rows)
+
+
+def _load_option_pairs(
+    universe: list[dict[str, Any]],
+    underlying_rows: dict[str, list[dict[str, Any]]],
+    trade_date: date,
+) -> dict[str, dict[str, Any]]:
+    spot_rows = []
+    for item in universe:
+        rows = underlying_rows.get(str(item["underlying_token"]), [])
+        if rows:
+            symbol = str(item["symbol"])
+            spot_rows.append({
+                "symbol": symbol,
+                "subscription_underlying": "NIFTY50" if symbol == "NIFTY" else symbol,
+                "option_type": str(item["option_type"]),
+                "spot": float(rows[-1]["close"]),
+            })
+    if not spot_rows:
+        return {}
+    pairs = fetch_all("""
+      with spots as (
+        select * from jsonb_to_recordset(%(spots)s::jsonb)
+          as x(symbol text,subscription_underlying text,option_type text,spot float8)
+      ), candidates as (
+        select x.symbol,c.expiry,c.strike::float8,c.symbol_token ce_token,c.tradingsymbol ce_symbol,
+          p.symbol_token pe_token,p.tradingsymbol pe_symbol,
+          row_number() over(partition by x.symbol order by c.expiry,abs(c.strike-x.spot),c.strike) selection_rank
+        from spots x
+        join public.subscriptions c on c.exchange='NFO' and c.active
+          and upper(c.underlying)=upper(x.subscription_underlying) and c.kind in ('OPTIDX','OPTSTK')
+          and c."right"='CE' and c.expiry>=%(date)s
+        join public.subscriptions p on p.exchange='NFO' and p.active
+          and upper(p.underlying)=upper(c.underlying) and p.kind=c.kind
+          and p.expiry=c.expiry and p.strike=c.strike and p."right"='PE'
+      )
+      select symbol,expiry,strike,ce_token,ce_symbol,pe_token,pe_symbol
+      from candidates where selection_rank=1
+    """, {"spots": json.dumps(spot_rows), "date": trade_date})
+    return {str(pair["symbol"]): pair for pair in pairs}
+
+
+def _persist_signals(
+    trade_date: date,
+    as_of: datetime,
+    interval: int,
+    item: dict[str, Any],
+    pair: dict[str, Any],
+    signals: list[dict[str, Any]],
+) -> tuple[int, int]:
     settings = get_settings()
-    calendar = fetch_one("select market_open_ts,market_close_ts from public.trading_calendar where trade_date=%(date)s and is_trading_day", {"date": trade_date})
-    if not calendar:
-        return {"interval": interval, "state": "NON_TRADING_DAY", "inserted": 0, "delivered": 0}
-    session_open = calendar["market_open_ts"]
-    underlying_rows = fetch_all("select distinct on(ts) ts,open,high,low,close from public.bars_1m where exchange='NSE' and symbol_token=%(token)s and ts>=%(start)s and ts<%(end)s order by ts,created_at desc", {"token": settings.scalper_underlying_token, "start": session_open, "end": as_of})
-    underlying = aggregate_minutes(underlying_rows, session_open, interval, as_of)
-    if len(underlying) < 10:
-        return {"interval": interval, "state": "INSUFFICIENT_UNDERLYING_BARS", "inserted": 0, "delivered": 0}
-    spot = underlying[-1].close
-    pair = fetch_one("""
-      select c.expiry,c.strike::float8,c.symbol_token ce_token,c.tradingsymbol ce_symbol,
-             p.symbol_token pe_token,p.tradingsymbol pe_symbol
-      from public.instruments c join public.instruments p
-        on p.exchange='NFO' and p.name=c.name and p.instrumenttype=c.instrumenttype
-       and p.expiry=c.expiry and p.strike=c.strike and p.tradingsymbol like '%%PE'
-      where c.exchange='NFO' and c.name='NIFTY' and c.instrumenttype='OPTIDX'
-        and c.tradingsymbol like '%%CE' and c.expiry>=%(date)s
-        and exists(select 1 from public.bars_1m b where b.exchange='NFO' and b.symbol_token=c.symbol_token and b.ts>=%(start)s)
-        and exists(select 1 from public.bars_1m b where b.exchange='NFO' and b.symbol_token=p.symbol_token and b.ts>=%(start)s)
-      order by c.expiry,abs(c.strike-%(spot)s),c.strike limit 1
-    """, {"date": trade_date, "start": session_open, "spot": spot})
-    if not pair:
-        return {"interval": interval, "state": "PAIRED_OPTION_DATA_UNAVAILABLE", "inserted": 0, "delivered": 0}
-    def load(token: str) -> list[Candle]:
-        rows = fetch_all("select distinct on(ts) ts,open,high,low,close from public.bars_1m where exchange='NFO' and symbol_token=%(token)s and ts>=%(start)s and ts<%(end)s order by ts,created_at desc", {"token": token, "start": session_open, "end": as_of})
-        return aggregate_minutes(rows, session_open, interval, as_of)
-    call, put = load(str(pair["ce_token"])), load(str(pair["pe_token"]))
-    signals = detect_paired_signals(underlying, call, put, interval)
     inserted = delivered = 0
     for signal in signals:
         option_token = str(pair["ce_token"] if signal["direction"] == "CALL" else pair["pe_token"])
@@ -226,13 +285,13 @@ def _evaluate_interval(trade_date: date, as_of: datetime, interval: int) -> dict
           insert into nse_ops.scalper_entry_signal(signal_key,rule_version,trade_date,interval_minutes,setup_end,entry_end,direction,
             underlying_symbol,underlying_token,option_symbol,option_token,expiry,strike,underlying_setup_close,underlying_ema9,
             underlying_body_fraction,option_setup_close,option_ema9,option_body_fraction,underlying_entry_open,option_entry_open,evidence_json,delivery_status)
-          values(%(key)s,%(rule)s,%(date)s,%(interval)s,%(setup)s,%(entry)s,%(direction)s,'NIFTY',%(underlying_token)s,%(option_symbol)s,%(option_token)s,
+          values(%(key)s,%(rule)s,%(date)s,%(interval)s,%(setup)s,%(entry)s,%(direction)s,%(underlying_symbol)s,%(underlying_token)s,%(option_symbol)s,%(option_token)s,
             %(expiry)s,%(strike)s,%(uclose)s,%(uema)s,%(ufraction)s,%(oclose)s,%(oema)s,%(ofraction)s,%(uopen)s,%(oopen)s,%(evidence)s::jsonb,%(delivery)s)
           on conflict(signal_key) do nothing returning signal_key
         """, {
             "key": key, "rule": RULE_VERSION, "date": trade_date, "interval": interval,
             "setup": signal["setup_end"], "entry": signal["entry_end"], "direction": signal["direction"],
-            "underlying_token": settings.scalper_underlying_token, "option_symbol": option_symbol, "option_token": option_token,
+            "underlying_symbol": item["symbol"], "underlying_token": item["underlying_token"], "option_symbol": option_symbol, "option_token": option_token,
             "expiry": pair["expiry"], "strike": pair["strike"], "uclose": signal["underlying_setup_close"], "uema": signal["underlying_ema9"],
             "ufraction": signal["underlying_fraction"], "oclose": signal["option_setup_close"], "oema": signal["option_ema9"],
             "ofraction": signal["option_fraction"], "uopen": signal["underlying_entry_open"], "oopen": signal["option_entry_open"],
@@ -243,20 +302,75 @@ def _evaluate_interval(trade_date: date, as_of: datetime, interval: int) -> dict
             continue
         inserted += 1
         if recent and settings.scalper_whatsapp_enabled:
-            ok, status, error = _send_whatsapp(key, render_whatsapp(signal, option_symbol, interval))
+            ok, status, error = _send_whatsapp(key, render_whatsapp(signal, option_symbol, interval, str(item["symbol"])))
             execute("update nse_ops.scalper_entry_signal set delivery_status=%(state)s,delivery_attempts=delivery_attempts+1,delivered_at=case when %(ok)s then now() else delivered_at end,last_http_status=%(status)s,last_error=%(error)s,updated_at=now() where signal_key=%(key)s", {"state": "DELIVERED" if ok else "FAILED", "ok": ok, "status": status, "error": error, "key": key})
             delivered += int(ok)
-    log.info("scalper paired entry evaluation interval=%sm state=COMPLETE candidates=%s inserted=%s delivered=%s", interval, len(signals), inserted, delivered)
-    return {"interval": interval, "state": "COMPLETE", "signals": len(signals), "inserted": inserted, "delivered": delivered, "pair": {"expiry": str(pair["expiry"]), "strike": pair["strike"]}}
+    return inserted, delivered
 
 
 def evaluate_scalper_entries(trade_date: date | None = None, as_of: datetime | None = None) -> dict[str, Any]:
     settings = get_settings()
     as_of = as_of or datetime.now(timezone.utc)
     trade_date = trade_date or as_of.astimezone(IST).date()
-    results = [_evaluate_interval(trade_date, as_of, interval) for interval in settings.scalper_intervals]
+    calendar = fetch_one("select market_open_ts,market_close_ts from public.trading_calendar where trade_date=%(date)s and is_trading_day", {"date": trade_date})
+    if not calendar:
+        return {"state": "NON_TRADING_DAY", "universe": 0, "evaluated": 0, "intervals": [], "inserted": 0, "delivered": 0}
+    session_open = calendar["market_open_ts"]
+    evaluation_end = min(as_of, calendar["market_close_ts"])
+    universe = _load_universe(trade_date)
+    underlying_rows = _load_bars("NSE", [str(item["underlying_token"]) for item in universe], session_open, evaluation_end)
+    pairs = _load_option_pairs(universe, underlying_rows, trade_date)
+    option_tokens = sorted({str(pair[key]) for pair in pairs.values() for key in ("ce_token", "pe_token")})
+    option_rows = _load_bars("NFO", option_tokens, session_open, evaluation_end)
+    observed_pairs = sum(
+        1 for pair in pairs.values()
+        if str(pair["ce_token"]) in option_rows and str(pair["pe_token"]) in option_rows
+    )
+    results: list[dict[str, Any]] = []
+    evaluated_symbols: set[str] = set()
+    for interval in settings.scalper_intervals:
+        signals_count = inserted = delivered = evaluated = 0
+        insufficient_bars = missing_pair = 0
+        for item in universe:
+            symbol = str(item["symbol"])
+            pair = pairs.get(symbol)
+            underlying = aggregate_minutes(underlying_rows.get(str(item["underlying_token"]), []), session_open, interval, evaluation_end)
+            if len(underlying) < MIN_SIGNAL_CANDLES:
+                insufficient_bars += 1
+                continue
+            if pair is None:
+                missing_pair += 1
+                continue
+            call = aggregate_minutes(option_rows.get(str(pair["ce_token"]), []), session_open, interval, evaluation_end)
+            put = aggregate_minutes(option_rows.get(str(pair["pe_token"]), []), session_open, interval, evaluation_end)
+            if len(call) < MIN_SIGNAL_CANDLES or len(put) < MIN_SIGNAL_CANDLES:
+                insufficient_bars += 1
+                continue
+            evaluated += 1
+            evaluated_symbols.add(symbol)
+            signals = detect_paired_signals(underlying, call, put, interval)
+            signals_count += len(signals)
+            new_rows, sent_rows = _persist_signals(trade_date, as_of, interval, item, pair, signals)
+            inserted += new_rows
+            delivered += sent_rows
+        state = "COMPLETE" if evaluated else "DATA_INSUFFICIENT"
+        result = {
+            "interval": interval, "state": state, "evaluated": evaluated,
+            "signals": signals_count, "inserted": inserted, "delivered": delivered,
+            "insufficient_bars": insufficient_bars, "missing_pair": missing_pair,
+        }
+        results.append(result)
+        log.info(
+            "scalper universe evaluation interval=%sm state=%s universe=%s evaluated=%s insufficient_bars=%s missing_pair=%s signals=%s inserted=%s delivered=%s",
+            interval, state, len(universe), evaluated, insufficient_bars, missing_pair, signals_count, inserted, delivered,
+        )
     return {
         "state": "COMPLETE" if any(result["state"] == "COMPLETE" for result in results) else "DATA_INSUFFICIENT",
+        "universe": len(universe),
+        "evaluated": len(evaluated_symbols),
+        "underlying_data": sum(1 for item in universe if str(item["underlying_token"]) in underlying_rows),
+        "configured_pairs": len(pairs),
+        "paired_option_data": observed_pairs,
         "intervals": results,
         "inserted": sum(int(result.get("inserted", 0)) for result in results),
         "delivered": sum(int(result.get("delivered", 0)) for result in results),

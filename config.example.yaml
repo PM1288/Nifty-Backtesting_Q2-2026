@@ -50,12 +50,13 @@ files:
 universe:
   equities_exchange: "NSE"
   derivatives_exchange: "NFO"
-  include_indices: ["NIFTY50","BANKNIFTY","FINNIFTY","MIDCPNIFTY","NIFTY100","NIFTY200","NIFTY500","INDIAVIX","SENSEX"]
+  include_indices: ["NIFTY50","BANKNIFTY","FINNIFTY","MIDCPNIFTY","NIFTYNXT50","NIFTY100","NIFTY200","NIFTY500","INDIAVIX","SENSEX"]
   index_tokens:
     NIFTY50: "99926000"
     BANKNIFTY: "99926009"
     FINNIFTY: "99926037"
     MIDCPNIFTY: "99926074"
+    NIFTYNXT50: "99926013"
     NIFTY100: "99926012"
     NIFTY200: "99926033"
     NIFTY500: "99926004"
@@ -71,7 +72,7 @@ universe:
   options:
     enable_index_options: true
     enable_stock_options: true
-    index_underlyings: ["NIFTY50"]
+    index_underlyings: ["NIFTY50","BANKNIFTY","FINNIFTY","MIDCPNIFTY","NIFTYNXT50"]
     stock_underlyings_max: 250
     expiry_rank_index: 0
     expiry_rank_stock: 0

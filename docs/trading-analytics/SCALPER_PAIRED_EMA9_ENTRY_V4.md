@@ -1,5 +1,7 @@
 # Paired NIFTY + Option EMA9 Entry V4
 
+> Historical V4 specification. Production evaluation was superseded on 9 September 2026 by `FNO_UNDERLYING_PAIRED_BODY80_NEXT_OPEN_V5`; see `SCALPER_FNO_UNIVERSE_ENTRY_V5.md`.
+
 ## Identity
 
 - Rule: `NIFTY_EMA9_PAIRED_BODY80_NEXT_OPEN_V4`

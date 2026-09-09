@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 from pathlib import Path
+from threading import Lock
 from typing import Iterable, Optional
 
 from psycopg import Connection
@@ -11,23 +12,28 @@ from psycopg_pool import ConnectionPool
 from .config import get_settings
 
 _POOL: ConnectionPool[Connection] | None = None
+_POOL_LOCK = Lock()
 
 
 def get_pool() -> ConnectionPool[Connection]:
     global _POOL
     if _POOL is not None:
         return _POOL
-
-    settings = get_settings()
-    _POOL = ConnectionPool(
-        conninfo=settings.pg_dsn,
-        min_size=settings.db_pool_min_size,
-        max_size=settings.db_pool_max_size,
-        timeout=settings.db_pool_timeout_seconds,
-        max_idle=settings.db_pool_max_idle_seconds,
-        kwargs={"row_factory": dict_row},
-        open=True,
-    )
+    # Several scheduler jobs start on the same minute. Without a guarded
+    # singleton, each thread can create a pool and the losing pool is finalized
+    # from the worker thread, producing noisy errors and leaking connections.
+    with _POOL_LOCK:
+        if _POOL is None:
+            settings = get_settings()
+            _POOL = ConnectionPool(
+                conninfo=settings.pg_dsn,
+                min_size=settings.db_pool_min_size,
+                max_size=settings.db_pool_max_size,
+                timeout=settings.db_pool_timeout_seconds,
+                max_idle=settings.db_pool_max_idle_seconds,
+                kwargs={"row_factory": dict_row},
+                open=True,
+            )
     return _POOL
 
 

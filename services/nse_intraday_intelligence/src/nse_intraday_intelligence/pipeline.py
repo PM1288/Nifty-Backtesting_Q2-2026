@@ -2419,7 +2419,7 @@ def run_job_key(job_key: str, trigger_type: str = "manual", **kwargs) -> dict:
             _step(run_id, 1, "backfill_history", "running", "Backfilling recent intraday history", kwargs)
             result = backfill_history(int(kwargs.get("days") or 90), kwargs.get("index_code"))
         elif job_key == "scalper_entry_evaluate":
-            _step(run_id, 1, "scalper_entries", "running", "Evaluating paired NIFTY and option EMA9 entries", kwargs)
+            _step(run_id, 1, "scalper_entries", "running", "Evaluating paired F&O underlying and option EMA9 entries", kwargs)
             result = evaluate_scalper_entries(kwargs.get("trade_date"))
         else:
             raise RuntimeError(f"Unknown job_key={job_key}")

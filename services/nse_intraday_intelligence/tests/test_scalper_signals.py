@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta, timezone
 
-from nse_intraday_intelligence.scalper_signals import Candle, detect_paired_signals, render_whatsapp
+from nse_intraday_intelligence.scalper_signals import MIN_SIGNAL_CANDLES, Candle, detect_paired_signals, render_whatsapp
 
 
 START = datetime(2026, 9, 9, 4, 0, tzinfo=timezone.utc)
+
+
+def test_live_evaluator_requires_complete_ema_pattern_and_next_open_history():
+    assert MIN_SIGNAL_CANDLES == 12
 
 
 def candle(index: int, open_: float, close: float, ema: float) -> Candle:
@@ -46,3 +50,13 @@ def test_same_rule_operates_independently_on_all_supported_intervals():
         result = detect_paired_signals(nifty, call, [], interval)
         assert len(result) == 1
         assert f"ENTRY · {interval}m" in render_whatsapp(result[0], "NIFTY09SEP23500CE", interval)
+
+
+def test_whatsapp_uses_the_evaluated_stock_identity_not_a_fixed_index():
+    underlying = [candle(0,100,98,101), candle(1,99,97,100), candle(2,99,109,101), candle(3,104,106,103)]
+    call = [candle(0,24,22,25), candle(1,23,21,24), candle(2,22,32,24), candle(3,30,31,29)]
+    signal = detect_paired_signals(underlying, call, [], 5)[0]
+    message = render_whatsapp(signal, "RELIANCE30SEP3000CE", 5, "RELIANCE")
+    assert message.startswith("RELIANCE CALL ENTRY · 5m")
+    assert "| RELIANCE 104.00" in message
+    assert "Confirmed: RELIANCE 80.0% above EMA9" in message

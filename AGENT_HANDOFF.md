@@ -3843,7 +3843,7 @@ or outcomes were deleted.
 ## 2026-09-09 — Complete MANEESH UI, Trade Log P&L and SHAP production cutover
 
 - Canonical production source is `/home/novius2/trading-stack`, branch `master`,
-  application commit `8849a98659d8b9a716ae956be259546ec0dd6b5b`.
+  application commit `179ebd5d8711019ffde1e4285c7412891e2cebe7`.
 - Trade Log now defaults to `P&L comparison` and places all six requested
   one-lot comparison columns in the main table: CE and PE at 15 minutes,
   30 minutes and EOD. Each cell exposes net P&L, gross P&L, fees, exact premium
@@ -3858,7 +3858,7 @@ or outcomes were deleted.
   No probability or SHAP contribution is fabricated before that gate passes.
 - The aligned Scalper V4, Trade Log and SHAP research UI are deployed. Runtime
   dashboard image is
-  `sha256:a1b2e6059d34aa55aa1477edbd2b103708457f85c02541c38e62e1d7b8857c2b`;
+  `sha256:42fe99bb5c4406f8d73fe99b4c5cfdaac18bd58a22f2b668df0929f226adbe8c`;
   SHAP worker image is
   `sha256:ec36a37c49af11eb2f72519254b8369e555f9e9b398289d655f87f3a1fb60786`.
   Both containers are healthy with zero restarts. The synchronized trade-quality
@@ -3869,11 +3869,11 @@ or outcomes were deleted.
   `trading-stack-novius2-nifty-context:pre-comparative-pnl-sync-20260909`.
 - Final checks: web typecheck/build and 118/118 tests; API typecheck/build and
   190/190 tests; Python worker 16/16 tests; canonical repository gate PASS.
-  Authenticated deployed-browser suites: Trade Log 38/38, NIFTY Context/SHAP
-  111/111 and Scalper V4 41/41.
+  Authenticated deployed-browser suites: final Trade Log 50/50, NIFTY
+  Context/SHAP 114/114 and Scalper V4 41/41.
 - Runtime evidence is intentionally outside Git:
-  `output/playwright/trade-log-complete-deployed/`,
-  `output/playwright/nifty-context-deployed-complete/`, and
+  `output/playwright/trade-log-complete-deployed-final2/`,
+  `output/playwright/nifty-context-deployed-v2/`, and
   `output/playwright/scalper-v4-deployed-20260909/`.
 - Follow-up correction: the default preset is now `All columns + P&L`. It
   retains the original monitor fields, stored entry/rule evidence and all

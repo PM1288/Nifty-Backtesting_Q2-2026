@@ -189,5 +189,5 @@ direct `Open SHAP research` action and MANEESH `SHAP Research` tab link to
 
 The strengthened browser suite additionally asserts each retained default
 heading rather than merely checking the six P&L headings. Production browser evidence:
-see `results.json` at
-`output/playwright/trade-log-complete-deployed/`.
+50/50 checks passed; see `results.json` at
+`output/playwright/trade-log-complete-deployed-final2/`.

@@ -123,8 +123,8 @@ rows and requires at least one observed numeric net result.
 The live state is still `DATA_INSUFFICIENT`, intentionally: 55 observations,
 38 complete feature rows and 1 independent session. The UI therefore shows the
 outcomes and gate reason but no fake SHAP waterfall. Authenticated deployed
-browser verification passed 111/111 checks; evidence is at
-`output/playwright/nifty-context-deployed-complete/`.
+browser verification passed 114/114 checks; evidence is at
+`output/playwright/nifty-context-deployed-v2/`.
 
 The Good-trade SHAP lens now includes a dedicated chart-status panel whenever
 the model gate is locked. It displays eligible independent sessions versus the

@@ -44,6 +44,7 @@ def main() -> None:
     _register_job(scheduler, settings.cron_finalize_session, "intraday_finalize_session", settings.timezone)
     _register_job(scheduler, settings.cron_retention, "intraday_retention", settings.timezone)
     _register_job(scheduler, settings.cron_backfill_history, "intraday_backfill_history", settings.timezone)
+    _register_job(scheduler, settings.cron_scalper_entries, "scalper_entry_evaluate", settings.timezone)
 
     log.info("Starting intraday scheduler")
     scheduler.start()

@@ -15,6 +15,7 @@ from .pipeline import (
     run_quality_checks,
     sync_raw_minute,
 )
+from .scalper_signals import evaluate_scalper_entries
 from .sql_loader import install_sql
 
 
@@ -39,6 +40,7 @@ def main() -> None:
             "finalize-session",
             "retention",
             "backfill-history",
+            "scalper-entries",
         ],
     )
     parser.add_argument("--trade-date")
@@ -74,6 +76,9 @@ def main() -> None:
         return
     if args.job == "backfill-history":
         backfill_history(days=args.days, index_code=args.index_code)
+        return
+    if args.job == "scalper-entries":
+        print(json.dumps(evaluate_scalper_entries(trade_date=trade_date), default=str))
         return
 
 

@@ -2380,6 +2380,7 @@ def list_intraday_exports(limit: int = 50) -> list[dict]:
 
 def run_job_key(job_key: str, trigger_type: str = "manual", **kwargs) -> dict:
     settings = get_settings()
+    from .scalper_signals import evaluate_scalper_entries
     command_text_map = {
         "intraday_sync_raw": settings.job_cmd_sync_raw,
         "intraday_refresh_features": settings.job_cmd_refresh_features,
@@ -2389,6 +2390,7 @@ def run_job_key(job_key: str, trigger_type: str = "manual", **kwargs) -> dict:
         "intraday_finalize_session": settings.job_cmd_finalize_session,
         "intraday_retention": settings.job_cmd_retention,
         "intraday_backfill_history": settings.job_cmd_backfill_history,
+        "scalper_entry_evaluate": "python -m nse_intraday_intelligence.manual_jobs scalper-entries",
     }
     run_id = _start_job(job_key, trigger_type, command_text=command_text_map.get(job_key), meta=kwargs)
     try:
@@ -2416,6 +2418,9 @@ def run_job_key(job_key: str, trigger_type: str = "manual", **kwargs) -> dict:
         elif job_key == "intraday_backfill_history":
             _step(run_id, 1, "backfill_history", "running", "Backfilling recent intraday history", kwargs)
             result = backfill_history(int(kwargs.get("days") or 90), kwargs.get("index_code"))
+        elif job_key == "scalper_entry_evaluate":
+            _step(run_id, 1, "scalper_entries", "running", "Evaluating paired NIFTY and option EMA9 entries", kwargs)
+            result = evaluate_scalper_entries(kwargs.get("trade_date"))
         else:
             raise RuntimeError(f"Unknown job_key={job_key}")
         _step(run_id, 1, "complete", "success", "Job completed", result)

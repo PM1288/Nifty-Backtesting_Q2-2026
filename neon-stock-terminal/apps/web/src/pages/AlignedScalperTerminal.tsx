@@ -461,7 +461,7 @@ export function AlignedScalperTerminal({
       chart.remove();
       chartRef.current = null;
     };
-  }, [bounds, indicators, latestCe, latestPe, legs, levels, maxPainStrikes, onTimeClick, panes, pcrRows, points, selecting, showEma, showGrid, showLevels]);
+  }, [bounds, indicators, latestCe, latestPe, legs, levels, maxPainStrikes, onTimeClick, panes, pcrRows, points, selecting, showEma, showGrid, showLevels, signals]);
 
   return <div className={styles.alignedTerminal} data-testid="aligned-scalper-terminal">
     <section className={styles.alignedChartSurface} aria-label="Aligned NIFTY, exact call, exact put and evidence panes">
@@ -498,8 +498,8 @@ export function AlignedScalperTerminal({
         {measured ? <><p><b>Long CE + PE</b><strong>₹{fmt(measured.pnl)}</strong></p>{measured.rows.map((row) => <p key={row.symbol}><b>{row.kind}</b><small>{fmt(row.from)} → {fmt(row.to)} · Δ {fmt(row.delta)}</small></p>)}<p><b>Quantity</b><small>{Number.isSafeInteger(quantity) && quantity > 0 ? quantity : "—"} units</small></p></> : <p className={styles.alignedMuted}>{selecting ? `Select ${points.length ? "B at candle close" : "A at candle open"}.` : "Fix pair, then select A and B."}</p>}
             </section>
       <section>
-        <header><strong>EMA9 SETUP REFERENCES</strong><span>{signals.length} observed</span></header>
-        {signals.length ? signals.slice(-6).reverse().map((event) => <p key={event.id}><b className={event.direction === "CALL" ? styles.ceText : styles.peText}>{event.direction}</b><small>{Math.round(event.bodyFraction * 10000) / 100}% body · {event.state.replaceAll("_", " ")}</small></p>) : <p className={styles.alignedMuted}>No qualifying closed-bar setup in this selected range.</p>}
+        <header><strong>PAIRED EMA9 ENTRY</strong><span>{signals.length} confirmed</span></header>
+        {signals.length ? signals.slice(-6).reverse().map((event) => <p key={event.id}><b className={event.direction === "CALL" ? styles.ceText : styles.peText}>{event.direction}</b><small>NIFTY {Math.round(event.underlyingBodyFraction * 10000) / 100}% · {event.direction === "CALL" ? "CE" : "PE"} {Math.round(event.optionBodyFraction * 10000) / 100}% · {event.state.replaceAll("_", " ")}</small></p>) : <p className={styles.alignedMuted}>No timestamp-aligned NIFTY + option confirmation in this range.</p>}
       </section>
       <section>
         <header><strong>LEVELS IN SESSION RANGE</strong><span>{levels.filter((level) => levelIsInSessionRange(level.value, bounds)).length}/{levels.length}</span></header>

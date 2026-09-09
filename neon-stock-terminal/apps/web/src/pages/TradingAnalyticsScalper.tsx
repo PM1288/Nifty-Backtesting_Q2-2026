@@ -5,7 +5,7 @@ import type { EChartsOption, SeriesOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { closeAt, measurePanes, openAt, scalperIndicators } from "../lib/scalperMeasurement";
-import { scalperBody70Signals } from "../lib/scalperSignals";
+import { SCALPER_ENTRY_RULE, scalperPairedBody80Signals } from "../lib/scalperSignals";
 import {
   candleColors,
   evidenceValueAxis,
@@ -289,7 +289,7 @@ export function TradingAnalyticsScalper({
     [selectedLevels, visibleUnderlyingBounds],
   );
   const measured = points.length === 2 ? measurePanes(panes ?? [], points[0], points[1], Number(quantity)) : null;
-  const signals = useMemo(() => scalperBody70Signals(panes ?? [], interval), [panes, interval]);
+  const signals = useMemo(() => scalperPairedBody80Signals(panes ?? [], interval), [panes, interval]);
   const pickPoint = (index:number) => {
     if (!fixedPair || !selecting || !times[index]) return;
     if (points.length === 1) { setPoints([points[0],times[index]].sort()); setSelecting(false); }
@@ -375,7 +375,16 @@ export function TradingAnalyticsScalper({
               silent:true,itemStyle:{color:"rgba(190,24,93,0.09)",borderWidth:1,borderColor:"#be185d"},
               data:[[{xAxis:measured.start,yAxis:Math.min(openAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)},{xAxis:measured.end,yAxis:Math.max(openAt(p.bars,measured.start)!,closeAt(p.bars,measured.end)!)}]],
             } : {data:[]},
-            markPoint: {symbol:"circle",symbolSize:8,label:{show:true,formatter:"{b}"},data:points.flatMap((t,j)=>{const v=j===0?openAt(p.bars,t):closeAt(p.bars,t);return v==null?[]:[{name:j===0?"A · open":"B · close",coord:[t,v]}];})},
+            markPoint: {symbol:"circle",symbolSize:9,label:{show:true,formatter:"{b}"},data:[
+              ...points.flatMap((t,j)=>{const v=j===0?openAt(p.bars,t):closeAt(p.bars,t);return v==null?[]:[{name:j===0?"A · open":"B · close",coord:[t,v]}];}),
+              ...signals.flatMap((event) => {
+                const side = optionSide(p.identity);
+                if (side == null) return [{ name: `${event.direction} CONFIRM`, coord: [event.setupTime, event.setupClose], symbol: event.direction === "CALL" ? "arrow" : "pin", itemStyle: { color: event.direction === "CALL" ? "#2563eb" : "#d97706" } }];
+                if (side !== (event.direction === "CALL" ? "CE" : "PE")) return [];
+                const setup = p.bars.find((bar) => String(bar.end) === event.setupTime);
+                return setup?.close == null ? [] : [{ name: `${side} CONFIRM`, coord: [event.setupTime, Number(setup.close)], symbol: "diamond", itemStyle: { color: side === "CE" ? "#2563eb" : "#d97706" } }];
+              }),
+            ]},
             markLine:
               i === 0 && (showLevels || showGrid)
                 ? {
@@ -435,7 +444,7 @@ export function TradingAnalyticsScalper({
         return {name:`${String(p.identity.tradingsymbol)} ${valueKey === "current" ? "OI" : valueKey === "interval_change" ? "ΔOI" : "Cum ΔOI"}`,type:valueKey === "current" ? "line" as const : "bar" as const,xAxisIndex:rows.length,yAxisIndex:rows.length,showSymbol:false,connectNulls:false,lineStyle:{color:i?"#087a55":"#c93346"},itemStyle:{color:i?"#087a55":"#c93346",opacity:0.65},data:times.map(t=>oiByTime.get(t)==null?null:Number(oiByTime.get(t))),markLine:valueKey === "current" ? undefined : {silent:true,symbol:"none",data:[{yAxis:0}],label:{show:false}}};
       }))],
     };
-  }, [panes, narrow, showEma, showLevels, showGrid, lowerPane, indicators, selecting, points, quantity, label, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds]);
+  }, [panes, narrow, showEma, showLevels, showGrid, lowerPane, indicators, selecting, points, quantity, label, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds, signals]);
   return (
     <div className={styles.scalperModule} data-renderer={renderer}>
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
@@ -891,9 +900,9 @@ export function TradingAnalyticsScalper({
         </details>
       </section>
       <section className={`${styles.warning} ${styles.scalperEvidence}`} tabIndex={0} role="region" aria-label="Closed-candle research evidence">
-        <h3>EMA9 body70 / next-open references · RESEARCH ONLY</h3>
+        <h3>Paired EMA9 body80 / next-open entry indicators</h3>
         <p>
-          NIFTY_EMA9_BODY70_NEXT_OPEN_V3 · {signals.length} reconstructed setup{signals.length === 1 ? "" : "s"} in the selected range. Real-body 70% is a symmetric preview; CALL precursor uses prior close below EMA, PUT precursor uses prior low above EMA. Exact next scheduled open only. No paper or broker eligibility.
+          {SCALPER_ENTRY_RULE} · {signals.length} confirmed setup{signals.length === 1 ? "" : "s"}. CALL requires two red NIFTY and CE closes below their own EMA9, then green crossovers with at least 80% of each real body above EMA9. PUT requires two green NIFTY closes above EMA9, then an 80% bearish cross, plus the same bullish reversal confirmation in the exact PE. Exact timestamps and next scheduled open only; missing bars block entry.
         </p>
       </section>
       {(panes?.length ?? 0) < 3 && (

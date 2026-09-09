@@ -1,5 +1,5 @@
 /** Independent research calculations. No paper/broker dependencies or order path. */
-export const VERSION = "TRADING-ANALYTICS-20260908.1";
+export const VERSION = "TRADING-ANALYTICS-20260909.1";
 export type Facts = Record<string, unknown>;
 export function numeric(v: unknown): number | null {
   if (v == null || v === "") return null;
@@ -369,23 +369,31 @@ export function researchCondition(
   const u = eligibleBars(underlying, asOf),
     o = eligibleBars(option, asOf),
     ub = u.at(-1),
-    ob = o.at(-1);
+    ob = o.at(-1),
+    up = u.slice(-3),
+    op = o.slice(-3);
   if (
     !ub ||
     !ob ||
     ub.end !== ob.end ||
     ub.start !== ob.start ||
-    u.length < 9 ||
-    o.length < 9
+    u.length < 11 ||
+    o.length < 11 ||
+    up.length !== 3 ||
+    op.length !== 3
   )
     return { state: "INSUFFICIENT_DATA", confirmed: false };
-  const uf = fractions(ub, ema9(u.map((b) => b.close)).at(-1) ?? null),
-    of = fractions(ob, ema9(o.map((b) => b.close)).at(-1) ?? null);
+  const uEma = ema9(u.map((b) => b.close)), oEma = ema9(o.map((b) => b.close));
+  const uf = fractions(ub, uEma.at(-1) ?? null), of = fractions(ob, oEma.at(-1) ?? null);
+  const [u1, u2] = up, [o1, o2] = op;
+  const [u1Ema, u2Ema] = uEma.slice(-3), [o1Ema, o2Ema] = oEma.slice(-3);
+  const optionReversal = o1.close < o1.open && o2.close < o2.open && o1Ema != null && o2Ema != null &&
+    o1.close < o1Ema && o2.close < o2Ema && ob.close > ob.open && (of.body.above ?? 0) >= .80;
+  const underlyingPattern = direction === "CALL"
+    ? u1.close < u1.open && u2.close < u2.open && u1Ema != null && u2Ema != null && u1.close < u1Ema && u2.close < u2Ema && ub.close > ub.open && (uf.body.above ?? 0) >= .80
+    : u1.close > u1.open && u2.close > u2.open && u1Ema != null && u2Ema != null && u1.close > u1Ema && u2.close > u2Ema && ub.close < ub.open && (uf.body.below ?? 0) >= .80;
   const confirmed =
-    (direction === "CALL" ? uf.range.above : uf.range.below) != null &&
-    (direction === "CALL" ? uf.range.above! : uf.range.below!) >= 0.7 &&
-    of.range.above != null &&
-    of.range.above >= 0.7;
+    underlyingPattern && optionReversal;
   const time = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kolkata",
     hour: "2-digit",

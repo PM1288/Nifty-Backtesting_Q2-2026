@@ -225,17 +225,17 @@ test("turnover detects resets and reordering", () => {
   assert.equal(turnover(s, { ...s, session: "b", time: 2 }).value, null);
 });
 test("research never emits paper eligibility, independently aligned option warmup", () => {
-  const bars = Array.from({ length: 9 }, (_, i) => bar(i + 1));
+  const bars = Array.from({ length: 11 }, (_, i) => bar(i + 1));
   assert.equal(
-    researchCondition(bars, bars, "2026-09-09T05:00:00Z", "PUT").state,
+    researchCondition(bars, bars, "2026-09-15T05:00:00Z", "PUT").state,
     "POLICY_INCOMPLETE",
   );
   assert.equal(
-    researchCondition(bars, bars, "2026-09-09T08:30:00Z", "PUT", true).state,
+    researchCondition(bars, bars, "2026-09-15T08:30:00Z", "PUT", true).state,
     "CUTOFF_BLOCKED",
   );
   assert.equal(
-    researchCondition(bars, bars.slice(1), "2026-09-09T05:00:00Z", "PUT").state,
+    researchCondition(bars, bars.slice(1), "2026-09-15T05:00:00Z", "PUT").state,
     "INSUFFICIENT_DATA",
   );
 });

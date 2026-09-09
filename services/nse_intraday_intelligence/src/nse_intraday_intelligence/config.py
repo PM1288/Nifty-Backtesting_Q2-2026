@@ -36,6 +36,16 @@ def _env_time(name: str, default: str) -> time:
         raise ValueError(f"{name} must be in HH:MM format") from exc
 
 
+def _env_intervals(name: str, default: str = "1,5,15") -> tuple[int, ...]:
+    try:
+        values = tuple(dict.fromkeys(int(value.strip()) for value in (os.getenv(name) or default).split(",")))
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a comma-separated integer list") from exc
+    if not values or any(value not in {1, 5, 15} for value in values):
+        raise ValueError(f"{name} supports only 1,5,15")
+    return values
+
+
 @dataclass(frozen=True)
 class Settings:
     pg_dsn: str
@@ -65,6 +75,7 @@ class Settings:
     cron_finalize_session: str
     cron_retention: str
     cron_backfill_history: str
+    cron_scalper_entries: str
 
     live_source_max_delay_seconds: int
     raw_sync_max_lag_minutes: int
@@ -79,6 +90,15 @@ class Settings:
     alerts_webhook_headers: dict[str, str]
     alerts_cooldown_minutes: int
     alerts_send_recovery: bool
+
+    scalper_intervals: tuple[int, ...]
+    scalper_underlying_token: str
+    scalper_alert_max_age_minutes: int
+    scalper_whatsapp_enabled: bool
+    scalper_whatsapp_url: str
+    scalper_whatsapp_token_file: str
+    scalper_whatsapp_chat_id: str
+    scalper_whatsapp_timeout_seconds: int
 
     job_cmd_sync_raw: str
     job_cmd_refresh_features: str
@@ -118,6 +138,7 @@ def get_settings() -> Settings:
         cron_finalize_session=os.getenv("CRON_FINALIZE_SESSION", "40 15 * * mon-fri"),
         cron_retention=os.getenv("CRON_RETENTION", "25 2 * * *"),
         cron_backfill_history=os.getenv("CRON_BACKFILL_HISTORY", "20 3 * * 6"),
+        cron_scalper_entries=os.getenv("CRON_SCALPER_ENTRIES", "*/1 9-15 * * mon-fri"),
         live_source_max_delay_seconds=int(os.getenv("NSE_INTRADAY_LIVE_SOURCE_MAX_DELAY_SECONDS", "120")),
         raw_sync_max_lag_minutes=int(os.getenv("NSE_INTRADAY_RAW_SYNC_MAX_LAG_MINUTES", "3")),
         snapshot_max_lag_minutes=int(os.getenv("NSE_INTRADAY_SNAPSHOT_MAX_LAG_MINUTES", "5")),
@@ -130,6 +151,14 @@ def get_settings() -> Settings:
         alerts_webhook_headers=_env_json_dict("NSE_INTRADAY_ALERTS_WEBHOOK_HEADERS"),
         alerts_cooldown_minutes=int(os.getenv("NSE_INTRADAY_ALERTS_COOLDOWN_MINUTES", "15")),
         alerts_send_recovery=_env_bool("NSE_INTRADAY_ALERTS_SEND_RECOVERY", True),
+        scalper_intervals=_env_intervals("SCALPER_ENTRY_INTERVALS"),
+        scalper_underlying_token=os.getenv("SCALPER_ENTRY_UNDERLYING_TOKEN", "99926000"),
+        scalper_alert_max_age_minutes=int(os.getenv("SCALPER_ENTRY_ALERT_MAX_AGE_MINUTES", "10")),
+        scalper_whatsapp_enabled=_env_bool("SCALPER_ENTRY_WHATSAPP_ENABLED", False),
+        scalper_whatsapp_url=os.getenv("WA_GATEWAY_URL", "https://wweb.noviusrailtech.com/webhook/send"),
+        scalper_whatsapp_token_file=os.getenv("WA_GATEWAY_API_TOKEN_FILE", "/run/secrets/whatsapp_gateway_api_token"),
+        scalper_whatsapp_chat_id=os.getenv("WA_MYSELF_CHAT_ID", ""),
+        scalper_whatsapp_timeout_seconds=int(os.getenv("SCALPER_ENTRY_WHATSAPP_TIMEOUT_SECONDS", "10")),
         job_cmd_sync_raw=os.getenv("JOB_CMD_SYNC_RAW", "python -m nse_intraday_intelligence.manual_jobs sync-raw"),
         job_cmd_refresh_features=os.getenv("JOB_CMD_REFRESH_FEATURES", "python -m nse_intraday_intelligence.manual_jobs refresh-features"),
         job_cmd_refresh_dashboard=os.getenv("JOB_CMD_REFRESH_DASHBOARD", "python -m nse_intraday_intelligence.manual_jobs refresh-dashboard"),

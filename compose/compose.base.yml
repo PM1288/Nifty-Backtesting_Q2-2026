@@ -391,6 +391,14 @@ services:
       CRON_FINALIZE_SESSION: ${NSE_INTRADAY_CRON_FINALIZE_SESSION:-40 15 * * mon-fri}
       CRON_RETENTION: ${NSE_INTRADAY_CRON_RETENTION:-25 2 * * *}
       CRON_BACKFILL_HISTORY: ${NSE_INTRADAY_CRON_BACKFILL_HISTORY:-20 3 * * 6}
+      CRON_SCALPER_ENTRIES: ${NSE_INTRADAY_CRON_SCALPER_ENTRIES:-*/1 9-15 * * mon-fri}
+      SCALPER_ENTRY_INTERVALS: ${SCALPER_ENTRY_INTERVALS:-1,5,15}
+      SCALPER_ENTRY_ALERT_MAX_AGE_MINUTES: ${SCALPER_ENTRY_ALERT_MAX_AGE_MINUTES:-10}
+      SCALPER_ENTRY_WHATSAPP_ENABLED: "0"
+      SCALPER_ENTRY_WHATSAPP_TIMEOUT_SECONDS: ${SCALPER_ENTRY_WHATSAPP_TIMEOUT_SECONDS:-10}
+      WA_GATEWAY_URL: ${WA_GATEWAY_URL:-https://wweb.noviusrailtech.com/webhook/send}
+      WA_GATEWAY_API_TOKEN_FILE: /run/secrets/whatsapp_gateway_api_token
+      WA_MYSELF_CHAT_ID: ${WA_MYSELF_CHAT_ID:-120363428118961288@g.us}
       JOB_CMD_SYNC_RAW: python -m nse_intraday_intelligence.manual_jobs sync-raw
       JOB_CMD_REFRESH_FEATURES: python -m nse_intraday_intelligence.manual_jobs refresh-features
       JOB_CMD_REFRESH_DASHBOARD: python -m nse_intraday_intelligence.manual_jobs refresh-dashboard
@@ -462,6 +470,14 @@ services:
       CRON_FINALIZE_SESSION: ${NSE_INTRADAY_CRON_FINALIZE_SESSION:-40 15 * * mon-fri}
       CRON_RETENTION: ${NSE_INTRADAY_CRON_RETENTION:-25 2 * * *}
       CRON_BACKFILL_HISTORY: ${NSE_INTRADAY_CRON_BACKFILL_HISTORY:-20 3 * * 6}
+      CRON_SCALPER_ENTRIES: ${NSE_INTRADAY_CRON_SCALPER_ENTRIES:-*/1 9-15 * * mon-fri}
+      SCALPER_ENTRY_INTERVALS: ${SCALPER_ENTRY_INTERVALS:-1,5,15}
+      SCALPER_ENTRY_ALERT_MAX_AGE_MINUTES: ${SCALPER_ENTRY_ALERT_MAX_AGE_MINUTES:-10}
+      SCALPER_ENTRY_WHATSAPP_ENABLED: ${SCALPER_ENTRY_WHATSAPP_ENABLED:-1}
+      SCALPER_ENTRY_WHATSAPP_TIMEOUT_SECONDS: ${SCALPER_ENTRY_WHATSAPP_TIMEOUT_SECONDS:-10}
+      WA_GATEWAY_URL: ${WA_GATEWAY_URL:-https://wweb.noviusrailtech.com/webhook/send}
+      WA_GATEWAY_API_TOKEN_FILE: /run/secrets/whatsapp_gateway_api_token
+      WA_MYSELF_CHAT_ID: ${WA_MYSELF_CHAT_ID:-120363428118961288@g.us}
       JOB_CMD_SYNC_RAW: python -m nse_intraday_intelligence.manual_jobs sync-raw
       JOB_CMD_REFRESH_FEATURES: python -m nse_intraday_intelligence.manual_jobs refresh-features
       JOB_CMD_REFRESH_DASHBOARD: python -m nse_intraday_intelligence.manual_jobs refresh-dashboard
@@ -478,6 +494,8 @@ services:
         condition: service_started
     volumes:
       - nse_intraday_exports:/var/lib/nse/intraday_exports
+    secrets:
+      - whatsapp_gateway_api_token
     restart: unless-stopped
     logging:
       driver: json-file
@@ -713,3 +731,7 @@ volumes:
   institutional_flow_curated:
   institutional_flow_logs:
   institutional_flow_run_reports:
+
+secrets:
+  whatsapp_gateway_api_token:
+    file: ${WA_GATEWAY_API_TOKEN_FILE:-../secrets/whatsapp_gateway_api_token}

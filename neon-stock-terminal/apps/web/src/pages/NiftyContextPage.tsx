@@ -322,7 +322,8 @@ export default function NiftyContextPage() {
             ))}
         </section>
       )}
-      {(lens === "audit" || data?.state === "DATA_INSUFFICIENT") &&
+      {lens !== "trade-quality" &&
+        (lens === "audit" || data?.state === "DATA_INSUFFICIENT") &&
         data?.report?.session_coverage && (
           <section>
             <h2>Actual session coverage</h2>

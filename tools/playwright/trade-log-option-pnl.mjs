@@ -1,0 +1,32 @@
+import fs from 'node:fs/promises';
+import {chromium} from 'playwright';
+import AxeBuilder from '@axe-core/playwright';
+const base='https://n50.nifty50today.co.in/n50',out='output/playwright/trade-log-option-pnl';await fs.mkdir(out,{recursive:true});
+const env=await fs.readFile('.env','utf8');const password=env.split(/\r?\n/).find(l=>l.startsWith('DEV_LOCAL_AUTH_PASSWORD='))?.split('=').slice(1).join('=').trim();if(!password)throw Error('Missing protected credential');
+const browser=await chromium.launch({headless:true});const checks=[];const check=(name,pass,details)=>checks.push({name,pass:!!pass,details});
+try{
+const c=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+const login=await c.request.post(`${base}/auth/session/dev-login`,{data:{identifier:'admin',password},headers:{Origin:new URL(base).origin}});if(!login.ok())throw Error('Login failed');
+const response=await c.request.get(`${base}/v1/trading-analytics/scalper-log?limit=5000`);const data=await response.json();
+check('exact lot metadata available',data.rows.some(r=>r.ce_lot_size>0&&r.pe_lot_size>0));
+const row=data.rows.find(r=>r.ce_lot_size>0&&r.pe_lot_size>0&&r.outcome_evidence?.eod?.ce?.endpoint!=null);if(!row)throw Error('No eligible real observation');
+const page=await c.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto(`${base}/strategy/trading-analytics?view=trade-log&logInspect=${encodeURIComponent(row.signal_key)}&logSection=Overview`);
+const dialog=page.getByRole('dialog');await dialog.waitFor({timeout:60000});
+const grid=dialog.getByRole('region',{name:'Gross charges and net option PnL'});await grid.waitFor();
+check('all three underlying/CE/PE rows',await dialog.getByRole('region',{name:'Entry to high low values'}).locator('tbody tr').count()===3);
+check('lot quantity displayed',(await grid.innerText()).includes(String(row.ce_lot_size)));
+await dialog.getByLabel('Number of option lots').fill('2');check('quantity doubles',(await grid.innerText()).includes(String(row.ce_lot_size*2)));
+await dialog.getByLabel('Hypothetical exit').selectOption('max');await dialog.getByLabel('PnL window').selectOption('15m');
+await page.screenshot({path:`${out}/high-pnl-1440.png`,fullPage:true});
+const axe=await new AxeBuilder({page}).include('dialog').analyze();check('inspector axe',!axe.violations.length,axe.violations);
+await page.setViewportSize({width:390,height:844});await page.screenshot({path:`${out}/pnl-390.png`,fullPage:true});check('mobile no page overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+await page.setViewportSize({width:1440,height:900});
+const link=dialog.getByRole('link',{name:/Open stock/});const href=await link.getAttribute('href');check('link exact pair',href.includes(encodeURIComponent(row.ce_symbol))&&href.includes(encodeURIComponent(row.pe_symbol)));
+const charts=page.waitForResponse(r=>r.url().includes('/v1/trading-analytics/charts?'),{timeout:60000});await link.click();const chartResponse=await charts;const chart=await chartResponse.json();
+check('chart returns both exact contracts',chart.panes?.some(p=>p.identity.tradingsymbol===row.ce_symbol)&&chart.panes?.some(p=>p.identity.tradingsymbol===row.pe_symbol));
+await page.getByRole('heading',{name:'SCALPER',exact:true}).waitFor({timeout:60000});
+await page.screenshot({path:`${out}/exact-scalper-1440.png`,fullPage:true});
+check('exact day and strike URL',new URL(page.url()).searchParams.get('day')===row.trade_date&&new URL(page.url()).searchParams.get('strike')===String(row.strike));
+check('no page errors',!errors.length,errors);await fs.writeFile(`${out}/results.json`,JSON.stringify(checks,null,2));console.log(JSON.stringify({passed:checks.filter(x=>x.pass).length,total:checks.length,failed:checks.filter(x=>!x.pass)}));if(checks.some(x=>!x.pass))process.exitCode=1;
+}finally{await browser.close();}

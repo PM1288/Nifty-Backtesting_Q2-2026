@@ -194,7 +194,8 @@ export function TradingAnalyticsScalper({
           (a, b) => Math.abs(a - spot) - Math.abs(b - spot) || a - b,
         )[0];
   const requestedChartExpiry = params.get("chartExpiry");
-  const chartExpiry = activeChartExpiry(requestedChartExpiry, expiry, asOf);
+  const exactLogPair = Boolean(params.get('expectedCE') && params.get('expectedPE'));
+  const chartExpiry = exactLogPair && requestedChartExpiry ? requestedChartExpiry : activeChartExpiry(requestedChartExpiry, expiry, asOf);
   const selected = fixedPair?.strike ?? (strike || String(defaultStrike ?? ""));
   const effectiveExpiry = fixedPair?.expiry ?? chartExpiry;
   const query = new URLSearchParams({ symbol, asOf, interval: String(interval) });
@@ -226,7 +227,7 @@ export function TradingAnalyticsScalper({
   ]
     .sort()
     .reverse();
-  const day = days.includes(params.get("day") ?? "")
+  const day = (exactLogPair && params.get('day')) || days.includes(params.get("day") ?? "")
     ? params.get("day")!
     : (days[0] ?? "");
   const availableContracts = q.data?.availableContracts ?? [];
@@ -235,7 +236,7 @@ export function TradingAnalyticsScalper({
   const availableExpiries = [...new Set([...availableContracts.map((row) => String(row.expiry)), effectiveExpiry].filter(Boolean))].sort();
   const availableStrikes = availableContracts.filter((row) => String(row.expiry) === effectiveExpiry).map((row) => Number(row.strike));
   useEffect(() => {
-    if (!q.data || fixedPair) return;
+    if (!q.data || fixedPair || exactLogPair) return;
     const rolledOver = requestedChartExpiry != null && requestedChartExpiry !== chartExpiry;
     const exactPanes = q.data.panes.filter((pane) => pane.identity.exchange === "NFO");
     if (!rolledOver && requestedChartExpiry && exactPanes.length === 2 && exactPanes.every((pane) => pane.sourceMinuteCount > 1)) return;
@@ -248,7 +249,7 @@ export function TradingAnalyticsScalper({
     next.set("strike", String(candidate.strike));
     next.set("pin", "true");
     setParams(next, { replace: true });
-  }, [chartExpiry, day, expiry, fixedPair, params, q.data, requestedChartExpiry, setParams, spot]);
+  }, [chartExpiry, day, expiry, fixedPair, params, q.data, requestedChartExpiry, setParams, spot, exactLogPair]);
   const oneDay = params.get("range") !== "all";
   const panes = useMemo(
     () =>
@@ -449,8 +450,12 @@ export function TradingAnalyticsScalper({
       }))],
     };
   }, [panes, narrow, showEma, showLevels, showGrid, lowerPane, indicators, selecting, points, quantity, label, selectedLevels, plottedLevels, visibleUnderlyingBounds, axisBounds, signals]);
+  if (exactLogPair && q.data && !['CE','PE'].every(side => q.data.panes.some(p => p.identity.tradingsymbol === params.get(`expected${side}`) && String(p.identity.symbol_token) === params.get(`expected${side}Token`)))) {
+    return <section role="alert"><h2>Exact observation contracts unavailable</h2><p>{params.get('expectedCE')} / {params.get('expectedPE')} could not be verified in the retained chart response. No replacement contracts are shown.</p><button onClick={()=>{const next=new URLSearchParams(params);for(const key of ['expectedCE','expectedPE','expectedCEToken','expectedPEToken'])next.delete(key);setParams(next);}}>Leave exact-pair mode</button></section>;
+  }
   return (
     <div className={styles.scalperModule} data-renderer={renderer}>
+      {exactLogPair && <p>Trade Log exact pair: {params.get('expectedCE')} / {params.get('expectedPE')}. Historical day {day}. No automatic contract substitution.</p>}
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
         <h2>SCALPER</h2>
         <label title="Chart renderer">

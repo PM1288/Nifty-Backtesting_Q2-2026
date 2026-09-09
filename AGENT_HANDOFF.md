@@ -1,5 +1,15 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-09 observation option P&L and exact Scalper link
+
+Click stock name / Inspect Overview: underlying/CE/PE entry-high-low-latest,
+15m/30m/EOD selector, editable lots, exact NFO master lot quantity, independent
+long CE and PE gross/charges/net what-if scenarios. Current Zerodha NSE option
+calculator rates; not realised P&L or historical tax/lot reconstruction. Exact
+Scalper links carry both symbols/tokens and disable automatic expiry/ATM fallback.
+Missing contracts or quantities remain unavailable. No orders or notifications.
+See `docs/trading-analytics/OPTION_PNL_20260909.md`.
+
 ## 2026-09-09 MANEESH Trade Log readability (deployed)
 
 Feature branch `feat/maneesh-trade-log-readability`. Implements the supplied

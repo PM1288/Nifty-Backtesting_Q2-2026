@@ -6,6 +6,12 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-09 observation P&L: additive exact-master CE/PE lot metadata, high/low
+and hypothetical premium-delta × quantity gross/net analysis; no realised-ledger
+changes. Exact-symbol/token Scalper links prohibit automatic pair substitution.
+Existing presets/raw exports, rules and messaging remain unchanged. Evidence:
+`docs/trading-analytics/OPTION_PNL_20260909.md`.
+
 2026-09-09 MANEESH Trade Log (deployed from master `a9d4372`): the existing
 `/strategy/trading-analytics?view=trade-log` read-only endpoint/route, V7 rules,
 exact underlying/CE/PE contracts, gates, all indicator/outcome fields, delivery,

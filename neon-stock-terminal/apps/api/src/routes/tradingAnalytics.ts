@@ -377,9 +377,14 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
           s.option_ema9::float8,s.option_body_fraction::float8,s.option_entry_open::float8,
           s.delivery_status,s.delivered_at,s.created_at,
           o.ce_symbol,o.ce_token,o.pe_symbol,o.pe_token,o.ce_entry_open::float8,o.pe_entry_open::float8,
-          o.condition_evidence,o.indicator_evidence,o.outcome_evidence,o.outcome_state,o.outcome_updated_at
+          o.condition_evidence,o.indicator_evidence,o.outcome_evidence,o.outcome_state,o.outcome_updated_at,
+          ce.lotsize::float8 ce_lot_size,pe.lotsize::float8 pe_lot_size,
+          ce.updated_at ce_lot_size_asof,pe.updated_at pe_lot_size_asof,
+          'CURRENT_EXACT_CONTRACT_MASTER_NOT_HISTORICAL'::text lot_size_basis
         from nse_ops.scalper_entry_signal s
         join nse_ops.scalper_trade_observation o using(signal_key)
+        left join lateral (select lotsize,updated_at from instruments where exchange='NFO' and tradingsymbol=o.ce_symbol and symbol_token=o.ce_token and expiry=s.expiry order by updated_at desc limit 1) ce on true
+        left join lateral (select lotsize,updated_at from instruments where exchange='NFO' and tradingsymbol=o.pe_symbol and symbol_token=o.pe_token and expiry=s.expiry order by updated_at desc limit 1) pe on true
         where s.trade_date=coalesce($1::date,(now() at time zone 'Asia/Kolkata')::date)
           and s.rule_version='FNO_PAIRED_EMA9_POSITION_BODY70_NEXT_OPEN_V7'
           and ($2::text is null or s.underlying_symbol=$2)

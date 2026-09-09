@@ -25,6 +25,7 @@ import {
   TradingAnalyticsTradeLog as LegacyTradeLog,
 } from "./TradingAnalyticsTradeLogLegacy";
 import styles from "./TradingAnalyticsTradeLog.module.css";
+import { TradeObservationPnl } from './TradeObservationPnl';
 
 type Payload = {
   rows: Observation[];
@@ -169,6 +170,7 @@ function Inspector({
         >
           {section === "Overview" && (
             <>
+              <TradeObservationPnl key={String(row.signal_key)} row={row}/>
               <p>
                 Observed next-candle OPEN prices, not fills or realised P&amp;L.
                 Entry candle end: {time(row.entry_end)} IST. Setup end:{" "}
@@ -180,7 +182,7 @@ function Inspector({
                   Selected-side outcomes are withheld.
                 </p>
               )}
-              <Facts record={other} />
+              <details><summary>Full observation fields</summary><Facts record={other} /></details>
             </>
           )}
           {section === "Conditions" && (
@@ -978,7 +980,7 @@ function ObservationLog() {
                 data-selected={r.signal_key === inspect}
               >
                 <th scope="row" className={styles.identity}>
-                  <b>{textValue(r.underlying_symbol)}</b>{" "}
+                  <button aria-label={`View ${r.underlying_symbol} high low and PnL`} onClick={()=>{change('logSection','Overview');open(r);}}><b>{textValue(r.underlying_symbol)}</b></button>{" "}
                   <span
                     className={
                       r.direction === "CALL"

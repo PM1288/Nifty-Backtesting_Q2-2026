@@ -117,7 +117,16 @@ def build_trade_example(row):
     selected_outcome = eod.get(selected_key) or {}
     selected_entry = row.get(f"{selected_key}_entry_open")
     selected_lot = row.get(f"{selected_key}_lot_size")
-    pnl = option_pnl(selected_entry, selected_outcome.get("endpoint"), selected_lot)
+    comparative_pnl = {
+        horizon: {
+            leg: option_pnl(row.get(f"{leg}_entry_open"),
+                            ((outcomes.get(horizon) or {}).get(leg) or {}).get("endpoint"),
+                            row.get(f"{leg}_lot_size"))
+            for leg in ("ce", "pe")
+        }
+        for horizon in ("15m", "30m", "eod")
+    }
+    pnl = comparative_pnl["eod"][selected_key]
     precursors = conditions.get("underlying_precursors") or []
     option_precursors = conditions.get("selected_option_precursors") or []
     feature_values = {
@@ -157,7 +166,7 @@ def build_trade_example(row):
         "label_policy": LABEL_POLICY, "maturity": row.get("outcome_state"),
         "label": None if not mature or pnl is None else int(pnl["net"] > 0),
         "label_name": "GOOD_TRADE" if mature and pnl and pnl["net"] > 0 else "NON_POSITIVE" if mature and pnl else "UNAVAILABLE",
-        "pnl": pnl, "features": feature_values,
+        "pnl": pnl, "comparative_pnl": comparative_pnl, "features": feature_values,
         "indicators": indicators, "conditions": conditions, "outcomes": outcomes,
         "input_complete": all(feature_values[name] is not None for name in FEATURES),
         "source_note": "Quote-path research, not a booked or executable paper-trade result.",

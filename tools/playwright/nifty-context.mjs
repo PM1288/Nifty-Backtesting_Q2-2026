@@ -130,6 +130,14 @@ try {
         record(`${viewport.width} honest insufficient state`,
           tradePayload.state === "DATA_INSUFFICIENT" &&
           (await root.getByText(/Need 20 complete independent sessions/).count()) > 0);
+        record(`${viewport.width} comparative CE and PE horizons visible`,
+          (await root.getByRole("columnheader", { name: "CE · 15m P&L" }).count()) === 1 &&
+          (await root.getByRole("columnheader", { name: "PE · EOD P&L" }).count()) === 1);
+        const evidenceRow = root.locator('[aria-label="Complete good-trade evidence table"] tbody tr').first();
+        await evidenceRow.click();
+        record(`${viewport.width} whole row opens evidence inspector`,
+          await evidenceRow.getAttribute("data-selected") === "true" &&
+          await root.getByText("Selected trade: all conditions, indicators and outcome evidence").isVisible());
       }
       await page.screenshot({
         path: path.join(out, `${viewport.width}-${lens}.png`),

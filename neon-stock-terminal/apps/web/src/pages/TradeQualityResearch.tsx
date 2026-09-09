@@ -18,6 +18,7 @@ type Evidence = {
   label_name: "GOOD_TRADE" | "NON_POSITIVE" | "UNAVAILABLE";
   maturity: string;
   pnl: null | { entry: number; exit: number; quantity: number; gross: number; charges: number; net: number; policy: string };
+  comparative_pnl?: Record<"15m" | "30m" | "eod", Record<"ce" | "pe", Evidence["pnl"]>>;
   features: Record<string, number | null>;
   indicators: Record<string, Record<string, number | null>>;
   conditions: Record<string, unknown>;
@@ -59,6 +60,17 @@ const outcome = (row: Evidence, horizon: string, instrument: string, field: stri
   return lane && typeof lane === "object" ? (lane as Record<string, unknown>)[field] : null;
 };
 const selectedLane = (row: Evidence) => row.direction === "CALL" ? "ce" : "pe";
+
+function ComparativePnlCell({ item, leg, horizon }: { item: Evidence; leg: "ce" | "pe"; horizon: "15m" | "30m" | "eod" }) {
+  const pnl = item.comparative_pnl?.[horizon]?.[leg] ?? null;
+  return <td>
+    <b className={pnl && pnl.net > 0 ? styles.positive : pnl ? styles.negative : ""}>{money(pnl?.net)}</b>
+    <small>Gross {money(pnl?.gross)} · fees {money(pnl?.charges)}<br />
+      Premium {money(pnl?.entry)} → {money(pnl?.exit)}<br />
+      High {number(outcome(item, horizon, leg, "max"))} ({number(outcome(item, horizon, leg, "max_change_pct"))}%) · low {number(outcome(item, horizon, leg, "min"))} ({number(outcome(item, horizon, leg, "min_change_pct"))}%)
+    </small>
+  </td>;
+}
 
 function TradeWaterfall({ row }: { row: Row }) {
   if (!row.explanation || !row.prediction) return null;
@@ -131,8 +143,9 @@ export default function TradeQualityResearch() {
     <div className={styles.tradeTable} role="region" tabIndex={0} aria-label="Complete good-trade evidence table">
       <table>
         <thead><tr>
-          <th>Trade</th><th>Outcome</th><th>Net / gross / charges</th><th>Entry → EOD</th>
-          <th>15m max / min / close</th><th>30m max / min / close</th>
+          <th>Trade</th><th>Selected outcome</th>
+          <th>CE · 15m P&amp;L</th><th>CE · 30m P&amp;L</th><th>CE · EOD P&amp;L</th>
+          <th>PE · 15m P&amp;L</th><th>PE · 30m P&amp;L</th><th>PE · EOD P&amp;L</th>
           <th>Underlying setup</th><th>Selected option setup</th>
           <th>Underlying RSI / MACD / signal / hist</th><th>Selected RSI / MACD / signal / hist</th>
           <th>Opposite RSI / MACD / signal / hist</th><th>Model / evidence</th>
@@ -141,23 +154,25 @@ export default function TradeQualityResearch() {
           const item = row.evidence, lane = selectedLane(item);
           const u = item.indicators.underlying ?? {}, selectedIndicators = item.indicators[lane] ?? {};
           const oppositeIndicators = item.indicators[lane === "ce" ? "pe" : "ce"] ?? {};
-          return <tr key={row.signal_key} data-selected={selected?.signal_key === row.signal_key}>
-            <th><button onClick={() => setSelectedKey(row.signal_key)}>{item.symbol}</button><small>{item.trade_date} · {item.interval_minutes}m · {item.direction}<br />{item.selected_option}</small></th>
-            <td><b className={item.label === 1 ? styles.positive : item.label === 0 ? styles.negative : ""}>{item.label_name.replaceAll("_", " ")}</b><small>{item.maturity}</small></td>
-            <td>{money(item.pnl?.net)}<small>Gross {money(item.pnl?.gross)} · fees {money(item.pnl?.charges)}<br />Qty {item.pnl?.quantity ?? "—"}</small></td>
-            <td>{money(item.pnl?.entry)} → {money(item.pnl?.exit)}<small>{item.expiry} · strike {number(item.strike)}</small></td>
-            {(["15m", "30m"] as const).map((horizon) => <td key={horizon}>{number(outcome(item, horizon, lane, "max"))} / {number(outcome(item, horizon, lane, "min"))} / {number(outcome(item, horizon, lane, "endpoint"))}<small>Δ max {number(outcome(item, horizon, lane, "max_change_pct"))}% · min {number(outcome(item, horizon, lane, "min_change_pct"))}%</small></td>)}
+          return <tr key={row.signal_key} data-selected={selected?.signal_key === row.signal_key}
+            tabIndex={0} aria-label={`Inspect ${item.symbol} ${item.direction} trade evidence`}
+            onClick={() => setSelectedKey(row.signal_key)}
+            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedKey(row.signal_key); } }}>
+            <th>{item.symbol}<small>{item.trade_date} · {item.interval_minutes}m · {item.direction}<br />Selected {item.selected_option}<br />Qty {item.pnl?.quantity ?? "—"} · strike {number(item.strike)} · exp {item.expiry}</small></th>
+            <td><b className={item.label === 1 ? styles.positive : item.label === 0 ? styles.negative : ""}>{item.label_name.replaceAll("_", " ")}</b><small>{item.maturity}<br />Selected EOD net {money(item.pnl?.net)}<br />Click row for all evidence</small></td>
+            {(["ce", "pe"] as const).flatMap((leg) => (["15m", "30m", "eod"] as const).map((horizon) =>
+              <ComparativePnlCell key={`${leg}-${horizon}`} item={item} leg={leg} horizon={horizon} />))}
             <td>Body {number(item.features.underlying_body_fraction != null ? item.features.underlying_body_fraction * 100 : null)}%<small>EMA distance {number(item.features.underlying_ema_distance_pct, 4)}% · entry gap {number(item.features.underlying_entry_gap_pct, 4)}%</small></td>
             <td>Body {number(item.features.option_body_fraction != null ? item.features.option_body_fraction * 100 : null)}%<small>EMA distance {number(item.features.option_ema_distance_pct, 4)}% · entry gap {number(item.features.option_entry_gap_pct, 4)}%</small></td>
             {[u, selectedIndicators, oppositeIndicators].map((values, index) => <td key={index}>{number(values.rsi14)} / {number(values.macd, 4)}<small>{number(values.macd_signal9, 4)} / {number(values.macd_histogram, 4)}</small></td>)}
-            <td>{row.prediction ? `${number(row.prediction.probability_good_trade * 100, 1)}% good` : "SHAP pending"}<small>{item.input_complete ? "Inputs complete" : "Missing indicator input"}<br /><button onClick={() => setSelectedKey(row.signal_key)}>Inspect</button></small></td>
+            <td>{row.prediction ? `${number(row.prediction.probability_good_trade * 100, 1)}% good` : "SHAP pending"}<small>{item.input_complete ? "Inputs complete" : "Missing indicator input"}</small></td>
           </tr>;
         })}</tbody>
       </table>
     </div>
     {selected && <>
       <TradeWaterfall row={selected} />
-      <details className={styles.rawEvidence}><summary>Selected trade: all conditions, indicators and outcome evidence</summary><pre>{JSON.stringify(selected.evidence, null, 2)}</pre></details>
+      <details key={selected.signal_key} className={styles.rawEvidence} open={selectedKey !== ""}><summary>Selected trade: all conditions, indicators and outcome evidence</summary><pre>{JSON.stringify(selected.evidence, null, 2)}</pre></details>
     </>}
     <details><summary>Feature availability and research limitations</summary>
       <ul>{data.report.limitations.map((item) => <li key={item}>{item}</li>)}</ul>

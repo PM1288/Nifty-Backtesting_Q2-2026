@@ -69,6 +69,8 @@ Missing input values remain null. Rows remain visible in evidence but are exclud
 
 The dashboard shows the full outcomes table even when the model gate is not met. It shows a waterfall only for genuine held-out predictions.
 
+The primary table compares both exact legs irrespective of the original direction. CE and PE each show 15-minute, 30-minute and EOD net P&L, gross P&L, charges, endpoint premium and the observed high/low excursion. The original selected leg remains explicit and alone determines the versioned good-trade label. Selecting anywhere on a row opens the unchanged complete evidence inspector.
+
 ## Initial live evidence — 9 September 2026
 
 | Measure | Value |

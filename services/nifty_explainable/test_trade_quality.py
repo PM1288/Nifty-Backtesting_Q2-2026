@@ -35,6 +35,8 @@ class TradeQualityTests(unittest.TestCase):
         self.assertEqual(example["label_name"], "GOOD_TRADE")
         self.assertEqual(example["selected_option"], "TESTCE")
         self.assertGreater(example["pnl"]["gross"], example["pnl"]["net"])
+        self.assertEqual(example["comparative_pnl"]["eod"]["ce"], example["pnl"])
+        self.assertIsNone(example["comparative_pnl"]["15m"]["ce"])
         self.assertEqual(list(example["features"]), FEATURES)
 
     def test_non_positive_and_missing_are_not_converted_to_wins_or_zero(self):
@@ -51,6 +53,20 @@ class TradeQualityTests(unittest.TestCase):
         second = build_trade_example(row(endpoint=20.0))
         self.assertEqual(first["features"], second["features"])
         self.assertNotEqual(first["pnl"], second["pnl"])
+
+    def test_both_legs_and_all_horizons_have_independent_pnl(self):
+        source = row(endpoint=12.0)
+        source["outcome_evidence"] = {
+            "15m": {"maturity": "MATURE", "ce": {"endpoint": 11.0}, "pe": {"endpoint": 7.5}},
+            "30m": {"maturity": "MATURE", "ce": {"endpoint": 9.5}, "pe": {"endpoint": 9.0}},
+            "eod": {"maturity": "MATURE", "ce": {"endpoint": 12.0}, "pe": {"endpoint": 7.0}},
+        }
+        example = build_trade_example(source)
+        self.assertEqual(set(example["comparative_pnl"]), {"15m", "30m", "eod"})
+        self.assertGreater(example["comparative_pnl"]["15m"]["ce"]["net"], 0)
+        self.assertLess(example["comparative_pnl"]["15m"]["pe"]["net"], 0)
+        self.assertLess(example["comparative_pnl"]["30m"]["ce"]["net"], 0)
+        self.assertGreater(example["comparative_pnl"]["30m"]["pe"]["net"], 0)
 
     def test_too_few_sessions_does_not_create_shap(self):
         result = fit_trade_quality([build_trade_example(row())])

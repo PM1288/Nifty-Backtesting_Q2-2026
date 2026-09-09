@@ -6,6 +6,14 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-09 MANEESH Trade Log (feature branch, not deployed): the existing
+`/strategy/trading-analytics?view=trade-log` read-only endpoint/route, V7 rules,
+exact underlying/CE/PE contracts, gates, all indicator/outcome fields, delivery,
+Legacy CSV and raw precision are retained. New presets, inspector and full loaded
+exports add access paths; no orders or notifications are generated. Shared
+market controls are explicitly distinguished from log filters. Old view available
+with `logLayout=legacy`. See `docs/trading-analytics/TRADE_LOG_READABILITY_20260909.md`.
+
 2026-09-09 NIFTY Model Research: additive `/strategy/nifty-context` with direction,
 range, validation and data/audit lenses. Lazy SVG/table explanations do not load
 SHAP into the browser or alter existing MANEESH charts. Authenticated read-only

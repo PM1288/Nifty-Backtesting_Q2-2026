@@ -1,5 +1,23 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-09 MANEESH Trade Log readability (not deployed)
+
+Feature branch `feat/maneesh-trade-log-readability`. Implements the supplied
+`NIFTY50/Dashboards` handover as a read-only observation ledger, NOT paper-order
+activation. Monitor, Outcomes, Entries & rules, Indicators and Full evidence;
+numeric inspector with conditions, indicators, three horizons, delivery and raw
+record; lossless loaded-filtered JSON/flattened CSV plus unchanged Legacy CSV.
+Route unchanged, URL scoped `log*` state. `logLayout=legacy` restores old view
+without mounting two pollers. Market-context controls remain available explicitly.
+
+Authenticated live read testing found 55 V7 observations; count is not hardcoded.
+`entry_end` is next-candle end, not actual fill time. Delivery includes
+SUPPRESSED_STALE; outcome MATURE is elapsed time, not complete-source coverage.
+Existing signals, collection, notification dispatch, APIs and DB are unchanged.
+Handover forbids deployment without separate approval: production remains old UI.
+Reruns, evidence and limitations: `docs/trading-analytics/TRADE_LOG_READABILITY_20260909.md`.
+
+
 ## 2026-09-09 NIFTY explainable research dashboards
 
 Additive `/strategy/nifty-context`, four independent URL lenses (direction,

@@ -338,6 +338,7 @@ export function TradingAnalyticsPage() {
   >(null);
   const [inspected, setInspected] = useState<Row | null>(null);
   const [params, setParams] = useSearchParams();
+  const [logMarketContext, setLogMarketContext] = useState(false);
   const tab: Tab =
     params.get("view") === "oi"
       ? "smartapi"
@@ -390,7 +391,8 @@ export function TradingAnalyticsPage() {
           <button disabled={q.isFetching} onClick={() => void q.refetch()}>
             {q.isFetching ? "Refreshing…" : "Refresh"}
           </button>
-          {d && (
+          {tab === 'trade-log' && <button aria-expanded={logMarketContext} onClick={() => setLogMarketContext(!logMarketContext)}>Market context — not Trade Log filters</button>}
+          {d && (tab !== 'trade-log' || logMarketContext) && (
             <>
               <label>Symbol <select aria-label="Analytics underlying" value={d.underlying.symbol} onChange={e=>{
                 const next=new URLSearchParams(params); next.set('symbol',e.target.value);
@@ -438,7 +440,7 @@ export function TradingAnalyticsPage() {
             </button>
           ))}
         </nav>
-        {d && (
+        {d && (tab !== 'trade-log' || logMarketContext) && (
           <p className={styles.context}>
             Underlying: {d.underlying.label} · Report {d.reportDate} · Analysis / as-of{" "}
             {d.asOf} · Aggregate report scope: all index derivatives ·{" "}
@@ -447,7 +449,7 @@ export function TradingAnalyticsPage() {
               : "Current retained evidence"}
           </p>
         )}
-        {d && <section className={styles.kpis} tabIndex={0} aria-label="Selected underlying option metrics">
+        {d && (tab !== 'trade-log' || logMarketContext) && <section className={styles.kpis} tabIndex={0} aria-label="Selected underlying option metrics">
           <span>{d.underlying.symbol} · {d.smartapi.expiry ?? 'Expiry unavailable'} · {d.smartapi.metrics.source??d.smartapi.source} · {d.smartapi.metrics.strikes?.length??0} paired strikes{d.smartapi.metrics.collectedAt?` · Captured ${d.smartapi.metrics.collectedAt}`:''}</span>
           <span>OI PCR <strong>{display(d.smartapi.metrics.oiPcr)}</strong></span>
           <span>Volume PCR <strong>{display(d.smartapi.metrics.volumePcr)}</strong></span>
@@ -1026,7 +1028,6 @@ export function TradingAnalyticsPage() {
                 }
               />
             )}
-            {tab === "trade-log" && <TradingAnalyticsTradeLog />}
             {tab === "matrix" && (
               <Suspense fallback={<p role="status">Loading synchronized timeframe matrix…</p>}>
                 <TimeframeMatrix
@@ -1089,6 +1090,7 @@ export function TradingAnalyticsPage() {
             )}
           </>
         )}
+        {tab === "trade-log" && <TradingAnalyticsTradeLog />}
         {d && (drawer === "source" || drawer === "condition") && (
           <TradingAnalyticsDrawer
             title={

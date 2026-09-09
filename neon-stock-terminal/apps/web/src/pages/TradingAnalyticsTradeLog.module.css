@@ -1,0 +1,336 @@
+.log {
+  color: #14243a;
+  background: #fff;
+  border: 1px solid #d9e3ef;
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
+  font-size: 14px;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.toolbar h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.toolbar label {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.log button,
+.log select,
+.log input,
+.log summary,
+.inspector button {
+  font: inherit;
+  min-height: 34px;
+  border: 1px solid #bcc9dc;
+  border-radius: 5px;
+  background: #fff;
+  color: inherit;
+  padding: 5px 8px;
+}
+.log button,
+.log summary,
+.inspector button {
+  cursor: pointer;
+}
+.log input {
+  max-width: 190px;
+}
+.log :focus-visible,
+.inspector :focus-visible {
+  outline: 3px solid #315ad7;
+  outline-offset: 2px;
+}
+.log button[aria-pressed="true"],
+.inspector button[aria-current="page"] {
+  background: #eaf0ff;
+  border-color: #315ad7;
+}
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid #d9e3ef;
+  background: #f8faff;
+  margin-bottom: 12px;
+}
+.summary > div {
+  padding: 10px;
+  border-right: 1px solid #d9e3ef;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.summary strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.summary small,
+.note {
+  font-size: 12px;
+  color: #3d506c;
+}
+.scroll {
+  max-width: 100%;
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid #d9e3ef;
+  position: relative;
+}
+.scroll table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.scroll th,
+.scroll td {
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e1e7f0;
+  background: #fff;
+  min-width: 110px;
+}
+.scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #eef3fa;
+  font-size: 12px;
+  height: 40px;
+}
+.log .scroll thead th {
+  color: #14243a;
+  background: #eef3fa;
+}
+.log .scroll tbody th {
+  background: #fff;
+}
+.log .scroll .groupHead + tr th {
+  top: 40px;
+}
+.scroll tbody td,
+.scroll tbody th {
+  height: 72px;
+  box-sizing: border-box;
+}
+.scroll th.identity {
+  position: sticky;
+  left: 0;
+  min-width: 205px;
+  z-index: 1;
+}
+.scroll thead th.identity {
+  z-index: 3;
+}
+.identity b {
+  font-size: 16px;
+}
+.identity small {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  padding-top: 6px;
+  white-space: nowrap;
+}
+.scroll .action {
+  position: sticky;
+  right: 0;
+  min-width: 85px;
+  border-left: 1px solid #bcc9dc;
+  z-index: 1;
+}
+.scroll thead .action {
+  z-index: 3;
+}
+.scroll .numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+.cell {
+  display: block;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.numeric .cell {
+  font-size: 16px;
+  font-weight: 600;
+}
+.cell small {
+  display: block;
+  font-size: 12px;
+}
+.scroll .positive {
+  color: #087a55;
+}
+.scroll .negative {
+  color: #b4233c;
+}
+.call {
+  color: #184da7;
+  background: #eaf0ff;
+  padding: 3px;
+  font-size: 12px;
+}
+.put {
+  color: #6e5100;
+  background: #fff2bd;
+  padding: 3px;
+  font-size: 12px;
+}
+.scroll tr[data-selected="true"] > * {
+  background: #eaf0ff;
+  border-bottom-color: #315ad7;
+}
+.scroll tbody tr:hover > * {
+  box-shadow:
+    inset 0 1px #bcc9dc,
+    inset 0 -1px #bcc9dc;
+}
+.log[data-density="compact"] tbody td,
+.log[data-density="compact"] tbody th {
+  height: 60px;
+  padding-block: 6px;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  max-height: 190px;
+  overflow: auto;
+  gap: 5px;
+}
+.fields label {
+  overflow-wrap: anywhere;
+}
+.fields input {
+  min-height: 20px;
+}
+.export {
+  position: relative;
+}
+.export > div {
+  position: absolute;
+  right: 0;
+  z-index: 5;
+  width: 225px;
+  padding: 8px;
+  background: white;
+  border: 1px solid #bcc9dc;
+  box-shadow: 0 6px 20px #14243a22;
+  display: grid;
+  gap: 6px;
+}
+.inspector {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  padding: 0;
+  width: min(1060px, 94vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  max-width: 100vw;
+  border: 1px solid #bcc9dc;
+  color: #14243a;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.inspector::backdrop {
+  background: #14243a55;
+}
+.inspectorBody {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 14px;
+  box-sizing: border-box;
+}
+.detail {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+.facts {
+  margin: 12px 0;
+}
+.facts > div {
+  display: grid;
+  grid-template-columns: minmax(160px, 35%) minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px;
+  border-bottom: 1px solid #e1e7f0;
+}
+.facts dt {
+  color: #3d506c;
+  overflow-wrap: anywhere;
+}
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.raw {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.detail h3 {
+  font-size: 15px;
+}
+.inspector .scroll tbody td,
+.inspector .scroll tbody th {
+  height: 40px;
+  padding: 6px 8px;
+}
+.inspector .scroll tbody td {
+  text-align: right;
+}
+.inspector summary {
+  cursor: pointer;
+  padding: 8px;
+  background: #eef3fa;
+  border: 1px solid #d9e3ef;
+}
+@media (max-width: 800px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .log {
+    padding: 8px;
+  }
+  .log button,
+  .log select,
+  .log input,
+  .log summary,
+  .inspector button {
+    min-height: 44px;
+  }
+  .scroll th.identity {
+    min-width: 165px;
+  }
+  .inspector {
+    width: 100vw;
+  }
+  .toolbar label {
+    flex-wrap: wrap;
+  }
+  .facts > div {
+    grid-template-columns: 1fr;
+  }
+  .export > div {
+    right: auto;
+    left: 0;
+  }
+}

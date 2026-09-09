@@ -50,7 +50,12 @@ export default function NiftyContextValidation({
         {number(evaluation.test_count)} occasions across{" "}
         {evaluation.test_sessions?.join(", ")}.
       </p>
-      <div style={{ overflowX: "auto" }}>
+      <div
+        style={{ overflowX: "auto" }}
+        tabIndex={0}
+        role="region"
+        aria-label="Direction benchmark table"
+      >
         <table>
           <caption>
             Direction benchmarks · lower log loss and Brier are better
@@ -167,7 +172,12 @@ export default function NiftyContextValidation({
         ))}
       </div>
       <h2>Range benchmark · index points</h2>
-      <div style={{ overflowX: "auto" }}>
+      <div
+        style={{ overflowX: "auto" }}
+        tabIndex={0}
+        role="region"
+        aria-label="Range benchmark table"
+      >
         <table>
           <thead>
             <tr>
@@ -201,7 +211,7 @@ export default function NiftyContextValidation({
       </p>
       <details>
         <summary>Full evaluation JSON</summary>
-        <pre>{JSON.stringify(evaluation, null, 2)}</pre>
+        <pre tabIndex={0}>{JSON.stringify(evaluation, null, 2)}</pre>
       </details>
     </>
   );

@@ -133,7 +133,12 @@
   color: #526175;
 }
 .page a {
+  text-decoration: underline;
   color: #2453b9;
+}
+.page [tabindex]:focus-visible {
+  outline: 2px solid #315ad7;
+  outline-offset: 2px;
 }
 .page label {
   display: flex;

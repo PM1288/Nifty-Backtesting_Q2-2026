@@ -26,6 +26,7 @@ export type WorkspaceRouteId =
   | "long-options"
   | "nifty-weekly-options"
   | "trading-analytics"
+  | "nifty-context"
   | "paper-trading"
   | "derivatives"
   | "data-operations";
@@ -228,6 +229,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
         !pathname.startsWith("/strategy/long-options") &&
         !pathname.startsWith("/strategy/nifty-weekly-options") &&
         !pathname.startsWith("/strategy/trading-analytics") &&
+        !pathname.startsWith("/strategy/nifty-context") &&
         !pathname.startsWith("/strategy/nifty-options")) ||
       (pathname.startsWith("/backtesting") &&
         !pathname.startsWith("/backtesting/runs")) ||
@@ -306,6 +308,18 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     primaryMobile: false,
     parentId: "oiis-lab",
     match: (pathname) => pathname.startsWith("/strategy/trading-analytics"),
+  },
+  {
+    id: "nifty-context",
+    label: "NIFTY Model Research",
+    compactLabel: "Model Research",
+    description: "Isolated hourly NIFTY direction, range and explainability research",
+    path: "/strategy/nifty-context",
+    icon: FlaskConical,
+    primaryDesktop: false,
+    primaryMobile: false,
+    parentId: "oiis-lab",
+    match: (pathname) => pathname.startsWith("/strategy/nifty-context"),
   },
   {
     id: "paper-trading",

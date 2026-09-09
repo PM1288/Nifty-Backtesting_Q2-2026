@@ -166,7 +166,7 @@ try {
       }),
     );
     await root.getByRole("button", { name: "Refresh", exact: true }).click();
-    await root.getByText(/TEST FIXTURE ONLY/).waitFor();
+    await root.getByText(/TEST FIXTURE ONLY/).first().waitFor();
     await root
       .getByRole("button", { name: "Hourly direction", exact: true })
       .click();

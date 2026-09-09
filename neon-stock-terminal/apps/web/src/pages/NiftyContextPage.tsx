@@ -109,7 +109,12 @@ function Waterfall({
           ? "Median range · index points"
           : `${labels[cls]} · raw class margin (not percentage points)`}
       </figcaption>
-      <div className={styles.waterfall}>
+      <div
+        className={styles.waterfall}
+        tabIndex={0}
+        role="region"
+        aria-label="Scrollable waterfall"
+      >
         <svg
           viewBox={`0 0 730 ${rows.length * 28}`}
           role="img"
@@ -273,7 +278,11 @@ export default function NiftyContextPage() {
         </p>
       )}
       {data?.report && (
-        <section className={styles.metrics}>
+        <section
+          className={styles.metrics}
+          tabIndex={0}
+          aria-label="Coverage counts"
+        >
           {Object.entries(data.report.coverage)
             .filter(([k]) => k !== "rejected")
             .map(([k, v]) => (
@@ -289,11 +298,16 @@ export default function NiftyContextPage() {
           <section>
             <h2>Actual session coverage</h2>
             <p>
-              Five hourly occasions per full session. Blue: eligible inputs;
-              green: complete outcomes. Gaps remain missing, not zero-return
+              Five hourly occasions per full session. Bars show eligible inputs
+              and complete outcomes. Gaps remain missing, not zero-return
               observations.
             </p>
-            <div className={styles.heatmap}>
+            <div
+              className={styles.heatmap}
+              tabIndex={0}
+              role="region"
+              aria-label="Session coverage table"
+            >
               <table>
                 <thead>
                   <tr>
@@ -373,7 +387,11 @@ export default function NiftyContextPage() {
             </p>
           ) : (
             <>
-              <section className={styles.metrics}>
+              <section
+                className={styles.metrics}
+                tabIndex={0}
+                aria-label="Prediction values"
+              >
                 {Object.entries(
                   lens === "direction"
                     ? selected.result.probabilities
@@ -411,7 +429,12 @@ export default function NiftyContextPage() {
                       : `${labels[cls]} class margin`}{" "}
                     · select a saved hour
                   </p>
-                  <div className={styles.heatmap}>
+                  <div
+                    className={styles.heatmap}
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Chronological factor table"
+                  >
                     <table>
                       <thead>
                         <tr>
@@ -492,9 +515,11 @@ export default function NiftyContextPage() {
             ))}
           </ul>
           <h2>Prospective hourly captures</h2>
-          <pre>{JSON.stringify(data?.snapshots ?? [], null, 2)}</pre>
+          <pre tabIndex={0}>
+            {JSON.stringify(data?.snapshots ?? [], null, 2)}
+          </pre>
           <h2>Experiment configuration</h2>
-          <pre>{JSON.stringify(data?.report, null, 2)}</pre>
+          <pre tabIndex={0}>{JSON.stringify(data?.report, null, 2)}</pre>
         </section>
       )}
       <footer>

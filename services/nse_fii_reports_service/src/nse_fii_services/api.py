@@ -56,6 +56,14 @@ def health() -> dict[str, Any]:
         "status": "ok",
         "scheduler_enabled": settings.auto_pull_enabled,
         "scheduler_running": scheduler.running,
+        "schedule_time": settings.auto_pull_time,
+        "schedule_timezone": "Asia/Kolkata",
+        "auto_load_enabled": settings.auto_load_enabled,
+        "last_attempt_at": scheduler.last_attempt_at,
+        "last_success_at": scheduler.last_success_at,
+        "last_trade_date": scheduler.last_trade_date,
+        "last_error": scheduler.last_error,
+        "next_run_at": scheduler.next_run_at,
     }
 
 

@@ -2,6 +2,21 @@
 
 Single-service wrapper for NSE daily F&O participant and FII derivatives reports.
 
+The production container runs an idempotent morning publish at `06:00
+Asia/Kolkata` by default. It downloads the latest complete official report set,
+checks that its report date matches the latest completed exchange session,
+and loads that immutable daily revision into PostgreSQL. A PostgreSQL advisory
+lock prevents duplicate concurrent publishers. Missing/late official reports
+are retried at `AUTO_PULL_INTERVAL_MINUTES` rather than being labelled current.
+
+Runtime controls:
+
+- `AUTO_PULL_ENABLED=true`
+- `AUTO_PULL_TIME=06:00`
+- `AUTO_PULL_RUN_ON_START=true` (catch up after a restart later than 06:00)
+- `AUTO_LOAD_ENABLED=true`
+- `AUTO_PULL_INTERVAL_MINUTES=60` (retry interval after a failed/stale pull)
+
 This service integrates the upstream `nse_fii_services` pack into the main trading stack as one deployable FastAPI container with:
 
 - latest daily pull

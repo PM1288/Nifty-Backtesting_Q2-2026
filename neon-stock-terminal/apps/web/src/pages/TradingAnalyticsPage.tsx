@@ -343,6 +343,7 @@ export function TradingAnalyticsPage() {
         ? (params.get("view") as Tab)
         : "morning";
   const [replayInput, setReplayInput] = useState(params.get("asOf") ?? "");
+  const main = analyticsMainView(tab);
   const query = new URLSearchParams();
   for (const k of ["symbol", "date", "expiry", "asOf", "dailyLookback", "weeklyLookback"])
     if (params.get(k)) query.set(k, params.get(k)!);
@@ -350,6 +351,8 @@ export function TradingAnalyticsPage() {
     queryKey: ["trading-analytics", query.toString()],
     queryFn: () => getJson<Payload>(`/v1/trading-analytics?${query}`),
     staleTime: 30000,
+    refetchInterval: main === "morning" ? 60000 : false,
+    refetchIntervalInBackground: false,
     retry: 1,
   });
   const change = (k: string, v: string) => {
@@ -363,7 +366,6 @@ export function TradingAnalyticsPage() {
     setInspected(row);
     setDrawer("source");
   };
-  const main = analyticsMainView(tab);
   if (import.meta.env.VITE_TRADING_ANALYTICS_ENABLED === "false")
     return (
       <section>

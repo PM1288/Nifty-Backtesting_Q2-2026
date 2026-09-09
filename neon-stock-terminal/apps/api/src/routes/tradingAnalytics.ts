@@ -325,9 +325,14 @@ export async function loadTradingAnalytics(
       },
       {
         id: "morning-job",
-        state: "NOT_ENABLED",
+        state:
+          process.env.TRADING_ANALYTICS_MORNING_JOB_ENABLED === "false"
+            ? "NOT_ENABLED"
+            : "ENABLED",
         reason:
-          "Existing FII interval scheduler found; 06:00 locked/calendar-aware bundle release not validated.",
+          process.env.TRADING_ANALYTICS_MORNING_JOB_ENABLED === "false"
+            ? "06:00 Asia/Kolkata NSE FII report pull/load is disabled by configuration."
+            : "06:00 Asia/Kolkata official NSE FII report pull/load; advisory-locked, exchange-calendar checked, idempotent and retryable.",
       },
     ],
     limitations: [

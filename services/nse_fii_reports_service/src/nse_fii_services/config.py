@@ -56,6 +56,9 @@ class Settings:
     postgres_schema: str
     postgres_audit_schema: str
     truncate_tables_on_load: bool
+    auto_pull_time: str = "06:00"
+    auto_pull_run_on_start: bool = True
+    auto_load_enabled: bool = True
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -64,6 +67,9 @@ class Settings:
             request_timeout_seconds=_env_int("REQUEST_TIMEOUT_SECONDS", 30),
             enable_reports_api_fallback=_env_flag("ENABLE_REPORTS_API_FALLBACK", True),
             auto_pull_enabled=_env_flag("AUTO_PULL_ENABLED", False),
+            auto_pull_time=_env_text("AUTO_PULL_TIME", "06:00"),
+            auto_pull_run_on_start=_env_flag("AUTO_PULL_RUN_ON_START", True),
+            auto_load_enabled=_env_flag("AUTO_LOAD_ENABLED", True),
             auto_pull_interval_minutes=_env_int("AUTO_PULL_INTERVAL_MINUTES", 60),
             auto_pull_max_lookback_days=_env_int("AUTO_PULL_MAX_LOOKBACK_DAYS", 10),
             auto_pull_save_parsed=_env_flag("AUTO_PULL_SAVE_PARSED", True),

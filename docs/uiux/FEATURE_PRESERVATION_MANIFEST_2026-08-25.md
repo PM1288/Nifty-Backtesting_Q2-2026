@@ -6,7 +6,7 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
-2026-09-09 MANEESH Trade Log (feature branch, not deployed): the existing
+2026-09-09 MANEESH Trade Log (deployed from master `a9d4372`): the existing
 `/strategy/trading-analytics?view=trade-log` read-only endpoint/route, V7 rules,
 exact underlying/CE/PE contracts, gates, all indicator/outcome fields, delivery,
 Legacy CSV and raw precision are retained. New presets, inspector and full loaded

@@ -4,6 +4,7 @@ import { chromium } from "playwright";
 
 const origin = (process.env.PLAYWRIGHT_ORIGIN ?? "http://127.0.0.1:19090").replace(/\/$/, "");
 const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD;
+const routePath = process.env.PLAYWRIGHT_ROUTE_PATH ?? '/analytics';
 const outputDir = path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR ?? "output/paper-event-notifier");
 if (!password) throw new Error("PLAYWRIGHT_ADMIN_PASSWORD is required.");
 
@@ -30,7 +31,7 @@ try {
   check("latest five cap", payload.items.length > 0 && payload.items.length <= 5, `items=${payload.items.length}`);
   check("entry or target only", payload.items.every((item) => ["ENTRY", "TARGET_HIT"].includes(item.kind)), JSON.stringify(payload.items.map((item) => item.kind)));
   const page = await desktop.newPage();
-  await page.goto(`${origin}/n50/analytics`, { waitUntil: "domcontentloaded", timeout: 90_000 });
+  await page.goto(`${origin}/n50${routePath}`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const launcher = page.getByRole("button", { name: /Paper trade notifications/ });
   await launcher.waitFor({ state: "visible", timeout: 60_000 });
   check("header speech defaults on", await page.getByRole("button", { name: "Mute paper trade voice alerts" }).getAttribute("aria-pressed") === "true");
@@ -83,7 +84,7 @@ try {
 
   const mobile = await authenticatedContext({ width: 390, height: 844 });
   const mobilePage = await mobile.newPage();
-  await mobilePage.goto(`${origin}/n50/analytics`, { waitUntil: "domcontentloaded", timeout: 90_000 });
+  await mobilePage.goto(`${origin}/n50${routePath}`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const mobileLauncher = mobilePage.getByRole("button", { name: /Paper trade notifications/ });
   await mobileLauncher.waitFor({ state: "visible", timeout: 60_000 }).catch(async (error) => {
     await mobilePage.screenshot({ path: path.join(outputDir, "mobile-launcher-timeout.png") });

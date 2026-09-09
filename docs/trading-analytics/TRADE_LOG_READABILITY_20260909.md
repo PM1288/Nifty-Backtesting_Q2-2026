@@ -72,9 +72,36 @@ independent observation table.
 
 `logLayout=legacy` mounts the original view instead, never two simultaneous
 pollers. Legacy CSV retains its original filename and nested-field projection.
-No deployment was performed: the supplied implementation prompt requires separate
-approval. A future release must follow the canonical master-only deployment
-policy; rollback requires no database migration.
+Initial implementation was not deployed because the handover required approval.
+After the user's follow-up requesting the visible update, release `a9d4372` was
+merged/pushed to master and deployed on 2026-09-09. Only the existing
+`trading-stack-novius2-n50-dashboard-1` container was recreated.
+Public asset changed from `index-BTeFf-13.js` to `index-CHvGx1Hh.js`.
+Image: `sha256:01d1f4a335496cf49133759fd591810f3aba0da53fe7851931530aeeafb3098b`.
+Container is healthy. No database migration or data/notification mutation occurred.
+
+Live route: `https://n50.nifty50today.co.in/n50/strategy/trading-analytics?view=trade-log`.
+This is MANEESH → Trade Log, not a redesign of the separate Scalper chart view.
+Authenticated deployed acceptance: 34/34 checks, including axe across target
+widths and inspector sections. Evidence: `output/playwright/trade-log-deployed/`.
+Canonical shell regression: 8/8. Paper notifier regression on the MANEESH route:
+17/17 (desktop/mobile, speech, history and browser-only simulated alert).
+The first parallel legacy `/analytics` notifier attempt timed out waiting for
+the launcher; its partial results are retained, not counted as a pass. The
+subsequent sequential MANEESH-route run passed in full.
+Web 105/105, API 190/190 and both builds passed
+again before release. The existing image is retained under
+`trading-stack-n50-dashboard:pre-trade-log-20260909` for rollback.
+
+Release command (canonical source, pushed master only):
+```bash
+PUBLIC_BASE_URL=https://n50.nifty50today.co.in \
+ROUTE_PATH='/n50/strategy/trading-analytics?view=trade-log' \
+bash scripts/deploy_n50_dashboard.sh
+PLAYWRIGHT_BASE_URL=https://n50.nifty50today.co.in/n50 \
+PLAYWRIGHT_OUTPUT_DIR=output/playwright/trade-log-deployed \
+node tools/playwright/trade-log-readability.mjs
+```
 
 ## Validation and evidence
 
@@ -131,7 +158,7 @@ resend existing failed WhatsApp notifications.
 
 ## Material limitations / pending acceptance
 
-- Production remains unchanged pending deployment approval.
+- The new UI is deployed; actual paper-order execution remains disabled as specified.
 - This endpoint has a 5,000-row ceiling and no total-count/pagination contract;
   exports explicitly cover matching loaded rows, not all database history.
 - Last-snapshot freshness is shown, but full exchange publication lineage and

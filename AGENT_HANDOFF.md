@@ -1,6 +1,6 @@
 # Agent Handoff — Phase 1 Data Foundation
 
-## 2026-09-09 MANEESH Trade Log readability (not deployed)
+## 2026-09-09 MANEESH Trade Log readability (deployed)
 
 Feature branch `feat/maneesh-trade-log-readability`. Implements the supplied
 `NIFTY50/Dashboards` handover as a read-only observation ledger, NOT paper-order
@@ -14,7 +14,12 @@ Authenticated live read testing found 55 V7 observations; count is not hardcoded
 `entry_end` is next-candle end, not actual fill time. Delivery includes
 SUPPRESSED_STALE; outcome MATURE is elapsed time, not complete-source coverage.
 Existing signals, collection, notification dispatch, APIs and DB are unchanged.
-Handover forbids deployment without separate approval: production remains old UI.
+User subsequently requested the visible UI update; release `a9d4372` was merged
+and pushed to master and deployed to the existing n50-dashboard container only.
+Public entry asset: `index-CHvGx1Hh.js`; container healthy. Live authenticated
+Trade Log acceptance passed 34/34, canonical shell 8/8 and MANEESH-route paper
+notifier 17/17. Rollback image is retained as
+`trading-stack-n50-dashboard:pre-trade-log-20260909`.
 Reruns, evidence and limitations: `docs/trading-analytics/TRADE_LOG_READABILITY_20260909.md`.
 
 

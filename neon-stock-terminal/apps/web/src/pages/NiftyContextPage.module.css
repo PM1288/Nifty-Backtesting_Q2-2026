@@ -65,7 +65,6 @@
 }
 .status p + p {
   margin-top: 4px;
-  color: #64748b;
 }
 .metrics {
   display: flex;

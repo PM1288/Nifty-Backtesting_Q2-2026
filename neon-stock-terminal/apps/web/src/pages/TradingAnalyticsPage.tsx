@@ -439,6 +439,7 @@ export function TradingAnalyticsPage() {
               {label}
             </button>
           ))}
+          <Link to="/strategy/nifty-context?lens=trade-quality">SHAP Research</Link>
         </nav>
         {d && (tab !== 'trade-log' || logMarketContext) && (
           <p className={styles.context}>

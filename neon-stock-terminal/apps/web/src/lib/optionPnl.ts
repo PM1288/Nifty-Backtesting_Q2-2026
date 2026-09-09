@@ -1,4 +1,4 @@
-import { number, Observation } from './tradeObservation';
+import { Horizon, instrumentEvidence, number, Observation } from './tradeObservation';
 export const chargePolicy = 'ZERODHA_NSE_OPTIONS_CALCULATOR_20260909';
 const money=(v:number)=>Number(v.toFixed(2));
 /** Two executed premium orders, not expiry/exercise. Rates and rounding match
@@ -13,6 +13,12 @@ export function optionPnl(entry:unknown,exit:unknown,quantity:unknown) {
  const gst=money((brokerage+sebi+exchange+ipft)*0.18),stamp=Math.round(money(buy*qty*0.00003));
  const charges=money(brokerage+stt+sebi+exchange+ipft+gst+stamp),delta=sell-buy,gross=money(delta*qty);
  return {policy:chargePolicy,entry:buy,exit:sell,quantity:qty,delta,gross,brokerage,stt,sebi,exchange,ipft,gst,stamp,charges,net:money(gross-charges)};
+}
+export function observationOptionPnl(row: Observation, horizon: Horizon, leg: 'ce'|'pe', exit: 'endpoint'|'max'|'min'='endpoint', lots=1) {
+ const lotSize=number(row[`${leg}_lot_size`]);
+ const quantity=lotSize!==null&&Number.isSafeInteger(lotSize)&&lotSize>0&&Number.isSafeInteger(lots)&&lots>0?lotSize*lots:null;
+ const evidence=instrumentEvidence(row,horizon,leg);
+ return {lotSize,quantity,evidence,pnl:optionPnl(row[`${leg}_entry_open`],evidence[exit],quantity)};
 }
 export function scalperLink(row:Observation) {
  if(!['underlying_symbol','ce_symbol','pe_symbol','ce_token','pe_token','expiry','trade_date'].every(k=>typeof row[k]==='string'&&row[k])||number(row.strike)===null)return null;

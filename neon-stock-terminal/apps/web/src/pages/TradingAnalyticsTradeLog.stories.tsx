@@ -58,7 +58,7 @@ const fixture: Observation = {
 function Gallery({
   empty = false,
   missing = false,
-  preset = "Monitor",
+  preset = "P&L comparison",
 }: {
   empty?: boolean;
   missing?: boolean;
@@ -106,6 +106,7 @@ const meta: Meta<typeof Gallery> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Developing: Story = {};
+export const ProfitAndLossComparison: Story = {};
 export const MissingAndFailed: Story = { args: { missing: true } };
 export const Empty: Story = { args: { empty: true } };
 export const IndicatorsZeroAndMissing: Story = {

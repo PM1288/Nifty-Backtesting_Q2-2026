@@ -1,12 +1,12 @@
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {horizons,Horizon,instrumentEvidence,number,numeric,Observation,side,textValue,time,windowEvidence} from '../lib/tradeObservation';
-import {optionPnl,scalperLink} from '../lib/optionPnl';
+import {observationOptionPnl,scalperLink} from '../lib/optionPnl';
 import styles from './TradingAnalyticsTradeLog.module.css';
 export function TradeObservationPnl({row}:{row:Observation}) {
  const [h,setH]=useState<Horizon>('eod'); const [lots,setLots]=useState('1'); const [exit,setExit]=useState('endpoint');
  const count=number(lots),valid=count!==null&&Number.isSafeInteger(count)&&count>0; const link=scalperLink(row);
- const results=['ce','pe'].map(k=>{const lot=number(row[`${k}_lot_size`]);const qty=valid&&lot!==null&&Number.isSafeInteger(lot)&&lot>0?count*lot:null;const d=instrumentEvidence(row,h,k);return {instrument:k,lot,qty,data:d,pnl:optionPnl(row[`${k}_entry_open`],d[exit],qty)};});
+ const results=(['ce','pe'] as const).map(k=>{const result=observationOptionPnl(row,h,k,exit as 'endpoint'|'max'|'min',valid?count:0);return {instrument:k,lot:result.lotSize,qty:result.quantity,data:result.evidence,pnl:result.pnl};});
  return <section aria-label="Entry high low and hypothetical option P&L">
  <div className={styles.toolbar}><h3>From entry: high, low &amp; P&amp;L</h3>{link?<Link to={link}>Open stock + CE + PE in Scalper ↗</Link>:<span>Exact Scalper identity unavailable</span>}</div>
  <div className={styles.toolbar}><label>Outcome window <select aria-label="PnL window" value={h} onChange={e=>setH(e.target.value as Horizon)}>{horizons.map(v=><option key={v}>{v}</option>)}</select></label><label>Lots <input aria-label="Number of option lots" type="number" min="1" step="1" value={lots} onChange={e=>setLots(e.target.value)}/></label><label>Hypothetical exit <select aria-label="Hypothetical exit" value={exit} onChange={e=>setExit(e.target.value)}><option value="endpoint">Latest observed close</option><option value="max">Observed high</option><option value="min">Observed low</option></select></label><span>{textValue(windowEvidence(row,h).maturity)}{windowEvidence(row,h).maturity==='DEVELOPING'?' · So far':''}</span></div>

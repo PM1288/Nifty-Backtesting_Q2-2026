@@ -171,6 +171,20 @@
   display: block;
   font-size: 12px;
 }
+.pnlCell {
+  display: grid;
+  min-width: 250px;
+  gap: 3px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.pnlCell b {
+  font-size: 16px;
+}
+.pnlCell small {
+  color: #3d506c;
+  font-size: 12px;
+}
 .scroll .positive {
   color: #087a55;
 }

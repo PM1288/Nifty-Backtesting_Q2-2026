@@ -3,6 +3,7 @@ export type Observation = Record<string, unknown>;
 export type Horizon = "15m" | "30m" | "eod";
 export const horizons: Horizon[] = ["15m", "30m", "eod"];
 export const presets = [
+  "P&L comparison",
   "Monitor",
   "Outcomes",
   "Entries & rules",
@@ -83,7 +84,7 @@ export function readState(params: URLSearchParams) {
     direction: one("logDirection", ["", "CALL", "PUT"], ""),
     search: params.get("logSearch") ?? "",
     horizon: one("logHorizon", horizons, "15m") as Horizon,
-    preset: one("logPreset", presets, "Monitor"),
+    preset: one("logPreset", presets, "P&L comparison"),
     metric: one(
       "logMetric",
       ["endpoint_change_pct", "max_change_pct", "min_change_pct", "underlying"],

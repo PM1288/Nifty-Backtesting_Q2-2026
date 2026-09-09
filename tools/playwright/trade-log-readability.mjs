@@ -44,6 +44,9 @@ try {
  const root=page.getByTestId('trade-observations');
  try{await root.waitFor({timeout:60000});}catch(e){await page.screenshot({path:path.join(out,'failure.png'),fullPage:true});console.log({url:page.url(),errors,body:(await page.locator('body').innerText()).slice(0,1200)});throw e;}
  await root.getByRole('button',{name:/Inspect /}).first().waitFor({timeout:60000});
+ check('P&L comparison is the default preset',await root.getByLabel('Preset',{exact:true}).inputValue()==='P&L comparison');
+ check('all six CE and PE horizon columns are present',(await root.getByRole('columnheader',{name:/^(CE|PE) · (15M|30M|EOD) P&L$/}).count())===6);
+ check('SHAP research is directly reachable',String(await root.getByRole('link',{name:/Open SHAP research/}).getAttribute('href')).includes('/strategy/nifty-context?lens=trade-quality'));
  for(const width of [1920,1440,1280,768,390]){
    await page.setViewportSize({width,height:width===1920?1080:900});
    await page.screenshot({path:path.join(out,`monitor-${width}.png`),fullPage:true});
@@ -53,7 +56,7 @@ try {
    check(`${width} axe`,axe.violations.length===0,axe.violations);
  }
  await page.setViewportSize({width:1440,height:900});
- for(const preset of ['Outcomes','Entries & rules','Indicators','Full evidence','Monitor']){
+ for(const preset of ['P&L comparison','Outcomes','Entries & rules','Indicators','Full evidence','Monitor']){
    await root.getByLabel('Preset',{exact:true}).selectOption(preset);
    await page.screenshot({path:path.join(out,`${preset.replaceAll(' ','-')}.png`),fullPage:true});
    check(`preset ${preset}`,await root.getByRole('button',{name:/Inspect /}).count()===payload.rows.length);

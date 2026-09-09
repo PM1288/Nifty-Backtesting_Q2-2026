@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
@@ -26,6 +26,7 @@ import {
 } from "./TradingAnalyticsTradeLogLegacy";
 import styles from "./TradingAnalyticsTradeLog.module.css";
 import { TradeObservationPnl } from './TradeObservationPnl';
+import { observationOptionPnl } from '../lib/optionPnl';
 
 type Payload = {
   rows: Observation[];
@@ -40,7 +41,22 @@ type Column = {
   read: (r: Observation) => unknown;
   digits?: number;
   signed?: boolean;
+  render?: (r: Observation) => ReactNode;
 };
+
+function PnlComparisonCell({ row, leg, horizon }: { row: Observation; leg: 'ce'|'pe'; horizon: '15m'|'30m'|'eod' }) {
+  const result = observationOptionPnl(row, horizon, leg);
+  const pnl = result.pnl;
+  const evidence = result.evidence;
+  const tone = pnl ? (pnl.net > 0 ? styles.positive : pnl.net < 0 ? styles.negative : '') : '';
+  return <span className={styles.pnlCell}>
+    <b className={tone}>{pnl ? `Net ₹${numeric(pnl.net, 2, true)}` : 'Net —'}</b>
+    <small>Gross {pnl ? `₹${numeric(pnl.gross, 2, true)}` : '—'} · fees {pnl ? `₹${numeric(pnl.charges)}` : '—'}</small>
+    <small>Premium ₹{numeric(row[`${leg}_entry_open`])} → ₹{numeric(evidence.endpoint)}</small>
+    <small>High ₹{numeric(evidence.max)} ({numeric(evidence.max_change_pct, 2, true)}%) · low ₹{numeric(evidence.min)} ({numeric(evidence.min_change_pct, 2, true)}%)</small>
+    <small>{textValue(result.lotSize)} units · {textValue(windowEvidence(row, horizon).maturity)}</small>
+  </span>;
+}
 const sections = [
   "Overview",
   "Conditions",
@@ -512,6 +528,26 @@ function ObservationLog() {
       signed: f.includes("change"),
       read: (r) => instrumentEvidence(r, h, instrument ?? side(r))[f],
     });
+    if (state.preset === "P&L comparison")
+      return (["ce", "pe"] as const).flatMap((leg) =>
+        horizons.map((horizon) => ({
+          key: `${leg}-${horizon}-pnl`,
+          label: `${leg.toUpperCase()} · ${horizon.toUpperCase()} P&L`,
+          read: (r: Observation) => {
+            const result = observationOptionPnl(r, horizon, leg);
+            return result.pnl ? {
+              ...result.pnl,
+              lot_size: result.lotSize,
+              high: result.evidence.max ?? null,
+              high_change_pct: result.evidence.max_change_pct ?? null,
+              low: result.evidence.min ?? null,
+              low_change_pct: result.evidence.min_change_pct ?? null,
+              maturity: windowEvidence(r, horizon).maturity ?? null,
+            } : null;
+          },
+          render: (r: Observation) => <PnlComparisonCell row={r} leg={leg} horizon={horizon} />,
+        })),
+      );
     if (state.preset === "Indicators")
       return ["underlying", "ce", "pe"].flatMap((k) =>
         ["rsi14", "macd", "macd_signal9", "macd_histogram"].map((f) => ({
@@ -678,6 +714,7 @@ function ObservationLog() {
       <header className={styles.toolbar}>
         <h2>Trade observations</h2>
         <span>READ-ONLY · no paper orders</span>
+        <Link to="/strategy/nifty-context?lens=trade-quality">Open SHAP research ↗</Link>
         <span>
           Updated{" "}
           {q.dataUpdatedAt
@@ -1005,7 +1042,9 @@ function ObservationLog() {
                       className={`${c.numeric ? styles.numeric : ""} ${c.signed && n !== null ? (n > 0 ? styles.positive : n < 0 ? styles.negative : "") : ""}`}
                     >
                       <span className={styles.cell} title={textValue(v)}>
-                        {c.numeric
+                        {c.render
+                          ? c.render(r)
+                          : c.numeric
                           ? numeric(v, c.digits ?? 2, c.signed)
                           : textValue(v)}
                         {c.key === "maturity" && v === "DEVELOPING" && (

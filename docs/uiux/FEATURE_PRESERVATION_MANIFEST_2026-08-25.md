@@ -28,6 +28,13 @@ exports add access paths; no orders or notifications are generated. Shared
 market controls are explicitly distinguished from log filters. Old view available
 with `logLayout=legacy`. See `docs/trading-analytics/TRADE_LOG_READABILITY_20260909.md`.
 
+2026-09-09 MANEESH Trade Log comparison follow-up: the default table preset now
+shows both exact CE and PE across 15m, 30m and EOD. Each of the six cells retains
+net/gross/charges, entry-to-endpoint premium, high/low excursion, one exact lot
+quantity and maturity. Monitor, Outcomes, Entries & rules, Indicators, Full
+evidence, inspector and exports remain available. The local SHAP Research link
+opens the separate read-only good-trade experiment; it does not alter V7 signals.
+
 2026-09-09 NIFTY Model Research: additive `/strategy/nifty-context` with direction,
 range, validation and data/audit lenses. Lazy SVG/table explanations do not load
 SHAP into the browser or alter existing MANEESH charts. Authenticated read-only

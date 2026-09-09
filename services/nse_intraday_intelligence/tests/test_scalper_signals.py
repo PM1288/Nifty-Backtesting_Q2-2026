@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from nse_intraday_intelligence.scalper_signals import MIN_SIGNAL_CANDLES, Candle, detect_paired_signals, render_whatsapp
+from nse_intraday_intelligence.scalper_signals import MIN_SIGNAL_CANDLES, Candle, _excursion, detect_paired_signals, render_whatsapp
 
 
 START = datetime(2026, 9, 9, 4, 0, tzinfo=timezone.utc)
@@ -14,14 +14,16 @@ def candle(index: int, open_: float, close: float, ema: float) -> Candle:
     return Candle(START + timedelta(minutes=index * 5), open_, max(open_, close) + 1, min(open_, close) - 1, close, ema)
 
 
-def test_call_requires_paired_two_red_then_body80_cross_and_next_open():
+def test_call_requires_underlying_precursors_but_option_precursors_are_context_only():
     nifty = [candle(0,100,98,101), candle(1,99,97,100), candle(2,99,109,101), candle(3,104,106,103)]
-    call = [candle(0,24,22,25), candle(1,23,21,24), candle(2,22,32,24), candle(3,30,31,29)]
+    call = [candle(0,22,24,21), candle(1,21,23,20), candle(2,22,32,24), candle(3,30,31,29)]
     result = detect_paired_signals(nifty, call, [], 5)
     assert len(result) == 1
     assert result[0]["direction"] == "CALL"
     assert result[0]["underlying_fraction"] == .8
     assert result[0]["option_fraction"] == .8
+    assert [row["colour"] for row in result[0]["option_precursors"]] == ["GREEN", "GREEN"]
+    assert result[0]["conditions"]["option_precursors_required"] is False
     assert "NIFTY CALL ENTRY · 5m" in render_whatsapp(result[0], "NIFTY09SEP23500CE", 5)
 
 
@@ -60,3 +62,17 @@ def test_whatsapp_uses_the_evaluated_stock_identity_not_a_fixed_index():
     assert message.startswith("RELIANCE CALL ENTRY · 5m")
     assert "| RELIANCE 104.00" in message
     assert "Confirmed: RELIANCE 80.0% above EMA9" in message
+    assert "option precursors logged as context" in message
+
+
+def test_forward_excursion_uses_entry_open_and_preserves_missing():
+    rows = [
+        {"ts": START, "high": 12, "low": 9},
+        {"ts": START + timedelta(minutes=1), "high": 15, "low": 8},
+    ]
+    result = _excursion(rows, START, START + timedelta(minutes=15), 10)
+    assert result["max"] == 15
+    assert result["max_change"] == 5
+    assert result["max_change_pct"] == 50
+    assert result["min"] == 8
+    assert _excursion([], START, START + timedelta(minutes=15), 10)["state"] == "DATA_INSUFFICIENT"

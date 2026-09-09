@@ -2,7 +2,7 @@ import { istDay } from "./tradingAnalyticsChartView";
 
 type Row = Record<string, unknown>;
 type Pane = { identity: Row; bars: Row[] };
-export const SCALPER_ENTRY_RULE = "FNO_UNDERLYING_PAIRED_BODY80_NEXT_OPEN_V5";
+export const SCALPER_ENTRY_RULE = "FNO_UNDERLYING_OPTION_CONTEXT_BODY80_NEXT_OPEN_V6";
 export type ScalperSignal = {
   id: string;
   direction: "CALL" | "PUT";
@@ -48,8 +48,9 @@ const belowBodyFraction = (bar: Row) => {
 };
 const bullishOptionConfirmation = (bars: Row[]) => {
   if (bars.length !== 3 || bars.some((bar) => !valid(bar))) return null;
-  const [first, second, setup] = bars;
-  if (!(isRed(first) && isRed(second) && belowEma(first) && belowEma(second) && isGreen(setup))) return null;
+  const setup = bars[2];
+  // Precursor option colours/EMA positions are recorded context, not gates.
+  if (!isGreen(setup)) return null;
   const fraction = aboveBodyFraction(setup);
   return fraction != null && fraction >= 0.80 ? fraction : null;
 };

@@ -906,7 +906,7 @@ export function TradingAnalyticsScalper({
       <section className={`${styles.warning} ${styles.scalperEvidence}`} tabIndex={0} role="region" aria-label="Closed-candle research evidence">
         <h3>Paired EMA9 body80 / next-open entry indicators</h3>
         <p>
-          {SCALPER_ENTRY_RULE} · {signals.length} confirmed setup{signals.length === 1 ? "" : "s"}. CALL requires two red {symbol} and CE closes below their own EMA9, then green crossovers with at least 80% of each real body above EMA9. PUT requires two green {symbol} closes above EMA9, then an 80% bearish cross, plus the same bullish reversal confirmation in the exact PE. Exact timestamps and next scheduled open only; missing bars block entry.
+          {SCALPER_ENTRY_RULE} · {signals.length} confirmed setup{signals.length === 1 ? "" : "s"}. CALL requires two red {symbol} closes below EMA9, then an 80% bullish crossover; PUT requires two green {symbol} closes above EMA9, then an 80% bearish crossover. The exact selected CE/PE must itself make a green 80% bullish EMA9 crossover. Its two prior candle colours and EMA positions are logged as context only and never reject an entry. Exact timestamps and next scheduled open only; missing required bars block entry.
         </p>
       </section>
       {(panes?.length ?? 0) < 3 && (

@@ -17,7 +17,7 @@ from .logging_utils import get_logger
 
 log = get_logger(__name__)
 IST = ZoneInfo("Asia/Kolkata")
-RULE_VERSION = "FNO_UNDERLYING_PAIRED_BODY80_NEXT_OPEN_V5"
+RULE_VERSION = "FNO_UNDERLYING_OPTION_CONTEXT_BODY80_NEXT_OPEN_V6"
 MIN_SIGNAL_CANDLES = 12  # EMA9 + two precursors + setup + next-open candle
 
 
@@ -88,6 +88,50 @@ def _below_fraction(bar: Candle) -> float | None:
     return (bar.ema9 - bar.close) / body if body > 0 and bar.close < bar.ema9 < bar.open else None
 
 
+def _candle_evidence(bar: Candle) -> dict[str, Any]:
+    return {
+        "end": bar.end.isoformat(),
+        "colour": "GREEN" if _green(bar) else "RED" if _red(bar) else "DOJI",
+        "close_vs_ema9": None if bar.ema9 is None else "ABOVE" if bar.close > bar.ema9 else "BELOW" if bar.close < bar.ema9 else "AT",
+        "open": bar.open,
+        "close": bar.close,
+        "ema9": bar.ema9,
+    }
+
+
+def _indicator_snapshot(bars: list[Candle], at: datetime) -> dict[str, float | None]:
+    """Match the display indicator policy: rolling RSI14 and SMA-seeded EMA MACD."""
+    closes = [bar.close for bar in sorted(bars, key=lambda row: row.end) if bar.end <= at]
+    rsi: float | None = None
+    if len(closes) >= 15:
+        changes = [closes[index] - closes[index - 1] for index in range(len(closes) - 14, len(closes))]
+        gains = sum(max(change, 0) for change in changes)
+        losses = sum(max(-change, 0) for change in changes)
+        rsi = 100.0 if losses == 0 else 100 - 100 / (1 + gains / losses)
+
+    def ema_series(period: int) -> list[float | None]:
+        output: list[float | None] = []
+        ema: float | None = None
+        for index, close in enumerate(closes):
+            if index == period - 1:
+                ema = sum(closes[:period]) / period
+            elif index >= period and ema is not None:
+                ema += (close - ema) * 2 / (period + 1)
+            output.append(ema)
+        return output
+
+    fast, slow = ema_series(12), ema_series(26)
+    macd_values = [None if a is None or b is None else a - b for a, b in zip(fast, slow)]
+    observed = [value for value in macd_values if value is not None]
+    macd = macd_values[-1] if macd_values else None
+    signal: float | None = None
+    if len(observed) >= 9:
+        signal = sum(observed[:9]) / 9
+        for value in observed[9:]:
+            signal += (value - signal) * .2
+    return {"rsi14": rsi, "macd": macd, "macd_signal9": signal, "macd_histogram": None if macd is None or signal is None else macd - signal}
+
+
 def detect_paired_signals(underlying: list[Candle], call: list[Candle], put: list[Candle], interval: int = 5) -> list[dict[str, Any]]:
     call_by_end = {bar.end: bar for bar in call}
     put_by_end = {bar.end: bar for bar in put}
@@ -111,17 +155,16 @@ def detect_paired_signals(underlying: list[Candle], call: list[Candle], put: lis
         if any(bar is None for bar in option_group):
             continue
         option_first, option_second, option_setup = option_group  # type: ignore[misc]
+        # Option precursor colours and EMA positions are useful context, but are
+        # deliberately not an entry gate. Only the selected option setup candle
+        # must make the paired bullish 80% EMA9 crossover.
         option_fraction = _above_fraction(option_setup)
-        if not (
-            _red(option_first) and _red(option_second)
-            and option_first.ema9 is not None and option_second.ema9 is not None
-            and option_first.close < option_first.ema9 and option_second.close < option_second.ema9
-            and _green(option_setup) and option_fraction is not None and option_fraction >= .80
-        ):
+        if not (_green(option_setup) and option_fraction is not None and option_fraction >= .80):
             continue
         next_end = setup.end + expected
         next_underlying = next((bar for bar in underlying if bar.end == next_end), None)
         next_option = option_map.get(next_end)
+        next_call, next_put = call_by_end.get(next_end), put_by_end.get(next_end)
         if next_underlying is None or next_option is None:
             continue
         next_open_pass = next_underlying.open > setup.ema9 if direction == "CALL" else next_underlying.open < setup.ema9  # type: ignore[operator]
@@ -139,6 +182,23 @@ def detect_paired_signals(underlying: list[Candle], call: list[Candle], put: lis
             "option_fraction": option_fraction,
             "underlying_entry_open": next_underlying.open,
             "option_entry_open": next_option.open,
+            "call_entry_open": None if next_call is None else next_call.open,
+            "put_entry_open": None if next_put is None else next_put.open,
+            "underlying_precursors": [_candle_evidence(first), _candle_evidence(second)],
+            "option_precursors": [_candle_evidence(option_first), _candle_evidence(option_second)],
+            "option_precursors_are_context_only": True,
+            "conditions": {
+                "underlying_precursors_required": True,
+                "option_precursors_required": False,
+                "underlying_body80_pass": True,
+                "selected_option_body80_pass": True,
+                "next_underlying_open_pass": True,
+            },
+            "indicators": {
+                "underlying": _indicator_snapshot(underlying, setup.end),
+                "ce": _indicator_snapshot(call, setup.end),
+                "pe": _indicator_snapshot(put, setup.end),
+            },
         })
     return signals
 
@@ -157,7 +217,7 @@ def render_whatsapp(signal: dict[str, Any], option_symbol: str, interval: int = 
         f"Option: {option_symbol}",
         f"Entry: ₹{signal['option_entry_open']:.2f} | {underlying_symbol} {signal['underlying_entry_open']:.2f}",
         f"Confirmed: {underlying_symbol} {signal['underlying_fraction'] * 100:.1f}% {'above' if signal['direction'] == 'CALL' else 'below'} EMA9 + {side} {signal['option_fraction'] * 100:.1f}% above EMA9",
-        "Pattern: two precursor candles + paired 80% crossover",
+        "Pattern: underlying precursors + paired 80% crossover; option precursors logged as context",
     ])
 
 
@@ -266,6 +326,36 @@ def _load_option_pairs(
     return {str(pair["symbol"]): pair for pair in pairs}
 
 
+def _warm_indicator_evidence(
+    signal: dict[str, Any], item: dict[str, Any], pair: dict[str, Any], interval: int,
+) -> dict[str, dict[str, float | None]]:
+    """Load retained history only for a newly inserted signal, never per universe scan."""
+    sessions = fetch_all("""
+      select market_open_ts,market_close_ts from public.trading_calendar
+      where is_trading_day and trade_date between %(date)s-interval '15 days' and %(date)s
+      order by trade_date
+    """, {"date": signal["setup_end"].astimezone(IST).date()})
+    if not sessions:
+        return signal["indicators"]
+    history_start = sessions[0]["market_open_ts"]
+    underlying = _load_bars("NSE", [str(item["underlying_token"])], history_start, signal["setup_end"])
+    options = _load_bars("NFO", [str(pair["ce_token"]), str(pair["pe_token"])], history_start, signal["setup_end"])
+
+    def candles(rows: list[dict[str, Any]]) -> list[Candle]:
+        result: list[Candle] = []
+        for session in sessions:
+            end = min(signal["setup_end"], session["market_close_ts"])
+            if end > session["market_open_ts"]:
+                result.extend(aggregate_minutes(rows, session["market_open_ts"], interval, end))
+        return result
+
+    return {
+        "underlying": _indicator_snapshot(candles(underlying.get(str(item["underlying_token"]), [])), signal["setup_end"]),
+        "ce": _indicator_snapshot(candles(options.get(str(pair["ce_token"]), [])), signal["setup_end"]),
+        "pe": _indicator_snapshot(candles(options.get(str(pair["pe_token"]), [])), signal["setup_end"]),
+    }
+
+
 def _persist_signals(
     trade_date: date,
     as_of: datetime,
@@ -298,6 +388,31 @@ def _persist_signals(
             "evidence": json.dumps({key: value.isoformat() if isinstance(value, datetime) else value for key, value in signal.items()}),
             "delivery": "PENDING" if recent and settings.scalper_whatsapp_enabled else "SUPPRESSED_STALE" if not recent else "DISABLED",
         })
+        if row:
+            signal["indicators"] = _warm_indicator_evidence(signal, item, pair, interval)
+        execute("""
+          insert into nse_ops.scalper_trade_observation(
+            signal_key,ce_symbol,ce_token,pe_symbol,pe_token,ce_entry_open,pe_entry_open,
+            condition_evidence,indicator_evidence,outcome_evidence,outcome_state,outcome_updated_at)
+          values(%(key)s,%(ce_symbol)s,%(ce_token)s,%(pe_symbol)s,%(pe_token)s,%(ce_open)s,%(pe_open)s,
+            %(conditions)s::jsonb,%(indicators)s::jsonb,'{}'::jsonb,'DEVELOPING',now())
+          on conflict(signal_key) do update set
+            ce_symbol=excluded.ce_symbol,ce_token=excluded.ce_token,pe_symbol=excluded.pe_symbol,pe_token=excluded.pe_token,
+            ce_entry_open=coalesce(nse_ops.scalper_trade_observation.ce_entry_open,excluded.ce_entry_open),
+            pe_entry_open=coalesce(nse_ops.scalper_trade_observation.pe_entry_open,excluded.pe_entry_open),
+            condition_evidence=excluded.condition_evidence,indicator_evidence=excluded.indicator_evidence,updated_at=now()
+        """, {
+            "key": key, "ce_symbol": pair["ce_symbol"], "ce_token": pair["ce_token"],
+            "pe_symbol": pair["pe_symbol"], "pe_token": pair["pe_token"],
+            "ce_open": signal.get("call_entry_open"), "pe_open": signal.get("put_entry_open"),
+            "conditions": json.dumps({
+                "underlying_precursors": signal["underlying_precursors"],
+                "selected_option_precursors": signal["option_precursors"],
+                "option_precursors_are_context_only": True,
+                **signal["conditions"],
+            }),
+            "indicators": json.dumps(signal["indicators"]),
+        })
         if not row:
             continue
         inserted += 1
@@ -306,6 +421,55 @@ def _persist_signals(
             execute("update nse_ops.scalper_entry_signal set delivery_status=%(state)s,delivery_attempts=delivery_attempts+1,delivered_at=case when %(ok)s then now() else delivered_at end,last_http_status=%(status)s,last_error=%(error)s,updated_at=now() where signal_key=%(key)s", {"state": "DELIVERED" if ok else "FAILED", "ok": ok, "status": status, "error": error, "key": key})
             delivered += int(ok)
     return inserted, delivered
+
+
+def _excursion(rows: list[dict[str, Any]], start: datetime, end: datetime, entry: float | None) -> dict[str, Any]:
+    eligible = [row for row in rows if start <= row["ts"] < end]
+    if not eligible or entry is None or not math.isfinite(entry):
+        return {"state": "DATA_INSUFFICIENT", "max": None, "max_at": None, "max_change": None, "max_change_pct": None,
+                "min": None, "min_at": None, "min_change": None, "min_change_pct": None, "observed_minutes": len(eligible)}
+    high_row = max(eligible, key=lambda row: (float(row["high"]), -row["ts"].timestamp()))
+    low_row = min(eligible, key=lambda row: (float(row["low"]), row["ts"].timestamp()))
+    high, low = float(high_row["high"]), float(low_row["low"])
+    return {
+        "state": "OBSERVED", "max": high, "max_at": high_row["ts"].isoformat(),
+        "max_change": high - entry, "max_change_pct": (high / entry - 1) * 100 if entry else None,
+        "min": low, "min_at": low_row["ts"].isoformat(),
+        "min_change": low - entry, "min_change_pct": (low / entry - 1) * 100 if entry else None,
+        "observed_minutes": len(eligible),
+    }
+
+
+def _refresh_trade_outcomes(trade_date: date, evaluation_end: datetime, market_close: datetime) -> int:
+    observations = fetch_all("""
+      select s.signal_key,s.entry_end,s.interval_minutes,s.underlying_token,s.underlying_entry_open,
+        o.ce_token,o.pe_token,o.ce_entry_open,o.pe_entry_open
+      from nse_ops.scalper_entry_signal s join nse_ops.scalper_trade_observation o using(signal_key)
+      where s.trade_date=%(date)s
+    """, {"date": trade_date})
+    if not observations:
+        return 0
+    start = min(row["entry_end"] - timedelta(minutes=int(row["interval_minutes"])) for row in observations)
+    nse_rows = _load_bars("NSE", sorted({str(row["underlying_token"]) for row in observations}), start, evaluation_end)
+    nfo_rows = _load_bars("NFO", sorted({str(row[key]) for row in observations for key in ("ce_token", "pe_token")}), start, evaluation_end)
+    for row in observations:
+        entry_start = row["entry_end"] - timedelta(minutes=int(row["interval_minutes"]))
+        evidence: dict[str, Any] = {}
+        instruments = {
+            "underlying": (nse_rows.get(str(row["underlying_token"]), []), float(row["underlying_entry_open"])),
+            "ce": (nfo_rows.get(str(row["ce_token"]), []), None if row["ce_entry_open"] is None else float(row["ce_entry_open"])),
+            "pe": (nfo_rows.get(str(row["pe_token"]), []), None if row["pe_entry_open"] is None else float(row["pe_entry_open"])),
+        }
+        for horizon, horizon_end in (("15m", entry_start + timedelta(minutes=15)), ("30m", entry_start + timedelta(minutes=30)), ("eod", market_close)):
+            observed_end = min(evaluation_end, horizon_end)
+            evidence[horizon] = {name: _excursion(rows, entry_start, observed_end, entry) for name, (rows, entry) in instruments.items()}
+            evidence[horizon]["maturity"] = "MATURE" if evaluation_end >= horizon_end else "DEVELOPING"
+            evidence[horizon]["window_end"] = horizon_end.isoformat()
+        execute("""
+          update nse_ops.scalper_trade_observation set outcome_evidence=%(outcomes)s::jsonb,
+            outcome_state=%(state)s,outcome_updated_at=now(),updated_at=now() where signal_key=%(key)s
+        """, {"outcomes": json.dumps(evidence), "state": "MATURE_EOD" if evaluation_end >= market_close else "DEVELOPING", "key": row["signal_key"]})
+    return len(observations)
 
 
 def evaluate_scalper_entries(trade_date: date | None = None, as_of: datetime | None = None) -> dict[str, Any]:
@@ -364,6 +528,7 @@ def evaluate_scalper_entries(trade_date: date | None = None, as_of: datetime | N
             "scalper universe evaluation interval=%sm state=%s universe=%s evaluated=%s insufficient_bars=%s missing_pair=%s signals=%s inserted=%s delivered=%s",
             interval, state, len(universe), evaluated, insufficient_bars, missing_pair, signals_count, inserted, delivered,
         )
+    refreshed_outcomes = _refresh_trade_outcomes(trade_date, evaluation_end, calendar["market_close_ts"])
     return {
         "state": "COMPLETE" if any(result["state"] == "COMPLETE" for result in results) else "DATA_INSUFFICIENT",
         "universe": len(universe),
@@ -374,4 +539,5 @@ def evaluate_scalper_entries(trade_date: date | None = None, as_of: datetime | N
         "intervals": results,
         "inserted": sum(int(result.get("inserted", 0)) for result in results),
         "delivered": sum(int(result.get("delivered", 0)) for result in results),
+        "outcomes_refreshed": refreshed_outcomes,
     }

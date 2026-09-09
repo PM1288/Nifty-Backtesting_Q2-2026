@@ -356,6 +356,51 @@ export async function loadTradingAnalytics(
   };
 }
 export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
+  app.get("/v1/trading-analytics/scalper-log", async (req, res) => {
+    if (process.env.TRADING_ANALYTICS_ENABLED === "false")
+      return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
+    const parsed = z.object({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      symbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/).optional(),
+      direction: z.enum(["CALL", "PUT"]).optional(),
+      interval: z.coerce.number().refine((value) => [1, 5, 15].includes(value)).optional(),
+      limit: z.coerce.number().int().min(1).max(5000).default(1000),
+    }).safeParse(req.query);
+    if (!parsed.success)
+      return res.status(400).json({ error: { code: "INVALID_SCALPER_LOG_QUERY" } });
+    try {
+      const rows = await prisma.$queryRawUnsafe<Facts[]>(`
+        select s.signal_key,s.rule_version,s.trade_date::text,s.interval_minutes,s.setup_end,s.entry_end,s.direction,
+          s.underlying_symbol,s.underlying_token,s.expiry::text,s.strike::float8,
+          s.underlying_setup_close::float8,s.underlying_ema9::float8,s.underlying_body_fraction::float8,
+          s.underlying_entry_open::float8,s.option_symbol,s.option_token,s.option_setup_close::float8,
+          s.option_ema9::float8,s.option_body_fraction::float8,s.option_entry_open::float8,
+          s.delivery_status,s.delivered_at,s.created_at,
+          o.ce_symbol,o.ce_token,o.pe_symbol,o.pe_token,o.ce_entry_open::float8,o.pe_entry_open::float8,
+          o.condition_evidence,o.indicator_evidence,o.outcome_evidence,o.outcome_state,o.outcome_updated_at
+        from nse_ops.scalper_entry_signal s
+        join nse_ops.scalper_trade_observation o using(signal_key)
+        where s.trade_date=coalesce($1::date,(now() at time zone 'Asia/Kolkata')::date)
+          and ($2::text is null or s.underlying_symbol=$2)
+          and ($3::text is null or s.direction=$3)
+          and ($4::int is null or s.interval_minutes=$4)
+        order by s.entry_end desc,s.underlying_symbol
+        limit $5::int`,
+        parsed.data.date ?? null, parsed.data.symbol ?? null, parsed.data.direction ?? null,
+        parsed.data.interval ?? null, parsed.data.limit,
+      );
+      return res.json({
+        version: "SCALPER_TRADE_OBSERVATION_V1",
+        date: parsed.data.date ?? null,
+        rows,
+        count: rows.length,
+        paperOrdersEnabled: false,
+        description: "Read-only entry and forward-excursion evidence; not booked paper P&L.",
+      });
+    } catch {
+      return res.status(503).json({ error: { code: "SCALPER_LOG_UNAVAILABLE" } });
+    }
+  });
   app.get("/v1/trading-analytics/charts", async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });

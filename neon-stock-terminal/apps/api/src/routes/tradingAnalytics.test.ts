@@ -55,3 +55,25 @@ test("read-only API validates input and reports partial source failure without l
     await new Promise<void>((r) => server.close(() => r()));
   }
 });
+
+test("scalper trade log is read-only, filter validated and preserves nested evidence", async () => {
+  const expected = { signal_key: "signal-1", ce_entry_open: 10, pe_entry_open: 0, condition_evidence: { option_precursors_are_context_only: true }, outcome_evidence: { "15m": { maturity: "MATURE" } } };
+  const prisma = { $queryRawUnsafe: async (sql: string) => sql.includes("scalper_trade_observation") ? [expected] : [] } as unknown as PrismaClient;
+  const app = express(); registerTradingAnalytics(app, prisma);
+  const server = app.listen(0, "127.0.0.1"); await new Promise<void>((resolve) => server.once("listening", resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const bad = await fetch(`${base}/v1/trading-analytics/scalper-log?interval=7`);
+    assert.equal(bad.status, 400);
+    const response = await fetch(`${base}/v1/trading-analytics/scalper-log?date=2026-09-09&interval=1`);
+    assert.equal(response.status, 200);
+    const body = await response.json() as { paperOrdersEnabled: boolean; rows: Array<{ pe_entry_open: number; condition_evidence: { option_precursors_are_context_only: boolean } }> };
+    assert.equal(body.paperOrdersEnabled, false);
+    assert.equal(body.rows[0].pe_entry_open, 0);
+    assert.equal(body.rows[0].condition_evidence.option_precursors_are_context_only, true);
+    const mutation = await fetch(`${base}/v1/trading-analytics/scalper-log`, { method: "POST" });
+    assert.equal(mutation.status, 404);
+  } finally {
+    server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

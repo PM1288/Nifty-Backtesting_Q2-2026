@@ -21,6 +21,7 @@ import { TradingAnalyticsDrawer } from "./TradingAnalyticsDrawer";
 import { TradingAnalyticsMorning } from "./TradingAnalyticsMorning";
 import { TradingAnalyticsStructure } from "./TradingAnalyticsStructure";
 import { TradingAnalyticsCash, type CashHistory } from "./TradingAnalyticsCash";
+import { TradingAnalyticsTradeLog } from "./TradingAnalyticsTradeLog";
 import { evidenceValueAxis } from "../lib/tradingAnalyticsChartView";
 
 const Chart = lazy(async () => ({
@@ -106,6 +107,7 @@ const tabs = {
   options: "Option Snapshots",
   smartapi: "SmartAPI OI & Quotes",
   scalper: "Scalper / Exact Contracts",
+  "trade-log": "Scalper Trade Log",
   matrix: "1m / 5m / 15m Matrix",
   structure: "Price & EMA",
   replay: "History / Replay",
@@ -485,7 +487,7 @@ export function TradingAnalyticsPage() {
             ))}
           </nav>
         )}
-        {d && !["scalper", "matrix", "replay", "stock"].includes(tab) && (
+        {d && !["scalper", "trade-log", "matrix", "replay", "stock"].includes(tab) && (
           <button
             onClick={() => {
               const rows =
@@ -1024,6 +1026,7 @@ export function TradingAnalyticsPage() {
                 }
               />
             )}
+            {tab === "trade-log" && <TradingAnalyticsTradeLog />}
             {tab === "matrix" && (
               <Suspense fallback={<p role="status">Loading synchronized timeframe matrix…</p>}>
                 <TimeframeMatrix

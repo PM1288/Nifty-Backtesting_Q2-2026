@@ -60,6 +60,13 @@
   padding: 10px;
   border-left: 3px solid #9a6500;
 }
+.status p {
+  margin: 0;
+}
+.status p + p {
+  margin-top: 4px;
+  color: #64748b;
+}
 .metrics {
   display: flex;
   gap: 0;

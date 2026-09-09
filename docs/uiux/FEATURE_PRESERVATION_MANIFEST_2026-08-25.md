@@ -6,6 +6,14 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-09 NIFTY Model Research recovery: missed hourly capture windows are
+retried every five minutes across the retained 15-day minute-data horizon.
+Recovered rows retain planned and actual timestamps, delay, exact source rows
+and outcomes, and remain explicitly ineligible as on-time point-in-time
+forecasts. On-time/recovered counts are visible. SHAP gates, EMA9, execution,
+paper trading and notifications remain unchanged. Evidence:
+`docs/trading-analytics/NIFTY_EXPLAINABLE_CONTEXT.md`.
+
 2026-09-09 observation P&L: additive exact-master CE/PE lot metadata, high/low
 and hypothetical premium-delta × quantity gross/net analysis; no realised-ledger
 changes. Exact-symbol/token Scalper links prohibit automatic pair substitution.

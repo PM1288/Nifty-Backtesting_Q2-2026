@@ -3772,3 +3772,14 @@ post-open live repopulation must be verified after deployment.
   committed.
 - Separate known maintenance issue: `npm audit --omit=dev` reports 16 existing
   dependency advisories and needs an isolated compatibility-tested security release.
+## 2026-09-09 — NIFTY Model Research missed-window recovery
+
+The isolated `nifty-context` worker now retries missing captures and pending
+outcomes every five minutes across the retained 15-day minute-data horizon.
+Recovered evidence is idempotent and stores planned cutoff, actual capture,
+delay, source rows and explicit `point_in_time_eligible=false`; it is never
+presented as an on-time forecast. The read-only API/dashboard expose on-time
+versus recovered records. No threshold, SHAP gate, EMA9 rule, order, paper or
+notification path changed. Python 9/9, API 190/190 and web 108/108 passed with
+typechecks/builds. Deployment evidence is in
+`docs/trading-analytics/NIFTY_EXPLAINABLE_CONTEXT.md`.

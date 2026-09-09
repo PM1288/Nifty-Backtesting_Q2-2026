@@ -28,6 +28,15 @@ type Prediction = {
   };
   explanation: Explanation;
 };
+type CaptureSnapshot = {
+  cutoff: string;
+  generated_at: string;
+  mode: "PROSPECTIVE_CAPTURE" | "RECOVERED_CAPTURE";
+  planned_cutoff: string | null;
+  captured_at: string | null;
+  recovery_delay_seconds: number | null;
+  availability_state: string | null;
+};
 type Payload = {
   state: string;
   report: null | {
@@ -53,7 +62,7 @@ type Payload = {
     code_commit: string;
   };
   predictions: Prediction[];
-  snapshots: unknown[];
+  snapshots: CaptureSnapshot[];
 };
 const fmt = (v: unknown, d = 3) =>
   typeof v === "number" && Number.isFinite(v)
@@ -189,6 +198,17 @@ export default function NiftyContextPage() {
   });
   const data = query.data;
   const predictions = data?.predictions ?? [];
+  const captureCounts = useMemo(
+    () => ({
+      onTime: (data?.snapshots ?? []).filter(
+        (snapshot) => snapshot.mode === "PROSPECTIVE_CAPTURE",
+      ).length,
+      recovered: (data?.snapshots ?? []).filter(
+        (snapshot) => snapshot.mode === "RECOVERED_CAPTURE",
+      ).length,
+    }),
+    [data?.snapshots],
+  );
   const selected =
     predictions.find((p) => p.id === params.get("prediction")) ??
     predictions.at(-1);
@@ -272,10 +292,16 @@ export default function NiftyContextPage() {
       )}
       {exportError && <p role="alert">{exportError}</p>}
       {data && (
-        <p className={styles.status}>
-          {data.state.replaceAll("_", " ")} ·{" "}
-          {data.report?.reason ?? "No experiment has completed yet."}
-        </p>
+        <div className={styles.status}>
+          <p>
+            {data.state.replaceAll("_", " ")} ·{" "}
+            {data.report?.reason ?? "No experiment has completed yet."}
+          </p>
+          <p>
+            Capture evidence: {captureCounts.onTime} on time ·{" "}
+            {captureCounts.recovered} recovered after interruption
+          </p>
+        </div>
       )}
       {data?.report && (
         <section
@@ -514,7 +540,12 @@ export default function NiftyContextPage() {
               <li key={g}>{g}</li>
             ))}
           </ul>
-          <h2>Prospective hourly captures</h2>
+          <h2>Prospective and recovered hourly captures</h2>
+          <p>
+            Recovered rows retain the planned cutoff and actual capture time.
+            They restore research evidence but are never represented as an
+            on-time live forecast.
+          </p>
           <pre tabIndex={0}>
             {JSON.stringify(data?.snapshots ?? [], null, 2)}
           </pre>

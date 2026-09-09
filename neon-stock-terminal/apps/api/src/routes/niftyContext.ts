@@ -31,7 +31,13 @@ export function registerNiftyContext(app: Express, prisma: PrismaClient) {
       const snapshots = await prisma.$queryRawUnsafe<
         Array<Record<string, unknown>>
       >(
-        "SELECT cutoff,generated_at,mode FROM nifty_context.snapshots WHERE mode='PROSPECTIVE_CAPTURE' ORDER BY cutoff DESC LIMIT 100",
+        `SELECT cutoff,generated_at,mode,evidence->>'planned_cutoff' AS planned_cutoff,
+          evidence->>'captured_at' AS captured_at,
+          NULLIF(evidence->>'recovery_delay_seconds','')::int AS recovery_delay_seconds,
+          evidence->>'availability_state' AS availability_state
+        FROM nifty_context.snapshots
+        WHERE mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE')
+        ORDER BY cutoff DESC LIMIT 100`,
       );
       return res.json({
         state: runs[0].report.state,

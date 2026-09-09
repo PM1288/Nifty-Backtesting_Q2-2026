@@ -2,7 +2,8 @@
 import unittest
 import numpy as np
 import pandas as pd
-from worker import CONFIG, FEATURES, build_examples, features, explain_and_fit, load, prospective_snapshot
+from worker import (CONFIG, FEATURES, build_examples, features, explain_and_fit,
+                    load, prospective_snapshot, recovery_snapshot)
 
 
 def session_fixture():
@@ -25,6 +26,30 @@ class ResearchTests(unittest.TestCase):
         self.assertNotIn('labels',saved)
         self.assertIn('labels',x)
         with self.assertRaises(ValueError): prospective_snapshot(x,now)
+
+    def test_missed_window_is_recovered_without_false_live_timestamp(self):
+        b,s,now=session_fixture()
+        planned=s[0]['market_open_ts']+pd.Timedelta(minutes=60,seconds=120)
+        # Simulate a collector/network delay: input candles arrived after the
+        # planned cutoff but are complete when the worker recovers.
+        b.loc[b.ts<planned-pd.Timedelta(seconds=120),'created_at']=planned+pd.Timedelta(minutes=3)
+        on_time=build_examples(b,s,now)[0]
+        self.assertNotIn(planned,{pd.Timestamp(row['cutoff']) for row in on_time})
+        saved,outcome,reason=recovery_snapshot(b,s[0],planned,now)
+        self.assertIsNone(reason)
+        self.assertEqual(saved['mode'],'RECOVERED_CAPTURE')
+        self.assertFalse(saved['point_in_time_eligible'])
+        self.assertEqual(pd.Timestamp(saved['planned_cutoff']),planned)
+        self.assertGreater(pd.Timestamp(saved['captured_at']),planned)
+        self.assertGreaterEqual(pd.Timestamp(outcome['labels']['available_at']),now)
+        self.assertEqual(len(outcome['source_rows']),60)
+
+    def test_recovery_waits_for_complete_input(self):
+        b,s,now=session_fixture(); b=b.drop(index=20)
+        planned=s[0]['market_open_ts']+pd.Timedelta(minutes=60,seconds=120)
+        saved,outcome,reason=recovery_snapshot(b,s[0],planned,now)
+        self.assertIsNone(saved); self.assertIsNone(outcome)
+        self.assertEqual(reason,'RECOVERY_INPUT_INCOMPLETE')
 
     def test_empty_database_keeps_typed_columns(self):
         class Empty:

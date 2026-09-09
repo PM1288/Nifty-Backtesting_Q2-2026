@@ -26,6 +26,7 @@ CONFIG = {"version": VERSION, "threshold_log_return": .0015, "horizon_minutes": 
           "decision_minutes_after_open": [60, 120, 180, 240, 300], "availability_delay_seconds": 120,
           "holdout_sessions": 5, "minimum_sessions": 20, "background_rows": 100,
           "seed": 42, "features": FEATURES, "mode": "EXPLORATORY_REVISION_UNVERIFIED",
+          "recovery_lookback_days": 15, "recovery_retry_seconds": 300,
           "hyperparameter_search": False,
           "direction": "DOWN if log return < -0.0015; UP if > +0.0015; SMALL otherwise",
           "range": "next 60 complete one-minute highs max minus lows min, in index points"}
@@ -214,8 +215,45 @@ def prospective_snapshot(example, now):
     # Never label an already-started candle as the entry of a later capture.
     cutoff=now.floor('min')+pd.Timedelta(minutes=1)
     x.update(cutoff=str(cutoff),window_end=str(cutoff+pd.Timedelta(minutes=60)),
-             mode='PROSPECTIVE_CAPTURE',captured_at=str(now))
+             mode='PROSPECTIVE_CAPTURE',captured_at=str(now),
+             point_in_time_eligible=True,availability_state='CAPTURED_ON_SCHEDULE')
     return x
+
+
+def recovery_snapshot(bars, session, planned_cutoff, now):
+    """Reconstruct a missed window without claiming it was captured on time."""
+    now, planned = pd.Timestamp(now), pd.Timestamp(planned_cutoff)
+    start, end = pd.Timestamp(session['market_open_ts']), pd.Timestamp(session['market_close_ts'])
+    anchor = planned - pd.Timedelta(seconds=CONFIG['availability_delay_seconds'])
+    expected = int((anchor-start).total_seconds()/60)
+    if now < planned or expected not in CONFIG['decision_minutes_after_open']:
+        return None, None, 'NOT_A_MISSED_PLANNED_WINDOW'
+    available = bars.copy()
+    available.ts = pd.to_datetime(available.ts, utc=True)
+    available.created_at = pd.to_datetime(available.created_at, utc=True)
+    h = available[(available.ts>=start)&(available.ts<anchor)&(available.created_at<=now)].sort_values('ts')
+    xvalues = features(h,start)
+    if xvalues is None or len(h)!=expected:
+        return None, None, 'RECOVERY_INPUT_INCOMPLETE'
+    window_end = planned+pd.Timedelta(minutes=CONFIG['horizon_minutes'])
+    x = {'cutoff':str(planned),'window_end':str(window_end),'session':str(session['trade_date']),
+         'features':xvalues,'max_input_event_time':str(h.ts.max()+pd.Timedelta(minutes=1)),
+         'max_input_available_at':str(h.created_at.max()),'source_digest':digest(h.to_dict('records')),
+         'source_rows':clean(h.to_dict('records')),'mode':'RECOVERED_CAPTURE',
+         'planned_cutoff':str(planned),'captured_at':str(now),
+         'recovery_delay_seconds':int((now-planned).total_seconds()),
+         'point_in_time_eligible':False,
+         'availability_state':'RECOVERED_AFTER_PLANNED_CUTOFF'}
+    outcome = None
+    future = available[(available.ts>=planned)&(available.ts<window_end)&(available.created_at<=now)].sort_values('ts')
+    if window_end<=min(now,end) and len(future)==CONFIG['horizon_minutes'] and features(future,planned) is not None:
+        reference=float(future.iloc[0].open); r=float(np.log(future.iloc[-1].close/reference)); threshold=CONFIG['threshold_log_return']
+        labels={'log_return':r,'direction':2 if r>threshold else 0 if r< -threshold else 1,
+                'range':float(future.high.max()-future.low.min()),'reference':reference,
+                'available_at':str(max(now,window_end,future.created_at.max()))}
+        outcome={'labels':labels,'source_rows':clean(future.to_dict('records')),
+                 'availability_state':'RECOVERED_AFTER_PLANNED_CUTOFF'}
+    return x,outcome,None
 
 
 def experiment():
@@ -226,7 +264,7 @@ def experiment():
         examples,rejected = build_examples(bars,sessions,pd.Timestamp.now(tz="UTC"))
         # Retain qualified prospective examples even after ordinary minute retention.
         saved=conn.execute("""SELECT s.evidence,o.evidence AS outcome FROM nifty_context.snapshots s
-          JOIN nifty_context.outcomes o ON o.snapshot_id=s.id WHERE s.mode='PROSPECTIVE_CAPTURE'
+          JOIN nifty_context.outcomes o ON o.snapshot_id=s.id WHERE s.mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE')
           AND s.cutoff>=now()-interval '730 days' ORDER BY s.cutoff""").fetchall()
         merged={x['cutoff']:x for x in examples}
         for row in saved:
@@ -273,18 +311,41 @@ def experiment():
         LOG.info("experiment_complete run_id=%s state=%s seconds=%.2f",run_id,result['state'],time.monotonic()-started)
 
 
+_last_recovery_attempt = None
+
+
 def capture():
+    global _last_recovery_attempt
     now=pd.Timestamp.now(tz='UTC')
     with connect() as conn:
         sessions=conn.execute("""SELECT trade_date,market_open_ts,market_close_ts FROM public.trading_calendar
-          WHERE is_trading_day AND trade_date=(now() AT TIME ZONE 'Asia/Kolkata')::date""").fetchall()
-        # Query the large bar table only in the scheduled capture window, not every polling tick.
+          WHERE is_trading_day AND trade_date >= (now() AT TIME ZONE 'Asia/Kolkata')::date-%s
+          AND trade_date <= (now() AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date""",
+          (CONFIG['recovery_lookback_days'],)).fetchall()
         offsets=CONFIG['decision_minutes_after_open']+[360,380]
-        if not any(0 <= (now-(pd.Timestamp(s['market_open_ts'])+pd.Timedelta(minutes=m,seconds=120))).total_seconds() < 60
-                   for s in sessions for m in offsets):
+        scheduled_tick=any(0 <= (now-(pd.Timestamp(s['market_open_ts'])+pd.Timedelta(minutes=m,seconds=120))).total_seconds() < 60
+                           for s in sessions for m in offsets)
+        existing={pd.Timestamp(r['planned_cutoff']) for r in conn.execute("""SELECT evidence->>'planned_cutoff' planned_cutoff
+          FROM nifty_context.snapshots WHERE mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE')
+          AND evidence ? 'planned_cutoff' AND cutoff>=now()-(%s*interval '1 day')""",
+          (CONFIG['recovery_lookback_days'],)).fetchall()}
+        planned=[(s,pd.Timestamp(s['market_open_ts'])+pd.Timedelta(minutes=m,seconds=120))
+                 for s in sessions for m in CONFIG['decision_minutes_after_open']
+                 if pd.Timestamp(s['market_open_ts'])+pd.Timedelta(minutes=m,seconds=120)<=now]
+        missing=[pair for pair in planned if pair[1] not in existing]
+        pending_exists=conn.execute("""SELECT EXISTS(SELECT 1 FROM nifty_context.snapshots s
+          WHERE mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE')
+          AND cutoff>=now()-(%s*interval '1 day')
+          AND NOT EXISTS(SELECT 1 FROM nifty_context.outcomes o WHERE o.snapshot_id=s.id)) pending""",
+          (CONFIG['recovery_lookback_days'],)).fetchone()['pending']
+        recovery_due=bool(missing or pending_exists) and (_last_recovery_attempt is None or
+          (now-_last_recovery_attempt).total_seconds()>=CONFIG['recovery_retry_seconds'])
+        if not scheduled_tick and not recovery_due:
             return
-        bars,_=load(conn,1)
-        examples,rejected=build_examples(bars,sessions,now)
+        bars,_=load(conn,CONFIG['recovery_lookback_days'] if recovery_due else 1)
+        local_day=now.tz_convert('Asia/Kolkata').date()
+        today=[s for s in sessions if pd.Timestamp(s['market_open_ts']).tz_convert('Asia/Kolkata').date()==local_day]
+        examples,rejected=build_examples(bars,today,now)
         for x in examples:
             # Never backdate a prospective snapshot. Capture only within 60s of its cutoff.
             if not 0 <= (now-pd.Timestamp(x['cutoff'])).total_seconds() < 60:
@@ -293,10 +354,33 @@ def capture():
             sid=digest({'version':VERSION,'cutoff':x['planned_cutoff'],'mode':x['mode']})
             conn.execute("INSERT INTO nifty_context.snapshots(id,cutoff,mode,evidence) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING",(sid,x['cutoff'],x['mode'],Jsonb(clean(x))))
             LOG.info('snapshot_captured cutoff=%s',x['cutoff'])
+        if recovery_due:
+            _last_recovery_attempt=now
+            recovered_count=recovered_outcomes=recovery_pending=0
+            for session,planned_cutoff in missing:
+                if (now-planned_cutoff).total_seconds()<60:
+                    continue
+                x,outcome,reason=recovery_snapshot(bars,session,planned_cutoff,now)
+                if x is None:
+                    recovery_pending+=1
+                    LOG.debug('snapshot_recovery_pending cutoff=%s reason=%s',planned_cutoff,reason)
+                    continue
+                sid=digest({'version':VERSION,'cutoff':x['planned_cutoff'],'mode':x['mode']})
+                conn.execute("INSERT INTO nifty_context.snapshots(id,cutoff,mode,evidence) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+                             (sid,x['cutoff'],x['mode'],Jsonb(clean(x))))
+                if outcome is not None:
+                    conn.execute('INSERT INTO nifty_context.outcomes(snapshot_id,evidence) VALUES(%s,%s) ON CONFLICT DO NOTHING',
+                                 (sid,Jsonb(clean(outcome))))
+                    recovered_outcomes+=1
+                recovered_count+=1
+            if recovered_count or recovery_pending:
+                LOG.info('snapshot_recovery_complete recovered=%s outcomes=%s pending=%s',
+                         recovered_count,recovered_outcomes,recovery_pending)
         # Outcomes are separate insert-only records, never written back into inputs.
         pending=conn.execute("""SELECT id,evidence FROM nifty_context.snapshots s
-          WHERE mode='PROSPECTIVE_CAPTURE' AND cutoff>=now()-interval '1 day'
-          AND NOT EXISTS(SELECT 1 FROM nifty_context.outcomes o WHERE o.snapshot_id=s.id)""").fetchall()
+          WHERE mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE') AND cutoff>=now()-(%s*interval '1 day')
+          AND NOT EXISTS(SELECT 1 FROM nifty_context.outcomes o WHERE o.snapshot_id=s.id)""",
+          (CONFIG['recovery_lookback_days'],)).fetchall()
         for row in pending:
             x=row['evidence']; cutoff=pd.Timestamp(x['cutoff']); end=pd.Timestamp(x['window_end'])
             future=bars[(bars.ts>=cutoff)&(bars.ts<end)].sort_values('ts')

@@ -101,11 +101,22 @@ storage failure 503 with a safe code, never a DSN or raw stack trace. Export
 includes all training/test inputs, model artifacts, raw values, labels and
 explanations, independently of visible rows. No mutation endpoint exists.
 
-Capture-loop observes the calendar every 30 seconds but reads the large minute
-table only during the five scheduled capture windows. It never backdates a
-missed capture. Two additional scheduled checks finalise outcomes, including
-one after close. Snapshots record actual capture time; their outcome starts at
-the **next** minute open after capture, never an already-started candle.
+Capture-loop observes the calendar every 30 seconds. It reads the minute table
+during scheduled windows and, when a planned window is absent or its outcome is
+still pending, retries recovery every five minutes across the retained 15-day
+minute-data horizon. Two additional scheduled checks finalise outcomes,
+including one after close. On-time snapshots record actual capture time; their
+outcome starts at the **next** minute open after capture, never an already-started
+candle.
+
+A missed window is not left permanently blank. Once its complete source minutes
+arrive, it is stored as `RECOVERED_CAPTURE` with the original `planned_cutoff`,
+actual `captured_at`, `recovery_delay_seconds`, source rows and, when mature, its
+outcome rows. It is explicitly `point_in_time_eligible=false` and
+`RECOVERED_AFTER_PLANNED_CUTOFF`; the system never represents it as an on-time
+live forecast. This preserves evidence after a collector/network interruption
+without creating false historical availability. Recovery is idempotent per
+version and planned window. The dashboard/API expose on-time and recovered rows.
 Planned versus actual cutoff stays explicit. Prospective records replace the
 matching planned retrospective occasion instead of duplicating it. Matured
 prospective input/outcome evidence survives ordinary source-minute retention
@@ -122,9 +133,10 @@ begin strictly after actual capture time.
 
 - Web: 99/99 tests, TypeScript check and production build passed.
 - API: 190/190 tests, TypeScript check and production build passed.
-- Python: seven tests cover chronology, SHAP additivity for tree/linear/range,
+- Python: nine tests cover chronology, SHAP additivity for tree/linear/range,
   missing/invalid/late bars, empty source, future-independence, immature labels,
-  insufficient-data abstention and non-backdated prospective cutoff.
+  insufficient-data abstention, non-backdated prospective cutoff, late-source
+  recovery and incomplete-source retry behavior.
 - Pinned Python dependency compatibility check passed.
 - Canonical repository gate passed.
 - Public authenticated browser: **78/78 passed**, including exact export input
@@ -158,7 +170,7 @@ Worker observed idle: 0% CPU, approximately 54 MiB RAM (1 GiB ceiling); research
 tables around 1.8 MiB during validation. Heartbeat-based health and bounded
 2×5 MB Docker logs are enabled. Both affected services were healthy with zero
 restarts after deployment. A complete future scheduled session has not yet
-elapsed; do not represent startup checks as full-session shadow acceptance.
+elapsed; do not represent startup/recovery checks as full-session shadow acceptance.
 
 Rerun browser checks:
 

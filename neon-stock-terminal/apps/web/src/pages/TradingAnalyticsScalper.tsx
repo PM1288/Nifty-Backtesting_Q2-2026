@@ -6,6 +6,7 @@ import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { closeAt, measurePanes, openAt, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody80Signals } from "../lib/scalperSignals";
+import { activeChartExpiry } from "../lib/multiTimeframeMatrix";
 import {
   candleColors,
   evidenceValueAxis,
@@ -192,7 +193,8 @@ export function TradingAnalyticsScalper({
       : [...strikes].sort(
           (a, b) => Math.abs(a - spot) - Math.abs(b - spot) || a - b,
         )[0];
-  const chartExpiry = params.get("chartExpiry") ?? expiry;
+  const requestedChartExpiry = params.get("chartExpiry");
+  const chartExpiry = activeChartExpiry(requestedChartExpiry, expiry, asOf);
   const selected = fixedPair?.strike ?? (strike || String(defaultStrike ?? ""));
   const effectiveExpiry = fixedPair?.expiry ?? chartExpiry;
   const query = new URLSearchParams({ symbol, asOf, interval: String(interval) });
@@ -233,10 +235,12 @@ export function TradingAnalyticsScalper({
   const availableExpiries = [...new Set([...availableContracts.map((row) => String(row.expiry)), effectiveExpiry].filter(Boolean))].sort();
   const availableStrikes = availableContracts.filter((row) => String(row.expiry) === effectiveExpiry).map((row) => Number(row.strike));
   useEffect(() => {
-    if (!q.data || fixedPair || params.get("chartExpiry")) return;
+    if (!q.data || fixedPair) return;
+    const rolledOver = requestedChartExpiry != null && requestedChartExpiry !== chartExpiry;
     const exactPanes = q.data.panes.filter((pane) => pane.identity.exchange === "NFO");
-    if (exactPanes.length === 2 && exactPanes.every((pane) => pane.sourceMinuteCount > 1)) return;
-    const candidate = [...q.data.availableContracts]
+    if (!rolledOver && requestedChartExpiry && exactPanes.length === 2 && exactPanes.every((pane) => pane.sourceMinuteCount > 1)) return;
+    const preferred = q.data.availableContracts.filter((candidate) => String(candidate.expiry) === chartExpiry);
+    const candidate = [...(preferred.length ? preferred : q.data.availableContracts)]
       .sort((a, b) => Math.abs(Date.parse(a.expiry) - Date.parse(day || expiry)) - Math.abs(Date.parse(b.expiry) - Date.parse(day || expiry)) || Math.abs(Number(a.strike) - Number(spot ?? 0)) - Math.abs(Number(b.strike) - Number(spot ?? 0)))[0];
     if (!candidate) return;
     const next = new URLSearchParams(params);
@@ -244,7 +248,7 @@ export function TradingAnalyticsScalper({
     next.set("strike", String(candidate.strike));
     next.set("pin", "true");
     setParams(next, { replace: true });
-  }, [day, expiry, fixedPair, params, q.data, setParams, spot]);
+  }, [chartExpiry, day, expiry, fixedPair, params, q.data, requestedChartExpiry, setParams, spot]);
   const oneDay = params.get("range") !== "all";
   const panes = useMemo(
     () =>

@@ -16,6 +16,7 @@ import {
   MATRIX_INTERVALS,
   MATRIX_SIDES,
   barsForIstDay,
+  activeChartExpiry,
   containingBar,
   latestIstDay,
   matrixSide,
@@ -158,7 +159,8 @@ export function TradingAnalyticsTimeframeMatrix({
 }) {
   const [params, setParams] = useSearchParams();
   const defaultStrike = spot == null ? null : [...strikes].sort((a, b) => Math.abs(a - spot) - Math.abs(b - spot) || a - b)[0] ?? null;
-  const selectedExpiry = params.get("chartExpiry") ?? expiry;
+  const requestedExpiry = params.get("chartExpiry");
+  const selectedExpiry = activeChartExpiry(requestedExpiry, expiry, asOf);
   const selectedStrike = params.get("strike") ?? String(defaultStrike ?? "");
   const queries = useQueries({ queries: MATRIX_INTERVALS.map((interval) => {
     const query = new URLSearchParams({ symbol, asOf, interval: String(interval) });
@@ -175,10 +177,12 @@ export function TradingAnalyticsTimeframeMatrix({
   }) });
   const fiveMinute = queries[1].data;
   useEffect(() => {
-    if (!fiveMinute || params.get("chartExpiry")) return;
+    if (!fiveMinute) return;
+    const rolledOver = requestedExpiry != null && requestedExpiry !== selectedExpiry;
     const exact = fiveMinute.panes.filter((pane) => matrixSide(pane.identity) !== "UNDERLYING");
-    if (exact.length === 2 && exact.every((pane) => pane.sourceMinuteCount > 1)) return;
-    const candidate = [...fiveMinute.availableContracts].sort((a, b) =>
+    if (!rolledOver && requestedExpiry && exact.length === 2 && exact.every((pane) => pane.sourceMinuteCount > 1)) return;
+    const preferred = fiveMinute.availableContracts.filter((candidate) => candidate.expiry === selectedExpiry);
+    const candidate = [...(preferred.length ? preferred : fiveMinute.availableContracts)].sort((a, b) =>
       Math.abs(Date.parse(a.expiry) - Date.parse(asOf)) - Math.abs(Date.parse(b.expiry) - Date.parse(asOf))
       || Math.abs(a.strike - Number(spot ?? 0)) - Math.abs(b.strike - Number(spot ?? 0))
       || a.strike - b.strike,
@@ -189,7 +193,7 @@ export function TradingAnalyticsTimeframeMatrix({
     next.set("strike", String(candidate.strike));
     next.set("pin", "true");
     setParams(next, { replace: true });
-  }, [asOf, fiveMinute, params, setParams, spot]);
+  }, [asOf, fiveMinute, params, requestedExpiry, selectedExpiry, setParams, spot]);
 
   const day = latestIstDay(fiveMinute?.panes ?? []);
   const [cursorTime, setCursorTime] = useState<string | null>(null);

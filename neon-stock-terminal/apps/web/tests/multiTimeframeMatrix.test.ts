@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   MATRIX_INTERVALS,
   MATRIX_SIDES,
+  activeChartExpiry,
   barsForIstDay,
   containingBar,
   latestIstDay,
@@ -15,6 +16,14 @@ test("matrix contract is fixed to three intervals and three exact identities", (
   assert.equal(matrixSide({ tradingsymbol: "NIFTY08SEP2623650CE" }), "CE");
   assert.equal(matrixSide({ tradingsymbol: "NIFTY08SEP2623650PE" }), "PE");
   assert.equal(matrixSide({ tradingsymbol: "Nifty 50" }), "UNDERLYING");
+});
+
+test("expired weekly option selection rolls to the current contract without overriding a current pin", () => {
+  const asOf = "2026-09-09T04:30:00.000Z";
+  assert.equal(activeChartExpiry("2026-09-08", "2026-09-15", asOf), "2026-09-15");
+  assert.equal(activeChartExpiry("2026-09-15", "2026-09-15", asOf), "2026-09-15");
+  assert.equal(activeChartExpiry("2026-09-22", "2026-09-15", asOf), "2026-09-22");
+  assert.equal(activeChartExpiry(null, "2026-09-15", asOf), "2026-09-15");
 });
 
 test("matrix uses one latest IST session without inventing missing rows", () => {

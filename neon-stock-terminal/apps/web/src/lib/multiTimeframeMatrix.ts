@@ -10,6 +10,29 @@ export type MatrixPane = {
   sourceMinuteCount: number;
 };
 
+export function istDateFromTimestamp(value: string) {
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(time);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value;
+  const year = part("year"), month = part("month"), day = part("day");
+  return year && month && day ? `${year}-${month}-${day}` : null;
+}
+
+/** An expired browser-only pin must never strand the live board on last week's
+ * contract. Current and future explicit pins are preserved. */
+export function activeChartExpiry(requested: string | null, current: string, asOf: string) {
+  const tradingDay = istDateFromTimestamp(asOf);
+  if (!requested) return current;
+  if (tradingDay && requested < tradingDay && current >= tradingDay) return current;
+  return requested;
+}
+
 export function matrixSide(identity: Row): MatrixSide {
   const symbol = String(identity.tradingsymbol ?? "").toUpperCase();
   if (symbol.endsWith("CE")) return "CE";
@@ -23,15 +46,7 @@ export function latestIstDay(panes: MatrixPane[]) {
     .map((bar) => {
       const time = Date.parse(String(bar.end));
       if (!Number.isFinite(time)) return null;
-      const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).formatToParts(time);
-      const value = (type: string) => parts.find((part) => part.type === type)?.value;
-      const year = value("year"), month = value("month"), day = value("day");
-      return year && month && day ? `${year}-${month}-${day}` : null;
+      return istDateFromTimestamp(new Date(time).toISOString());
     })
     .filter((day): day is string => day != null)
     .sort()

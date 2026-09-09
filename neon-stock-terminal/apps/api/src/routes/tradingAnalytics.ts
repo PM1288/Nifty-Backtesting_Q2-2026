@@ -396,6 +396,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
                 count(*) FILTER (WHERE i.tradingsymbol LIKE '%PE')::int pe_contracts
          FROM instruments i
          WHERE i.name=$3 AND i.exchange='NFO' AND i.instrumenttype=$4
+           AND i.expiry>=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
            AND i.updated_at<=$1::timestamptz
            AND EXISTS (
              SELECT 1 FROM bars_1m b

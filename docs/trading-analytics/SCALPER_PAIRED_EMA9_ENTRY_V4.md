@@ -63,6 +63,14 @@ Configuration:
 - `CRON_SCALPER_ENTRIES=*/1 9-15 * * mon-fri`
 
 The scheduler runs once per minute. Each pass independently aggregates complete 1m, 5m and 15m candles. A signal identity includes its interval, so an otherwise identical setup on two timeframes is retained and notified separately, while retries cannot duplicate a delivered timeframe signal.
+
+## Weekly option rollover
+
+- The active contract is the earliest instrument-master expiry on or after the current IST trading date with an exact CE/PE pair and retained minute data.
+- The chart API does not advertise already-expired contracts for a current as-of request.
+- A browser `chartExpiry` left over from the expired week is automatically replaced by the canonical current expiry and its nearest available paired strike.
+- Explicit pins for the current or a later active expiry remain browser-local and are not overwritten.
+- Missing next-expiry contracts or missing exact CE/PE minutes remain explicit data-insufficient states; another expiry is never relabelled as the requested contract.
 - `SCALPER_ENTRY_ALERT_MAX_AGE_MINUTES=10`
 - `SCALPER_ENTRY_WHATSAPP_ENABLED=1`
 - `WA_GATEWAY_URL`

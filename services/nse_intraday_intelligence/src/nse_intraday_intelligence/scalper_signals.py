@@ -17,7 +17,8 @@ from .logging_utils import get_logger
 
 log = get_logger(__name__)
 IST = ZoneInfo("Asia/Kolkata")
-RULE_VERSION = "FNO_UNDERLYING_OPTION_CONTEXT_BODY80_NEXT_OPEN_V6"
+RULE_VERSION = "FNO_PAIRED_EMA9_POSITION_BODY70_NEXT_OPEN_V7"
+BODY_THRESHOLD = .70
 MIN_SIGNAL_CANDLES = 12  # EMA9 + two precursors + setup + next-open candle
 
 
@@ -88,6 +89,14 @@ def _below_fraction(bar: Candle) -> float | None:
     return (bar.ema9 - bar.close) / body if body > 0 and bar.close < bar.ema9 < bar.open else None
 
 
+def _entire_body_below_ema(bar: Candle) -> bool:
+    return bar.ema9 is not None and bar.open < bar.ema9 and bar.close < bar.ema9
+
+
+def _entire_body_above_ema(bar: Candle) -> bool:
+    return bar.ema9 is not None and bar.open > bar.ema9 and bar.close > bar.ema9
+
+
 def _candle_evidence(bar: Candle) -> dict[str, Any]:
     return {
         "end": bar.end.isoformat(),
@@ -141,13 +150,11 @@ def detect_paired_signals(underlying: list[Candle], call: list[Candle], put: lis
         first, second, setup = underlying[index - 2:index + 1]
         if second.end - first.end != expected or setup.end - second.end != expected:
             continue
-        call_fraction = _above_fraction(setup) if (
-            _red(first) and _red(second) and first.ema9 is not None and second.ema9 is not None and first.close < first.ema9 and second.close < second.ema9 and _green(setup)
-        ) else None
-        put_fraction = _below_fraction(setup) if (
-            _green(first) and _green(second) and first.ema9 is not None and second.ema9 is not None and first.close > first.ema9 and second.close > second.ema9 and _red(setup)
-        ) else None
-        direction = "CALL" if call_fraction is not None and call_fraction >= .80 else "PUT" if put_fraction is not None and put_fraction >= .80 else None
+        # Precursor colour is deliberately irrelevant. Both the open and close
+        # must be wholly on the required side of that candle's EMA9.
+        call_fraction = _above_fraction(setup) if _entire_body_below_ema(first) and _entire_body_below_ema(second) else None
+        put_fraction = _below_fraction(setup) if _entire_body_above_ema(first) and _entire_body_above_ema(second) else None
+        direction = "CALL" if call_fraction is not None and call_fraction >= BODY_THRESHOLD else "PUT" if put_fraction is not None and put_fraction >= BODY_THRESHOLD else None
         if direction is None:
             continue
         option_map = call_by_end if direction == "CALL" else put_by_end
@@ -155,11 +162,15 @@ def detect_paired_signals(underlying: list[Candle], call: list[Candle], put: lis
         if any(bar is None for bar in option_group):
             continue
         option_first, option_second, option_setup = option_group  # type: ignore[misc]
-        # Option precursor colours and EMA positions are useful context, but are
-        # deliberately not an entry gate. Only the selected option setup candle
-        # must make the paired bullish 80% EMA9 crossover.
+        # The selected CE/PE independently confirms a bullish option reversal:
+        # two complete bodies below EMA9, then at least 70% above on the setup.
         option_fraction = _above_fraction(option_setup)
-        if not (_green(option_setup) and option_fraction is not None and option_fraction >= .80):
+        if not (
+            _entire_body_below_ema(option_first)
+            and _entire_body_below_ema(option_second)
+            and option_fraction is not None
+            and option_fraction >= BODY_THRESHOLD
+        ):
             continue
         next_end = setup.end + expected
         next_underlying = next((bar for bar in underlying if bar.end == next_end), None)
@@ -186,12 +197,15 @@ def detect_paired_signals(underlying: list[Candle], call: list[Candle], put: lis
             "put_entry_open": None if next_put is None else next_put.open,
             "underlying_precursors": [_candle_evidence(first), _candle_evidence(second)],
             "option_precursors": [_candle_evidence(option_first), _candle_evidence(option_second)],
-            "option_precursors_are_context_only": True,
+            "option_precursors_are_context_only": False,
             "conditions": {
                 "underlying_precursors_required": True,
-                "option_precursors_required": False,
-                "underlying_body80_pass": True,
-                "selected_option_body80_pass": True,
+                "underlying_precursor_open_close_position_required": True,
+                "option_precursors_required": True,
+                "option_precursor_open_close_position_required": True,
+                "precursor_colour_required": False,
+                "underlying_body70_pass": True,
+                "selected_option_body70_pass": True,
                 "next_underlying_open_pass": True,
             },
             "indicators": {
@@ -217,7 +231,7 @@ def render_whatsapp(signal: dict[str, Any], option_symbol: str, interval: int = 
         f"Option: {option_symbol}",
         f"Entry: ₹{signal['option_entry_open']:.2f} | {underlying_symbol} {signal['underlying_entry_open']:.2f}",
         f"Confirmed: {underlying_symbol} {signal['underlying_fraction'] * 100:.1f}% {'above' if signal['direction'] == 'CALL' else 'below'} EMA9 + {side} {signal['option_fraction'] * 100:.1f}% above EMA9",
-        "Pattern: underlying precursors + paired 80% crossover; option precursors logged as context",
+        "Pattern: two full precursor bodies beyond EMA9 + paired 70% crossover; candle colour is context",
     ])
 
 
@@ -408,7 +422,7 @@ def _persist_signals(
             "conditions": json.dumps({
                 "underlying_precursors": signal["underlying_precursors"],
                 "selected_option_precursors": signal["option_precursors"],
-                "option_precursors_are_context_only": True,
+                "option_precursors_are_context_only": False,
                 **signal["conditions"],
             }),
             "indicators": json.dumps(signal["indicators"]),
@@ -427,22 +441,30 @@ def _excursion(rows: list[dict[str, Any]], start: datetime, end: datetime, entry
     eligible = [row for row in rows if start <= row["ts"] < end]
     if not eligible or entry is None or not math.isfinite(entry):
         return {"state": "DATA_INSUFFICIENT", "max": None, "max_at": None, "max_change": None, "max_change_pct": None,
-                "min": None, "min_at": None, "min_change": None, "min_change_pct": None, "observed_minutes": len(eligible)}
+                "min": None, "min_at": None, "min_change": None, "min_change_pct": None,
+                "endpoint": None, "endpoint_at": None, "endpoint_change": None, "endpoint_change_pct": None,
+                "trend": "DATA_INSUFFICIENT", "observed_minutes": len(eligible)}
     high_row = max(eligible, key=lambda row: (float(row["high"]), -row["ts"].timestamp()))
     low_row = min(eligible, key=lambda row: (float(row["low"]), row["ts"].timestamp()))
+    endpoint_row = max(eligible, key=lambda row: row["ts"])
     high, low = float(high_row["high"]), float(low_row["low"])
+    endpoint = float(endpoint_row["close"])
+    trend = "BULLISH" if endpoint > entry else "BEARISH" if endpoint < entry else "FLAT"
     return {
         "state": "OBSERVED", "max": high, "max_at": high_row["ts"].isoformat(),
         "max_change": high - entry, "max_change_pct": (high / entry - 1) * 100 if entry else None,
         "min": low, "min_at": low_row["ts"].isoformat(),
         "min_change": low - entry, "min_change_pct": (low / entry - 1) * 100 if entry else None,
+        "endpoint": endpoint, "endpoint_at": endpoint_row["ts"].isoformat(),
+        "endpoint_change": endpoint - entry, "endpoint_change_pct": (endpoint / entry - 1) * 100 if entry else None,
+        "trend": trend,
         "observed_minutes": len(eligible),
     }
 
 
 def _refresh_trade_outcomes(trade_date: date, evaluation_end: datetime, market_close: datetime) -> int:
     observations = fetch_all("""
-      select s.signal_key,s.entry_end,s.interval_minutes,s.underlying_token,s.underlying_entry_open,
+      select s.signal_key,s.entry_end,s.interval_minutes,s.direction,s.underlying_token,s.underlying_entry_open,
         o.ce_token,o.pe_token,o.ce_entry_open,o.pe_entry_open
       from nse_ops.scalper_entry_signal s join nse_ops.scalper_trade_observation o using(signal_key)
       where s.trade_date=%(date)s
@@ -463,6 +485,19 @@ def _refresh_trade_outcomes(trade_date: date, evaluation_end: datetime, market_c
         for horizon, horizon_end in (("15m", entry_start + timedelta(minutes=15)), ("30m", entry_start + timedelta(minutes=30)), ("eod", market_close)):
             observed_end = min(evaluation_end, horizon_end)
             evidence[horizon] = {name: _excursion(rows, entry_start, observed_end, entry) for name, (rows, entry) in instruments.items()}
+            expected_trend = "BULLISH" if row["direction"] == "CALL" else "BEARISH"
+            observed_trend = evidence[horizon]["underlying"]["trend"]
+            selected_option = "ce" if row["direction"] == "CALL" else "pe"
+            evidence[horizon]["expected_underlying_trend"] = expected_trend
+            evidence[horizon]["observed_underlying_trend"] = observed_trend
+            evidence[horizon]["thesis_alignment"] = (
+                "DATA_INSUFFICIENT" if observed_trend == "DATA_INSUFFICIENT"
+                else "FLAT" if observed_trend == "FLAT"
+                else "ALIGNED" if observed_trend == expected_trend
+                else "OPPOSED"
+            )
+            evidence[horizon]["selected_option"] = selected_option.upper()
+            evidence[horizon]["selected_option_trend"] = evidence[horizon][selected_option]["trend"]
             evidence[horizon]["maturity"] = "MATURE" if evaluation_end >= horizon_end else "DEVELOPING"
             evidence[horizon]["window_end"] = horizon_end.isoformat()
         execute("""

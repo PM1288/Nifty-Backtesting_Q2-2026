@@ -1,5 +1,7 @@
 # MANEESH Scalper V6 — Option Context and Trade Observation Log
 
+> Historical V6 specification. Superseded on 9 September 2026 by the stricter V7 paired-position rule in `SCALPER_PAIRED_EMA9_BODY70_V7.md`. V6 replay observations are invalid under V7 and were removed.
+
 ## Effective change
 
 Rule version: `FNO_UNDERLYING_OPTION_CONTEXT_BODY80_NEXT_OPEN_V6`

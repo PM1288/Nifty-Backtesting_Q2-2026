@@ -2,7 +2,7 @@ import { istDay } from "./tradingAnalyticsChartView";
 
 type Row = Record<string, unknown>;
 type Pane = { identity: Row; bars: Row[] };
-export const SCALPER_ENTRY_RULE = "FNO_UNDERLYING_OPTION_CONTEXT_BODY80_NEXT_OPEN_V6";
+export const SCALPER_ENTRY_RULE = "FNO_PAIRED_EMA9_POSITION_BODY70_NEXT_OPEN_V7";
 export type ScalperSignal = {
   id: string;
   direction: "CALL" | "PUT";
@@ -28,10 +28,8 @@ const optionSide = (pane: Pane) => {
   return symbol.endsWith("CE") ? "CE" : symbol.endsWith("PE") ? "PE" : null;
 };
 const valid = (bar: Row) => [bar.open, bar.close, bar.ema9].every((value) => number(value) != null);
-const isRed = (bar: Row) => number(bar.close)! < number(bar.open)!;
-const isGreen = (bar: Row) => number(bar.close)! > number(bar.open)!;
-const belowEma = (bar: Row) => valid(bar) && number(bar.close)! < number(bar.ema9)!;
-const aboveEma = (bar: Row) => valid(bar) && number(bar.close)! > number(bar.ema9)!;
+const belowEma = (bar: Row) => valid(bar) && number(bar.open)! < number(bar.ema9)! && number(bar.close)! < number(bar.ema9)!;
+const aboveEma = (bar: Row) => valid(bar) && number(bar.open)! > number(bar.ema9)! && number(bar.close)! > number(bar.ema9)!;
 const consecutive = (bars: Row[], intervalMinutes: number) => bars.length === 3 && bars.every((bar, index) => index === 0 || (
   Date.parse(String(bar.end)) - Date.parse(String(bars[index - 1].end)) === intervalMinutes * 60_000 &&
   istDay(bar.end) === istDay(bars[index - 1].end)
@@ -48,15 +46,14 @@ const belowBodyFraction = (bar: Row) => {
 };
 const bullishOptionConfirmation = (bars: Row[]) => {
   if (bars.length !== 3 || bars.some((bar) => !valid(bar))) return null;
-  const setup = bars[2];
-  // Precursor option colours/EMA positions are recorded context, not gates.
-  if (!isGreen(setup)) return null;
+  const [first, second, setup] = bars;
+  if (!belowEma(first) || !belowEma(second)) return null;
   const fraction = aboveBodyFraction(setup);
-  return fraction != null && fraction >= 0.80 ? fraction : null;
+  return fraction != null && fraction >= 0.70 ? fraction : null;
 };
 
 /** Closed-bar paired EMA9 reconstruction. Missing exact bars are never substituted. */
-export function scalperPairedBody80Signals(panes: Pane[], intervalMinutes: number): ScalperSignal[] {
+export function scalperPairedBody70Signals(panes: Pane[], intervalMinutes: number): ScalperSignal[] {
   const underlying = panes.find((pane) => optionSide(pane) == null);
   if (!underlying || !Number.isFinite(intervalMinutes) || intervalMinutes <= 0) return [];
   const bars = [...underlying.bars].filter((bar) => bar.closed === true).sort((a, b) => String(a.end).localeCompare(String(b.end)));
@@ -66,9 +63,9 @@ export function scalperPairedBody80Signals(panes: Pane[], intervalMinutes: numbe
     const group = bars.slice(index - 2, index + 1);
     if (!consecutive(group, intervalMinutes) || group.some((bar) => !valid(bar))) continue;
     const [first, second, setup] = group;
-    const callFraction = isRed(first) && isRed(second) && belowEma(first) && belowEma(second) && isGreen(setup) ? aboveBodyFraction(setup) : null;
-    const putFraction = isGreen(first) && isGreen(second) && aboveEma(first) && aboveEma(second) && isRed(setup) ? belowBodyFraction(setup) : null;
-    const direction = callFraction != null && callFraction >= 0.80 ? "CALL" : putFraction != null && putFraction >= 0.80 ? "PUT" : null;
+    const callFraction = belowEma(first) && belowEma(second) ? aboveBodyFraction(setup) : null;
+    const putFraction = aboveEma(first) && aboveEma(second) ? belowBodyFraction(setup) : null;
+    const direction = callFraction != null && callFraction >= 0.70 ? "CALL" : putFraction != null && putFraction >= 0.70 ? "PUT" : null;
     if (!direction) continue;
     const optionPane = options.get(direction === "CALL" ? "CE" : "PE");
     if (!optionPane) continue;

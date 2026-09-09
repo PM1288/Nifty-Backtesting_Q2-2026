@@ -5,7 +5,7 @@ import type { EChartsOption, SeriesOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { closeAt, measurePanes, openAt, scalperIndicators } from "../lib/scalperMeasurement";
-import { SCALPER_ENTRY_RULE, scalperPairedBody80Signals } from "../lib/scalperSignals";
+import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { activeChartExpiry } from "../lib/multiTimeframeMatrix";
 import {
   candleColors,
@@ -293,7 +293,7 @@ export function TradingAnalyticsScalper({
     [selectedLevels, visibleUnderlyingBounds],
   );
   const measured = points.length === 2 ? measurePanes(panes ?? [], points[0], points[1], Number(quantity)) : null;
-  const signals = useMemo(() => scalperPairedBody80Signals(panes ?? [], interval), [panes, interval]);
+  const signals = useMemo(() => scalperPairedBody70Signals(panes ?? [], interval), [panes, interval]);
   const pickPoint = (index:number) => {
     if (!fixedPair || !selecting || !times[index]) return;
     if (points.length === 1) { setPoints([points[0],times[index]].sort()); setSelecting(false); }
@@ -904,9 +904,9 @@ export function TradingAnalyticsScalper({
         </details>
       </section>
       <section className={`${styles.warning} ${styles.scalperEvidence}`} tabIndex={0} role="region" aria-label="Closed-candle research evidence">
-        <h3>Paired EMA9 body80 / next-open entry indicators</h3>
+        <h3>Paired EMA9 body70 / next-open entry indicators</h3>
         <p>
-          {SCALPER_ENTRY_RULE} · {signals.length} confirmed setup{signals.length === 1 ? "" : "s"}. CALL requires two red {symbol} closes below EMA9, then an 80% bullish crossover; PUT requires two green {symbol} closes above EMA9, then an 80% bearish crossover. The exact selected CE/PE must itself make a green 80% bullish EMA9 crossover. Its two prior candle colours and EMA positions are logged as context only and never reject an entry. Exact timestamps and next scheduled open only; missing required bars block entry.
+          {SCALPER_ENTRY_RULE} · {signals.length} confirmed setup{signals.length === 1 ? "" : "s"}. CALL requires both open and close of the two prior {symbol} candles below EMA9, then a 70% bullish crossover; PUT requires both open and close above EMA9, then a 70% bearish crossover. The exact selected CE/PE must have both prior bodies below its EMA9 and then make a 70% bullish crossover. Precursor colour is recorded but optional. Exact timestamps and next scheduled open only; missing required bars block entry.
         </p>
       </section>
       {(panes?.length ?? 0) < 3 && (

@@ -31,8 +31,9 @@ function downloadCsv(rows: Row[]) {
       result[`${horizon}_maturity`] = window.maturity;
       for (const name of ["underlying", "ce", "pe"]) {
         const data = object(window[name]);
-        for (const key of ["max", "max_at", "max_change", "max_change_pct", "min", "min_at", "min_change", "min_change_pct", "observed_minutes"]) result[`${horizon}_${name}_${key}`] = data[key];
+        for (const key of ["max", "max_at", "max_change", "max_change_pct", "min", "min_at", "min_change", "min_change_pct", "endpoint", "endpoint_at", "endpoint_change", "endpoint_change_pct", "trend", "observed_minutes"]) result[`${horizon}_${name}_${key}`] = data[key];
       }
+      for (const key of ["expected_underlying_trend", "observed_underlying_trend", "thesis_alignment", "selected_option", "selected_option_trend"]) result[`${horizon}_${key}`] = window[key];
     }
     return result;
   });
@@ -47,12 +48,14 @@ function IndicatorCell({ evidence }: { evidence: unknown }) {
 }
 
 function OutcomeCell({ evidence }: { evidence: unknown }) {
-  const window = object(evidence), ce = object(window.ce), pe = object(window.pe);
+  const window = object(evidence), underlying = object(window.underlying), ce = object(window.ce), pe = object(window.pe);
   return <span className={styles.tradeLogStack}>
     <b>{String(window.maturity ?? "DATA INSUFFICIENT").replaceAll("_", " ")}</b>
+    <small>Underlying {String(underlying.trend ?? "DATA_INSUFFICIENT").replaceAll("_", " ")} · {String(window.thesis_alignment ?? "—").replaceAll("_", " ")}</small>
+    <small>Close {value(underlying.endpoint)} · {signed(underlying.endpoint_change_pct, "%")} at {istTime(underlying.endpoint_at)} IST</small>
     <small>CE max {value(ce.max)} · {signed(ce.max_change)} ({signed(ce.max_change_pct, "%")})</small>
     <small>PE max {value(pe.max)} · {signed(pe.max_change)} ({signed(pe.max_change_pct, "%")})</small>
-    <small>Max at CE {istTime(ce.max_at)} · PE {istTime(pe.max_at)} IST</small>
+    <small>CE {String(ce.trend ?? "—")} · PE {String(pe.trend ?? "—")}</small>
   </span>;
 }
 
@@ -75,17 +78,17 @@ export function TradingAnalyticsTradeLog() {
       <button disabled={q.isFetching} onClick={() => void q.refetch()}>{q.isFetching ? "Refreshing…" : "Refresh"}</button>
       <button disabled={!rows.length} onClick={() => downloadCsv(rows)}>Export full CSV</button>
     </header>
-    <p className={styles.context}>{rows.length} observations · entry prices are next-candle opens · CE/PE maximum change is measured from its own entry open. Option precursor colours are context only.</p>
+    <p className={styles.context}>{rows.length} valid V7 observations · entry prices are next-candle opens · prior candle colour is context only, but both prior open/close values must be beyond EMA9. Maximum excursion and closing trend are separate.</p>
     {q.error && <p role="alert" className={styles.warning}>Trade observation evidence is unavailable. No value was replaced with zero.</p>}
     <div className={`${styles.tableWrap} ${styles.tradeLogTable}`} role="region" tabIndex={0} aria-label="Scalper entry and outcome evidence">
-      <table><thead><tr><th>Day / Entry</th><th>Stock / Direction</th><th>Contracts</th><th>Entry values</th><th>Underlying conditions</th><th>Option precursor context</th><th>Underlying RSI / MACD</th><th>CE RSI / MACD</th><th>PE RSI / MACD</th><th>15 min max</th><th>30 min max</th><th>End of day max</th><th>Delivery / State</th></tr></thead>
+      <table><thead><tr><th>Day / Entry</th><th>Stock / Direction</th><th>Contracts</th><th>Entry values</th><th>Underlying conditions</th><th>Option confirmation</th><th>Underlying RSI / MACD</th><th>CE RSI / MACD</th><th>PE RSI / MACD</th><th>15 min max / trend</th><th>30 min max / trend</th><th>End of day max / trend</th><th>Delivery / State</th></tr></thead>
       <tbody>{rows.map((row) => { const conditions = object(row.condition_evidence), indicators = object(row.indicator_evidence), outcomes = object(row.outcome_evidence); return <tr key={String(row.signal_key)}>
         <td><span className={styles.tradeLogStack}><b>{String(row.trade_date)}</b><small>{ist(row.entry_end)} IST</small><small>{String(row.interval_minutes)} minute</small></span></td>
-        <td><span className={styles.tradeLogStack}><b>{String(row.underlying_symbol)} · {String(row.direction)}</b><small>Expiry {String(row.expiry)} · strike {value(row.strike)}</small><small>{String(row.rule_version)}</small></span></td>
+        <td><span className={styles.tradeLogStack}><b>{String(row.underlying_symbol)} · {String(row.direction)}</b><small>{row.direction === "CALL" ? "BULLISH" : "BEARISH"} THESIS</small><small>Expiry {String(row.expiry)} · strike {value(row.strike)}</small><small>{String(row.rule_version)}</small></span></td>
         <td><span className={styles.tradeLogStack}><b>CE {String(row.ce_symbol)}</b><small>PE {String(row.pe_symbol)}</small><small>Selected {String(row.option_symbol)}</small></span></td>
         <td><span className={styles.tradeLogStack}><b>Underlying {value(row.underlying_entry_open)}</b><small>CE {value(row.ce_entry_open)} · PE {value(row.pe_entry_open)}</small><small>Setup U {value(row.underlying_setup_close)} · option {value(row.option_setup_close)}</small></span></td>
         <td><span className={styles.tradeLogStack}><b>{precursor(conditions.underlying_precursors)}</b><small>Body {signed(num(row.underlying_body_fraction) == null ? null : num(row.underlying_body_fraction)! * 100, "%")} · required</small><small>Next open gate passed</small></span></td>
-        <td><span className={styles.tradeLogStack}><b>{precursor(conditions.selected_option_precursors)}</b><small>Context only · never rejects entry</small><small>Setup green · body {signed(num(row.option_body_fraction) == null ? null : num(row.option_body_fraction)! * 100, "%")}</small></span></td>
+        <td><span className={styles.tradeLogStack}><b>{precursor(conditions.selected_option_precursors)}</b><small>Open + close EMA position required</small><small>Colour optional · body {signed(num(row.option_body_fraction) == null ? null : num(row.option_body_fraction)! * 100, "%")}</small></span></td>
         <td><IndicatorCell evidence={indicators.underlying} /></td><td><IndicatorCell evidence={indicators.ce} /></td><td><IndicatorCell evidence={indicators.pe} /></td>
         <td><OutcomeCell evidence={outcomes["15m"]} /></td><td><OutcomeCell evidence={outcomes["30m"]} /></td><td><OutcomeCell evidence={outcomes.eod} /></td>
         <td><span className={styles.tradeLogStack}><b>{String(row.outcome_state).replaceAll("_", " ")}</b><small>WhatsApp {String(row.delivery_status)}</small><small>Updated {ist(row.outcome_updated_at)} IST</small></span></td>

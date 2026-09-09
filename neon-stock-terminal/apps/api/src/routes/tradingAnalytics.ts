@@ -381,6 +381,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         from nse_ops.scalper_entry_signal s
         join nse_ops.scalper_trade_observation o using(signal_key)
         where s.trade_date=coalesce($1::date,(now() at time zone 'Asia/Kolkata')::date)
+          and s.rule_version='FNO_PAIRED_EMA9_POSITION_BODY70_NEXT_OPEN_V7'
           and ($2::text is null or s.underlying_symbol=$2)
           and ($3::text is null or s.direction=$3)
           and ($4::int is null or s.interval_minutes=$4)
@@ -395,7 +396,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         rows,
         count: rows.length,
         paperOrdersEnabled: false,
-        description: "Read-only entry and forward-excursion evidence; not booked paper P&L.",
+        description: "Read-only V7 paired EMA9 entry, maximum excursion, endpoint trend and thesis-alignment evidence; not booked paper P&L.",
       });
     } catch {
       return res.status(503).json({ error: { code: "SCALPER_LOG_UNAVAILABLE" } });

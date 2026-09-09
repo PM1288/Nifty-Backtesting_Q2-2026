@@ -3839,3 +3839,46 @@ or outcomes were deleted.
 - Remaining source limitations are visible, not fabricated: selected-contract
   IV history, comparable interval/cumulative delta OI and bid/ask spread may be
   unavailable in a retained response; max pain remains snapshot/indicative.
+
+## 2026-09-09 — Complete MANEESH UI, Trade Log P&L and SHAP production cutover
+
+- Canonical production source is `/home/novius2/trading-stack`, branch `master`,
+  application commit `8849a98659d8b9a716ae956be259546ec0dd6b5b`.
+- Trade Log now defaults to `P&L comparison` and places all six requested
+  one-lot comparison columns in the main table: CE and PE at 15 minutes,
+  30 minutes and EOD. Each cell exposes net P&L, gross P&L, fees, exact premium
+  path, observed high/low excursion, quantity and maturity. The unchanged row
+  inspector and full evidence exports retain all original conditions,
+  indicators, source data and nested fields.
+- `SHAP Research` is directly reachable from the MANEESH local navigation and
+  from Trade Log at `/n50/strategy/nifty-context?lens=trade-quality`. Every one
+  of the 55 live research rows has the CE/PE 15m/30m/EOD comparison payload.
+  The current model state remains truthfully `DATA_INSUFFICIENT`: 38 complete
+  feature rows but only 1 independent session versus the frozen minimum of 20.
+  No probability or SHAP contribution is fabricated before that gate passes.
+- The aligned Scalper V4, Trade Log and SHAP research UI are deployed. Runtime
+  dashboard image is
+  `sha256:a1b2e6059d34aa55aa1477edbd2b103708457f85c02541c38e62e1d7b8857c2b`;
+  SHAP worker image is
+  `sha256:ec36a37c49af11eb2f72519254b8369e555f9e9b398289d655f87f3a1fb60786`.
+  Both containers are healthy with zero restarts. The synchronized trade-quality
+  run ID is
+  `4ac5f1c496d9f3ed9e881249c74c59de048edc458988e9f9d4cee5f96fae1a9d`.
+- Rollback image tags were retained as
+  `trading-stack-n50-dashboard:pre-scalper-v4-complete-20260909` and
+  `trading-stack-novius2-nifty-context:pre-comparative-pnl-sync-20260909`.
+- Final checks: web typecheck/build and 118/118 tests; API typecheck/build and
+  190/190 tests; Python worker 16/16 tests; canonical repository gate PASS.
+  Authenticated deployed-browser suites: Trade Log 38/38, NIFTY Context/SHAP
+  111/111 and Scalper V4 41/41.
+- Runtime evidence is intentionally outside Git:
+  `output/playwright/trade-log-complete-deployed/`,
+  `output/playwright/nifty-context-deployed-complete/`, and
+  `output/playwright/scalper-v4-deployed-20260909/`.
+- Follow-up correction: the default preset is now `All columns + P&L`. It
+  retains the original monitor fields, stored entry/rule evidence and all
+  underlying/CE/PE RSI-MACD fields beside the six comparison columns. The
+  separate `P&L comparison` preset remains for a narrower view. The SHAP page
+  now reserves an explicit chart-status panel showing independent-session
+  progress instead of leaving an unexplained blank area while the gate is
+  locked.

@@ -84,6 +84,19 @@
   border: 1px solid #d9e3ef;
   position: relative;
 }
+.columnGuide {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  width: max-content;
+  max-width: min(920px, calc(100vw - 72px));
+  margin: 0;
+  padding: 7px 10px;
+  border-bottom: 1px solid #d9e3ef;
+  background: #eef4ff;
+  color: #334155;
+  font-size: 12px;
+}
 .scroll table {
   border-collapse: separate;
   border-spacing: 0;

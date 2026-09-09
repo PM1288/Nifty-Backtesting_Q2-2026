@@ -110,3 +110,24 @@ docker run --rm \
 ```
 
 Roll back the dashboard and worker images to their prior immutable image digests. The additive tables may safely remain because execution code never references them.
+
+## Production synchronization — 9 September 2026
+
+The dashboard and SHAP worker were rebuilt from canonical master. The worker
+then produced trade-quality run
+`4ac5f1c496d9f3ed9e881249c74c59de048edc458988e9f9d4cee5f96fae1a9d`.
+Every returned trade row contains CE and PE comparative outcomes for 15m, 30m
+and EOD; a strengthened browser contract verifies those payload keys on all
+rows and requires at least one observed numeric net result.
+
+The live state is still `DATA_INSUFFICIENT`, intentionally: 55 observations,
+38 complete feature rows and 1 independent session. The UI therefore shows the
+outcomes and gate reason but no fake SHAP waterfall. Authenticated deployed
+browser verification passed 111/111 checks; evidence is at
+`output/playwright/nifty-context-deployed-complete/`.
+
+The Good-trade SHAP lens now includes a dedicated chart-status panel whenever
+the model gate is locked. It displays eligible independent sessions versus the
+required minimum and states that the waterfall has not been calculated. Once
+real held-out explanations exist, the same lens renders the actual per-trade
+waterfall; it never substitutes an outcome chart or synthetic importance bars.

@@ -126,3 +126,15 @@ Browser evidence:
 Release state is recorded after the canonical gate and feature-branch commit.
 Production deployment remains a separate authorised release action; this
 document does not treat a local build as a production deployment.
+
+## Production release — 9 September 2026
+
+The verified implementation was fast-forwarded to canonical `master` at
+`1c137327769f769705ee284d761d88a4a688c61c` and deployed as dashboard image
+`sha256:a1b2e6059d34aa55aa1477edbd2b103708457f85c02541c38e62e1d7b8857c2b`.
+The container is healthy with zero restarts. Authenticated production browser
+verification passed 41/41 checks, including responsive layouts, separate OI and
+delta-OI panes, inspection modes, A-open/B-close persistence, exports and axe.
+Evidence is at `output/playwright/scalper-v4-deployed-20260909/`.
+
+Rollback tag: `trading-stack-n50-dashboard:pre-scalper-v4-complete-20260909`.

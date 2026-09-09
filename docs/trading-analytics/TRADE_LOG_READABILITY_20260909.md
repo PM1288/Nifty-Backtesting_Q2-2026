@@ -170,3 +170,24 @@ resend existing failed WhatsApp notifications.
   race/failure coverage beyond the documented tests remain follow-up checks.
 - Actual paper fills, position sizing, exits and realised accounting require a
   separately approved execution specification. This handover prohibits them.
+
+## 2026-09-09 production follow-up — complete comparison columns
+
+The deployed main table now defaults to `All columns + P&L`: all prior curated
+monitor, entry/rule and underlying/CE/PE indicator columns remain present, with
+CE 15m, CE 30m, CE EOD, PE 15m, PE 30m and PE EOD appended. A narrower
+`P&L comparison` preset remains available. The figures are
+calculated from the exact stored contract and lot quantity using the existing
+charge policy. Net, gross, fees, entry and endpoint premiums, observed high/low
+and maturity are visible without opening the inspector. Missing observations
+remain unavailable rather than zero.
+
+This is additive presentation. All original response fields remain reachable
+through the unchanged row inspector and complete JSON/CSV evidence exports. A
+direct `Open SHAP research` action and MANEESH `SHAP Research` tab link to
+`/n50/strategy/nifty-context?lens=trade-quality`.
+
+The strengthened browser suite additionally asserts each retained default
+heading rather than merely checking the six P&L headings. Production browser evidence:
+see `results.json` at
+`output/playwright/trade-log-complete-deployed/`.

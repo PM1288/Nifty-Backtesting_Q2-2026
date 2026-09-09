@@ -591,7 +591,7 @@ function ObservationLog() {
       { key: "delivery", label: "Delivery", read: (r) => r.delivery_status },
     ];
     if (state.preset === "All columns + P&L")
-      return [...monitorColumns, ...pnlColumns, ...entryColumns, ...indicatorColumns];
+      return [...pnlColumns, ...monitorColumns, ...entryColumns, ...indicatorColumns];
     if (state.preset === "P&L comparison") return pnlColumns;
     if (state.preset === "Indicators") return indicatorColumns;
     if (state.preset === "Entries & rules") return entryColumns;
@@ -984,6 +984,13 @@ function ObservationLog() {
         role="region"
         aria-label="Trade observation evidence table"
       >
+        {state.preset === "All columns + P&L" && (
+          <p className={styles.columnGuide}>
+            All columns are loaded in this one table: CE/PE P&amp;L first, then
+            prior monitor, entry/rule and indicator columns. Scroll horizontally
+            inside the table to inspect every column.
+          </p>
+        )}
         <table>
           <thead>
             {state.preset === "Indicators" && (

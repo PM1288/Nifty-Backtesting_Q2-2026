@@ -105,7 +105,8 @@ def build_examples(bars, sessions, now):
                 threshold = CONFIG['threshold_log_return']
                 y = {"log_return": r, "direction": 2 if r > threshold else 0 if r < -threshold else 1,
                      "range": float(future.high.max() - future.low.min()), "reference": reference,
-                     "available_at": str(max(window_end, future.created_at.max()))}
+                     "available_at": str(max(window_end, future.created_at.max())),
+                     "source_rows":clean(future.to_dict('records'))}
             examples.append({"cutoff": str(cutoff), "window_end": str(window_end), "session": str(session["trade_date"]),
                              "features": x, "labels": y, "max_input_event_time": str(h.ts.max() + pd.Timedelta(minutes=1)),
                              "max_input_available_at": str(h.created_at.max()), "source_digest": digest(h.to_dict("records")),
@@ -261,7 +262,6 @@ def experiment():
 def capture():
     now=pd.Timestamp.now(tz='UTC')
     with connect() as conn:
-        conn.execute(Path('schema.sql').read_text()); conn.commit()
         sessions=conn.execute("""SELECT trade_date,market_open_ts,market_close_ts FROM public.trading_calendar
           WHERE is_trading_day AND trade_date=(now() AT TIME ZONE 'Asia/Kolkata')::date""").fetchall()
         # Query the large bar table only in the scheduled capture window, not every polling tick.
@@ -304,15 +304,19 @@ if __name__=='__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
     parser=argparse.ArgumentParser(); parser.add_argument('command',choices=['experiment','capture','capture-loop'])
     args=parser.parse_args()
+    with connect() as conn:
+        conn.execute(Path('schema.sql').read_text()); conn.commit()
     if args.command=='experiment':
         experiment()
     elif args.command=='capture':
         capture()
     else:
+        LOG.info('capture_loop_started version=%s execution_enabled=false',VERSION)
         while True:
             if os.getenv('NIFTY_CONTEXT_ENABLED','true')=='true':
                 try:
                     capture()
+                    Path('/tmp/nifty-context-heartbeat').touch()
                 except Exception as exc:
                     LOG.error('capture_failed type=%s',type(exc).__name__)
             time.sleep(30)

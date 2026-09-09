@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-09 NIFTY Model Research: additive `/strategy/nifty-context` with direction,
+range, validation and data/audit lenses. Lazy SVG/table explanations do not load
+SHAP into the browser or alter existing MANEESH charts. Authenticated read-only
+API and isolated CPU worker use only the new `nifty_context` schema for writes.
+EMA9 entries, PCR/OI, source records, notifications and execution are unchanged.
+Evidence and acceptance gates: `docs/trading-analytics/NIFTY_EXPLAINABLE_CONTEXT.md`.
+
 2026-09-07 Scalper measurement: opt-in chart click callback/rectangle support,
 browser-memory-only endpoints/quantity and fixed exact pair; RSI/MACD on selected
 underlying. Existing chart consumers, source bars/CSV, OI, EMA9, resistance,

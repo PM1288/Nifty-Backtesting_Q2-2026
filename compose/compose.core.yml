@@ -19,6 +19,7 @@ services:
       - ./env/core.env
     environment:
       PORT: "18184"
+      NIFTY_CONTEXT_ENABLED: ${NIFTY_CONTEXT_ENABLED:-true}
       SERVE_CLIENT: "1"
       TZ: "Asia/Kolkata"
       N50_API_DB_CONNECTION_LIMIT: ${N50_API_DB_CONNECTION_LIMIT:-2}

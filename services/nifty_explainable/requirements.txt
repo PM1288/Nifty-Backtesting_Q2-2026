@@ -1,0 +1,6 @@
+numpy==2.2.6
+pandas==2.3.2
+scikit-learn==1.7.1
+shap==0.48.0
+xgboost-cpu==3.0.5
+psycopg[binary]==3.2.9

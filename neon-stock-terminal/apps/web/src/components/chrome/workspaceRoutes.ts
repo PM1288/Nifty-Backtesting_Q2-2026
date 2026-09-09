@@ -45,6 +45,13 @@ export type WorkspaceRouteDefinition = {
 
 export const STRATEGY_MENU_ROUTES = [
   {
+    id: "nifty-context",
+    label: "NIFTY Model Research",
+    description: "Hourly direction, range and SHAP evidence in shadow research",
+    path: "/strategy/nifty-context",
+    icon: FlaskConical,
+  },
+  {
     id: "trendlyne-summary",
     label: "Trendlyne Summary",
     description: "Six-month analyst recommendation outcomes and research-house track records",
@@ -136,6 +143,7 @@ const strategyHeaderOrder = [
   ["trendlyne-summary", "RESEARCH"],
   ["monthly-strategy", "RESEARCH"],
   ["rolling-monthly", "RESEARCH"],
+  ["nifty-context", "RESEARCH"],
   ["long-options", "DERIVATIVE STRATEGIES"],
   ["nifty-weekly-options", "DERIVATIVE STRATEGIES"],
   ["trading-analytics", "DERIVATIVE STRATEGIES"],

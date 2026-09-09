@@ -1,5 +1,17 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-09 NIFTY explainable research dashboards
+
+Additive `/strategy/nifty-context`, four independent URL lenses (direction,
+range, validation, audit), training/test evidence export, CPU Python models and
+SHAP worker. Existing MANEESH and trading/WhatsApp behaviour unchanged.
+Initial real experiment: 13,737 minutes / 28 sessions, 65 eligible occasions,
+59 mature occasions, only 16 eligible distinct sessions. Minimum remains 20;
+real predictions are withheld as DATA_INSUFFICIENT, not replaced with mocks.
+Synthetic test-only model/SHAP tests pass. Do not imply live forecast acceptance.
+Detailed commands, data contracts, provenance limitations and further research
+gates: `docs/trading-analytics/NIFTY_EXPLAINABLE_CONTEXT.md`.
+
 ## 2026-09-09 MANEESH IST chart axes
 
 The original aligned Scalper still used Lightweight Charts' UTC default even

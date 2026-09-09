@@ -1,0 +1,16 @@
+# Tested transitive versions; keep installed distribution license notices.
+cloudpickle==3.1.2
+joblib==1.6.0
+llvmlite==0.49.0
+numba==0.67.0
+packaging==26.3
+psycopg-binary==3.2.9
+python-dateutil==2.9.0.post0
+pytz==2026.3.post1
+scipy==1.18.1
+six==1.17.0
+slicer==0.0.8
+threadpoolctl==3.6.0
+tqdm==4.70.0
+typing_extensions==4.16.0
+tzdata==2026.3

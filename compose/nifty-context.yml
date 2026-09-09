@@ -1,0 +1,15 @@
+services:
+  nifty-context:
+    build: ./services/nifty_explainable
+    environment:
+      PG_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      CODE_COMMIT: ${NIFTY_CONTEXT_COMMIT:-unknown}
+      NIFTY_CONTEXT_ENABLED: ${NIFTY_CONTEXT_ENABLED:-true}
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

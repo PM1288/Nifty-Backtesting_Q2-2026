@@ -22,6 +22,7 @@ test("research API is read-only, parameterized, explicit when absent, and fail-s
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/v1/nifty-context`;
   try {
     assert.equal((await fetch(`${base}?run=invalid`)).status, 400);
+    assert.equal((await fetch(`${base}/trade-quality?run=invalid`)).status, 400);
     assert.equal(calls.length, 0);
     const body = (await (await fetch(base)).json()) as {
       state: string;
@@ -32,6 +33,13 @@ test("research API is read-only, parameterized, explicit when absent, and fail-s
     assert.equal(body.executionEnabled, false);
     assert.deepEqual(body.predictions, []);
     assert.equal((await fetch(base, { method: "POST" })).status, 404);
+    const trade = (await (await fetch(`${base}/trade-quality`)).json()) as {
+      state: string; executionEnabled: boolean; rows: unknown[];
+    };
+    assert.equal(trade.state, "NOT_RUN");
+    assert.equal(trade.executionEnabled, false);
+    assert.deepEqual(trade.rows, []);
+    assert.equal((await fetch(`${base}/trade-quality`, { method: "POST" })).status, 404);
     assert.equal((await fetch(`${base}/export/${"a".repeat(64)}`)).status, 404);
     fail = true;
     const response = await fetch(base);

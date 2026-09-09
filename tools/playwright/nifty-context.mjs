@@ -89,6 +89,7 @@ try {
     for (const [lens, label] of [
       ["direction", "Hourly direction"],
       ["range", "Hourly range"],
+      ["trade-quality", "Good-trade SHAP"],
       ["validation", "Model validation"],
       ["audit", "Data & audit"],
     ]) {
@@ -113,6 +114,23 @@ try {
           () => document.documentElement.scrollWidth <= innerWidth + 1,
         ),
       );
+      if (lens === "trade-quality") {
+        const tradeResponse = await context.request.get(
+          `${base}/v1/nifty-context/trade-quality`,
+        );
+        const tradePayload = await tradeResponse.json();
+        record(`${viewport.width} trade research no execution`,
+          tradePayload.executionEnabled === false);
+        record(`${viewport.width} trade population preserved`,
+          tradePayload.rows?.length === tradePayload.report?.coverage?.observations,
+          { rows: tradePayload.rows?.length, expected: tradePayload.report?.coverage?.observations });
+        record(`${viewport.width} positive and non-positive retained`,
+          tradePayload.report?.coverage?.good_trades > 0 &&
+          tradePayload.report?.coverage?.non_positive_trades > 0);
+        record(`${viewport.width} honest insufficient state`,
+          tradePayload.state === "DATA_INSUFFICIENT" &&
+          (await root.getByText(/Need 20 complete independent sessions/).count()) > 0);
+      }
       await page.screenshot({
         path: path.join(out, `${viewport.width}-${lens}.png`),
         fullPage: true,

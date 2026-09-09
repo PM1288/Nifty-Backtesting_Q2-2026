@@ -1,5 +1,10 @@
 # NIFTY Explainable Context — isolated research dashboards
 
+The separate MANEESH V7 positive-net outcome experiment is documented in
+[`MANEESH_GOOD_TRADE_SHAP.md`](./MANEESH_GOOD_TRADE_SHAP.md). It shares the
+research dashboard shell but has an independent population, label, persistence
+and minimum-session gate.
+
 ## Scope and safety
 
 This is an additive research module, not an EMA9 replacement, signal gate,

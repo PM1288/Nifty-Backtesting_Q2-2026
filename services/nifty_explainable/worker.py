@@ -16,6 +16,7 @@ import pandas as pd
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
+from trade_quality import run_trade_quality
 
 LOG = logging.getLogger("nifty_context")
 VERSION = "NIFTY_CONTEXT_EXPERIMENT_1"
@@ -315,10 +316,11 @@ def experiment():
 
 
 _last_recovery_attempt = None
+_last_trade_quality_date = None
 
 
 def capture():
-    global _last_recovery_attempt
+    global _last_recovery_attempt, _last_trade_quality_date
     now=pd.Timestamp.now(tz='UTC')
     with connect() as conn:
         sessions=conn.execute("""SELECT trade_date,market_open_ts,market_close_ts FROM public.trading_calendar
@@ -398,16 +400,25 @@ def capture():
             if 0 <= (now-pd.Timestamp(item['cutoff'])).total_seconds()<60:
                 LOG.info('snapshot_abstained cutoff=%s reason=%s',item['cutoff'],item['reason'])
         conn.commit()
+        local_now = now.tz_convert('Asia/Kolkata')
+        if local_now.hour >= 16 and _last_trade_quality_date != local_now.date():
+            report = run_trade_quality(conn, os.getenv('CODE_COMMIT', 'unknown'))
+            _last_trade_quality_date = local_now.date()
+            LOG.info('trade_quality_complete state=%s run_id=%s', report['state'], report['run_id'])
 
 
 if __name__=='__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
-    parser=argparse.ArgumentParser(); parser.add_argument('command',choices=['experiment','capture','capture-loop'])
+    parser=argparse.ArgumentParser(); parser.add_argument('command',choices=['experiment','trade-experiment','capture','capture-loop'])
     args=parser.parse_args()
     with connect() as conn:
         conn.execute(Path('schema.sql').read_text()); conn.commit()
     if args.command=='experiment':
         experiment()
+    elif args.command=='trade-experiment':
+        with connect() as conn:
+            report=run_trade_quality(conn,os.getenv('CODE_COMMIT','unknown'))
+            LOG.info('trade_quality_complete state=%s run_id=%s',report['state'],report['run_id'])
     elif args.command=='capture':
         capture()
     else:

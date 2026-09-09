@@ -35,3 +35,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS context_capture_planned_unique
   ON nifty_context.snapshots(mode,(evidence->>'planned_cutoff'))
   WHERE mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE')
     AND evidence ? 'planned_cutoff';
+CREATE TABLE IF NOT EXISTS nifty_context.trade_quality_runs (
+ id text PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), report jsonb NOT NULL
+);
+CREATE TABLE IF NOT EXISTS nifty_context.trade_quality_examples (
+ run_id text NOT NULL REFERENCES nifty_context.trade_quality_runs(id),
+ signal_key text NOT NULL, evidence jsonb NOT NULL, PRIMARY KEY(run_id,signal_key)
+);
+CREATE TABLE IF NOT EXISTS nifty_context.trade_quality_predictions (
+ run_id text NOT NULL REFERENCES nifty_context.trade_quality_runs(id), signal_key text NOT NULL,
+ result jsonb NOT NULL, explanation jsonb NOT NULL, PRIMARY KEY(run_id,signal_key),
+ FOREIGN KEY(run_id,signal_key) REFERENCES nifty_context.trade_quality_examples(run_id,signal_key)
+);
+CREATE INDEX IF NOT EXISTS trade_quality_run_created ON nifty_context.trade_quality_runs(created_at DESC);

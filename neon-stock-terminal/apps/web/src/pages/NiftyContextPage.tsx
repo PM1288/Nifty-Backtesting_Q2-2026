@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getJson } from "../lib/api";
 import styles from "./NiftyContextPage.module.css";
 import NiftyContextValidation from "./NiftyContextValidation";
+import TradeQualityResearch from "./TradeQualityResearch";
 
 type Explanation = {
   feature_names: string[];
@@ -184,7 +185,7 @@ function Waterfall({
 
 export default function NiftyContextPage() {
   const [params, setParams] = useSearchParams();
-  const lens = ["direction", "range", "validation", "audit"].includes(
+  const lens = ["direction", "range", "trade-quality", "validation", "audit"].includes(
     params.get("lens") ?? "",
   )
     ? params.get("lens")!
@@ -254,7 +255,7 @@ export default function NiftyContextPage() {
       <header>
         <div>
           <h1>NIFTY Model Research</h1>
-          <span>Shadow research · hourly direction and range</span>
+          <span>Shadow research · hourly NIFTY context and MANEESH trade quality</span>
         </div>
         <Link to="/strategy/trading-analytics?view=scalper">
           MANEESH charts
@@ -270,7 +271,7 @@ export default function NiftyContextPage() {
         </button>
       </header>
       <nav aria-label="Research dashboards">
-        {["direction", "range", "validation", "audit"].map((l) => (
+        {["direction", "range", "trade-quality", "validation", "audit"].map((l) => (
           <button
             key={l}
             aria-pressed={lens === l}
@@ -280,6 +281,8 @@ export default function NiftyContextPage() {
               ? "Hourly direction"
               : l === "range"
                 ? "Hourly range"
+                : l === "trade-quality"
+                  ? "Good-trade SHAP"
                 : l === "validation"
                   ? "Model validation"
                   : "Data & audit"}
@@ -291,7 +294,7 @@ export default function NiftyContextPage() {
         <p role="alert">Research service unavailable. Retry with Refresh.</p>
       )}
       {exportError && <p role="alert">{exportError}</p>}
-      {data && (
+      {data && lens !== "trade-quality" && (
         <div className={styles.status}>
           <p>
             {data.state.replaceAll("_", " ")} ·{" "}
@@ -303,7 +306,7 @@ export default function NiftyContextPage() {
           </p>
         </div>
       )}
-      {data?.report && (
+      {data?.report && lens !== "trade-quality" && (
         <section
           className={styles.metrics}
           tabIndex={0}
@@ -521,6 +524,7 @@ export default function NiftyContextPage() {
           )}
         </>
       )}
+      {lens === "trade-quality" && <TradeQualityResearch />}
       {lens === "validation" && (
         <section>
           <h2>Held-out evaluation</h2>

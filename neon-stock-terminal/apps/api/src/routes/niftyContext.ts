@@ -2,6 +2,56 @@ import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
 export function registerNiftyContext(app: Express, prisma: PrismaClient) {
+  app.get("/v1/nifty-context/trade-quality", async (req, res) => {
+    if (process.env.NIFTY_CONTEXT_ENABLED === "false")
+      return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
+    if (req.query.run != null && !/^[a-f0-9]{64}$/.test(String(req.query.run)))
+      return res.status(400).json({ error: { code: "INVALID_RUN" } });
+    try {
+      const runs = await prisma.$queryRawUnsafe<
+        Array<{ id: string; report: Record<string, unknown> }>
+      >(
+        "SELECT id,report FROM nifty_context.trade_quality_runs WHERE ($1::text IS NULL OR id=$1) ORDER BY created_at DESC LIMIT 1",
+        req.query.run ?? null,
+      );
+      if (!runs.length)
+        return res.json({ state: "NOT_RUN", report: null, rows: [], executionEnabled: false });
+      const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+        `SELECT e.signal_key,e.evidence,p.result AS prediction,p.explanation
+         FROM nifty_context.trade_quality_examples e
+         LEFT JOIN nifty_context.trade_quality_predictions p
+           ON p.run_id=e.run_id AND p.signal_key=e.signal_key
+         WHERE e.run_id=$1
+         ORDER BY e.evidence->>'entry_end' DESC,e.evidence->>'symbol'`,
+        runs[0].id,
+      );
+      return res.json({ state: runs[0].report.state, report: runs[0].report, rows, executionEnabled: false });
+    } catch (error) {
+      console.error(JSON.stringify({ event: "trade_quality_read_failed",
+        errorType: error instanceof Error ? error.name : "Unknown" }));
+      return res.status(503).json({ error: { code: "TRADE_QUALITY_UNAVAILABLE" } });
+    }
+  });
+  app.get("/v1/nifty-context/trade-quality/export/:run", async (req, res) => {
+    if (process.env.NIFTY_CONTEXT_ENABLED === "false") return res.status(404).end();
+    if (!/^[a-f0-9]{64}$/.test(req.params.run)) return res.status(400).end();
+    try {
+      const runs = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+        "SELECT * FROM nifty_context.trade_quality_runs WHERE id=$1", req.params.run,
+      );
+      if (!runs.length) return res.status(404).json({ error: { code: "RUN_NOT_FOUND" } });
+      const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+        `SELECT e.signal_key,e.evidence,p.result AS prediction,p.explanation
+         FROM nifty_context.trade_quality_examples e
+         LEFT JOIN nifty_context.trade_quality_predictions p
+           ON p.run_id=e.run_id AND p.signal_key=e.signal_key
+         WHERE e.run_id=$1 ORDER BY e.evidence->>'entry_end'`, req.params.run,
+      );
+      return res.attachment(`maneesh-trade-quality-${req.params.run}.json`).json({ runs, rows });
+    } catch {
+      return res.status(503).json({ error: { code: "EXPORT_UNAVAILABLE" } });
+    }
+  });
   app.get("/v1/nifty-context", async (req, res) => {
     if (process.env.NIFTY_CONTEXT_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });

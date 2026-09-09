@@ -151,6 +151,44 @@
   gap: 6px;
   align-items: center;
 }
+.tradeQuality {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.tradeHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tradeHeading > div { margin-right: auto; }
+.tradeHeading h2,
+.tradeHeading p { margin: 0; }
+.tradeTable {
+  overflow: auto;
+  max-height: 47vh;
+  border: 1px solid #dce4ef;
+  background: white;
+  border-radius: 8px;
+}
+.tradeTable table { border-collapse: separate; border-spacing: 0; min-width: 2250px; }
+.tradeTable thead { position: sticky; top: 0; z-index: 2; background: #eef3fa; }
+.tradeTable tbody tr[data-selected="true"] { background: #eaf0ff; box-shadow: inset 3px 0 #315ad7; }
+.tradeTable th,
+.tradeTable td { text-align: right; vertical-align: top; min-width: 145px; }
+.tradeTable th:first-child { position: sticky; left: 0; z-index: 1; background: inherit; min-width: 190px; text-align: left; }
+.tradeTable small { display: block; color: #526175; font-size: 11px; line-height: 1.35; margin-top: 3px; }
+.positive { color: #087a55; }
+.negative { color: #c93346; }
+.tradeExplanation,
+.rawEvidence { background: white; border: 1px solid #dce4ef; border-radius: 8px; padding: 10px; }
+.factorBars { display: grid; gap: 5px; }
+.factorBars > div { display: grid; grid-template-columns: 250px minmax(40px, 1fr) 100px; align-items: center; gap: 8px; }
+.factorBars i { display: block; height: 8px; background: #087a55; justify-self: start; }
+.factorBars i[data-sign="negative"] { background: #c93346; }
+.factorBars b { text-align: right; font-variant-numeric: tabular-nums; }
+.rawEvidence pre { max-height: 360px; }
 @media (max-width: 1024px) {
   .workspace {
     grid-template-columns: 1fr;

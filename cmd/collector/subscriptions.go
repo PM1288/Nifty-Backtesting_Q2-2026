@@ -16,7 +16,18 @@ import (
 const stockDerivativePlanName = "NIFTY250_STOCK_DERIVATIVES"
 
 func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instruments.Instrument, baseSubs []store.Subscription, cfg *config.Config, prices *priceCache, logger *slog.Logger, now time.Time) ([]store.Subscription, error) {
-	equities := filterKinds(baseSubs, "EQUITY")
+	baseEquities := filterKinds(baseSubs, "EQUITY")
+	equities, fnoEquityAdditions := reconcileCurrentStockFNOEquities(
+		insts,
+		baseEquities,
+		cfg.Universe.EquitiesExchange,
+		cfg.Universe.DerivativesExchange,
+		cfg.WS.ModeEquities,
+		cfg.Universe.Options.StockUnderlyingsMax,
+		cfg.Universe.Futures.EnableStockFutures,
+		cfg.Universe.Options.EnableStockOptions,
+		now,
+	)
 	indices := filterKinds(baseSubs, "INDEX")
 	liveSubs, liveErr := st.ListOIISLiveSubscriptions(ctx)
 	if liveErr != nil && logger != nil {
@@ -27,6 +38,7 @@ func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instrume
 		return nil, err
 	}
 	desired := append([]store.Subscription{}, baseSubs...)
+	desired = appendUniqueSubscriptions(desired, fnoEquityAdditions...)
 	desired = appendUniqueSubscriptions(desired, liveSubs...)
 	desired = append(desired, selection.Subscriptions...)
 	for i := range desired {
@@ -58,6 +70,8 @@ func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instrume
 	if logger != nil {
 		logger.Info("subscriptions_refreshed",
 			"base", len(baseSubs),
+			"stock_fno_equities", len(equities),
+			"stock_fno_equities_added", len(fnoEquityAdditions),
 			"oiis_live", len(liveSubs),
 			"derivatives", len(selection.Subscriptions),
 			"stock_derivative_plan", len(planRows),
@@ -67,6 +81,133 @@ func refreshSubscriptions(ctx context.Context, st *store.Store, insts []instrume
 		)
 	}
 	return keep, nil
+}
+
+// reconcileCurrentStockFNOEquities makes the cash and derivative sides of the
+// current stock-F&O universe agree. The static equity CSV remains the base
+// universe, but a stock newly admitted to F&O must not appear in analytics with
+// option contracts while its underlying is never subscribed.
+//
+// Existing base equities are preferred when the configured cap is reached.
+// Missing current F&O names are resolved only to real cash instruments from the
+// same instrument master; no token or symbol is inferred.
+func reconcileCurrentStockFNOEquities(insts []instruments.Instrument, baseEquities []store.Subscription, equityExchange, derivativeExchange, equityMode string, maxUnderlyings int, enableFutures, enableOptions bool, now time.Time) ([]store.Subscription, []store.Subscription) {
+	if !enableFutures && !enableOptions {
+		return baseEquities, nil
+	}
+
+	currentFNO := map[string]string{}
+	for _, inst := range insts {
+		if !strings.EqualFold(inst.Exchange, derivativeExchange) || inst.Expiry == nil || derivativeExpired(*inst.Expiry, now) {
+			continue
+		}
+		kind := strings.ToUpper(strings.TrimSpace(inst.InstrumentType))
+		if (kind != "FUTSTK" || !enableFutures) && (kind != "OPTSTK" || !enableOptions) {
+			continue
+		}
+		key := universe.NormalizeIndexUnderlying(inst.Name)
+		if key == "" || strings.HasSuffix(key, "NSETEST") {
+			continue
+		}
+		name := strings.ToUpper(strings.TrimSpace(inst.Name))
+		if previous, ok := currentFNO[key]; !ok || name < previous {
+			currentFNO[key] = name
+		}
+	}
+
+	cashByUnderlying := map[string][]instruments.Instrument{}
+	for _, inst := range insts {
+		if !strings.EqualFold(inst.Exchange, equityExchange) {
+			continue
+		}
+		kind := strings.ToUpper(strings.TrimSpace(inst.InstrumentType))
+		if kind != "EQ" && !strings.HasSuffix(strings.ToUpper(strings.TrimSpace(inst.TradingSymbol)), "-EQ") {
+			continue
+		}
+		key := universe.NormalizeIndexUnderlying(strings.TrimSuffix(strings.ToUpper(strings.TrimSpace(inst.TradingSymbol)), "-EQ"))
+		if key == "" {
+			key = universe.NormalizeIndexUnderlying(inst.Name)
+		}
+		if key != "" {
+			cashByUnderlying[key] = append(cashByUnderlying[key], inst)
+		}
+	}
+	for key := range cashByUnderlying {
+		sort.SliceStable(cashByUnderlying[key], func(i, j int) bool {
+			return cashByUnderlying[key][i].TradingSymbol < cashByUnderlying[key][j].TradingSymbol
+		})
+	}
+
+	baseByUnderlying := map[string]store.Subscription{}
+	for _, sub := range baseEquities {
+		key := stockUnderlyingKey(sub)
+		if key != "" {
+			baseByUnderlying[key] = sub
+		}
+	}
+	keys := make([]string, 0, len(currentFNO))
+	for key := range currentFNO {
+		keys = append(keys, key)
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		_, iBase := baseByUnderlying[keys[i]]
+		_, jBase := baseByUnderlying[keys[j]]
+		if iBase != jBase {
+			return iBase
+		}
+		return keys[i] < keys[j]
+	})
+	if maxUnderlyings > 0 && len(keys) > maxUnderlyings {
+		keys = keys[:maxUnderlyings]
+	}
+
+	selected := make([]store.Subscription, 0, len(keys))
+	additions := make([]store.Subscription, 0)
+	for _, key := range keys {
+		if sub, ok := baseByUnderlying[key]; ok {
+			selected = append(selected, sub)
+			continue
+		}
+		candidates := cashByUnderlying[key]
+		if len(candidates) == 0 {
+			continue
+		}
+		inst := candidates[0]
+		underlying := currentFNO[key]
+		if underlying == "" {
+			underlying = strings.TrimSuffix(strings.ToUpper(strings.TrimSpace(inst.TradingSymbol)), "-EQ")
+		}
+		sub := store.Subscription{
+			Exchange:       inst.Exchange,
+			SymbolToken:    inst.SymbolToken,
+			Mode:           equityMode,
+			Kind:           "EQUITY",
+			TradingSymbol:  inst.TradingSymbol,
+			Underlying:     underlying,
+			InstrumentType: inst.InstrumentType,
+			Priority:       20,
+			Active:         true,
+			Reason:         "current_stock_fno_underlying",
+		}
+		selected = append(selected, sub)
+		additions = append(additions, sub)
+	}
+	return selected, additions
+}
+
+func derivativeExpired(expiry time.Time, now time.Time) bool {
+	expiryDate := time.Date(expiry.Year(), expiry.Month(), expiry.Day(), 0, 0, 0, 0, expiry.Location())
+	nowInExpiryLocation := now.In(expiry.Location())
+	today := time.Date(nowInExpiryLocation.Year(), nowInExpiryLocation.Month(), nowInExpiryLocation.Day(), 0, 0, 0, 0, expiry.Location())
+	return expiryDate.Before(today)
+}
+
+func stockUnderlyingKey(sub store.Subscription) string {
+	underlying := strings.TrimSpace(sub.Underlying)
+	if underlying == "" {
+		underlying = strings.TrimSuffix(strings.ToUpper(strings.TrimSpace(sub.TradingSymbol)), "-EQ")
+	}
+	return universe.NormalizeIndexUnderlying(underlying)
 }
 
 func appendUniqueSubscriptions(base []store.Subscription, extra ...store.Subscription) []store.Subscription {

@@ -3882,3 +3882,23 @@ or outcomes were deleted.
   now reserves an explicit chart-status panel showing independent-session
   progress instead of leaving an unexplained blank area while the gate is
   locked.
+
+## 2026-09-09 — Current stock-F&O underlying coverage repair
+
+- Branch: `fix/fno-underlying-option-coverage-20260909`.
+- Production audit identified a membership mismatch: Trading Analytics exposed
+  every current stock-option name from the SmartAPI master, but derivative
+  collection only considered equities in the mounted NIFTY LargeMidcap 250 CSV.
+- Dated coverage: 210 current stock-option underlyings; 208 had cash bars,
+  option bars and an exact CE/PE pair on 9 September. `ATHERENERG` and `SAGILITY`
+  had current cash and F&O master identities but no subscriptions/data.
+  `IDFCFIRSTB` was healthy under its exact canonical symbol and token `11184`.
+- The collector now reconciles current non-expired FUTSTK/OPTSTK names to actual
+  NSE cash instruments, excludes synthetic `NSETEST` rows, respects the
+  configured stock-underlying cap, adds missing cash subscriptions and seeds
+  their prices before initial ATM option selection.
+- No schema, API, dashboard, strategy, V7 rule, paper/live order, permission or
+  historical-row mutation is included. Uncaptured historical option OI remains
+  explicitly unavailable rather than being fabricated.
+- Evidence and rerun commands:
+  `docs/worklogs/current-stock-fno-coverage-2026-09-09.md`.

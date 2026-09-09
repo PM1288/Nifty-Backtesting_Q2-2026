@@ -217,7 +217,23 @@ func main() {
 		logger.Error("rest queue start failed", "err", err)
 		os.Exit(1)
 	}
-	seedPriceCache(ctx, cfg, tokenProvider, baseSubs, priceCache, queue, logger)
+	// Seed prices for every current stock-F&O cash underlying, including names
+	// admitted after the static constituent CSV was produced. Option selection
+	// needs a real underlying price, so seeding only baseSubs would delay those
+	// option subscriptions until a later refresh after the first cash tick.
+	_, startupFNOEquityAdditions := reconcileCurrentStockFNOEquities(
+		insts,
+		filterKinds(baseSubs, "EQUITY"),
+		cfg.Universe.EquitiesExchange,
+		cfg.Universe.DerivativesExchange,
+		cfg.WS.ModeEquities,
+		cfg.Universe.Options.StockUnderlyingsMax,
+		cfg.Universe.Futures.EnableStockFutures,
+		cfg.Universe.Options.EnableStockOptions,
+		time.Now().In(loc),
+	)
+	seedSubs := appendUniqueSubscriptions(append([]store.Subscription{}, baseSubs...), startupFNOEquityAdditions...)
+	seedPriceCache(ctx, cfg, tokenProvider, seedSubs, priceCache, queue, logger)
 
 	subIndex := newSubscriptionIndex()
 	optionStates := newOptionStateIndex()

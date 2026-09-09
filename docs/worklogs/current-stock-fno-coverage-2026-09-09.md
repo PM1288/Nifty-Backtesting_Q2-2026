@@ -1,0 +1,76 @@
+# Current stock-F&O underlying coverage repair — 9 September 2026
+
+## Scope
+
+This change reconciles the collector's cash-equity subscriptions with the
+current stock-F&O names in the authoritative SmartAPI instrument master. It is
+collection plumbing only. It does not change chart calculations, V7 entries,
+option selection arithmetic, strategy rules, paper/live orders, permissions or
+stored historical rows.
+
+## Failure and cause
+
+The Trading Analytics universe is current-master driven, while the collector's
+stock-derivative plan previously iterated only cash equities from the mounted
+NIFTY LargeMidcap 250 CSV. A newly admitted F&O stock could therefore be shown
+in the selector with valid option contracts but have no cash subscription and
+no derivative collection plan.
+
+The dated production audit found 210 current stock-option underlyings. For the
+9 September session, 208 had cash minute bars, option minute bars and at least
+one exact CE/PE strike pair with bars. The two gaps were:
+
+- `ATHERENERG` — cash token `757645`; current FUTSTK and OPTSTK contracts exist,
+  but neither cash nor options had been subscribed.
+- `SAGILITY` — cash token `27052`; current FUTSTK and OPTSTK contracts exist,
+  but neither cash nor options had been subscribed.
+
+`IDFCFIRSTB` was verified separately. The canonical symbol is `IDFCFIRSTB`
+(not `IDFCFIRST`), cash token `11184`. Its cash data, current contracts and exact
+CE/PE chart data were present in PostgreSQL and the authenticated API.
+
+Synthetic SmartAPI test instruments whose names end in `NSETEST` are excluded.
+They are instrument-master test records, not tradable application underlyings.
+
+## Implementation
+
+- Keep the static cash/index base subscriptions unchanged.
+- Build the current eligible stock-F&O name set from non-expired `FUTSTK` and/or
+  `OPTSTK` master rows, according to enabled collector features.
+- Resolve every missing name to an actual NSE cash instrument in the same
+  master. No symbol or token is fabricated.
+- Prefer existing base equities and apply `stock_underlyings_max`
+  deterministically.
+- Add resolved missing cash subscriptions to the desired collector set with
+  reason `current_stock_fno_underlying`.
+- Seed those cash prices at startup before selecting ATM option subscriptions,
+  so newly admitted names do not wait for a later refresh cycle.
+- Continue using the existing derivative plan, WebSocket capacity enforcement,
+  quote rotation, recurring refresh and cash/index REST fallback.
+
+## Missing-data and recovery semantics
+
+The change prevents future blank underlyings after F&O membership changes.
+Existing cash/index REST fallback remains eligible for the newly active cash
+subscriptions. Historical option OI that was never captured cannot be recreated
+and remains missing; the collector does not turn it into zero. A post-close
+deployment can establish current subscriptions, but full minute coverage is
+verified on the next live session unless an authorised point-in-time source can
+truthfully backfill the missing observations.
+
+## Tests
+
+- Adds a missing current F&O cash underlying.
+- Rejects expired derivatives and unresolved cash identities.
+- Excludes `NSETEST` master records.
+- Applies the configured cap while preferring existing base equities.
+- Existing subscription deduplication and derivative selection tests remain.
+
+Run:
+
+```bash
+go test ./cmd/collector ./internal/universe
+go test ./...
+bash scripts/verify/canonical-repository-gate.sh
+```
+

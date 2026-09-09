@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-09 current stock-F&O collection reconciliation: Trading Analytics and
+the collector now use the same current SmartAPI stock-F&O membership boundary.
+Missing cash underlyings are resolved from the real NSE master, startup prices
+are seeded before ATM option selection, synthetic `NSETEST` rows are excluded,
+and configured capacity remains authoritative. Existing NIFTY-250/index
+subscriptions, V7 rules, chart calculations, OI meanings, orders and stored
+history are unchanged. Evidence:
+`docs/worklogs/current-stock-fno-coverage-2026-09-09.md`.
+
 2026-09-09 NIFTY Model Research recovery: missed hourly capture windows are
 retried every five minutes across the retained 15-day minute-data horizon.
 Recovered rows retain planned and actual timestamps, delay, exact source rows

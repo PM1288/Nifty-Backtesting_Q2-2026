@@ -3820,3 +3820,22 @@ or outcomes were deleted.
 - Detailed map and evidence:
   `docs/trading-analytics/SCALPER_READABILITY_V4_20260909.md` and
   `output/playwright/scalper-v4-local-20260909/`.
+# 2026-09-09 — Scalper readability V4 full-brief verification
+
+- Canonical branch: `feat/scalper-readable-inspector-v4`.
+- Completed the second-pass verification against the full V4 brief: persisted
+  presentation/pane geometry, stable layer registry, price/full presets,
+  Session/Visible/manual axes, structured pane readouts, ladder metric modes,
+  exact snapshot copy/jump, signal inspection, scoped exports, fullscreen and
+  compliant TradingView attribution.
+- Preserved `FNO_PAIRED_EMA9_POSITION_BODY70_NEXT_OPEN_V7` and exact A-open to
+  B-close measurement arithmetic. No API, schema, collector, broker/order or
+  alert-delivery changes.
+- Validation: web typecheck/build PASS; 117/117 web tests PASS; API
+  typecheck/build PASS and 190/190 tests PASS; authenticated live-API browser
+  suite 41/41 PASS; canonical repository gate PASS.
+- Browser evidence: `output/playwright/scalper-v4-local-20260909/` (ignored;
+  operational screenshots are not committed).
+- Remaining source limitations are visible, not fabricated: selected-contract
+  IV history, comparable interval/cumulative delta OI and bid/ask spread may be
+  unavailable in a retained response; max pain remains snapshot/indicative.

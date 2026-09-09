@@ -49,7 +49,7 @@ try {
   const terminal = page.getByTestId("aligned-scalper-terminal");
   await terminal.waitFor({ state: "visible", timeout: 60_000 });
   await page.getByText("Loading retained minute paths…", { exact: true }).waitFor({ state: "hidden", timeout: 60_000 }).catch(() => {});
-  await page.waitForTimeout(1_000);
+  await page.waitForTimeout(2_500);
 
   const labels = terminal.locator('[data-testid^="aligned-pane-label-"]');
   check("five baseline panes", await labels.count() === 5, `${await labels.count()} labels`);
@@ -70,15 +70,19 @@ try {
   const profileSelect = terminal.locator("label").filter({ hasText: /^Profile/ }).locator("select");
   const profileOptions = await profileSelect.locator("option").count();
   check("OI profile offers current, delta and composite modes", profileOptions === 3, `${profileOptions} options`);
+  check("price pane readout uses labelled numeric cells", await labels.nth(0).locator("i").count() === 5, `${await labels.nth(0).locator("i").count()} cells`);
+  check("TradingView attribution remains visible", await terminal.locator('a[href*="tradingview.com"]').count() >= 1);
+  check("price focus and full analysis presets are visible", await terminal.getByRole("button", { name: "Price focus" }).isVisible() && await terminal.getByRole("button", { name: "Full analysis" }).isVisible());
 
   const root = terminal.locator('[class*="alignedChartHost"] > *').first();
   await root.evaluate((node) => { node.dataset.lifecycleProbe = "stable"; });
+  const chartLifecycleStable = async () => await root.getAttribute("data-lifecycle-probe") === "stable";
   await terminal.evaluate((node) => { node.dataset.componentProbe = "stable"; });
   const surface = terminal.getByRole("region", { name: "Aligned NIFTY, exact call, exact put and evidence panes" });
   const box = await surface.boundingBox();
   if (box) await page.mouse.move(box.x + 300, box.y + 150, { steps: 5 });
   await page.waitForTimeout(100);
-  check("cursor does not recreate chart", await root.getAttribute("data-lifecycle-probe") === "stable");
+  check("cursor does not recreate chart", await chartLifecycleStable());
 
   const divider = terminal.getByRole("button", { name: "Resize evidence inspector" });
   const dividerBox = await divider.boundingBox();
@@ -88,7 +92,39 @@ try {
     await page.mouse.move(dividerBox.x - 40, dividerBox.y + 200);
     await page.mouse.up();
   }
-  check("divider resize does not recreate chart", await root.getAttribute("data-lifecycle-probe") === "stable");
+  check("divider resize does not recreate chart", await chartLifecycleStable());
+  const profileBar = terminal.locator('[data-profile-coordinate]').first();
+  const profileBefore = await profileBar.getAttribute("data-profile-coordinate");
+  const hostBox = await terminal.locator('[class*="alignedChartHost"]').boundingBox();
+  if (hostBox) {
+    await page.mouse.move(hostBox.x + hostBox.width - 18, hostBox.y + 170);
+    await page.mouse.down();
+    await page.mouse.move(hostBox.x + hostBox.width - 18, hostBox.y + 220, { steps: 6 });
+    await page.mouse.up();
+  }
+  await page.waitForTimeout(100);
+  const profileGeometry = await profileBar.evaluate((node) => {
+    const value = Number(node.getAttribute("data-profile-coordinate"));
+    const surface = node.closest('[aria-label="Aligned NIFTY, exact call, exact put and evidence panes"]');
+    return { value, actual: node.getBoundingClientRect().top - (surface?.getBoundingClientRect().top ?? 0) };
+  });
+  check("OI profile tracks native price coordinate after axis gesture", Math.abs(profileGeometry.value - profileGeometry.actual) <= 2, JSON.stringify({ before: profileBefore, after: profileGeometry }));
+  const savedPaneHeights = await page.evaluate(() => JSON.parse(localStorage.getItem("n50.scalper.aligned.presentation.v4") ?? "null")?.paneHeights);
+  check("native pane sizes are persisted as presentation state", Number(savedPaneHeights?.underlying) >= 320 && Number(savedPaneHeights?.call) >= 210, JSON.stringify(savedPaneHeights));
+  await terminal.getByLabel("Price range").selectOption("visible");
+  await page.waitForTimeout(100);
+  check("price-range presentation change does not recreate chart", await chartLifecycleStable());
+  await terminal.getByLabel("Price range").selectOption("session");
+  await terminal.getByRole("button", { name: "Full analysis" }).click();
+  await page.waitForTimeout(150);
+  check("full-analysis preset does not recreate chart", await chartLifecycleStable());
+  await terminal.getByRole("button", { name: "Price focus" }).click();
+  await page.waitForTimeout(150);
+  check("price-focus preset restores baseline without recreating chart", await chartLifecycleStable() && await labels.count() === 5);
+  const rsiToggle = terminal.getByLabel("RSI", { exact: true });
+  for (let index = 0; index < 50; index += 1) await rsiToggle.click();
+  await page.waitForTimeout(150);
+  check("50 layer toggles retain one chart and no chart recreation", await chartLifecycleStable() && await terminal.locator('[class*="alignedChartHost"] .tv-lightweight-charts').count() === 1);
   const contextBeforeRefresh = {
     data: await terminal.getAttribute("data-chart-context"),
     config: await terminal.getAttribute("data-chart-config"),
@@ -99,7 +135,7 @@ try {
     data: await terminal.getAttribute("data-chart-context"),
     config: await terminal.getAttribute("data-chart-config"),
   };
-  check("ordinary refresh does not recreate chart", await root.getAttribute("data-lifecycle-probe") === "stable", JSON.stringify({
+  check("ordinary refresh does not recreate chart", await chartLifecycleStable(), JSON.stringify({
     contextBeforeRefresh,
     contextAfterRefresh,
     componentProbe: await terminal.getAttribute("data-component-probe"),
@@ -111,6 +147,13 @@ try {
   check("levels remain accessible", (await terminal.innerText()).includes("All structural levels"));
   await terminal.getByLabel("Inspector sections").getByRole("button", { name: "Measure" }).click();
   check("A-open/B-close basis remains visible", (await terminal.innerText()).includes("A open → B close"));
+  await terminal.getByLabel("Inspector sections").getByRole("button", { name: "Chain" }).click();
+  const ladderMetric = terminal.getByLabel("Outside columns");
+  await ladderMetric.selectOption("oi");
+  check("strike ladder supports premium, OI and delta modes", await ladderMetric.locator("option").count() === 3);
+  check("selected pair and ATM labels are independently available", /Selected/.test(await terminal.innerText()) && /ATM/.test(await terminal.innerText()));
+  const savedPreferences = await page.evaluate(() => JSON.parse(localStorage.getItem("n50.scalper.aligned.presentation.v4") ?? "null"));
+  check("presentation preferences persist without market identity", savedPreferences?.ladderMetric === "oi" && !("selectedStrike" in savedPreferences), JSON.stringify(savedPreferences));
 
   for (const name of ["RSI", "MACD", "PCR"]) await terminal.getByLabel(name, { exact: true }).check();
   await page.waitForTimeout(400);
@@ -122,6 +165,7 @@ try {
   await page.screenshot({ path: path.join(output, "screenshots", "scalper-v4-separated-analytics-1920x1080.png"), fullPage: true, animations: "disabled" });
   for (const name of ["RSI", "MACD", "PCR"]) await terminal.getByLabel(name, { exact: true }).uncheck();
   await terminal.getByLabel("Inspector sections").getByRole("button", { name: "Snapshot" }).click();
+  check("exact snapshot copy action is available", await terminal.getByRole("button", { name: "Copy exact snapshot" }).isVisible());
   await viewport.evaluate((node) => { node.scrollTop = 0; });
 
   await page.screenshot({ path: path.join(output, "screenshots", "scalper-v4-1920x1080.png"), fullPage: true, animations: "disabled" });

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ALIGNED_PANE_MINIMUMS,
+  aggregateOiFlows,
   alignedChartContentHeight,
   alignedPaneManifest,
   formatScalperNumber,
@@ -9,6 +10,7 @@ import {
   inspectionBar,
   oiCompositeSegments,
   paddedRenderBounds,
+  parseScalperPresentationPreferences,
 } from "../src/lib/scalperAlignedView";
 
 test("five baseline panes retain their readable minimum heights", () => {
@@ -40,6 +42,22 @@ test("OI composite separates retained, added and removed amounts", () => {
   });
 });
 
+test("opposing OI changes retain gross additions and removals", () => {
+  assert.deepEqual(aggregateOiFlows([20_000, -20_000]), {
+    net: 0,
+    additions: 20_000,
+    removals: 20_000,
+  });
+});
+
+test("screenshot arithmetic fixture proves formatting only", () => {
+  const ce = 2_385_045;
+  const pe = 2_690_155;
+  assert.equal(formatScalperNumber(ce, 0), "23,85,045");
+  assert.equal(formatScalperNumber(pe, 0), "26,90,155");
+  assert.ok(Math.abs(pe / ce - 1.127926) < 0.000001);
+});
+
 test("optional analytical units receive independent panes", () => {
   const panes = alignedPaneManifest({ rsi: true, macd: true, pcr: true });
   assert.deepEqual(panes.slice(-3), ["rsi", "macd", "pcr"]);
@@ -67,4 +85,29 @@ test("formatters preserve zero, missingness and signs", () => {
   assert.equal(formatSignedScalperNumber(1.2), "+1.20");
   assert.equal(formatSignedScalperNumber(-1.2), "-1.20");
   assert.equal(formatSignedScalperNumber(-0), "0.00");
+});
+
+test("presentation preferences are validated and contain no market context", () => {
+  assert.deepEqual(parseScalperPresentationPreferences({
+    inspectorWidth: 999,
+    inspectorSection: "levels",
+    paneVisibility: { rsi: true, macd: false, pcr: true },
+    workspacePreset: "custom",
+    ladderMetric: "oi",
+    compactOi: false,
+    selectedStrike: 23_450,
+  }), {
+    version: 4,
+    inspectorWidth: 460,
+    inspectorSection: "levels",
+    paneVisibility: { rsi: true, macd: false, pcr: true },
+    workspacePreset: "custom",
+    ladderMetric: "oi",
+    compactOi: false,
+    priceRangeMode: "session",
+    paneHeights: {},
+  });
+  assert.equal(parseScalperPresentationPreferences({ inspectorSection: "bad" }).inspectorSection, "snapshot");
+  assert.equal(parseScalperPresentationPreferences({ inspectorWidth: 1 }).inspectorWidth, 320);
+  assert.deepEqual(parseScalperPresentationPreferences({ paneHeights: { underlying: 420.4, call: 20, rogue: 200 } }).paneHeights, { underlying: 420 });
 });

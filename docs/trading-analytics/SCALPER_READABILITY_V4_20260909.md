@@ -52,18 +52,48 @@ Implemented on branch `feat/scalper-readable-inspector-v4`.
 ### Recorded checks
 
 - Web typecheck: PASS.
-- Web tests: PASS, 114/114.
+- Web tests: PASS, 117/117.
 - Web production build: PASS.
 - API typecheck: PASS.
 - API tests: PASS, 190/190.
 - API build: PASS.
-- Authenticated local-Vite/live-API browser suite: PASS, 28/28.
+- Authenticated local-Vite/live-API browser suite: PASS, 41/41.
 - Browser dimensions exercised: 1920×1080, 1440×900, 1366×768 and
   390×844. The checks include pane pixel geometry, internal chart scrolling,
   28px selected premiums, chart-root stability across cursor/divider/refetch,
   separate analytical panes, all inspector sections, responsive sheet,
   Escape/focus restoration, OI profile modes, page overflow and runtime
-  errors.
+  errors. The expanded second-pass checks also cover labelled pane readouts,
+  TradingView attribution, Session/Visible price-range changes, Price focus and
+  Full analysis presets, 50 repeated layer toggles without chart recreation,
+  native price-axis/profile alignment, persisted pane sizes, ladder metric
+  switching and presentation-state isolation.
+
+## Full-brief verification additions
+
+- Presentation preferences use the versioned
+  `n50.scalper.aligned.presentation.v4` key. Only inspector width/section, pane
+  heights/visibility, range mode, ladder view and number presentation are
+  stored; instrument, quote, contract and measurement data are excluded.
+- Price focus and Full analysis are explicit reversible presets. RSI, MACD and
+  selected-pair PCR are added/removed through the stable chart registry; 50
+  repeated toggles retain one chart root.
+- Session and Visible-candles ranges are explicit. Existing per-instrument
+  manual limits now reach the aligned renderer rather than applying only to the
+  classic renderer.
+- Pane readouts use labelled O/H/L/C/EMA cells. Snapshot actions copy raw
+  structured values and focus the exact chart time.
+- The strike ladder switches between premium, current OI and snapshot delta OI
+  without changing the selected pair. Compact/exact OI display is a persisted
+  presentation preference.
+- Export actions separately provide candle CSV, OI-observation CSV, complete
+  aligned evidence JSON and measurement JSON. Fullscreen retains the same
+  read-only component.
+- OI profile coordinates are refreshed during price-axis/pane gestures and use
+  the underlying series coordinate conversion. The displayed scale maximum is
+  explicit.
+- The official TradingView attribution logo is retained in normal and
+  fullscreen rendering.
 
 Browser evidence:
 
@@ -89,7 +119,10 @@ Browser evidence:
   a historical path.
 - The chart response supplies provider-native OI units, so the UI does not
   relabel them as contracts or shares.
+- Bid/ask spread is not present in this retained selected-pair response. The
+  metric row therefore remains explicitly unavailable rather than deriving a
+  spread from unrelated fields.
 
-Release/deployment state is recorded after the canonical gate, commit and
-authorised release procedure. This document does not treat a local build as a
-production deployment.
+Release state is recorded after the canonical gate and feature-branch commit.
+Production deployment remains a separate authorised release action; this
+document does not treat a local build as a production deployment.

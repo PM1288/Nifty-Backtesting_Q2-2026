@@ -772,6 +772,7 @@ export function TradingAnalyticsScalper({
           interval={interval}
           maxPainStrikes={effectiveExpiry === expiry ? maxPainStrikes : []}
           signals={signals}
+          manualBounds={(panes ?? []).slice(0, 3).map((_, index) => validManualBounds(index))}
         />
       </Suspense> : renderer === "classic" ? <div className={styles.scalperWorkspace}>
         {panes && panes.length > 0 && (

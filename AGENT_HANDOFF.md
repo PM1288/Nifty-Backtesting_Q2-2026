@@ -3906,3 +3906,13 @@ or outcomes were deleted.
   explicitly unavailable rather than being fabricated.
 - Evidence and rerun commands:
   `docs/worklogs/current-stock-fno-coverage-2026-09-09.md`.
+- Deployed application commit:
+  `bbe3f799c196f2302f9fd9ebfcd7a1be7ae2fab8`; collector image
+  `sha256:e437f7615b657c669f11759f48382700e36fd7a037f55df24d071f4559aee35d`.
+  The collector is healthy with zero restarts. Startup repair completed 22/22
+  requests with zero failures/throttles and upserted 2,654 available OHLCV
+  bars. Post-repair SQL is 210/210 for cash, any option and exact CE/PE-pair
+  coverage. Authenticated deployed browser checks for ATHERENERG and SAGILITY
+  returned three non-empty panes and no page errors.
+- Rollback image retained:
+  `trading-stack-novius2-collector:pre-fno-universe-20260909`.

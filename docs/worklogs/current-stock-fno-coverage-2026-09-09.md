@@ -77,3 +77,27 @@ go test ./cmd/collector ./internal/universe
 go test ./...
 bash scripts/verify/canonical-repository-gate.sh
 ```
+
+## Production verification
+
+- Application commit: `bbe3f799c196f2302f9fd9ebfcd7a1be7ae2fab8`.
+- Collector image:
+  `sha256:e437f7615b657c669f11759f48382700e36fd7a037f55df24d071f4559aee35d`.
+- Container: healthy, zero restarts after recreate.
+- Startup reconciliation: 210 current stock-F&O equities, two added names,
+  3,000 active subscriptions within the configured WebSocket capacity.
+- Startup repair: 22/22 cash/future/option requests succeeded, zero throttles,
+  2,654 available SmartAPI OHLCV bars upserted.
+- Post-repair SQL: 210/210 current stock-option underlyings have cash bars,
+  option bars and at least one exact CE/PE strike pair with bars for the dated
+  session.
+- Authenticated deployed UI/API: ATHERENERG returned underlying/CE/PE pane bars
+  `74/73/58`; SAGILITY returned `74/41/44`; both selectors retained the exact
+  stock identity, both chart requests returned HTTP 200 and the browser emitted
+  no page errors.
+- IDFCFIRSTB authenticated API remained healthy at its ATM strike: underlying,
+  CE and PE panes returned non-empty retained paths.
+
+Rollback image retained as
+`trading-stack-novius2-collector:pre-fno-universe-20260909`. Recreate only the
+collector from that image; do not alter PostgreSQL or unrelated services.

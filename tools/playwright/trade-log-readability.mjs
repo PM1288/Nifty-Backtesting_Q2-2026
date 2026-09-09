@@ -4,7 +4,7 @@ import {chromium} from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
 const remote='https://n50.nifty50today.co.in/n50';
 const local=process.env.PLAYWRIGHT_BASE_URL??'http://127.0.0.1:5178/n50';
-const out=path.resolve('output/playwright/trade-log-readability');
+const out=path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR??'output/playwright/trade-log-readability');
 await fs.mkdir(out,{recursive:true});
 const env=await fs.readFile('/home/novius2/trading-stack/.env','utf8');
 const password=env.split(/\r?\n/).find(l=>l.startsWith('DEV_LOCAL_AUTH_PASSWORD='))?.split('=').slice(1).join('=').trim();
@@ -23,8 +23,8 @@ try {
  await page.goto('file:///home/novius2/NIFTY50/Dashboards/NIFTY_Trade_Log_Interactive_Preview_20260909_v1_0.html');
  await page.screenshot({path:path.join(out,'reference-preview.png'),fullPage:true});
  await page.goto(`${remote}/strategy/trading-analytics?view=trade-log`);
- await page.getByRole('heading',{name:'Scalper trade observation log'}).waitFor({timeout:60000});
- await page.screenshot({path:path.join(out,'before-1440.png'),fullPage:true});
+ await page.getByRole('heading',{name:local===remote?'Trade observations':'Scalper trade observation log',exact:true}).waitFor({timeout:60000});
+ await page.screenshot({path:path.join(out,local===remote?'deployed-initial-1440.png':'before-1440.png'),fullPage:true});
  const before=await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}));
  // Local frontend, authenticated production GETs only. Never send orders or notifications.
  const forbidden=[];let latestLog=payload;let failContext=false;let failedContextRequests=0;

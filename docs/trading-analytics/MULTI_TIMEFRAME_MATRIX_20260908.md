@@ -64,3 +64,11 @@ nine panes, one-viewport geometry, no horizontal overflow, no application
 runtime errors, and no serious/critical axe violations. The evidence used the
 retained 8 September 2026 NIFTY `23650` CE/PE pair and kept it explicitly
 separate from the 15 September current-chain context.
+
+## Timezone correction — 9 September 2026
+
+All Lightweight Charts time axes in MANEESH now use the shared explicit
+`Asia/Kolkata` formatter. This covers both this matrix and the original aligned
+Scalper, including bottom-axis ticks and crosshair labels. Epoch `04:00 UTC` is
+therefore shown as `09:30` on the NSE chart. Source timestamps remain unchanged;
+only their presentation is converted to IST.

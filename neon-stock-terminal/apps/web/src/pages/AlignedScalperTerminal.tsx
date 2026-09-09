@@ -23,6 +23,7 @@ import {
   profileWidth,
   roundNumberGuides,
 } from "../lib/tradingAnalyticsChartView";
+import { istChartTimeLabel } from "../lib/tradingAnalyticsTime";
 import styles from "./TradingAnalyticsPage.module.css";
 
 type Row = Record<string, unknown>;
@@ -201,6 +202,7 @@ export function AlignedScalperTerminal({
         panes: { separatorColor: "#d7e0eb", separatorHoverColor: "#3b82f666", enableResize: true },
         attributionLogo: false,
       },
+      localization: { locale: "en-IN", timeFormatter: istChartTimeLabel },
       grid: {
         vertLines: { color: "#eef2f7", style: LineStyle.SparseDotted },
         horzLines: { color: "#eef2f7", style: LineStyle.SparseDotted },
@@ -211,7 +213,7 @@ export function AlignedScalperTerminal({
         horzLine: { color: "#64748b88", width: 1, style: LineStyle.Dotted, labelBackgroundColor: "#315ad7" },
       },
       rightPriceScale: { borderColor: "#cbd5e1", scaleMargins: { top: 0.08, bottom: 0.08 } },
-      timeScale: { borderColor: "#cbd5e1", timeVisible: true, secondsVisible: false, rightOffset: 3, barSpacing: 9, minBarSpacing: 3 },
+      timeScale: { borderColor: "#cbd5e1", timeVisible: true, secondsVisible: false, rightOffset: 3, barSpacing: 9, minBarSpacing: 3, tickMarkFormatter: istChartTimeLabel },
       handleScroll: selecting ? false : { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
       handleScale: selecting ? false : { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
     });

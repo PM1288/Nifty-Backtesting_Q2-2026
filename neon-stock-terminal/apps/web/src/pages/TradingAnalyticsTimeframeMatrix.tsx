@@ -9,7 +9,6 @@ import {
   createChart,
   type IChartApi,
   type ISeriesApi,
-  type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
 import { getJson } from "../lib/api";
@@ -24,6 +23,7 @@ import {
   type MatrixPane,
   type MatrixSide,
 } from "../lib/multiTimeframeMatrix";
+import { chartTimeToIso, istChartTimeLabel } from "../lib/tradingAnalyticsTime";
 import styles from "./TradingAnalyticsPage.module.css";
 
 type Row = Record<string, unknown>;
@@ -42,25 +42,6 @@ const finite = (value: unknown) => {
 const stamp = (value: unknown): UTCTimestamp | null => {
   const parsed = Date.parse(String(value));
   return Number.isFinite(parsed) ? Math.floor(parsed / 1000) as UTCTimestamp : null;
-};
-const isoTime = (value: Time | undefined) => {
-  if (typeof value === "number") return new Date(value * 1000).toISOString();
-  if (typeof value === "string") {
-    const parsed = Date.parse(value);
-    return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
-  }
-  if (value && typeof value === "object" && "year" in value)
-    return new Date(Date.UTC(value.year, value.month - 1, value.day)).toISOString();
-  return null;
-};
-const istTimeLabel = (value: Time) => {
-  const iso = isoTime(value);
-  return iso == null ? "—" : new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(iso));
 };
 const valueText = (value: unknown) => {
   const parsed = finite(value);
@@ -96,11 +77,11 @@ function MatrixCandleChart({
     const chart = createChart(host, {
       autoSize: false,
       layout: { background: { type: ColorType.Solid, color: "#ffffff" }, textColor: "#53657d", fontFamily: "IBM Plex Mono, monospace", fontSize: 10 },
-      localization: { locale: "en-IN", timeFormatter: istTimeLabel },
+      localization: { locale: "en-IN", timeFormatter: istChartTimeLabel },
       grid: { vertLines: { color: "#edf1f6" }, horzLines: { color: "#edf1f6" } },
       crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "#315ad7", width: 1, labelBackgroundColor: "#315ad7" }, horzLine: { color: "#94a3b8", width: 1 } },
       rightPriceScale: { borderColor: "#dce4ef", minimumWidth: 58 },
-      timeScale: { borderColor: "#dce4ef", timeVisible: true, secondsVisible: false, rightOffset: 1, barSpacing: 5, tickMarkFormatter: istTimeLabel },
+      timeScale: { borderColor: "#dce4ef", timeVisible: true, secondsVisible: false, rightOffset: 1, barSpacing: 5, tickMarkFormatter: istChartTimeLabel },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
     });
@@ -126,7 +107,7 @@ function MatrixCandleChart({
     const observer = new ResizeObserver(resize);
     observer.observe(host);
     chart.subscribeCrosshairMove((parameter) => {
-      if (!applyingExternalCursor.current) onCursor(isoTime(parameter.time));
+      if (!applyingExternalCursor.current) onCursor(chartTimeToIso(parameter.time));
     });
     chartRef.current = chart;
     seriesRef.current = candles;

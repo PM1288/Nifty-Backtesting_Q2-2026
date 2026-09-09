@@ -1,5 +1,13 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-09 MANEESH IST chart axes
+
+The original aligned Scalper still used Lightweight Charts' UTC default even
+though the newer 3×3 matrix had explicit IST labels. Both now share
+`tradingAnalyticsTime.ts`, which formats financial-chart ticks and crosshair
+labels in `Asia/Kolkata`. A boundary test proves `04:00 UTC` displays as NSE
+open `09:30`; source timestamps and candle values are not mutated.
+
 ## 2026-09-08 MANEESH multi-timeframe matrix
 
 Trading Analytics has a separate `/strategy/trading-analytics?view=matrix`

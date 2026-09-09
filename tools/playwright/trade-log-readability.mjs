@@ -23,7 +23,7 @@ try {
  await page.goto('file:///home/novius2/NIFTY50/Dashboards/NIFTY_Trade_Log_Interactive_Preview_20260909_v1_0.html');
  await page.screenshot({path:path.join(out,'reference-preview.png'),fullPage:true});
  await page.goto(`${remote}/strategy/trading-analytics?view=trade-log`);
- await page.getByRole('heading',{name:local===remote?'Trade observations':'Scalper trade observation log',exact:true}).waitFor({timeout:60000});
+ await page.getByTestId('trade-observations').waitFor({timeout:60000});
  await page.screenshot({path:path.join(out,local===remote?'deployed-initial-1440.png':'before-1440.png'),fullPage:true});
  const before=await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}));
  // Local frontend, authenticated production GETs only. Never send orders or notifications.

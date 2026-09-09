@@ -25,7 +25,8 @@ await page.setViewportSize({width:1440,height:900});
 const link=dialog.getByRole('link',{name:/Open stock/});const href=await link.getAttribute('href');check('link exact pair',href.includes(encodeURIComponent(row.ce_symbol))&&href.includes(encodeURIComponent(row.pe_symbol)));
 const charts=page.waitForResponse(r=>r.url().includes('/v1/trading-analytics/charts?'),{timeout:60000});await link.click();const chartResponse=await charts;const chart=await chartResponse.json();
 check('chart returns both exact contracts',chart.panes?.some(p=>p.identity.tradingsymbol===row.ce_symbol)&&chart.panes?.some(p=>p.identity.tradingsymbol===row.pe_symbol));
-await page.getByRole('heading',{name:'SCALPER',exact:true}).waitFor({timeout:60000});
+await fs.writeFile(`${out}/chart-identity.json`,JSON.stringify({url:page.url(),expected:{ce:row.ce_symbol,pe:row.pe_symbol,ce_token:row.ce_token,pe_token:row.pe_token},identities:chart.panes?.map(p=>p.identity),error:chart.error},null,2));
+try{await page.getByLabel('Scalper renderer',{exact:true}).waitFor({timeout:30000});}catch{await page.screenshot({path:`${out}/scalper-failure.png`,fullPage:true});await fs.writeFile(`${out}/failure.json`,JSON.stringify({checks,errors,text:(await page.locator('body').innerText()).slice(-5000)},null,2));throw Error('Scalper missing: see scrubbed failure evidence');}
 await page.screenshot({path:`${out}/exact-scalper-1440.png`,fullPage:true});
 check('exact day and strike URL',new URL(page.url()).searchParams.get('day')===row.trade_date&&new URL(page.url()).searchParams.get('strike')===String(row.strike));
 check('no page errors',!errors.length,errors);await fs.writeFile(`${out}/results.json`,JSON.stringify(checks,null,2));console.log(JSON.stringify({passed:checks.filter(x=>x.pass).length,total:checks.length,failed:checks.filter(x=>!x.pass)}));if(checks.some(x=>!x.pass))process.exitCode=1;

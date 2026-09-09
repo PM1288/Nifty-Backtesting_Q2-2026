@@ -38,3 +38,47 @@ or WhatsApp behavior changed. Raw evidence/exports retain every prior field; add
 lot-size fields are included automatically in full exports. Calculation breakdown
 is visible in the inspector. Tests: `optionPnl.test.ts`, web/API suites and deployed
 `trade-log-option-pnl.mjs`. Release evidence recorded after deployment.
+
+## Release and live evidence — 2026-09-09
+
+- Runtime source: `6243d0a`, merged and pushed to `master`.
+- Existing Compose project: `trading-stack-novius2`; dashboard healthy after rebuild.
+- Image: `sha256:47b3b13f9d7c56477241dba7ac893df002b6309f58b56c22ea5328536c7bb96f`.
+- Public bundle: `index-CDvh3wwg.js`.
+- Rollback image retained: `trading-stack-n50-dashboard:pre-option-pnl-20260909`.
+- Web: 108 tests passed; API: 190 tests passed; both typechecks/builds passed.
+- New live feature checks: 10/10, including inspector axe, mobile overflow,
+  quantity changes, exact CE/PE response identity, date/strike and no JS errors.
+- Existing live regression: 34/34, including all presets, full filtered JSON exact
+  row parity, responsive/axe checks, Escape/focus return, URL restoration and
+  observation availability when the unrelated market-context request fails.
+  Evidence: `output/playwright/trade-log-pnl-regression/`.
+- Live sample: NHPC29SEP2676CE/PE; respective exact tokens 131833/131840;
+  master lot size 6,950. Two-lot CE 15-minute high scenario: entry 2.00,
+  high 2.15, quantity 13,900, gross ₹2,085, charges ₹117.46, net ₹1,967.54.
+  This is hypothetical, not a realised trade or guaranteed executable high.
+- Existing NFO master checks also covered AXISBANK (625) and LAURUSLABS (850).
+  No claim that every underlying had an eligible live observation during this run.
+- Evidence: `output/playwright/trade-log-option-pnl/results.json`,
+  `chart-identity.json`, `high-pnl-1440.png`, `pnl-390.png`,
+  `exact-scalper-1440.png`.
+- Initial browser-test failures waited for headings hidden at compact viewport
+  widths; tests now wait for the visible workbench/control. Runtime functionality
+  was verified independently via exact chart-response identities.
+
+Reproduce (existing protected local admin credential is read by the harness;
+never print it):
+
+```bash
+cd /home/novius2/trading-stack
+node tools/playwright/trade-log-option-pnl.mjs
+PLAYWRIGHT_BASE_URL=https://n50.nifty50today.co.in/n50 PLAYWRIGHT_OUTPUT_DIR=output/playwright/trade-log-pnl-regression node tools/playwright/trade-log-readability.mjs
+```
+
+Deployment used only the existing dashboard deployment script:
+
+```bash
+PUBLIC_BASE_URL=https://n50.nifty50today.co.in ROUTE_PATH='/n50/strategy/trading-analytics?view=trade-log' bash scripts/deploy_n50_dashboard.sh
+```
+
+No database migration, broker order, paper order or WhatsApp message was issued.

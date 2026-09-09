@@ -127,9 +127,24 @@ try {
         record(`${viewport.width} positive and non-positive retained`,
           tradePayload.report?.coverage?.good_trades > 0 &&
           tradePayload.report?.coverage?.non_positive_trades > 0);
+        const comparisonRows = tradePayload.rows ?? [];
+        record(`${viewport.width} comparative CE PE payload present`,
+          comparisonRows.length > 0 && comparisonRows.every((row) =>
+            ["15m", "30m", "eod"].every((horizon) =>
+              row.evidence?.comparative_pnl?.[horizon] &&
+              Object.hasOwn(row.evidence.comparative_pnl[horizon], "ce") &&
+              Object.hasOwn(row.evidence.comparative_pnl[horizon], "pe"))));
+        record(`${viewport.width} comparative option P&L observed`,
+          comparisonRows.some((row) =>
+            ["15m", "30m", "eod"].some((horizon) =>
+              ["ce", "pe"].some((leg) =>
+                typeof row.evidence?.comparative_pnl?.[horizon]?.[leg]?.net === "number"))));
         record(`${viewport.width} honest insufficient state`,
           tradePayload.state === "DATA_INSUFFICIENT" &&
           (await root.getByText(/Need 20 complete independent sessions/).count()) > 0);
+        record(`${viewport.width} SHAP gate visibly explained`,
+          (await root.getByTestId("shap-chart-gate").count()) === 1 &&
+          (await root.getByText(/Not calculated yet.*evidence gate is still locked/).count()) === 1);
         record(`${viewport.width} comparative CE and PE horizons visible`,
           (await root.getByRole("columnheader", { name: "CE · 15m P&L" }).count()) === 1 &&
           (await root.getByRole("columnheader", { name: "PE · EOD P&L" }).count()) === 1);

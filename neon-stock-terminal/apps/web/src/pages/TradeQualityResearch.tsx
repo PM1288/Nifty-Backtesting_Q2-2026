@@ -120,6 +120,9 @@ export default function TradeQualityResearch() {
   if (query.error) return <p role="alert">Trade-quality evidence is unavailable. Retry with Refresh.</p>;
   const data = query.data;
   if (!data?.report) return <p>No trade-quality experiment has completed yet.</p>;
+  const hasShap = data.rows.some((row) => row.explanation && row.prediction);
+  const sessionCount = data.report.coverage.model_eligible_sessions ?? 0;
+  const requiredSessions = data.report.config.minimum_sessions;
   return <section data-testid="trade-quality-research" className={styles.tradeQuality}>
     <div className={styles.tradeHeading}>
       <div><h2>Good-trade outcome research</h2><p>{data.state.replaceAll("_", " ")} · {data.report.reason}</p></div>
@@ -133,6 +136,18 @@ export default function TradeQualityResearch() {
     <section className={styles.metrics} aria-label="Trade quality coverage" tabIndex={0}>
       {Object.entries(data.report.coverage).map(([name, value]) => <div key={name}><span>{name.replaceAll("_", " ")}</span><b>{number(value, 0)}</b></div>)}
     </section>
+    {!hasShap && <section className={styles.shapGate} aria-label="SHAP chart status" data-testid="shap-chart-gate">
+      <div>
+        <h2>SHAP chart status</h2>
+        <b>Not calculated yet — evidence gate is still locked</b>
+        <p>{sessionCount} independent session of {requiredSessions} required sessions is available. A genuine SHAP waterfall will appear here automatically after chronological training and held-out validation become eligible.</p>
+        <p>Trade outcomes and input coverage remain visible below. No placeholder contribution, probability or synthetic feature importance is being shown as SHAP.</p>
+      </div>
+      <div className={styles.shapGateChart} role="img" aria-label={`SHAP unavailable: ${sessionCount} of ${requiredSessions} independent sessions`}>
+        <span style={{ width: `${Math.min(100, requiredSessions > 0 ? sessionCount / requiredSessions * 100 : 0)}%` }} />
+        <strong>{sessionCount} / {requiredSessions} sessions</strong>
+      </div>
+    </section>}
     <div className={styles.controls}>
       <label>Outcome <select value={filter} onChange={(event) => setFilter(event.target.value)}>
         <option value="all">All eligible trades</option><option value="good">Positive net P&amp;L</option>
@@ -171,7 +186,7 @@ export default function TradeQualityResearch() {
       </table>
     </div>
     {selected && <>
-      <TradeWaterfall row={selected} />
+      {hasShap && <TradeWaterfall row={selected} />}
       <details key={selected.signal_key} className={styles.rawEvidence} open={selectedKey !== ""}><summary>Selected trade: all conditions, indicators and outcome evidence</summary><pre>{JSON.stringify(selected.evidence, null, 2)}</pre></details>
     </>}
     <details><summary>Feature availability and research limitations</summary>

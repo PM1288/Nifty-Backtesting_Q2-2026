@@ -185,6 +185,36 @@
 .negative { color: #c93346; }
 .tradeExplanation,
 .rawEvidence { background: white; border: 1px solid #dce4ef; border-radius: 8px; padding: 10px; }
+.shapGate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 34%);
+  gap: 18px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid #d8b454;
+  border-left: 4px solid #a86600;
+  border-radius: 8px;
+  background: #fffaf0;
+}
+.shapGate h2,
+.shapGate p { margin: 0 0 6px; }
+.shapGateChart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 74px;
+  overflow: hidden;
+  border: 1px solid #d9e3ef;
+  border-radius: 7px;
+  background: repeating-linear-gradient(135deg, #f7f9fc, #f7f9fc 8px, #eef2f7 8px, #eef2f7 16px);
+}
+.shapGateChart span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgba(47, 95, 208, 0.2);
+  border-right: 2px solid #2f5fd0;
+}
+.shapGateChart strong { position: relative; color: #14243a; font-variant-numeric: tabular-nums; }
 .factorBars { display: grid; gap: 5px; }
 .factorBars > div { display: grid; grid-template-columns: 250px minmax(40px, 1fr) 100px; align-items: center; gap: 8px; }
 .factorBars i { display: block; height: 8px; background: #087a55; justify-self: start; }
@@ -195,6 +225,7 @@
   .workspace {
     grid-template-columns: 1fr;
   }
+  .shapGate { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
   .page button,

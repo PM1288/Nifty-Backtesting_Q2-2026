@@ -89,7 +89,7 @@ test("URL validation preserves unrelated parameters and filters missing maturity
   const s = readState(p);
   assert.equal(s.horizon, "15m");
   assert.equal(s.direction, "");
-  assert.equal(s.preset, "P&L comparison");
+  assert.equal(s.preset, "All columns + P&L");
   assert.equal(p.get("symbol"), "NIFTY");
   const missing = { underlying_symbol: "ABC", outcome_evidence: {} };
   assert.equal(

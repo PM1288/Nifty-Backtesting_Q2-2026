@@ -31,19 +31,24 @@ try {
   const state = await context.storageState();
   const session = state.cookies.find((cookie) => cookie.name.includes("session"));
   check("session cookie issued", Boolean(session), "No session cookie");
-  await context.addCookies([{
-    ...session,
-    domain: "127.0.0.1",
-    path: "/",
-    secure: false,
-    sameSite: "Lax",
-  }]);
+  if (new URL(appOrigin).hostname === "127.0.0.1") {
+    await context.addCookies([{
+      ...session,
+      domain: "127.0.0.1",
+      path: "/",
+      secure: false,
+      sameSite: "Lax",
+    }]);
+  }
 
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(String(error)));
   page.on("console", (message) => {
-    if (message.type() === "error" && !message.text().includes("clarity.ms")) errors.push(message.text());
+    if (message.type() !== "error") return;
+    const source = message.location().url;
+    if (message.text().includes("clarity.ms") || (/clarity\.ms/.test(source) && message.text().includes("ERR_NETWORK_CHANGED"))) return;
+    errors.push(`${message.text()}${source ? ` @ ${source}` : ""}`);
   });
   await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper&interval=5`, { waitUntil: "domcontentloaded", timeout: 60_000 });
   const terminal = page.getByTestId("aligned-scalper-terminal");

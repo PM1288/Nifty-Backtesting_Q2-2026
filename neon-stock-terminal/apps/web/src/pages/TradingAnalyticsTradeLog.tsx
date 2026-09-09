@@ -528,8 +528,7 @@ function ObservationLog() {
       signed: f.includes("change"),
       read: (r) => instrumentEvidence(r, h, instrument ?? side(r))[f],
     });
-    if (state.preset === "P&L comparison")
-      return (["ce", "pe"] as const).flatMap((leg) =>
+    const pnlColumns: Column[] = (["ce", "pe"] as const).flatMap((leg) =>
         horizons.map((horizon) => ({
           key: `${leg}-${horizon}-pnl`,
           label: `${leg.toUpperCase()} · ${horizon.toUpperCase()} P&L`,
@@ -548,8 +547,7 @@ function ObservationLog() {
           render: (r: Observation) => <PnlComparisonCell row={r} leg={leg} horizon={horizon} />,
         })),
       );
-    if (state.preset === "Indicators")
-      return ["underlying", "ce", "pe"].flatMap((k) =>
+    const indicatorColumns: Column[] = ["underlying", "ce", "pe"].flatMap((k) =>
         ["rsi14", "macd", "macd_signal9", "macd_histogram"].map((f) => ({
           key: `${k}-${f}`,
           label: `${k.toUpperCase()} · ${f.replace("macd_", "")}`,
@@ -558,8 +556,7 @@ function ObservationLog() {
           read: (r: Observation) => object(object(r.indicator_evidence)[k])[f],
         })),
       );
-    if (state.preset === "Entries & rules")
-      return [
+    const entryColumns: Column[] = [
         col("underlying_entry_open", "Underlying open"),
         col("ce_entry_open", "CE open"),
         col("pe_entry_open", "PE open"),
@@ -575,6 +572,29 @@ function ObservationLog() {
           read: (r) => JSON.stringify(object(r.condition_evidence)),
         },
       ];
+    const monitorColumns: Column[] = [
+      col("option_entry_open", "Selected open"),
+      outcome(state.horizon, "endpoint", "Selected endpoint"),
+      outcome(state.horizon, "endpoint_change_pct", "Endpoint Δ %"),
+      outcome(state.horizon, "max_change_pct", "High Δ %"),
+      outcome(state.horizon, "min_change_pct", "Low Δ %"),
+      {
+        key: "alignment",
+        label: "Underlying alignment",
+        read: (r) => windowEvidence(r, state.horizon).thesis_alignment,
+      },
+      {
+        key: "maturity",
+        label: `${state.horizon} window`,
+        read: (r) => windowEvidence(r, state.horizon).maturity,
+      },
+      { key: "delivery", label: "Delivery", read: (r) => r.delivery_status },
+    ];
+    if (state.preset === "All columns + P&L")
+      return [...monitorColumns, ...pnlColumns, ...entryColumns, ...indicatorColumns];
+    if (state.preset === "P&L comparison") return pnlColumns;
+    if (state.preset === "Indicators") return indicatorColumns;
+    if (state.preset === "Entries & rules") return entryColumns;
     if (state.preset === "Outcomes")
       return horizons.flatMap((h) => [
         outcome(
@@ -595,25 +615,7 @@ function ObservationLog() {
         label: f,
         read: (r) => flatten(r)[f],
       }));
-    return [
-      col("underlying_entry_open", "Underlying open"),
-      col("option_entry_open", "Selected open"),
-      outcome(state.horizon, "endpoint", "Selected endpoint"),
-      outcome(state.horizon, "endpoint_change_pct", "Endpoint Δ %"),
-      outcome(state.horizon, "max_change_pct", "High Δ %"),
-      outcome(state.horizon, "min_change_pct", "Low Δ %"),
-      {
-        key: "alignment",
-        label: "Underlying alignment",
-        read: (r) => windowEvidence(r, state.horizon).thesis_alignment,
-      },
-      {
-        key: "maturity",
-        label: `${state.horizon} window`,
-        read: (r) => windowEvidence(r, state.horizon).maturity,
-      },
-      { key: "delivery", label: "Delivery", read: (r) => r.delivery_status },
-    ];
+    return [col("underlying_entry_open", "Underlying open"), ...monitorColumns];
   }, [state.preset, state.horizon, state.metric, fields, allFields]);
   const ordered = useMemo(
     () =>

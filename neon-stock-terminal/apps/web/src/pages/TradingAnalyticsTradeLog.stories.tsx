@@ -58,7 +58,7 @@ const fixture: Observation = {
 function Gallery({
   empty = false,
   missing = false,
-  preset = "P&L comparison",
+  preset = "All columns + P&L",
 }: {
   empty?: boolean;
   missing?: boolean;

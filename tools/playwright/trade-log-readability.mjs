@@ -23,7 +23,12 @@ try {
  await page.goto('file:///home/novius2/NIFTY50/Dashboards/NIFTY_Trade_Log_Interactive_Preview_20260909_v1_0.html');
  await page.screenshot({path:path.join(out,'reference-preview.png'),fullPage:true});
  await page.goto(`${remote}/strategy/trading-analytics?view=trade-log`);
- await page.getByTestId('trade-observations').waitFor({timeout:60000});
+ try { await page.getByTestId('trade-observations').waitFor({timeout:60000}); }
+ catch (error) {
+   await page.screenshot({path:path.join(out,'deployed-load-failure.png'),fullPage:true});
+   console.log(JSON.stringify({stage:'deployed-load',url:page.url(),errors,body:(await page.locator('body').innerText()).slice(0,1600)}));
+   throw error;
+ }
  await page.screenshot({path:path.join(out,local===remote?'deployed-initial-1440.png':'before-1440.png'),fullPage:true});
  const before=await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth}));
  // Local frontend, authenticated production GETs only. Never send orders or notifications.
@@ -44,8 +49,10 @@ try {
  const root=page.getByTestId('trade-observations');
  try{await root.waitFor({timeout:60000});}catch(e){await page.screenshot({path:path.join(out,'failure.png'),fullPage:true});console.log({url:page.url(),errors,body:(await page.locator('body').innerText()).slice(0,1200)});throw e;}
  await root.getByRole('button',{name:/Inspect /}).first().waitFor({timeout:60000});
- check('P&L comparison is the default preset',await root.getByLabel('Preset',{exact:true}).inputValue()==='P&L comparison');
+ check('all columns plus P&L is the default preset',await root.getByLabel('Preset',{exact:true}).inputValue()==='All columns + P&L');
  check('all six CE and PE horizon columns are present',(await root.getByRole('columnheader',{name:/^(CE|PE) · (15M|30M|EOD) P&L$/}).count())===6);
+ for(const heading of ['Selected open','Selected endpoint','Endpoint Δ %','High Δ %','Low Δ %','Underlying alignment','Delivery','Stored gates','UNDERLYING · rsi14','CE · rsi14','PE · rsi14'])
+   check(`default retains ${heading}`,await root.getByRole('columnheader',{name:heading,exact:true}).count()===1);
  check('SHAP research is directly reachable',String(await root.getByRole('link',{name:/Open SHAP research/}).getAttribute('href')).includes('/strategy/nifty-context?lens=trade-quality'));
  for(const width of [1920,1440,1280,768,390]){
    await page.setViewportSize({width,height:width===1920?1080:900});
@@ -56,7 +63,7 @@ try {
    check(`${width} axe`,axe.violations.length===0,axe.violations);
  }
  await page.setViewportSize({width:1440,height:900});
- for(const preset of ['P&L comparison','Outcomes','Entries & rules','Indicators','Full evidence','Monitor']){
+ for(const preset of ['All columns + P&L','P&L comparison','Outcomes','Entries & rules','Indicators','Full evidence','Monitor']){
    await root.getByLabel('Preset',{exact:true}).selectOption(preset);
    await page.screenshot({path:path.join(out,`${preset.replaceAll(' ','-')}.png`),fullPage:true});
    check(`preset ${preset}`,await root.getByRole('button',{name:/Inspect /}).count()===payload.rows.length);

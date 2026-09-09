@@ -74,3 +74,24 @@ func TestReconcileCurrentStockFNOEquitiesHonoursCapAndPrefersBase(t *testing.T) 
 		t.Fatalf("expected configured cap to retain the existing base F&O equity, got selected=%#v additions=%#v", selected, additions)
 	}
 }
+
+func TestSubscriptionsForAddedFNOIncludesOnlyActiveMatchingMarketData(t *testing.T) {
+	additions := []store.Subscription{{Exchange: "NSE", SymbolToken: "2", Mode: "QUOTE", Kind: "EQUITY", TradingSymbol: "BETA-EQ", Underlying: "BETA", Active: true}}
+	active := []store.Subscription{
+		{Exchange: "NSE", SymbolToken: "1", Kind: "EQUITY", TradingSymbol: "ALPHA-EQ", Underlying: "ALPHA", Active: true},
+		{Exchange: "NSE", SymbolToken: "2", Kind: "EQUITY", TradingSymbol: "BETA-EQ", Underlying: "BETA", Active: true},
+		{Exchange: "NFO", SymbolToken: "3", Kind: "FUT", TradingSymbol: "BETA29SEP26FUT", Underlying: "BETA", Active: true},
+		{Exchange: "NFO", SymbolToken: "4", Kind: "OPTSTK", TradingSymbol: "BETA29SEP26100CE", Underlying: "BETA", Active: true},
+		{Exchange: "NFO", SymbolToken: "5", Kind: "OPTSTK", TradingSymbol: "BETA29SEP26100PE", Underlying: "BETA", Active: false},
+	}
+
+	got := subscriptionsForAddedFNO(active, additions)
+	if len(got) != 3 {
+		t.Fatalf("expected cash, future and one active option for added underlying, got %#v", got)
+	}
+	for _, sub := range got {
+		if sub.Underlying != "BETA" || !sub.Active {
+			t.Fatalf("unexpected startup repair target: %#v", sub)
+		}
+	}
+}

@@ -3897,6 +3897,10 @@ or outcomes were deleted.
   NSE cash instruments, excludes synthetic `NSETEST` rows, respects the
   configured stock-underlying cap, adds missing cash subscriptions and seeds
   their prices before initial ATM option selection.
+- A bounded startup repair fetches available current-session SmartAPI OHLCV for
+  the added names' active cash/future/options through the existing rate-limited
+  queue. It is idempotent and does not send WhatsApp noise. Historical option OI
+  remains unavailable when it was not captured live.
 - No schema, API, dashboard, strategy, V7 rule, paper/live order, permission or
   historical-row mutation is included. Uncaptured historical option OI remains
   explicitly unavailable rather than being fabricated.

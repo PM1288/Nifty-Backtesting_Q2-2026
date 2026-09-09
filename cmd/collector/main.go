@@ -254,6 +254,7 @@ func main() {
 	subsCount.Store(int64(len(activeSubs)))
 	wsArchiveTracker.SetSubscriptionCounts(smartapi.SubscriptionCounts(activeSubs, cfg.WS.MaxConnections, cfg.WS.MaxTokensPerConnection))
 	optionStates.Update(buildOptionStates(activeSubs, priceCache, time.Now().In(loc)))
+	backfillAddedFNOCurrentSession(ctx, cfg, tokenProvider, st, queue, activeSubs, startupFNOEquityAdditions, stateCache, loc, logger, time.Now().In(loc))
 
 	wsManager := smartapi.NewWSManager(cfg.SmartAPI, cfg.WS, tokenProvider, logger)
 	tickCh := make(chan smartapi.Tick, 4096)

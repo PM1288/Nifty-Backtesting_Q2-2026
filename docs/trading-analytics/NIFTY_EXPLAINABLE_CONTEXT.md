@@ -241,6 +241,25 @@ saved capture ID, and a partial unique index enforces one on-time/recovered row
 per mode and planned cutoff. Final production counts and browser acceptance are
 recorded after the corrected worker/dashboard deployment.
 
+Final deployment: canonical `master` through `5d0bee8`; worker implementation
+`0eafbba`. Worker image
+`sha256:f5c916509d050842f9e0ed069ba87afeedc231ffe0f9d1f8b701a55a88bdb406`;
+dashboard image
+`sha256:fb721901b649a461fbbaff03697ef3e8662cab65258cdeb74a0f5402b231208b`;
+public entry `index-PAAVl2qP.js`. Both containers were healthy with zero restarts.
+The final replay `2191f2fd3b331f745c97f9313bcdd8836ce2a2cefa3e866d31d8dd37d0aacc14`
+left the recovered set at exactly 40 rows / 40 distinct planned cutoffs, proving
+idempotent identity, with 38 outcomes. Public authenticated acceptance passed
+78/78 at 1920×1080, 1440×900 and 390×844, including all lenses, export,
+keyboard navigation, inactive-chart unmount, no overflow, no page errors and
+zero axe violations. Evidence:
+`output/playwright/nifty-context-recovery-final/`.
+
+Rollback images: `trading-stack-novius2-nifty-context:pre-recovery-20260909`
+and `trading-stack-n50-dashboard:pre-nifty-recovery-20260909`. Rolling back the
+services does not require deleting recovered evidence; disable recovery by
+restoring the prior worker image. The uniqueness index is additive.
+
 Methodology: [TreeExplainer](https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html),
 [LinearExplainer](https://shap.readthedocs.io/en/latest/generated/shap.LinearExplainer.html).
 SHAP is MIT-licensed; installed distribution notices remain in the image.

@@ -3788,3 +3788,35 @@ follow-up fixed experiment persistence to reuse those capture IDs and added a
 database uniqueness guard; 38 duplicate research-only snapshots from that
 first replay were removed after their run links were repointed. No predictions
 or outcomes were deleted.
+
+## 2026-09-09 — MANEESH aligned Scalper readability V4
+
+- Branch: `feat/scalper-readable-inspector-v4`.
+- Canonical route and all Trading Analytics tabs remain unchanged. The aligned
+  Scalper now uses readable minimum pane allocations in a vertically scrollable
+  native chart stack; CE/PE retain independent premium scales and the inspector
+  remains 360px by default with a 320–460px desktop divider.
+- Outstanding OI and signed ΔOI are separate default panes. RSI, MACD and pair
+  PCR are independent optional panes. A latest-only IV value remains numerical
+  evidence and is never extended into a false history.
+- The selected-pair inspector now exposes 28px CE/PE premiums, explicit
+  completed-close/snapshot basis and time, current/interval/cumulative/snapshot
+  OI rows, pair-PCR endpoint scope, exact OHLC/EMA snapshots, the complete
+  ladder, V7 event-state counts, A-open/B-close quantity contributions, levels
+  and raw source health.
+- Native chart mounting is separated from series refreshes. Cursor movement,
+  inspector-divider resize and an unchanged refetch preserve the chart root and
+  visible time range. Historical prepend preservation uses timestamps.
+- The price-aligned profile follows the actual underlying pane geometry and
+  supports Current OI, archived Snapshot ΔOI and composite retained/addition/
+  reduction modes. Missing baselines remain missing.
+- At <1100px the chart keeps the full width and the inspector opens as a fixed
+  sheet; Escape closes it and restores focus.
+- No API, database, collector, V7 formula, paper/live order, notification or
+  permission change was made. Classic ECharts rollback remains available.
+- Validation before release: web typecheck/build and 114/114 tests; API
+  typecheck/build and 190/190 tests; authenticated local-Vite/live-API browser
+  suite 28/28 at 1920×1080, 1440×900, 1366×768 and 390×844.
+- Detailed map and evidence:
+  `docs/trading-analytics/SCALPER_READABILITY_V4_20260909.md` and
+  `output/playwright/scalper-v4-local-20260909/`.

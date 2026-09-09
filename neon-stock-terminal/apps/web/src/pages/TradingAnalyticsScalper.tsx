@@ -219,6 +219,13 @@ export function TradingAnalyticsScalper({
       }>(`/v1/trading-analytics/charts?${query}`),
     staleTime: 30000,
     retry: 1,
+    placeholderData: (previous, previousQuery) => {
+      if (!previous || !previousQuery) return undefined;
+      const prior = new URLSearchParams(String(previousQuery.queryKey[1] ?? ""));
+      const sameInstrumentContext = ["symbol", "interval", "expiry", "strike"]
+        .every((key) => prior.get(key) === query.get(key));
+      return sameInstrumentContext ? previous : undefined;
+    },
   });
   const days = [
     ...new Set(
@@ -761,6 +768,8 @@ export function TradingAnalyticsScalper({
           fixed={Boolean(fixedPair)}
           onStrike={setStrike}
           expiry={effectiveExpiry}
+          tradingDay={day}
+          interval={interval}
           maxPainStrikes={effectiveExpiry === expiry ? maxPainStrikes : []}
           signals={signals}
         />

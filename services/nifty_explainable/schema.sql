@@ -31,3 +31,7 @@ CREATE TABLE IF NOT EXISTS nifty_context.outcomes (
 );
 CREATE INDEX IF NOT EXISTS context_prediction_time ON nifty_context.predictions(cutoff DESC);
 CREATE INDEX IF NOT EXISTS context_snapshot_time ON nifty_context.snapshots(cutoff DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS context_capture_planned_unique
+  ON nifty_context.snapshots(mode,(evidence->>'planned_cutoff'))
+  WHERE mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE')
+    AND evidence ? 'planned_cutoff';

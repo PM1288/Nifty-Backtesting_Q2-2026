@@ -223,6 +223,24 @@ evidence policy before expanding symbols/features.
   reusable optimisation target.
 - Neither the range estimate nor directional accuracy is paper-trading P&L.
 
+## Missed-window recovery release — 9 September 2026
+
+Release `b99b9d1` introduced the recovery path. The first production pass found
+40 unique reconstructable missed windows and stored 38 already-mature outcomes;
+20 other planned windows still lacked a complete minute sequence and remain on
+the five-minute retry path. The subsequent experiment remained honestly
+`DATA_INSUFFICIENT`: 16 eligible sessions versus the frozen minimum of 20, so it
+still emitted no prediction or SHAP explanation.
+
+The first experiment replay also exposed that experiment persistence could add
+a second snapshot ID for the same recovered planned cutoff. No prediction used
+those duplicates. Thirty-eight duplicate research snapshot rows created during
+this release were removed, their 38 run associations were repointed to the
+original capture rows, and no outcome row was deleted. The worker now reuses the
+saved capture ID, and a partial unique index enforces one on-time/recovered row
+per mode and planned cutoff. Final production counts and browser acceptance are
+recorded after the corrected worker/dashboard deployment.
+
 Methodology: [TreeExplainer](https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html),
 [LinearExplainer](https://shap.readthedocs.io/en/latest/generated/shap.LinearExplainer.html).
 SHAP is MIT-licensed; installed distribution notices remain in the image.

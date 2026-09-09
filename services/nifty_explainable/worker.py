@@ -263,13 +263,16 @@ def experiment():
         bars,sessions = load(conn)
         examples,rejected = build_examples(bars,sessions,pd.Timestamp.now(tz="UTC"))
         # Retain qualified prospective examples even after ordinary minute retention.
-        saved=conn.execute("""SELECT s.evidence,o.evidence AS outcome FROM nifty_context.snapshots s
+        saved=conn.execute("""SELECT s.id AS snapshot_id,s.evidence,o.evidence AS outcome FROM nifty_context.snapshots s
           JOIN nifty_context.outcomes o ON o.snapshot_id=s.id WHERE s.mode IN ('PROSPECTIVE_CAPTURE','RECOVERED_CAPTURE')
           AND s.cutoff>=now()-interval '730 days' ORDER BY s.cutoff""").fetchall()
         merged={x['cutoff']:x for x in examples}
+        saved_snapshot_ids={}
         for row in saved:
             x=row['evidence']; x['labels']={**row['outcome']['labels'],'source_rows':row['outcome']['source_rows']}
-            merged[x.get('planned_cutoff',x['cutoff'])]=x
+            key=x.get('planned_cutoff',x['cutoff'])
+            merged[key]=x
+            saved_snapshot_ids[key]=row['snapshot_id']
         examples=sorted(merged.values(),key=lambda x:x['cutoff'])
         source_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
         run_id = digest({"config":CONFIG,"code":source_hash,"commit":os.getenv('CODE_COMMIT','unknown'),"data":[x["source_digest"] for x in examples],"labels":[x["labels"] for x in examples]})
@@ -297,7 +300,7 @@ def experiment():
         for model in result.get("models",[]):
             conn.execute("INSERT INTO nifty_context.models VALUES(%s,%s,%s)",(run_id+model['name'],run_id,Jsonb(clean({**model,'background':result['background']}))))
         for x in examples:
-            sid=digest(x)
+            sid=saved_snapshot_ids.get(x.get('planned_cutoff',x['cutoff']),digest(x))
             conn.execute("INSERT INTO nifty_context.snapshots(id,cutoff,mode,evidence) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING",(sid,x['cutoff'],x['mode'],Jsonb(clean(x))))
             conn.execute("INSERT INTO nifty_context.run_snapshots VALUES(%s,%s) ON CONFLICT DO NOTHING",(run_id,sid))
             for p in [p for p in result.get('predictions',[]) if p['cutoff']==x['cutoff']]:

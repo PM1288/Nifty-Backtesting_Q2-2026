@@ -3783,3 +3783,8 @@ versus recovered records. No threshold, SHAP gate, EMA9 rule, order, paper or
 notification path changed. Python 9/9, API 190/190 and web 108/108 passed with
 typechecks/builds. Deployment evidence is in
 `docs/trading-analytics/NIFTY_EXPLAINABLE_CONTEXT.md`.
+The first production recovery stored 40 unique captures and 38 outcomes. A
+follow-up fixed experiment persistence to reuse those capture IDs and added a
+database uniqueness guard; 38 duplicate research-only snapshots from that
+first replay were removed after their run links were repointed. No predictions
+or outcomes were deleted.

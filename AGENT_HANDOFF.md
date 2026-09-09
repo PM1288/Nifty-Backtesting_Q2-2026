@@ -12,6 +12,15 @@ Synthetic test-only model/SHAP tests pass. Do not imply live forecast acceptance
 Detailed commands, data contracts, provenance limitations and further research
 gates: `docs/trading-analytics/NIFTY_EXPLAINABLE_CONTEXT.md`.
 
+Acceptance: public browser 78/78 at 1920, 1440, 390; axe zero on real and
+test-only populated waterfall views. Web 99/99, API 190/190, Python 7/7;
+typechecks/builds and canonical gate passed. Evidence is under
+`output/playwright/nifty-context-final/`, including full export reconciliation.
+Dashboard application `c59c7e6`; worker has subsequent non-backdating/empty-source
+hardening. Forecasting, OI/IV ablations and longer forward validation remain
+gated; do not describe this as a validated live prediction system. No alerts,
+orders or old market records were modified.
+
 ## 2026-09-09 MANEESH IST chart axes
 
 The original aligned Scalper still used Lightweight Charts' UTC default even

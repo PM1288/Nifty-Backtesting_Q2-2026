@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 import pandas as pd
-from worker import CONFIG, FEATURES, build_examples, features, explain_and_fit
+from worker import CONFIG, FEATURES, build_examples, features, explain_and_fit, load, prospective_snapshot
 
 
 def session_fixture():
@@ -16,6 +16,25 @@ def session_fixture():
 
 
 class ResearchTests(unittest.TestCase):
+    def test_prospective_outcome_cannot_start_before_capture(self):
+        b,s,now=session_fixture(); x=build_examples(b,s,now)[0][0]
+        captured_at=pd.Timestamp(x['cutoff'])+pd.Timedelta(seconds=30)
+        saved=prospective_snapshot(x,captured_at)
+        self.assertGreater(pd.Timestamp(saved['cutoff']),captured_at)
+        self.assertEqual(saved['planned_cutoff'],x['cutoff'])
+        self.assertNotIn('labels',saved)
+        self.assertIn('labels',x)
+        with self.assertRaises(ValueError): prospective_snapshot(x,now)
+
+    def test_empty_database_keeps_typed_columns(self):
+        class Empty:
+            def execute(self,*args): return self
+            def fetchall(self): return []
+        bars,sessions=load(Empty())
+        self.assertTrue(bars.empty)
+        self.assertIn('ts',bars.columns)
+        self.assertEqual(build_examples(bars,sessions,pd.Timestamp.now(tz='UTC'))[1],[{'reason':'NO_NIFTY_MINUTES'}])
+
     def test_complete_hour_and_cutoff(self):
         b,s,now=session_fixture(); rows,bad=build_examples(b,s,now)
         self.assertEqual(len(rows),5); self.assertEqual(bad,[])

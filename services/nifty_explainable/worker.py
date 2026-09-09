@@ -47,7 +47,8 @@ def connect():
 def load(conn, days=180):
     bars = pd.DataFrame(conn.execute("""SELECT ts,open::float8,high::float8,low::float8,close::float8,
       created_at,source FROM public.bars_1m WHERE exchange='NSE' AND symbol_token='99926000'
-      AND ts >= now()-(%s * interval '1 day') ORDER BY ts""", (days,)).fetchall())
+      AND ts >= now()-(%s * interval '1 day') ORDER BY ts""", (days,)).fetchall(),
+      columns=['ts','open','high','low','close','created_at','source'])
     sessions = conn.execute("""SELECT trade_date,market_open_ts,market_close_ts FROM public.trading_calendar
       WHERE is_trading_day AND trade_date >= current_date-180 AND trade_date <= current_date ORDER BY trade_date""").fetchall()
     return bars, sessions
@@ -205,6 +206,18 @@ def explain_and_fit(examples):
             "background_id": background_id, "background": background.tolist(), "predictions": predictions}
 
 
+def prospective_snapshot(example, now):
+    if not 0 <= (now-pd.Timestamp(example['cutoff'])).total_seconds()<60:
+        raise ValueError('MISSED_CAPTURE_WINDOW')
+    x={k:v for k,v in example.items() if k!='labels'}
+    x['planned_cutoff']=example['cutoff']
+    # Never label an already-started candle as the entry of a later capture.
+    cutoff=now.floor('min')+pd.Timedelta(minutes=1)
+    x.update(cutoff=str(cutoff),window_end=str(cutoff+pd.Timedelta(minutes=60)),
+             mode='PROSPECTIVE_CAPTURE',captured_at=str(now))
+    return x
+
+
 def experiment():
     started = time.monotonic()
     with connect() as conn:
@@ -217,7 +230,8 @@ def experiment():
           AND s.cutoff>=now()-interval '730 days' ORDER BY s.cutoff""").fetchall()
         merged={x['cutoff']:x for x in examples}
         for row in saved:
-            x=row['evidence']; x['labels']=row['outcome']['labels']; merged[x['cutoff']]=x
+            x=row['evidence']; x['labels']={**row['outcome']['labels'],'source_rows':row['outcome']['source_rows']}
+            merged[x.get('planned_cutoff',x['cutoff'])]=x
         examples=sorted(merged.values(),key=lambda x:x['cutoff'])
         source_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
         run_id = digest({"config":CONFIG,"code":source_hash,"commit":os.getenv('CODE_COMMIT','unknown'),"data":[x["source_digest"] for x in examples],"labels":[x["labels"] for x in examples]})
@@ -265,7 +279,7 @@ def capture():
         sessions=conn.execute("""SELECT trade_date,market_open_ts,market_close_ts FROM public.trading_calendar
           WHERE is_trading_day AND trade_date=(now() AT TIME ZONE 'Asia/Kolkata')::date""").fetchall()
         # Query the large bar table only in the scheduled capture window, not every polling tick.
-        offsets=CONFIG['decision_minutes_after_open']+[360]
+        offsets=CONFIG['decision_minutes_after_open']+[360,380]
         if not any(0 <= (now-(pd.Timestamp(s['market_open_ts'])+pd.Timedelta(minutes=m,seconds=120))).total_seconds() < 60
                    for s in sessions for m in offsets):
             return
@@ -275,9 +289,8 @@ def capture():
             # Never backdate a prospective snapshot. Capture only within 60s of its cutoff.
             if not 0 <= (now-pd.Timestamp(x['cutoff'])).total_seconds() < 60:
                 continue
-            x.pop('labels',None)
-            x['mode']='PROSPECTIVE_CAPTURE'; x['captured_at']=str(now)
-            sid=digest({'version':VERSION,'cutoff':x['cutoff'],'mode':x['mode']})
+            x=prospective_snapshot(x,now)
+            sid=digest({'version':VERSION,'cutoff':x['planned_cutoff'],'mode':x['mode']})
             conn.execute("INSERT INTO nifty_context.snapshots(id,cutoff,mode,evidence) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING",(sid,x['cutoff'],x['mode'],Jsonb(clean(x))))
             LOG.info('snapshot_captured cutoff=%s',x['cutoff'])
         # Outcomes are separate insert-only records, never written back into inputs.
@@ -319,4 +332,6 @@ if __name__=='__main__':
                     Path('/tmp/nifty-context-heartbeat').touch()
                 except Exception as exc:
                     LOG.error('capture_failed type=%s',type(exc).__name__)
+            else:
+                Path('/tmp/nifty-context-heartbeat').touch()
             time.sleep(30)

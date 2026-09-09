@@ -88,6 +88,7 @@ market tables and writes only additive `nifty_context` tables:
 | predictions | original cutoff/window, probabilities/range, model and snapshot identities |
 | explanations | feature values/order, base, contributions, output units, background ID |
 | evaluations | held-out metrics and numerical reconciliation |
+| outcomes | separately matured prospective labels and exact future source candles |
 
 Insert-only IDs and transactions make reruns idempotent for an identical
 worker/config/input/label snapshot. Quantile artifacts are trusted local Python
@@ -102,9 +103,73 @@ explanations, independently of visible rows. No mutation endpoint exists.
 
 Capture-loop observes the calendar every 30 seconds but reads the large minute
 table only during the five scheduled capture windows. It never backdates a
-missed capture. Snapshots record actual capture time. Capture is separate from
+missed capture. Two additional scheduled checks finalise outcomes, including
+one after close. Snapshots record actual capture time; their outcome starts at
+the **next** minute open after capture, never an already-started candle.
+Planned versus actual cutoff stays explicit. Prospective records replace the
+matching planned retrospective occasion instead of duplicating it. Matured
+prospective input/outcome evidence survives ordinary source-minute retention
+and can be included in later experiments. Capture is separate from
 retraining. This first release does not automatically approve/retrain a model
 or issue live forecasts from an unqualified historical run.
+
+## Executed acceptance
+
+Implementation branch `feat/nifty-explainable-context`, merged and pushed to
+canonical master. Dashboard application through `c59c7e6`; subsequent worker
+hardening preserves empty-source geometry and ensures prospective outcomes
+begin strictly after actual capture time.
+
+- Web: 99/99 tests, TypeScript check and production build passed.
+- API: 190/190 tests, TypeScript check and production build passed.
+- Python: seven tests cover chronology, SHAP additivity for tree/linear/range,
+  missing/invalid/late bars, empty source, future-independence, immature labels,
+  insufficient-data abstention and non-backdated prospective cutoff.
+- Pinned Python dependency compatibility check passed.
+- Canonical repository gate passed.
+- Public authenticated browser: **78/78 passed**, including exact export input
+  count, all four lenses, browser Back, keyboard activation, inactive chart
+  unmount, real source state, no horizontal overflow, no page errors and zero
+  axe violations. Viewports: 1920×1080, 1440×900, 390×844.
+- Model-renderer browser fixtures are labelled TEST ONLY; none entered the
+  database or production data source. Real screenshots honestly show the
+  insufficient-data state, not invented forecasts.
+
+Evidence directory (ignored, deliberately not committed):
+`/home/novius2/trading-stack/output/playwright/nifty-context-final/`.
+Contains `results.json`, full `real-evidence.json`, 12 real screenshots, and
+three explicitly labelled test-only waterfall screenshots.
+
+Latest accepted real run at screenshot time:
+`857fa9caac9bf412723576e2f0d69ff9717007079779005e7dab3ed378db0bec`.
+13,746 retained minutes; 28 raw sessions; 65 eligible input occasions; 59 mature
+outcomes; only **16 eligible sessions**, below the frozen 20-session minimum.
+The result is DATA_INSUFFICIENT and contains no trained production predictions.
+
+Timing: source audit/gated experiment wall time about 8–17 seconds (no real
+training occurred); stored computation measurement on accepted run 15.203 s.
+Public first-evidence navigation: 545 ms at 1920, 1,097 ms at 1440, 677 ms at
+390. Lens switches 49–117 ms. These are network-inclusive browser timings, not
+claimed 300 ms warm-shell acceptance. No old version of this new route exists
+for an honest before/after route comparison. No live-training latency or
+20-session forward performance claim is made.
+
+Worker observed idle: 0% CPU, approximately 54 MiB RAM (1 GiB ceiling); research
+tables around 1.8 MiB during validation. Heartbeat-based health and bounded
+2×5 MB Docker logs are enabled. Both affected services were healthy with zero
+restarts after deployment. A complete future scheduled session has not yet
+elapsed; do not represent startup checks as full-session shadow acceptance.
+
+Rerun browser checks:
+
+```bash
+cd /home/novius2/trading-stack
+PLAYWRIGHT_OUTPUT_DIR=/home/novius2/trading-stack/output/playwright/nifty-context-final node tools/playwright/nifty-context.mjs
+docker run --rm -v /home/novius2/trading-stack/services/nifty_explainable:/app:ro trading-stack-novius2-nifty-context python -m unittest -v test_worker
+```
+
+Retained dashboard rollback image:
+`trading-stack-n50-dashboard:before-nifty-context-20260909`.
 
 ## Deployment and rollback
 

@@ -118,7 +118,7 @@ export default function TradeQualityResearch() {
       <p><b>Good trade:</b> exact selected option has positive one-lot EOD net P&amp;L after the versioned charge policy.</p>
       <p>Research-only quote path; not booked/executable P&amp;L. Future 15m/30m/EOD data is outcome evidence and is never a model input.</p>
     </div>
-    <section className={styles.metrics} aria-label="Trade quality coverage">
+    <section className={styles.metrics} aria-label="Trade quality coverage" tabIndex={0}>
       {Object.entries(data.report.coverage).map(([name, value]) => <div key={name}><span>{name.replaceAll("_", " ")}</span><b>{number(value, 0)}</b></div>)}
     </section>
     <div className={styles.controls}>

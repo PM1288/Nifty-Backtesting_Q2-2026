@@ -94,3 +94,17 @@ with a visible zero origin. Positive values are green, negative values red,
 observed zero neutral, and CE/PE identity remains blue/yellow through borders.
 Missing comparisons remain null and the existing baseline-unavailable state is
 shown instead of an empty or fabricated chart.
+
+- Application commit: `adcd713` on canonical `master`.
+- Web typecheck and production build: PASS; web tests: PASS, 139/139.
+- Authenticated deployed local-gateway browser: 45/45 executable PASS, zero
+  FAIL; headed DPR2 remains BLOCKED.
+- Public root and health: HTTP 200. The public Cloudflare-origin headless run
+  was BLOCKED by transient `ERR_NETWORK_CHANGED`/blank asset loading before V2
+  hydration; it was not counted as an application pass.
+- Deployed image:
+  `sha256:fcca73eb1874d6cae4247a5612880f3d4c0654504a28d6de77697b6d70a3a959`,
+  healthy with zero restarts. Only `n50-dashboard` was recreated.
+- Evidence: `/tmp/scalper-v2-deltaoi-deployed-local-gateway-adcd713/`.
+- Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-horizontal-deltaoi-746b3f0`.

@@ -4221,3 +4221,13 @@ or outcomes were deleted.
 - The production retained chain still has `0/20` comparable baselines, so its
   truthful default remains `Baseline unavailable`; deterministic tests verify
   the bar configuration that renders when comparable values exist.
+- Web typecheck/build and 139/139 tests pass. Authenticated deployed browser
+  checks through the production local gateway pass 45/45 executable checks
+  with zero failures; headed DPR2 remains blocked. Public root/health return
+  HTTP 200, while a public-edge headless run was blocked before hydration by
+  transient Cloudflare/network-change asset loading.
+- Application `adcd713` is pushed to canonical master and deployed as image
+  `sha256:fcca73eb1874d6cae4247a5612880f3d4c0654504a28d6de77697b6d70a3a959`.
+  Only `n50-dashboard` was recreated; it is healthy with zero restarts.
+  Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-horizontal-deltaoi-746b3f0`.

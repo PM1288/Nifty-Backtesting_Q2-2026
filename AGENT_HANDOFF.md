@@ -3996,3 +3996,19 @@ or outcomes were deleted.
   charts). Evidence:
   `output/playwright/scalper-latency-deployed-final-20260910/`.
 - Rollback tag: `trading-stack-n50-dashboard:pre-scalper-latency-20260910`.
+
+## 2026-09-10 — Additive Scalper V2 three-chart workspace
+
+- Added `/strategy/trading-analytics?view=scalper_v2` without replacing the
+  existing Scalper. It renders a large underlying chart beside stacked exact CE
+  and PE charts, a value-first selected-pair/chain rail, current-OI CE1/CE2 and
+  PE1/PE2, an in-price OI profile, and OI, delta-OI, PCR and max-pain analytics.
+- The selected interval loads first; exact-pair 1m/5m/15m/60m payloads then
+  prefetch through the existing authenticated chart API and shared query cache.
+- V7 rules, exact A-open/B-close arithmetic, source missingness, all existing
+  tabs/exports, collectors, permissions and V1 remain unchanged.
+- Verification before release: web typecheck/build and 121/121 tests; API
+  typecheck/build and 192/192 tests; canonical gate PASS; authenticated
+  local-Vite/live-API browser suite 17/17 across 1920, 1440, 1366 and 390 widths.
+  Detailed evidence: `docs/trading-analytics/SCALPER_V2_20260910.md` and ignored
+  browser artifacts under `output/playwright/scalper-v2-local-20260910-final/`.

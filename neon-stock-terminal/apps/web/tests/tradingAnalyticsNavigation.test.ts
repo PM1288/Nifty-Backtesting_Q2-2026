@@ -4,8 +4,10 @@ import {
   analyticsMainView,
   analyticsTabs,
 } from "../src/lib/tradingAnalyticsNavigation";
-test("IO navigation includes the separate scalper trade-observation log", () => {
-  assert.equal(Object.keys(analyticsTabs).length, 8);
+test("IO navigation includes separate V1, V2 and trade-observation views", () => {
+  assert.equal(Object.keys(analyticsTabs).length, 9);
+  assert.equal(analyticsTabs.scalper, "Scalper");
+  assert.equal(analyticsTabs.scalper_v2, "Scalper V2");
   assert.equal(analyticsTabs["trade-log"], "Trade Log");
 });
 test("all historical query aliases keep their owning workspace", () => {

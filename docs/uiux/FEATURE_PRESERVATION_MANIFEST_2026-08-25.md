@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 additive Scalper V2: `/strategy/trading-analytics?view=scalper_v2`
+adds a separate three-chart comparison workspace while `view=scalper` remains
+the default Scalper. The selected timeframe loads first, then exact-pair
+1m/5m/15m/60m chart payloads preload through the existing authenticated API and
+React Query cache. Current V7 signals, A-open/B-close measurement, collectors,
+OI meanings, source gaps, exports, permissions and all previous tabs remain
+unchanged. V2 adds current-OI leaders, price-aligned OI context, a chain rail and
+four scoped option analytics blocks. Evidence:
+`docs/trading-analytics/SCALPER_V2_20260910.md`.
+
 2026-09-10 Scalper latency repair: normal Scalper entry uses a small authenticated
 read-only context route instead of blocking on the full Morning/FII/participant
 payload. Selected context/chart requests use an indexed exact-symbol lookup;

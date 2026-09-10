@@ -30,6 +30,9 @@ const Chart = lazy(async () => ({
 const TimeframeMatrix = lazy(async () => ({
   default: (await import("./TradingAnalyticsTimeframeMatrix")).TradingAnalyticsTimeframeMatrix,
 }));
+const ScalperV2 = lazy(async () => ({
+  default: (await import("./TradingAnalyticsScalperV2")).TradingAnalyticsScalperV2,
+}));
 type Row = Record<string, unknown>;
 const InspectContext = createContext<(row: Row) => void>(() => {});
 type Payload = {
@@ -70,6 +73,7 @@ type Payload = {
       };
       profile: Row[];
     };
+    metricLegs?: Row[];
   };
   policies: Row[];
   limitations: string[];
@@ -111,6 +115,7 @@ const tabs = {
   options: "Option Snapshots",
   smartapi: "SmartAPI OI & Quotes",
   scalper: "Scalper / Exact Contracts",
+  scalper_v2: "Scalper V2 / Three Charts",
   "trade-log": "Scalper Trade Log",
   matrix: "1m / 5m / 15m Matrix",
   structure: "Price & EMA",
@@ -364,7 +369,7 @@ export function TradingAnalyticsPage() {
     // Scalper has a deliberately small context endpoint. Load the full research
     // contract only when another lens owns it or a shared evidence drawer is
     // explicitly requested.
-    enabled: tab !== "scalper" || drawer != null,
+    enabled: !["scalper", "scalper_v2"].includes(tab) || drawer != null,
   });
   const scalperQuery = new URLSearchParams();
   for (const k of ["symbol", "expiry", "asOf"])
@@ -374,7 +379,7 @@ export function TradingAnalyticsPage() {
     queryFn: () => getJson<ScalperContextPayload>(`/v1/trading-analytics/scalper-context?${scalperQuery}`),
     staleTime: 30000,
     retry: 1,
-    enabled: tab === "scalper",
+    enabled: tab === "scalper" || tab === "scalper_v2",
   });
   const universeQuery = new URLSearchParams();
   if (params.get("asOf")) universeQuery.set("asOf", params.get("asOf")!);
@@ -393,11 +398,12 @@ export function TradingAnalyticsPage() {
   };
   const d = q.data;
   const scalperContext = scalperQ.data;
-  const pageContext = tab === "scalper" ? scalperContext : d;
-  const pageUniverse = tab === "scalper" && universeQ.data?.universe.length
+  const isScalperView = tab === "scalper" || tab === "scalper_v2";
+  const pageContext = isScalperView ? scalperContext : d;
+  const pageUniverse = isScalperView && universeQ.data?.universe.length
     ? universeQ.data.universe
     : pageContext?.universe ?? [];
-  const activeQuery = tab === "scalper" ? scalperQ : q;
+  const activeQuery = isScalperView ? scalperQ : q;
   const inspect = (row: Row) => {
     setInspected(row);
     setDrawer("source");
@@ -427,13 +433,13 @@ export function TradingAnalyticsPage() {
           {tab === 'trade-log' && <button aria-expanded={logMarketContext} onClick={() => setLogMarketContext(!logMarketContext)}>Market context — not Trade Log filters</button>}
           {pageContext && (tab !== 'trade-log' || logMarketContext) && (
             <>
-              <label>Symbol <select aria-label="Analytics underlying" value={pageContext.underlying.symbol} onFocus={()=>{if(tab === "scalper" && !universeQ.data) void universeQ.refetch();}} onChange={e=>{
+              <label>Symbol <select aria-label="Analytics underlying" value={pageContext.underlying.symbol} onFocus={()=>{if(isScalperView && !universeQ.data) void universeQ.refetch();}} onChange={e=>{
                 const next=new URLSearchParams(params); next.set('symbol',e.target.value);
                 for(const k of ['expiry','strike','pin','day']) next.delete(k);
                 setInspected(null);setDrawer(null);setParams(next);
               }}>
                 {pageUniverse.length ? pageUniverse.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={pageContext.underlying.symbol}>{pageContext.underlying.label}</option>}
-                {tab === "scalper" && universeQ.isFetching && <option disabled>Loading all symbols…</option>}
+                {isScalperView && universeQ.isFetching && <option disabled>Loading all symbols…</option>}
               </select></label>
               <label>Chain <select aria-label="Selected underlying expiry" value={pageContext.smartapi.expiry??''} onChange={e=>{
                 const next=new URLSearchParams(params);next.set('expiry',e.target.value);next.delete('strike');next.delete('pin');setParams(next);
@@ -524,7 +530,7 @@ export function TradingAnalyticsPage() {
             ))}
           </nav>
         )}
-        {d && !["scalper", "trade-log", "matrix", "replay", "stock"].includes(tab) && (
+        {d && !["scalper", "scalper_v2", "trade-log", "matrix", "replay", "stock"].includes(tab) && (
           <button
             onClick={() => {
               const rows =
@@ -578,6 +584,24 @@ export function TradingAnalyticsPage() {
               spot={scalperContext.smartapi.spot?.ltp == null ? null : Number(scalperContext.smartapi.spot.ltp)}
             />
           </>
+        )) : tab === "scalper_v2" ? (!scalperContext ? (
+          <p role="status">{scalperQ.isLoading ? "Loading Scalper V2 market context…" : "No Scalper V2 context response."}</p>
+        ) : (
+          <Suspense fallback={<p role="status">Loading the three-chart Scalper V2 workspace…</p>}>
+            <ScalperV2
+              key={scalperContext.underlying.symbol}
+              symbol={scalperContext.underlying.symbol}
+              label={scalperContext.underlying.label}
+              asOf={scalperContext.asOf}
+              expiry={String(scalperContext.smartapi.expiry ?? "")}
+              strikes={scalperContext.smartapi.strikes}
+              legs={scalperContext.smartapi.legs}
+              metricLegs={scalperContext.smartapi.metricLegs ?? []}
+              state={scalperContext.state}
+              errors={scalperContext.errors}
+              spot={scalperContext.smartapi.spot?.ltp == null ? null : Number(scalperContext.smartapi.spot.ltp)}
+            />
+          </Suspense>
         )) : !d ? (
           <p role="status">
             {q.isLoading

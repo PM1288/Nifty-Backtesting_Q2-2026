@@ -43,24 +43,27 @@ the displayed category counts against both live API payloads, verifies filters,
 CSV fields, contained table overflow, desktop/mobile rendering and absence of
 failed authenticated API responses.
 
-Deployed data on 10 September 2026 contains 1,128 stock-month selections across
-267 unique symbols:
+After the v2 recalculation, deployed data on 10 September 2026 contains 1,130
+stock-month selections:
 
 | Classification | Rows |
 | --- | ---: |
-| In both strategies | 91 |
-| Monthly Close only | 1,036 |
-| Monthly Open only | 1 |
+| In both strategies | 95 |
+| Monthly Close only | 1,032 |
+| Monthly Open only | 3 |
 
 These are live retained-data counts, not constants in the UI or test. The
 deployed authenticated browser suite passed 40/40 checks at 1440x900 and
 390x844, including route switching for both original strategies and CSV
 download. Runtime-only screenshots/results are in
-`/tmp/monthly-comparison-4a2a9bc-final/`.
+`/tmp/monthly-comparison-v2-a6cb683/`.
 
-Web typecheck/build and 124/124 tests passed. API typecheck/build and 193/193
+Web typecheck/build and 144/144 tests passed. API typecheck/build and 194/194
 tests passed. The canonical source gate passed. Dashboard image
-`sha256:0bb88be4d6aae374e0c7163802556ce6361a63263a491564ef08e6fe3dee0d1b`
-and the unchanged rolling worker were healthy with zero restarts.
+`sha256:0f5ebe603fee885b277829ecb218f2c4c50e70fed8d61597b505a9c577002634`
+and rolling worker
+`sha256:1f30456e839a3baf553bab548f7351e3db2f1f0248b135fa7b58d157c5958e77`
+were healthy with zero restarts.
 
-Rollback image: `trading-stack-n50-dashboard:pre-monthly-comparison-34c47b5`.
+Rollback images: `trading-stack-n50-dashboard:pre-monthly-open-v2-a6cb683`
+and `trading-stack-rolling-monthly:pre-monthly-open-v2-a6cb683`.

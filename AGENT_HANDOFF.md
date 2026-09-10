@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-10 — Monthly Open v2 removes the previous-close gate
+
+- User-authorised rule revision: Monthly Open now has six eligibility gates;
+  only `Signal open > previous-day close` was removed. Monthly Close and every
+  other strategy remain unchanged.
+- New additive version `absolute_monthly_open_bullish_long_v2` preserves v1
+  rows. The 36-month canonical-data replay produced 98 candidates versus 92 in
+  v1, with 60 positive / 38 negative and +3.3706% average end return. September
+  is developing.
+- Commit `a6cb683` is on `master` and
+  `feat/monthly-open-remove-previous-close`. Dashboard and rolling worker are
+  deployed and healthy. Authenticated browser checks pass 32/32 and 40/40 at
+  desktop/mobile sizes. Full evidence and rollback instructions:
+  `docs/rolling-monthly/MONTHLY_OPEN_STRATEGY_2026-09-10.md`.
+
 ## 2026-09-10 — Scalper V2 charting-upgrade v2 trendline lifecycle
 
 - Read all three `/home/novius2/NIFTY50/Charting-upgrade` Markdown contracts and

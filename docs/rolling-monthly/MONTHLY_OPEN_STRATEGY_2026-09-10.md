@@ -48,33 +48,34 @@ Neither EMA is a hidden entry gate.
   survivorship bias until point-in-time membership is available.
 - Results are gross before costs, taxes, slippage, liquidity, and capital overlap.
 
-## Previous v1 36-month replay baseline
-
-The figures below are the retained v1 baseline captured before removal of the
-previous-session-close gate. They are not v2 results; the v2 replay and
-comparison counts must replace them after recalculation.
+## 36-month v2 replay captured on 10 September 2026
 
 Source end: 10 September 2026. Current recognized stock-F&O universe: 268.
 
-| Metric | Monthly Open |
-| --- | ---: |
-| Selected candidates | 92 |
-| Evaluable paths | 92 |
-| Positive / negative | 61 / 31 |
-| Average end return | +4.0029% |
-| Average maximum profit | +9.8919% |
-| Worst observed drawdown | -30.7793% |
-| Equal ₹100,000 per opportunity gross sum | +₹368,268.02 |
+| Metric | v1 baseline | v2 revised rule |
+| --- | ---: | ---: |
+| Selected candidates | 92 | 98 |
+| Evaluable paths | 92 | 98 |
+| Positive / negative | 61 / 31 | 60 / 38 |
+| Average end return | +4.0029% | +3.3706% |
+| Average maximum profit | +9.8919% | +9.4315% |
+| Worst observed drawdown | -30.7793% | -30.7793% |
+| Equal ₹100,000 per opportunity gross sum | +₹368,268.02 | +₹330,314.83 |
 
-September 2026 is developing and currently contains NIACL (1 September) and
-GRASIM (4 September). Developing rows are visible and must not be represented
-as final month outcomes.
+September 2026 is developing and currently contains GRASIM, NIACL, NMDC and
+SBIN. Developing rows are visible and must not be represented as final month
+outcomes. Six stock-months are newly eligible in v2. The removed gate also
+makes an earlier session the first qualifying session for 16 retained
+stock-months, so this is a full rule replay rather than six rows appended to
+the old result.
 
 For comparison only, the independently persisted Monthly Close population at
 the same database snapshot contained 1,127 evaluable candidates with +0.8003%
 average end return. Different candidate counts are expected because the new
 model uses strict open-to-prior-open confirmation and is not a relabelled
-copy of close-selected trades.
+copy of close-selected trades. The v2 close/open comparison contains 95
+stock-months in both strategies, 1,032 Monthly Close only and 3 Monthly Open
+only.
 
 ## Implementation surfaces
 
@@ -98,33 +99,27 @@ dormant; Monthly Close rows are never overwritten.
 
 ## Released evidence
 
-- Canonical commits: `3f3578672b1936948c8f6d02b3f9681bc656e800`
-  (strategy/API/dashboard/backtest) and `99a0554` (direct Monthly Close and
-  Monthly Open local tabs plus the deployed regression).
-- `master` and `feature/monthly-open-strategy` are pushed to the canonical
-  GitHub repository.
+- Canonical commit `a6cb683` is pushed to both
+  `feat/monthly-open-remove-previous-close` and `master`.
+- A canonical-data `backfill-absolute-open --months 36` persisted 98 v2
+  candidates under the additive v2 key. The 92 v1 candidates remain intact.
 - Runtime images: dashboard
-  `sha256:405fab542954ecf6c2782a106384c2d3edd942b94a5dd7434f928e42f1d084e9`;
+  `sha256:0f5ebe603fee885b277829ecb218f2c4c50e70fed8d61597b505a9c577002634`;
   rolling worker
-  `sha256:0146e31635db22fb4a336857aae7733fd397a49276c712cd865c94960ba942d7`.
+  `sha256:1f30456e839a3baf553bab548f7351e3db2f1f0248b135fa7b58d157c5958e77`.
   Both containers were healthy with zero restarts after release.
-- Authenticated deployed browser checks: 28/28 at 1440x900 and 390x844. They
-  verify both direct strategy tabs, the four-method selector, 92 persisted
-  Monthly Open candidates, open-basis evidence, zero failed API responses and
-  no document-level horizontal overflow. Runtime-only evidence:
-  `/tmp/monthly-open-99a0554/`.
-- Python strategy tests: 25/25. Web tests: 121/121. API tests: 193/193, including
-  9/9 focused rolling-monthly tests. Web/API typechecks and production builds
-  passed. The canonical repository gate passed.
-- Export smoke test produced 92 rows in
-  `ABSOLUTE_MONTHLY_OPEN_3Y_TRADES.csv` and a 44,919-byte
-  `ABSOLUTE_MONTHLY_OPEN_3Y_ANALYSIS.xlsx` inside the worker's temporary export
-  directory.
-- Full service lint still reports three pre-existing `E702` findings in
-  `rolling_window.py`; focused lint for the modified Python files passed.
+- Authenticated deployed browser checks pass 32/32 for Monthly Open and 40/40
+  for Close vs Open at 1440x900 and 390x844. They verify the v2 API, six
+  eligibility conditions, absence of the removed close gate in evidence,
+  populated comparisons, exports and contained responsive layout. Runtime-only
+  evidence: `/tmp/monthly-open-v2-a6cb683/` and
+  `/tmp/monthly-comparison-v2-a6cb683/`.
+- Python tests pass 26/26; focused Ruff passes. Web tests pass 144/144 and API
+  tests 194/194; web/API typechecks and production builds pass. The canonical
+  repository gate passes.
+- Authenticated export smoke produced 98 CSV data records and a 484,961-byte
+  Excel-compatible workbook in `/tmp`; these runtime exports are not committed.
 
-Rollback images are
-`trading-stack-n50-dashboard:pre-monthly-open-3f35786` and
-`trading-stack-rolling-monthly:pre-monthly-open-3f35786`. The latter was rebuilt
-from canonical pre-feature commit `c556858`; do not delete the additive Open
-rows merely to roll back the application surface.
+Rollback images are `trading-stack-n50-dashboard:pre-monthly-open-v2-a6cb683`
+and `trading-stack-rolling-monthly:pre-monthly-open-v2-a6cb683`. Rolling back
+the application does not require deleting either version's additive rows.

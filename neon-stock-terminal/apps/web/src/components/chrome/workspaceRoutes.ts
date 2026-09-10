@@ -76,7 +76,7 @@ export const STRATEGY_MENU_ROUTES = [
   {
     id: "monthly-strategy",
     label: "Monthly Strategy",
-    description: "Expiry, calendar closure and first-session entries in one ledger",
+    description: "Monthly Close, Monthly Open, expiry and first-session entries",
     path: "/strategy/monthly",
     icon: CalendarRange,
   },
@@ -253,7 +253,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     id: "monthly-strategy",
     label: "Monthly Strategy",
     compactLabel: "Monthly",
-    description: "Unified expiry, closure and first-session evidence",
+    description: "Unified Monthly Close, Monthly Open, expiry and first-session evidence",
     path: "/strategy/monthly",
     icon: CalendarRange,
     primaryDesktop: false,

@@ -22,6 +22,7 @@ type EvidenceRow = {
   entryMethod:
     | "EXPIRY"
     | "MONTHLY_CLOSURE"
+    | "MONTHLY_OPEN"
     | "FIRST_SESSION"
     | "ROLLING_5_30_60";
   symbol: string;
@@ -91,10 +92,17 @@ const reasonLabel = (value: string) =>
     .replaceAll("_", " ")
     .toLowerCase()
     .replace(/^./, (letter) => letter.toUpperCase());
+const methodLabel = (method: EvidenceRow["entryMethod"]) =>
+  method === "MONTHLY_CLOSURE"
+    ? "Monthly Close"
+    : method === "MONTHLY_OPEN"
+      ? "Monthly Open"
+      : method.replaceAll("_", " ");
 
 function normalized(
   expiry: Array<Record<string, any>>,
   closure: Array<Record<string, any>>,
+  open: Array<Record<string, any>>,
   firstSession: Array<Record<string, any>>,
   closureEvaluations: Array<Record<string, any>> = [],
 ): EvidenceRow[] {
@@ -180,6 +188,40 @@ function normalized(
       raw: row,
     };
   });
+  const fromOpen = open.map((row): EvidenceRow => {
+    const entry = number(row.entry_price);
+    const end = number(row.path_end_price);
+    const quantity = entry ? Math.floor(10000 / entry) : 0;
+    const maxProfit = number(row.max_profit_pct);
+    const maxDrawdown = number(row.max_drawdown_pct);
+    return {
+      id: String(row.candidate_id),
+      entryMethod: "MONTHLY_OPEN",
+      symbol: String(row.symbol),
+      period: text(row.evaluation_month),
+      signalDate: text(row.signal_date),
+      entryDate: text(row.entry_date),
+      entryPrice: entry,
+      endPrice: end,
+      endReturn: number(row.end_return_pct),
+      maxProfit,
+      maxDrawdown,
+      pnl10000: entry != null && end != null ? quantity * (end - entry) : null,
+      maxProfit10000: entry != null && maxProfit != null ? (quantity * entry * maxProfit) / 100 : null,
+      maxDrawdown10000: entry != null && maxDrawdown != null ? (quantity * entry * maxDrawdown) / 100 : null,
+      status: String(row.evaluation_status),
+      selectionStatus: "SELECTED",
+      gapThreshold: null,
+      gapPct: null,
+      ema9: number(row.monthly_ema9),
+      closeAboveEma9: truth(row.monthly_close_above_ema9),
+      candleAboveEma9Pct: number(row.monthly_candle_above_ema9_pct),
+      hit1: (maxProfit ?? -Infinity) >= 1,
+      hit3: (maxProfit ?? -Infinity) >= 3,
+      hit5: (maxProfit ?? -Infinity) >= 5,
+      raw: row,
+    };
+  });
   const fromFirst = firstSession.map((row): EvidenceRow => {
     const maxProfit = number(row.max_profit_pct);
     const maxDrawdown = number(row.max_drawdown_pct);
@@ -252,7 +294,7 @@ function normalized(
         },
       }),
     );
-  return [...fromExpiry, ...fromClosure, ...fromFirst, ...rejectedClosure];
+  return [...fromExpiry, ...fromClosure, ...fromOpen, ...fromFirst, ...rejectedClosure];
 }
 
 function csvDownload(rows: EvidenceRow[], filename: string) {
@@ -411,7 +453,7 @@ function StrategyTable({
                 </td>
                 <td>
                   <b className={styles.method}>
-                    {row.entryMethod.replaceAll("_", " ")}
+                    {methodLabel(row.entryMethod)}
                   </b>
                   <small>{row.selectionStatus.replaceAll("_", " ")}</small>
                   {rejectionReasons(row)[0] ? (
@@ -474,8 +516,8 @@ function StrategyTable({
                         {row.closeAboveEma9 == null
                           ? "Not available"
                           : row.closeAboveEma9
-                            ? "Close above"
-                            : "Close below"}
+                            ? `${row.entryMethod === "MONTHLY_OPEN" ? "Open" : "Close"} above`
+                            : `${row.entryMethod === "MONTHLY_OPEN" ? "Open" : "Close"} below`}
                       </small>
                     </td>
                     <td>
@@ -536,7 +578,7 @@ function Inspector({
     >
       <header>
         <div>
-          <span>{row.entryMethod.replaceAll("_", " ")}</span>
+          <span>{methodLabel(row.entryMethod)}</span>
           <h2>
             {row.symbol} · {row.period.slice(0, 7)}
           </h2>
@@ -619,7 +661,7 @@ function Inspector({
         <section>
           <h3>EMA9 context — informational</h3>
           <p>
-            Monthly EMA9 is never used as a silent entry gate. Close:{" "}
+            Monthly EMA9 is never used as a silent entry gate. {row.entryMethod === "MONTHLY_OPEN" ? "Open" : "Close"}:{" "}
             {row.closeAboveEma9 == null
               ? "not available"
               : row.closeAboveEma9
@@ -681,17 +723,18 @@ export function MonthlyStrategyPage() {
   const [data, setData] = useState<{
     expiry: any[];
     closure: any[];
+    open: any[];
     first: any[];
     closureEvaluations: any[];
-  }>({ expiry: [], closure: [], first: [], closureEvaluations: [] });
-  const [loadingSources, setLoadingSources] = useState(4);
+  }>({ expiry: [], closure: [], open: [], first: [], closureEvaluations: [] });
+  const [loadingSources, setLoadingSources] = useState(5);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<EvidenceRow | null>(null);
   const requestedMethod = new URLSearchParams(location.search).get(
     "entryMethod",
   );
   const [method, setMethod] = useState(
-    ["EXPIRY", "MONTHLY_CLOSURE", "FIRST_SESSION"].includes(
+    ["EXPIRY", "MONTHLY_CLOSURE", "MONTHLY_OPEN", "FIRST_SESSION"].includes(
       requestedMethod ?? "",
     )
       ? requestedMethod!
@@ -712,7 +755,7 @@ export function MonthlyStrategyPage() {
     let active = true;
     const load = async () => {
       setError("");
-      setLoadingSources(4);
+      setLoadingSources(5);
       let firstRows: any[] = [];
       const apply = (patch: Partial<typeof data>) => {
         if (!active) return;
@@ -739,6 +782,17 @@ export function MonthlyStrategyPage() {
           false,
         );
         apply({ closure: closure.candidates, closureEvaluations: [] });
+      } catch (reason) {
+        fail(reason);
+      }
+      try {
+        const open = await fetchAbsoluteMonthlyDashboard(
+          undefined,
+          undefined,
+          false,
+          "open",
+        );
+        apply({ open: open.candidates });
       } catch (reason) {
         fail(reason);
       }
@@ -813,6 +867,7 @@ export function MonthlyStrategyPage() {
       normalized(
         data.expiry,
         data.closure,
+        data.open,
         data.first,
         data.closureEvaluations,
       ),
@@ -869,9 +924,9 @@ export function MonthlyStrategyPage() {
           <span>INDEPENDENT CASH-EQUITY RESEARCH · NOT OIIS</span>
           <h1>Monthly Strategy</h1>
           <p>
-            Compare expiry-anchored, calendar-month closure and first-session
-            entries in one evidence ledger. The entry date changes; outcomes,
-            target tests and capital bases remain directly comparable.
+            Compare Monthly Close, Monthly Open, expiry-anchored and first-session
+            entries in one evidence ledger. Open and close variants remain
+            independently versioned and directly backtestable.
           </p>
         </div>
         <nav>
@@ -889,7 +944,7 @@ export function MonthlyStrategyPage() {
       ) : null}
       {loadingSources > 0 ? (
         <div className={styles.loading}>
-          Loading monthly evidence progressively… {4 - loadingSources}/4 sources
+          Loading monthly evidence progressively… {5 - loadingSources}/5 sources
           ready
         </div>
       ) : null}
@@ -932,9 +987,10 @@ export function MonthlyStrategyPage() {
           <label>
             Entry method
             <select value={method} onChange={(e) => setMethod(e.target.value)}>
-              <option value="ALL">All three methods</option>
+              <option value="ALL">All four methods</option>
               <option value="EXPIRY">Expiry</option>
-              <option value="MONTHLY_CLOSURE">Monthly closure</option>
+              <option value="MONTHLY_CLOSURE">Monthly Close</option>
+              <option value="MONTHLY_OPEN">Monthly Open</option>
               <option value="FIRST_SESSION">First session</option>
             </select>
           </label>
@@ -1327,10 +1383,12 @@ export function RollingWindowStrategyPage() {
 export function RollingMonthlyLegacyRouter() {
   const location = useLocation();
   const view = new URLSearchParams(location.search).get("view");
-  if (["expiry", "absolute", "absolute-first-session"].includes(view ?? "")) {
+  if (["expiry", "absolute", "absolute-open", "absolute-first-session"].includes(view ?? "")) {
     const method =
       view === "expiry"
         ? "EXPIRY"
+        : view === "absolute-open"
+          ? "MONTHLY_OPEN"
         : view === "absolute-first-session"
           ? "FIRST_SESSION"
           : "MONTHLY_CLOSURE";

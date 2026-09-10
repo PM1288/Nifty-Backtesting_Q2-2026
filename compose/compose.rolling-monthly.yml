@@ -1,6 +1,6 @@
 services:
   rolling-monthly:
-    image: trading-stack-rolling-monthly:2.3.0
+    image: trading-stack-rolling-monthly:2.4.0
     build:
       context: .
       dockerfile: services/rolling_monthly/Dockerfile

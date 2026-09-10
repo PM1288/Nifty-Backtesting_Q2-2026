@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Monthly Open strategy: `/strategy/monthly?entryMethod=MONTHLY_OPEN`
+adds independent `absolute_monthly_open_bullish_long_v1` selection and
+same-calendar-month backtesting beside the unchanged Monthly Close strategy.
+Monthly red/green context remains explicit; all cross-period decision values
+and entry use opening prices, with no signal-session close used for selection.
+First Session gap logic, expiry, Rolling 5/30/60, OIIS, Paper Trading, source
+precedence, permissions and existing close results remain unchanged. Evidence:
+`docs/rolling-monthly/MONTHLY_OPEN_STRATEGY_2026-09-10.md`.
+
 2026-09-10 additive Scalper V2: `/strategy/trading-analytics?view=scalper_v2`
 adds a separate three-chart comparison workspace while `view=scalper` remains
 the default Scalper. The selected timeframe loads first, then exact-pair

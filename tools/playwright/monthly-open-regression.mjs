@@ -1,0 +1,70 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { chromium } from "playwright";
+
+const origin = (process.env.PLAYWRIGHT_ORIGIN ?? "http://127.0.0.1:19090").replace(/\/$/, "");
+const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD;
+const outputDir = path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR ?? "/tmp/monthly-open-regression");
+if (!password) throw new Error("PLAYWRIGHT_ADMIN_PASSWORD is required");
+await fs.mkdir(outputDir, { recursive: true });
+
+const browser = await chromium.launch({ headless: true });
+const results = [];
+const check = (name, passed, detail = "") => {
+  results.push({ name, passed, detail });
+  if (!passed) throw new Error(`${name}: ${detail}`);
+};
+
+try {
+  for (const viewport of [
+    { name: "desktop-1440x900", width: 1440, height: 900 },
+    { name: "mobile-390x844", width: 390, height: 844 },
+  ]) {
+    const context = await browser.newContext({ viewport });
+    const login = await context.request.post(`${origin}/n50/auth/session/dev-login`, {
+      data: { identifier: "admin", password },
+    });
+    check(`${viewport.name} login`, login.ok(), `status=${login.status()}`);
+    const page = await context.newPage();
+    const failures = [];
+    page.on("response", (response) => {
+      if (response.status() >= 400 && /\/n50\/(v1|auth)\//.test(response.url())) {
+        failures.push(`${response.status()} ${response.url()}`);
+      }
+    });
+    await page.goto(`${origin}/n50/strategy/monthly?entryMethod=MONTHLY_OPEN`, {
+      waitUntil: "networkidle",
+      timeout: 120_000,
+    });
+    await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor();
+    const method = page.getByLabel("Entry method");
+    check(`${viewport.name} four methods`, await method.locator("option").count() === 5);
+    check(`${viewport.name} Monthly Open selected`, await method.inputValue() === "MONTHLY_OPEN");
+    const rows = page.locator("tbody tr");
+    check(`${viewport.name} open rows`, await rows.count() > 0, "no Monthly Open rows");
+    check(
+      `${viewport.name} open labels only`,
+      await rows.locator("td:nth-child(2) b").evaluateAll((nodes) => nodes.every((node) => node.textContent?.trim() === "Monthly Open")),
+    );
+    const api = await page.evaluate(async () => {
+      const response = await fetch("/n50/v1/rolling-monthly/absolute-months?basis=open&includeEvaluations=false", { credentials: "include" });
+      return { status: response.status, body: await response.json() };
+    });
+    check(`${viewport.name} API`, api.status === 200, `status=${api.status}`);
+    check(`${viewport.name} version`, api.body.strategyVersion === "absolute_monthly_open_bullish_long_v1");
+    check(`${viewport.name} basis`, api.body.comparisonBasis === "OPEN");
+    check(`${viewport.name} persisted candidates`, api.body.candidates.length > 0, `count=${api.body.candidates.length}`);
+    await rows.first().click();
+    await page.getByRole("heading", { name: "Entry conditions" }).waitFor();
+    check(`${viewport.name} open evidence`, await page.getByText(/Signal open > previous-day close/).count() === 1);
+    check(`${viewport.name} no API failures`, failures.length === 0, failures.join(" | "));
+    check(`${viewport.name} no horizontal overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
+    await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: true });
+    await context.close();
+  }
+} finally {
+  await browser.close();
+  await fs.writeFile(path.join(outputDir, "results.json"), `${JSON.stringify(results, null, 2)}\n`);
+}
+
+console.log(JSON.stringify({ checks: results.length, passed: results.filter((row) => row.passed).length, outputDir }, null, 2));

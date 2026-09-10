@@ -9,6 +9,7 @@ import pandas as pd
 
 
 STRATEGY_VERSION = "absolute_monthly_closure_bullish_long_v1"
+OPEN_STRATEGY_VERSION = "absolute_monthly_open_bullish_long_v1"
 RESEARCH_NOTIONAL_PER_TRADE = 100_000.0
 
 
@@ -41,6 +42,7 @@ def evaluate_absolute_months(
     first_evaluation_month: str,
     last_evaluation_month: str,
     source_end_date: Any,
+    comparison_basis: str = "close",
 ) -> AbsoluteMonthResult:
     """Evaluate the first seven-condition LONG signal in each calendar month.
 
@@ -48,6 +50,9 @@ def evaluate_absolute_months(
     requested model. Same-session high/low are excluded from post-entry MFE/MAE
     because their ordering relative to the close is unknowable from daily OHLC.
     """
+    if comparison_basis not in {"close", "open"}:
+        raise ValueError("comparison_basis must be close or open")
+    strategy_version = STRATEGY_VERSION if comparison_basis == "close" else OPEN_STRATEGY_VERSION
     required = {"trade_date", "symbol", "open", "high", "low", "close", "volume", "source", "source_priority"}
     missing = required - set(frame.columns)
     if missing:
@@ -76,7 +81,7 @@ def evaluate_absolute_months(
     }
 
     for month in months:
-        run_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{STRATEGY_VERSION}:{month}"))
+        run_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{strategy_version}:{month}"))
         expected_month = sessions_by_month.get(month, set())
         recorded_month_end = max(expected_month) if expected_month else month.end_time.normalize()
         projected_business_month_end = pd.offsets.BMonthEnd().rollforward(month.start_time).normalize()
@@ -119,7 +124,8 @@ def evaluate_absolute_months(
             monthly = rows.assign(period=rows.trade_date.dt.to_period("M")).groupby("period", observed=True).agg(
                 month_open=("open", "first"), month_close=("close", "last")
             )
-            monthly["monthly_ema9"] = monthly.month_close.ewm(span=9, adjust=False, min_periods=9).mean()
+            reference_series = monthly.month_close if comparison_basis == "close" else monthly.month_open
+            monthly["monthly_ema9"] = reference_series.ewm(span=9, adjust=False, min_periods=9).mean()
             if m1 not in monthly.index or m2 not in monthly.index:
                 incomplete += 1
                 continue
@@ -152,15 +158,29 @@ def evaluate_absolute_months(
                           previous_day.open, previous_day.close, row.open, row.close]
                 if not all(_finite(value) for value in values):
                     continue
-                checks = [
-                    m2_close < m2_open,
-                    m1_close > m1_open,
-                    m1_close > m2_open,
-                    float(row.close) > w0_open,
-                    float(row.close) > w1_open,
-                    float(row.close) > float(previous_day.open),
-                    float(row.close) > float(row.open),
-                ]
+                if comparison_basis == "close":
+                    checks = [
+                        m2_close < m2_open,
+                        m1_close > m1_open,
+                        m1_close > m2_open,
+                        float(row.close) > w0_open,
+                        float(row.close) > w1_open,
+                        float(row.close) > float(previous_day.open),
+                        float(row.close) > float(row.open),
+                    ]
+                else:
+                    # Candle-colour gates necessarily retain OHLC. Every
+                    # cross-period decision value and the executable reference
+                    # is an opening price known at the signal-session open.
+                    checks = [
+                        m2_close < m2_open,
+                        m1_close > m1_open,
+                        m1_open > m2_open,
+                        float(row.open) > w0_open,
+                        float(row.open) > w1_open,
+                        float(row.open) > float(previous_day.open),
+                        float(row.open) > float(previous_day.close),
+                    ]
                 if all(checks):
                     selected = {
                         "row": row,
@@ -176,9 +196,13 @@ def evaluate_absolute_months(
 
             row = selected["row"]
             signal_date = pd.Timestamp(row.trade_date)
-            entry_price = float(row.close)
-            path = month_rows[month_rows.trade_date.gt(signal_date) & month_rows.trade_date.le(expected_month_end)]
-            observed_expected = {value for value in expected_month if signal_date < value <= min(source_end, expected_month_end)}
+            entry_price = float(row.close) if comparison_basis == "close" else float(row.open)
+            if comparison_basis == "close":
+                path = month_rows[month_rows.trade_date.gt(signal_date) & month_rows.trade_date.le(expected_month_end)]
+                observed_expected = {value for value in expected_month if signal_date < value <= min(source_end, expected_month_end)}
+            else:
+                path = month_rows[month_rows.trade_date.ge(signal_date) & month_rows.trade_date.le(expected_month_end)]
+                observed_expected = {value for value in expected_month if signal_date <= value <= min(source_end, expected_month_end)}
             path_complete = observed_expected.issubset(observed)
             if path.empty:
                 path_end_date = signal_date
@@ -198,20 +222,35 @@ def evaluate_absolute_months(
                 max_profit_date = pd.Timestamp(max_profit_row.trade_date).date() if max_profit_price > entry_price else None
                 max_drawdown_date = pd.Timestamp(max_drawdown_row.trade_date).date() if max_drawdown_price < entry_price else None
             evaluation_status = "MATURED" if is_matured and path_complete else "DEVELOPING" if not is_matured and path_complete else "INCOMPLETE"
-            conditions = [
-                {"code": "M2_RED", "label": "Two months ago close < open", "left": m2_close, "operator": "<", "right": m2_open, "pass": True},
-                {"code": "M1_GREEN", "label": "Previous month close > open", "left": m1_close, "operator": ">", "right": m1_open, "pass": True},
-                {"code": "M1_ABOVE_M2_OPEN", "label": "Previous month close > two-month open", "left": m1_close, "operator": ">", "right": m2_open, "pass": True},
-                {"code": "W0_GREEN_ASOF", "label": "Week close as-of signal > week open", "left": float(row.close), "operator": ">", "right": selected["w0_open"], "pass": True},
-                {"code": "W0_ABOVE_W1_OPEN", "label": "Week close as-of signal > previous-week open", "left": float(row.close), "operator": ">", "right": selected["w1_open"], "pass": True},
-                {"code": "D0_ABOVE_D1_OPEN", "label": "Signal close > previous-day open", "left": float(row.close), "operator": ">", "right": float(selected["previous_day"].open), "pass": True},
-                {"code": "D0_GREEN", "label": "Signal close > signal-day open", "left": float(row.close), "operator": ">", "right": float(row.open), "pass": True},
-                {"code": "M1_CLOSE_ABOVE_EMA9", "label": "Previous-month close > monthly EMA9 (informational)", "left": m1_close, "operator": ">", "right": monthly_ema9, "pass": monthly_ema9 is not None and m1_close > monthly_ema9, "informational": True},
-                {"code": "M1_CANDLE_70_ABOVE_EMA9", "label": "At least 70% of previous-month bullish body is above EMA9 (informational)", "left": candle_above_ema9_pct, "operator": ">=", "right": 70.0, "pass": candle_above_ema9_pct is not None and candle_above_ema9_pct >= 70.0, "informational": True},
-            ]
-            candidate_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{STRATEGY_VERSION}:{month}:{symbol}"))
+            if comparison_basis == "close":
+                conditions = [
+                    {"code": "M2_RED", "label": "Two months ago close < open", "left": m2_close, "operator": "<", "right": m2_open, "pass": True},
+                    {"code": "M1_GREEN", "label": "Previous month close > open", "left": m1_close, "operator": ">", "right": m1_open, "pass": True},
+                    {"code": "M1_ABOVE_M2_OPEN", "label": "Previous month close > two-month open", "left": m1_close, "operator": ">", "right": m2_open, "pass": True},
+                    {"code": "W0_GREEN_ASOF", "label": "Week close as-of signal > week open", "left": float(row.close), "operator": ">", "right": selected["w0_open"], "pass": True},
+                    {"code": "W0_ABOVE_W1_OPEN", "label": "Week close as-of signal > previous-week open", "left": float(row.close), "operator": ">", "right": selected["w1_open"], "pass": True},
+                    {"code": "D0_ABOVE_D1_OPEN", "label": "Signal close > previous-day open", "left": float(row.close), "operator": ">", "right": float(selected["previous_day"].open), "pass": True},
+                    {"code": "D0_GREEN", "label": "Signal close > signal-day open", "left": float(row.close), "operator": ">", "right": float(row.open), "pass": True},
+                    {"code": "M1_CLOSE_ABOVE_EMA9", "label": "Previous-month close > monthly close EMA9 (informational)", "left": m1_close, "operator": ">", "right": monthly_ema9, "pass": monthly_ema9 is not None and m1_close > monthly_ema9, "informational": True},
+                    {"code": "M1_CANDLE_70_ABOVE_EMA9", "label": "At least 70% of previous-month bullish body is above EMA9 (informational)", "left": candle_above_ema9_pct, "operator": ">=", "right": 70.0, "pass": candle_above_ema9_pct is not None and candle_above_ema9_pct >= 70.0, "informational": True},
+                ]
+                reference_above_ema9 = monthly_ema9 is not None and m1_close > monthly_ema9
+            else:
+                conditions = [
+                    {"code": "M2_RED", "label": "Two months ago close < open (candle direction)", "left": m2_close, "operator": "<", "right": m2_open, "pass": True},
+                    {"code": "M1_GREEN", "label": "Previous month close > open (candle direction)", "left": m1_close, "operator": ">", "right": m1_open, "pass": True},
+                    {"code": "M1_OPEN_ABOVE_M2_OPEN", "label": "Previous-month open > two-month open", "left": m1_open, "operator": ">", "right": m2_open, "pass": True},
+                    {"code": "D0_OPEN_ABOVE_W0_OPEN", "label": "Signal open > current-week open", "left": float(row.open), "operator": ">", "right": selected["w0_open"], "pass": True},
+                    {"code": "D0_OPEN_ABOVE_W1_OPEN", "label": "Signal open > previous-week open", "left": float(row.open), "operator": ">", "right": selected["w1_open"], "pass": True},
+                    {"code": "D0_OPEN_ABOVE_D1_OPEN", "label": "Signal open > previous-day open", "left": float(row.open), "operator": ">", "right": float(selected["previous_day"].open), "pass": True},
+                    {"code": "D0_OPEN_ABOVE_D1_CLOSE", "label": "Signal open > previous-day close", "left": float(row.open), "operator": ">", "right": float(selected["previous_day"].close), "pass": True},
+                    {"code": "M1_OPEN_ABOVE_OPEN_EMA9", "label": "Previous-month open > monthly open EMA9 (informational)", "left": m1_open, "operator": ">", "right": monthly_ema9, "pass": monthly_ema9 is not None and m1_open > monthly_ema9, "informational": True},
+                ]
+                reference_above_ema9 = monthly_ema9 is not None and m1_open > monthly_ema9
+                candle_above_ema9_pct = None
+            candidate_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{strategy_version}:{month}:{symbol}"))
             month_candidates.append({
-                "candidate_id": candidate_id, "run_id": run_id, "strategy_version": STRATEGY_VERSION,
+                "candidate_id": candidate_id, "run_id": run_id, "strategy_version": strategy_version,
                 "evaluation_month": month.start_time.date(), "symbol": symbol, "company_name": company_names.get(symbol, symbol),
                 "sector": sectors.get(symbol), "signal_date": signal_date.date(), "entry_date": signal_date.date(),
                 "entry_price": entry_price, "evaluation_end_date": path_end_date.date(),
@@ -219,7 +258,7 @@ def evaluate_absolute_months(
                 "month_two_open": m2_open, "month_two_close": m2_close,
                 "month_one_open": m1_open, "month_one_close": m1_close,
                 "monthly_ema9": monthly_ema9,
-                "monthly_close_above_ema9": monthly_ema9 is not None and m1_close > monthly_ema9,
+                "monthly_close_above_ema9": reference_above_ema9,
                 "monthly_candle_above_ema9_pct": candle_above_ema9_pct,
                 "current_week_open": selected["w0_open"], "current_week_close_asof": float(row.close),
                 "previous_week_open": selected["w1_open"], "previous_week_close": selected["w1_close"],
@@ -237,22 +276,50 @@ def evaluate_absolute_months(
                 "source_provenance": {"entry": str(row.source), "path_sources": sorted(set(path.source.astype(str))) if not path.empty else [],
                                       "adjustment_policy": "YAHOO_SPLIT_ADJUSTED_OHLC_PRIMARY_WITH_NSE_SMARTAPI_LATEST_FALLBACK"},
                 "data_quality": {"status": evaluation_status, "path_complete": path_complete,
-                                 "same_day_extremes_excluded": True, "current_fno_membership_applied_retrospectively": True},
+                                 "comparison_basis": comparison_basis.upper(),
+                                 "same_day_extremes_excluded": comparison_basis == "close",
+                                 "same_day_extremes_included": comparison_basis == "open",
+                                 "current_fno_membership_applied_retrospectively": True},
             })
         candidates.extend(month_candidates)
         matured = all(candidate["evaluation_status"] == "MATURED" for candidate in month_candidates) and is_matured
         run_state = "MATURED" if matured else "DEVELOPING" if not is_matured else "INCOMPLETE"
         runs.append({
-            "run_id": run_id, "evaluation_month": month.start_time.date(), "strategy_version": STRATEGY_VERSION,
+            "run_id": run_id, "evaluation_month": month.start_time.date(), "strategy_version": strategy_version,
             "status": "COMPLETED", "maturity_state": run_state, "universe_size": len(universe),
             "evaluated_symbol_count": evaluated, "qualified_count": len(month_candidates),
             "incomplete_symbol_count": incomplete, "source_start_date": min(work.trade_date).date(),
             "source_end_date": source_end.date(),
-            "methodology": {"anchor": "ABSOLUTE_CALENDAR_MONTH", "side": "LONG", "entry": "SIGNAL_SESSION_CLOSE",
+            "methodology": {"anchor": "ABSOLUTE_CALENDAR_MONTH", "side": "LONG",
+                            "comparison_basis": comparison_basis.upper(),
+                            "entry": "SIGNAL_SESSION_CLOSE" if comparison_basis == "close" else "SIGNAL_SESSION_OPEN",
                             "exit": "FINAL_EXCHANGE_SESSION_CLOSE_IN_SAME_CALENDAR_MONTH",
                             "signal_selection": "FIRST_QUALIFYING_SESSION_PER_SYMBOL_PER_MONTH",
-                            "post_entry_extremes": "NEXT_SESSION_ONWARD", "research_notional_per_trade": RESEARCH_NOTIONAL_PER_TRADE},
+                            "post_entry_extremes": "NEXT_SESSION_ONWARD" if comparison_basis == "close" else "SIGNAL_SESSION_ONWARD",
+                            "research_notional_per_trade": RESEARCH_NOTIONAL_PER_TRADE},
             "quality_metrics": {"recognized_fno_symbols": len(universe), "evaluated_symbols": evaluated,
                                 "missing_or_incomplete_symbols": incomplete},
         })
     return AbsoluteMonthResult(runs=runs, candidates=candidates)
+
+
+def evaluate_absolute_open_months(
+    frame: pd.DataFrame,
+    universe: set[str],
+    sectors: dict[str, str],
+    expected_sessions: list[Any],
+    first_evaluation_month: str,
+    last_evaluation_month: str,
+    source_end_date: Any,
+) -> AbsoluteMonthResult:
+    """Evaluate the isolated open-reference counterpart to Monthly Close."""
+    return evaluate_absolute_months(
+        frame,
+        universe,
+        sectors,
+        expected_sessions,
+        first_evaluation_month,
+        last_evaluation_month,
+        source_end_date,
+        comparison_basis="open",
+    )

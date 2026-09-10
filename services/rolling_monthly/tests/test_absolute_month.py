@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pandas as pd
 
-from rolling_monthly.absolute_month import STRATEGY_VERSION, evaluate_absolute_months
+from rolling_monthly.absolute_month import (
+    OPEN_STRATEGY_VERSION,
+    STRATEGY_VERSION,
+    evaluate_absolute_months,
+    evaluate_absolute_open_months,
+)
 
 
 def fixture_frame() -> pd.DataFrame:
@@ -113,3 +118,63 @@ def test_absolute_month_quarantines_unresolved_price_scale_break() -> None:
     assert result.runs[0]["qualified_count"] == 0
     assert result.runs[0]["incomplete_symbol_count"] == 1
     assert result.candidates == []
+
+
+def test_absolute_open_month_uses_open_references_and_same_session_path() -> None:
+    frame = fixture_frame()
+    # Make the prior monthly open advance while retaining the red-to-green
+    # candle transition, then create a Tuesday open above all known references.
+    frame.loc[frame.trade_date == "2026-02-02", "open"] = 102
+    frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [116, 115]
+    frame.loc[frame.trade_date == "2026-03-03", "open"] = 103
+    frame.loc[frame.trade_date == "2026-03-09", ["open", "high", "low", "close"]] = [109, 111, 107, 108]
+    frame.loc[frame.trade_date == "2026-03-10", ["open", "high", "low", "close"]] = [110, 114, 106, 107]
+    result = evaluate_absolute_open_months(
+        frame,
+        {"TEST"},
+        {"TEST": "Test Sector"},
+        list(pd.to_datetime(frame.trade_date)),
+        "2026-03",
+        "2026-03",
+        "2026-04-01",
+    )
+    assert result.runs[0]["strategy_version"] == OPEN_STRATEGY_VERSION
+    assert result.runs[0]["methodology"]["comparison_basis"] == "OPEN"
+    assert result.runs[0]["qualified_count"] == 1
+    candidate = result.candidates[0]
+    assert candidate["signal_date"].isoformat() == "2026-03-10"
+    assert candidate["entry_price"] == 110
+    assert candidate["max_profit_price"] == 120
+    assert candidate["max_drawdown_price"] == 106
+    assert candidate["observed_post_entry_sessions"] == 3
+    assert candidate["data_quality"]["same_day_extremes_included"] is True
+    assert all(condition["pass"] for condition in candidate["conditions"] if not condition.get("informational"))
+
+
+def test_absolute_open_month_does_not_use_signal_close_for_selection() -> None:
+    frame = fixture_frame()
+    frame.loc[frame.trade_date == "2026-02-02", "open"] = 102
+    frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [116, 115]
+    frame.loc[frame.trade_date == "2026-03-03", "open"] = 103
+    frame.loc[frame.trade_date == "2026-03-09", ["open", "close"]] = [109, 108]
+    frame.loc[frame.trade_date == "2026-03-10", ["open", "high", "low", "close"]] = [110, 111, 90, 91]
+    result = evaluate_absolute_open_months(
+        frame, {"TEST"}, {}, list(pd.to_datetime(frame.trade_date)),
+        "2026-03", "2026-03", "2026-04-01",
+    )
+    assert result.runs[0]["qualified_count"] == 1
+    assert result.candidates[0]["entry_price"] == 110
+    assert any(condition["code"] == "D0_OPEN_ABOVE_D1_CLOSE" for condition in result.candidates[0]["conditions"])
+
+
+def test_absolute_month_rejects_unknown_comparison_basis() -> None:
+    frame = fixture_frame()
+    try:
+        evaluate_absolute_months(
+            frame, {"TEST"}, {}, list(pd.to_datetime(frame.trade_date)),
+            "2026-03", "2026-03", "2026-04-01", comparison_basis="median",
+        )
+    except ValueError as error:
+        assert str(error) == "comparison_basis must be close or open"
+    else:
+        raise AssertionError("unknown comparison basis must fail")

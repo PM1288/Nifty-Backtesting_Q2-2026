@@ -7,6 +7,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const YEAR = /^20\d{2}$/;
 const MONTH = /^(0[1-9]|1[0-2])$/;
 const ABSOLUTE_MONTH_VERSION = "absolute_monthly_closure_bullish_long_v1";
+const ABSOLUTE_OPEN_MONTH_VERSION = "absolute_monthly_open_bullish_long_v1";
 const ABSOLUTE_FIRST_SESSION_VERSION = "absolute_monthly_first_session_gap_fill_long_v1";
 const RESEARCH_NOTIONAL = 100_000;
 const FIRST_SESSION_NOTIONAL = 10_000;
@@ -30,7 +31,7 @@ function csv(value: unknown) {
 }
 
 const absoluteColumns = [
-  "evaluation_month", "symbol", "company_name", "sector", "signal_date", "entry_date",
+  "strategy_version", "evaluation_month", "symbol", "company_name", "sector", "signal_date", "entry_date",
   "entry_price", "evaluation_end_date", "evaluation_status", "observed_post_entry_sessions",
   "month_two_open", "month_two_close", "month_one_open", "month_one_close",
   "monthly_ema9", "monthly_close_above_ema9", "monthly_candle_above_ema9_pct",
@@ -74,19 +75,22 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
     const includeEvaluations = clean(req.query.includeEvaluations, 5).toLowerCase() !== "false";
+    const comparisonBasis = clean(req.query.basis, 8).toLowerCase() || "close";
     if (year && !YEAR.test(year)) return void res.status(400).json({ error: "year must be YYYY" });
     if (month && !MONTH.test(month)) return void res.status(400).json({ error: "month must be MM" });
+    if (!['close', 'open'].includes(comparisonBasis)) return void res.status(400).json({ error: "basis must be close or open" });
+    const strategyVersion = comparisonBasis === "open" ? ABSOLUTE_OPEN_MONTH_VERSION : ABSOLUTE_MONTH_VERSION;
     const [runs, candidates, evaluations, monthlySummary, yearlySummary] = await Promise.all([
       prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT * FROM rolling_monthly.absolute_month_run WHERE strategy_version=$1
-         ORDER BY evaluation_month DESC`, ABSOLUTE_MONTH_VERSION),
+         ORDER BY evaluation_month DESC`, strategyVersion),
       prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT * FROM rolling_monthly.absolute_month_candidate
          WHERE strategy_version=$1
            AND ($2='' OR extract(year FROM evaluation_month)::int=$2::int)
            AND ($3='' OR extract(month FROM evaluation_month)::int=$3::int)
-         ORDER BY evaluation_month DESC,signal_date,symbol`, ABSOLUTE_MONTH_VERSION, year, month),
-      includeEvaluations ? prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+         ORDER BY evaluation_month DESC,signal_date,symbol`, strategyVersion, year, month),
+      includeEvaluations && comparisonBasis === "close" ? prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT e.*,p.market_cap_bucket,p.is_nifty_50,p.is_nifty_100,p.is_nifty_200,
           p.is_nifty_largemidcap_250,p.is_nifty_500,p.is_nse_fno
          FROM rolling_monthly.evaluation_ledger e
@@ -111,7 +115,7 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
           sum(LEAST(end_return_pct,0)) FILTER (WHERE evaluation_status<>'INCOMPLETE')*$2/100 AS hypothetical_gross_loss,
           sum(end_return_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE')*$2/100 AS hypothetical_net_pnl
          FROM rolling_monthly.absolute_month_candidate WHERE strategy_version=$1
-         GROUP BY evaluation_month ORDER BY evaluation_month DESC`, ABSOLUTE_MONTH_VERSION, RESEARCH_NOTIONAL),
+         GROUP BY evaluation_month ORDER BY evaluation_month DESC`, strategyVersion, RESEARCH_NOTIONAL),
       prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT extract(year FROM evaluation_month)::int AS "year",count(*)::int AS opportunities,
           count(*) FILTER (WHERE evaluation_status<>'INCOMPLETE')::int AS eligible_opportunities,
@@ -127,15 +131,19 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
           sum(LEAST(end_return_pct,0)) FILTER (WHERE evaluation_status<>'INCOMPLETE')*$2/100 AS hypothetical_gross_loss,
           sum(end_return_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE')*$2/100 AS hypothetical_net_pnl
          FROM rolling_monthly.absolute_month_candidate WHERE strategy_version=$1
-         GROUP BY extract(year FROM evaluation_month) ORDER BY year DESC`, ABSOLUTE_MONTH_VERSION, RESEARCH_NOTIONAL),
+         GROUP BY extract(year FROM evaluation_month) ORDER BY year DESC`, strategyVersion, RESEARCH_NOTIONAL),
     ]);
     res.setHeader("Cache-Control", "no-store");
     res.json({
-      strategyFamily: "ROLLING_MONTHLY", variant: "ABSOLUTE_MONTHLY_CLOSURE", strategyVersion: ABSOLUTE_MONTH_VERSION,
+      strategyFamily: "ROLLING_MONTHLY",
+      variant: comparisonBasis === "open" ? "ABSOLUTE_MONTHLY_OPEN" : "ABSOLUTE_MONTHLY_CLOSURE",
+      comparisonBasis: comparisonBasis.toUpperCase(), strategyVersion,
       independentFromOiis: true, paperTradingConnected: false, researchNotionalPerOpportunity: RESEARCH_NOTIONAL,
       methodology: runs[0]?.methodology ?? null, runs, monthlySummary, yearlySummary, candidates, evaluations,
       warnings: [
-        "Research entry is the signal-session close; same-session high and low are excluded from MFE/MAE.",
+        comparisonBasis === "open"
+          ? "Research entry is the signal-session open; same-session high and low are included after entry."
+          : "Research entry is the signal-session close; same-session high and low are excluded from MFE/MAE.",
         "Current F&O membership is applied retrospectively because point-in-time historical membership is unavailable.",
         "Returns are gross before costs and taxes; hypothetical rupees use equal ₹100,000 research notional per opportunity.",
         "INCOMPLETE candidate paths remain visible but are excluded from aggregate performance and hypothetical P&L.",
@@ -147,14 +155,17 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
     const format = clean(req.query.format, 8).toLowerCase() || "csv";
+    const comparisonBasis = clean(req.query.basis, 8).toLowerCase() || "close";
     if (year && !YEAR.test(year)) return void res.status(400).json({ error: "year must be YYYY" });
     if (month && !MONTH.test(month)) return void res.status(400).json({ error: "month must be MM" });
+    if (!['close', 'open'].includes(comparisonBasis)) return void res.status(400).json({ error: "basis must be close or open" });
     if (!['csv', 'xls'].includes(format)) return void res.status(400).json({ error: "format must be csv or xls" });
+    const strategyVersion = comparisonBasis === "open" ? ABSOLUTE_OPEN_MONTH_VERSION : ABSOLUTE_MONTH_VERSION;
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT * FROM rolling_monthly.absolute_month_candidate
        WHERE strategy_version=$1 AND ($2='' OR extract(year FROM evaluation_month)::int=$2::int)
          AND ($3='' OR extract(month FROM evaluation_month)::int=$3::int)
-       ORDER BY evaluation_month DESC,signal_date,symbol`, ABSOLUTE_MONTH_VERSION, year, month);
+       ORDER BY evaluation_month DESC,signal_date,symbol`, strategyVersion, year, month);
     const monthly = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT evaluation_month,count(*)::int opportunities,
         count(*) FILTER (WHERE evaluation_status<>'INCOMPLETE')::int eligible_opportunities,
@@ -163,7 +174,7 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
         min(max_drawdown_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE') worst_max_drawdown_pct,
         sum(end_return_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE')*$2/100 hypothetical_net_pnl
        FROM rolling_monthly.absolute_month_candidate WHERE strategy_version=$1
-       GROUP BY evaluation_month ORDER BY evaluation_month`, ABSOLUTE_MONTH_VERSION, RESEARCH_NOTIONAL);
+       GROUP BY evaluation_month ORDER BY evaluation_month`, strategyVersion, RESEARCH_NOTIONAL);
     const yearly = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT extract(year FROM evaluation_month)::int AS "year",count(*)::int opportunities,
         count(*) FILTER (WHERE evaluation_status<>'INCOMPLETE')::int eligible_opportunities,
@@ -172,18 +183,18 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
         min(max_drawdown_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE') worst_max_drawdown_pct,
         sum(end_return_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE')*$2/100 hypothetical_net_pnl
        FROM rolling_monthly.absolute_month_candidate WHERE strategy_version=$1
-       GROUP BY extract(year FROM evaluation_month) ORDER BY year`, ABSOLUTE_MONTH_VERSION, RESEARCH_NOTIONAL);
+       GROUP BY extract(year FROM evaluation_month) ORDER BY year`, strategyVersion, RESEARCH_NOTIONAL);
     const stamp = [year || "all", month || "all"].join("-");
     if (format === "csv") {
       const body = [absoluteColumns.join(","), ...rows.map((row) => absoluteColumns.map((column) => csv(row[column])).join(","))].join("\n");
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader("Content-Disposition", `attachment; filename="absolute-monthly-${stamp}.csv"`);
+      res.setHeader("Content-Disposition", `attachment; filename="absolute-monthly-${comparisonBasis}-${stamp}.csv"`);
       return void res.send(`\uFEFF${body}`);
     }
     const monthlyColumns = ["evaluation_month", "opportunities", "eligible_opportunities", "average_end_return_pct", "average_max_profit_pct", "worst_max_drawdown_pct", "hypothetical_net_pnl"];
     const yearlyColumns = ["year", "opportunities", "eligible_opportunities", "average_end_return_pct", "average_max_profit_pct", "worst_max_drawdown_pct", "hypothetical_net_pnl"];
     res.setHeader("Content-Type", "application/vnd.ms-excel; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="absolute-monthly-${stamp}.xls"`);
+    res.setHeader("Content-Disposition", `attachment; filename="absolute-monthly-${comparisonBasis}-${stamp}.xls"`);
     res.send(spreadsheetXml([
       { name: "Opportunities", rows, columns: absoluteColumns },
       { name: "Monthly Summary", rows: monthly, columns: monthlyColumns },

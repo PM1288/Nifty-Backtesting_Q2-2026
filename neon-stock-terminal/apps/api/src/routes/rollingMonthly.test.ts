@@ -102,6 +102,25 @@ test("absolute monthly closure exposes separate calendar-month evidence", async 
     assert.deepEqual(payload.evaluations[0].rejection_reasons, ["M2_RED"]);
   }));
 
+test("absolute monthly open exposes independently versioned open-basis backtest", async () =>
+  withServer([
+    [{ evaluation_month: "2026-08-01", maturity_state: "DEVELOPING", methodology: { anchor: "ABSOLUTE_CALENDAR_MONTH", comparison_basis: "OPEN" } }],
+    [{ candidate_id: "44444444-4444-4444-8444-444444444444", symbol: "MPHASIS", entry_price: "2500", end_return_pct: "2.10" }],
+    [{ evaluation_month: "2026-08-01", opportunities: 1, average_end_return_pct: "2.10" }],
+    [{ year: 2026, opportunities: 1, average_end_return_pct: "2.10" }],
+  ], async (baseUrl, count) => {
+    const response = await fetch(`${baseUrl}/v1/rolling-monthly/absolute-months?basis=open&year=2026&month=08`);
+    assert.equal(response.status, 200);
+    const payload = await response.json() as Record<string, any>;
+    assert.equal(count(), 4);
+    assert.equal(payload.variant, "ABSOLUTE_MONTHLY_OPEN");
+    assert.equal(payload.comparisonBasis, "OPEN");
+    assert.equal(payload.strategyVersion, "absolute_monthly_open_bullish_long_v1");
+    assert.equal(payload.methodology.comparison_basis, "OPEN");
+    assert.equal(payload.candidates[0].entry_price, "2500");
+    assert.deepEqual(payload.evaluations, []);
+  }));
+
 test("absolute monthly export returns an Excel-readable multi-sheet workbook", async () =>
   withServer([
     [{ evaluation_month: "2026-08-01", symbol: "MPHASIS", end_return_pct: "4.25" }],
@@ -122,6 +141,7 @@ test("absolute monthly routes reject malformed filters and ids before querying",
   withServer([], async (baseUrl, count) => {
     assert.equal((await fetch(`${baseUrl}/v1/rolling-monthly/absolute-months?year=26`)).status, 400);
     assert.equal((await fetch(`${baseUrl}/v1/rolling-monthly/absolute-months?month=13`)).status, 400);
+    assert.equal((await fetch(`${baseUrl}/v1/rolling-monthly/absolute-months?basis=median`)).status, 400);
     assert.equal((await fetch(`${baseUrl}/v1/rolling-monthly/absolute-month-candidates/not-a-uuid/chart`)).status, 400);
     assert.equal(count(), 0);
   }));

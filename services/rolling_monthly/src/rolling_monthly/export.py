@@ -9,6 +9,7 @@ import psycopg
 import xlsxwriter
 
 from .absolute_month import STRATEGY_VERSION
+from .absolute_month import OPEN_STRATEGY_VERSION
 from .absolute_first_session import STRATEGY_VERSION as FIRST_SESSION_STRATEGY_VERSION
 
 
@@ -27,13 +28,17 @@ def _value(value: Any) -> Any:
     return json.dumps(value, separators=(",", ":"), default=str) if isinstance(value, (dict, list)) else value
 
 
-def export_absolute_months(database_url: str, output_dir: str) -> dict[str, Any]:
+def export_absolute_months(database_url: str, output_dir: str, comparison_basis: str = "close") -> dict[str, Any]:
+    if comparison_basis not in {"close", "open"}:
+        raise ValueError("comparison_basis must be close or open")
+    strategy_version = STRATEGY_VERSION if comparison_basis == "close" else OPEN_STRATEGY_VERSION
+    file_stem = "ABSOLUTE_MONTHLY_CLOSURE" if comparison_basis == "close" else "ABSOLUTE_MONTHLY_OPEN"
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
     with psycopg.connect(database_url, row_factory=psycopg.rows.dict_row) as conn:
         details = conn.execute(
             "SELECT * FROM rolling_monthly.absolute_month_candidate WHERE strategy_version=%s ORDER BY evaluation_month,signal_date,symbol",
-            (STRATEGY_VERSION,),
+            (strategy_version,),
         ).fetchall()
         monthly = conn.execute("""
           SELECT evaluation_month,count(*)::int opportunities,
@@ -49,7 +54,7 @@ def export_absolute_months(database_url: str, output_dir: str) -> dict[str, Any]
             sum(end_return_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE')*100000/100 hypothetical_net_pnl
           FROM rolling_monthly.absolute_month_candidate WHERE strategy_version=%s
           GROUP BY evaluation_month ORDER BY evaluation_month
-        """, (STRATEGY_VERSION,)).fetchall()
+        """, (strategy_version,)).fetchall()
         yearly = conn.execute("""
           SELECT extract(year FROM evaluation_month)::int AS "year",count(*)::int opportunities,
             count(*) FILTER (WHERE evaluation_status<>'INCOMPLETE')::int eligible_opportunities,
@@ -64,17 +69,17 @@ def export_absolute_months(database_url: str, output_dir: str) -> dict[str, Any]
             sum(end_return_pct) FILTER (WHERE evaluation_status<>'INCOMPLETE')*100000/100 hypothetical_net_pnl
           FROM rolling_monthly.absolute_month_candidate WHERE strategy_version=%s
           GROUP BY extract(year FROM evaluation_month) ORDER BY year
-        """, (STRATEGY_VERSION,)).fetchall()
+        """, (strategy_version,)).fetchall()
         run = conn.execute(
             "SELECT methodology,quality_metrics,min(evaluation_month) first_month,max(evaluation_month) last_month,max(source_end_date) source_end FROM rolling_monthly.absolute_month_run WHERE strategy_version=%s GROUP BY methodology,quality_metrics ORDER BY last_month DESC LIMIT 1",
-            (STRATEGY_VERSION,),
+            (strategy_version,),
         ).fetchone()
-    csv_path = target / "ABSOLUTE_MONTHLY_CLOSURE_3Y_TRADES.csv"
+    csv_path = target / f"{file_stem}_3Y_TRADES.csv"
     with csv_path.open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=DETAIL_COLUMNS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows({key: _value(row.get(key)) for key in DETAIL_COLUMNS} for row in details)
-    xlsx_path = target / "ABSOLUTE_MONTHLY_CLOSURE_3Y_ANALYSIS.xlsx"
+    xlsx_path = target / f"{file_stem}_3Y_ANALYSIS.xlsx"
     workbook = xlsxwriter.Workbook(xlsx_path)
     header = workbook.add_format({"bold": True, "bg_color": "#DCE6F1", "border": 1})
     percent = workbook.add_format({"num_format": "0.00%"})
@@ -97,14 +102,15 @@ def export_absolute_months(database_url: str, output_dir: str) -> dict[str, Any]
     method = workbook.add_worksheet("Methodology")
     method.write_row(0, 0, ["Field", "Value"], header)
     method_rows = {
-        "strategy_version": STRATEGY_VERSION,
+        "strategy_version": strategy_version,
+        "comparison_basis": comparison_basis.upper(),
         "methodology": run.get("methodology") if run else None,
         "quality_metrics": run.get("quality_metrics") if run else None,
         "first_month": run.get("first_month") if run else None,
         "last_month": run.get("last_month") if run else None,
         "source_end": run.get("source_end") if run else None,
         "research_notional_per_opportunity": 100000,
-        "critical_path_rule": "Signal-day high/low excluded; post-entry MFE/MAE starts next session.",
+        "critical_path_rule": "Signal-day high/low excluded; post-entry MFE/MAE starts next session." if comparison_basis == "close" else "Signal-day entry is at the open; same-session high/low are included after entry.",
         "incomplete_summary_rule": "INCOMPLETE paths remain in Opportunities but are excluded from performance summaries.",
     }
     for index, (key, value) in enumerate(method_rows.items(), 1):

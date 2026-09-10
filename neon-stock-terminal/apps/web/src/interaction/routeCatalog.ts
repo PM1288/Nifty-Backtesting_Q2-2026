@@ -38,7 +38,7 @@ export const ROUTE_COMMANDS: readonly RouteEntry[] = [
   { id: "oiis-live", group: "Strategies", label: "OIIS Live", to: "/strategy/oiis-live", description: "Current selection, gates and near misses", keywords: ["strategy evaluation"] },
   { id: "oiss-v1-202608", group: "Strategies", label: "OISS v1.202608", to: "/strategy/oiss-v1-202608", description: "Independent explainable decision and risk framework", keywords: ["OISS", "radar", "carry", "rejected"] },
   { id: "oiis-history", group: "Strategies", label: "OIIS Run History", to: "/strategy/oiis-live/history", description: "Historical 30-minute selection runs" },
-  { id: "monthly-strategy", group: "Strategies", label: "Monthly Strategy", to: "/strategy/monthly", description: "Expiry, calendar-month closure and first-session evidence in one table" },
+  { id: "monthly-strategy", group: "Strategies", label: "Monthly Strategy", to: "/strategy/monthly", description: "Monthly Close, Monthly Open, expiry and first-session evidence in one table" },
   { id: "rolling-monthly", group: "Strategies", label: "Rolling Strategy", to: "/strategy/rolling-monthly", description: "Independent rolling 5, 30 and 60-session research" },
   { id: "trendlyne-summary", group: "Strategies", label: "Trendlyne Summary", to: "/strategy/trendlyne-summary", description: "Six-month analyst recommendation, target, 5D and 30D evidence", keywords: ["broker research", "fund house", "research house", "target hit"] },
   { id: "long-options", group: "Strategies", label: "Long Options", to: "/strategy/long-options", description: "Independent derivatives router for long straddles, strangles and shadow directional options", keywords: ["derivatives strategy", "buy call", "buy put", "long straddle", "long strangle"] },

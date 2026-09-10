@@ -1,5 +1,24 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-10 Monthly Open strategy
+
+The canonical Monthly Strategy now distinguishes the unchanged **Monthly
+Close** model from additive **Monthly Open** model
+`absolute_monthly_open_bullish_long_v1`. Monthly Open retains explicit
+red/green candle context, evaluates all cross-period decision gates from known
+opens, enters at the signal-session open, and includes same-session post-open
+high/low in its research path. It is not the existing gap-aware First Session
+variant and is not connected to execution or Paper Trading.
+
+The one-off 36-month canonical-data replay through 10 September 2026 produced
+92 candidates across 268 current F&O symbols: 61 positive, 31 negative,
+average end return +4.0029%, average maximum profit +9.8919%, worst observed
+drawdown -30.7793%, and equal-₹100,000 gross sum +₹368,268.02. September is
+developing. Current-universe survivorship bias and gross-before-costs limits
+remain explicit. API uses `basis=open`; CLI uses `backfill-absolute-open` and
+`export-absolute-open`. Full contract and reruns:
+`docs/rolling-monthly/MONTHLY_OPEN_STRATEGY_2026-09-10.md`.
+
 ## 2026-09-09 observation option P&L and exact Scalper link
 
 Click stock name / Inspect Overview: underlying/CE/PE entry-high-low-latest,

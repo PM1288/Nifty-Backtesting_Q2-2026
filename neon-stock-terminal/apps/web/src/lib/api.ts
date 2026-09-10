@@ -810,9 +810,10 @@ export function fetchRollingMonthlyWeeklyChart(candidateId: string) {
 }
 
 export type AbsoluteMonthlyDashboard = {
-  strategyFamily: "ROLLING_MONTHLY";
-  variant: "ABSOLUTE_MONTHLY_CLOSURE";
+  variant: "ABSOLUTE_MONTHLY_CLOSURE" | "ABSOLUTE_MONTHLY_OPEN";
+  comparisonBasis: "CLOSE" | "OPEN";
   strategyVersion: string;
+  strategyFamily: "ROLLING_MONTHLY";
   independentFromOiis: true;
   paperTradingConnected: false;
   researchNotionalPerOpportunity: number;
@@ -832,11 +833,17 @@ export type AbsoluteMonthlyChart = {
   bars: Array<Record<string, any>>;
 };
 
-export function fetchAbsoluteMonthlyDashboard(year?: string, month?: string, includeEvaluations = true) {
+export function fetchAbsoluteMonthlyDashboard(
+  year?: string,
+  month?: string,
+  includeEvaluations = true,
+  comparisonBasis: "close" | "open" = "close",
+) {
   const params = new URLSearchParams();
   if (year) params.set("year", year);
   if (month) params.set("month", month);
   if (!includeEvaluations) params.set("includeEvaluations", "false");
+  params.set("basis", comparisonBasis);
   const suffix = params.size ? `?${params.toString()}` : "";
   return getJson<AbsoluteMonthlyDashboard>(`/v1/rolling-monthly/absolute-months${suffix}`);
 }
@@ -847,8 +854,13 @@ export function fetchAbsoluteMonthlyChart(candidateId: string) {
   );
 }
 
-export function absoluteMonthlyExportUrl(format: "csv" | "xls", year?: string, month?: string) {
-  const params = new URLSearchParams({ format });
+export function absoluteMonthlyExportUrl(
+  format: "csv" | "xls",
+  year?: string,
+  month?: string,
+  comparisonBasis: "close" | "open" = "close",
+) {
+  const params = new URLSearchParams({ format, basis: comparisonBasis });
   if (year) params.set("year", year);
   if (month) params.set("month", month);
   return `${API_BASE_URL}/v1/rolling-monthly/absolute-months/export?${params.toString()}`;

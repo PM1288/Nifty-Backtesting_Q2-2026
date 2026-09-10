@@ -5,13 +5,13 @@ import json
 import os
 import time
 
-from .service import execute, execute_absolute_first_sessions, execute_absolute_months, execute_expiry_history, execute_rolling_windows, load_config
+from .service import execute, execute_absolute_first_sessions, execute_absolute_months, execute_absolute_open_months, execute_expiry_history, execute_rolling_windows, load_config
 from .export import export_absolute_first_sessions, export_absolute_months
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Independent Rolling Monthly quality runner")
-    parser.add_argument("command", choices=("run", "daemon", "backfill-expiry", "backfill-absolute", "backfill-absolute-first-session", "backfill-rolling", "export-absolute", "export-absolute-first-session", "verify-config"), nargs="?", default="run")
+    parser.add_argument("command", choices=("run", "daemon", "backfill-expiry", "backfill-absolute", "backfill-absolute-open", "backfill-absolute-first-session", "backfill-rolling", "export-absolute", "export-absolute-open", "export-absolute-first-session", "verify-config"), nargs="?", default="run")
     parser.add_argument("--database-url", default=os.getenv("DATABASE_URL"))
     parser.add_argument("--config", default=os.getenv("ROLLING_MONTHLY_CONFIG"))
     parser.add_argument("--interval-seconds", type=int, default=int(os.getenv("ROLLING_MONTHLY_INTERVAL_SECONDS", "900")))
@@ -33,6 +33,9 @@ def main() -> None:
     if args.command == "backfill-absolute":
         print(json.dumps(execute_absolute_months(args.database_url, args.months), default=str))
         return
+    if args.command == "backfill-absolute-open":
+        print(json.dumps(execute_absolute_open_months(args.database_url, args.months), default=str))
+        return
     if args.command == "backfill-absolute-first-session":
         print(json.dumps(execute_absolute_first_sessions(args.database_url, args.months), default=str))
         return
@@ -41,6 +44,9 @@ def main() -> None:
         return
     if args.command == "export-absolute":
         print(json.dumps(export_absolute_months(args.database_url, args.output_dir), default=str))
+        return
+    if args.command == "export-absolute-open":
+        print(json.dumps(export_absolute_months(args.database_url, args.output_dir, comparison_basis="open"), default=str))
         return
     if args.command == "export-absolute-first-session":
         print(json.dumps(export_absolute_first_sessions(args.database_url, args.output_dir), default=str))
@@ -52,9 +58,10 @@ def main() -> None:
             # expiry during the daemon loop. Use backfill-expiry for older months.
             expiry = execute_expiry_history(args.database_url, 1, args.config)
             absolute = execute_absolute_months(args.database_url, 1)
+            absolute_open = execute_absolute_open_months(args.database_url, 1)
             first_session = execute_absolute_first_sessions(args.database_url, 1)
             rolling = execute_rolling_windows(args.database_url, 3)
-            print(json.dumps({"current": current, "expiry_history": expiry, "absolute_month": absolute, "absolute_first_session": first_session, "rolling_window": rolling}, default=str), flush=True)
+            print(json.dumps({"current": current, "expiry_history": expiry, "absolute_month": absolute, "absolute_open_month": absolute_open, "absolute_first_session": first_session, "rolling_window": rolling}, default=str), flush=True)
         except Exception as exc:
             print(json.dumps({"status": "FAILED", "error": str(exc)[:500]}), flush=True)
         time.sleep(max(60, args.interval_seconds))

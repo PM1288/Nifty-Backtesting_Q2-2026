@@ -26,7 +26,8 @@ from .engine import (
     score_candidate,
 )
 from .absolute_month import STRATEGY_VERSION as ABSOLUTE_MONTH_VERSION
-from .absolute_month import evaluate_absolute_months
+from .absolute_month import OPEN_STRATEGY_VERSION as ABSOLUTE_OPEN_MONTH_VERSION
+from .absolute_month import evaluate_absolute_months, evaluate_absolute_open_months
 from .absolute_first_session import STRATEGY_VERSION as ABSOLUTE_FIRST_SESSION_VERSION
 from .absolute_first_session import evaluate_absolute_first_sessions
 from .rolling_window import STRATEGY_VERSION as ROLLING_WINDOW_VERSION
@@ -561,6 +562,29 @@ def execute_absolute_months(database_url: str, months: int = 36) -> dict[str, An
     latest = result.runs[-1]
     return {
         "strategy_version": ABSOLUTE_MONTH_VERSION,
+        "months": len(result.runs),
+        "candidate_count": len(result.candidates),
+        "latest_month": str(latest["evaluation_month"]),
+        "latest_candidates": latest["qualified_count"],
+        "source_end_date": str(source_end),
+        "universe_size": len(universe),
+    }
+
+
+def execute_absolute_open_months(database_url: str, months: int = 36) -> dict[str, Any]:
+    """Backfill the independent open-reference Monthly strategy."""
+    today = datetime.now(timezone.utc).date()
+    last_month = pd.Timestamp(today).to_period("M")
+    first_month = last_month - max(0, months - 1)
+    with psycopg.connect(database_url) as conn:
+        frame, universe, sectors, sessions, source_end = _absolute_month_frame(conn, first_month.start_time.date())
+        result = evaluate_absolute_open_months(
+            frame, universe, sectors, sessions, str(first_month), str(last_month), source_end
+        )
+        _persist_absolute_months(conn, result.runs, result.candidates)
+    latest = result.runs[-1]
+    return {
+        "strategy_version": ABSOLUTE_OPEN_MONTH_VERSION,
         "months": len(result.runs),
         "candidate_count": len(result.candidates),
         "latest_month": str(latest["evaluation_month"]),

@@ -58,12 +58,14 @@ try {
       return { status: response.status, body: await response.json() };
     });
     check(`${viewport.name} API`, api.status === 200, `status=${api.status}`);
-    check(`${viewport.name} version`, api.body.strategyVersion === "absolute_monthly_open_bullish_long_v1");
+    check(`${viewport.name} version`, api.body.strategyVersion === "absolute_monthly_open_bullish_long_v2");
     check(`${viewport.name} basis`, api.body.comparisonBasis === "OPEN");
+    check(`${viewport.name} six eligibility conditions`, api.body.methodology.eligibility_condition_count === 6);
+    check(`${viewport.name} previous-close gate disabled`, api.body.methodology.previous_session_close_gate === false);
     check(`${viewport.name} persisted candidates`, api.body.candidates.length > 0, `count=${api.body.candidates.length}`);
     await rows.first().click();
     await page.getByRole("heading", { name: "Entry conditions" }).waitFor();
-    check(`${viewport.name} open evidence`, await page.getByText(/Signal open > previous-day close/).count() === 1);
+    check(`${viewport.name} removed close-gate evidence`, await page.getByText(/Signal open > previous-day close/).count() === 0);
     check(`${viewport.name} no API failures`, failures.length === 0, failures.join(" | "));
     check(`${viewport.name} no horizontal overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: true });

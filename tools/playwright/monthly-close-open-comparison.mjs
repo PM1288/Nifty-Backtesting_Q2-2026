@@ -56,7 +56,7 @@ try {
     });
     check(`${viewport.name} both APIs`, payloads.closeStatus === 200 && payloads.openStatus === 200);
     check(`${viewport.name} Close version`, payloads.close.strategyVersion === "absolute_monthly_closure_bullish_long_v1");
-    check(`${viewport.name} Open version`, payloads.open.strategyVersion === "absolute_monthly_open_bullish_long_v1");
+    check(`${viewport.name} Open version`, payloads.open.strategyVersion === "absolute_monthly_open_bullish_long_v2");
     check(`${viewport.name} populated strategies`, payloads.close.candidates.length > 0 && payloads.open.candidates.length > 0);
 
     const closeKeys = new Set(payloads.close.candidates.map(key));

@@ -164,7 +164,30 @@ def test_absolute_open_month_does_not_use_signal_close_for_selection() -> None:
     )
     assert result.runs[0]["qualified_count"] == 1
     assert result.candidates[0]["entry_price"] == 110
-    assert any(condition["code"] == "D0_OPEN_ABOVE_D1_CLOSE" for condition in result.candidates[0]["conditions"])
+    assert not any(condition["code"] == "D0_OPEN_ABOVE_D1_CLOSE" for condition in result.candidates[0]["conditions"])
+
+
+def test_absolute_open_month_does_not_require_open_above_previous_close() -> None:
+    frame = fixture_frame()
+    frame.loc[frame.trade_date == "2026-02-02", "open"] = 102
+    frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [116, 115]
+    frame.loc[frame.trade_date == "2026-03-03", "open"] = 103
+    # The previous session closes above the signal open. Every retained open
+    # condition passes, so v2 must qualify without the removed close gate.
+    frame.loc[frame.trade_date == "2026-03-09", ["open", "high", "close"]] = [109, 113, 112]
+    frame.loc[frame.trade_date == "2026-03-10", ["open", "high", "low", "close"]] = [110, 114, 106, 107]
+    result = evaluate_absolute_open_months(
+        frame, {"TEST"}, {}, list(pd.to_datetime(frame.trade_date)),
+        "2026-03", "2026-03", "2026-04-01",
+    )
+    assert result.runs[0]["qualified_count"] == 1
+    assert result.runs[0]["methodology"]["eligibility_condition_count"] == 6
+    assert result.runs[0]["methodology"]["previous_session_close_gate"] is False
+    candidate = result.candidates[0]
+    assert candidate["signal_date"].isoformat() == "2026-03-10"
+    assert candidate["signal_day_open"] == 110
+    assert candidate["previous_day_close"] == 112
+    assert not any(condition["code"] == "D0_OPEN_ABOVE_D1_CLOSE" for condition in candidate["conditions"])
 
 
 def test_absolute_month_rejects_unknown_comparison_basis() -> None:

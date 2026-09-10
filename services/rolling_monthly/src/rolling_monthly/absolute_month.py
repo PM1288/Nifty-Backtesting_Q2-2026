@@ -9,7 +9,7 @@ import pandas as pd
 
 
 STRATEGY_VERSION = "absolute_monthly_closure_bullish_long_v1"
-OPEN_STRATEGY_VERSION = "absolute_monthly_open_bullish_long_v1"
+OPEN_STRATEGY_VERSION = "absolute_monthly_open_bullish_long_v2"
 RESEARCH_NOTIONAL_PER_TRADE = 100_000.0
 
 
@@ -44,7 +44,7 @@ def evaluate_absolute_months(
     source_end_date: Any,
     comparison_basis: str = "close",
 ) -> AbsoluteMonthResult:
-    """Evaluate the first seven-condition LONG signal in each calendar month.
+    """Evaluate the first qualifying LONG signal in each calendar month.
 
     The research entry is the signal-session close because that is the explicit
     requested model. Same-session high/low are excluded from post-entry MFE/MAE
@@ -179,7 +179,6 @@ def evaluate_absolute_months(
                         float(row.open) > w0_open,
                         float(row.open) > w1_open,
                         float(row.open) > float(previous_day.open),
-                        float(row.open) > float(previous_day.close),
                     ]
                 if all(checks):
                     selected = {
@@ -243,7 +242,6 @@ def evaluate_absolute_months(
                     {"code": "D0_OPEN_ABOVE_W0_OPEN", "label": "Signal open > current-week open", "left": float(row.open), "operator": ">", "right": selected["w0_open"], "pass": True},
                     {"code": "D0_OPEN_ABOVE_W1_OPEN", "label": "Signal open > previous-week open", "left": float(row.open), "operator": ">", "right": selected["w1_open"], "pass": True},
                     {"code": "D0_OPEN_ABOVE_D1_OPEN", "label": "Signal open > previous-day open", "left": float(row.open), "operator": ">", "right": float(selected["previous_day"].open), "pass": True},
-                    {"code": "D0_OPEN_ABOVE_D1_CLOSE", "label": "Signal open > previous-day close", "left": float(row.open), "operator": ">", "right": float(selected["previous_day"].close), "pass": True},
                     {"code": "M1_OPEN_ABOVE_OPEN_EMA9", "label": "Previous-month open > monthly open EMA9 (informational)", "left": m1_open, "operator": ">", "right": monthly_ema9, "pass": monthly_ema9 is not None and m1_open > monthly_ema9, "informational": True},
                 ]
                 reference_above_ema9 = monthly_ema9 is not None and m1_open > monthly_ema9
@@ -295,6 +293,8 @@ def evaluate_absolute_months(
                             "entry": "SIGNAL_SESSION_CLOSE" if comparison_basis == "close" else "SIGNAL_SESSION_OPEN",
                             "exit": "FINAL_EXCHANGE_SESSION_CLOSE_IN_SAME_CALENDAR_MONTH",
                             "signal_selection": "FIRST_QUALIFYING_SESSION_PER_SYMBOL_PER_MONTH",
+                            "eligibility_condition_count": 7 if comparison_basis == "close" else 6,
+                            "previous_session_close_gate": comparison_basis == "close",
                             "post_entry_extremes": "NEXT_SESSION_ONWARD" if comparison_basis == "close" else "SIGNAL_SESSION_ONWARD",
                             "research_notional_per_trade": RESEARCH_NOTIONAL_PER_TRADE},
             "quality_metrics": {"recognized_fno_symbols": len(universe), "evaluated_symbols": evaluated,

@@ -2,7 +2,7 @@
 
 Date: 10 September 2026
 
-Strategy version: `absolute_monthly_open_bullish_long_v1`
+Strategy version: `absolute_monthly_open_bullish_long_v2`
 
 Dashboard: `/n50/strategy/monthly?entryMethod=MONTHLY_OPEN`
 
@@ -25,7 +25,9 @@ signal-session open:
 4. Signal-session open > current-week open.
 5. Signal-session open > previous-week open.
 6. Signal-session open > previous-session open.
-7. Signal-session open > previous-session close.
+
+Version 2 intentionally removes the former `Signal-session open >
+previous-session close` eligibility gate. Monthly Close is unchanged.
 
 The first two conditions necessarily retain both open and close because a
 candle's colour cannot be defined from its open alone. No signal-session close
@@ -46,7 +48,11 @@ Neither EMA is a hidden entry gate.
   survivorship bias until point-in-time membership is available.
 - Results are gross before costs, taxes, slippage, liquidity, and capital overlap.
 
-## 36-month replay captured on 10 September 2026
+## Previous v1 36-month replay baseline
+
+The figures below are the retained v1 baseline captured before removal of the
+previous-session-close gate. They are not v2 results; the v2 replay and
+comparison counts must replace them after recalculation.
 
 Source end: 10 September 2026. Current recognized stock-F&O universe: 268.
 
@@ -67,7 +73,7 @@ as final month outcomes.
 For comparison only, the independently persisted Monthly Close population at
 the same database snapshot contained 1,127 evaluable candidates with +0.8003%
 average end return. Different candidate counts are expected because the new
-model uses strict open-to-prior-open/close confirmation and is not a relabelled
+model uses strict open-to-prior-open confirmation and is not a relabelled
 copy of close-selected trades.
 
 ## Implementation surfaces

@@ -17,7 +17,7 @@ The comparison key is `calendar month + stock symbol`:
 - **Monthly Close only** means it was selected only by
   `absolute_monthly_closure_bullish_long_v1` for that month.
 - **Monthly Open only** means it was selected only by
-  `absolute_monthly_open_bullish_long_v1` for that month.
+  `absolute_monthly_open_bullish_long_v2` for that month.
 
 The same symbol selected in different months is not a same-selection overlap.
 This prevents a misleading lifetime-symbol intersection.

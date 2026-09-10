@@ -4137,3 +4137,10 @@ or outcomes were deleted.
 - Web 129/129 and API 193/193 tests, both typechecks/builds and the canonical
   gate pass. Per-check evidence and remaining source prerequisites are in
   `docs/trading-analytics/SCALPER_V2_ACCEPTANCE_MATRIX_20260910.md`.
+- Application commit `0b073f3` is pushed to canonical master and deployed as
+  dashboard image
+  `sha256:4dd54f6b686d9169fd1846cc989e6dfe45209c37239c0a2195b3a707748a4fee`.
+  Only the canonical dashboard was recreated; it is healthy with zero restarts
+  and public root/health return HTTP 200. Deployed browser checks pass 37/37
+  executable checks with the same headed-DPR limitation. Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-acceptance-0b073f3`.

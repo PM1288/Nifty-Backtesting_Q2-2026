@@ -41,6 +41,9 @@ A-open/B-close formula, APIs, collectors and order permissions are unchanged.
   axes 28 px.
 - Ignored runtime evidence: `/tmp/scalper-v2-completion-local-10/`. It must not
   be committed.
+- Deployed authenticated browser suite: PASS 37/37 executable checks with the
+  same single headed-DPR limitation. Runtime evidence:
+  `/tmp/scalper-v2-completion-deployed-0b073f3/`.
 
 ## Honest 70-check status
 
@@ -129,3 +132,16 @@ rendering cannot be completed truthfully from the current tested response.
 Those are data-contract/source prerequisites, not values to infer in the UI.
 The exact-price cursor, selected pair, latest retained OI evidence and no-source
 states remain usable without fabrication.
+
+## Release
+
+- Application commit: `0b073f3` on pushed canonical `master`.
+- Dashboard image:
+  `sha256:4dd54f6b686d9169fd1846cc989e6dfe45209c37239c0a2195b3a707748a4fee`.
+- Only `trading-stack-novius2-n50-dashboard-1` was recreated. It is healthy,
+  has zero restarts, and public `/n50/` and `/n50/health` return HTTP 200.
+- Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-acceptance-0b073f3`.
+- The first public checks during proxy reconnection returned 502; five seconds
+  later both routes returned 200 and remained healthy. No unrelated container
+  or volume was changed.

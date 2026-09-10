@@ -79,12 +79,15 @@ export function maxPainDistribution(legs: ScalperV2Leg[]) {
 }
 
 export function oiPcr(legs: ScalperV2Leg[]) {
-  const total = (side: "CE" | "PE") => legs.reduce((sum, leg) => {
+  const values = (side: "CE" | "PE") => legs.flatMap((leg) => {
     const value = String(leg.option_type ?? leg.side ?? "").toUpperCase() === side
       ? finite(leg.open_interest ?? leg.currentOi)
       : null;
-    return value != null && value >= 0 ? sum + value : sum;
-  }, 0);
-  const ce = total("CE"), pe = total("PE");
+    return value != null && value >= 0 ? [value] : [];
+  });
+  const ceValues = values("CE"), peValues = values("PE");
+  if (!ceValues.length || !peValues.length) return null;
+  const ce = ceValues.reduce((sum, value) => sum + value, 0);
+  const pe = peValues.reduce((sum, value) => sum + value, 0);
   return ce > 0 ? pe / ce : null;
 }

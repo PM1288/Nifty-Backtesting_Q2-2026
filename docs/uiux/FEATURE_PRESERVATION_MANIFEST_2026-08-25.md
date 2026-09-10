@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Scalper V2 geometry and inspection repair: the additive
+`view=scalper_v2` now uses measured full-width chart bodies, independent
+observed-session price envelopes, full-day X fitting, source-owned linked time
+and strike inspection, real Latest/Cursor/Locked numerical values, truthful
+delta-OI/PCR states and bounded price-coordinate OI geometry. Existing Scalper
+V1, V7 events, A-open/B-close measurement, exact contracts, all Trading
+Analytics routes/exports, collectors, SHAP Research and no-order permissions
+remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_REPAIR_20260910.md`.
+
 2026-09-10 Monthly Close vs Open comparison:
 `/strategy/monthly?compare=close-open` is a read-only comparison of the two
 independently versioned selected-candidate lists. It classifies each stock and

@@ -32,6 +32,7 @@ test("Scalper V2 tie ordering is stable and duplicate strikes are rejected", () 
 test("Scalper V2 PCR and combined max-pain use common-unit arithmetic", () => {
   assert.equal(oiPcr([{ option_type: "CE", open_interest: 100 }, { option_type: "PE", open_interest: 150 }]), 1.5);
   assert.equal(oiPcr([{ option_type: "CE", open_interest: 0 }, { option_type: "PE", open_interest: 150 }]), null);
+  assert.equal(oiPcr([{ option_type: "CE", open_interest: 100 }]), null);
   const result = maxPainDistribution([
     { option_type: "CE", strike: 100, open_interest: 2 },
     { option_type: "CE", strike: 110, open_interest: 1 },

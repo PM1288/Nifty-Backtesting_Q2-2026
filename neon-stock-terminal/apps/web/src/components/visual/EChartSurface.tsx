@@ -478,6 +478,8 @@ export function EChartSurface({
   option,
   setOptionOpts,
   onCategoryClick,
+  onCategoryHover,
+  activeCategoryIndex,
   axisExtentPolicy = "normalized",
   appearance = "light"
 }: {
@@ -486,6 +488,8 @@ export function EChartSurface({
   option: EChartsOption;
   setOptionOpts?: SetOptionOpts;
   onCategoryClick?: (index: number, gridIndex: number) => void;
+  onCategoryHover?: (index: number | null) => void;
+  activeCategoryIndex?: number | null;
   axisExtentPolicy?: "normalized" | "native";
   appearance?: ChartAppearance;
 }) {
@@ -496,6 +500,8 @@ export function EChartSurface({
   const chartRef = useRef<ReturnType<typeof echarts.init> | null>(null);
   const clickRef = useRef(onCategoryClick);
   clickRef.current = onCategoryClick;
+  const hoverRef = useRef(onCategoryHover);
+  hoverRef.current = onCategoryHover;
   const fontFamily = useMemo(
     () =>
       fontMode === "high-legibility" && language === "en" && digits === "latn"
@@ -527,6 +533,10 @@ export function EChartSurface({
         break;
       }
     });
+    chart.on("mouseover", (params) => {
+      if (hoverRef.current && typeof params.dataIndex === "number") hoverRef.current(params.dataIndex);
+    });
+    chart.on("globalout", () => hoverRef.current?.(null));
 
     const resize = () => {
       chart.resize();
@@ -555,6 +565,18 @@ export function EChartSurface({
       ...setOptionOpts
     });
   }, [normalizedOption, setOptionOpts]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    chart.dispatchAction({ type: "downplay", seriesIndex: "all" });
+    if (activeCategoryIndex == null || activeCategoryIndex < 0) {
+      chart.dispatchAction({ type: "hideTip" });
+      return;
+    }
+    chart.dispatchAction({ type: "highlight", dataIndex: activeCategoryIndex });
+    chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: activeCategoryIndex });
+  }, [activeCategoryIndex]);
 
   return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" />;
 }

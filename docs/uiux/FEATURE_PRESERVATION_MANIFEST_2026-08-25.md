@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Scalper V2 acceptance completion: the existing V2 adds explicit
+full-day/30/60-bar X views, Session/Visible/Manual Y modes, Y lock, exact A/B
+time controls with immutable measurement evidence context, a selected-pair
+OI/delta-OI/IV/spread matrix, and selected-versus-ATM identity. Pointer motion
+does not hydrate chart data. Historical chain absence and screenshot-export
+limitations are explicit. V1, V7, A-open/B-close arithmetic, Trade Log, matrix,
+SHAP, APIs, collectors and no-order permissions remain unchanged. Full honest
+matrix: `docs/trading-analytics/SCALPER_V2_ACCEPTANCE_MATRIX_20260910.md`.
+
 2026-09-10 Scalper V2 geometry and inspection repair: the additive
 `view=scalper_v2` now uses measured full-width chart bodies, independent
 observed-session price envelopes, full-day X fitting, source-owned linked time

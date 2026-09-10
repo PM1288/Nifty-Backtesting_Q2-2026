@@ -23,16 +23,19 @@ const format = (value: number | null | undefined) => value == null ? "—" : val
 export type ScalperV2Crosshair = { time: number; source: string; sequence: number } | null;
 export type ScalperV2TimeRange = { from: number; to: number; source: string; sequence: number } | null;
 export type ScalperV2InspectionMode = "latest" | "hover" | "locked";
+export type ScalperV2HorizontalView = "day" | "last30" | "last60";
+export type ScalperV2VerticalView = "session" | "visible" | "manual";
 type ProfileGeometry = { side: "CE" | "PE"; strike: number; currentOi: number; top: number; width: number; lane: number };
 
 export function ScalperV2Chart({
   id, title, subtitle, bars, interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
-  fitRequest, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE,
+  fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE,
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, hoveredStrike = null,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; interval: number;
   externalCrosshair: ScalperV2Crosshair; externalRange: ScalperV2TimeRange;
-  inspectionMode: ScalperV2InspectionMode; inspectionTime: number | null; fitRequest: number;
+  inspectionMode: ScalperV2InspectionMode; inspectionTime: number | null; fitRequest: number; horizontalView: ScalperV2HorizontalView;
+  verticalView: ScalperV2VerticalView; yLocked: boolean;
   onCrosshair: (value: ScalperV2Crosshair) => void; onRangeChange: (value: ScalperV2TimeRange) => void;
   onTimeClick?: (time: string) => void;
   rankLevels?: Array<{ side: "CE" | "PE"; rank: number; strike: number; currentOi: number }>;
@@ -49,6 +52,7 @@ export function ScalperV2Chart({
   const rankLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]), selectionLinesRef = useRef<IPriceLine[]>([]);
   const profileRowsRef = useRef(oiProfile), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
   const pointerFrameRef = useRef(0), profileFrameRef = useRef(0), dimensionsRef = useRef({ width: 0, height: 0 });
+  const appliedFitRef = useRef<number | null>(null), setDataCountRef = useRef(0);
   const callbacksRef = useRef({ onCrosshair, onRangeChange, onTimeClick });
   callbacksRef.current = { onCrosshair, onRangeChange, onTimeClick };
   profileRowsRef.current = oiProfile;
@@ -83,6 +87,10 @@ export function ScalperV2Chart({
       }));
       body.dataset.profileLaneWidth = String(Math.round(lane * 100) / 100);
       body.dataset.profileRows = String(profileRowsRef.current.length);
+      body.dataset.profileGeometry = JSON.stringify(profileRowsRef.current.flatMap((row) => {
+        const coordinate = candle.priceToCoordinate(row.strike), width = profileWidth(row.currentOi, maximum, lane);
+        return coordinate == null || width == null ? [] : [{ side: row.side, strike: row.strike, coordinate, width }];
+      }));
     });
   };
 
@@ -117,10 +125,12 @@ export function ScalperV2Chart({
     });
     const rangeHandler = (range: { from: Time; to: Time } | null) => {
       if (suppressRangeRef.current > 0 || !range) return;
+      host.dataset.visibleFrom = String(Number(range.from)); host.dataset.visibleTo = String(Number(range.to));
       callbacksRef.current.onRangeChange({ from: Number(range.from), to: Number(range.to), source: id, sequence: performance.now() });
     };
     instance.timeScale().subscribeVisibleTimeRangeChange(rangeHandler);
     chartRef.current = instance; candleRef.current = candle; emaRef.current = ema; markerRef.current = marker;
+    host.dataset.chartCreateCount = "1";
 
     let resizeFrame = 0;
     const resize = () => {
@@ -137,9 +147,9 @@ export function ScalperV2Chart({
       });
     };
     const observer = new ResizeObserver(resize); observer.observe(host);
-    body.addEventListener("pointermove", scheduleProfile, { passive: true }); body.addEventListener("pointerup", scheduleProfile, { passive: true }); resize();
+    body.addEventListener("pointermove", scheduleProfile, { passive: true }); body.addEventListener("pointerup", scheduleProfile, { passive: true }); body.addEventListener("wheel", scheduleProfile, { passive: true }); resize();
     return () => {
-      observer.disconnect(); body.removeEventListener("pointermove", scheduleProfile); body.removeEventListener("pointerup", scheduleProfile);
+      observer.disconnect(); body.removeEventListener("pointermove", scheduleProfile); body.removeEventListener("pointerup", scheduleProfile); body.removeEventListener("wheel", scheduleProfile);
       instance.timeScale().unsubscribeVisibleTimeRangeChange(rangeHandler); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(pointerFrameRef.current); cancelAnimationFrame(profileFrameRef.current);
       marker.detach(); instance.remove(); chartRef.current = null; candleRef.current = null; emaRef.current = null; markerRef.current = null;
     };
@@ -147,9 +157,17 @@ export function ScalperV2Chart({
 
   useEffect(() => {
     candleRef.current?.setData(data); emaRef.current?.setData(emaData);
-    candleRef.current?.applyOptions({ autoscaleInfoProvider: renderBounds ? () => ({ priceRange: { minValue: renderBounds.low, maxValue: renderBounds.high } }) : undefined });
+    setDataCountRef.current += 1;
+    if (hostRef.current) hostRef.current.dataset.setDataCount = String(setDataCountRef.current);
+    candleRef.current?.applyOptions({ autoscaleInfoProvider: verticalView === "session" && renderBounds ? () => ({ priceRange: { minValue: renderBounds.low, maxValue: renderBounds.high } }) : undefined });
+    chartRef.current?.priceScale("right").setAutoScale(verticalView !== "manual" && !yLocked);
     scheduleProfile();
-  }, [data, emaData, renderBounds]);
+  }, [data, emaData, renderBounds, verticalView, yLocked]);
+
+  useEffect(() => {
+    chartRef.current?.applyOptions({ handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: !yLocked }, axisDoubleClickReset: { time: true, price: !yLocked } } });
+    if (bodyRef.current) { bodyRef.current.dataset.verticalView = verticalView; bodyRef.current.dataset.yLocked = String(yLocked); }
+  }, [verticalView, yLocked]);
 
   useEffect(() => {
     const candle = candleRef.current; if (!candle) return;
@@ -193,12 +211,18 @@ export function ScalperV2Chart({
 
   useEffect(() => {
     const chart = chartRef.current; if (!chart || data.length === 0) return;
-    suppressRangeRef.current += 1; chart.timeScale().setVisibleRange({ from: data[0].time, to: data[data.length - 1].time });
+    if (appliedFitRef.current === fitRequest) return;
+    appliedFitRef.current = fitRequest;
+    const count = horizontalView === "last30" ? 30 : horizontalView === "last60" ? 60 : data.length;
+    const visible = data.slice(-count);
+    if (hostRef.current) { hostRef.current.dataset.visibleFrom = String(Number(visible[0].time)); hostRef.current.dataset.visibleTo = String(Number(visible[visible.length - 1].time)); hostRef.current.dataset.horizontalView = horizontalView; }
+    suppressRangeRef.current += 1; chart.timeScale().setVisibleRange({ from: visible[0].time, to: visible[visible.length - 1].time });
     requestAnimationFrame(() => { suppressRangeRef.current = Math.max(0, suppressRangeRef.current - 1); });
-  }, [fitRequest, data]);
+  }, [fitRequest, horizontalView, data]);
 
   useEffect(() => {
     const chart = chartRef.current; if (!chart || !externalRange || externalRange.source === id) return;
+    if (hostRef.current) { hostRef.current.dataset.visibleFrom = String(externalRange.from); hostRef.current.dataset.visibleTo = String(externalRange.to); }
     suppressRangeRef.current += 1; chart.timeScale().setVisibleRange({ from: externalRange.from as UTCTimestamp, to: externalRange.to as UTCTimestamp });
     requestAnimationFrame(() => { suppressRangeRef.current = Math.max(0, suppressRangeRef.current - 1); });
   }, [externalRange, id]);

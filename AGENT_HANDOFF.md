@@ -4116,3 +4116,24 @@ or outcomes were deleted.
   is healthy with zero restarts; public `/n50/` returns HTTP 200. Only
   `n50-dashboard` was recreated. Rollback image:
   `trading-stack-n50-dashboard:pre-scalper-v2-repair-20260910`.
+
+## 2026-09-10 — Scalper V2 acceptance completion pass
+
+- Continued the existing V2 repair in place. Added explicit Fit day/Last 30/
+  Last 60 X views, Session/Visible/Manual Y modes and Y lock without changing
+  any price, indicator or strategy formula.
+- A/B selection now captures its original panes, interval, exact pair and
+  expiry. Exact time dropdowns are available and display-timeframe changes no
+  longer rebind the calculation to new candles.
+- The fixed rail now distinguishes Selected and ATM and exposes latest CE/PE
+  OI, retained-baseline delta OI, IV and bid-ask spread as numerical cells.
+  Strike analytics show a qualified nearest-strike spot guide.
+- Browser instrumentation records chart creation, data hydration, visible
+  ranges and profile coordinates. Local authenticated browser evidence passes
+  37 executable checks with no failures: 500 pointer moves p95 17.3ms, zero
+  hover requests, unchanged `setData` counters, 156ms cached switch and stable
+  native roots over 20 V1/V2 cycles. Headed DPR2 crispness remains explicitly
+  blocked; headless geometry reconciles but exposes 1:1 backing dimensions.
+- Web 129/129 and API 193/193 tests, both typechecks/builds and the canonical
+  gate pass. Per-check evidence and remaining source prerequisites are in
+  `docs/trading-analytics/SCALPER_V2_ACCEPTANCE_MATRIX_20260910.md`.

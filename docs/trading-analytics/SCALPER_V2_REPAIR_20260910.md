@@ -94,6 +94,37 @@ section explicitly states that this view has no connected position source.
 - Browser screenshots and runtime JSON are ignored artefacts and must remain
   outside Git.
 
+Final results:
+
+- Web typecheck/build and 129/129 tests: PASS.
+- API typecheck/build and 193/193 tests: PASS; API source was unchanged.
+- Canonical repository preservation gate: PASS.
+- Authenticated local-Vite/live-API repair suite: PASS, 29/29.
+- Authenticated deployed repair suite: PASS, 29/29 at 1920x1080, 1440x900,
+  1366x768, 1024x768 and 390x844.
+- Deployed geometry at 1920x1080: underlying host/native width
+  812.23/812.23px and plot body 601.22px; CE/PE host/native width
+  637.77/637.77px and plot body 267.22px; native time axes 28px.
+- Deployed interaction profile: 500 pointer moves, 17.3ms p95 in headless
+  Chromium at DPR1; no V2 chart/context request during the pointer loop; cached
+  5m-to-1m route redraw 120ms. These are measurements on this test host, not a
+  universal performance guarantee.
+
+Ignored evidence: `/tmp/scalper-v2-repair-local-final/` and
+`/tmp/scalper-v2-repair-deployed-final/`.
+
+## Release
+
+- Canonical release commit: `ed10c9cd5459b9314ec0e187298fa36ed1b85afa`.
+- Dashboard image:
+  `sha256:e46f6f84efed44c406182741395ce0d5df25588d5750850bb24b99653f55eca9`.
+- Only the canonical `trading-stack-novius2` `n50-dashboard` was recreated. It
+  is healthy with zero restarts and the public `/n50/` route returns HTTP 200.
+- Rollback image: `trading-stack-n50-dashboard:pre-scalper-v2-repair-20260910`.
+- An accidental duplicate Compose-project dashboard created during the release
+  command was detected immediately and removed before canonical cutover. No
+  unrelated service or volume was removed.
+
 ## Source limitations retained visibly
 
 - Ranked chain inputs can be an observed retained cohort or a nearest paired

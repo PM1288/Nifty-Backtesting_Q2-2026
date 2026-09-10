@@ -4088,3 +4088,31 @@ or outcomes were deleted.
   `docs/rolling-monthly/MONTHLY_CLOSE_OPEN_COMPARISON_2026-09-10.md` and
   runtime-only `/tmp/monthly-comparison-4a2a9bc-final/`.
 - Rollback: `trading-stack-n50-dashboard:pre-monthly-comparison-34c47b5`.
+## 2026-09-10 — Scalper V2 geometry and linked-inspection repair
+
+- Repaired the existing `/strategy/trading-analytics?view=scalper_v2`; no third
+  terminal was added and `view=scalper` remains separately available.
+- Confirmed root cause: generic evidence-table geometry reached Lightweight
+  Charts' internal table; fixed canvas/card heights cropped time axes; the rail
+  had fewer tracks than children; and the OI overlay added its header origin
+  twice. V2 now has scoped native-table containment, measured chart bodies and
+  one explicit resize owner.
+- Added full observed-day fitting, independent OHLC-only price envelopes,
+  linked time/range propagation with each instrument's own Y value, real
+  Latest/Cursor/Locked numerical readouts, bounded OI geometry, separate strike
+  hover, truthful delta-OI/PCR states and render-only V7/A-B evidence.
+- V7 calculations and IDs, exact contracts, A-open/B-close arithmetic,
+  collectors, API/database contracts, exports, authentication and no-order
+  permissions are unchanged. Field map and remaining source limitations:
+  `docs/trading-analytics/SCALPER_V2_REPAIR_20260910.md`.
+- Verification: web 129/129 and API 193/193 tests, both typechecks/builds,
+  canonical gate, local browser 29/29 and deployed browser 29/29 PASS. Deployed
+  1920px geometry reconciles host/native widths exactly within subpixel
+  rounding; plot bodies are 601px/267px/267px. Production pointer test measured
+  17.3ms p95 over 500 moves with zero V2 hover requests; cached interval switch
+  was 120ms.
+- Release `ed10c9c` is pushed to canonical master. Dashboard image
+  `sha256:e46f6f84efed44c406182741395ce0d5df25588d5750850bb24b99653f55eca9`
+  is healthy with zero restarts; public `/n50/` returns HTTP 200. Only
+  `n50-dashboard` was recreated. Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-repair-20260910`.

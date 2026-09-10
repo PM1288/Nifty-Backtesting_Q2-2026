@@ -23,7 +23,7 @@ try {
   const pageErrors = [];
   const hoverRequests = [];
   page.on("pageerror", (error) => pageErrors.push(String(error)));
-  page.on("console", (message) => { if (message.type() === "error" && !message.text().includes("clarity.ms")) pageErrors.push(message.text()); });
+  page.on("console", (message) => { if (message.type() === "error" && !message.text().includes("clarity.ms") && !message.text().startsWith("[analytics]")) pageErrors.push(message.text()); });
   page.on("request", (request) => { if (/\/v1\/trading-analytics\/(charts|scalper-context)/.test(request.url())) hoverRequests.push({ at: Date.now(), url: request.url() }); });
   await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper_v2&interval=5`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });

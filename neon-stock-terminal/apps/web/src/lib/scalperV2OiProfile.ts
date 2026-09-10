@@ -30,6 +30,8 @@ export type ScalperV2ProfileLayout = {
   totalStrikes: number;
 };
 
+export type ScalperV2ProfileBounds = { low: number; high: number };
+
 const finite = (value: unknown) => {
   if (value == null || value === "") return null;
   const parsed = Number(value);
@@ -134,4 +136,23 @@ export function profileBaselineLabel(kind: string | null) {
   if (kind === "FIRST_SESSION_OBSERVATION") return "Session initial observation";
   if (kind === "PREVIOUS_ARCHIVED_SNAPSHOT") return "Previous archived snapshot";
   return "Baseline unavailable";
+}
+
+/**
+ * Explicit all-strikes fit. This is never applied implicitly because distant
+ * option strikes would otherwise compress the underlying candles.
+ */
+export function allProfileStrikeBounds(
+  sessionBounds: ScalperV2ProfileBounds | null,
+  rows: ScalperV2ProfileRow[],
+  paddingFraction = 0.03,
+): ScalperV2ProfileBounds | null {
+  const values = rows.map((row) => row.strike).filter((strike) => Number.isFinite(strike) && strike > 0);
+  if (!sessionBounds && values.length === 0) return null;
+  const low = Math.min(sessionBounds?.low ?? Number.POSITIVE_INFINITY, ...values);
+  const high = Math.max(sessionBounds?.high ?? Number.NEGATIVE_INFINITY, ...values);
+  if (!Number.isFinite(low) || !Number.isFinite(high)) return null;
+  const span = high - low;
+  const padding = span > 0 ? span * Math.max(0, paddingFraction) : Math.max(Math.abs(high) * 0.0001, 0.01) * 2;
+  return { low: low - padding, high: high + padding };
 }

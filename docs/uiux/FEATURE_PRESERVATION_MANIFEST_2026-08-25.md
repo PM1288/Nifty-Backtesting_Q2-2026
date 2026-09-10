@@ -12,7 +12,10 @@ are vertically aligned to actual strike coordinates on the right price scale.
 One declared baseline kind, full-cohort magnitude scaling, CE/PE identity,
 signed colours, zero/missing distinction and a keyboard-readable evidence table
 are preserved. The separate horizontal Delta OI chart retains strike on its
-right Y axis. V1, V7, A-open/B-close, exact contracts, routes, collectors,
+right Y axis. The normal session view reports its visible/total strike count;
+an explicit `All strikes Y` fit includes the complete cohort on their true
+underlying-price coordinates without silently compressing the default view.
+V1, V7, A-open/B-close, exact contracts, routes, collectors,
 orders and permissions are unchanged. Evidence:
 `docs/trading-analytics/SCALPER_V2_TEST_PACKAGE_INTEGRATION_20260910.md`.
 

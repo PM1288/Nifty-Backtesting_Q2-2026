@@ -4331,3 +4331,17 @@ or outcomes were deleted.
   edge returned HTTP 502 during final verification and remains an explicitly
   recorded external reachability blocker. Rollback image:
   `trading-stack-n50-dashboard:pre-scalper-v2-native-deltaoi-5b144a7`.
+
+## 2026-09-10 — Scalper V2 explicit all-strikes Y fit
+
+- Re-audited the deployed profile against the retained source cohort. All ten
+  supplied strikes were present; the normal observed-session price range
+  correctly painted only the two in-view strikes. No source row was lost.
+- Added a visible strike count and an explicit `All strikes Y` action. It fits
+  the complete cohort on the underlying's real price coordinates without
+  changing the safe Session Y default. Session Y restores the readable candle
+  range; off-screen strikes are never clamped to chart edges.
+- Web 144/144 and API 194/194 tests, both typechecks/builds and the canonical
+  gate pass. Authenticated local browser checks have 56 PASS, 0 FAIL and one
+  headed-DPR2 visual BLOCKED check. Real retained data changes from 2/10 to
+  10/10 visible strikes with 0px coordinate error when All strikes Y is used.

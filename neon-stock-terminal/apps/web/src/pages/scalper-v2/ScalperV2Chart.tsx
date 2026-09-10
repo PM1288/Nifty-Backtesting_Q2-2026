@@ -5,7 +5,7 @@ import {
   type ISeriesMarkersPluginApi, type Time, type UTCTimestamp,
 } from "lightweight-charts";
 import { levelInObservedSession, observedSessionBounds, paddedSessionBounds } from "../../lib/scalperV2Geometry";
-import type { ScalperV2ProfileMode, ScalperV2ProfileRow } from "../../lib/scalperV2OiProfile";
+import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2ProfileRow } from "../../lib/scalperV2OiProfile";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
@@ -34,6 +34,7 @@ export type ScalperV2VerticalView = "session" | "visible" | "manual";
 export function ScalperV2Chart({
   id, title, subtitle, bars, interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
   fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "current", profileLabel = "Current OI",
+  profileRangeExpanded = false,
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, hoveredStrike = null,
   drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
@@ -47,6 +48,7 @@ export function ScalperV2Chart({
   oiProfile?: ScalperV2ProfileRow[];
   profileMode?: ScalperV2ProfileMode;
   profileLabel?: string;
+  profileRangeExpanded?: boolean;
   signalEvents?: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string }>;
   measurementTimes?: string[];
   selectedStrike?: number | null;
@@ -79,6 +81,8 @@ export function ScalperV2Chart({
   profileModeRef.current = profileMode;
   yLockedRef.current = yLocked;
   const [drawingHint, setDrawingHint] = useState<string | null>(null);
+  const [profileVisibility, setProfileVisibility] = useState({ visible: 0, total: 0 });
+  const profileVisibilityRef = useRef(profileVisibility);
 
   const data = useMemo(() => bars.flatMap((bar): CandlestickData<Time>[] => {
     const time = chartTime(bar.end), open = numeric(bar.open), high = numeric(bar.high), low = numeric(bar.low), close = numeric(bar.close);
@@ -92,6 +96,7 @@ export function ScalperV2Chart({
   const emaByTime = useMemo(() => new Map(emaData.map((row) => [Number(row.time), row.value])), [emaData]);
   const sessionBounds = useMemo(() => observedSessionBounds(bars), [bars]);
   const renderBounds = useMemo(() => paddedSessionBounds(sessionBounds, 0.05), [sessionBounds]);
+  const profileBounds = useMemo(() => allProfileStrikeBounds(sessionBounds, oiProfile), [sessionBounds, oiProfile]);
   const selected = inspectionTime == null ? data.at(-1) : byTime.get(inspectionTime);
   const selectedEma = selected ? emaByTime.get(Number(selected.time)) ?? null : null;
   const distance = selected && selectedEma != null ? selected.close - selectedEma : null;
@@ -108,6 +113,10 @@ export function ScalperV2Chart({
       body.dataset.profileRows = String(profileRowsRef.current.length);
       body.dataset.profileVisibleStrikes = String(layout.visibleStrikes);
       body.dataset.profileTotalStrikes = String(layout.totalStrikes);
+      if (profileVisibilityRef.current.visible !== layout.visibleStrikes || profileVisibilityRef.current.total !== layout.totalStrikes) {
+        profileVisibilityRef.current = { visible: layout.visibleStrikes, total: layout.totalStrikes };
+        setProfileVisibility(profileVisibilityRef.current);
+      }
       body.dataset.profileMaxAlignmentError = String(Math.max(0, ...layout.bars.map((row) => Math.abs(row.y - (candle.priceToCoordinate(row.strike) ?? Number.POSITIVE_INFINITY)))));
       body.dataset.profileGeometry = JSON.stringify(layout.bars.map((row) => ({
         side: row.side, strike: row.strike, coordinate: row.y, width: row.width,
@@ -312,15 +321,16 @@ export function ScalperV2Chart({
       emaDataRef.current = emaData;
     }
     if (hostRef.current) { hostRef.current.dataset.setDataCount = String(setDataCountRef.current); hostRef.current.dataset.updateCount = String(updateCountRef.current); }
-    candleRef.current?.applyOptions({ autoscaleInfoProvider: verticalView === "session" && renderBounds ? () => ({ priceRange: { minValue: renderBounds.low, maxValue: renderBounds.high } }) : undefined });
+    const requestedBounds = id === "underlying" && profileRangeExpanded ? profileBounds : renderBounds;
+    candleRef.current?.applyOptions({ autoscaleInfoProvider: verticalView === "session" && requestedBounds ? () => ({ priceRange: { minValue: requestedBounds.low, maxValue: requestedBounds.high } }) : undefined });
     chartRef.current?.priceScale("right").setAutoScale(verticalView !== "manual" && !yLocked);
     scheduleProfile();
-  }, [data, emaData, renderBounds, verticalView, yLocked]);
+  }, [data, emaData, id, profileBounds, profileRangeExpanded, renderBounds, verticalView, yLocked]);
 
   useEffect(() => {
     chartRef.current?.applyOptions({ handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: !yLocked }, axisDoubleClickReset: { time: true, price: !yLocked } } });
-    if (bodyRef.current) { bodyRef.current.dataset.verticalView = verticalView; bodyRef.current.dataset.yLocked = String(yLocked); }
-  }, [verticalView, yLocked]);
+    if (bodyRef.current) { bodyRef.current.dataset.verticalView = verticalView; bodyRef.current.dataset.yLocked = String(yLocked); bodyRef.current.dataset.profileRangeExpanded = String(profileRangeExpanded); }
+  }, [profileRangeExpanded, verticalView, yLocked]);
 
   useEffect(() => {
     const candle = candleRef.current; if (!candle) return;
@@ -399,7 +409,7 @@ export function ScalperV2Chart({
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
-      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label={`${profileMode === "change" ? profileLabel : "Current OI"} horizontal bars aligned to the underlying price axis`}><b>{profileMode === "change" ? "ΔOI by strike" : "OI by strike"}</b><span>CE solid · PE dashed</span></div>}
+      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label={`${profileMode === "change" ? profileLabel : "Current OI"} horizontal bars aligned to the underlying price axis`}><b>{profileMode === "change" ? "ΔOI by strike" : "OI by strike"}</b><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible · CE solid · PE dashed</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y to include off-screen strikes</span>}</div>}
     </div>
   </section>;
 }

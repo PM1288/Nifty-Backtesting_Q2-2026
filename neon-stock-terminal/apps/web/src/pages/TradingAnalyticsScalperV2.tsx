@@ -116,6 +116,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [measurementContext, setMeasurementContext] = useState<{ panes: ChartPane[]; interval: number; symbol: string; expiry: string; strike: string } | null>(null);
   const [drawingTool, setDrawingTool] = useState<ScalperV2DrawingTool>("select");
   const [profileMode, setProfileMode] = useState<"current" | "change">("change");
+  const [profileRangeExpanded, setProfileRangeExpanded] = useState(false);
   const drawingStore = useScalperV2Drawings(symbol);
   const drawingSelectedId = drawingStore.selectedId, removeDrawing = drawingStore.remove;
   const inspectionMode: ScalperV2InspectionMode = lockedTime != null ? "locked" : hoverCrosshair ? "hover" : "latest";
@@ -129,7 +130,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     };
     window.addEventListener("keydown", clear); return () => window.removeEventListener("keydown", clear);
   }, [drawingSelectedId, removeDrawing]);
-  useEffect(() => { setFitRequest((value) => value + 1); setVerticalView("session"); setYLocked(false); setLockedTime(null); setHoverCrosshair(null); }, [symbol, expiry, selectedStrike, interval, selectedDayParam]);
+  useEffect(() => { setFitRequest((value) => value + 1); setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); setLockedTime(null); setHoverCrosshair(null); }, [symbol, expiry, selectedStrike, interval, selectedDayParam]);
 
   const activeData = active.data;
   const rawPanes = useMemo(() => activeData?.panes ?? [], [activeData]);
@@ -220,9 +221,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <button aria-pressed={horizontalView === "day"} onClick={() => { setHorizontalView("day"); setFitRequest((value) => value + 1); }}>Fit day</button>
       <button aria-pressed={horizontalView === "last30"} onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button>
       <button aria-pressed={horizontalView === "last60"} onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button>
-      <button aria-pressed={verticalView === "session"} onClick={() => { setVerticalView("session"); setYLocked(false); }}>Session Y</button>
-      <button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setYLocked(false); }}>Visible Y</button>
-      <button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setYLocked(false); }}>Manual Y</button>
+      <button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button>
+      <button aria-pressed={profileRangeExpanded} disabled={profileRows.length === 0} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button>
+      <button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button>
+      <button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button>
       <button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button>
       <button aria-pressed={profileMode === "current"} onClick={() => setProfileMode("current")}>Profile OI</button>
       <button aria-pressed={profileMode === "change"} onClick={() => setProfileMode("change")}>Profile ΔOI</button>
@@ -242,7 +244,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
         </nav>
         <div className={css.charts}>
-          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · index points" bars={underlying?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} profileMode={profileMode} profileLabel={deltaBasisLabel} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedStrike)} hoveredStrike={hoveredStrike} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · index points" bars={underlying?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} profileMode={profileMode} profileLabel={deltaBasisLabel} profileRangeExpanded={profileRangeExpanded} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedStrike)} hoveredStrike={hoveredStrike} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="call" title={`CE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="put" title={`PE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
         </div>

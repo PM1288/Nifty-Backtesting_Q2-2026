@@ -143,8 +143,19 @@ try {
     const axisX = profileBodyBox.x + profileBodyBox.width - 14, axisY = profileBodyBox.y + profileBodyBox.height * .48;
     await page.mouse.move(axisX, axisY); await page.mouse.down(); await page.mouse.move(axisX, axisY - 45, { steps: 5 }); await page.mouse.up(); await page.waitForTimeout(100);
     const afterAxisGesture = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => Number(body.dataset.profileMaxAlignmentError));
-    check("SV2-FIX-038", afterAxisGesture <= 2, `native-axis gesture max strike alignment error ${afterAxisGesture}px`);
+  check("SV2-FIX-038", afterAxisGesture <= 2, `native-axis gesture max strike alignment error ${afterAxisGesture}px`);
   } else check("SV2-FIX-038", false, "Underlying chart body geometry unavailable");
+  check("SV2-PROFILE-VISIBLE-STATUS", /\d+\/\d+ strikes visible/.test(await page.getByTestId("v2-oi-profile").innerText()), await page.getByTestId("v2-oi-profile").innerText());
+  await page.getByRole("button", { name: "All strikes Y", exact: true }).click();
+  await page.waitForTimeout(150);
+  const allStrikeFit = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => ({
+    visible: Number(body.dataset.profileVisibleStrikes), total: Number(body.dataset.profileTotalStrikes),
+    expanded: body.dataset.profileRangeExpanded, maximumError: Number(body.dataset.profileMaxAlignmentError),
+  }));
+  check("SV2-PROFILE-ALL-STRIKES-Y", allStrikeFit.total > 0 && allStrikeFit.visible === allStrikeFit.total && allStrikeFit.expanded === "true" && allStrikeFit.maximumError <= 2, JSON.stringify(allStrikeFit));
+  await page.screenshot({ path: path.join(output, "screenshots", "all-strikes-y.png"), fullPage: false });
+  await page.getByRole("button", { name: "Session Y", exact: true }).click();
+  await page.waitForTimeout(100);
   check("SV2-PROFILE-DELTAOI-DEFAULT", await page.getByTestId("v2-oi-profile").getAttribute("data-mode") === "change", await page.getByTestId("v2-oi-profile").getAttribute("aria-label"));
   await page.getByRole("tab", { name: "ΔOI profile", exact: true }).click();
   check("SV2-PROFILE-ACCESSIBLE-EVIDENCE", await page.locator("section[aria-label='Accessible strike change in open interest profile'] table").count() === 1 && /Baseline OI/.test(await page.locator("section[aria-label='Accessible strike change in open interest profile']").innerText()), "Profile has a keyboard-readable exact-value alternative");

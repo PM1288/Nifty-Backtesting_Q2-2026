@@ -57,6 +57,14 @@ problems:
   changing the selected option pair.
 - Kept the separate Change in OI analytical chart horizontal, with strike on
   the right-side Y axis and signed provider-unit Delta OI on X.
+- Re-audited the retained production cohort after the first deployment. Ten
+  strikes were supplied, but only two were inside the observed session price
+  viewport. This is required clipping, not missing data: the source contract
+  explicitly forbids automatically widening the default candle range.
+- Added a visible `shown/total strikes` status and an explicit `All strikes Y`
+  action. It expands only the underlying Y range to the complete cohort plus a
+  small drawing margin. Every bar still uses its true underlying-price
+  coordinate. `Session Y` restores the readable observed-session envelope.
 
 No API, database, collector, V7 signal, A-open/B-close measurement, position,
 notification, broker/order or permission contract changed.
@@ -78,6 +86,19 @@ notification, broker/order or permission contract changed.
   142ms on headless Chromium/DPR1. These are test-host measurements.
 - Headless DPR2 backing-store crispness remains BLOCKED pending a headed-browser
   visual check; DPR2 width reconciliation passed.
+
+Follow-up verification after adding the explicit all-strikes fit:
+
+- Full web tests: 144/144 PASS; typecheck and production build PASS.
+- API tests: 194/194 PASS; typecheck and build PASS; API remains unchanged.
+- Authenticated local browser regression: 56 PASS, 0 FAIL, 1 BLOCKED (the same
+  headed-DPR2 visual check).
+- Retained data: Session Y reports 2/10 visible strikes; All strikes Y reports
+  10/10, with finite coordinates and 0px maximum alignment error.
+- Pointer p95 remained 17.1ms over 500 moves; cached interval switch was 168ms
+  on the recorded headless test run.
+- Browser evidence:
+  `/tmp/scalper-v2-all-strikes-local-final/screenshots/all-strikes-y.png`.
 
 The same authenticated regression was repeated against the deployed production
 container: 54 PASS, 0 FAIL and the same single headed-DPR2 check BLOCKED. The

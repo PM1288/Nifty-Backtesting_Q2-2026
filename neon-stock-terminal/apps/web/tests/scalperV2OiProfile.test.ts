@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { layoutScalperV2Profile, normalizeScalperV2ProfileRows } from "../src/lib/scalperV2OiProfile";
+import { allProfileStrikeBounds, layoutScalperV2Profile, normalizeScalperV2ProfileRows } from "../src/lib/scalperV2OiProfile";
 
 test("Scalper V2 profile keeps one declared baseline and preserves missingness", () => {
   const model = normalizeScalperV2ProfileRows([
@@ -36,4 +36,12 @@ test("Scalper V2 profile deduplicates conflicting strike-side rows", () => {
   ]);
   assert.equal(model.rows.length, 1);
   assert.equal(model.duplicates, 1);
+});
+
+test("explicit all-strikes fit includes the session and complete profile cohort", () => {
+  const rows = normalizeScalperV2ProfileRows([
+    { option_type: "CE", strike: 23_250, open_interest: 100, baseline_open_interest: 80, baseline_kind: "PREVIOUS_SESSION_FINAL" },
+    { option_type: "PE", strike: 23_700, open_interest: 120, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },
+  ]).rows;
+  assert.deepEqual(allProfileStrikeBounds({ low: 23_390, high: 23_480 }, rows), { low: 23_236.5, high: 23_713.5 });
 });

@@ -3963,3 +3963,25 @@ or outcomes were deleted.
   canonical repository gate PASS; authenticated deployed browser 114/114 at
   1920/1440/390. Ignored browser evidence:
   `output/playwright/nifty-context-daily-shap-20260910-final/`.
+
+## 2026-09-10 — Scalper load-latency repair
+
+- Branch: `fix/scalper-load-latency-20260910`; canonical route remains
+  `/strategy/trading-analytics?view=scalper`.
+- Root cause: the browser serially awaited the full Trading Analytics payload
+  before starting chart loading. Live pre-fix timings included 8.089s + 3.531s
+  for NIFTY and 22.971s + 6.834s for IDFCFIRSTB. The slowest retained option
+  context SQL took 15.324s because exchange-time filters lacked an indexed
+  collection-time bound.
+- Added read-only `/v1/trading-analytics/scalper-context`, lazy full-evidence
+  loading for explicit shared drawers, bounded current/prior-session quote
+  lookups, and a three-calendar-day default payload for the one-session chart.
+  `All retained days` remains the complete 15-day request.
+- No schema/index/data mutation, collector, V7 signal, exact-pair, OI,
+  A-open/B-close, permission or order change. Rollback needs only the prior
+  dashboard image; database rollback is not applicable.
+- Pre-deployment checks: web typecheck, 118/118 tests and production build;
+  API typecheck, 191/191 tests and production build; canonical repository gate
+  PASS. Deployment and authenticated browser timing are recorded by the
+  follow-up entry after cutover.
+- Detailed evidence: `docs/trading-analytics/SCALPER_LOAD_LATENCY_20260910.md`.

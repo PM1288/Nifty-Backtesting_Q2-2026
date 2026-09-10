@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Scalper latency repair: normal Scalper entry uses a small authenticated
+read-only context route instead of blocking on the full Morning/FII/participant
+payload. Session OI baseline queries retain event-time rules while adding indexed
+collection-time bounds. The default one-day view requests three calendar days
+for indicator warm-up; All retained days remains 15 days. Shared full evidence
+loads lazily on explicit drawer access. V7 rules, A-open/B-close measurement,
+exact contracts, OI semantics, exports, collectors and no-order permissions are
+unchanged. Evidence: `docs/trading-analytics/SCALPER_LOAD_LATENCY_20260910.md`.
+
 2026-09-10 MANEESH daily trade SHAP V2: the read-only Good-trade experiment now
 uses a rolling 30-calendar-day population and an exact selected-option positive
 15-minute net P&L label after versioned charges. The old 20-session gate is

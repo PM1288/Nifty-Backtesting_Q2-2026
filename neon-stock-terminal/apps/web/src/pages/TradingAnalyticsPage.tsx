@@ -100,6 +100,10 @@ type Payload = {
     archivedLegCount: number;
   };
 };
+type ScalperContextPayload = Pick<Payload, "underlying" | "universe" | "asOf" | "smartapi" | "resistance"> & {
+  state: string;
+  errors: Row[];
+};
 const tabs = {
   morning: "Morning Brief",
   activity: "FII Activity",
@@ -357,6 +361,20 @@ export function TradingAnalyticsPage() {
     refetchInterval: main === "morning" ? 60000 : false,
     refetchIntervalInBackground: false,
     retry: 1,
+    // Scalper has a deliberately small context endpoint. Load the full research
+    // contract only when another lens owns it or a shared evidence drawer is
+    // explicitly requested.
+    enabled: tab !== "scalper" || drawer != null,
+  });
+  const scalperQuery = new URLSearchParams();
+  for (const k of ["symbol", "expiry", "asOf"])
+    if (params.get(k)) scalperQuery.set(k, params.get(k)!);
+  const scalperQ = useQuery({
+    queryKey: ["trading-analytics-scalper-context", scalperQuery.toString()],
+    queryFn: () => getJson<ScalperContextPayload>(`/v1/trading-analytics/scalper-context?${scalperQuery}`),
+    staleTime: 30000,
+    retry: 1,
+    enabled: tab === "scalper",
   });
   const change = (k: string, v: string) => {
     const next = new URLSearchParams(params);
@@ -365,6 +383,9 @@ export function TradingAnalyticsPage() {
     setParams(next);
   };
   const d = q.data;
+  const scalperContext = scalperQ.data;
+  const pageContext = tab === "scalper" ? scalperContext : d;
+  const activeQuery = tab === "scalper" ? scalperQ : q;
   const inspect = (row: Row) => {
     setInspected(row);
     setDrawer("source");
@@ -388,23 +409,23 @@ export function TradingAnalyticsPage() {
           <button onClick={() => setDrawer("condition")}>
             Conditions
           </button>
-          <button disabled={q.isFetching} onClick={() => void q.refetch()}>
-            {q.isFetching ? "Refreshing…" : "Refresh"}
+          <button disabled={activeQuery.isFetching} onClick={() => void activeQuery.refetch()}>
+            {activeQuery.isFetching ? "Refreshing…" : "Refresh"}
           </button>
           {tab === 'trade-log' && <button aria-expanded={logMarketContext} onClick={() => setLogMarketContext(!logMarketContext)}>Market context — not Trade Log filters</button>}
-          {d && (tab !== 'trade-log' || logMarketContext) && (
+          {pageContext && (tab !== 'trade-log' || logMarketContext) && (
             <>
-              <label>Symbol <select aria-label="Analytics underlying" value={d.underlying.symbol} onChange={e=>{
+              <label>Symbol <select aria-label="Analytics underlying" value={pageContext.underlying.symbol} onChange={e=>{
                 const next=new URLSearchParams(params); next.set('symbol',e.target.value);
                 for(const k of ['expiry','strike','pin','day']) next.delete(k);
                 setInspected(null);setDrawer(null);setParams(next);
               }}>
-                {d.universe.length ? d.universe.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={d.underlying.symbol}>{d.underlying.label}</option>}
+                {pageContext.universe.length ? pageContext.universe.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={pageContext.underlying.symbol}>{pageContext.underlying.label}</option>}
               </select></label>
-              <label>Chain <select aria-label="Selected underlying expiry" value={d.smartapi.expiry??''} onChange={e=>{
+              <label>Chain <select aria-label="Selected underlying expiry" value={pageContext.smartapi.expiry??''} onChange={e=>{
                 const next=new URLSearchParams(params);next.set('expiry',e.target.value);next.delete('strike');next.delete('pin');setParams(next);
-              }}><option value="">Unavailable / automatic</option>{d.smartapi.expiries.map(e=><option key={e} value={e}>{e}</option>)}</select></label>
-              <label>
+              }}><option value="">Unavailable / automatic</option>{pageContext.smartapi.expiries.map(e=><option key={e} value={e}>{e}</option>)}</select></label>
+              {d && <label>
                 Report{" "}
                 <select
                   value={d.reportDate}
@@ -414,8 +435,8 @@ export function TradingAnalyticsPage() {
                     <option key={date}>{date}</option>
                   ))}
                 </select>
-              </label>
-              <button
+              </label>}
+              {d && <button
                 onClick={() =>
                   download(
                     `trading-analytics-${d.reportDate}.json`,
@@ -425,7 +446,7 @@ export function TradingAnalyticsPage() {
                 }
               >
                 Export JSON
-              </button>
+              </button>}
             </>
           )}
         </header>
@@ -515,14 +536,36 @@ export function TradingAnalyticsPage() {
             Export source rows CSV
           </button>
         )}
-        {q.error && (
+        {activeQuery.error && (
           <section role="alert" className={styles.warning}>
             Could not refresh evidence.{" "}
-            {q.error instanceof Error ? q.error.message : "Request failed"}{" "}
-            <button onClick={() => void q.refetch()}>Retry</button>
+            {activeQuery.error instanceof Error ? activeQuery.error.message : "Request failed"}{" "}
+            <button onClick={() => void activeQuery.refetch()}>Retry</button>
           </section>
         )}
-        {!d ? (
+        {tab === "scalper" ? (!scalperContext ? (
+          <p role="status">
+            {scalperQ.isLoading ? "Loading Scalper market context…" : "No Scalper context response."}
+          </p>
+        ) : (
+          <>
+            <section className={styles.warning}>
+              <strong>{scalperContext.state}</strong> · Read-only research · {scalperContext.errors.length} source query failures.
+            </section>
+            <TradingAnalyticsScalper
+              key={scalperContext.underlying.symbol}
+              symbol={scalperContext.underlying.symbol}
+              label={scalperContext.underlying.label}
+              asOf={scalperContext.asOf}
+              expiry={String(scalperContext.smartapi.expiry ?? "")}
+              strikes={scalperContext.smartapi.strikes}
+              legs={scalperContext.smartapi.legs}
+              resistance={scalperContext.resistance ?? []}
+              maxPainStrikes={scalperContext.smartapi.metrics.indicativeMaxPainStrikes ?? []}
+              spot={scalperContext.smartapi.spot?.ltp == null ? null : Number(scalperContext.smartapi.spot.ltp)}
+            />
+          </>
+        )) : !d ? (
           <p role="status">
             {q.isLoading
               ? "Loading retained research evidence…"
@@ -1005,30 +1048,6 @@ export function TradingAnalyticsPage() {
                 </details>
               </>
             )}
-            {tab === "scalper" && (
-              <TradingAnalyticsScalper
-                key={d.underlying.symbol}
-                symbol={d.underlying.symbol}
-                label={d.underlying.label}
-                asOf={d.asOf}
-                expiry={String(
-                  d.smartapi.expiry ?? d.chain.snapshot?.expiry_date ?? "",
-                )}
-                strikes={
-                  d.smartapi.strikes.length
-                    ? d.smartapi.strikes
-                    : d.chain.strikes
-                }
-                legs={d.smartapi.legs}
-                resistance={d.resistance}
-                maxPainStrikes={d.smartapi.metrics.indicativeMaxPainStrikes ?? []}
-                spot={
-                  d.smartapi.spot?.ltp == null
-                    ? null
-                    : Number(d.smartapi.spot.ltp)
-                }
-              />
-            )}
             {tab === "matrix" && (
               <Suspense fallback={<p role="status">Loading synchronized timeframe matrix…</p>}>
                 <TimeframeMatrix
@@ -1042,54 +1061,54 @@ export function TradingAnalyticsPage() {
                 />
               </Suspense>
             )}
-            {(drawer === "health" || (tab === "health" && drawer == null)) && (
-              <TradingAnalyticsDrawer
-                title="Data Health"
-                onClose={() => {
-                  setDrawer(null);
-                  if (tab === "health") change("view", "morning");
-                }}
-              >
-                <h2>Source reconciliation and approval gates</h2>
-                <Table
-                  label="Reconciliation issues"
-                  rows={d.issues}
-                  columns={[
-                    ["code", "Check"],
-                    ["unit", "Unit"],
-                    ["reported", "Reported"],
-                    ["calculated", "Reconstructed"],
-                    ["difference", "Difference"],
-                  ]}
-                />
-                <Table
-                  label="Source query failures"
-                  rows={d.errors}
-                  columns={[
-                    ["source", "Source"],
-                    ["state", "State"],
-                  ]}
-                />
-                <Table
-                  label="Policy register"
-                  rows={d.policies}
-                  columns={[
-                    ["id", "Policy"],
-                    ["state", "State"],
-                    ["reason", "Reason"],
-                  ]}
-                />
-                <ul>
-                  {d.limitations.map((l) => (
-                    <li key={l}>{l}</li>
-                  ))}
-                </ul>
-                <p>
-                  Formula {d.version} · Evidence digest {d.evidenceId}
-                </p>
-              </TradingAnalyticsDrawer>
-            )}
           </>
+        )}
+        {d && (drawer === "health" || (tab === "health" && drawer == null)) && (
+          <TradingAnalyticsDrawer
+            title="Data Health"
+            onClose={() => {
+              setDrawer(null);
+              if (tab === "health") change("view", "morning");
+            }}
+          >
+            <h2>Source reconciliation and approval gates</h2>
+            <Table
+              label="Reconciliation issues"
+              rows={d.issues}
+              columns={[
+                ["code", "Check"],
+                ["unit", "Unit"],
+                ["reported", "Reported"],
+                ["calculated", "Reconstructed"],
+                ["difference", "Difference"],
+              ]}
+            />
+            <Table
+              label="Source query failures"
+              rows={d.errors}
+              columns={[
+                ["source", "Source"],
+                ["state", "State"],
+              ]}
+            />
+            <Table
+              label="Policy register"
+              rows={d.policies}
+              columns={[
+                ["id", "Policy"],
+                ["state", "State"],
+                ["reason", "Reason"],
+              ]}
+            />
+            <ul>
+              {d.limitations.map((l) => (
+                <li key={l}>{l}</li>
+              ))}
+            </ul>
+            <p>
+              Formula {d.version} · Evidence digest {d.evidenceId}
+            </p>
+          </TradingAnalyticsDrawer>
         )}
         {tab === "trade-log" && <TradingAnalyticsTradeLog />}
         {d && (drawer === "source" || drawer === "condition") && (

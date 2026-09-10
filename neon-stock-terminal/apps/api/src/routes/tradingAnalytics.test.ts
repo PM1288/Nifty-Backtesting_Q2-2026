@@ -50,6 +50,15 @@ test("read-only API validates input and reports partial source failure without l
     assert.equal(mutation.status, 404);
     const chart = await fetch(`${base}/v1/trading-analytics/charts?interval=7`);
     assert.equal(chart.status, 400);
+    const badContext = await fetch(`${base}/v1/trading-analytics/scalper-context?symbol=bad symbol`);
+    assert.equal(badContext.status, 400);
+    const context = await fetch(`${base}/v1/trading-analytics/scalper-context`);
+    assert.equal(context.status, 200);
+    const contextBody = await context.json() as { paperOrdersEnabled: boolean; liveOrdersEnabled: boolean; errors: unknown[]; underlying: { symbol: string } };
+    assert.equal(contextBody.underlying.symbol, "NIFTY");
+    assert.equal(contextBody.paperOrdersEnabled, false);
+    assert.equal(contextBody.liveOrdersEnabled, false);
+    assert.ok(contextBody.errors.length > 0);
   } finally {
     server.closeAllConnections();
     await new Promise<void>((r) => server.close(() => r()));

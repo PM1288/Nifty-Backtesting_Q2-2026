@@ -407,6 +407,65 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       return res.status(503).json({ error: { code: "SCALPER_LOG_UNAVAILABLE" } });
     }
   });
+  app.get("/v1/trading-analytics/scalper-context", async (req, res) => {
+    if (process.env.TRADING_ANALYTICS_ENABLED === "false")
+      return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
+    const parsed = querySchema.pick({ symbol: true, asOf: true, expiry: true }).safeParse(req.query);
+    if (!parsed.success)
+      return res.status(400).json({ error: { code: "INVALID_SCALPER_CONTEXT_QUERY" } });
+    const asOf = parsed.data.asOf ?? new Date().toISOString();
+    if (Date.parse(asOf) > Date.now())
+      return res.status(400).json({ error: { code: "FUTURE_ASOF_NOT_ALLOWED" } });
+    const errors: { source: string; state: string }[] = [];
+    const read = async (source: string, sql: string, ...args: unknown[]) => {
+      try {
+        return await prisma.$queryRawUnsafe<Facts[]>(sql, ...args);
+      } catch {
+        errors.push({ source, state: "SOURCE_QUERY_FAILED" });
+        return [];
+      }
+    };
+    try {
+      const universe = await analyticsUniverse(read, asOf);
+      const underlying = selectUnderlying(universe, parsed.data.symbol);
+      const [dayBars, dailyCalendar, smartapi] = await Promise.all([
+        read(
+          "scalper_daily",
+          `SELECT b.trade_date::text date,open::float8,high::float8,low::float8,close::float8,volume::text,source,created_at FROM public.bars_1d b WHERE exchange='NSE' AND symbol_token=$2 AND (b.trade_date<($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date OR EXISTS (SELECT 1 FROM public.trading_calendar c WHERE c.trade_date=b.trade_date AND c.is_trading_day AND c.market_close_ts<=$1::timestamptz)) AND b.trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date AND created_at<=$1::timestamptz ORDER BY b.trade_date DESC LIMIT 400`,
+          asOf,
+          underlying.token,
+        ),
+        read(
+          "scalper_calendar",
+          `SELECT trade_date::text,market_open_ts,market_close_ts,'REGULAR'::text phase_id,updated_at FROM public.trading_calendar WHERE is_trading_day AND trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date DESC LIMIT 450`,
+          asOf,
+        ),
+        loadSmartApiNifty(read, asOf, parsed.data.expiry, underlying),
+      ]);
+      const resistance = resistanceViews(
+        dayBars.reverse(),
+        asOf,
+        numeric(smartapi.spot?.ltp),
+        Number(process.env.TRADING_ANALYTICS_DAILY_LEVEL_LOOKBACK ?? 20),
+        Number(process.env.TRADING_ANALYTICS_WEEKLY_LEVEL_LOOKBACK ?? 12),
+        dailyCalendar,
+      );
+      return res.json({
+        version: `${VERSION}_SCALPER_CONTEXT_V1`,
+        asOf,
+        underlying,
+        universe,
+        smartapi,
+        resistance,
+        errors,
+        state: errors.length ? "PARTIAL" : "OBSERVED",
+        liveOrdersEnabled: false,
+        paperOrdersEnabled: false,
+      });
+    } catch {
+      return res.status(503).json({ error: { code: "SCALPER_CONTEXT_UNAVAILABLE" } });
+    }
+  });
   app.get("/v1/trading-analytics/charts", async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });

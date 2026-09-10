@@ -107,3 +107,19 @@ test("SmartAPI unavailable sources never produce synthetic quotes", async () => 
   assert.equal(result.spot, null);
   assert.equal(result.metrics.oiPcr, null);
 });
+
+test("SmartAPI option baselines bound collection time for partition pruning", async () => {
+  let contractSql = "";
+  await loadSmartApiNifty(
+    async (source, sql) => {
+      if (source === "smartapi_spot") return [{ ltp: 23800 }];
+      if (source === "smartapi_expiries") return [{ expiry: "2026-09-15" }];
+      if (source === "smartapi_contracts") contractSql = sql;
+      return [];
+    },
+    "2026-09-10T08:50:00Z",
+  );
+  assert.match(contractSql, /p\.ts BETWEEN \$1::timestamptz-interval '1 day' AND \$1::timestamptz/);
+  assert.match(contractSql, /p\.ts BETWEEN previous_day\.market_open_ts-interval '1 day' AND \$1::timestamptz/);
+  assert.match(contractSql, /p\.exch_feed_time BETWEEN previous_day\.market_open_ts AND previous_day\.market_close_ts/);
+});

@@ -198,7 +198,16 @@ export function TradingAnalyticsScalper({
   const chartExpiry = exactLogPair && requestedChartExpiry ? requestedChartExpiry : activeChartExpiry(requestedChartExpiry, expiry, asOf);
   const selected = fixedPair?.strike ?? (strike || String(defaultStrike ?? ""));
   const effectiveExpiry = fixedPair?.expiry ?? chartExpiry;
-  const query = new URLSearchParams({ symbol, asOf, interval: String(interval) });
+  const oneDay = params.get("range") !== "all";
+  // The default one-session view needs retained indicator warm-up, not the
+  // complete 15-day chart payload. The explicit All retained days view keeps
+  // the full contract unchanged.
+  const query = new URLSearchParams({
+    symbol,
+    asOf,
+    interval: String(interval),
+    historyDays: oneDay ? "3" : "15",
+  });
   if (effectiveExpiry && selected) {
     query.set("expiry", effectiveExpiry);
     query.set("strike", selected);
@@ -257,7 +266,6 @@ export function TradingAnalyticsScalper({
     next.set("pin", "true");
     setParams(next, { replace: true });
   }, [chartExpiry, day, expiry, fixedPair, params, q.data, requestedChartExpiry, setParams, spot, exactLogPair]);
-  const oneDay = params.get("range") !== "all";
   const panes = useMemo(
     () =>
       q.data?.panes.map((p) => ({

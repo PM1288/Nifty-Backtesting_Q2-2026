@@ -115,6 +115,7 @@ try {
         ),
       );
       if (lens === "trade-quality") {
+        await root.getByTestId("trade-quality-research").waitFor();
         const tradeResponse = await context.request.get(
           `${base}/v1/nifty-context/trade-quality`,
         );

@@ -3916,3 +3916,50 @@ or outcomes were deleted.
   returned three non-empty panes and no page errors.
 - Rollback image retained:
   `trading-stack-novius2-collector:pre-fno-universe-20260909`.
+
+## 2026-09-10 — MANEESH daily 30-day option trade SHAP V2
+
+- Canonical application commit
+  `0079da71161818ddd4d2409e85563069d8dfb526` is pushed to `master` and
+  deployed. Feature branch: `feat/daily-30d-trade-shap-20260910`.
+- The existing read-only Good-trade experiment now selects the latest 30
+  calendar days and labels the exact direction-selected option as good only
+  when its one-lot 15-minute net P&L is positive after the existing versioned
+  Zerodha NSE-option charges. V7 signal logic, exact pair identity, stored
+  outcomes, paper/live permissions and notifications are unchanged.
+- The former 20-session and 100-training-row gates are removed for this
+  trade-quality model only. Eligibility is at least 20 complete labelled trades,
+  at least 12 chronological training rows and both outcome classes. The final
+  20% (minimum five) complete decision-time groups are held out, simultaneous
+  signals cannot straddle the split, and training labels must mature before the
+  first test entry. Same-session correlation remains explicitly exploratory.
+- The feature boundary expanded from 23 to 32 entry-time values: all existing
+  underlying/selected/opposite RSI-MACD values, EMA/body/gap context, precursor
+  red/green counts, stored V7 pass states and precursor open/close distance from
+  EMA9. Complete original conditions, indicators and all 15m/30m/EOD outcomes
+  remain in each evidence row/export. Outcomes are never model inputs.
+- Scheduler defect repaired: its durable 16:00 IST trading-day check now runs
+  before the capture loop's early return. It catches up later the same day after
+  restart and skips an already persisted V2 date instead of relying on process
+  memory.
+- The SHAP lens now shows a daily mean-absolute held-out feature chart plus the
+  signed selected-trade waterfall. It also shows the rolling window, IST
+  schedule and exact 15-minute label meaning.
+- Live read-only fit: 135 observations, 131 labelled, 65 good, 66 non-positive,
+  86 complete, 63 train, 18 held out and SHAP reconciliation error
+  `3.387164687618238e-07`. Backfilled 9 September run:
+  `feb36d701b6793e4909e6cfc58a9caae229c7f12500d825fe85672524bdafdd8`
+  with eight persisted explanations. The 10 September live check remains due at
+  16:00 IST rather than being falsely completed early.
+- Runtime images: dashboard
+  `sha256:8096d0ecd9513f6b1c9f3b5e29b57e460e5a933e47c8276a6941732814854ce2`;
+  worker
+  `sha256:557170c0b543b93bc9a9f47dd2cc3d9926a75e4532d63af2a68bd33119f05362`.
+  Both are healthy with zero restarts. Rollback tags:
+  `trading-stack-n50-dashboard:pre-daily-shap-20260910` and
+  `trading-stack-novius2-nifty-context:pre-daily-shap-20260910`.
+- Checks: web/API typecheck, tests and build PASS; web 118/118; API 190/190;
+  Python 20/20;
+  canonical repository gate PASS; authenticated deployed browser 114/114 at
+  1920/1440/390. Ignored browser evidence:
+  `output/playwright/nifty-context-daily-shap-20260910-final/`.

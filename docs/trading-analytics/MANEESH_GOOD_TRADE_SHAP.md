@@ -154,3 +154,25 @@ The Good-trade SHAP lens includes a dedicated chart-status panel whenever the
 trade-level model gate is locked. Once genuine held-out explanations exist, the
 same lens renders the actual per-trade waterfall; it never substitutes an
 outcome chart or synthetic importance bars.
+
+## Daily V2 production synchronization — 10 September 2026
+
+Canonical application commit `0079da71161818ddd4d2409e85563069d8dfb526`
+was pushed to `master` and deployed to the dashboard and isolated context
+worker. A read-only live-data fit found 135 rolling-window observations, 131
+mature 15-minute labels, 65 positive and 66 non-positive outcomes, 86 complete
+feature rows, 63 training rows and 18 held-out predictions. SHAP reconciliation
+error was `3.387164687618238e-07`.
+
+Because the current time was before the day's scheduled run, the deployment
+backfilled the missing 9 September daily V2 run instead of prematurely marking
+10 September complete. Run
+`feb36d701b6793e4909e6cfc58a9caae229c7f12500d825fe85672524bdafdd8`
+contains 55 observations, 38 complete inputs and eight genuine held-out SHAP
+explanations. The scheduler's live durable-state check reports false at 15:59
+IST and true at 16:00 IST for 10 September, so the normal 10 September run
+remains due.
+
+Authenticated deployed-browser verification passed 114/114 checks at 1920,
+1440 and 390 CSS pixels. Evidence is intentionally ignored at
+`output/playwright/nifty-context-daily-shap-20260910-final/`.

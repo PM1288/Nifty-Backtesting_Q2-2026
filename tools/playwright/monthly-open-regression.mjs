@@ -37,8 +37,15 @@ try {
       timeout: 120_000,
     });
     await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor();
-    const method = page.getByLabel("Entry method");
-    check(`${viewport.name} four methods`, await method.locator("option").count() === 5);
+    check(`${viewport.name} Monthly Close tab`, await page.getByRole("link", { name: "Monthly Close", exact: true }).count() === 1);
+    check(`${viewport.name} Monthly Open tab`, await page.getByRole("link", { name: "Monthly Open", exact: true }).count() === 1);
+    const method = page.locator("label", { hasText: "Entry method" }).locator("select");
+    const methodValues = await method.locator("option").evaluateAll((options) => options.map((option) => option.value));
+    check(
+      `${viewport.name} four methods`,
+      ["ALL", "EXPIRY", "MONTHLY_CLOSURE", "MONTHLY_OPEN", "FIRST_SESSION"].every((value) => methodValues.includes(value)),
+      `count=${methodValues.length}; values=${JSON.stringify(methodValues)}`,
+    );
     check(`${viewport.name} Monthly Open selected`, await method.inputValue() === "MONTHLY_OPEN");
     const rows = page.locator("tbody tr");
     check(`${viewport.name} open rows`, await rows.count() > 0, "no Monthly Open rows");

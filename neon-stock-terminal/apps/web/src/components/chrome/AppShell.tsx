@@ -66,7 +66,8 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   if (workspace === "monthly-strategy") return [
     { label: "All entry methods", to: "/strategy/monthly" },
     { label: "Expiry", to: "/strategy/monthly?entryMethod=EXPIRY" },
-    { label: "Monthly closure", to: "/strategy/monthly?entryMethod=MONTHLY_CLOSURE" },
+    { label: "Monthly Close", to: "/strategy/monthly?entryMethod=MONTHLY_CLOSURE" },
+    { label: "Monthly Open", to: "/strategy/monthly?entryMethod=MONTHLY_OPEN" },
     { label: "First session", to: "/strategy/monthly?entryMethod=FIRST_SESSION" },
     { label: "Rolling 5/30/60", to: "/strategy/rolling-monthly" }
   ];

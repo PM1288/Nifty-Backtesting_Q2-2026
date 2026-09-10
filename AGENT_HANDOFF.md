@@ -4277,3 +4277,25 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:pre-charting-upgrade-v2-6b85d04`.
 - Full evidence and deliberately unimplemented later workstation stages are in
   `docs/trading-analytics/SCALPER_V2_CHARTING_UPGRADE_V2_20260910.md`.
+
+## 2026-09-10 — MANEESH Morning View participant yesterday comparison
+
+- Expanded the existing Morning View with FII, Pro, Client and DII index-option
+  comparisons. The summary shows previous/current/change for net calls, net
+  puts and options proxy. The open calculation audit shows both reports' raw
+  call/put long and short contracts and each formula result.
+- The API adds only prior/comparison fields to the existing participant rows.
+  Missing prior reports remain null. Client is labelled as the official
+  reported class, not verified retail; no position, premium-flow or trading
+  claim is inferred.
+- Web 140/140 and API 194/194 tests, both typechecks/builds and the canonical
+  gate pass. Authenticated deployed browser evidence passes 64/64 checks with
+  zero failures. The retained report is 2026-09-09 versus 2026-09-08 and all
+  four participant classes are comparable.
+- Commit `9d8e20b` is pushed on canonical `master` and deployed as dashboard
+  image `sha256:255b3e701f52bbfca959d47c4447eda4debf494f7714986685fcc9997b50ce19`.
+  Only the dashboard was recreated; it is healthy with zero restarts and local
+  and public Morning View routes return HTTP 200. Rollback image:
+  `trading-stack-n50-dashboard:pre-morning-participant-9d8e20b`.
+- Full record:
+  `docs/trading-analytics/MORNING_PARTICIPANT_YESTERDAY_COMPARISON_20260910.md`.

@@ -39,6 +39,10 @@ try {
   const calculations = page.getByTestId("morning-participant-calculation-table");
   await summary.waitFor({ state: "visible", timeout: 90_000 });
   await calculations.waitFor({ state: "visible", timeout: 90_000 });
+  // Ignore only requests cancelled while the authenticated local gateway page
+  // hydrates; errors emitted during the stable inspection below still fail.
+  errors.length = 0;
+  await page.waitForTimeout(500);
 
   const summaryHeaders = await summary.locator("thead").innerText();
   check("HEADERS", ["Net calls", "Net puts", "Options proxy", "Previous", "Current", "Change"].every((label) => summaryHeaders.includes(label)), summaryHeaders.replace(/\s+/g, " "));

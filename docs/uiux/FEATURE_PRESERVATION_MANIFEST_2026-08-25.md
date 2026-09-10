@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 MANEESH Morning View participant comparison: the existing Morning
+View now exposes FII, Pro, Client and DII index-option current/prior/change
+values plus an expanded calculation audit for call/put long, short and net
+contracts. Client remains the official reported participant class and is not
+relabeled verified retail. Missing prior reports remain unavailable. Existing
+cash, activity, participant, matrix, Scalper V1/V2, Trade Log, SHAP, exports and
+read-only permissions remain unchanged. Evidence:
+`docs/trading-analytics/MORNING_PARTICIPANT_YESTERDAY_COMPARISON_20260910.md`.
+
 2026-09-10 Scalper V2 charting-upgrade v2: the existing native drawing layer now
 supports click-by-click trendline preview/commit, complete cancellation, endpoint
 and whole-object drag, CSS-pixel hit testing, exact UTC/price editing and one-step

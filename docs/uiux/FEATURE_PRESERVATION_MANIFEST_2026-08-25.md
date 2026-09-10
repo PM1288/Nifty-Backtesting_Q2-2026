@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Monthly Close vs Open comparison:
+`/strategy/monthly?compare=close-open` is a read-only comparison of the two
+independently versioned selected-candidate lists. It classifies each stock and
+calendar month as In both, Monthly Close only or Monthly Open only, preserves
+missing outcomes, exposes both underlying evidence inspectors and exports the
+paired fields. It does not merge, re-rank or change either strategy.
+
 2026-09-10 Monthly Open strategy: `/strategy/monthly?entryMethod=MONTHLY_OPEN`
 adds independent `absolute_monthly_open_bullish_long_v1` selection and
 same-calendar-month backtesting beside the unchanged Monthly Close strategy.

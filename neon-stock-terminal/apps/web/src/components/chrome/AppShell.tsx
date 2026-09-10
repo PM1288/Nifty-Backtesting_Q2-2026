@@ -68,6 +68,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Expiry", to: "/strategy/monthly?entryMethod=EXPIRY" },
     { label: "Monthly Close", to: "/strategy/monthly?entryMethod=MONTHLY_CLOSURE" },
     { label: "Monthly Open", to: "/strategy/monthly?entryMethod=MONTHLY_OPEN" },
+    { label: "Close vs Open", to: "/strategy/monthly?compare=close-open" },
     { label: "First session", to: "/strategy/monthly?entryMethod=FIRST_SESSION" },
     { label: "Rolling 5/30/60", to: "/strategy/rolling-monthly" }
   ];

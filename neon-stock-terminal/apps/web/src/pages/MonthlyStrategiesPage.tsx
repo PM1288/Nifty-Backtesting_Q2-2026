@@ -15,6 +15,12 @@ import {
   StockIdentity,
   StockUniverseFilterBar,
 } from "../components/stocks/StockProfileControls";
+import {
+  buildMonthlyStrategyComparison,
+  summarizeMonthlyStrategyComparison,
+  type MonthlyStrategyComparisonRow,
+  type MonthlyStrategyMembership,
+} from "../lib/monthlyStrategyComparison";
 import styles from "./MonthlyStrategiesPage.module.css";
 
 type EvidenceRow = {
@@ -332,6 +338,40 @@ function csvDownload(rows: EvidenceRow[], filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function comparisonCsvDownload(rows: MonthlyStrategyComparisonRow[]) {
+  const columns: Array<[string, (row: MonthlyStrategyComparisonRow) => unknown]> = [
+    ["symbol", (row) => row.symbol],
+    ["month", (row) => row.period],
+    ["membership", (row) => row.membership],
+    ["close_signal_date", (row) => row.close?.signalDate],
+    ["close_entry_date", (row) => row.close?.entryDate],
+    ["close_entry_price", (row) => row.close?.entryPrice],
+    ["close_end_return_pct", (row) => row.close?.endReturn],
+    ["close_max_profit_pct", (row) => row.close?.maxProfit],
+    ["close_max_drawdown_pct", (row) => row.close?.maxDrawdown],
+    ["close_status", (row) => row.close?.status],
+    ["open_signal_date", (row) => row.open?.signalDate],
+    ["open_entry_date", (row) => row.open?.entryDate],
+    ["open_entry_price", (row) => row.open?.entryPrice],
+    ["open_end_return_pct", (row) => row.open?.endReturn],
+    ["open_max_profit_pct", (row) => row.open?.maxProfit],
+    ["open_max_drawdown_pct", (row) => row.open?.maxDrawdown],
+    ["open_status", (row) => row.open?.status],
+    ["open_minus_close_end_return_pct", (row) => row.endReturnDifference],
+  ];
+  const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const body = [
+    columns.map(([label]) => label).join(","),
+    ...rows.map((row) => columns.map(([, getter]) => quote(getter(row))).join(",")),
+  ].join("\n");
+  const url = URL.createObjectURL(new Blob([`\uFEFF${body}`], { type: "text/csv;charset=utf-8" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "monthly-close-vs-open-comparison.csv";
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 function Kpi({
   label,
   value,
@@ -558,6 +598,136 @@ function StrategyTable({
   );
 }
 
+const membershipLabel = (membership: MonthlyStrategyMembership) =>
+  membership === "BOTH"
+    ? "In both"
+    : membership === "CLOSE_ONLY"
+      ? "Monthly Close only"
+      : "Monthly Open only";
+
+function ComparisonValue({ value }: { value: number | null }) {
+  return (
+    <span
+      className={
+        value == null ? styles.missing : value >= 0 ? styles.positive : styles.negative
+      }
+    >
+      {pct(value)}
+    </span>
+  );
+}
+
+function MonthlyCloseOpenComparison({
+  rows,
+  profiles,
+  onInspect,
+}: {
+  rows: MonthlyStrategyComparisonRow[];
+  profiles: ReturnType<typeof useProfileIndex>["bySymbol"];
+  onInspect: (row: EvidenceRow) => void;
+}) {
+  const [visibleLimit, setVisibleLimit] = useState(250);
+  useEffect(() => setVisibleLimit(250), [rows]);
+  const visibleRows = rows.slice(0, visibleLimit);
+  return (
+    <section className={`${styles.ledger} ${styles.comparisonLedger}`}>
+      <header>
+        <div>
+          <span>CLOSE VS OPEN SELECTION</span>
+          <h2>Stock-month overlap and differences</h2>
+        </div>
+        <small>
+          Membership matches the same stock in the same calendar month. Missing
+          values stay unavailable.
+        </small>
+      </header>
+      <div
+        className={styles.tableViewport}
+        tabIndex={0}
+        aria-label="Monthly Close versus Monthly Open comparison table"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>Stock</th>
+              <th>Month</th>
+              <th>Selection</th>
+              <th>Monthly Close entry</th>
+              <th>Monthly Open entry</th>
+              <th>Close end</th>
+              <th>Open end</th>
+              <th>Open − Close</th>
+              <th>Close max / drawdown</th>
+              <th>Open max / drawdown</th>
+              <th>Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows.map((row) => (
+              <tr key={row.key}>
+                <td>
+                  <StockIdentity
+                    symbol={row.symbol}
+                    profile={profiles.get(row.symbol)}
+                    compact
+                  />
+                </td>
+                <td>{row.period.slice(0, 7)}</td>
+                <td>
+                  <span className={styles[row.membership === "BOTH" ? "both" : row.membership === "CLOSE_ONLY" ? "closeOnly" : "openOnly"]}>
+                    {membershipLabel(row.membership)}
+                  </span>
+                </td>
+                <td>
+                  {row.close ? price(row.close.entryPrice) : "—"}
+                  <small>{row.close?.entryDate || "Not selected"}</small>
+                </td>
+                <td>
+                  {row.open ? price(row.open.entryPrice) : "—"}
+                  <small>{row.open?.entryDate || "Not selected"}</small>
+                </td>
+                <td><ComparisonValue value={row.close?.endReturn ?? null} /></td>
+                <td><ComparisonValue value={row.open?.endReturn ?? null} /></td>
+                <td><ComparisonValue value={row.endReturnDifference} /></td>
+                <td>
+                  <ComparisonValue value={row.close?.maxProfit ?? null} />
+                  <small>Drawdown {pct(row.close?.maxDrawdown ?? null)}</small>
+                </td>
+                <td>
+                  <ComparisonValue value={row.open?.maxProfit ?? null} />
+                  <small>Drawdown {pct(row.open?.maxDrawdown ?? null)}</small>
+                </td>
+                <td>
+                  <div className={styles.compareActions}>
+                    {row.close ? (
+                      <button type="button" onClick={() => onInspect(row.close as EvidenceRow)}>
+                        Close
+                      </button>
+                    ) : null}
+                    {row.open ? (
+                      <button type="button" onClick={() => onInspect(row.open as EvidenceRow)}>
+                        Open
+                      </button>
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {visibleRows.length < rows.length ? (
+        <footer>
+          <span>Showing {visibleRows.length.toLocaleString("en-IN")} of {rows.length.toLocaleString("en-IN")}</span>
+          <button type="button" onClick={() => setVisibleLimit((limit) => Math.min(rows.length, limit + 250))}>
+            Load 250 more
+          </button>
+        </footer>
+      ) : null}
+    </section>
+  );
+}
+
 function Inspector({
   row,
   onClose,
@@ -733,6 +903,8 @@ export function MonthlyStrategyPage() {
   const requestedMethod = new URLSearchParams(location.search).get(
     "entryMethod",
   );
+  const comparisonMode =
+    new URLSearchParams(location.search).get("compare") === "close-open";
   const [method, setMethod] = useState(
     ["EXPIRY", "MONTHLY_CLOSURE", "MONTHLY_OPEN", "FIRST_SESSION"].includes(
       requestedMethod ?? "",
@@ -746,11 +918,23 @@ export function MonthlyStrategyPage() {
   const [selection, setSelection] = useState("SELECTED");
   const [evaluationsLoading, setEvaluationsLoading] = useState(false);
   const [failureReason, setFailureReason] = useState("ALL");
+  const [comparisonMembership, setComparisonMembership] =
+    useState<MonthlyStrategyMembership | "ALL">("ALL");
   const [stockFilters, setStockFilters] = useState<StockProfileFilters>({
     universe: "ALL",
     capBucket: "ALL",
     sector: "ALL",
   });
+  useEffect(() => {
+    if (comparisonMode) return;
+    setMethod(
+      ["EXPIRY", "MONTHLY_CLOSURE", "MONTHLY_OPEN", "FIRST_SESSION"].includes(
+        requestedMethod ?? "",
+      )
+        ? requestedMethod!
+        : "ALL",
+    );
+  }, [comparisonMode, requestedMethod]);
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -917,6 +1101,29 @@ export function MonthlyStrategyPage() {
   const winners = eligible.filter((row) => (row.endReturn ?? 0) > 0);
   const total = (key: "pnl10000" | "maxProfit10000" | "maxDrawdown10000") =>
     eligible.reduce((sum, row) => sum + (row[key] ?? 0), 0);
+  const comparisonPopulation = useMemo(() => {
+    const compared = buildMonthlyStrategyComparison(
+      allRows.filter((row) => row.entryMethod === "MONTHLY_CLOSURE" && row.selectionStatus === "SELECTED"),
+      allRows.filter((row) => row.entryMethod === "MONTHLY_OPEN" && row.selectionStatus === "SELECTED"),
+    );
+    return compared.filter(
+      (row) =>
+        (year === "ALL" || row.period.startsWith(year)) &&
+        (month === "ALL" || row.period.slice(5, 7) === month) &&
+        matchesStockProfile(profiles.bySymbol.get(row.symbol), stockFilters),
+    );
+  }, [allRows, year, month, profiles.bySymbol, stockFilters]);
+  const comparisonRows = useMemo(
+    () =>
+      comparisonPopulation.filter(
+        (row) => comparisonMembership === "ALL" || row.membership === comparisonMembership,
+      ),
+    [comparisonPopulation, comparisonMembership],
+  );
+  const comparisonSummary = useMemo(
+    () => summarizeMonthlyStrategyComparison(comparisonPopulation),
+    [comparisonPopulation],
+  );
   return (
     <main className={styles.page}>
       <header className={styles.hero}>
@@ -924,9 +1131,9 @@ export function MonthlyStrategyPage() {
           <span>INDEPENDENT CASH-EQUITY RESEARCH · NOT OIIS</span>
           <h1>Monthly Strategy</h1>
           <p>
-            Compare Monthly Close, Monthly Open, expiry-anchored and first-session
-            entries in one evidence ledger. Open and close variants remain
-            independently versioned and directly backtestable.
+            {comparisonMode
+              ? "Compare Monthly Close and Monthly Open selections by stock and calendar month, with both shared and strategy-only candidates visible."
+              : "Compare Monthly Close, Monthly Open, expiry-anchored and first-session entries in one evidence ledger. Open and close variants remain independently versioned and directly backtestable."}
           </p>
         </div>
         <nav>
@@ -953,6 +1160,64 @@ export function MonthlyStrategyPage() {
           Loading the all-stock rejection ledger on request…
         </div>
       ) : null}
+      {comparisonMode ? (
+        <>
+          <div className={styles.context}>
+            <strong>
+              {comparisonRows.length} visible / {comparisonSummary.total} stock-month selections
+            </strong>
+            <label>
+              Selection overlap
+              <select
+                value={comparisonMembership}
+                onChange={(event) => setComparisonMembership(event.target.value as MonthlyStrategyMembership | "ALL")}
+              >
+                <option value="ALL">All selections</option>
+                <option value="BOTH">In both strategies</option>
+                <option value="CLOSE_ONLY">Monthly Close only</option>
+                <option value="OPEN_ONLY">Monthly Open only</option>
+              </select>
+            </label>
+            <label>
+              Year
+              <select value={year} onChange={(event) => setYear(event.target.value)}>
+                <option value="ALL">All</option>
+                {years.map((item) => <option key={item}>{item}</option>)}
+              </select>
+            </label>
+            <label>
+              Month
+              <select value={month} onChange={(event) => setMonth(event.target.value)}>
+                <option value="ALL">All</option>
+                {Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, "0")).map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+            </label>
+            <StockUniverseFilterBar
+              compact
+              profiles={profiles.payload?.records ?? []}
+              filters={stockFilters}
+              onChange={setStockFilters}
+              count={comparisonRows.length}
+            />
+            <button type="button" onClick={() => comparisonCsvDownload(comparisonRows)}>
+              Download comparison CSV
+            </button>
+          </div>
+          <section className={styles.kpis} aria-label="Monthly Close and Open comparison summary" tabIndex={0}>
+            <Kpi label="In both" value={String(comparisonSummary.both)} detail="Same stock and month" />
+            <Kpi label="Monthly Close only" value={String(comparisonSummary.closeOnly)} detail="Absent from Monthly Open" />
+            <Kpi label="Monthly Open only" value={String(comparisonSummary.openOnly)} detail="Absent from Monthly Close" />
+            <Kpi label="Unique stocks" value={String(comparisonSummary.uniqueSymbols)} detail={`${comparisonSummary.total} stock-month rows`} />
+          </section>
+          <MonthlyCloseOpenComparison
+            rows={comparisonRows}
+            profiles={profiles.bySymbol}
+            onInspect={setSelected}
+          />
+        </>
+      ) : (
       <>
         <div className={styles.context}>
           <strong>
@@ -1102,6 +1367,7 @@ export function MonthlyStrategyPage() {
           onSelect={setSelected}
         />
       </>
+      )}
       {selected ? (
         <Inspector row={selected} onClose={() => setSelected(null)} />
       ) : null}

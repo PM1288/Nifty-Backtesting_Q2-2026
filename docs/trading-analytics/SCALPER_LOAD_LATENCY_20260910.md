@@ -30,6 +30,11 @@ bounds completed in about 1.8 seconds under the same load.
   It returns only the canonical underlying/universe, SmartAPI selected-pair
   context, daily structural levels, source failures and no-order state needed
   to mount the existing Scalper.
+- Both the context and chart routes resolve the requested underlying through an
+  indexed, F&O-eligibility-preserving selected-symbol lookup instead of making
+  the selected chart wait for the complete 265-symbol universe query. The full
+  selector remains available from `/v1/trading-analytics/underlying-universe`
+  and loads on explicit selector focus, with a five-minute browser cache.
 - The web route no longer requests the full institutional, archived-chain and
   morning payload for normal Scalper loading. The full payload loads lazily if
   the user explicitly opens a shared Health/Formula/Conditions drawer.

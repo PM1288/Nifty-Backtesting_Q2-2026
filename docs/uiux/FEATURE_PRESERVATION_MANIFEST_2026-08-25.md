@@ -8,7 +8,9 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 2026-09-10 Scalper latency repair: normal Scalper entry uses a small authenticated
 read-only context route instead of blocking on the full Morning/FII/participant
-payload. Session OI baseline queries retain event-time rules while adding indexed
+payload. Selected context/chart requests use an indexed exact-symbol lookup;
+the full all-stock selector loads on demand and remains available. Session OI
+baseline queries retain event-time rules while adding indexed
 collection-time bounds. The default one-day view requests three calendar days
 for indicator warm-up; All retained days remains 15 days. Shared full evidence
 loads lazily on explicit drawer access. V7 rules, A-open/B-close measurement,

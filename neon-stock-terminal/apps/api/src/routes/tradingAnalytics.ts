@@ -5,7 +5,7 @@ import { z } from "zod";
 import { loadSmartApiNifty } from "../services/tradingAnalyticsSmartApi";
 import { periodCandles } from "../services/tradingAnalyticsPeriods";
 import { resistanceViews } from "../services/tradingAnalyticsResistance";
-import { analyticsUniverse, selectUnderlying } from '../services/tradingAnalyticsUniverse';
+import { analyticsUnderlying, analyticsUniverse, selectUnderlying } from '../services/tradingAnalyticsUniverse';
 import {
   activity,
   participant,
@@ -426,8 +426,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       }
     };
     try {
-      const universe = await analyticsUniverse(read, asOf);
-      const underlying = selectUnderlying(universe, parsed.data.symbol);
+      const underlying = await analyticsUnderlying(read, asOf, parsed.data.symbol);
       const [dayBars, dailyCalendar, smartapi] = await Promise.all([
         read(
           "scalper_daily",
@@ -454,7 +453,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         version: `${VERSION}_SCALPER_CONTEXT_V1`,
         asOf,
         underlying,
-        universe,
+        universe: [underlying],
         smartapi,
         resistance,
         errors,
@@ -464,6 +463,25 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       });
     } catch {
       return res.status(503).json({ error: { code: "SCALPER_CONTEXT_UNAVAILABLE" } });
+    }
+  });
+  app.get("/v1/trading-analytics/underlying-universe", async (req, res) => {
+    if (process.env.TRADING_ANALYTICS_ENABLED === "false")
+      return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
+    const parsed = querySchema.pick({ asOf: true }).safeParse(req.query);
+    if (!parsed.success)
+      return res.status(400).json({ error: { code: "INVALID_UNIVERSE_QUERY" } });
+    const asOf = parsed.data.asOf ?? new Date().toISOString();
+    if (Date.parse(asOf) > Date.now())
+      return res.status(400).json({ error: { code: "FUTURE_ASOF_NOT_ALLOWED" } });
+    try {
+      const universe = await analyticsUniverse(
+        async (_source, sql, ...args) => prisma.$queryRawUnsafe<Facts[]>(sql, ...args),
+        asOf,
+      );
+      return res.json({ asOf, universe });
+    } catch {
+      return res.status(503).json({ error: { code: "UNDERLYING_UNIVERSE_UNAVAILABLE" } });
     }
   });
   app.get("/v1/trading-analytics/charts", async (req, res) => {
@@ -493,8 +511,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         .status(400)
         .json({ error: { code: "FUTURE_ASOF_NOT_ALLOWED" } });
     try {
-      const universe=await analyticsUniverse(async (_source,sql,...args)=>prisma.$queryRawUnsafe<Facts[]>(sql,...args),asOf);
-      const underlying=selectUnderlying(universe,q.data.symbol);
+      const underlying=await analyticsUnderlying(async (_source,sql,...args)=>prisma.$queryRawUnsafe<Facts[]>(sql,...args),asOf,q.data.symbol);
       const sessions = await prisma.$queryRawUnsafe<Facts[]>(
         `SELECT trade_date::text,market_open_ts,market_close_ts,'REGULAR'::text phase_id,updated_at FROM trading_calendar WHERE is_trading_day AND trade_date BETWEEN ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date-$2::int AND ($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date`,
         asOf,

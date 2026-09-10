@@ -376,6 +376,15 @@ export function TradingAnalyticsPage() {
     retry: 1,
     enabled: tab === "scalper",
   });
+  const universeQuery = new URLSearchParams();
+  if (params.get("asOf")) universeQuery.set("asOf", params.get("asOf")!);
+  const universeQ = useQuery({
+    queryKey: ["trading-analytics-underlying-universe", universeQuery.toString()],
+    queryFn: () => getJson<{ universe: Payload["universe"] }>(`/v1/trading-analytics/underlying-universe?${universeQuery}`),
+    staleTime: 300000,
+    retry: 1,
+    enabled: false,
+  });
   const change = (k: string, v: string) => {
     const next = new URLSearchParams(params);
     if (v) next.set(k, v);
@@ -385,6 +394,9 @@ export function TradingAnalyticsPage() {
   const d = q.data;
   const scalperContext = scalperQ.data;
   const pageContext = tab === "scalper" ? scalperContext : d;
+  const pageUniverse = tab === "scalper" && universeQ.data?.universe.length
+    ? universeQ.data.universe
+    : pageContext?.universe ?? [];
   const activeQuery = tab === "scalper" ? scalperQ : q;
   const inspect = (row: Row) => {
     setInspected(row);
@@ -415,12 +427,13 @@ export function TradingAnalyticsPage() {
           {tab === 'trade-log' && <button aria-expanded={logMarketContext} onClick={() => setLogMarketContext(!logMarketContext)}>Market context — not Trade Log filters</button>}
           {pageContext && (tab !== 'trade-log' || logMarketContext) && (
             <>
-              <label>Symbol <select aria-label="Analytics underlying" value={pageContext.underlying.symbol} onChange={e=>{
+              <label>Symbol <select aria-label="Analytics underlying" value={pageContext.underlying.symbol} onFocus={()=>{if(tab === "scalper" && !universeQ.data) void universeQ.refetch();}} onChange={e=>{
                 const next=new URLSearchParams(params); next.set('symbol',e.target.value);
                 for(const k of ['expiry','strike','pin','day']) next.delete(k);
                 setInspected(null);setDrawer(null);setParams(next);
               }}>
-                {pageContext.universe.length ? pageContext.universe.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={pageContext.underlying.symbol}>{pageContext.underlying.label}</option>}
+                {pageUniverse.length ? pageUniverse.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={pageContext.underlying.symbol}>{pageContext.underlying.label}</option>}
+                {tab === "scalper" && universeQ.isFetching && <option disabled>Loading all symbols…</option>}
               </select></label>
               <label>Chain <select aria-label="Selected underlying expiry" value={pageContext.smartapi.expiry??''} onChange={e=>{
                 const next=new URLSearchParams(params);next.set('expiry',e.target.value);next.delete('strike');next.delete('pin');setParams(next);

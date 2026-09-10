@@ -3975,13 +3975,14 @@ or outcomes were deleted.
   collection-time bound.
 - Added read-only `/v1/trading-analytics/scalper-context`, lazy full-evidence
   loading for explicit shared drawers, bounded current/prior-session quote
-  lookups, and a three-calendar-day default payload for the one-session chart.
+  lookups, an indexed exact-symbol fast path for context/charts, lazy all-stock
+  selector loading, and a three-calendar-day default payload for the one-session chart.
   `All retained days` remains the complete 15-day request.
 - No schema/index/data mutation, collector, V7 signal, exact-pair, OI,
   A-open/B-close, permission or order change. Rollback needs only the prior
   dashboard image; database rollback is not applicable.
 - Pre-deployment checks: web typecheck, 118/118 tests and production build;
-  API typecheck, 191/191 tests and production build; canonical repository gate
+  API typecheck, 192/192 tests and production build; canonical repository gate
   PASS. Deployment and authenticated browser timing are recorded by the
   follow-up entry after cutover.
 - Detailed evidence: `docs/trading-analytics/SCALPER_LOAD_LATENCY_20260910.md`.

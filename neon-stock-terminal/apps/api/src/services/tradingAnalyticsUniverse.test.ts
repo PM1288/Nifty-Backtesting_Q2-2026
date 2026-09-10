@@ -1,11 +1,19 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {selectUnderlying} from './tradingAnalyticsUniverse';
+import {analyticsUnderlying,selectUnderlying} from './tradingAnalyticsUniverse';
 import {loadSmartApiNifty,windowMaxPain} from './tradingAnalyticsSmartApi';
 import {loadTradingAnalytics} from '../routes/tradingAnalytics';
 import type {PrismaClient} from '@prisma/client';
 const stock={symbol:'RELIANCE',label:'RELIANCE-EQ',token:'2885',kind:'STOCK',optionType:'OPTSTK'};
 test('unknown stock never substitutes NIFTY',()=>{assert.throws(()=>selectUnderlying([], 'UNKNOWN'));assert.equal(selectUnderlying([stock],'RELIANCE').token,'2885');});
+test('selected underlying lookup is symbol-scoped and keeps F&O eligibility',async()=>{
+ const calls:{sql:string;args:unknown[]}[]=[];
+ const selected=await analyticsUnderlying(async(_source,sql,...args)=>{calls.push({sql,args});return [stock];},'2026-09-10T09:00:00Z','RELIANCE');
+  assert.equal(selected.token,'2885');
+ assert.deepEqual(calls[0]?.args,['2026-09-10T09:00:00Z','RELIANCE']);
+ assert.match(calls[0]?.sql??'',/s\.name=\$2/);
+ assert.match(calls[0]?.sql??'',/o\.instrumenttype IN\('OPTIDX','OPTSTK'\)/);
+});
 test('stock spot options and Greeks use exact selected identity',async()=>{
  const calls:{source:string;args:unknown[]}[]=[];
  await loadSmartApiNifty(async(source,_sql,...args)=>{calls.push({source,args});return source==='smartapi_spot'?[{ltp:1400}]:source==='smartapi_expiries'?[{expiry:'2026-09-29'}]:[];},'2026-09-07T12:00:00Z',undefined,stock);

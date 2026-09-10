@@ -71,7 +71,7 @@ try {
     check(`${viewport.name} close-only count`, (await summary.getByText("Monthly Close only", { exact: true }).locator("..").innerText()).includes(String(closeOnly)));
     check(`${viewport.name} open-only count`, (await summary.getByText("Monthly Open only", { exact: true }).locator("..").innerText()).includes(String(openOnly)));
 
-    const membership = page.getByLabel("Selection overlap", { exact: true });
+    const membership = page.locator("label", { hasText: "Selection overlap" }).locator("select");
     await membership.selectOption("BOTH");
     const table = page.getByLabel("Monthly Close versus Monthly Open comparison table");
     check(`${viewport.name} both rows`, await table.locator("tbody tr").count() === Math.min(both, 250));

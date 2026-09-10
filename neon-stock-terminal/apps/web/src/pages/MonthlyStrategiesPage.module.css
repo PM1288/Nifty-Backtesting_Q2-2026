@@ -577,6 +577,12 @@
 :global([data-ui-compact-v5="true"]) .ledger > footer { padding:4px 7px; }
 
 @media (max-width: 767px) {
+  :global([data-ui-compact-v5="true"]) .hero > div:first-child {
+    width: 100%;
+  }
+  :global([data-ui-compact-v5="true"]) .hero > div:first-child > span {
+    display: none;
+  }
   :global([data-ui-compact-v5="true"]) .hero nav a {
     min-height: 44px;
     padding-inline: 10px;

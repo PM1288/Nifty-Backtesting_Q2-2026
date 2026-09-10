@@ -48,6 +48,33 @@ Log, SHAP Research, monthly strategies and OI/Delta-OI views are unchanged.
   unchanged chart hydration counters. Cached 1m switch: 105 ms.
 - Runtime evidence (not committed): `/tmp/scalper-v2-charting-upgrade-v2/`.
 
+## Production release evidence
+
+- Application commit `6b85d04` was pushed to
+  `origin/feat/scalper-v2-charting-upgrade-v2` and deployed through the
+  repository dashboard deploy script.
+- Dashboard image:
+  `sha256:d6d8b3d3c1183a98c4c5d07a99a59f2b9458d7338beaf976ce25bf01e44d6a55`.
+  Rollback image:
+  `trading-stack-n50-dashboard:pre-charting-upgrade-v2-6b85d04`.
+- Only `trading-stack-novius2-n50-dashboard-1` was recreated. It is healthy,
+  running with zero restarts. Local gateway root/health/Scalper V2 and public
+  root/health/Scalper V2 all return HTTP 200.
+- The deploy script's first route probe received HTTP 502 during container
+  startup. Subsequent checks recovered to HTTP 200; container logs show normal
+  Redis connections, API startup and successful health requests.
+- Authenticated Chromium against the deployed gateway: 51 executable checks
+  PASS, zero FAIL and one BLOCKED. The only blocked check is headed DPR2 canvas
+  crispness because the headless renderer reports 1:1 backing dimensions.
+- Deployed geometry: underlying host/native 784.23/784.23 CSS px, CE/PE
+  615.77/615.77 CSS px; plot bodies 601.22/267.22/267.22 CSS px. OI unit axes,
+  the right-side strike Y-axis, horizontal signed Delta-OI bars and profile
+  alignment all PASS; maximum measured profile error was 0.005 CSS px.
+- Deployed performance proxy: 500 pointer moves p95 16.90 ms, zero hover API
+  requests, unchanged hydration counters and 123 ms cached 1m switch.
+- Runtime evidence (not committed):
+  `/tmp/scalper-v2-charting-upgrade-v2-deployed-6b85d04-final/`.
+
 ## Explicit remaining stages
 
 The documents' complete drawing suite validation, server-owned multi-account
@@ -55,5 +82,4 @@ workspace persistence, Strategy Lab, five historical OI modes, screeners,
 portfolio/alert engine and source-backed company research are separate staged
 deliverables. They are not represented as complete by this pass. Missing
 authorised historical chain cubes, account position sources and analyst data
-remain unavailable rather than fabricated. No deployment is claimed in this
-pre-release record.
+remain unavailable rather than fabricated.

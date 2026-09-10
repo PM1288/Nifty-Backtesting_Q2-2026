@@ -33,6 +33,9 @@ try {
   await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("trading-analytics:scalper-v2:drawings:")).forEach((key) => localStorage.removeItem(key)));
   await page.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
   await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });
+  // Chromium can report requests cancelled by this deliberate navigation as
+  // ERR_NETWORK_CHANGED. Start stable-runtime error accounting after reload.
+  pageErrors.length = 0;
   const drawingBody = page.getByTestId("v2-chart-body-underlying"), drawingBox = await drawingBody.boundingBox();
   if (drawingBox) {
     const first = { x: drawingBox.x + drawingBox.width * .25, y: drawingBox.y + drawingBox.height * .55 };
@@ -75,6 +78,7 @@ try {
     check("SV2-WORKSTATION-UNDO", await page.getByTestId("v2-drawing-objects").locator("li").count() === 1, "Undo restored the previous drawing list");
     await page.getByRole("button", { name: "Hide", exact: true }).click(); await page.waitForTimeout(250); await page.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
     await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 }); await page.getByRole("tab", { name: "Objects", exact: true }).click();
+    pageErrors.length = 0;
     check("SV2-WORKSTATION-PERSISTENCE", await page.getByRole("button", { name: "Show", exact: true }).count() === 1, "Hidden object restored from symbol-scoped local recovery storage after reload");
     await page.screenshot({ path: path.join(output, "screenshots", "workstation-drawing-object-tree.png"), fullPage: true });
     await page.getByRole("tab", { name: "Snapshot", exact: true }).click();

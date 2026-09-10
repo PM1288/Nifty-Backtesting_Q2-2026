@@ -4251,3 +4251,29 @@ or outcomes were deleted.
   `sha256:b5c702addc0ef3515b46ab003858e37980eb118d880bd3ea47335d323222c0cc`.
   Deployed browser checks pass 47/47 executable checks with zero failures;
   headed DPR2 remains blocked.
+
+## 2026-09-10 — Scalper V2 charting-upgrade v2 interaction completion
+
+- Read all three Markdown specifications in
+  `/home/novius2/NIFTY50/Charting-upgrade` and implemented their immediate
+  staged exit condition in the existing `view=scalper_v2`: a complete native
+  trendline lifecycle. Two-click placement now has preview/cancel, endpoint and
+  whole-object drag, exact UTC-time/price editing and one-command undo. No third
+  terminal, strategy, API, collector, database or order change was introduced.
+- The existing right-side strike Y-axis and horizontal signed Delta-OI bars
+  remain visible and passed deployed containment/unit checks. The OI profile
+  remains price-coordinate aligned; deployed maximum error was 0.005 CSS px.
+- Web 140/140 and API 193/193 tests, both typechecks/builds and the canonical
+  gate pass. Deployed authenticated browser checks pass 51 executable checks
+  with zero failures; headed DPR2 canvas crispness remains BLOCKED. Deployed
+  pointer p95 was 16.90 ms over 500 moves, with zero hover API requests; cached
+  1m switch was 123 ms.
+- Application commit `6b85d04` is pushed to
+  `origin/feat/scalper-v2-charting-upgrade-v2` and deployed as dashboard image
+  `sha256:d6d8b3d3c1183a98c4c5d07a99a59f2b9458d7338beaf976ce25bf01e44d6a55`.
+  The container is healthy with zero restarts and local/public Scalper V2 routes
+  return HTTP 200. The first deploy-script probe received a startup-only 502 and
+  recovered. Rollback image:
+  `trading-stack-n50-dashboard:pre-charting-upgrade-v2-6b85d04`.
+- Full evidence and deliberately unimplemented later workstation stages are in
+  `docs/trading-analytics/SCALPER_V2_CHARTING_UPGRADE_V2_20260910.md`.

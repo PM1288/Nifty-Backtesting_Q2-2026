@@ -9,10 +9,13 @@
   rows. The 36-month canonical-data replay produced 98 candidates versus 92 in
   v1, with 60 positive / 38 negative and +3.3706% average end return. September
   is developing.
-- Commit `a6cb683` is on `master` and
+- Calculation commit `a6cb683` and final inspector correction `612d8d2` are on
+  `master` and
   `feat/monthly-open-remove-previous-close`. Dashboard and rolling worker are
-  deployed and healthy. Authenticated browser checks pass 32/32 and 40/40 at
-  desktop/mobile sizes. Full evidence and rollback instructions:
+  deployed and healthy. The inspector displays exactly six eligibility checks
+  and keeps EMA9 in a separate informational section. Authenticated browser
+  checks pass 34/34 and 40/40 at desktop/mobile sizes. Full evidence and
+  rollback instructions:
   `docs/rolling-monthly/MONTHLY_OPEN_STRATEGY_2026-09-10.md`.
 
 ## 2026-09-10 — Scalper V2 charting-upgrade v2 trendline lifecycle

@@ -56,11 +56,11 @@ These are live retained-data counts, not constants in the UI or test. The
 deployed authenticated browser suite passed 40/40 checks at 1440x900 and
 390x844, including route switching for both original strategies and CSV
 download. Runtime-only screenshots/results are in
-`/tmp/monthly-comparison-v2-a6cb683/`.
+`/tmp/monthly-comparison-final-612d8d2/`.
 
 Web typecheck/build and 144/144 tests passed. API typecheck/build and 194/194
 tests passed. The canonical source gate passed. Dashboard image
-`sha256:0f5ebe603fee885b277829ecb218f2c4c50e70fed8d61597b505a9c577002634`
+`sha256:5a8809d9173391f50ce4a2e90d8551cd9fa970640cea22cd7077790666e66db8`
 and rolling worker
 `sha256:1f30456e839a3baf553bab548f7351e3db2f1f0248b135fa7b58d157c5958e77`
 were healthy with zero restarts.

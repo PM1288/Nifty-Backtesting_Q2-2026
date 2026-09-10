@@ -104,22 +104,26 @@ dormant; Monthly Close rows are never overwritten.
 - A canonical-data `backfill-absolute-open --months 36` persisted 98 v2
   candidates under the additive v2 key. The 92 v1 candidates remain intact.
 - Runtime images: dashboard
-  `sha256:0f5ebe603fee885b277829ecb218f2c4c50e70fed8d61597b505a9c577002634`;
+  `sha256:5a8809d9173391f50ce4a2e90d8551cd9fa970640cea22cd7077790666e66db8`;
   rolling worker
   `sha256:1f30456e839a3baf553bab548f7351e3db2f1f0248b135fa7b58d157c5958e77`.
   Both containers were healthy with zero restarts after release.
-- Authenticated deployed browser checks pass 32/32 for Monthly Open and 40/40
+- Authenticated deployed browser checks pass 34/34 for Monthly Open and 40/40
   for Close vs Open at 1440x900 and 390x844. They verify the v2 API, six
-  eligibility conditions, absence of the removed close gate in evidence,
+  visible eligibility rows, separation of informational EMA9 evidence, absence
+  of the removed close gate,
   populated comparisons, exports and contained responsive layout. Runtime-only
-  evidence: `/tmp/monthly-open-v2-a6cb683/` and
-  `/tmp/monthly-comparison-v2-a6cb683/`.
+  evidence: `/tmp/monthly-open-final-612d8d2/` and
+  `/tmp/monthly-comparison-final-612d8d2/`.
 - Python tests pass 26/26; focused Ruff passes. Web tests pass 144/144 and API
   tests 194/194; web/API typechecks and production builds pass. The canonical
   repository gate passes.
 - Authenticated export smoke produced 98 CSV data records and a 484,961-byte
   Excel-compatible workbook in `/tmp`; these runtime exports are not committed.
 
-Rollback images are `trading-stack-n50-dashboard:pre-monthly-open-v2-a6cb683`
-and `trading-stack-rolling-monthly:pre-monthly-open-v2-a6cb683`. Rolling back
-the application does not require deleting either version's additive rows.
+The final inspector-only correction is commit `612d8d2`; rollback image
+`trading-stack-n50-dashboard:pre-monthly-open-six-gates-612d8d2` restores the
+preceding v2 UI. The original v2 rollback images remain
+`trading-stack-n50-dashboard:pre-monthly-open-v2-a6cb683` and
+`trading-stack-rolling-monthly:pre-monthly-open-v2-a6cb683`. Rolling back the
+application does not require deleting either version's additive rows.

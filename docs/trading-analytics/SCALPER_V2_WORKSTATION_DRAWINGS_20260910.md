@@ -65,5 +65,23 @@ separate. Server drawing sync was not invented; local recovery is labelled.
 - Runtime evidence: `/tmp/scalper-v2-workstation-drawings-final/` and
   `/tmp/scalper-drawing-visible.png`; neither is committed.
 
-Deployment is recorded after the canonical gate, commit, push,
-dashboard-only rebuild, health checks and deployed browser rerun.
+## Deployment
+
+- Application commit `42404a5` is pushed to canonical `master`.
+- Only `n50-dashboard` was rebuilt and recreated. API, PostgreSQL, collectors
+  and other services were not restarted.
+- Deployed image:
+  `sha256:dfad2f4589b54f2dcd063d029ea00a2e2085794144f92c06547134fcd94c3388`.
+- Container health: healthy, zero restarts. Public `/n50/` and
+  `/n50/api/health` both returned HTTP 200.
+- Authenticated deployed Chromium: 44/44 executable checks PASS, zero FAIL;
+  headed DPR2 canvas crispness remains BLOCKED because headless Chromium
+  exposes 1:1 backing dimensions even while reporting DPR2.
+- Deployed geometry: underlying host/native 784.23/784.23 CSS px; CE/PE
+  615.77/615.77 CSS px. Plot bodies are 601.22/267.22/267.22 CSS px.
+- Deployed performance: 500 pointer moves p95 17 ms with no request or
+  hydration on hover; cached timeframe switch 108 ms.
+- Runtime evidence:
+  `/tmp/scalper-v2-workstation-deployed-42404a5/` (not committed).
+- Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-workstation-42404a5`.

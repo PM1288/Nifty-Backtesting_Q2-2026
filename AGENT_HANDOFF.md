@@ -4183,3 +4183,31 @@ or outcomes were deleted.
   Dashboard is healthy with zero restarts and public HTTP 200. Only
   `n50-dashboard` was recreated. Rollback tag:
   `trading-stack-n50-dashboard:pre-scalper-v2-oi-axis-04bf049`.
+
+## 2026-09-10 — Scalper V2 workstation drawings and OI ranks
+
+- Read both specifications in `/home/novius2/NIFTY50/new-lib` and extended the
+  existing `view=scalper_v2`; no third terminal was created.
+- Added native time/price-anchored drawing primitives for horizontal and
+  vertical lines, rays, trends, channels, rectangles, Fibonacci, text,
+  measurement and long/short plans. Added selection/dragging, lock, hide,
+  duplicate, delete, style controls, object inspector, undo/redo, local
+  recovery and complete JSON export.
+- Added deterministic CE1/CE2/CE3 and PE1/PE2/PE3 current-OI ranks and an
+  incremental native-series update path. OI and signed delta-OI retain their
+  own labelled axes; the deployed chain truthfully reports `0/20` comparable
+  delta-OI baselines instead of drawing zero bars.
+- V1, Trade Log, SHAP Research, monthly views, V7, exact-contract identity,
+  A-open/B-close arithmetic, APIs, collectors, database and no-order controls
+  are unchanged. Source-limited heatmap/history/position items were not
+  fabricated. Full record:
+  `docs/trading-analytics/SCALPER_V2_WORKSTATION_DRAWINGS_20260910.md`.
+- Web 137/137 and API 193/193 tests, both typechecks/builds and canonical gate
+  pass. Deployed authenticated browser regression: 44/44 executable PASS,
+  zero FAIL; headed DPR2 crispness remains BLOCKED. Deployed pointer p95 was
+  17 ms over 500 moves; cached timeframe switch was 108 ms.
+- Application `42404a5` is pushed to canonical master and deployed as image
+  `sha256:dfad2f4589b54f2dcd063d029ea00a2e2085794144f92c06547134fcd94c3388`.
+  Only `n50-dashboard` was recreated; it is healthy with zero restarts and
+  public root/health return HTTP 200. Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-workstation-42404a5`.

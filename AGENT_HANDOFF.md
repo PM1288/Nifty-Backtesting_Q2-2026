@@ -4012,3 +4012,9 @@ or outcomes were deleted.
   local-Vite/live-API browser suite 17/17 across 1920, 1440, 1366 and 390 widths.
   Detailed evidence: `docs/trading-analytics/SCALPER_V2_20260910.md` and ignored
   browser artifacts under `output/playwright/scalper-v2-local-20260910-final/`.
+- Release `c556858` is pushed to `master` and deployed. Only `n50-dashboard`
+  was recreated; it is healthy on image
+  `sha256:7b86b3d7f870a59a9e69afeb2184ccf84891353554d18f088e0e793e95f76cfc`.
+  Authenticated deployed browser checks pass 17/17; evidence is under
+  `output/playwright/scalper-v2-deployed-20260910/`. Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-20260910`.

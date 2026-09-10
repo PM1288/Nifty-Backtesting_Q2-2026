@@ -3,6 +3,10 @@ import { formatOiAxisValue } from "./scalperV2";
 
 type DeltaOiValue = number | null;
 
+const signedDeltaLabel = (value: DeltaOiValue) => value == null
+  ? "—"
+  : `${value > 0 ? "+" : ""}${formatOiAxisValue(value)}`;
+
 const deltaBar = (value: DeltaOiValue, identity: string) => value == null ? null : ({
   value,
   itemStyle: {
@@ -20,7 +24,7 @@ export function scalperV2HorizontalDeltaOiOption(
   return {
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["CE ΔOI", "PE ΔOI"], top: 2, left: 28 },
-    grid: { left: 28, right: 82, top: 38, bottom: 52 },
+    grid: { left: 28, right: 218, top: 38, bottom: 52 },
     xAxis: {
       type: "value",
       name: "Signed ΔOI · provider units",
@@ -35,12 +39,24 @@ export function scalperV2HorizontalDeltaOiOption(
       type: "category",
       data: strikes,
       position: "right",
-      name: "Strike",
-      nameLocation: "middle",
-      nameGap: 52,
       axisLine: { show: true },
       axisTick: { show: true },
-      axisLabel: { margin: 9 },
+      axisLabel: {
+        interval: 0,
+        hideOverlap: false,
+        margin: 10,
+        align: "left",
+        formatter: (_value: string, index: number) => {
+          const strike = Number(strikes[index]);
+          const strikeLabel = Number.isFinite(strike) ? strike.toLocaleString("en-IN") : "—";
+          return `{strike|${strikeLabel}}  {ce|CE ${signedDeltaLabel(ceChanges[index] ?? null)}}  {pe|PE ${signedDeltaLabel(peChanges[index] ?? null)}}`;
+        },
+        rich: {
+          strike: { color: "#14243a", fontWeight: 650, width: 58 },
+          ce: { color: "#1d4ed8", fontWeight: 600, width: 68 },
+          pe: { color: "#785500", fontWeight: 600, width: 68 },
+        },
+      },
     },
     series: [
       {

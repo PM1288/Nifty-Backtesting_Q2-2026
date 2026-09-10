@@ -79,8 +79,9 @@ try {
   check("V2 loads requested exact contracts", v2Options.some((pane) => String(pane.identity.tradingsymbol).endsWith("CE") && String(pane.identity.strike) === v2Choice.ce) && v2Options.some((pane) => String(pane.identity.tradingsymbol).endsWith("PE") && String(pane.identity.strike) === v2Choice.pe), JSON.stringify(v2Options.map((pane) => pane.identity)));
   const selectedGuides = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => ({ ce: element.dataset.selectedCeStrike, pe: element.dataset.selectedPeStrike }));
   check("V2 underlying identifies both selected strikes", selectedGuides.ce === v2Choice.ce && selectedGuides.pe === v2Choice.pe, JSON.stringify(selectedGuides));
+  check("V2 ΔOI axis declares visible strike and CE/PE values", (await page.getByTestId("v2-deltaoi-axis-context").innerText()).includes("Strike · CE ΔOI · PE ΔOI"), await page.getByTestId("v2-deltaoi-axis-context").innerText());
   check("No browser errors", errors.length === 0, errors.join(" | "));
-  await page.screenshot({ path: path.join(output, "scalper-v2-independent-contracts.png"), fullPage: false });
+  await page.screenshot({ path: path.join(output, "scalper-v2-independent-contracts.png"), fullPage: true });
 } finally {
   await browser.close();
   await fs.writeFile(path.join(output, "results.json"), JSON.stringify(results, null, 2));

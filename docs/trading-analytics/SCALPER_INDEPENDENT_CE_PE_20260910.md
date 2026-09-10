@@ -25,11 +25,15 @@ The implementation remains read-only. V7 signal calculation, A-open/B-close meas
 - Focused selection tests: PASS, 3/3.
 - Focused API contract tests: PASS, 5/5 in the route test run.
 - Candidate Docker image build: PASS.
-- Authenticated local Chromium against an isolated candidate: PASS, 10/10.
+- Authenticated local Chromium against an isolated candidate: PASS, 11/11.
   - V1 requested and loaded CE 23,700 with PE 23,250, retained both exact IDs in the URL, and locked both selectors for measurement.
   - V2 independently selected CE 25,750 with PE 21,900. The CE had no retained completed candle and remained visibly unavailable; PE data and both selected-strike guides remained rendered without substitution or a page crash.
   - Evidence: `/tmp/scalper-independent-contracts/results.json` and two 1440x1000 screenshots. These runtime artifacts are intentionally outside source control.
 - Canonical repository source gate: PASS.
+
+### ΔOI right-axis follow-up
+
+The horizontal Change in OI chart originally used a numeric X-axis and a right-side categorical Y-axis that printed only strikes. The signed CE/PE values were present in the bars and hover tooltip, but were not persistently readable. The right axis now prints `Strike · CE ΔOI · PE ΔOI` for every supplied strike, retains compact signs and provider-native units, distinguishes missing `—` from observed zero, and disables ECharts category skipping. Focused ΔOI tests pass 2/2 and the updated authenticated candidate browser run passes 11/11. The final full-page screenshot at `/tmp/scalper-independent-contracts/scalper-v2-independent-contracts.png` visibly contains all ten retained strike rows and their CE/PE values.
 
 ## Release state
 

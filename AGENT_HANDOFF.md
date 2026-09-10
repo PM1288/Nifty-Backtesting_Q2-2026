@@ -12,9 +12,12 @@
 - Browser testing also found and fixed a fast-selection overwrite race and a V2
   empty-contract crash. A selected contract with no retained candles now stays
   selected and shows unavailable instead of borrowing another contract.
+- Follow-up: the V2 horizontal Change in OI chart right Y-axis now prints every
+  retained strike together with its signed CE and PE ΔOI values. Category-label
+  auto-skipping is disabled; missing remains `—` and observed zero remains `0`.
 - Verification: web 147/147 and API 196/196 tests, both typechecks/builds,
   focused helper/API tests, candidate image build, and authenticated isolated
-  Chromium 10/10 PASS. Production was not changed. Full report:
+  Chromium 11/11 PASS. Production was not changed. Full report:
   `docs/trading-analytics/SCALPER_INDEPENDENT_CE_PE_20260910.md`.
 
 ## 2026-09-10 — Monthly Open v2 removes the previous-close gate

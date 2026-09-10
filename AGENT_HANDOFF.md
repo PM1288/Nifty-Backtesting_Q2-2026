@@ -4322,3 +4322,12 @@ or outcomes were deleted.
   and cached interval switching was 142ms.
 - Full evidence and deliberately unclaimed later v4 stages:
   `docs/trading-analytics/SCALPER_V2_TEST_PACKAGE_INTEGRATION_20260910.md`.
+- Application commit `5b144a7` is pushed to canonical `master` and the feature
+  branch, and is deployed as dashboard image
+  `sha256:77b2183295869c04e39dc03cd9f4716f96867183e06d0d1eb15c7a4ab2be4aea`.
+  Only `n50-dashboard` was recreated; it is healthy with zero restarts. The
+  authenticated deployed browser run has 54 PASS, 0 FAIL and one BLOCKED
+  headed-DPR2 visual check. Local production routes return HTTP 200; the public
+  edge returned HTTP 502 during final verification and remains an explicitly
+  recorded external reachability blocker. Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-native-deltaoi-5b144a7`.

@@ -79,7 +79,30 @@ notification, broker/order or permission contract changed.
 - Headless DPR2 backing-store crispness remains BLOCKED pending a headed-browser
   visual check; DPR2 width reconciliation passed.
 
+The same authenticated regression was repeated against the deployed production
+container: 54 PASS, 0 FAIL and the same single headed-DPR2 check BLOCKED. The
+deployed screenshot confirms the native strike profile is inside the underlying
+plot and the separate horizontal Change in OI chart retains Strike on its right
+Y axis.
+
 Ignored browser artefacts are under `/tmp/scalper-v2-delta-oi-local-final/`.
+Deployed browser artefacts are under `/tmp/scalper-v2-delta-oi-deployed/`.
+
+## Delivery and deployment
+
+- Application commit: `5b144a7` (`fix scalper v2 native strike delta oi profile`).
+- Pushed branches: canonical `master` and
+  `feat/scalper-v2-chart-delta-oi-upgrade`.
+- Deployed dashboard image:
+  `sha256:77b2183295869c04e39dc03cd9f4716f96867183e06d0d1eb15c7a4ab2be4aea`.
+- Only `n50-dashboard` was rebuilt/recreated. It is healthy with zero restarts;
+  the local root and Scalper V2 route return HTTP 200.
+- The public `https://m.nifty50today.co.in/` edge returned HTTP 502 during the
+  post-deploy verification, although the local production gateway with the same
+  host routing returned HTTP 200. Public reachability is therefore BLOCKED on
+  the external edge and is not claimed as passing.
+- Rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-native-deltaoi-5b144a7`.
 
 ## Deliberately not claimed
 
@@ -91,5 +114,5 @@ snapshots remain unavailable and are not inferred from later data.
 
 ## Rollback
 
-This is frontend-only. Revert the application commit and rebuild the dashboard;
-no database rollback is required.
+This is frontend-only. Redeploy the tagged rollback image above or revert the
+application commit and rebuild the dashboard; no database rollback is required.

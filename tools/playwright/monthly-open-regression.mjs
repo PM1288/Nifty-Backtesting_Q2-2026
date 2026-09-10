@@ -64,7 +64,9 @@ try {
     check(`${viewport.name} previous-close gate disabled`, api.body.methodology.previous_session_close_gate === false);
     check(`${viewport.name} persisted candidates`, api.body.candidates.length > 0, `count=${api.body.candidates.length}`);
     await rows.first().click();
-    await page.getByRole("heading", { name: "Entry conditions" }).waitFor();
+    const entryConditions = page.getByRole("heading", { name: "Entry conditions" }).locator("..").locator("li");
+    await entryConditions.first().waitFor();
+    check(`${viewport.name} six visible entry conditions`, await entryConditions.count() === 6);
     check(`${viewport.name} removed close-gate evidence`, await page.getByText(/Signal open > previous-day close/).count() === 0);
     check(`${viewport.name} no API failures`, failures.length === 0, failures.join(" | "));
     check(`${viewport.name} no horizontal overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));

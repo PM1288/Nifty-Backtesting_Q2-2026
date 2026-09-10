@@ -741,6 +741,9 @@ function Inspector({
         label,
         pass,
       }));
+  const entryConditions = conditions.filter(
+    (condition: any) => condition.informational !== true,
+  );
   return (
     <aside
       className={styles.inspector}
@@ -781,9 +784,9 @@ function Inspector({
       </div>
       <section>
         <h3>Entry conditions</h3>
-        {conditions.length ? (
+        {entryConditions.length ? (
           <ul className={styles.conditions}>
-            {conditions.map((condition: any, index: number) => (
+            {entryConditions.map((condition: any, index: number) => (
               <li
                 key={String(condition.code ?? condition.label ?? index)}
                 data-pass={condition.pass === true}

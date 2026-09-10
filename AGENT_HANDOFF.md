@@ -4144,3 +4144,24 @@ or outcomes were deleted.
   and public root/health return HTTP 200. Deployed browser checks pass 37/37
   executable checks with the same headed-DPR limitation. Rollback image:
   `trading-stack-n50-dashboard:pre-scalper-v2-acceptance-0b073f3`.
+
+## 2026-09-10 — Scalper V2 OI and delta-OI axis follow-up
+
+- Repaired only the existing V2 analytical panels: OI and signed delta-OI now
+  expose permanent Y/X unit strips, compact readable Y ticks, isolated legends
+  and a zero reference for comparable signed changes. Raw precision remains in
+  tooltips/exports.
+- The deployed retained chain has `0/20` comparable delta-OI baselines. The
+  panel therefore truthfully displays `Baseline unavailable` and does not draw
+  fabricated zero bars; this is a source state rather than a hidden chart.
+- Web 130/130 and API 193/193 tests, typechecks/builds, canonical gate, local
+  browser checks and deployed authenticated browser checks pass. Deployed run:
+  39 executable PASS, zero FAIL, with the existing headed-DPR2 check BLOCKED.
+  Axis-label and containment checks both pass; desktop/mobile screenshots were
+  inspected. Full record:
+  `docs/trading-analytics/SCALPER_V2_OI_AXIS_FIX_20260910.md`.
+- Application `04bf049` is pushed to canonical master and deployed as image
+  `sha256:4b4bc49b0983b89f8df84374ec503a1f8cad1bc37b495a49c7d68cd1a456320b`.
+  Dashboard is healthy with zero restarts and public HTTP 200. Only
+  `n50-dashboard` was recreated. Rollback tag:
+  `trading-stack-n50-dashboard:pre-scalper-v2-oi-axis-04bf049`.

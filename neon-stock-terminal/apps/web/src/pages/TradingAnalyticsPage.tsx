@@ -439,14 +439,14 @@ export function TradingAnalyticsPage() {
             <>
               <label>Symbol <select aria-label="Analytics underlying" value={pageContext.underlying.symbol} onFocus={()=>{if(isScalperView && !universeQ.data) void universeQ.refetch();}} onChange={e=>{
                 const next=new URLSearchParams(params); next.set('symbol',e.target.value);
-                for(const k of ['expiry','strike','pin','day']) next.delete(k);
+                for(const k of ['expiry','strike','ceStrike','peStrike','pin','day']) next.delete(k);
                 setInspected(null);setDrawer(null);setParams(next);
               }}>
                 {pageUniverse.length ? pageUniverse.map(u=><option key={u.symbol} value={u.symbol}>{u.symbol} · {u.kind}</option>) : <option value={pageContext.underlying.symbol}>{pageContext.underlying.label}</option>}
                 {isScalperView && universeQ.isFetching && <option disabled>Loading all symbols…</option>}
               </select></label>
               <label>Chain <select aria-label="Selected underlying expiry" value={pageContext.smartapi.expiry??''} onChange={e=>{
-                const next=new URLSearchParams(params);next.set('expiry',e.target.value);next.delete('strike');next.delete('pin');setParams(next);
+                const next=new URLSearchParams(params);next.set('expiry',e.target.value);for(const key of ['strike','ceStrike','peStrike','pin'])next.delete(key);setParams(next);
               }}><option value="">Unavailable / automatic</option>{pageContext.smartapi.expiries.map(e=><option key={e} value={e}>{e}</option>)}</select></label>
               {d && <label>
                 Report{" "}

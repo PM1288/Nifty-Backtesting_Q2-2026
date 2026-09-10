@@ -204,7 +204,8 @@ export function AlignedScalperTerminal({
   measured,
   quantity,
   strikes,
-  selectedStrike,
+  selectedCeStrike,
+  selectedPeStrike,
   defaultStrike,
   fixed,
   onStrike,
@@ -229,10 +230,11 @@ export function AlignedScalperTerminal({
   measured: Measurement;
   quantity: number;
   strikes: number[];
-  selectedStrike: string;
+  selectedCeStrike: string;
+  selectedPeStrike: string;
   defaultStrike: number | null;
   fixed: boolean;
-  onStrike: (strike: string) => void;
+  onStrike: (side: "CE" | "PE", strike: string) => void;
   expiry: string;
   tradingDay: string;
   interval: number;
@@ -313,8 +315,8 @@ export function AlignedScalperTerminal({
     width: number;
     height: number;
   }>>([]);
-  const latestCe = useMemo(() => readingForSide(panes, legs, selectedStrike, "CE"), [panes, legs, selectedStrike]);
-  const latestPe = useMemo(() => readingForSide(panes, legs, selectedStrike, "PE"), [panes, legs, selectedStrike]);
+  const latestCe = useMemo(() => readingForSide(panes, legs, selectedCeStrike, "CE"), [panes, legs, selectedCeStrike]);
+  const latestPe = useMemo(() => readingForSide(panes, legs, selectedPeStrike, "PE"), [panes, legs, selectedPeStrike]);
   const latestIndicator = useMemo(
     () => [...indicators.values()].sort((a, b) => a.time.localeCompare(b.time)).at(-1) ?? null,
     [indicators],
@@ -330,15 +332,15 @@ export function AlignedScalperTerminal({
   const chartContentHeight = alignedChartContentHeight(visibility);
   const chartContentHeightRef = useRef(chartContentHeight);
   chartContentHeightRef.current = chartContentHeight;
-  const dataContext = `${tradingDay}|${interval}|${selectedStrike}|${panes.map((pane) => String(pane.identity.tradingsymbol ?? "")).sort().join("|")}`;
+  const dataContext = `${tradingDay}|${interval}|CE:${selectedCeStrike}|PE:${selectedPeStrike}|${panes.map((pane) => String(pane.identity.tradingsymbol ?? "")).sort().join("|")}`;
   const boundsKey = bounds ? `${bounds.min}:${bounds.max}` : "missing";
   const levelsKey = levels.map((level) => `${String(level.row.timeframe)}:${level.side}:${level.value}`).join("|");
   const maxPainKey = maxPainStrikes.join("|");
   const manualBoundsKey = manualBounds.map((value) => value ? `${value.min}:${value.max}` : "auto").join("|");
   const closedCount = Math.max(0, ...panes.map((pane) => closedBars(pane).length));
   const inspectedTime = inspectionMode === "locked" ? lockedTime : inspectionMode === "cursor" ? cursor?.time ?? null : null;
-  const activeCe = useMemo(() => readingForSide(panes, legs, selectedStrike, "CE", inspectedTime), [panes, legs, selectedStrike, inspectedTime]);
-  const activePe = useMemo(() => readingForSide(panes, legs, selectedStrike, "PE", inspectedTime), [panes, legs, selectedStrike, inspectedTime]);
+  const activeCe = useMemo(() => readingForSide(panes, legs, selectedCeStrike, "CE", inspectedTime), [panes, legs, selectedCeStrike, inspectedTime]);
+  const activePe = useMemo(() => readingForSide(panes, legs, selectedPeStrike, "PE", inspectedTime), [panes, legs, selectedPeStrike, inspectedTime]);
   const activePcr = useMemo(() => pcrRows.filter((row) => !inspectedTime || row.time <= inspectedTime).at(-1) ?? null, [inspectedTime, pcrRows]);
 
   useEffect(() => {
@@ -434,7 +436,7 @@ export function AlignedScalperTerminal({
       const instrument = side(pane);
       const renderBounds = manualBounds[index] ?? (priceRangeMode === "session" ? paddedRenderBounds(financialVisibleBounds(pane.bars), 0.05) : null);
       const candle = chart.addSeries(CandlestickSeries, {
-        title: instrument === "NIFTY" ? String(pane.identity.tradingsymbol) : `${instrument} ${selectedStrike}`,
+        title: instrument === "NIFTY" ? String(pane.identity.tradingsymbol) : `${instrument} ${String(pane.identity.strike ?? "")}`,
         upColor: UP,
         downColor: DOWN,
         borderUpColor: UP,
@@ -687,7 +689,7 @@ export function AlignedScalperTerminal({
       referenceLinesRef.current = [];
       refreshGeometryRef.current = () => {};
     };
-  }, [dataContext, selectedStrike]);
+  }, [dataContext]);
 
   useEffect(() => {
     const chart = chartRef.current;
@@ -919,7 +921,8 @@ export function AlignedScalperTerminal({
       trading_day: tradingDay,
       interval_minutes: interval,
       expiry,
-      strike: selectedStrike,
+      ce_strike: selectedCeStrike,
+      pe_strike: selectedPeStrike,
       underlying: inspected[0],
       call: { identity: callPane?.identity ?? null, bar: inspected[1], reading: activeCe },
       put: { identity: putPane?.identity ?? null, bar: inspected[2], reading: activePe },
@@ -930,7 +933,7 @@ export function AlignedScalperTerminal({
   const exportPayload = {
     analysis_as_of: inspectedTime,
     generated_at: new Date().toISOString(),
-    context: { tradingDay, intervalMinutes: interval, expiry, selectedStrike, inspectionMode },
+    context: { tradingDay, intervalMinutes: interval, expiry, selectedCeStrike, selectedPeStrike, inspectionMode },
     panes,
     chain: legs,
     levels: levels.map((level) => ({ ...level.row, side: level.side, value: level.value })),
@@ -949,7 +952,7 @@ export function AlignedScalperTerminal({
     className: string;
     price?: { open: string; high: string; low: string; close: string; ema: string; relationship: string; status: string };
   }> = [
-    ...["NIFTY 50", `CE ${selectedStrike}`, `PE ${selectedStrike}`].map((label, index) => {
+    ...["NIFTY 50", `CE ${selectedCeStrike}`, `PE ${selectedPeStrike}`].map((label, index) => {
       const bar = inspected[index], close = number(bar?.close), ema = number(bar?.ema9), distance = close == null || ema == null ? null : close - ema;
       return {
         label,
@@ -1013,11 +1016,11 @@ export function AlignedScalperTerminal({
     {mobileInspectorOpen && <button type="button" className={styles.alignedInspectorBackdrop} aria-label="Close evidence inspector" onClick={() => setMobileInspectorOpen(false)} />}
     <aside className={`${styles.alignedInspector} ${mobileInspectorOpen ? styles.alignedInspectorOpen : ""}`} aria-label="Aligned terminal evidence inspector">
       <section className={styles.alignedInspectorSummary}>
-        <header><strong>{String(underlyingPane?.identity.tradingsymbol ?? "Underlying")} · {fmt(number(selectedStrike), 0)} pair</strong><span>{expiry || "—"}</span><button type="button" className={styles.alignedInspectorClose} aria-label="Close evidence inspector" onClick={() => setMobileInspectorOpen(false)}>×</button></header>
-        <p className={styles.alignedIdentityMeta}>{tradingDay || "—"} · {interval}m · {fixed ? "Measurement pair fixed" : Number(selectedStrike) === defaultStrike ? "Selected · ATM" : "Selected · ATM differs"} · {inspectionMode === "latest" ? "Latest" : inspectionMode === "cursor" ? "At cursor" : `Locked ${istTime(lockedTime)}`}</p>
+        <header><strong>{String(underlyingPane?.identity.tradingsymbol ?? "Underlying")} · CE {fmt(number(selectedCeStrike), 0)} / PE {fmt(number(selectedPeStrike), 0)}</strong><span>{expiry || "—"}</span><button type="button" className={styles.alignedInspectorClose} aria-label="Close evidence inspector" onClick={() => setMobileInspectorOpen(false)}>×</button></header>
+        <p className={styles.alignedIdentityMeta}>{tradingDay || "—"} · {interval}m · {fixed ? "Measurement contracts fixed" : Number(selectedCeStrike) === defaultStrike && Number(selectedPeStrike) === defaultStrike ? "Both selected · ATM" : `Selected independently · ATM ${fmt(defaultStrike, 0)}`} · {inspectionMode === "latest" ? "Latest" : inspectionMode === "cursor" ? "At cursor" : `Locked ${istTime(lockedTime)}`}</p>
         <div className={styles.alignedPairCards}>
-          <article data-side="ce"><b className={styles.ceText}>CE · {fmt(number(selectedStrike), 0)}</b><strong>{money(activeCe?.ltp)}</strong><small>{activeCe?.priceBasis ?? "Unavailable"} · {istTime(activeCe?.priceAt ?? null)}</small></article>
-          <article data-side="pe"><b className={styles.peText}>PE · {fmt(number(selectedStrike), 0)}</b><strong>{money(activePe?.ltp)}</strong><small>{activePe?.priceBasis ?? "Unavailable"} · {istTime(activePe?.priceAt ?? null)}</small></article>
+          <article data-side="ce"><b className={styles.ceText}>CE · {fmt(number(selectedCeStrike), 0)}</b><strong>{money(activeCe?.ltp)}</strong><small>{activeCe?.priceBasis ?? "Unavailable"} · {istTime(activeCe?.priceAt ?? null)}</small></article>
+          <article data-side="pe"><b className={styles.peText}>PE · {fmt(number(selectedPeStrike), 0)}</b><strong>{money(activePe?.ltp)}</strong><small>{activePe?.priceBasis ?? "Unavailable"} · {istTime(activePe?.priceAt ?? null)}</small></article>
         </div>
         <div className={styles.alignedMetricMatrix} role="table" aria-label="Selected pair metrics"><div role="row"><b>Metric</b><b className={styles.ceText}>CE</b><b className={styles.peText}>PE</b></div>{metricRows.map((row) => <div role="row" key={row.label}><span>{row.label}</span><strong>{row.format(row.ce ?? null)}</strong><strong>{row.format(row.pe ?? null)}</strong></div>)}</div>
         <div className={styles.alignedPcrSummary}><span>Pair OI PCR</span><strong>{fmt(activePcr?.value ?? null)}</strong><small>{activePcr == null ? "Unavailable · matching endpoint required" : `${inspectedTime ? "Same endpoint at/prior cursor" : "Same endpoint"} · ${istTime(activePcr.time)}`}</small></div>
@@ -1025,8 +1028,12 @@ export function AlignedScalperTerminal({
       </section>
       <nav className={styles.alignedInspectorTabs} aria-label="Inspector sections">{(["snapshot", "chain", "rules", "measure", "levels", "health"] as const).map((item) => <button type="button" key={item} aria-current={section === item ? "page" : undefined} onClick={() => setSection(item)}>{item[0].toUpperCase() + item.slice(1)}</button>)}</nav>
       <div className={styles.alignedInspectorBody}>
-        {section === "snapshot" && <section><div className={styles.alignedModeBar}><button type="button" aria-pressed={inspectionMode === "latest"} onClick={() => { setInspectionMode("latest"); setLockedTime(null); }}>Latest</button><button type="button" aria-pressed={inspectionMode === "cursor"} disabled={!cursor?.time} onClick={() => setInspectionMode("cursor")}>Cursor</button><button type="button" aria-pressed={inspectionMode === "locked"} disabled={!lockedTime} onClick={() => setInspectionMode("locked")}>Locked</button></div><div className={styles.alignedSnapshotActions}><button type="button" onClick={copySnapshot}>Copy exact snapshot</button><button type="button" disabled={!inspectedTime} onClick={() => inspectedTime && jumpToTime(inspectedTime)}>Jump chart to time</button></div>{snapshotCard(String(underlyingPane?.identity.tradingsymbol ?? "Underlying"), underlyingPane, inspected[0], false)}{snapshotCard(`CE ${selectedStrike}`, callPane, inspected[1], true)}{snapshotCard(`PE ${selectedStrike}`, putPane, inspected[2], true)}<article className={styles.alignedSnapshotCard}><header><strong>Underlying indicators</strong><span>{istTime(inspectedTime)}</span></header><div className={styles.alignedOhlcGrid}>{[["RSI14", indicator?.rsi], ["MACD", indicator?.macd], ["Signal", indicator?.signal], ["Histogram", indicator?.histogram]].map(([label, value]) => <span key={String(label)}><small>{label}</small><strong>{fmt(number(value), label === "RSI14" ? 2 : 4)}</strong></span>)}</div></article></section>}
-        {section === "chain" && <section><header><strong>Paired strike ladder</strong><span>{expiry} · provider-native</span></header><div className={styles.alignedChainControls}><label>Outside columns <select value={ladderMetric} onChange={(event) => setLadderMetric(event.target.value as ScalperLadderMetric)}><option value="premium">Premium</option><option value="oi">Current OI</option><option value="doi">Snapshot ΔOI</option></select></label><label><input type="checkbox" checked={compactOi} onChange={(event) => setCompactOi(event.target.checked)} />Compact OI</label></div>{legs.length ? <div className={styles.alignedLadderScroll}><table><thead><tr><th>CE {ladderMetric === "premium" ? "premium" : ladderMetric === "oi" ? "OI" : "ΔOI"}</th><th>Strike</th><th>PE {ladderMetric === "premium" ? "premium" : ladderMetric === "oi" ? "OI" : "ΔOI"}</th></tr></thead><tbody>{strikes.map((strike) => <tr key={strike} aria-selected={String(strike) === selectedStrike}><td>{ladderCell(legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "CE"))}</td><th><button type="button" disabled={fixed} onClick={() => onStrike(String(strike))}>{fmt(strike, 0)}{String(strike) === selectedStrike ? " · Selected" : ""}{strike === defaultStrike ? " · ATM" : ""}</button></th><td>{ladderCell(legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "PE"))}</td></tr>)}</tbody></table></div> : <p className={styles.alignedMuted}>Current-chain ladder is not mixed into this retained historical expiry.</p>}<details><summary>Accessible price-aligned OI table</summary><table><thead><tr><th>Side</th><th>Strike</th><th>Current OI</th><th>Snapshot ΔOI</th></tr></thead><tbody>{oiProfilePoints(legs).map((point) => <tr key={`${point.side}-${point.strike}`}><td>{point.side}</td><td>{fmt(point.strike, 0)}</td><td>{fmt(point.current, 0)}</td><td>{signed(point.change, 0)}</td></tr>)}</tbody></table></details></section>}
+        {section === "snapshot" && <section><div className={styles.alignedModeBar}><button type="button" aria-pressed={inspectionMode === "latest"} onClick={() => { setInspectionMode("latest"); setLockedTime(null); }}>Latest</button><button type="button" aria-pressed={inspectionMode === "cursor"} disabled={!cursor?.time} onClick={() => setInspectionMode("cursor")}>Cursor</button><button type="button" aria-pressed={inspectionMode === "locked"} disabled={!lockedTime} onClick={() => setInspectionMode("locked")}>Locked</button></div><div className={styles.alignedSnapshotActions}><button type="button" onClick={copySnapshot}>Copy exact snapshot</button><button type="button" disabled={!inspectedTime} onClick={() => inspectedTime && jumpToTime(inspectedTime)}>Jump chart to time</button></div>{snapshotCard(String(underlyingPane?.identity.tradingsymbol ?? "Underlying"), underlyingPane, inspected[0], false)}{snapshotCard(`CE ${selectedCeStrike}`, callPane, inspected[1], true)}{snapshotCard(`PE ${selectedPeStrike}`, putPane, inspected[2], true)}<article className={styles.alignedSnapshotCard}><header><strong>Underlying indicators</strong><span>{istTime(inspectedTime)}</span></header><div className={styles.alignedOhlcGrid}>{[["RSI14", indicator?.rsi], ["MACD", indicator?.macd], ["Signal", indicator?.signal], ["Histogram", indicator?.histogram]].map(([label, value]) => <span key={String(label)}><small>{label}</small><strong>{fmt(number(value), label === "RSI14" ? 2 : 4)}</strong></span>)}</div></article></section>}
+        {section === "chain" && <section><header><strong>Independent CE / PE ladder</strong><span>{expiry} · provider-native</span></header><div className={styles.alignedChainControls}><label>Outside columns <select value={ladderMetric} onChange={(event) => setLadderMetric(event.target.value as ScalperLadderMetric)}><option value="premium">Premium</option><option value="oi">Current OI</option><option value="doi">Snapshot ΔOI</option></select></label><label><input type="checkbox" checked={compactOi} onChange={(event) => setCompactOi(event.target.checked)} />Compact OI</label></div>{legs.length ? <div className={styles.alignedLadderScroll}><table><thead><tr><th>Select CE · {ladderMetric === "premium" ? "premium" : ladderMetric === "oi" ? "OI" : "ΔOI"}</th><th>Strike</th><th>Select PE · {ladderMetric === "premium" ? "premium" : ladderMetric === "oi" ? "OI" : "ΔOI"}</th></tr></thead><tbody>{strikes.map((strike) => {
+          const ceLeg = legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "CE");
+          const peLeg = legs.find((leg) => Number(leg.strike) === strike && leg.option_type === "PE");
+          return <tr key={strike} data-ce-selected={String(strike) === selectedCeStrike || undefined} data-pe-selected={String(strike) === selectedPeStrike || undefined}><td><button type="button" disabled={fixed || !ceLeg} aria-pressed={String(strike) === selectedCeStrike} onClick={() => onStrike("CE", String(strike))}>{ladderCell(ceLeg)}{String(strike) === selectedCeStrike ? " · Selected" : ""}</button></td><th>{fmt(strike, 0)}{strike === defaultStrike ? " · ATM" : ""}</th><td><button type="button" disabled={fixed || !peLeg} aria-pressed={String(strike) === selectedPeStrike} onClick={() => onStrike("PE", String(strike))}>{ladderCell(peLeg)}{String(strike) === selectedPeStrike ? " · Selected" : ""}</button></td></tr>;
+        })}</tbody></table></div> : <p className={styles.alignedMuted}>Current-chain ladder is not mixed into this retained historical expiry.</p>}<details><summary>Accessible price-aligned OI table</summary><table><thead><tr><th>Side</th><th>Strike</th><th>Current OI</th><th>Snapshot ΔOI</th></tr></thead><tbody>{oiProfilePoints(legs).map((point) => <tr key={`${point.side}-${point.strike}`}><td>{point.side}</td><td>{fmt(point.strike, 0)}</td><td>{fmt(point.current, 0)}</td><td>{signed(point.change, 0)}</td></tr>)}</tbody></table></details></section>}
         {section === "rules" && <section><header><strong>Paired EMA9 entry · V7</strong><span>{stateCounts.RETROSPECTIVE_ENTRY_REFERENCE} entry references</span></header><div className={styles.alignedRuleCounts}><span>{stateCounts.WAIT_NEXT_OPEN} waiting</span><span>{stateCounts.NEXT_BAR_MISSING} next candle missing</span><span>{stateCounts.NEXT_OPEN_FAILED} next-open failed</span></div>{signals.length ? signals.slice().reverse().map((event) => <details key={event.id}><summary><b className={event.direction === "CALL" ? styles.ceText : styles.peText}>{event.direction}</b> · {event.state === "WAIT_NEXT_OPEN" ? "Setup · waiting for next open" : event.state === "NEXT_BAR_MISSING" ? "Next candle unavailable" : event.state === "NEXT_OPEN_FAILED" ? "Next-open confirmation failed" : "Entry reference · retrospective"} · {istTime(event.setupTime)}</summary><p><b>Body evidence</b><strong>NIFTY {fmt(event.underlyingBodyFraction * 100)}% · option {fmt(event.optionBodyFraction * 100)}%</strong></p><p><b>References</b><strong>{fmt(event.underlyingOpen)} · {money(event.optionPremium)}</strong></p><button type="button" onClick={() => jumpToTime(event.setupTime)}>Inspect setup candle</button><small>Closed-bar research reference; not a live fill. Setup timestamp is the canonical bar-end label.</small></details>) : <p className={styles.alignedMuted}>No timestamp-aligned NIFTY plus selected-option confirmation in this range.</p>}</section>}
         {section === "measure" && <section><header><strong>A open → B close</strong><span>{points.length}/2 anchors · {quantity} units</span></header>{measured ? <>
           <p><b>Intervals</b><small>A {istTime(measured.start)} → B {istTime(measured.end)}</small></p>

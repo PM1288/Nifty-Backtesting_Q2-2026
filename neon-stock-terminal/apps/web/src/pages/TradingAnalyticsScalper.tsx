@@ -8,6 +8,14 @@ import { closeAt, measurePanes, openAt, scalperIndicators } from "../lib/scalper
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { activeChartExpiry } from "../lib/multiTimeframeMatrix";
 import {
+  applyScalperLegsToChartQuery,
+  availableScalperStrikes,
+  nearestScalperStrike,
+  scalperLegSelection,
+  setScalperLegSelection,
+  type AvailableScalperContract,
+} from "../lib/scalperContractSelection";
+import {
   candleColors,
   evidenceValueAxis,
   chartInterval,
@@ -147,7 +155,7 @@ export function TradingAnalyticsScalper({
   const [showLevels, setShowLevels] = useState(true);
   const [showGrid, setShowGrid] = useState(symbol==='NIFTY');
   const renderer = params.get("renderer") === "classic" ? "classic" : "aligned";
-  const [fixedPair, setFixedPair] = useState<{strike:string;expiry:string}|null>(null);
+  const [fixedPair, setFixedPair] = useState<{ceStrike:string;peStrike:string;expiry:string}|null>(null);
   const [points, setPoints] = useState<string[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [quantity, setQuantity] = useState("65");
@@ -161,21 +169,9 @@ export function TradingAnalyticsScalper({
     else next.delete(key);
     setParams(next);
   };
-  const strike = params.get("strike") ?? "";
   const setInterval = (v: number) => {
     const next = new URLSearchParams(params);
     next.set("interval", String(v));
-    setParams(next);
-  };
-  const setStrike = (v: string) => {
-    const next = new URLSearchParams(params);
-    if (v) {
-      next.set("strike", v);
-      next.set("pin", "true");
-    } else {
-      next.delete("strike");
-      next.delete("pin");
-    }
     setParams(next);
   };
   const [narrow, setNarrow] = useState(() => window.innerWidth < 1100);
@@ -187,17 +183,26 @@ export function TradingAnalyticsScalper({
   }, []);
   const [showEma, setShowEma] = useState(true);
   const [axisBounds, setAxisBounds] = useState<Record<number, { min: string; max: string }>>({});
-  const defaultStrike =
-    spot == null
-      ? null
-      : [...strikes].sort(
-          (a, b) => Math.abs(a - spot) - Math.abs(b - spot) || a - b,
-        )[0];
+  const defaultStrike = nearestScalperStrike(strikes, spot);
   const requestedChartExpiry = params.get("chartExpiry");
   const exactLogPair = Boolean(params.get('expectedCE') && params.get('expectedPE'));
   const chartExpiry = exactLogPair && requestedChartExpiry ? requestedChartExpiry : activeChartExpiry(requestedChartExpiry, expiry, asOf);
-  const selected = fixedPair?.strike ?? (strike || String(defaultStrike ?? ""));
+  const urlSelection = scalperLegSelection(params, defaultStrike);
+  const selectedCeStrike = fixedPair?.ceStrike ?? urlSelection.ceStrike;
+  const selectedPeStrike = fixedPair?.peStrike ?? urlSelection.peStrike;
+  const pinnedSelection = params.has("ceStrike") || params.has("peStrike") || params.has("strike");
   const effectiveExpiry = fixedPair?.expiry ?? chartExpiry;
+  const setLegStrike = (wanted: "CE" | "PE", value: string) => {
+    setParams(setScalperLegSelection(params, {
+      ceStrike: wanted === "CE" ? value : selectedCeStrike,
+      peStrike: wanted === "PE" ? value : selectedPeStrike,
+    }));
+  };
+  const setBothAtm = () => {
+    const next = new URLSearchParams(params);
+    for (const key of ["strike", "ceStrike", "peStrike", "pin"]) next.delete(key);
+    setParams(next);
+  };
   const oneDay = params.get("range") !== "all";
   // The default one-session view needs retained indicator warm-up, not the
   // complete 15-day chart payload. The explicit All retained days view keeps
@@ -208,10 +213,7 @@ export function TradingAnalyticsScalper({
     interval: String(interval),
     historyDays: oneDay ? "3" : "15",
   });
-  if (effectiveExpiry && selected) {
-    query.set("expiry", effectiveExpiry);
-    query.set("strike", selected);
-  }
+  applyScalperLegsToChartQuery(query, effectiveExpiry, { ceStrike: selectedCeStrike, peStrike: selectedPeStrike });
   const q = useQuery({
     queryKey: ["trading-analytics-charts", query.toString()],
     queryFn: () =>
@@ -223,7 +225,7 @@ export function TradingAnalyticsScalper({
           sourceMinuteCount: number;
           oiHistory: Row[];
         }[];
-        availableContracts: Array<{ expiry: string; strike: number; ce_contracts: number; pe_contracts: number }>;
+        availableContracts: AvailableScalperContract[];
         limitations: string[];
       }>(`/v1/trading-analytics/charts?${query}`),
     staleTime: 30000,
@@ -231,7 +233,7 @@ export function TradingAnalyticsScalper({
     placeholderData: (previous, previousQuery) => {
       if (!previous || !previousQuery) return undefined;
       const prior = new URLSearchParams(String(previousQuery.queryKey[1] ?? ""));
-      const sameInstrumentContext = ["symbol", "interval", "expiry", "strike"]
+      const sameInstrumentContext = ["symbol", "interval", "expiry", "strike", "ceStrike", "peStrike"]
         .every((key) => prior.get(key) === query.get(key));
       return sameInstrumentContext ? previous : undefined;
     },
@@ -250,22 +252,34 @@ export function TradingAnalyticsScalper({
   // This selector controls retained exact-pair candles, not the current chain.
   // Never offer an expiry with no paired minute bars as if it were chartable.
   const availableExpiries = [...new Set([...availableContracts.map((row) => String(row.expiry)), effectiveExpiry].filter(Boolean))].sort();
-  const availableStrikes = availableContracts.filter((row) => String(row.expiry) === effectiveExpiry).map((row) => Number(row.strike));
+  const availableCeStrikes = availableScalperStrikes(availableContracts, effectiveExpiry, "CE");
+  const availablePeStrikes = availableScalperStrikes(availableContracts, effectiveExpiry, "PE");
   useEffect(() => {
     if (!q.data || fixedPair || exactLogPair) return;
     const rolledOver = requestedChartExpiry != null && requestedChartExpiry !== chartExpiry;
     const exactPanes = q.data.panes.filter((pane) => pane.identity.exchange === "NFO");
+    // A deliberate independent selection must remain selected even when one
+    // retained contract has sparse bars; the renderer exposes that coverage.
+    if (!rolledOver && requestedChartExpiry && pinnedSelection) return;
     if (!rolledOver && requestedChartExpiry && exactPanes.length === 2 && exactPanes.every((pane) => pane.sourceMinuteCount > 1)) return;
-    const preferred = q.data.availableContracts.filter((candidate) => String(candidate.expiry) === chartExpiry);
-    const candidate = [...(preferred.length ? preferred : q.data.availableContracts)]
-      .sort((a, b) => Math.abs(Date.parse(a.expiry) - Date.parse(day || expiry)) - Math.abs(Date.parse(b.expiry) - Date.parse(day || expiry)) || Math.abs(Number(a.strike) - Number(spot ?? 0)) - Math.abs(Number(b.strike) - Number(spot ?? 0)))[0];
-    if (!candidate) return;
+    const expiryCandidates = [...new Set(q.data.availableContracts.map((candidate) => String(candidate.expiry)))]
+      .sort((a, b) => Math.abs(Date.parse(a) - Date.parse(day || expiry)) - Math.abs(Date.parse(b) - Date.parse(day || expiry)));
+    const candidateExpiry = [chartExpiry, ...expiryCandidates].find((value, index, values) => values.indexOf(value) === index
+      && availableScalperStrikes(q.data.availableContracts, value, "CE").length > 0
+      && availableScalperStrikes(q.data.availableContracts, value, "PE").length > 0);
+    if (!candidateExpiry) return;
+    const candidateCe = nearestScalperStrike(availableScalperStrikes(q.data.availableContracts, candidateExpiry, "CE"), spot);
+    const candidatePe = nearestScalperStrike(availableScalperStrikes(q.data.availableContracts, candidateExpiry, "PE"), spot);
+    if (candidateCe == null || candidatePe == null) return;
+    // The initial availability effect may finish just after a fast user
+    // selection. Re-read live URL state so that stale effect work cannot
+    // overwrite the newly selected exact contracts.
+    const liveParams = new URLSearchParams(window.location.search);
+    if (!rolledOver && ["strike", "ceStrike", "peStrike"].some((key) => liveParams.has(key))) return;
     const next = new URLSearchParams(params);
-    next.set("chartExpiry", String(candidate.expiry));
-    next.set("strike", String(candidate.strike));
-    next.set("pin", "true");
-    setParams(next, { replace: true });
-  }, [chartExpiry, day, expiry, fixedPair, params, q.data, requestedChartExpiry, setParams, spot, exactLogPair]);
+    next.set("chartExpiry", candidateExpiry);
+    setParams(setScalperLegSelection(next, { ceStrike: String(candidateCe), peStrike: String(candidatePe) }), { replace: true });
+  }, [chartExpiry, day, expiry, fixedPair, params, pinnedSelection, q.data, requestedChartExpiry, setParams, spot, exactLogPair]);
   const panes = useMemo(
     () =>
       q.data?.panes.map((p) => ({
@@ -277,7 +291,7 @@ export function TradingAnalyticsScalper({
       })),
     [q.data, oneDay, day],
   );
-  useEffect(() => { setPoints([]); setSelecting(false); }, [interval, day, oneDay, selected, effectiveExpiry]);
+  useEffect(() => { setPoints([]); setSelecting(false); }, [interval, day, oneDay, selectedCeStrike, selectedPeStrike, effectiveExpiry]);
   const times = useMemo(() => [...new Set((panes ?? []).flatMap(p => p.bars.map(b => String(b.end))))].sort(), [panes]);
   const indicators = useMemo(() => new Map(scalperIndicators(q.data?.panes[0]?.bars ?? []).map(r => [r.time,r])), [q.data]);
   const visibleUnderlyingBounds = useMemo(
@@ -514,9 +528,18 @@ export function TradingAnalyticsScalper({
             <option value={60}>60m</option>
           </select>
         </label>
-        <label title="Paired strike">
-          <select aria-label="Paired strike" disabled={!!fixedPair} value={selected} onChange={(e) => setStrike(e.target.value)}>
-            {[...new Set([...(availableStrikes.length ? availableStrikes : strikes), ...(selected ? [Number(selected)] : [])])]
+        <label title="Exact call strike">
+          <select aria-label="Selected CE strike" disabled={!!fixedPair} value={selectedCeStrike} onChange={(e) => setLegStrike("CE", e.target.value)}>
+            {[...new Set([...(availableCeStrikes.length ? availableCeStrikes : strikes), ...(selectedCeStrike ? [Number(selectedCeStrike)] : [])])]
+              .sort((a, b) => a - b)
+              .map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+          </select>
+        </label>
+        <label title="Exact put strike">
+          <select aria-label="Selected PE strike" disabled={!!fixedPair} value={selectedPeStrike} onChange={(e) => setLegStrike("PE", e.target.value)}>
+            {[...new Set([...(availablePeStrikes.length ? availablePeStrikes : strikes), ...(selectedPeStrike ? [Number(selectedPeStrike)] : [])])]
               .sort((a, b) => a - b)
               .map((s) => (
                 <option key={s}>{s}</option>
@@ -526,21 +549,20 @@ export function TradingAnalyticsScalper({
         <label title="Exact-contract expiry">
           <select aria-label="Exact-contract expiry" disabled={!!fixedPair} value={effectiveExpiry} onChange={(event) => {
             const nextExpiry = event.target.value;
-            const candidates = availableContracts.filter((row) => String(row.expiry) === nextExpiry).map((row) => Number(row.strike));
-            const nextStrike = [...candidates].sort((a, b) => Math.abs(a - Number(spot ?? 0)) - Math.abs(b - Number(spot ?? 0)))[0];
+            const nextCe = nearestScalperStrike(availableScalperStrikes(availableContracts, nextExpiry, "CE"), spot);
+            const nextPe = nearestScalperStrike(availableScalperStrikes(availableContracts, nextExpiry, "PE"), spot);
             const next = new URLSearchParams(params);
             next.set("chartExpiry", nextExpiry);
-            if (nextStrike != null) next.set("strike", String(nextStrike));
-            setParams(next);
+            setParams(setScalperLegSelection(next, { ceStrike: String(nextCe ?? ""), peStrike: String(nextPe ?? "") }));
           }}>{availableExpiries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
         </label>
-        <button disabled={!!fixedPair} onClick={() => setStrike(selected)}>Pin</button>
-        <button disabled={!!fixedPair} onClick={() => setStrike("")}>ATM</button>
+        <button disabled={!!fixedPair} onClick={() => setParams(setScalperLegSelection(params, { ceStrike: selectedCeStrike, peStrike: selectedPeStrike }))}>Pin contracts</button>
+        <button disabled={!!fixedPair} onClick={setBothAtm}>Both ATM</button>
         <strong
           className={effectiveExpiry !== expiry ? styles.scalperPairScope : undefined}
           title={effectiveExpiry !== expiry ? `Current chain ${expiry}; retained chart pair ${effectiveExpiry}. Values are not mixed.` : `Retained chart pair and current chain both use ${effectiveExpiry}.`}
         >
-          {fixedPair ? "FIXED" : strike ? "PINNED" : "ATM AUTO"}
+          {fixedPair ? "FIXED" : pinnedSelection ? "PINNED" : "ATM AUTO"}
           {effectiveExpiry !== expiry
             ? ` · PAIR ${effectiveExpiry.slice(5)} ≠ CHAIN ${expiry.slice(5)}`
             : ` · PAIR/CHAIN ${effectiveExpiry.slice(5)}`}
@@ -557,7 +579,7 @@ export function TradingAnalyticsScalper({
         <details className={styles.scalperCompactMenu}>
           <summary>Measure {measured ? `₹${valueText(measured.pnl)}` : "A→B"}</summary>
           <div>
-            <button disabled={!selected || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{strike:selected,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock pair":"Fix pair"}</button>
+            <button disabled={!selectedCeStrike || !selectedPeStrike || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{ceStrike:selectedCeStrike,peStrike:selectedPeStrike,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock contracts":"Fix contracts"}</button>
             <label>Quantity <input aria-label="Measurement quantity" type="number" min={1} step={1} value={quantity} onChange={e=>setQuantity(e.target.value)} style={{width:90}} /></label>
             <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Pick A open → B close</button>
             <button onClick={()=>{setPoints([]);setSelecting(false);}}>Clear</button>
@@ -615,7 +637,7 @@ export function TradingAnalyticsScalper({
       <ScalperOiTopline panes={panes} />
       <section className={styles.measurement} aria-label="Browser-only position measurement">
         <div className={styles.toolbar}>
-          <button disabled={!selected || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{strike:selected,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock visual pair":"Fix pair for measurement"}</button>
+          <button disabled={!selectedCeStrike || !selectedPeStrike || !effectiveExpiry || q.isFetching || (panes?.length??0)<3} onClick={() => {setFixedPair(fixedPair?null:{ceStrike:selectedCeStrike,peStrike:selectedPeStrike,expiry:effectiveExpiry});setPoints([]);setSelecting(false);}}>{fixedPair?"Unlock visual contracts":"Fix contracts for measurement"}</button>
           <label>Quantity (units)<input aria-label="Measurement quantity" type="number" min={1} step={1} value={quantity} onChange={e=>setQuantity(e.target.value)} style={{width:90}} /></label>
           <button disabled={!fixedPair || q.isFetching} onClick={()=>{setPoints([]);setSelecting(true);}}>Select A entry → B exit on chart</button>
           <button onClick={()=>{setPoints([]);setSelecting(false);}}>Clear measurement</button>
@@ -629,7 +651,7 @@ export function TradingAnalyticsScalper({
             </select>
           </label>}
         </div>
-        <p role="status">{fixedPair?`VISUAL PAIR FIXED · ${symbol} ${fixedPair.strike} · ${fixedPair.expiry}`:"Fix the pair to begin."} {selecting?`Click ${points.length?"B exit (candle close)":"A entry (candle open)"} on any price pane, or use the time controls below.`:"A measures the selected candle open; B measures the selected candle close. Scroll to zoom; drag to pan."}</p>
+        <p role="status">{fixedPair?`VISUAL CONTRACTS FIXED · ${symbol} CE ${fixedPair.ceStrike} / PE ${fixedPair.peStrike} · ${fixedPair.expiry}`:"Fix the selected CE and PE to begin."} {selecting?`Click ${points.length?"B exit (candle close)":"A entry (candle open)"} on any price pane, or use the time controls below.`:"A measures the selected candle open; B measures the selected candle close. Scroll to zoom; drag to pan."}</p>
         {fixedPair && <div className={styles.toolbar}>{[0,1].map(i=><label key={i}>{i===0?"A entry candle (open)":"B exit candle (close)"}<select aria-label={i===0?"Measurement start time":"Measurement end time"} value={points[i]??""} onChange={e=>{setPoints(old=>!e.target.value?[]:i===0?[e.target.value]:[old[0]??times[0],e.target.value].sort());setSelecting(false);}} disabled={i===1&&!points[0]}><option value="">Choose completed-candle time</option>{times.map(t=><option key={t} value={t}>{new Date(t).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST</option>)}</select></label>)}</div>}
         {measured && <>
           <strong data-testid="measurement-pnl">Illustrative long CE + PE P&amp;L: ₹{valueText(measured.pnl)}</strong>
@@ -748,7 +770,7 @@ export function TradingAnalyticsScalper({
         {panes?.map((p) => (
           <strong key={String(p.identity.tradingsymbol)}>
             {String(p.identity.tradingsymbol)} · {interval}m ·{" "}
-            {fixedPair ? "Visual pair fixed" : strike ? "Pinned pair" : "Auto pair"}
+            {fixedPair ? "Visual contracts fixed" : pinnedSelection ? "Pinned contracts" : "Auto ATM contracts"}
           </strong>
         ))}
       </div>}
@@ -771,10 +793,11 @@ export function TradingAnalyticsScalper({
           measured={measured}
           quantity={Number(quantity)}
           strikes={strikes}
-          selectedStrike={selected}
+          selectedCeStrike={selectedCeStrike}
+          selectedPeStrike={selectedPeStrike}
           defaultStrike={defaultStrike}
           fixed={Boolean(fixedPair)}
-          onStrike={setStrike}
+          onStrike={setLegStrike}
           expiry={effectiveExpiry}
           tradingDay={day}
           interval={interval}
@@ -797,8 +820,8 @@ export function TradingAnalyticsScalper({
         )}
         <div className={styles.scalperSideDock}>
           <OiPriceProfile legs={legs} bounds={visibleUnderlyingBounds} />
-        <section className={styles.ladder} aria-label="Paired strike ladder" tabIndex={0}>
-          <h3>Nearest 10 pairs</h3>
+        <section className={styles.ladder} aria-label="Independent CE and PE strike ladder" tabIndex={0}>
+          <h3>Select CE and PE independently</h3>
           <table>
             <thead>
               <tr>
@@ -809,34 +832,30 @@ export function TradingAnalyticsScalper({
             </thead>
             <tbody>
               {strikes.map((s) => (
-                <tr key={s} aria-selected={String(s) === selected}>
+                <tr key={s} data-ce-selected={String(s) === selectedCeStrike || undefined} data-pe-selected={String(s) === selectedPeStrike || undefined}>
                   <td>
-                    {String(
+                    <button disabled={!!fixedPair} aria-pressed={String(s) === selectedCeStrike} onClick={() => setLegStrike("CE", String(s))}>{String(
                       legs.find(
                         (l) => effectiveExpiry === expiry && Number(l.strike) === s && l.option_type === "CE",
                       )?.last_price ?? "—",
-                    )}
+                    )}{String(s) === selectedCeStrike ? " · Selected" : ""}</button>
                   </td>
                   <th>
-                    <button disabled={!!fixedPair} onClick={() => setStrike(String(s))}>
-                      {s}
-                      {s === defaultStrike ? " · ATM" : ""}
-                    </button>
+                    {s}{s === defaultStrike ? " · ATM" : ""}
                   </th>
                   <td>
-                    {String(
+                    <button disabled={!!fixedPair} aria-pressed={String(s) === selectedPeStrike} onClick={() => setLegStrike("PE", String(s))}>{String(
                       legs.find(
                         (l) => effectiveExpiry === expiry && Number(l.strike) === s && l.option_type === "PE",
                       )?.last_price ?? "—",
-                    )}
+                    )}{String(s) === selectedPeStrike ? " · Selected" : ""}</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           <p>
-            One expiry · provider-native quotes · selection pins both exact
-            contracts.
+            One expiry · provider-native quotes · each side selects its own exact contract.
           </p>
         </section>
         </div>

@@ -3,7 +3,54 @@ import assert from "node:assert/strict";
 import express from "express";
 import type { AddressInfo } from "node:net";
 import type { PrismaClient } from "@prisma/client";
-import { registerTradingAnalytics,loadTradingAnalytics } from "./tradingAnalytics";
+import { registerTradingAnalytics,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
+
+test("chart selection accepts independent CE and PE strikes while preserving legacy pair links", () => {
+  assert.deepEqual(resolveChartStrikeSelection({ strike: 23450 }), { ceStrike: 23450, peStrike: 23450 });
+  assert.deepEqual(resolveChartStrikeSelection({ strike: 23450, ceStrike: 23500, peStrike: 23400 }), { ceStrike: 23500, peStrike: 23400 });
+});
+
+test("charts endpoint resolves one exact CE and one exact PE at different strikes", async () => {
+  const calls: Array<{ sql: string; args: unknown[] }> = [];
+  const prisma = {
+    $queryRawUnsafe: async (sql: string, ...args: unknown[]) => {
+      calls.push({ sql, args });
+      if (sql.includes("FROM public.instruments s") && sql.includes("s.name=$2")) {
+        return [{ symbol: "NIFTY", label: "Nifty 50", token: "99926000", kind: "INDEX", optionType: "OPTIDX" }];
+      }
+      if (sql.includes("GROUP BY i.expiry,i.strike")) {
+        return [
+          { expiry: "2026-09-15", strike: 23400, ce_contracts: 0, pe_contracts: 1 },
+          { expiry: "2026-09-15", strike: 23500, ce_contracts: 1, pe_contracts: 0 },
+        ];
+      }
+      if (sql.includes("tradingsymbol LIKE '%CE'") && sql.includes("tradingsymbol LIKE '%PE'") && sql.includes("strike=$3::numeric")) {
+        return [
+          { exchange: "NFO", symbol_token: "ce-token", tradingsymbol: "NIFTY15SEP2623500CE", expiry: "2026-09-15", strike: 23500 },
+          { exchange: "NFO", symbol_token: "pe-token", tradingsymbol: "NIFTY15SEP2623400PE", expiry: "2026-09-15", strike: 23400 },
+        ];
+      }
+      return [];
+    },
+  } as unknown as PrismaClient;
+  const app = express(); registerTradingAnalytics(app, prisma);
+  const server = app.listen(0, "127.0.0.1"); await new Promise<void>((resolve) => server.once("listening", resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const response = await fetch(`${base}/v1/trading-analytics/charts?asOf=2026-09-10T10:00:00Z&expiry=2026-09-15&ceStrike=23500&peStrike=23400`);
+    assert.equal(response.status, 200);
+    const body = await response.json() as { panes: Array<{ identity: { tradingsymbol: string; strike?: number } }>; availableContracts: Array<{ strike: number; ce_contracts: number; pe_contracts: number }> };
+    assert.deepEqual(body.panes.slice(1).map((pane) => [pane.identity.tradingsymbol, pane.identity.strike]), [
+      ["NIFTY15SEP2623500CE", 23500],
+      ["NIFTY15SEP2623400PE", 23400],
+    ]);
+    assert.equal(body.availableContracts.length, 2);
+    const contractRead = calls.find((call) => call.sql.includes("strike=$3::numeric") && call.sql.includes("strike=$4::numeric"));
+    assert.deepEqual(contractRead?.args.slice(2, 4), [23500, 23400]);
+  } finally {
+    server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
 test("older cash history stays descriptive and does not fill missing selected-date matrix",async()=>{
   const calls:{sql:string;args:unknown[]}[]=[];
   const rows=[{market_date:"2026-09-03",participant_type:"DII",buy_value:10,sell_value:10,net_value:0}];

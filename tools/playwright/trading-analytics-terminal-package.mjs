@@ -152,7 +152,7 @@ try {
   await capture(page, "03-synchronized-cursor-evidence-1920x1080", false);
 
   await page.getByText(/^Measure A→B$/).click();
-  await page.getByRole("button", { name: "Fix pair", exact: true }).click();
+  await page.getByRole("button", { name: "Fix contracts", exact: true }).click();
   const start = page.locator('select[aria-label="Measurement start time"]:visible').first();
   const end = page.locator('select[aria-label="Measurement end time"]:visible').first();
   await start.selectOption({ index: 1 });

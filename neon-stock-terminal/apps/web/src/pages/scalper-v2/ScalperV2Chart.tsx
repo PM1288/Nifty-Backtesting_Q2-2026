@@ -35,7 +35,7 @@ export function ScalperV2Chart({
   id, title, subtitle, bars, interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
   fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "current", profileLabel = "Current OI",
   profileRangeExpanded = false,
-  signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, hoveredStrike = null,
+  signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, selectedPutStrike = null, hoveredStrike = null,
   drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; interval: number;
@@ -52,6 +52,7 @@ export function ScalperV2Chart({
   signalEvents?: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string }>;
   measurementTimes?: string[];
   selectedStrike?: number | null;
+  selectedPutStrike?: number | null;
   hoveredStrike?: number | null;
   drawingTool?: ScalperV2DrawingTool;
   drawings?: ScalperV2Drawing[];
@@ -345,14 +346,17 @@ export function ScalperV2Chart({
     const candle = candleRef.current; if (!candle || id !== "underlying") return;
     if (bodyRef.current) {
       bodyRef.current.dataset.selectedStrike = selectedStrike == null ? "" : String(selectedStrike);
+      bodyRef.current.dataset.selectedCeStrike = selectedStrike == null ? "" : String(selectedStrike);
+      bodyRef.current.dataset.selectedPeStrike = selectedPutStrike == null ? "" : String(selectedPutStrike);
       bodyRef.current.dataset.hoveredStrike = hoveredStrike == null ? "" : String(hoveredStrike);
     }
     selectionLinesRef.current.forEach((line) => candle.removePriceLine(line));
     selectionLinesRef.current = [
-      selectedStrike != null && levelInObservedSession(selectedStrike, sessionBounds) ? { price: selectedStrike, title: "Selected", color: "#6651d9", lineWidth: 2 as const, lineStyle: 2 as const } : null,
-      hoveredStrike != null && hoveredStrike !== selectedStrike && levelInObservedSession(hoveredStrike, sessionBounds) ? { price: hoveredStrike, title: "Hovered strike", color: "#0f766e", lineWidth: 1 as const, lineStyle: 3 as const } : null,
+      selectedStrike != null && levelInObservedSession(selectedStrike, sessionBounds) ? { price: selectedStrike, title: "Selected CE", color: "#2563eb", lineWidth: 2 as const, lineStyle: 2 as const } : null,
+      selectedPutStrike != null && selectedPutStrike !== selectedStrike && levelInObservedSession(selectedPutStrike, sessionBounds) ? { price: selectedPutStrike, title: "Selected PE", color: "#a86600", lineWidth: 2 as const, lineStyle: 2 as const } : null,
+      hoveredStrike != null && hoveredStrike !== selectedStrike && hoveredStrike !== selectedPutStrike && levelInObservedSession(hoveredStrike, sessionBounds) ? { price: hoveredStrike, title: "Hovered strike", color: "#0f766e", lineWidth: 1 as const, lineStyle: 3 as const } : null,
     ].flatMap((options) => options ? [candle.createPriceLine({ ...options, axisLabelVisible: true })] : []);
-  }, [hoveredStrike, id, selectedStrike, sessionBounds]);
+  }, [hoveredStrike, id, selectedPutStrike, selectedStrike, sessionBounds]);
 
   useEffect(() => {
     markerRef.current?.setMarkers(signalEvents.flatMap((event) => {
@@ -384,11 +388,15 @@ export function ScalperV2Chart({
   }, [fitRequest, horizontalView, data]);
 
   useEffect(() => {
-    const chart = chartRef.current; if (!chart || !externalRange || externalRange.source === id) return;
+    const chart = chartRef.current;
+    // An exact contract can be selectable before retained candles exist. Keep
+    // that pane in its explicit empty state; Lightweight Charts cannot apply a
+    // time range to a series with no time points.
+    if (!chart || data.length === 0 || !externalRange || externalRange.source === id) return;
     if (hostRef.current) { hostRef.current.dataset.visibleFrom = String(externalRange.from); hostRef.current.dataset.visibleTo = String(externalRange.to); }
     suppressRangeRef.current += 1; chart.timeScale().setVisibleRange({ from: externalRange.from as UTCTimestamp, to: externalRange.to as UTCTimestamp });
     requestAnimationFrame(() => { suppressRangeRef.current = Math.max(0, suppressRangeRef.current - 1); });
-  }, [externalRange, id]);
+  }, [data.length, externalRange, id]);
 
   useEffect(() => {
     const chart = chartRef.current, candle = candleRef.current; if (!chart || !candle) return;

@@ -1,5 +1,22 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-10 — Independent CE and PE selection in both Scalpers
+
+- Existing `view=scalper` and `view=scalper_v2` now expose separate exact CE and
+  PE strike selectors under one selected expiry. Legacy `strike=` URLs still
+  initialize a same-strike pair; mixed contracts persist as `ceStrike=` and
+  `peStrike=`.
+- API lookup, cache keys, headers, inspector, ladder, selected-strike guides,
+  measurement locks and exports preserve both exact identities. V7 and the
+  canonical A-open/B-close calculation were not changed.
+- Browser testing also found and fixed a fast-selection overwrite race and a V2
+  empty-contract crash. A selected contract with no retained candles now stays
+  selected and shows unavailable instead of borrowing another contract.
+- Verification: web 147/147 and API 196/196 tests, both typechecks/builds,
+  focused helper/API tests, candidate image build, and authenticated isolated
+  Chromium 10/10 PASS. Production was not changed. Full report:
+  `docs/trading-analytics/SCALPER_INDEPENDENT_CE_PE_20260910.md`.
+
 ## 2026-09-10 — Monthly Open v2 removes the previous-close gate
 
 - User-authorised rule revision: Monthly Open now has six eligibility gates;

@@ -37,6 +37,12 @@ const querySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
 });
+export function resolveChartStrikeSelection(input: { strike?: number; ceStrike?: number; peStrike?: number }) {
+  return {
+    ceStrike: input.ceStrike ?? input.strike,
+    peStrike: input.peStrike ?? input.strike,
+  };
+}
 export async function loadTradingAnalytics(
   prisma: PrismaClient,
   asOf: string,
@@ -496,6 +502,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
         strike: z.coerce.number().positive().optional(),
+        ceStrike: z.coerce.number().positive().optional(),
+        peStrike: z.coerce.number().positive().optional(),
         interval: z.coerce
           .number()
           .refine((n) => [1, 5, 15, 60].includes(n))
@@ -533,19 +541,27 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
                AND b.created_at<=$1::timestamptz
            )
          GROUP BY i.expiry,i.strike
-         HAVING count(*) FILTER (WHERE i.tradingsymbol LIKE '%CE')>0
-            AND count(*) FILTER (WHERE i.tradingsymbol LIKE '%PE')>0
+         HAVING (count(*) FILTER (WHERE i.tradingsymbol LIKE '%CE')>0
+             OR count(*) FILTER (WHERE i.tradingsymbol LIKE '%PE')>0)
          ORDER BY i.expiry,i.strike`,
         asOf,q.data.historyDays,underlying.symbol,underlying.optionType,
       );
       // The canonical Go master has already converted broker strike units to rupees.
+      const selectedStrikes = resolveChartStrikeSelection(q.data);
       const contracts =
-        q.data.expiry && q.data.strike
+        q.data.expiry && (selectedStrikes.ceStrike || selectedStrikes.peStrike)
           ? await prisma.$queryRawUnsafe<Facts[]>(
-              `SELECT exchange,symbol_token,tradingsymbol,expiry::text,strike::float8,lotsize,updated_at FROM instruments WHERE name=$4 AND exchange='NFO' AND instrumenttype=$5 AND expiry=$2::date AND strike=$3::numeric AND updated_at<=$1::timestamptz ORDER BY tradingsymbol`,
+              `SELECT exchange,symbol_token,tradingsymbol,expiry::text,strike::float8,lotsize,updated_at
+               FROM instruments
+               WHERE name=$5 AND exchange='NFO' AND instrumenttype=$6 AND expiry=$2::date
+                 AND ((tradingsymbol LIKE '%CE' AND $3::numeric IS NOT NULL AND strike=$3::numeric)
+                   OR (tradingsymbol LIKE '%PE' AND $4::numeric IS NOT NULL AND strike=$4::numeric))
+                 AND updated_at<=$1::timestamptz
+               ORDER BY tradingsymbol`,
               asOf,
               q.data.expiry,
-              q.data.strike,
+              selectedStrikes.ceStrike ?? null,
+              selectedStrikes.peStrike ?? null,
               underlying.symbol,underlying.optionType,
             )
           : [];

@@ -11,12 +11,13 @@ try{
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  let payload;page.on('response',async r=>{if(r.url().includes('/v1/trading-analytics/charts?')&&r.ok())payload=await r.json();});
  await page.goto(`${base}/strategy/trading-analytics?view=scalper`);
- const fix=page.getByRole('button',{name:'Fix pair for measurement',exact:true});await fix.waitFor({timeout:60000});
+ const measure=page.getByText('Measure A→B',{exact:true});await measure.waitFor({timeout:60000});await measure.click();
+ const fix=page.getByRole('button',{name:'Fix contracts',exact:true});await fix.waitFor({timeout:60000});
  await page.getByText('Loading retained minute paths…',{exact:true}).waitFor({state:'hidden',timeout:60000});
  check('5m default',await page.getByRole('combobox',{name:'Interval',exact:true}).inputValue()==='5');
  check('quantity defaults 65',await page.getByRole('spinbutton',{name:'Measurement quantity'}).inputValue()==='65');
  const url=page.url();await fix.click();check('fix pair does not write URL',page.url()===url);
- check('pair selector locked',await page.getByRole('combobox',{name:'Pinned paired strike'}).isDisabled());
+ check('contract selectors locked',await page.getByRole('combobox',{name:'Selected CE strike'}).isDisabled()&&await page.getByRole('combobox',{name:'Selected PE strike'}).isDisabled());
  const start=page.getByRole('combobox',{name:'Measurement start time'}),end=page.getByRole('combobox',{name:'Measurement end time'});
  const times=await start.locator('option').evaluateAll(ns=>ns.map(n=>n.value).filter(Boolean));
  const common=times.filter(t=>payload.panes.length===3&&payload.panes.every(p=>p.bars.some(b=>b.end===t&&b.closed&&b.close!=null)));

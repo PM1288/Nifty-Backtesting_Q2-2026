@@ -62,6 +62,18 @@ try {
   });
   check("SV2-FIX-007", sectionGap != null && sectionGap >= 0 && sectionGap <= 16, `${sectionGap}px workspace-to-analytics gap`);
 
+  const oiAxisContexts = await page.evaluate(() => ["v2-oi-axis-context", "v2-deltaoi-axis-context"].map((testId) => {
+    const element = document.querySelector(`[data-testid="${testId}"]`);
+    const card = element?.closest("article");
+    return {
+      testId,
+      text: element?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+      contained: Boolean(element && card && element.getBoundingClientRect().left >= card.getBoundingClientRect().left && element.getBoundingClientRect().right <= card.getBoundingClientRect().right + 1),
+    };
+  }));
+  check("SV2-OI-AXIS-LABELS", oiAxisContexts[0]?.text.includes("Y Open interest · provider units") && oiAxisContexts[0]?.text.includes("X Strike") && oiAxisContexts[1]?.text.includes("Y Signed ΔOI · provider units") && oiAxisContexts[1]?.text.includes("X Strike"), JSON.stringify(oiAxisContexts));
+  check("SV2-OI-AXIS-CONTAINMENT", oiAxisContexts.every((item) => item.contained), JSON.stringify(oiAxisContexts));
+
   await page.getByTestId("v2-chart-body-underlying").waitFor({ state: "attached", timeout: 90_000 });
   const profileAlignment = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => {
     const geometry = JSON.parse(body.dataset.profileGeometry || "[]");

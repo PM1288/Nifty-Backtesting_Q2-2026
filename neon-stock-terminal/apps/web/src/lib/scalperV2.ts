@@ -6,6 +6,23 @@ const finite = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+/** Compact axis-only formatter. Exact provider-native OI remains in tooltips and exports. */
+export function formatOiAxisValue(value: unknown): string {
+  const parsed = finite(value);
+  if (parsed == null) return "—";
+  const absolute = Math.abs(parsed);
+  const sign = parsed < 0 ? "−" : "";
+  const scaled = absolute >= 10_000_000
+    ? [absolute / 10_000_000, "Cr"] as const
+    : absolute >= 100_000
+      ? [absolute / 100_000, "L"] as const
+      : absolute >= 1_000
+        ? [absolute / 1_000, "K"] as const
+        : [absolute, ""] as const;
+  const digits = scaled[0] >= 100 || Number.isInteger(scaled[0]) ? 0 : scaled[0] >= 10 ? 1 : 2;
+  return `${sign}${scaled[0].toLocaleString("en-IN", { maximumFractionDigits: digits })}${scaled[1]}`;
+}
+
 export type OiLeader = {
   side: "CE" | "PE";
   rank: 1 | 2;

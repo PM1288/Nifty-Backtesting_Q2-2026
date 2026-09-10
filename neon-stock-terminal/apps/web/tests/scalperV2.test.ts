@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { maxPainDistribution, oiPcr, rankCurrentOi } from "../src/lib/scalperV2";
+import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../src/lib/scalperV2";
 
 const ranking = [
   [23000, 1000, 9000], [23100, 2500, 8000], [23450, 6000, 2000],
@@ -41,4 +41,12 @@ test("Scalper V2 PCR and combined max-pain use common-unit arithmetic", () => {
   ]);
   assert.deepEqual(result.points.map((point) => point.totalPayout), [30, 20]);
   assert.deepEqual(result.candidates, [110]);
+});
+
+test("Scalper V2 OI axes stay compact while preserving sign and missingness", () => {
+  assert.equal(formatOiAxisValue(12_000_000), "1.2Cr");
+  assert.equal(formatOiAxisValue(250_000), "2.5L");
+  assert.equal(formatOiAxisValue(-36_739), "−36.7K");
+  assert.equal(formatOiAxisValue(0), "0");
+  assert.equal(formatOiAxisValue(null), "—");
 });

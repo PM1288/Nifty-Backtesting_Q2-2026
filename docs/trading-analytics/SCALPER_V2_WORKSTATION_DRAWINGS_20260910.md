@@ -85,3 +85,12 @@ separate. Server drawing sync was not invented; local recovery is labelled.
   `/tmp/scalper-v2-workstation-deployed-42404a5/` (not committed).
 - Rollback image:
   `trading-stack-n50-dashboard:pre-scalper-v2-workstation-42404a5`.
+
+## Horizontal delta-OI follow-up
+
+The Change in OI panel now uses grouped horizontal CE/PE bars. Strike is the
+category axis on the right-side Y edge; signed delta-OI is the X value axis
+with a visible zero origin. Positive values are green, negative values red,
+observed zero neutral, and CE/PE identity remains blue/yellow through borders.
+Missing comparisons remain null and the existing baseline-unavailable state is
+shown instead of an empty or fabricated chart.

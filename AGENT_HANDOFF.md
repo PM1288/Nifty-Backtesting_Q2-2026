@@ -4211,3 +4211,13 @@ or outcomes were deleted.
   Only `n50-dashboard` was recreated; it is healthy with zero restarts and
   public root/health return HTTP 200. Rollback image:
   `trading-stack-n50-dashboard:pre-scalper-v2-workstation-42404a5`.
+
+## 2026-09-10 — Scalper V2 horizontal delta-OI chart
+
+- Changed only the existing V2 Change in OI panel to grouped horizontal bars.
+  Strikes are on the right-side Y axis; signed provider-unit delta-OI is on X
+  with a true zero reference. CE/PE identity and positive/negative/zero/missing
+  semantics are preserved.
+- The production retained chain still has `0/20` comparable baselines, so its
+  truthful default remains `Baseline unavailable`; deterministic tests verify
+  the bar configuration that renders when comparable values exist.

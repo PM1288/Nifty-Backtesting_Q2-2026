@@ -103,8 +103,10 @@ try {
       contained: Boolean(element && card && element.getBoundingClientRect().left >= card.getBoundingClientRect().left && element.getBoundingClientRect().right <= card.getBoundingClientRect().right + 1),
     };
   }));
-  check("SV2-OI-AXIS-LABELS", oiAxisContexts[0]?.text.includes("Y Open interest · provider units") && oiAxisContexts[0]?.text.includes("X Strike") && oiAxisContexts[1]?.text.includes("Y Signed ΔOI · provider units") && oiAxisContexts[1]?.text.includes("X Strike"), JSON.stringify(oiAxisContexts));
+  check("SV2-OI-AXIS-LABELS", oiAxisContexts[0]?.text.includes("Y Open interest · provider units") && oiAxisContexts[0]?.text.includes("X Strike") && oiAxisContexts[1]?.text.includes("Y · right Strike") && oiAxisContexts[1]?.text.includes("X Signed ΔOI · provider units"), JSON.stringify(oiAxisContexts));
   check("SV2-OI-AXIS-CONTAINMENT", oiAxisContexts.every((item) => item.contained), JSON.stringify(oiAxisContexts));
+  const deltaOiOrientation = await page.locator('[data-deltaoi-orientation="horizontal"]').count();
+  check("SV2-DELTAOI-HORIZONTAL-RIGHT-Y", deltaOiOrientation === 1, `horizontal right-axis panels=${deltaOiOrientation}`);
 
   await page.getByTestId("v2-chart-body-underlying").waitFor({ state: "attached", timeout: 90_000 });
   const profileAlignment = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => {

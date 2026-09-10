@@ -95,6 +95,14 @@ observed zero neutral, and CE/PE identity remains blue/yellow through borders.
 Missing comparisons remain null and the existing baseline-unavailable state is
 shown instead of an empty or fabricated chart.
 
+The underlying price pane also defaults to a right-edge, strike-aligned ΔOI
+profile. Positive/negative bars diverge from a true centre zero line and use
+green/red fill with blue/yellow CE/PE outlines. `Profile OI` restores the
+current-OI magnitude view; `Profile ΔOI` restores signed change. When the
+retained-baseline field is absent but the provider supplies its declared
+`changeOi`, the UI labels that evidence `Provider-reported change in OI`
+instead of mislabelling it as a retained-baseline comparison.
+
 - Application commit: `adcd713` on canonical `master`.
 - Web typecheck and production build: PASS; web tests: PASS, 139/139.
 - Authenticated deployed local-gateway browser: 45/45 executable PASS, zero

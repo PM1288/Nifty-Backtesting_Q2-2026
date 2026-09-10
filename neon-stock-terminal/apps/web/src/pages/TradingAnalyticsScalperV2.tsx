@@ -92,6 +92,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [measureMode, setMeasureMode] = useState(false), [points, setPoints] = useState<string[]>([]), [quantity, setQuantity] = useState("65");
   const [measurementContext, setMeasurementContext] = useState<{ panes: ChartPane[]; interval: number; symbol: string; expiry: string; strike: string } | null>(null);
   const [drawingTool, setDrawingTool] = useState<ScalperV2DrawingTool>("select");
+  const [profileMode, setProfileMode] = useState<"current" | "change">("change");
   const pendingDrawingRef = useRef<{ tool: Exclude<ScalperV2DrawingTool, "select">; paneRole: ScalperV2PaneRole; anchors: ScalperV2DrawingAnchor[] } | null>(null);
   const [pendingDrawingCount, setPendingDrawingCount] = useState(0);
   const drawingStore = useScalperV2Drawings(symbol);
@@ -135,19 +136,25 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const contextRows = useMemo(() => rankSource.map((row) => ({ ...row, ranking_scope: metricLegs.length ? "Observed retained cohort" : "Nearest paired observed window", analysis_as_of: asOf })), [asOf, metricLegs.length, rankSource]);
   const strikeRows = useMemo(() => [...new Set(rankSource.map((row) => numeric(row.strike)).filter((value): value is number => value != null))].sort((a, b) => a - b), [rankSource]);
   const nearestSpotStrike = spot == null || strikeRows.length === 0 ? null : [...strikeRows].sort((a, b) => Math.abs(a - spot) - Math.abs(b - spot))[0];
+  const deltaBasis = useMemo(() => rankSource.some((row) => numeric((row.oi_layers as Row | undefined)?.change) != null) ? "retained_baseline" as const : rankSource.some((row) => numeric(row.changeOi) != null) ? "provider_reported" as const : "unavailable" as const, [rankSource]);
+  const deltaBasisLabel = deltaBasis === "retained_baseline" ? "Retained baseline ΔOI" : deltaBasis === "provider_reported" ? "Provider-reported change in OI" : "Change in OI unavailable";
   const profileRows = useMemo(() => rankSource.flatMap((row) => {
     const strike = numeric(row.strike), currentOi = numeric(row.open_interest), optionSide = side(row);
-    return strike != null && currentOi != null && currentOi >= 0 && (optionSide === "CE" || optionSide === "PE") ? [{ side: optionSide as "CE" | "PE", strike, currentOi }] : [];
-  }), [rankSource]);
+    const changeOi = deltaBasis === "retained_baseline" ? numeric((row.oi_layers as Row | undefined)?.change) : deltaBasis === "provider_reported" ? numeric(row.changeOi) : null;
+    return strike != null && currentOi != null && currentOi >= 0 && (optionSide === "CE" || optionSide === "PE") ? [{ side: optionSide as "CE" | "PE", strike, currentOi, changeOi }] : [];
+  }), [deltaBasis, rankSource]);
   const { ceCurrent, peCurrent, ceChanges, peChanges } = useMemo(() => {
     const currentSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => numeric(rankSource.find((row) => side(row) === wanted && numeric(row.strike) === strike)?.open_interest));
     const changeSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => {
       const row = rankSource.find((candidate) => side(candidate) === wanted && numeric(candidate.strike) === strike);
-      return numeric((row?.oi_layers as Row | undefined)?.change);
+      return deltaBasis === "retained_baseline" ? numeric((row?.oi_layers as Row | undefined)?.change) : deltaBasis === "provider_reported" ? numeric(row?.changeOi) : null;
     });
     return { ceCurrent: currentSeries("CE"), peCurrent: currentSeries("PE"), ceChanges: changeSeries("CE"), peChanges: changeSeries("PE") };
-  }, [rankSource, strikeRows]);
-  const deltaState = useMemo(() => oiComparisonState([...ceCurrent, ...peCurrent], [...ceChanges, ...peChanges].map((value, index) => value == null ? null : (index < ceCurrent.length ? ceCurrent[index] : peCurrent[index - ceCurrent.length])! - value)), [ceChanges, ceCurrent, peChanges, peCurrent]);
+  }, [deltaBasis, rankSource, strikeRows]);
+  const deltaState = useMemo(() => {
+    if (deltaBasis === "provider_reported") { const values = [...ceChanges, ...peChanges], comparable = values.filter((value) => value != null).length; return { state: comparable === 0 ? "baseline_unavailable" as const : comparable === values.length ? "comparable" as const : "partial" as const, comparable, total: values.length }; }
+    return oiComparisonState([...ceCurrent, ...peCurrent], [...ceChanges, ...peChanges].map((value, index) => value == null ? null : (index < ceCurrent.length ? ceCurrent[index] : peCurrent[index - ceCurrent.length])! - value));
+  }, [ceChanges, ceCurrent, deltaBasis, peChanges, peCurrent]);
   const analyticOptions = useMemo<EChartsOption[]>(() => [
     { tooltip: { trigger: "axis" }, legend: { data: ["CE OI", "PE OI"], top: 2, left: 86 }, grid: { left: 72, right: 20, top: 38, bottom: 48 }, xAxis: { type: "category", data: strikeRows, name: "Strike", nameGap: 30 }, yAxis: { type: "value", min: 0, axisLine: { show: true }, axisTick: { show: true }, axisLabel: { formatter: formatOiAxisValue, margin: 9 }, splitNumber: 5 }, series: [{ name: "CE OI", type: "bar", data: ceCurrent, itemStyle: { color: "#2563eb" }, markLine: nearestSpotStrike == null ? undefined : { silent: true, symbol: "none", lineStyle: { color: "#0f766e", type: "dashed" }, label: { formatter: `Nearest ${nearestSpotStrike}\nspot ${number(spot)}` }, data: [{ xAxis: nearestSpotStrike }] } }, { name: "PE OI", type: "bar", data: peCurrent, itemStyle: { color: "#eab308" } }] },
     scalperV2HorizontalDeltaOiOption(strikeRows, ceChanges, peChanges),
@@ -209,6 +216,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setYLocked(false); }}>Visible Y</button>
       <button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setYLocked(false); }}>Manual Y</button>
       <button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button>
+      <button aria-pressed={profileMode === "current"} onClick={() => setProfileMode("current")}>Profile OI</button>
+      <button aria-pressed={profileMode === "change"} onClick={() => setProfileMode("change")}>Profile ΔOI</button>
       <button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button>
       <button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button>
       <button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button>
@@ -225,7 +234,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
         </nav>
         <div className={css.charts}>
-          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · index points" bars={underlying?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedStrike)} hoveredStrike={hoveredStrike} drawingTool={drawingTool} pendingDrawingCount={pendingDrawingCount} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingAnchor={collectDrawingAnchor} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · index points" bars={underlying?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} profileMode={profileMode} profileLabel={deltaBasisLabel} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedStrike)} hoveredStrike={hoveredStrike} drawingTool={drawingTool} pendingDrawingCount={pendingDrawingCount} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingAnchor={collectDrawingAnchor} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="call" title={`CE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} pendingDrawingCount={pendingDrawingCount} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingAnchor={collectDrawingAnchor} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="put" title={`PE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} pendingDrawingCount={pendingDrawingCount} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingAnchor={collectDrawingAnchor} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
         </div>
@@ -235,7 +244,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         <div className={css.premiums}><div className={`${css.premium} ${css.call}`}><b>CE · exact contract</b><strong>{price(inspectedRows[1]?.close ?? (inspectionMode === "latest" ? callLeg?.last_price : null))}</strong><small>{inspectionMode === "latest" ? "Completed close / retained quote" : inspectionLabel}</small></div><div className={`${css.premium} ${css.put}`}><b>PE · exact contract</b><strong>{price(inspectedRows[2]?.close ?? (inspectionMode === "latest" ? putLeg?.last_price : null))}</strong><small>{inspectionMode === "latest" ? "Completed close / retained quote" : inspectionLabel}</small></div></div>
         <table className={css.pairMetrics} aria-label="Selected pair latest snapshot metrics"><thead><tr><th>Latest snapshot metric</th><th className={css.callText}>CE</th><th className={css.putText}>PE</th></tr></thead><tbody>
           <tr><th>Open interest · provider units</th><td>{compact(callLeg?.open_interest)}</td><td>{compact(putLeg?.open_interest)}</td></tr>
-          <tr><th>Snapshot ΔOI · retained baseline</th><td className={signClass(legChangeOi(callLeg))}>{signed(legChangeOi(callLeg))}</td><td className={signClass(legChangeOi(putLeg))}>{signed(legChangeOi(putLeg))}</td></tr>
+          <tr><th>{deltaBasisLabel}</th><td className={signClass(legChangeOi(callLeg))}>{signed(legChangeOi(callLeg))}</td><td className={signClass(legChangeOi(putLeg))}>{signed(legChangeOi(putLeg))}</td></tr>
           <tr><th>IV · %</th><td>{number(callLeg?.implied_volatility)}</td><td>{number(putLeg?.implied_volatility)}</td></tr>
           <tr><th>Bid–ask spread · ₹</th><td>{price(legSpread(callLeg))}</td><td>{price(legSpread(putLeg))}</td></tr>
         </tbody></table>

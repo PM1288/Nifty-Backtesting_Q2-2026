@@ -116,6 +116,10 @@ try {
     return { count: errors.length, maximumError: errors.length ? Math.max(...errors) : null };
   });
   check("SV2-FIX-037", profileAlignment.count > 0 && profileAlignment.maximumError <= 2, JSON.stringify(profileAlignment));
+  check("SV2-PROFILE-DELTAOI-DEFAULT", await page.getByTestId("v2-oi-profile").getAttribute("data-mode") === "change", await page.getByTestId("v2-oi-profile").getAttribute("aria-label"));
+  await page.getByRole("button", { name: "Profile OI", exact: true }).click();
+  check("SV2-PROFILE-CURRENT-TOGGLE", await page.getByTestId("v2-oi-profile").getAttribute("data-mode") === "current", await page.getByTestId("v2-oi-profile").getAttribute("aria-label"));
+  await page.getByRole("button", { name: "Profile ΔOI", exact: true }).click();
 
   const dayRange = await page.getByTestId("v2-chart-host-underlying").evaluate((element) => `${element.dataset.visibleFrom}:${element.dataset.visibleTo}`);
   await page.getByRole("button", { name: "Last 30", exact: true }).click();

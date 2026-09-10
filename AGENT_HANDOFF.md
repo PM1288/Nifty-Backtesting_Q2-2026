@@ -4231,3 +4231,6 @@ or outcomes were deleted.
   Only `n50-dashboard` was recreated; it is healthy with zero restarts.
   Rollback image:
   `trading-stack-n50-dashboard:pre-scalper-v2-horizontal-deltaoi-746b3f0`.
+- Follow-up adds the same signed ΔOI bars to the underlying pane's right-edge
+  strike-aligned profile, with `Profile OI`/`Profile ΔOI` controls and explicit
+  provider-reported versus retained-baseline labels.

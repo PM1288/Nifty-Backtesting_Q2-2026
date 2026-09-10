@@ -13,7 +13,7 @@ import css from "./ScalperV2.module.css";
 
 type Row = Record<string, unknown>;
 const EMPTY_LEVELS: Array<{ side: "CE" | "PE"; rank: number; strike: number; currentOi: number }> = [];
-const EMPTY_PROFILE: Array<{ side: "CE" | "PE"; strike: number; currentOi: number }> = [];
+const EMPTY_PROFILE: Array<{ side: "CE" | "PE"; strike: number; currentOi: number; changeOi: number | null }> = [];
 const EMPTY_SIGNALS: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string }> = [];
 const EMPTY_MEASUREMENT: string[] = [];
 const numeric = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
@@ -28,11 +28,11 @@ export type ScalperV2TimeRange = { from: number; to: number; source: string; seq
 export type ScalperV2InspectionMode = "latest" | "hover" | "locked";
 export type ScalperV2HorizontalView = "day" | "last30" | "last60";
 export type ScalperV2VerticalView = "session" | "visible" | "manual";
-type ProfileGeometry = { side: "CE" | "PE"; strike: number; currentOi: number; top: number; width: number; lane: number };
+type ProfileGeometry = { side: "CE" | "PE"; strike: number; value: number; top: number; width: number; lane: number };
 
 export function ScalperV2Chart({
   id, title, subtitle, bars, interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
-  fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE,
+  fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "current", profileLabel = "Current OI",
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, hoveredStrike = null,
   drawingTool = "select", pendingDrawingCount = 0, drawings = [], selectedDrawingId = null, onDrawingAnchor, onDrawingUpdate, onDrawingSelect,
 }: {
@@ -43,7 +43,9 @@ export function ScalperV2Chart({
   onCrosshair: (value: ScalperV2Crosshair) => void; onRangeChange: (value: ScalperV2TimeRange) => void;
   onTimeClick?: (time: string) => void;
   rankLevels?: Array<{ side: "CE" | "PE"; rank: number; strike: number; currentOi: number }>;
-  oiProfile?: Array<{ side: "CE" | "PE"; strike: number; currentOi: number }>;
+  oiProfile?: Array<{ side: "CE" | "PE"; strike: number; currentOi: number; changeOi: number | null }>;
+  profileMode?: "current" | "change";
+  profileLabel?: string;
   signalEvents?: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string }>;
   measurementTimes?: string[];
   selectedStrike?: number | null;
@@ -62,7 +64,7 @@ export function ScalperV2Chart({
   const markerRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const drawingPrimitiveRef = useRef<ScalperV2DrawingPrimitive | null>(null);
   const rankLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]), selectionLinesRef = useRef<IPriceLine[]>([]);
-  const profileRowsRef = useRef(oiProfile), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
+  const profileRowsRef = useRef(oiProfile), profileModeRef = useRef(profileMode), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
   const pointerFrameRef = useRef(0), profileFrameRef = useRef(0), dimensionsRef = useRef({ width: 0, height: 0 });
   const appliedFitRef = useRef<number | null>(null), setDataCountRef = useRef(0);
   const candleDataRef = useRef<CandlestickData<Time>[]>([]), emaDataRef = useRef<Array<{ time: Time; value: number }>>([]), updateCountRef = useRef(0);
@@ -71,6 +73,7 @@ export function ScalperV2Chart({
   callbacksRef.current = { onCrosshair, onRangeChange, onTimeClick, onDrawingAnchor, onDrawingUpdate, onDrawingSelect, drawingTool };
   drawingsRef.current = drawings;
   profileRowsRef.current = oiProfile;
+  profileModeRef.current = profileMode;
   const [profileGeometry, setProfileGeometry] = useState<ProfileGeometry[]>([]);
 
   const data = useMemo(() => bars.flatMap((bar): CandlestickData<Time>[] => {
@@ -95,16 +98,19 @@ export function ScalperV2Chart({
       const candle = candleRef.current, chart = chartRef.current, body = bodyRef.current;
       if (!candle || !chart || !body) return;
       const plotWidth = chart.timeScale().width(), lane = Math.max(0, Math.min(180, plotWidth * 0.22));
-      const maximum = Math.max(0, ...profileRowsRef.current.map((row) => row.currentOi));
+      const mode = profileModeRef.current;
+      const maximum = Math.max(0, ...profileRowsRef.current.map((row) => Math.abs(mode === "change" ? row.changeOi ?? 0 : row.currentOi)));
       setProfileGeometry(profileRowsRef.current.flatMap((row) => {
-        const top = candle.priceToCoordinate(row.strike), width = profileWidth(row.currentOi, maximum, lane);
-        return top == null || width == null || width === 0 ? [] : [{ ...row, top, width, lane }];
+        const value = mode === "change" ? row.changeOi : row.currentOi;
+        const top = candle.priceToCoordinate(row.strike), width = profileWidth(value == null ? null : Math.abs(value), maximum, mode === "change" ? lane / 2 : lane);
+        return top == null || value == null || width == null || width === 0 ? [] : [{ side: row.side, strike: row.strike, value, top, width, lane }];
       }));
       body.dataset.profileLaneWidth = String(Math.round(lane * 100) / 100);
       body.dataset.profileRows = String(profileRowsRef.current.length);
       body.dataset.profileGeometry = JSON.stringify(profileRowsRef.current.flatMap((row) => {
-        const coordinate = candle.priceToCoordinate(row.strike), width = profileWidth(row.currentOi, maximum, lane);
-        return coordinate == null || width == null ? [] : [{ side: row.side, strike: row.strike, coordinate, width }];
+        const value = mode === "change" ? row.changeOi : row.currentOi;
+        const coordinate = candle.priceToCoordinate(row.strike), width = profileWidth(value == null ? null : Math.abs(value), maximum, mode === "change" ? lane / 2 : lane);
+        return coordinate == null || value == null || width == null ? [] : [{ side: row.side, strike: row.strike, coordinate, width, value, mode }];
       }));
     });
   };
@@ -229,6 +235,7 @@ export function ScalperV2Chart({
   }, [id]);
 
   useEffect(() => { drawingPrimitiveRef.current?.setData(drawings, selectedDrawingId); }, [drawings, selectedDrawingId]);
+  useEffect(() => { scheduleProfile(); }, [oiProfile, profileMode]);
 
   useEffect(() => {
     const candle = candleRef.current, ema = emaRef.current;
@@ -332,7 +339,7 @@ export function ScalperV2Chart({
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{pendingDrawingCount + 1}/{drawingAnchorCount(drawingTool)} · click {pendingDrawingCount === 0 ? "first" : "next"} anchor</div>}
-      {id === "underlying" && profileGeometry.length > 0 && <div className={css.oiProfile} data-testid="v2-oi-profile" aria-hidden="true"><span>Current OI</span>{profileGeometry.map((row) => <i key={`${row.side}-${row.strike}`} className={row.side === "CE" ? css.profileCe : css.profilePe} style={{ top: row.top + (row.side === "CE" ? -5 : 2), width: row.width, maxWidth: row.lane }} title={`${row.side} ${row.strike} OI ${row.currentOi}`} />)}</div>}
+      {id === "underlying" && <div className={css.oiProfile} data-testid="v2-oi-profile" data-mode={profileMode} aria-label={`${profileMode === "change" ? profileLabel : "Current OI"} horizontal bars aligned to underlying strikes`}><span>{profileMode === "change" ? "ΔOI" : "Current OI"}</span>{profileGeometry.map((row) => <i key={`${row.side}-${row.strike}`} className={`${row.side === "CE" ? css.profileCe : css.profilePe} ${profileMode === "change" ? row.value > 0 ? css.profilePositive : css.profileNegative : ""}`} style={profileMode === "change" ? row.value > 0 ? { top: row.top + (row.side === "CE" ? -5 : 2), left: "50%", width: row.width, maxWidth: row.lane / 2 } : { top: row.top + (row.side === "CE" ? -5 : 2), right: "50%", width: row.width, maxWidth: row.lane / 2 } : { top: row.top + (row.side === "CE" ? -5 : 2), right: 0, width: row.width, maxWidth: row.lane }} title={`${row.side} ${row.strike} ${profileMode === "change" ? "ΔOI" : "OI"} ${row.value}`} />)}</div>}
     </div>
   </section>;
 }

@@ -3986,3 +3986,13 @@ or outcomes were deleted.
   PASS. Deployment and authenticated browser timing are recorded by the
   follow-up entry after cutover.
 - Detailed evidence: `docs/trading-analytics/SCALPER_LOAD_LATENCY_20260910.md`.
+- Final canonical commit `696d904` is pushed to `master` and deployed as
+  dashboard image
+  `sha256:2c733181c40b540df4435c1d6fe322af99b46e4cb9a4f96c4c6a8d811dcaee1e`;
+  container is healthy with zero restarts. Authenticated NIFTY browser
+  acceptance passed 41/41 with final server timings 1.004s context + 0.297s
+  charts. Authenticated IDFCFIRSTB rendered all five baseline panes and CE/PE
+  without page errors in 9.592s total browser time (4.316s context + 0.984s
+  charts). Evidence:
+  `output/playwright/scalper-latency-deployed-final-20260910/`.
+- Rollback tag: `trading-stack-n50-dashboard:pre-scalper-latency-20260910`.

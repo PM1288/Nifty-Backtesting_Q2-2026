@@ -49,10 +49,23 @@ introduced.
 
 ## Validation and rollback
 
-API and web typechecks, complete unit suites, production builds and the
-canonical preservation gate are required before deployment. Live authenticated
-browser evidence must confirm NIFTY and a stock-F&O symbol load exact three-pane
-charts, retained OI and no page errors.
+Deployed commit `696d904` produced dashboard image
+`sha256:2c733181c40b540df4435c1d6fe322af99b46e4cb9a4f96c4c6a8d811dcaee1e`.
+Web typecheck/build and 118/118 tests passed; API typecheck/build and 192/192
+tests passed; the canonical repository gate passed.
+
+The final authenticated NIFTY browser run passed 41/41 checks. Its observed
+server timings were 1.004 seconds for Scalper context and 0.297 seconds for the
+three-pane chart response. A separate authenticated IDFCFIRSTB browser run
+rendered five baseline pane labels plus CE/PE with zero page errors in 9.592
+seconds including application navigation/assets; its API requests were 4.316
+seconds for context and 0.984 seconds for charts. Live latency still varies with
+the 245 GB database's collector/analytics I/O, but the former 20–30 second
+serial dependency is removed.
+
+Ignored browser evidence:
+`output/playwright/scalper-latency-deployed-final-20260910/`.
 
 Rollback is application-only: recreate the prior dashboard image recorded in
-the final handoff. No database rollback is required.
+the final handoff. No database rollback is required. Rollback tag:
+`trading-stack-n50-dashboard:pre-scalper-latency-20260910`.

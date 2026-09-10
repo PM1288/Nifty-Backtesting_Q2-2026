@@ -103,6 +103,12 @@ retained-baseline field is absent but the provider supplies its declared
 `changeOi`, the UI labels that evidence `Provider-reported change in OI`
 instead of mislabelling it as a retained-baseline comparison.
 
+Final overlay release: application commit `27d393d`, deployed image
+`sha256:b5c702addc0ef3515b46ab003858e37980eb118d880bd3ea47335d323222c0cc`.
+Authenticated deployed browser verification passed 47/47 executable checks
+with zero failures; headed DPR2 remains the sole blocked check. Runtime
+evidence is in `/tmp/scalper-v2-profile-deltaoi-deployed-27d393d/`.
+
 - Application commit: `adcd713` on canonical `master`.
 - Web typecheck and production build: PASS; web tests: PASS, 139/139.
 - Authenticated deployed local-gateway browser: 45/45 executable PASS, zero

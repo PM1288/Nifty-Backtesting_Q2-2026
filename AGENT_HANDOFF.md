@@ -4234,3 +4234,7 @@ or outcomes were deleted.
 - Follow-up adds the same signed ΔOI bars to the underlying pane's right-edge
   strike-aligned profile, with `Profile OI`/`Profile ΔOI` controls and explicit
   provider-reported versus retained-baseline labels.
+- Final application commit `27d393d` is deployed as dashboard image
+  `sha256:b5c702addc0ef3515b46ab003858e37980eb118d880bd3ea47335d323222c0cc`.
+  Deployed browser checks pass 47/47 executable checks with zero failures;
+  headed DPR2 remains blocked.

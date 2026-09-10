@@ -88,6 +88,16 @@ try {
     const csv = downloadPath ? await fs.readFile(downloadPath, "utf8") : "";
     check(`${viewport.name} CSV name`, download.suggestedFilename() === "monthly-close-vs-open-comparison.csv");
     check(`${viewport.name} CSV fields`, csv.includes("close_end_return_pct") && csv.includes("open_end_return_pct"));
+    await page.getByRole("link", { name: "Monthly Close", exact: true }).click();
+    await page.waitForURL(/entryMethod=MONTHLY_CLOSURE/);
+    const method = page.locator("label", { hasText: "Entry method" }).locator("select");
+    await method.waitFor();
+    check(`${viewport.name} Close UI`, await method.inputValue() === "MONTHLY_CLOSURE");
+    await page.getByRole("link", { name: "Monthly Open", exact: true }).click();
+    await page.waitForURL(/entryMethod=MONTHLY_OPEN/);
+    check(`${viewport.name} Open UI`, await method.inputValue() === "MONTHLY_OPEN");
+    await page.getByRole("link", { name: "Close vs Open", exact: true }).click();
+    await page.getByRole("heading", { name: "Stock-month overlap and differences" }).waitFor();
     check(`${viewport.name} no API failures`, failures.length === 0, failures.join(" | "));
     check(`${viewport.name} no page overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: true });

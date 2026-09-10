@@ -4065,3 +4065,26 @@ or outcomes were deleted.
 - Rollback tags: `trading-stack-n50-dashboard:pre-monthly-open-3f35786` and
   `trading-stack-rolling-monthly:pre-monthly-open-3f35786` (worker rebuilt from
   pre-feature commit `c556858`).
+
+## 2026-09-10 — Monthly Close vs Open comparison
+
+- Added `/strategy/monthly?compare=close-open` as a separate read-only local
+  tab. It compares canonical selected candidates by stock plus calendar month
+  and separates In both, Monthly Close only and Monthly Open only.
+- The paired table shows both entry dates/prices, end returns, maximum
+  profit/drawdown, Open-minus-Close return difference and links to each original
+  evidence inspector. Filters and a paired CSV export are included; missing
+  outcomes remain missing.
+- Live retained-data reconciliation: 1,128 stock-month rows across 267 symbols;
+  91 in both, 1,036 Close-only and 1 Open-only. Counts are derived dynamically.
+- Existing calculation/API versions remain unchanged. Browser navigation was
+  explicitly switched among Close, Open and comparison views without stale
+  entry-method state.
+- Release commits `34c47b5` and `4a2a9bc` are pushed to `master`. Dashboard
+  image `sha256:0bb88be4d6aae374e0c7163802556ce6361a63263a491564ef08e6fe3dee0d1b`
+  is healthy with zero restarts; rolling worker was not recreated.
+- Checks: web 124/124, API 193/193, both typechecks/builds, canonical gate, and
+  deployed authenticated browser 40/40 at 1440/390 PASS. Evidence:
+  `docs/rolling-monthly/MONTHLY_CLOSE_OPEN_COMPARISON_2026-09-10.md` and
+  runtime-only `/tmp/monthly-comparison-4a2a9bc-final/`.
+- Rollback: `trading-stack-n50-dashboard:pre-monthly-comparison-34c47b5`.

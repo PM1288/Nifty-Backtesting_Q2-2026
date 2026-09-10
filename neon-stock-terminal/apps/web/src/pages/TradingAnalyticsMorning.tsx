@@ -26,6 +26,9 @@ const tint = (v: unknown) =>
       : Number(v) > 0
         ? styles.positive
         : "";
+const participantOrder = ["FII", "Pro", "Client", "DII"];
+const participantLabel = (type: unknown) =>
+  type === "Client" ? "Client (reported)" : String(type ?? "Unavailable");
 export function TradingAnalyticsMorning({
   activity,
   participants,
@@ -185,6 +188,91 @@ export function TradingAnalyticsMorning({
           participant. Missing reports remain unavailable, never zero.
           Percentage change is shown in percentage points.
         </p>
+      </section>
+      <section className={styles.morningWideSection} data-testid="morning-participant-comparison">
+        <h2>Participant index options · current vs previous report</h2>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Participant call and put comparison scroll area">
+          <table aria-label="FII Pro Client and DII call put comparison" data-testid="morning-participant-summary-table">
+            <thead>
+              <tr>
+                <th rowSpan={2}>Participant</th>
+                <th rowSpan={2}>Previous report</th>
+                <th colSpan={3}>Net calls · contracts</th>
+                <th colSpan={3}>Net puts · contracts</th>
+                <th colSpan={3}>Options proxy · contracts</th>
+                <th rowSpan={2}>State</th>
+              </tr>
+              <tr>
+                <th>Previous</th><th>Current</th><th>Change</th>
+                <th>Previous</th><th>Current</th><th>Change</th>
+                <th>Previous</th><th>Current</th><th>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {participantOrder.map((type) => {
+                const row = participants.find((candidate) => candidate.client_type === type);
+                return (
+                  <tr key={type}>
+                    <th>{participantLabel(type)}</th>
+                    <td>{value(row?.previous_trade_date)}</td>
+                    <td className={tint(row?.previous_net_calls)}>{value(row?.previous_net_calls)}</td>
+                    <td className={tint(row?.net_calls)}>{value(row?.net_calls)}</td>
+                    <td className={tint(row?.delta_net_calls)}>{value(row?.delta_net_calls)}</td>
+                    <td className={tint(row?.previous_net_puts)}>{value(row?.previous_net_puts)}</td>
+                    <td className={tint(row?.net_puts)}>{value(row?.net_puts)}</td>
+                    <td className={tint(row?.delta_net_puts)}>{value(row?.delta_net_puts)}</td>
+                    <td className={tint(row?.previous_options_proxy)}>{value(row?.previous_options_proxy)}</td>
+                    <td className={tint(row?.options_proxy)}>{value(row?.options_proxy)}</td>
+                    <td className={tint(row?.delta_options_proxy)}>{value(row?.delta_options_proxy)}</td>
+                    <td>
+                      <button className={styles.metricButton} onClick={() => onInspect(row ?? { client_type: type, reason: "Participant unavailable" })}>
+                        {String(row?.comparison_state ?? "Unavailable").replaceAll("_", " ")}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Change = current report minus the preceding retained trading report for the same participant.
+          Client is the exchange-reported client class; it is not asserted to be retail-only.
+        </p>
+        <details open>
+          <summary>Yesterday comparison · detailed call/put calculations</summary>
+          <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Detailed participant option calculations scroll area">
+            <table aria-label="Detailed participant call and put calculations" data-testid="morning-participant-calculation-table">
+              <thead>
+                <tr>
+                  <th>Participant</th><th>Report</th>
+                  <th>Call long</th><th>Call short</th><th>Net calls = long − short</th>
+                  <th>Put long</th><th>Put short</th><th>Net puts = long − short</th>
+                  <th>Options proxy = net calls − net puts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {participantOrder.flatMap((type) => {
+                  const row = participants.find((candidate) => candidate.client_type === type);
+                  return ([
+                    ["Previous", "previous_option_index_call_long", "previous_option_index_call_short", "previous_net_calls", "previous_option_index_put_long", "previous_option_index_put_short", "previous_net_puts", "previous_options_proxy"],
+                    ["Current", "option_index_call_long", "option_index_call_short", "net_calls", "option_index_put_long", "option_index_put_short", "net_puts", "options_proxy"],
+                  ] as const).map(([report, callLong, callShort, netCalls, putLong, putShort, netPuts, proxy]) => (
+                    <tr key={`${type}-${report}`}>
+                      <th>{participantLabel(type)}</th><th>{report}</th>
+                      <td>{value(row?.[callLong])}</td><td>{value(row?.[callShort])}</td><td className={tint(row?.[netCalls])}>{value(row?.[netCalls])}</td>
+                      <td>{value(row?.[putLong])}</td><td>{value(row?.[putShort])}</td><td className={tint(row?.[netPuts])}>{value(row?.[netPuts])}</td>
+                      <td className={tint(row?.[proxy])}>{value(row?.[proxy])}</td>
+                    </tr>
+                  ));
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Net calls = index-call long contracts − index-call short contracts. Net puts = index-put long contracts − index-put short contracts. Options proxy = net calls − net puts. These are outstanding participant contracts, not premium cash flow or a trade recommendation.
+          </p>
+        </details>
       </section>
       <section>
         <h2>Original six-row market matrix</h2>

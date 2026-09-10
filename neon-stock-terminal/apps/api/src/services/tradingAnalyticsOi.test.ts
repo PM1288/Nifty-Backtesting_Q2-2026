@@ -47,6 +47,40 @@ test("session OI preserves exact interval-boundary ownership without carrying it
 });
 
 test("participant comparison keeps current net separate from previous-report change",()=>{
-  const result=participantComparison([{client_type:"FII",trade_date:"2026-09-08",net_futures:-40,options_proxy:20,futures_long_pct:30}],[{client_type:"FII",trade_date:"2026-09-07",net_futures:-60,options_proxy:25,futures_long_pct:28}])[0];
+  const result=participantComparison([{
+    client_type:"FII",trade_date:"2026-09-08",net_futures:-40,
+    option_index_call_long:150,option_index_call_short:90,net_calls:60,
+    option_index_put_long:80,option_index_put_short:40,net_puts:40,
+    options_proxy:20,futures_long_pct:30,
+  }],[{
+    client_type:"FII",trade_date:"2026-09-07",net_futures:-60,
+    option_index_call_long:120,option_index_call_short:80,net_calls:40,
+    option_index_put_long:70,option_index_put_short:55,net_puts:15,
+    options_proxy:25,futures_long_pct:28,
+  }])[0];
   assert.equal(result.net_futures,-40); assert.equal(result.delta_net_futures,20); assert.equal(result.delta_options_proxy,-5); assert.equal(result.futures_long_pct_change_pp,2);
+  assert.equal(result.previous_option_index_call_long,120);
+  assert.equal(result.previous_net_calls,40);
+  assert.equal(result.delta_option_index_call_long,30);
+  assert.equal(result.delta_option_index_call_short,10);
+  assert.equal(result.delta_net_calls,20);
+  assert.equal(result.previous_option_index_put_long,70);
+  assert.equal(result.previous_net_puts,15);
+  assert.equal(result.delta_option_index_put_long,10);
+  assert.equal(result.delta_option_index_put_short,-15);
+  assert.equal(result.delta_net_puts,25);
+});
+
+test("participant call and put comparison remains missing without a prior report",()=>{
+  const result=participantComparison([{
+    client_type:"Pro",trade_date:"2026-09-08",
+    option_index_call_long:100,option_index_call_short:70,net_calls:30,
+    option_index_put_long:50,option_index_put_short:60,net_puts:-10,
+    options_proxy:40,
+  }],[])[0];
+  assert.equal(result.comparison_state,"BASELINE_MISSING");
+  assert.equal(result.previous_net_calls,null);
+  assert.equal(result.delta_net_calls,null);
+  assert.equal(result.previous_net_puts,null);
+  assert.equal(result.delta_net_puts,null);
 });

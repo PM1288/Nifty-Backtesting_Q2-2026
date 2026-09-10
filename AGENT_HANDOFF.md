@@ -4037,3 +4037,31 @@ or outcomes were deleted.
   Authenticated deployed browser checks pass 17/17; evidence is under
   `output/playwright/scalper-v2-deployed-20260910/`. Rollback image:
   `trading-stack-n50-dashboard:pre-scalper-v2-20260910`.
+
+## 2026-09-10 — Monthly Open strategy and backtest
+
+- Added `absolute_monthly_open_bullish_long_v1` beside the unchanged Monthly
+  Close, expiry and first-session strategies. Monthly candle colour still uses
+  close versus open; every cross-period selection comparison uses opens, and
+  the research entry is the exact signal-session open.
+- Canonical route:
+  `/strategy/monthly?entryMethod=MONTHLY_OPEN`. Monthly Close and Monthly Open
+  are separate local tabs and remain unified in the all-method evidence table.
+- A 36-month replay over the current 268-stock F&O universe persisted 92
+  candidates: 61 positive, 31 negative, +4.0029% average end return, +9.8919%
+  average maximum profit and -30.7793% worst observed drawdown. Results are
+  gross and retain the disclosed retrospective-membership survivorship bias.
+- CLI/API exports, current-month 15-minute daemon refresh and basis-specific API
+  queries are live. The existing Monthly Close default is preserved.
+- Release commits `3f35786` and `99a0554` are pushed to `master`. Dashboard
+  image `sha256:405fab542954ecf6c2782a106384c2d3edd942b94a5dd7434f928e42f1d084e9`
+  and rolling worker image
+  `sha256:0146e31635db22fb4a336857aae7733fd397a49276c712cd865c94960ba942d7`
+  are healthy with zero restarts.
+- Verification: Python 25/25; web 121/121; API 193/193; focused rolling API 9/9;
+  both typechecks/builds and canonical gate PASS; deployed authenticated browser
+  28/28 at 1440 and 390. Evidence and full rule contract:
+  `docs/rolling-monthly/MONTHLY_OPEN_STRATEGY_2026-09-10.md`.
+- Rollback tags: `trading-stack-n50-dashboard:pre-monthly-open-3f35786` and
+  `trading-stack-rolling-monthly:pre-monthly-open-3f35786` (worker rebuilt from
+  pre-feature commit `c556858`).

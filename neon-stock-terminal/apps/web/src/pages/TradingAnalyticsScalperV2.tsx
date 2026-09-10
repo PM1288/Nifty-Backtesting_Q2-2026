@@ -136,21 +136,23 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const contextRows = useMemo(() => rankSource.map((row) => ({ ...row, ranking_scope: metricLegs.length ? "Observed retained cohort" : "Nearest paired observed window", analysis_as_of: asOf })), [asOf, metricLegs.length, rankSource]);
   const strikeRows = useMemo(() => [...new Set(rankSource.map((row) => numeric(row.strike)).filter((value): value is number => value != null))].sort((a, b) => a - b), [rankSource]);
   const nearestSpotStrike = spot == null || strikeRows.length === 0 ? null : [...strikeRows].sort((a, b) => Math.abs(a - spot) - Math.abs(b - spot))[0];
-  const deltaBasis = useMemo(() => rankSource.some((row) => numeric((row.oi_layers as Row | undefined)?.change) != null) ? "retained_baseline" as const : rankSource.some((row) => numeric(row.changeOi) != null) ? "provider_reported" as const : "unavailable" as const, [rankSource]);
+  const deltaBasis = useMemo(() => [...rankSource, ...legs].some((row) => numeric((row.oi_layers as Row | undefined)?.change) != null) ? "retained_baseline" as const : [...rankSource, ...legs].some((row) => numeric(row.changeOi) != null) ? "provider_reported" as const : "unavailable" as const, [legs, rankSource]);
   const deltaBasisLabel = deltaBasis === "retained_baseline" ? "Retained baseline ΔOI" : deltaBasis === "provider_reported" ? "Provider-reported change in OI" : "Change in OI unavailable";
   const profileRows = useMemo(() => rankSource.flatMap((row) => {
     const strike = numeric(row.strike), currentOi = numeric(row.open_interest), optionSide = side(row);
-    const changeOi = deltaBasis === "retained_baseline" ? numeric((row.oi_layers as Row | undefined)?.change) : deltaBasis === "provider_reported" ? numeric(row.changeOi) : null;
+    const exact = legs.find((candidate) => side(candidate) === optionSide && numeric(candidate.strike) === strike);
+    const changeOi = deltaBasis === "retained_baseline" ? numeric((row.oi_layers as Row | undefined)?.change ?? (exact?.oi_layers as Row | undefined)?.change) : deltaBasis === "provider_reported" ? numeric(row.changeOi ?? exact?.changeOi) : null;
     return strike != null && currentOi != null && currentOi >= 0 && (optionSide === "CE" || optionSide === "PE") ? [{ side: optionSide as "CE" | "PE", strike, currentOi, changeOi }] : [];
-  }), [deltaBasis, rankSource]);
+  }), [deltaBasis, legs, rankSource]);
   const { ceCurrent, peCurrent, ceChanges, peChanges } = useMemo(() => {
     const currentSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => numeric(rankSource.find((row) => side(row) === wanted && numeric(row.strike) === strike)?.open_interest));
     const changeSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => {
       const row = rankSource.find((candidate) => side(candidate) === wanted && numeric(candidate.strike) === strike);
-      return deltaBasis === "retained_baseline" ? numeric((row?.oi_layers as Row | undefined)?.change) : deltaBasis === "provider_reported" ? numeric(row?.changeOi) : null;
+      const exact = legs.find((candidate) => side(candidate) === wanted && numeric(candidate.strike) === strike);
+      return deltaBasis === "retained_baseline" ? numeric((row?.oi_layers as Row | undefined)?.change ?? (exact?.oi_layers as Row | undefined)?.change) : deltaBasis === "provider_reported" ? numeric(row?.changeOi ?? exact?.changeOi) : null;
     });
     return { ceCurrent: currentSeries("CE"), peCurrent: currentSeries("PE"), ceChanges: changeSeries("CE"), peChanges: changeSeries("PE") };
-  }, [deltaBasis, rankSource, strikeRows]);
+  }, [deltaBasis, legs, rankSource, strikeRows]);
   const deltaState = useMemo(() => {
     if (deltaBasis === "provider_reported") { const values = [...ceChanges, ...peChanges], comparable = values.filter((value) => value != null).length; return { state: comparable === 0 ? "baseline_unavailable" as const : comparable === values.length ? "comparable" as const : "partial" as const, comparable, total: values.length }; }
     return oiComparisonState([...ceCurrent, ...peCurrent], [...ceChanges, ...peChanges].map((value, index) => value == null ? null : (index < ceCurrent.length ? ceCurrent[index] : peCurrent[index - ceCurrent.length])! - value));

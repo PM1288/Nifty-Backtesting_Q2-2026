@@ -100,6 +100,24 @@ Follow-up verification after adding the explicit all-strikes fit:
 - Browser evidence:
   `/tmp/scalper-v2-all-strikes-local-final/screenshots/all-strikes-y.png`.
 
+The follow-up was deployed and repeated against the production container:
+
+- Application commit: `e8d3645` (`fix scalper v2 all strikes y fit`).
+- Deployed browser regression: 56 PASS, 0 FAIL and the same one headed-DPR2
+  visual check BLOCKED.
+- Deployed retained cohort: 10/10 strikes visible in All strikes Y with 0px
+  alignment error; Session Y remains the non-compressed default.
+- Dashboard image:
+  `sha256:661fe478b3777be70961eb04937c7b3c870e6047263ec91a6a7eff9c0edbce66`.
+- `n50-dashboard` is healthy with zero restarts. Local production Scalper V2 and
+  public `https://n50.nifty50today.co.in/n50/` return HTTP 200. The separate
+  `https://m.nifty50today.co.in/` edge still returned HTTP 502 and is not used
+  to claim the working n50 hostname failed.
+- Deployed browser evidence:
+  `/tmp/scalper-v2-all-strikes-deployed/screenshots/all-strikes-y.png`.
+- Follow-up rollback image:
+  `trading-stack-n50-dashboard:pre-scalper-v2-all-strikes-e8d3645`.
+
 The same authenticated regression was repeated against the deployed production
 container: 54 PASS, 0 FAIL and the same single headed-DPR2 check BLOCKED. The
 deployed screenshot confirms the native strike profile is inside the underlying

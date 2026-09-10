@@ -4345,3 +4345,10 @@ or outcomes were deleted.
   gate pass. Authenticated local browser checks have 56 PASS, 0 FAIL and one
   headed-DPR2 visual BLOCKED check. Real retained data changes from 2/10 to
   10/10 visible strikes with 0px coordinate error when All strikes Y is used.
+- Application commit `e8d3645` is pushed to canonical `master` and
+  `feat/scalper-v2-all-strikes-y-fit`, and deployed as dashboard image
+  `sha256:661fe478b3777be70961eb04937c7b3c870e6047263ec91a6a7eff9c0edbce66`.
+  Deployed browser checks repeat the same 56 PASS, 0 FAIL and one headed-DPR2
+  BLOCKED result. The container is healthy with zero restarts; local Scalper V2
+  and public `https://n50.nifty50today.co.in/n50/` return HTTP 200. Rollback:
+  `trading-stack-n50-dashboard:pre-scalper-v2-all-strikes-e8d3645`.

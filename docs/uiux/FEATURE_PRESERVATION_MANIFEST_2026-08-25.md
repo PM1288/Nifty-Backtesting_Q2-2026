@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Scalper V2 charting-upgrade v2: the existing native drawing layer now
+supports click-by-click trendline preview/commit, complete cancellation, endpoint
+and whole-object drag, CSS-pixel hit testing, exact UTC/price editing and one-step
+undo. This is the charting specification's immediate complete-trendline slice,
+not a claim that its later Strategy Lab, screener, alert or research stages are
+implemented. V1, V7, A-open/B-close, exact contracts, OI/delta-OI, Trade Log,
+SHAP, monthly views, collectors and no-order permissions remain unchanged. See
+`docs/trading-analytics/SCALPER_V2_CHARTING_UPGRADE_V2_20260910.md`.
+
 2026-09-10 Scalper V2 workstation drawings: the existing
 `view=scalper_v2` now owns native time/price drawing primitives, a left tool
 rail, Objects inspector, undo/redo and symbol-scoped local recovery. CE1-3 and

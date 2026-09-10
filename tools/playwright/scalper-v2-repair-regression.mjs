@@ -38,7 +38,11 @@ try {
     const first = { x: drawingBox.x + drawingBox.width * .25, y: drawingBox.y + drawingBox.height * .55 };
     const second = { x: drawingBox.x + drawingBox.width * .45, y: drawingBox.y + drawingBox.height * .35 };
     await page.getByRole("button", { name: "Trend line", exact: true }).click();
-    await page.mouse.move(first.x, first.y); await page.mouse.down(); await page.mouse.move(second.x, second.y, { steps: 4 }); await page.mouse.up(); await page.waitForTimeout(300);
+    await page.mouse.click(first.x, first.y); await page.mouse.move(second.x, second.y, { steps: 4 });
+    check("DRW02", /move for preview/.test(await drawingBody.locator('[aria-live="polite"]').innerText()), "Uncommitted two-click preview is active after anchor A");
+    await page.keyboard.press("Escape"); await page.waitForTimeout(100);
+    check("DRW04", await page.getByTestId("v2-drawing-objects").count() === 0, "Escape cancelled preview without committing an object");
+    await page.getByRole("button", { name: "Trend line", exact: true }).click(); await page.mouse.click(first.x, first.y); await page.mouse.move(second.x, second.y, { steps: 4 }); await page.mouse.click(second.x, second.y); await page.waitForTimeout(300);
     await page.getByTestId("v2-drawing-objects").waitFor({ state: "visible", timeout: 10_000 });
     const storedBeforeDrag = await page.evaluate(() => {
       const key = Object.keys(localStorage).find((value) => value.startsWith("trading-analytics:scalper-v2:drawings:v1:"));
@@ -51,6 +55,20 @@ try {
       return key ? JSON.parse(localStorage.getItem(key) || "[]") : [];
     });
     check("SV2-WORKSTATION-DRAW-DRAG", storedAfterDrag[0]?.anchors?.[0]?.time !== storedBeforeDrag[0]?.anchors?.[0]?.time || storedAfterDrag[0]?.anchors?.[0]?.price !== storedBeforeDrag[0]?.anchors?.[0]?.price, `${JSON.stringify(storedBeforeDrag[0]?.anchors?.[0])} -> ${JSON.stringify(storedAfterDrag[0]?.anchors?.[0])}`);
+    const midpoint = { x: (first.x + second.x) / 2 + 17.5, y: (first.y + second.y) / 2 - 11 };
+    await page.mouse.move(midpoint.x, midpoint.y); await page.mouse.down(); await page.mouse.move(midpoint.x + 28, midpoint.y + 18, { steps: 4 }); await page.mouse.up(); await page.waitForTimeout(300);
+    const storedAfterBodyDrag = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((value) => value.startsWith("trading-analytics:scalper-v2:drawings:v1:"));
+      return key ? JSON.parse(localStorage.getItem(key) || "[]") : [];
+    });
+    check("DRW08", storedAfterBodyDrag[0]?.anchors?.every((anchor, index) => anchor.time !== storedAfterDrag[0]?.anchors?.[index]?.time || anchor.price !== storedAfterDrag[0]?.anchors?.[index]?.price), `${JSON.stringify(storedAfterDrag[0]?.anchors)} -> ${JSON.stringify(storedAfterBodyDrag[0]?.anchors)}`);
+    const editedPrice = Number(storedAfterBodyDrag[0]?.anchors?.[0]?.price ?? 0) + 1.25;
+    await page.getByLabel("Anchor 1 price").fill(String(editedPrice)); await page.getByRole("button", { name: "Apply coordinates and style", exact: true }).click(); await page.waitForTimeout(250);
+    const storedAfterEditor = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((value) => value.startsWith("trading-analytics:scalper-v2:drawings:v1:"));
+      return key ? JSON.parse(localStorage.getItem(key) || "[]") : [];
+    });
+    check("DRW23", storedAfterEditor[0]?.anchors?.[0]?.price === editedPrice, `Exact price editor stored ${storedAfterEditor[0]?.anchors?.[0]?.price}`);
     await page.getByRole("button", { name: "Duplicate", exact: true }).click(); await page.waitForTimeout(250);
     check("SV2-WORKSTATION-OBJECT-DUPLICATE", await page.getByTestId("v2-drawing-objects").locator("li").count() === 2, "Object tree contains two independent drawings");
     await page.getByRole("button", { name: "Undo drawing", exact: true }).click();

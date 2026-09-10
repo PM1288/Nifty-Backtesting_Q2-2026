@@ -11,6 +11,37 @@ import type { ScalperV2Drawing, ScalperV2DrawingAnchor } from "./scalperV2Drawin
 
 type Point = { x: number; y: number };
 
+export type DrawingHit = { id: string; kind: "anchor" | "body"; anchorIndex: number | null };
+
+export function distanceToSegment(point: Point, start: Point, end: Point, extend: "segment" | "ray" | "line" = "segment"): number {
+  const dx = end.x - start.x, dy = end.y - start.y;
+  const denominator = dx * dx + dy * dy;
+  if (denominator === 0) return Math.hypot(point.x - start.x, point.y - start.y);
+  const projected = ((point.x - start.x) * dx + (point.y - start.y) * dy) / denominator;
+  const ratio = extend === "line" ? projected : extend === "ray" ? Math.max(0, projected) : Math.max(0, Math.min(1, projected));
+  return Math.hypot(point.x - (start.x + ratio * dx), point.y - (start.y + ratio * dy));
+}
+
+function bodyDistance(drawing: ScalperV2Drawing, points: Point[], point: Point): number {
+  const [a, b, c] = points;
+  if (!a) return Number.POSITIVE_INFINITY;
+  if (drawing.tool === "horizontal_line") return Math.abs(point.y - a.y);
+  if (drawing.tool === "horizontal_ray") return point.x < a.x ? Math.hypot(point.x - a.x, point.y - a.y) : Math.abs(point.y - a.y);
+  if (drawing.tool === "vertical_line") return Math.abs(point.x - a.x);
+  if ((drawing.tool === "trend_line" || drawing.tool === "trend_ray") && b) return distanceToSegment(point, a, b, drawing.tool === "trend_ray" ? "ray" : "segment");
+  if (drawing.tool === "rectangle" && b) {
+    const left = Math.min(a.x, b.x), right = Math.max(a.x, b.x), top = Math.min(a.y, b.y), bottom = Math.max(a.y, b.y);
+    return Math.min(distanceToSegment(point, { x: left, y: top }, { x: right, y: top }), distanceToSegment(point, { x: right, y: top }, { x: right, y: bottom }), distanceToSegment(point, { x: right, y: bottom }, { x: left, y: bottom }), distanceToSegment(point, { x: left, y: bottom }, { x: left, y: top }));
+  }
+  if (drawing.tool === "parallel_channel" && b && c) {
+    const offset = { x: c.x - a.x, y: c.y - a.y };
+    return Math.min(distanceToSegment(point, a, b), distanceToSegment(point, { x: a.x + offset.x, y: a.y + offset.y }, { x: b.x + offset.x, y: b.y + offset.y }));
+  }
+  if (drawing.tool === "fibonacci" && b) return Math.min(...[0, .236, .382, .5, .618, .786, 1].map((level) => Math.abs(point.y - (a.y + (b.y - a.y) * level))));
+  if ((drawing.tool === "measure" || drawing.tool === "long_position" || drawing.tool === "short_position") && b) return distanceToSegment(point, a, b);
+  return Math.hypot(point.x - a.x, point.y - a.y);
+}
+
 const dash = (style: ScalperV2Drawing["style"]["lineStyle"]) => style === "dashed" ? [7, 5] : style === "dotted" ? [2, 4] : [];
 const rgba = (hex: string, alpha: number) => {
   const normalized = /^#[0-9a-f]{6}$/i.test(hex) ? hex : "#6651d9";
@@ -45,7 +76,7 @@ class DrawingRenderer implements IPrimitivePaneRenderer {
         } else if (drawing.tool === "rectangle" && b) {
           context.rect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y)); context.fill();
         } else if (drawing.tool === "fibonacci" && b) {
-          for (const level of [0, .236, .382, .5, .618, 1]) {
+          for (const level of [0, .236, .382, .5, .618, .786, 1]) {
             const y = a.y + (b.y - a.y) * level; context.moveTo(Math.min(a.x, b.x), y); context.lineTo(Math.max(a.x, b.x), y);
             context.fillStyle = style.color; context.font = "11px system-ui"; context.fillText(`${(level * 100).toFixed(level === 0 || level === 1 ? 0 : 1)}%`, Math.min(a.x, b.x) + 3, y - 3);
           }
@@ -123,6 +154,24 @@ export class ScalperV2DrawingPrimitive implements ISeriesPrimitive<Time> {
     }
     return null;
   }
+
+  findTarget(x: number, y: number): DrawingHit | null {
+    const ordered = [...this.drawings].reverse().sort((left, right) => Number(right.id === this.selectedId) - Number(left.id === this.selectedId));
+    for (const drawing of ordered) {
+      if (!drawing.visible) continue;
+      const points = this.projected.get(drawing.id) ?? [];
+      const anchorIndex = points.findIndex((point) => Math.hypot(point.x - x, point.y - y) <= 9);
+      if (anchorIndex >= 0) return { id: drawing.id, kind: "anchor", anchorIndex };
+    }
+    for (const drawing of ordered) {
+      if (!drawing.visible) continue;
+      const points = this.projected.get(drawing.id) ?? [];
+      if (bodyDistance(drawing, points, { x, y }) <= 7) return { id: drawing.id, kind: "body", anchorIndex: null };
+    }
+    return null;
+  }
+
+  pointsFor(id: string): Point[] { return (this.projected.get(id) ?? []).map((point) => ({ ...point })); }
 }
 
 export function anchorFromChartPoint(param: { time?: Time; point?: Point }, coordinateToPrice: (coordinate: number) => number | null): ScalperV2DrawingAnchor | null {

@@ -7,8 +7,8 @@ import {
 import { levelInObservedSession, observedSessionBounds, paddedSessionBounds, profileWidth } from "../../lib/scalperV2Geometry";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
-import { anchorFromChartPoint, ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
-import { drawingAnchorCount, type ScalperV2Drawing, type ScalperV2DrawingAnchor, type ScalperV2DrawingTool } from "./scalperV2Drawings";
+import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
+import { createScalperV2Drawing, drawingAnchorCount, type ScalperV2Drawing, type ScalperV2DrawingAnchor, type ScalperV2DrawingTool } from "./scalperV2Drawings";
 import css from "./ScalperV2.module.css";
 
 type Row = Record<string, unknown>;
@@ -34,7 +34,7 @@ export function ScalperV2Chart({
   id, title, subtitle, bars, interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
   fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "current", profileLabel = "Current OI",
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, hoveredStrike = null,
-  drawingTool = "select", pendingDrawingCount = 0, drawings = [], selectedDrawingId = null, onDrawingAnchor, onDrawingUpdate, onDrawingSelect,
+  drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; interval: number;
   externalCrosshair: ScalperV2Crosshair; externalRange: ScalperV2TimeRange;
@@ -53,8 +53,7 @@ export function ScalperV2Chart({
   drawingTool?: ScalperV2DrawingTool;
   drawings?: ScalperV2Drawing[];
   selectedDrawingId?: string | null;
-  pendingDrawingCount?: number;
-  onDrawingAnchor?: (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: "underlying" | "call" | "put", anchor: ScalperV2DrawingAnchor) => void;
+  onDrawingCreate?: (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: "underlying" | "call" | "put", anchors: ScalperV2DrawingAnchor[]) => void;
   onDrawingUpdate?: (drawing: ScalperV2Drawing) => void;
   onDrawingSelect?: (id: string | null) => void;
 }) {
@@ -65,16 +64,20 @@ export function ScalperV2Chart({
   const drawingPrimitiveRef = useRef<ScalperV2DrawingPrimitive | null>(null);
   const rankLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]), selectionLinesRef = useRef<IPriceLine[]>([]);
   const profileRowsRef = useRef(oiProfile), profileModeRef = useRef(profileMode), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
+  const yLockedRef = useRef(yLocked);
   const pointerFrameRef = useRef(0), profileFrameRef = useRef(0), dimensionsRef = useRef({ width: 0, height: 0 });
   const appliedFitRef = useRef<number | null>(null), setDataCountRef = useRef(0);
   const candleDataRef = useRef<CandlestickData<Time>[]>([]), emaDataRef = useRef<Array<{ time: Time; value: number }>>([]), updateCountRef = useRef(0);
+  const cancelDrawingGestureRef = useRef<(() => void) | null>(null);
   const drawingsRef = useRef(drawings);
-  const callbacksRef = useRef({ onCrosshair, onRangeChange, onTimeClick, onDrawingAnchor, onDrawingUpdate, onDrawingSelect, drawingTool });
-  callbacksRef.current = { onCrosshair, onRangeChange, onTimeClick, onDrawingAnchor, onDrawingUpdate, onDrawingSelect, drawingTool };
+  const callbacksRef = useRef({ onCrosshair, onRangeChange, onTimeClick, onDrawingCreate, onDrawingUpdate, onDrawingSelect, drawingTool });
+  callbacksRef.current = { onCrosshair, onRangeChange, onTimeClick, onDrawingCreate, onDrawingUpdate, onDrawingSelect, drawingTool };
   drawingsRef.current = drawings;
   profileRowsRef.current = oiProfile;
   profileModeRef.current = profileMode;
+  yLockedRef.current = yLocked;
   const [profileGeometry, setProfileGeometry] = useState<ProfileGeometry[]>([]);
+  const [drawingHint, setDrawingHint] = useState<string | null>(null);
 
   const data = useMemo(() => bars.flatMap((bar): CandlestickData<Time>[] => {
     const time = chartTime(bar.end), open = numeric(bar.open), high = numeric(bar.high), low = numeric(bar.low), close = numeric(bar.close);
@@ -156,9 +159,8 @@ export function ScalperV2Chart({
         if (param.time != null) callbacksRef.current.onTimeClick?.(new Date(Number(param.time) * 1000).toISOString());
         return;
       }
-      const anchor = anchorFromChartPoint(param, (coordinate) => candle.coordinateToPrice(coordinate));
-      if (!anchor) { body.dataset.lastDrawingClickResult = "no-market-anchor"; return; }
-      callbacksRef.current.onDrawingAnchor?.(activeTool, id, anchor); body.dataset.lastDrawingClickResult = "published-market-anchor";
+      body.dataset.lastDrawingClickResult = "owned-by-drawing-controller";
+      return;
     });
     const rangeHandler = (range: { from: Time; to: Time } | null) => {
       if (suppressRangeRef.current > 0 || !range) return;
@@ -184,57 +186,113 @@ export function ScalperV2Chart({
       });
     };
     const observer = new ResizeObserver(resize); observer.observe(host);
-    let dragging: { id: string; anchorIndex: number; pointerId: number; drawing: ScalperV2Drawing } | null = null;
-    let creating: { tool: Exclude<ScalperV2DrawingTool, "select">; pointerId: number; anchor: ScalperV2DrawingAnchor } | null = null;
+    let dragging: { id: string; anchorIndex: number | null; pointerId: number; original: ScalperV2Drawing; drawing: ScalperV2Drawing; start: { x: number; y: number }; points: Array<{ x: number; y: number }> } | null = null;
+    let creating: { tool: Exclude<ScalperV2DrawingTool, "select">; anchors: ScalperV2DrawingAnchor[] } | null = null;
     const drawingAnchorAtPointer = (event: PointerEvent) => {
       const rect = body.getBoundingClientRect(), time = instance.timeScale().coordinateToTime(event.clientX - rect.left), price = candle.coordinateToPrice(event.clientY - rect.top);
       return time == null || price == null ? null : { time: Number(time), price };
+    };
+    const restoreChartInteraction = () => instance.applyOptions({
+      handleScroll: true,
+      handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: !yLockedRef.current }, axisDoubleClickReset: { time: true, price: !yLockedRef.current } },
+    });
+    const ownChartInteraction = () => instance.applyOptions({ handleScroll: false, handleScale: false });
+    const cancelDrawingGesture = () => {
+      creating = null; dragging = null; setDrawingHint(null);
+      drawingPrimitive.setData(drawingsRef.current, null);
+      restoreChartInteraction();
+    };
+    cancelDrawingGestureRef.current = cancelDrawingGesture;
+    const previewCreation = (pointer: ScalperV2DrawingAnchor) => {
+      if (!creating) return;
+      const required = drawingAnchorCount(creating.tool);
+      const anchors = [...creating.anchors, pointer];
+      while (anchors.length < required) anchors.push({ ...pointer });
+      const preview = createScalperV2Drawing({ id: "__scalper-v2-preview__", tool: creating.tool, paneRole: id, instrumentId: `preview:${id}`, anchors: anchors.slice(0, required) });
+      drawingPrimitive.setData([...drawingsRef.current, preview], preview.id);
     };
     const drawingPointerDown = (event: PointerEvent) => {
       const activeTool = callbacksRef.current.drawingTool;
       if (activeTool !== "select") {
         const anchor = drawingAnchorAtPointer(event); if (!anchor) return;
         suppressNextChartClick = true;
-        if (drawingAnchorCount(activeTool) === 1) callbacksRef.current.onDrawingAnchor?.(activeTool, id, anchor);
-        else { creating = { tool: activeTool, pointerId: event.pointerId, anchor }; body.setPointerCapture(event.pointerId); }
+        const required = drawingAnchorCount(activeTool);
+        if (required === 1) callbacksRef.current.onDrawingCreate?.(activeTool, id, [anchor]);
+        else if (!creating || creating.tool !== activeTool) {
+          creating = { tool: activeTool, anchors: [anchor] }; ownChartInteraction();
+          setDrawingHint(`1/${required} · move for preview, click next anchor · Esc cancels`);
+        } else {
+          const anchors = [...creating.anchors, anchor];
+          if (anchors.length >= required) {
+            const first = anchors[0], second = anchors[1];
+            if (first.time === second.time && first.price === second.price) {
+              setDrawingHint("Choose a different second anchor"); previewCreation(anchor);
+            } else {
+              callbacksRef.current.onDrawingCreate?.(activeTool, id, anchors); cancelDrawingGesture();
+            }
+          } else {
+            creating = { ...creating, anchors };
+            setDrawingHint(`${anchors.length}/${required} · move for preview, click next anchor · Esc cancels`);
+          }
+        }
         event.preventDefault(); event.stopPropagation(); return;
       }
-      const rect = body.getBoundingClientRect(), hit = drawingPrimitive.findAnchor(event.clientX - rect.left, event.clientY - rect.top);
+      const rect = body.getBoundingClientRect(), point = { x: event.clientX - rect.left, y: event.clientY - rect.top }, hit = drawingPrimitive.findTarget(point.x, point.y);
       if (!hit) return;
-      const drawing = drawingsRef.current.find((row) => row.id === hit.id); if (!drawing || drawing.locked) return;
-      dragging = { ...hit, pointerId: event.pointerId, drawing }; body.setPointerCapture(event.pointerId); callbacksRef.current.onDrawingSelect?.(drawing.id);
+      const drawing = drawingsRef.current.find((row) => row.id === hit.id); if (!drawing) return;
+      callbacksRef.current.onDrawingSelect?.(drawing.id);
+      if (drawing.locked) { event.preventDefault(); event.stopPropagation(); return; }
+      dragging = { id: hit.id, anchorIndex: hit.anchorIndex, pointerId: event.pointerId, original: drawing, drawing, start: point, points: drawingPrimitive.pointsFor(hit.id) };
+      body.setPointerCapture(event.pointerId); ownChartInteraction(); setDrawingHint(hit.kind === "anchor" ? `Moving anchor ${(hit.anchorIndex ?? 0) + 1}` : "Moving whole drawing");
       event.preventDefault(); event.stopPropagation();
     };
     const drawingPointerMove = (event: PointerEvent) => {
-      if (creating?.pointerId === event.pointerId) { event.preventDefault(); event.stopPropagation(); return; }
+      if (creating) {
+        const anchor = drawingAnchorAtPointer(event); if (anchor) previewCreation(anchor);
+        event.preventDefault(); event.stopPropagation(); return;
+      }
       if (!dragging || dragging.pointerId !== event.pointerId) return;
       const anchor = drawingAnchorAtPointer(event); if (!anchor) return;
-      dragging = { ...dragging, drawing: { ...dragging.drawing, anchors: dragging.drawing.anchors.map((value, index) => index === dragging!.anchorIndex ? anchor : value) } };
+      const rect = body.getBoundingClientRect(), current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      let anchors: ScalperV2DrawingAnchor[];
+      if (dragging.anchorIndex != null) anchors = dragging.original.anchors.map((value, index) => index === dragging!.anchorIndex ? anchor : value);
+      else {
+        const dx = current.x - dragging.start.x, dy = current.y - dragging.start.y;
+        anchors = dragging.points.flatMap((point) => {
+          const time = instance.timeScale().coordinateToTime(point.x + dx), price = candle.coordinateToPrice(point.y + dy);
+          return time == null || price == null ? [] : [{ time: Number(time), price }];
+        });
+        if (anchors.length !== dragging.original.anchors.length) return;
+      }
+      dragging = { ...dragging, drawing: { ...dragging.original, anchors, updatedAt: new Date().toISOString() } };
       drawingPrimitive.setData(drawingsRef.current.map((row) => row.id === dragging!.id ? dragging!.drawing : row), dragging.id);
       event.preventDefault(); event.stopPropagation();
     };
     const drawingPointerUp = (event: PointerEvent) => {
-      if (creating?.pointerId === event.pointerId) {
-        const end = drawingAnchorAtPointer(event) ?? creating.anchor, start = creating.anchor, tool = creating.tool;
-        callbacksRef.current.onDrawingAnchor?.(tool, id, start); callbacksRef.current.onDrawingAnchor?.(tool, id, end);
-        if (drawingAnchorCount(tool) === 3) callbacksRef.current.onDrawingAnchor?.(tool, id, { time: end.time, price: tool === "parallel_channel" ? end.price + (end.price === start.price ? Math.max(Math.abs(end.price) * .02, .1) : (end.price - start.price) * .25) : start.price - (end.price === start.price ? Math.max(Math.abs(end.price) * .02, .1) : (end.price - start.price) * .5) });
-        creating = null; body.releasePointerCapture(event.pointerId); event.preventDefault(); event.stopPropagation(); return;
-      }
       if (!dragging || dragging.pointerId !== event.pointerId) return;
       const completed = dragging.drawing; dragging = null; body.releasePointerCapture(event.pointerId); callbacksRef.current.onDrawingUpdate?.(completed);
+      setDrawingHint(null); restoreChartInteraction();
       event.preventDefault(); event.stopPropagation();
     };
+    const drawingPointerCancel = (event: PointerEvent) => { if (dragging?.pointerId === event.pointerId || creating) cancelDrawingGesture(); };
+    const drawingContextMenu = (event: MouseEvent) => { if (creating) { cancelDrawingGesture(); event.preventDefault(); } };
+    const drawingKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && (creating || dragging)) cancelDrawingGesture(); };
+    const drawingBlur = () => { if (creating || dragging) cancelDrawingGesture(); };
     body.addEventListener("pointerdown", drawingPointerDown, true); body.addEventListener("pointermove", drawingPointerMove, true); body.addEventListener("pointerup", drawingPointerUp, true);
+    body.addEventListener("pointercancel", drawingPointerCancel, true); body.addEventListener("contextmenu", drawingContextMenu); window.addEventListener("keydown", drawingKeyDown); window.addEventListener("blur", drawingBlur);
     body.addEventListener("pointermove", scheduleProfile, { passive: true }); body.addEventListener("pointerup", scheduleProfile, { passive: true }); body.addEventListener("wheel", scheduleProfile, { passive: true }); resize();
     return () => {
       observer.disconnect(); body.removeEventListener("pointermove", scheduleProfile); body.removeEventListener("pointerup", scheduleProfile); body.removeEventListener("wheel", scheduleProfile);
       body.removeEventListener("pointerdown", drawingPointerDown, true); body.removeEventListener("pointermove", drawingPointerMove, true); body.removeEventListener("pointerup", drawingPointerUp, true);
+      body.removeEventListener("pointercancel", drawingPointerCancel, true); body.removeEventListener("contextmenu", drawingContextMenu); window.removeEventListener("keydown", drawingKeyDown); window.removeEventListener("blur", drawingBlur);
       instance.timeScale().unsubscribeVisibleTimeRangeChange(rangeHandler); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(pointerFrameRef.current); cancelAnimationFrame(profileFrameRef.current);
       candle.detachPrimitive(drawingPrimitive); marker.detach(); instance.remove(); chartRef.current = null; candleRef.current = null; emaRef.current = null; markerRef.current = null; drawingPrimitiveRef.current = null;
+      cancelDrawingGestureRef.current = null;
     };
   }, [id]);
 
   useEffect(() => { drawingPrimitiveRef.current?.setData(drawings, selectedDrawingId); }, [drawings, selectedDrawingId]);
+  useEffect(() => { cancelDrawingGestureRef.current?.(); }, [drawingTool]);
   useEffect(() => { scheduleProfile(); }, [oiProfile, profileMode]);
 
   useEffect(() => {
@@ -338,7 +396,7 @@ export function ScalperV2Chart({
       </span></header>
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
-      {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{pendingDrawingCount + 1}/{drawingAnchorCount(drawingTool)} · click {pendingDrawingCount === 0 ? "first" : "next"} anchor</div>}
+      {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
       {id === "underlying" && <div className={css.oiProfile} data-testid="v2-oi-profile" data-mode={profileMode} aria-label={`${profileMode === "change" ? profileLabel : "Current OI"} horizontal bars aligned to underlying strikes`}><span>{profileMode === "change" ? "ΔOI" : "Current OI"}</span>{profileGeometry.map((row) => <i key={`${row.side}-${row.strike}`} className={`${row.side === "CE" ? css.profileCe : css.profilePe} ${profileMode === "change" ? row.value > 0 ? css.profilePositive : css.profileNegative : ""}`} style={profileMode === "change" ? row.value > 0 ? { top: row.top + (row.side === "CE" ? -5 : 2), left: "50%", width: row.width, maxWidth: row.lane / 2 } : { top: row.top + (row.side === "CE" ? -5 : 2), right: "50%", width: row.width, maxWidth: row.lane / 2 } : { top: row.top + (row.side === "CE" ? -5 : 2), right: 0, width: row.width, maxWidth: row.lane }} title={`${row.side} ${row.strike} ${profileMode === "change" ? "ΔOI" : "OI"} ${row.value}`} />)}</div>}
     </div>
   </section>;

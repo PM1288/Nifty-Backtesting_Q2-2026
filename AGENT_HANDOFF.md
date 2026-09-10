@@ -1,5 +1,18 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-10 — Scalper V2 charting-upgrade v2 trendline lifecycle
+
+- Read all three `/home/novius2/NIFTY50/Charting-upgrade` Markdown contracts and
+  applied their immediate Stage 2 gate to the existing `view=scalper_v2`.
+- Trendlines now have click-by-click native preview/commit, Escape/right-click/
+  blur cancellation, endpoint and whole-object drag, CSS-pixel body hit testing,
+  exact UTC/price editing and one-command undo. No third terminal was created.
+- Pre-release: web 140/140 and API 193/193 tests, both typechecks/builds and the
+  canonical gate PASS. Authenticated Chromium passes 51/51 executable checks;
+  headed DPR2 remains BLOCKED in the headless environment. Evidence and honest
+  remaining-stage inventory:
+  `docs/trading-analytics/SCALPER_V2_CHARTING_UPGRADE_V2_20260910.md`.
+
 ## 2026-09-10 — Scalper V2 workstation drawings from `new-lib`
 
 - Read both `/home/novius2/NIFTY50/new-lib` specifications completely and

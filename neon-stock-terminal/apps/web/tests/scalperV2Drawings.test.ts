@@ -7,6 +7,7 @@ import {
   duplicateScalperV2Drawing,
   parseScalperV2Drawings,
 } from "../src/pages/scalper-v2/scalperV2Drawings";
+import { distanceToSegment } from "../src/pages/scalper-v2/ScalperV2DrawingPrimitive";
 
 test("Scalper V2 drawing tools declare deterministic market anchors", () => {
   assert.equal(drawingAnchorCount("horizontal_line"), 1);
@@ -39,4 +40,13 @@ test("Scalper V2 drawing duplication uses an independent anchor array", () => {
   copy.anchors[0].price = 101;
   assert.equal(original.anchors[0].price, 100);
   assert.equal(copy.locked, false);
+});
+
+test("Scalper V2 drawing hit tests distinguish a segment from a ray in CSS pixels", () => {
+  const start = { x: 0, y: 0 }, end = { x: 10, y: 10 };
+  assert.ok(Math.abs(distanceToSegment({ x: 5, y: 6 }, start, end) - Math.SQRT1_2) < 1e-12);
+  assert.ok(Math.abs(distanceToSegment({ x: 12, y: 12 }, start, end) - Math.sqrt(8)) < 1e-12);
+  assert.equal(distanceToSegment({ x: 12, y: 12 }, start, end, "ray"), 0);
+  assert.equal(distanceToSegment({ x: 12, y: 12 }, start, end, "line"), 0);
+  assert.equal(distanceToSegment({ x: 3, y: 4 }, start, start), 5);
 });

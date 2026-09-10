@@ -6,6 +6,14 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Scalper V2 workstation drawings: the existing
+`view=scalper_v2` now owns native time/price drawing primitives, a left tool
+rail, Objects inspector, undo/redo and symbol-scoped local recovery. CE1-3 and
+PE1-3 are retained by current-OI rank, and append-only chart updates reuse the
+existing series. V1, V7, A-open/B-close, OI/delta-OI axes, Trade Log, SHAP,
+monthly views, APIs, collectors and read-only permissions remain unchanged.
+See `docs/trading-analytics/SCALPER_V2_WORKSTATION_DRAWINGS_20260910.md`.
+
 2026-09-10 Scalper V2 acceptance completion: the existing V2 adds explicit
 full-day/30/60-bar X views, Session/Visible/Manual Y modes, Y lock, exact A/B
 time controls with immutable measurement evidence context, a selected-pair

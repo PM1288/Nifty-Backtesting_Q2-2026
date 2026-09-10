@@ -1,5 +1,23 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-10 — Scalper V2 workstation drawings from `new-lib`
+
+- Read both `/home/novius2/NIFTY50/new-lib` specifications completely and
+  upgraded the existing `view=scalper_v2`; no third terminal or strategy/order
+  change was introduced.
+- Added native Lightweight Charts drawing primitives for all specified tools,
+  time/price anchors, drag editing, locking/hiding/duplication/deletion,
+  styling, object tree, undo/redo, local recovery and JSON export.
+- Expanded current-OI leaders to CE1-3/PE1-3 and added incremental
+  append/revised-last series updates. V1, V7, exact contracts,
+  A-open/B-close, OI/delta-OI axes, Trade Log and SHAP remain unchanged.
+- Pre-release verification: web 137/137 and API 193/193 tests, both typechecks
+  and builds PASS. Authenticated local Chromium passes 44/44 executable checks
+  including drawing create/drag/duplicate/undo/reload persistence, geometry,
+  cursor, performance and 20 V1/V2 lifecycle cycles. Headed DPR2 crispness
+  remains BLOCKED in the headless environment. Evidence and source limits:
+  `docs/trading-analytics/SCALPER_V2_WORKSTATION_DRAWINGS_20260910.md`.
+
 ## 2026-09-10 Monthly Open strategy
 
 The canonical Monthly Strategy now distinguishes the unchanged **Monthly

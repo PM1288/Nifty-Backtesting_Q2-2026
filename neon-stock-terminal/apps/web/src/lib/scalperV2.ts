@@ -25,7 +25,7 @@ export function formatOiAxisValue(value: unknown): string {
 
 export type OiLeader = {
   side: "CE" | "PE";
-  rank: 1 | 2;
+  rank: 1 | 2 | 3;
   strike: number;
   currentOi: number;
   changeOi: number | null;
@@ -62,9 +62,9 @@ export function rankCurrentOi(legs: ScalperV2Leg[]): OiLeader[] {
     const unique = eligible
       .filter((row) => !duplicateKeys.has(`${side}:${row.strike}`))
       .sort((a, b) => b.currentOi - a.currentOi || a.strike - b.strike || a.contractId.localeCompare(b.contractId));
-    return unique.slice(0, 2).map((row, index) => ({
+    return unique.slice(0, 3).map((row, index) => ({
       ...row,
-      rank: (index + 1) as 1 | 2,
+      rank: (index + 1) as 1 | 2 | 3,
       tiedOi: unique.some((other, otherIndex) => otherIndex !== index && other.currentOi === row.currentOi),
     }));
   });

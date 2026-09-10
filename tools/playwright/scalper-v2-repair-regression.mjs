@@ -30,6 +30,38 @@ try {
   await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });
   await page.waitForTimeout(3_000);
 
+  await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("trading-analytics:scalper-v2:drawings:")).forEach((key) => localStorage.removeItem(key)));
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });
+  const drawingBody = page.getByTestId("v2-chart-body-underlying"), drawingBox = await drawingBody.boundingBox();
+  if (drawingBox) {
+    const first = { x: drawingBox.x + drawingBox.width * .25, y: drawingBox.y + drawingBox.height * .55 };
+    const second = { x: drawingBox.x + drawingBox.width * .45, y: drawingBox.y + drawingBox.height * .35 };
+    await page.getByRole("button", { name: "Trend line", exact: true }).click();
+    await page.mouse.move(first.x, first.y); await page.mouse.down(); await page.mouse.move(second.x, second.y, { steps: 4 }); await page.mouse.up(); await page.waitForTimeout(300);
+    await page.getByTestId("v2-drawing-objects").waitFor({ state: "visible", timeout: 10_000 });
+    const storedBeforeDrag = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((value) => value.startsWith("trading-analytics:scalper-v2:drawings:v1:"));
+      return key ? JSON.parse(localStorage.getItem(key) || "[]") : [];
+    });
+    check("SV2-WORKSTATION-DRAW-CREATE", storedBeforeDrag.length === 1 && storedBeforeDrag[0].tool === "trend_line" && storedBeforeDrag[0].anchors.every((anchor) => Number.isFinite(anchor.time) && Number.isFinite(anchor.price) && !("x" in anchor) && !("y" in anchor)), JSON.stringify(storedBeforeDrag));
+    await page.mouse.move(first.x, first.y); await page.mouse.down(); await page.mouse.move(first.x + 35, first.y - 22, { steps: 3 }); await page.mouse.up(); await page.waitForTimeout(300);
+    const storedAfterDrag = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((value) => value.startsWith("trading-analytics:scalper-v2:drawings:v1:"));
+      return key ? JSON.parse(localStorage.getItem(key) || "[]") : [];
+    });
+    check("SV2-WORKSTATION-DRAW-DRAG", storedAfterDrag[0]?.anchors?.[0]?.time !== storedBeforeDrag[0]?.anchors?.[0]?.time || storedAfterDrag[0]?.anchors?.[0]?.price !== storedBeforeDrag[0]?.anchors?.[0]?.price, `${JSON.stringify(storedBeforeDrag[0]?.anchors?.[0])} -> ${JSON.stringify(storedAfterDrag[0]?.anchors?.[0])}`);
+    await page.getByRole("button", { name: "Duplicate", exact: true }).click(); await page.waitForTimeout(250);
+    check("SV2-WORKSTATION-OBJECT-DUPLICATE", await page.getByTestId("v2-drawing-objects").locator("li").count() === 2, "Object tree contains two independent drawings");
+    await page.getByRole("button", { name: "Undo drawing", exact: true }).click();
+    check("SV2-WORKSTATION-UNDO", await page.getByTestId("v2-drawing-objects").locator("li").count() === 1, "Undo restored the previous drawing list");
+    await page.getByRole("button", { name: "Hide", exact: true }).click(); await page.waitForTimeout(250); await page.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+    await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 }); await page.getByRole("tab", { name: "Objects", exact: true }).click();
+    check("SV2-WORKSTATION-PERSISTENCE", await page.getByRole("button", { name: "Show", exact: true }).count() === 1, "Hidden object restored from symbol-scoped local recovery storage after reload");
+    await page.screenshot({ path: path.join(output, "screenshots", "workstation-drawing-object-tree.png"), fullPage: true });
+    await page.getByRole("tab", { name: "Snapshot", exact: true }).click();
+  } else check("SV2-WORKSTATION-DRAW-CREATE", false, "Underlying drawing body had no browser geometry");
+
   const geometry = await page.evaluate(() => ["underlying", "call", "put"].map((id) => {
     const host = document.querySelector(`[data-testid="v2-chart-host-${id}"]`);
     const body = document.querySelector(`[data-testid="v2-chart-body-${id}"]`);

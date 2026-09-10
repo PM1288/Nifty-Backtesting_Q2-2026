@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import type { EChartsOption } from "echarts";
@@ -17,13 +17,15 @@ import {
   type ScalperV2TimeRange,
   type ScalperV2VerticalView,
 } from "./scalper-v2/ScalperV2Chart";
+import { createScalperV2Drawing, drawingAnchorCount, DRAWING_TOOLS, type ScalperV2DrawingAnchor, type ScalperV2DrawingTool, type ScalperV2PaneRole } from "./scalper-v2/scalperV2Drawings";
+import { useScalperV2Drawings } from "./scalper-v2/useScalperV2Drawings";
 import css from "./scalper-v2/ScalperV2.module.css";
 
 const Chart = lazy(async () => ({ default: (await import("../components/visual/EChartSurface")).EChartSurface }));
 type Row = Record<string, unknown>;
 type ChartPane = { identity: Row; bars: Row[]; coverage: Row[]; sourceMinuteCount: number; oiHistory: Row[] };
 type ChartPayload = { panes: ChartPane[]; availableContracts: Array<{ expiry: string; strike: number; ce_contracts: number; pe_contracts: number }>; limitations: string[]; interval: number; asOf: string };
-type RailTab = "time" | "chain" | "levels" | "rules" | "measure" | "health";
+type RailTab = "time" | "chain" | "levels" | "rules" | "measure" | "objects" | "health";
 
 const numeric = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
 const compact = (value: unknown) => numeric(value) == null ? "—" : new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 2 }).format(Number(value));
@@ -63,6 +65,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   legs: Row[]; metricLegs?: Row[]; state: string; errors?: Row[];
 }) {
   const [params, setParams] = useSearchParams(), client = useQueryClient();
+  const selectedDayParam = params.get("day");
   const interval = [1, 5, 15, 60].includes(Number(params.get("interval"))) ? Number(params.get("interval")) : 5;
   const defaultStrike = [...strikes].sort((a, b) => Math.abs(a - Number(spot ?? a)) - Math.abs(b - Number(spot ?? b)) || a - b)[0];
   const selectedStrike = params.get("strike") ?? String(defaultStrike ?? "");
@@ -87,19 +90,28 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [railOpen, setRailOpen] = useState(true), [railTab, setRailTab] = useState<RailTab>("time");
   const [measureMode, setMeasureMode] = useState(false), [points, setPoints] = useState<string[]>([]), [quantity, setQuantity] = useState("65");
   const [measurementContext, setMeasurementContext] = useState<{ panes: ChartPane[]; interval: number; symbol: string; expiry: string; strike: string } | null>(null);
+  const [drawingTool, setDrawingTool] = useState<ScalperV2DrawingTool>("select");
+  const pendingDrawingRef = useRef<{ tool: Exclude<ScalperV2DrawingTool, "select">; paneRole: ScalperV2PaneRole; anchors: ScalperV2DrawingAnchor[] } | null>(null);
+  const [pendingDrawingCount, setPendingDrawingCount] = useState(0);
+  const drawingStore = useScalperV2Drawings(symbol);
+  const drawingSelectedId = drawingStore.selectedId, removeDrawing = drawingStore.remove;
   const inspectionMode: ScalperV2InspectionMode = lockedTime != null ? "locked" : hoverCrosshair ? "hover" : "latest";
   const inspectionTime = lockedTime ?? hoverCrosshair?.time ?? null;
   const crosshair = lockedTime == null ? hoverCrosshair : { time: lockedTime, source: "locked", sequence: lockedTime };
 
   useEffect(() => {
-    const clear = (event: KeyboardEvent) => { if (event.key === "Escape") { setLockedTime(null); setHoverCrosshair(null); } };
+    const clear = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setLockedTime(null); setHoverCrosshair(null); setDrawingTool("select"); }
+      if ((event.key === "Delete" || event.key === "Backspace") && drawingSelectedId && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) removeDrawing(drawingSelectedId);
+    };
     window.addEventListener("keydown", clear); return () => window.removeEventListener("keydown", clear);
-  }, []);
-  useEffect(() => { setFitRequest((value) => value + 1); setVerticalView("session"); setYLocked(false); setLockedTime(null); setHoverCrosshair(null); }, [symbol, expiry, selectedStrike, interval, params.get("day")]);
+  }, [drawingSelectedId, removeDrawing]);
+  useEffect(() => { setFitRequest((value) => value + 1); setVerticalView("session"); setYLocked(false); setLockedTime(null); setHoverCrosshair(null); }, [symbol, expiry, selectedStrike, interval, selectedDayParam]);
 
-  const rawPanes = active.data?.panes ?? [];
+  const activeData = active.data;
+  const rawPanes = useMemo(() => activeData?.panes ?? [], [activeData]);
   const days = useMemo(() => [...new Set((rawPanes[0]?.bars ?? []).map((row) => istDay(row.end)).filter(Boolean))].sort().reverse(), [rawPanes]);
-  const tradingDay = params.get("day") && days.includes(params.get("day")!) ? params.get("day")! : (days[0] ?? "");
+  const tradingDay = selectedDayParam && days.includes(selectedDayParam) ? selectedDayParam : (days[0] ?? "");
   const panes = useMemo(() => rawPanes.map((pane) => ({ ...pane, bars: dayRows(pane.bars, tradingDay, "end"), oiHistory: dayRows(pane.oiHistory, tradingDay, "event_time") })), [rawPanes, tradingDay]);
   const underlying = panes.find((pane) => chartSide(pane) === "UNDERLYING"), call = panes.find((pane) => chartSide(pane) === "CE"), put = panes.find((pane) => chartSide(pane) === "PE");
   const rawUnderlying = rawPanes.find((pane) => chartSide(pane) === "UNDERLYING");
@@ -115,7 +127,6 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const putSignals = useMemo(() => signals.filter((signal) => signal.direction === "PUT"), [signals]);
   const measurement = useMemo(() => points.length === 2 ? measurePanes(measurementContext?.panes ?? panes, points[0], points[1], Number(quantity)) : null, [measurementContext, panes, points, quantity]);
   const inspectedRows = [underlying, call, put].map((pane) => exactAt(pane?.bars ?? [], inspectionTime));
-  const latestRows = [underlying, call, put].map((pane) => latest(pane?.bars ?? []));
   const measurementOptions = useMemo(() => {
     const sets = [underlying, call, put].map((pane) => new Set((pane?.bars ?? []).filter((row) => row.closed === true).map((row) => String(row.end))));
     return [...(sets[0] ?? new Set<string>())].filter((time) => sets.slice(1).every((values) => values.has(time))).sort();
@@ -164,6 +175,19 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   };
   const update = (key: string, value: string) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next); };
   const handleCrosshair = (value: ScalperV2Crosshair) => { if (lockedTime == null) setHoverCrosshair(value); };
+  const instrumentId = (paneRole: ScalperV2PaneRole) => String((paneRole === "underlying" ? underlying : paneRole === "call" ? call : put)?.identity.tradingsymbol ?? `${symbol}:${paneRole}`);
+  const createDrawing = (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: ScalperV2PaneRole, anchors: ScalperV2DrawingAnchor[]) => {
+    const drawing = createScalperV2Drawing({ id: drawingStore.newId(), tool, paneRole, instrumentId: instrumentId(paneRole), anchors });
+    drawingStore.upsert(drawing); setDrawingTool("select"); setRailOpen(true); setRailTab("objects");
+  };
+  const collectDrawingAnchor = (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: ScalperV2PaneRole, anchor: ScalperV2DrawingAnchor) => {
+    const pending = pendingDrawingRef.current;
+    const anchors = pending?.tool === tool && pending.paneRole === paneRole ? [...pending.anchors, anchor] : [anchor];
+    if (anchors.length >= drawingAnchorCount(tool)) {
+      pendingDrawingRef.current = null; setPendingDrawingCount(0); createDrawing(tool, paneRole, anchors);
+    } else { pendingDrawingRef.current = { tool, paneRole, anchors }; setPendingDrawingCount(anchors.length); }
+  };
+  const selectedDrawing = drawingStore.drawings.find((drawing) => drawing.id === drawingStore.selectedId) ?? null;
   const inspectionLabel = inspectionMode === "latest" ? "Latest completed candles" : `${inspectionMode === "locked" ? "Locked" : "At cursor"} · ${inspectionTime == null ? "—" : new Date(inspectionTime * 1000).toISOString()}`;
   const signalCounts = useMemo(() => Object.fromEntries(["WAIT_NEXT_OPEN", "NEXT_BAR_MISSING", "NEXT_OPEN_FAILED", "RETROSPECTIVE_ENTRY_REFERENCE"].map((key) => [key, signals.filter((signal) => signal.state === key).length])), [signals]);
   const hoveredStrikeIndex = hoveredStrike == null ? null : strikeRows.indexOf(hoveredStrike);
@@ -185,17 +209,25 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setYLocked(false); }}>Manual Y</button>
       <button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button>
       <button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button>
+      <button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button>
+      <button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button>
       <button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide rail" : "Show rail"}</button>
-      <button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_UI_V1_1", symbol, expiry, selectedStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, rankingScope: metricLegs.length ? "OBSERVED_RETAINED_COHORT" : "NEAREST_PAIRED_OBSERVED_WINDOW", rankLevels: leaders, source: contextRows, chart: active.data, measurement, measurementContext: measurementContext ? { interval: measurementContext.interval, symbol: measurementContext.symbol, expiry: measurementContext.expiry, strike: measurementContext.strike } : null }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button>
+      <button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V1", symbol, expiry, selectedStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, rankingScope: metricLegs.length ? "OBSERVED_RETAINED_COHORT" : "NEAREST_PAIRED_OBSERVED_WINDOW", rankLevels: leaders, source: contextRows, chart: active.data, drawings: drawingStore.drawings, drawingPersistence: "local_workspace_recovery", measurement, measurementContext: measurementContext ? { interval: measurementContext.interval, symbol: measurementContext.symbol, expiry: measurementContext.expiry, strike: measurementContext.strike } : null }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button>
       <button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button>
     </header>
     <div className={css.statusBar}><strong>{state}</strong> · Read-only research · {errors.length} source failures · active {interval}m loaded first · background timeframe cache is opportunistic · V7 signals: entry references {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</div>
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
     <div className={css.workspace} style={!railOpen ? { gridTemplateColumns: "minmax(0,1fr)" } : undefined}>
-      <div className={css.charts}>
-        <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · index points" bars={underlying?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedStrike)} hoveredStrike={hoveredStrike} />
-        <ScalperV2Chart id="call" title={`CE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} />
-        <ScalperV2Chart id="put" title={`PE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} />
+      <div className={css.chartStage}>
+        <nav className={css.drawingTools} aria-label="Chart drawing tools">
+          {DRAWING_TOOLS.map((entry) => <button key={entry.tool} type="button" title={entry.label} aria-label={entry.label} aria-pressed={drawingTool === entry.tool} onClick={() => { pendingDrawingRef.current = null; setPendingDrawingCount(0); setDrawingTool(entry.tool); setMeasureMode(false); }}>{entry.short}</button>)}
+          <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
+        </nav>
+        <div className={css.charts}>
+          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · index points" bars={underlying?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedStrike)} hoveredStrike={hoveredStrike} drawingTool={drawingTool} pendingDrawingCount={pendingDrawingCount} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingAnchor={collectDrawingAnchor} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="call" title={`CE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} pendingDrawingCount={pendingDrawingCount} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingAnchor={collectDrawingAnchor} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="put" title={`PE ${Number(selectedStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} pendingDrawingCount={pendingDrawingCount} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingAnchor={collectDrawingAnchor} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+        </div>
       </div>
       {railOpen && <aside className={css.rail} aria-label="Scalper V2 option chain and inspector">
         <header className={css.railHeader}><h2>{label} · {Number(selectedStrike).toLocaleString("en-IN")} pair</h2><span className={css.identity}>{expiry} · <b>Selected</b>{selectedIsAtm ? " · ATM" : defaultStrike == null ? "" : ` · ATM ${defaultStrike.toLocaleString("en-IN")}`}</span></header>
@@ -208,13 +240,14 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         </tbody></table>
         <div className={css.leaders}>{leaders.map((leader) => <div className={css.leader} key={`${leader.side}-${leader.rank}`}><span className={leader.side === "CE" ? css.callText : css.putText}>{leader.side}{leader.rank}</span><b>{leader.strike.toLocaleString("en-IN")}</b><small>OI {compact(leader.currentOi)}{leader.tiedOi ? " · tie" : ""}</small></div>)}</div>
         <div className={css.inspectionModes} data-testid="v2-inspection-mode"><div><button aria-pressed={inspectionMode === "latest"} onClick={() => { setLockedTime(null); setHoverCrosshair(null); }}>Latest</button><button aria-pressed={inspectionMode === "hover"} disabled={!hoverCrosshair}>Cursor</button><button aria-pressed={inspectionMode === "locked"} disabled={!hoverCrosshair && lockedTime == null} onClick={() => setLockedTime((current) => current ?? hoverCrosshair?.time ?? null)}>Lock time</button></div><span data-testid="v2-cursor-time">{inspectionLabel}</span></div>
-        <div className={css.tabs} role="tablist">{(["time", "chain", "levels", "rules", "measure", "health"] as const).map((tab) => <button key={tab} role="tab" aria-selected={railTab === tab} onClick={() => setRailTab(tab)}>{tab === "time" ? "Snapshot" : tab[0].toUpperCase() + tab.slice(1)}</button>)}</div>
+        <div className={css.tabs} role="tablist">{(["time", "chain", "levels", "rules", "measure", "objects", "health"] as const).map((tab) => <button key={tab} role="tab" aria-selected={railTab === tab} onClick={() => setRailTab(tab)}>{tab === "time" ? "Snapshot" : tab[0].toUpperCase() + tab.slice(1)}</button>)}</div>
         <div className={css.railBody}>
           {railTab === "time" && <div data-testid="v2-at-time-grid"><Snapshot name={label} row={inspectedRows[0]} /><Snapshot name="Selected CE" row={inspectedRows[1]} /><Snapshot name="Selected PE" row={inspectedRows[2]} /></div>}
           {railTab === "chain" && <table className={css.chain} onMouseLeave={() => setHoveredStrike(null)}><thead><tr><th>CE OI</th><th>CE ₹</th><th>Strike</th><th>PE ₹</th><th>PE OI</th></tr></thead><tbody>{strikeRows.map((strike) => { const ce = rankSource.find((row) => side(row) === "CE" && numeric(row.strike) === strike), pe = rankSource.find((row) => side(row) === "PE" && numeric(row.strike) === strike); return <tr key={strike} aria-current={String(strike) === selectedStrike} onMouseEnter={() => setHoveredStrike(strike)}><td>{compact(ce?.open_interest)}</td><td>{price(ce?.last_price)}</td><td><button disabled={points.length > 0} onClick={() => update("strike", String(strike))}>{strike.toLocaleString("en-IN")}</button></td><td>{price(pe?.last_price)}</td><td>{compact(pe?.open_interest)}</td></tr>; })}</tbody></table>}
           {railTab === "levels" && <><p>Ranked from <strong>{metricLegs.length ? "the retained observed cohort" : "the nearest paired observed window"}</strong>. Off-session leaders remain here and are not promoted.</p>{leaders.map((leader) => <p key={`${leader.side}${leader.rank}`}><b>{leader.side}{leader.rank}</b> {leader.strike.toLocaleString("en-IN")} · OI {leader.currentOi.toLocaleString("en-IN")} · ΔOI {signed(leader.changeOi)}</p>)}</>}
           {railTab === "rules" && <><p><strong>{SCALPER_ENTRY_RULE}</strong></p><p>Entry references {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0} · waiting {signalCounts.WAIT_NEXT_OPEN ?? 0} · missing {signalCounts.NEXT_BAR_MISSING ?? 0} · failed {signalCounts.NEXT_OPEN_FAILED ?? 0}</p>{signals.slice(-20).map((signal) => <p key={signal.id}><b>{signal.direction}</b> · {signal.state.replaceAll("_", " ")} · {signal.setupTime}</p>)}</>}
           {railTab === "measure" && <><p><strong>A open → B close</strong> · illustrative, before costs/slippage, not booked P&amp;L.</p>{measurementContext && <p><strong>Locked evidence:</strong> {measurementContext.interval === 60 ? "1h" : `${measurementContext.interval}m`} · {measurementContext.strike} · {measurementContext.expiry}. Display timeframe changes do not rebind these values.</p>}<label>Quantity units <input type="number" min="1" value={quantity} onChange={(event) => setQuantity(event.target.value)} /></label><label>A interval <select aria-label="Measurement A interval" value={points[0] ?? ""} onChange={(event) => selectMeasurementTime(0, event.target.value)}><option value="">Select exact candle</option>{measurementOptions.map((time) => <option key={`a-${time}`} value={time}>{time}</option>)}</select></label><label>B interval <select aria-label="Measurement B interval" value={points[1] ?? ""} onChange={(event) => selectMeasurementTime(1, event.target.value)}><option value="">Select exact candle</option>{measurementOptions.map((time) => <option key={`b-${time}`} value={time}>{time}</option>)}</select></label><p>{points[0] ? `A ${points[0]}` : "Click a chart candle or select A"}</p><p>{points[1] ? `B ${points[1]}` : "Then click a candle or select B"}</p>{measurement && <table className={css.metricGrid} data-testid="v2-measurement-pnl"><tbody><tr><th>Underlying points</th><td className={signClass(measurement.rows.find((row) => row.kind === "UNDERLYING")?.delta)}>{signed(measurement.rows.find((row) => row.kind === "UNDERLYING")?.delta)}</td></tr><tr><th>CE premium Δ</th><td className={signClass(measurement.rows.find((row) => row.kind === "CE")?.delta)}>{signed(measurement.rows.find((row) => row.kind === "CE")?.delta)}</td></tr><tr><th>PE premium Δ</th><td className={signClass(measurement.rows.find((row) => row.kind === "PE")?.delta)}>{signed(measurement.rows.find((row) => row.kind === "PE")?.delta)}</td></tr><tr><th>Combined premium Δ</th><td className={signClass(measurement.combined)}>{signed(measurement.combined)}</td></tr><tr><th>Illustrative P&amp;L</th><td className={signClass(measurement.pnl)}>{price(measurement.pnl)}</td></tr></tbody></table>}<button onClick={() => { setPoints([]); setMeasureMode(false); setMeasurementContext(null); }}>Clear A/B and unlock pair</button></>}
+          {railTab === "objects" && <section className={css.objectPanel} data-testid="v2-drawing-objects"><header><strong>Drawing objects</strong><span>{drawingStore.drawings.length} · {drawingStore.saveState}</span></header>{drawingStore.drawings.length === 0 ? <p>No saved drawings for {symbol}. Choose a tool and click its market anchors on any price pane.</p> : <ul>{drawingStore.drawings.map((drawing) => <li key={drawing.id} aria-current={drawing.id === drawingStore.selectedId}><button type="button" onClick={() => drawingStore.setSelectedId(drawing.id)}><b>{drawing.tool.replaceAll("_", " ")}</b><span>{drawing.paneRole} · {drawing.instrumentId}</span></button><div><button type="button" onClick={() => drawingStore.patch(drawing.id, { visible: !drawing.visible })}>{drawing.visible ? "Hide" : "Show"}</button><button type="button" onClick={() => drawingStore.patch(drawing.id, { locked: !drawing.locked })}>{drawing.locked ? "Unlock" : "Lock"}</button><button type="button" onClick={() => drawingStore.duplicate(drawing.id)}>Duplicate</button><button type="button" onClick={() => drawingStore.remove(drawing.id)}>Delete</button></div></li>)}</ul>}{selectedDrawing && <fieldset><legend>Selected style</legend><label>Colour <input type="color" value={selectedDrawing.style.color} onChange={(event) => drawingStore.patch(selectedDrawing.id, { style: { ...selectedDrawing.style, color: event.target.value } })} /></label><label>Width <select value={selectedDrawing.style.lineWidth} onChange={(event) => drawingStore.patch(selectedDrawing.id, { style: { ...selectedDrawing.style, lineWidth: Number(event.target.value) as 1 | 2 | 3 | 4 } })}>{[1, 2, 3, 4].map((width) => <option key={width}>{width}</option>)}</select></label><label>Line <select value={selectedDrawing.style.lineStyle} onChange={(event) => drawingStore.patch(selectedDrawing.id, { style: { ...selectedDrawing.style, lineStyle: event.target.value as "solid" | "dashed" | "dotted" } })}><option>solid</option><option>dashed</option><option>dotted</option></select></label><label>Label <input value={selectedDrawing.text} onChange={(event) => drawingStore.patch(selectedDrawing.id, { text: event.target.value })} /></label></fieldset>}</section>}
           {railTab === "health" && <><p><strong>{state}</strong> · {errors.length} source failures</p><p>Ranking: {metricLegs.length ? "Observed retained cohort" : "Nearest paired observed window; not full expiry"}</p><p>As-of {asOf}</p>{inspectionMode !== "latest" && <p><strong>Historical chain unavailable at this time.</strong> Price OHLC/EMA use the exact inspected candle; OI, PCR and payout remain separately labelled latest retained snapshot evidence.</p>}<p>OI units remain provider-native. No account position source is connected in this view; selected pair is not a holding.</p><p>Canvas screenshot export is not provided by V2. Complete source and measurement evidence is available through JSON; chain observations through CSV.</p>{active.data.limitations.map((item) => <p key={item}>{item}</p>)}</>}
         </div>
       </aside>}

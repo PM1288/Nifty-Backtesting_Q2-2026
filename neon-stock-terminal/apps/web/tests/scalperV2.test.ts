@@ -12,7 +12,7 @@ const ranking = [
 
 test("Scalper V2 ranks current OI by magnitude and side", () => {
   assert.deepEqual(rankCurrentOi(ranking).map((row) => [row.side, row.rank, row.strike]), [
-    ["CE", 1, 23700], ["CE", 2, 24000], ["PE", 1, 23000], ["PE", 2, 23100],
+    ["CE", 1, 23700], ["CE", 2, 24000], ["CE", 3, 23450], ["PE", 1, 23000], ["PE", 2, 23100], ["PE", 3, 23450],
   ]);
 });
 

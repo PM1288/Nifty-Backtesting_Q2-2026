@@ -5,7 +5,10 @@ import {
   type ISeriesMarkersPluginApi, type Time, type UTCTimestamp,
 } from "lightweight-charts";
 import { levelInObservedSession, observedSessionBounds, paddedSessionBounds, profileWidth } from "../../lib/scalperV2Geometry";
+import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
+import { anchorFromChartPoint, ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
+import { drawingAnchorCount, type ScalperV2Drawing, type ScalperV2DrawingAnchor, type ScalperV2DrawingTool } from "./scalperV2Drawings";
 import css from "./ScalperV2.module.css";
 
 type Row = Record<string, unknown>;
@@ -31,6 +34,7 @@ export function ScalperV2Chart({
   id, title, subtitle, bars, interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
   fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE,
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, hoveredStrike = null,
+  drawingTool = "select", pendingDrawingCount = 0, drawings = [], selectedDrawingId = null, onDrawingAnchor, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; interval: number;
   externalCrosshair: ScalperV2Crosshair; externalRange: ScalperV2TimeRange;
@@ -44,17 +48,28 @@ export function ScalperV2Chart({
   measurementTimes?: string[];
   selectedStrike?: number | null;
   hoveredStrike?: number | null;
+  drawingTool?: ScalperV2DrawingTool;
+  drawings?: ScalperV2Drawing[];
+  selectedDrawingId?: string | null;
+  pendingDrawingCount?: number;
+  onDrawingAnchor?: (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: "underlying" | "call" | "put", anchor: ScalperV2DrawingAnchor) => void;
+  onDrawingUpdate?: (drawing: ScalperV2Drawing) => void;
+  onDrawingSelect?: (id: string | null) => void;
 }) {
   const bodyRef = useRef<HTMLDivElement>(null), hostRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null), emaRef = useRef<ISeriesApi<"Line"> | null>(null);
   const markerRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const drawingPrimitiveRef = useRef<ScalperV2DrawingPrimitive | null>(null);
   const rankLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]), selectionLinesRef = useRef<IPriceLine[]>([]);
   const profileRowsRef = useRef(oiProfile), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
   const pointerFrameRef = useRef(0), profileFrameRef = useRef(0), dimensionsRef = useRef({ width: 0, height: 0 });
   const appliedFitRef = useRef<number | null>(null), setDataCountRef = useRef(0);
-  const callbacksRef = useRef({ onCrosshair, onRangeChange, onTimeClick });
-  callbacksRef.current = { onCrosshair, onRangeChange, onTimeClick };
+  const candleDataRef = useRef<CandlestickData<Time>[]>([]), emaDataRef = useRef<Array<{ time: Time; value: number }>>([]), updateCountRef = useRef(0);
+  const drawingsRef = useRef(drawings);
+  const callbacksRef = useRef({ onCrosshair, onRangeChange, onTimeClick, onDrawingAnchor, onDrawingUpdate, onDrawingSelect, drawingTool });
+  callbacksRef.current = { onCrosshair, onRangeChange, onTimeClick, onDrawingAnchor, onDrawingUpdate, onDrawingSelect, drawingTool };
+  drawingsRef.current = drawings;
   profileRowsRef.current = oiProfile;
   const [profileGeometry, setProfileGeometry] = useState<ProfileGeometry[]>([]);
 
@@ -97,6 +112,7 @@ export function ScalperV2Chart({
   useEffect(() => {
     const host = hostRef.current, body = bodyRef.current;
     if (!host || !body) return;
+    candleDataRef.current = []; emaDataRef.current = [];
     const instance = createChart(host, {
       autoSize: false, width: Math.max(1, host.clientWidth), height: Math.max(1, host.clientHeight),
       layout: { background: { type: ColorType.Solid, color: "#ffffff" }, textColor: "#526175", fontSize: 12 },
@@ -115,13 +131,28 @@ export function ScalperV2Chart({
       crosshairMarkerVisible: false, autoscaleInfoProvider: () => null,
     });
     const marker = createSeriesMarkers(candle, []);
+    const drawingPrimitive = new ScalperV2DrawingPrimitive();
+    candle.attachPrimitive(drawingPrimitive);
     instance.subscribeCrosshairMove((param) => {
       if (suppressCrosshairRef.current > 0) return;
       cancelAnimationFrame(pointerFrameRef.current);
       pointerFrameRef.current = requestAnimationFrame(() => callbacksRef.current.onCrosshair(param.time == null ? null : { time: Number(param.time), source: id, sequence: performance.now() }));
     });
+    let suppressNextChartClick = false;
     instance.subscribeClick((param) => {
-      if (param.time != null) callbacksRef.current.onTimeClick?.(new Date(Number(param.time) * 1000).toISOString());
+      if (suppressNextChartClick) { suppressNextChartClick = false; return; }
+      const activeTool = callbacksRef.current.drawingTool;
+      body.dataset.lastDrawingClick = JSON.stringify({ tool: activeTool, time: param.time == null ? null : Number(param.time), hasPoint: Boolean(param.point) });
+      if (activeTool === "select") {
+        const hoveredId = typeof param.hoveredObjectId === "string" ? param.hoveredObjectId : null;
+        if (hoveredId) { callbacksRef.current.onDrawingSelect?.(hoveredId); return; }
+        callbacksRef.current.onDrawingSelect?.(null);
+        if (param.time != null) callbacksRef.current.onTimeClick?.(new Date(Number(param.time) * 1000).toISOString());
+        return;
+      }
+      const anchor = anchorFromChartPoint(param, (coordinate) => candle.coordinateToPrice(coordinate));
+      if (!anchor) { body.dataset.lastDrawingClickResult = "no-market-anchor"; return; }
+      callbacksRef.current.onDrawingAnchor?.(activeTool, id, anchor); body.dataset.lastDrawingClickResult = "published-market-anchor";
     });
     const rangeHandler = (range: { from: Time; to: Time } | null) => {
       if (suppressRangeRef.current > 0 || !range) return;
@@ -129,7 +160,7 @@ export function ScalperV2Chart({
       callbacksRef.current.onRangeChange({ from: Number(range.from), to: Number(range.to), source: id, sequence: performance.now() });
     };
     instance.timeScale().subscribeVisibleTimeRangeChange(rangeHandler);
-    chartRef.current = instance; candleRef.current = candle; emaRef.current = ema; markerRef.current = marker;
+    chartRef.current = instance; candleRef.current = candle; emaRef.current = ema; markerRef.current = marker; drawingPrimitiveRef.current = drawingPrimitive;
     host.dataset.chartCreateCount = "1";
 
     let resizeFrame = 0;
@@ -147,18 +178,73 @@ export function ScalperV2Chart({
       });
     };
     const observer = new ResizeObserver(resize); observer.observe(host);
+    let dragging: { id: string; anchorIndex: number; pointerId: number; drawing: ScalperV2Drawing } | null = null;
+    let creating: { tool: Exclude<ScalperV2DrawingTool, "select">; pointerId: number; anchor: ScalperV2DrawingAnchor } | null = null;
+    const drawingAnchorAtPointer = (event: PointerEvent) => {
+      const rect = body.getBoundingClientRect(), time = instance.timeScale().coordinateToTime(event.clientX - rect.left), price = candle.coordinateToPrice(event.clientY - rect.top);
+      return time == null || price == null ? null : { time: Number(time), price };
+    };
+    const drawingPointerDown = (event: PointerEvent) => {
+      const activeTool = callbacksRef.current.drawingTool;
+      if (activeTool !== "select") {
+        const anchor = drawingAnchorAtPointer(event); if (!anchor) return;
+        suppressNextChartClick = true;
+        if (drawingAnchorCount(activeTool) === 1) callbacksRef.current.onDrawingAnchor?.(activeTool, id, anchor);
+        else { creating = { tool: activeTool, pointerId: event.pointerId, anchor }; body.setPointerCapture(event.pointerId); }
+        event.preventDefault(); event.stopPropagation(); return;
+      }
+      const rect = body.getBoundingClientRect(), hit = drawingPrimitive.findAnchor(event.clientX - rect.left, event.clientY - rect.top);
+      if (!hit) return;
+      const drawing = drawingsRef.current.find((row) => row.id === hit.id); if (!drawing || drawing.locked) return;
+      dragging = { ...hit, pointerId: event.pointerId, drawing }; body.setPointerCapture(event.pointerId); callbacksRef.current.onDrawingSelect?.(drawing.id);
+      event.preventDefault(); event.stopPropagation();
+    };
+    const drawingPointerMove = (event: PointerEvent) => {
+      if (creating?.pointerId === event.pointerId) { event.preventDefault(); event.stopPropagation(); return; }
+      if (!dragging || dragging.pointerId !== event.pointerId) return;
+      const anchor = drawingAnchorAtPointer(event); if (!anchor) return;
+      dragging = { ...dragging, drawing: { ...dragging.drawing, anchors: dragging.drawing.anchors.map((value, index) => index === dragging!.anchorIndex ? anchor : value) } };
+      drawingPrimitive.setData(drawingsRef.current.map((row) => row.id === dragging!.id ? dragging!.drawing : row), dragging.id);
+      event.preventDefault(); event.stopPropagation();
+    };
+    const drawingPointerUp = (event: PointerEvent) => {
+      if (creating?.pointerId === event.pointerId) {
+        const end = drawingAnchorAtPointer(event) ?? creating.anchor, start = creating.anchor, tool = creating.tool;
+        callbacksRef.current.onDrawingAnchor?.(tool, id, start); callbacksRef.current.onDrawingAnchor?.(tool, id, end);
+        if (drawingAnchorCount(tool) === 3) callbacksRef.current.onDrawingAnchor?.(tool, id, { time: end.time, price: tool === "parallel_channel" ? end.price + (end.price === start.price ? Math.max(Math.abs(end.price) * .02, .1) : (end.price - start.price) * .25) : start.price - (end.price === start.price ? Math.max(Math.abs(end.price) * .02, .1) : (end.price - start.price) * .5) });
+        creating = null; body.releasePointerCapture(event.pointerId); event.preventDefault(); event.stopPropagation(); return;
+      }
+      if (!dragging || dragging.pointerId !== event.pointerId) return;
+      const completed = dragging.drawing; dragging = null; body.releasePointerCapture(event.pointerId); callbacksRef.current.onDrawingUpdate?.(completed);
+      event.preventDefault(); event.stopPropagation();
+    };
+    body.addEventListener("pointerdown", drawingPointerDown, true); body.addEventListener("pointermove", drawingPointerMove, true); body.addEventListener("pointerup", drawingPointerUp, true);
     body.addEventListener("pointermove", scheduleProfile, { passive: true }); body.addEventListener("pointerup", scheduleProfile, { passive: true }); body.addEventListener("wheel", scheduleProfile, { passive: true }); resize();
     return () => {
       observer.disconnect(); body.removeEventListener("pointermove", scheduleProfile); body.removeEventListener("pointerup", scheduleProfile); body.removeEventListener("wheel", scheduleProfile);
+      body.removeEventListener("pointerdown", drawingPointerDown, true); body.removeEventListener("pointermove", drawingPointerMove, true); body.removeEventListener("pointerup", drawingPointerUp, true);
       instance.timeScale().unsubscribeVisibleTimeRangeChange(rangeHandler); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(pointerFrameRef.current); cancelAnimationFrame(profileFrameRef.current);
-      marker.detach(); instance.remove(); chartRef.current = null; candleRef.current = null; emaRef.current = null; markerRef.current = null;
+      candle.detachPrimitive(drawingPrimitive); marker.detach(); instance.remove(); chartRef.current = null; candleRef.current = null; emaRef.current = null; markerRef.current = null; drawingPrimitiveRef.current = null;
     };
   }, [id]);
 
+  useEffect(() => { drawingPrimitiveRef.current?.setData(drawings, selectedDrawingId); }, [drawings, selectedDrawingId]);
+
   useEffect(() => {
-    candleRef.current?.setData(data); emaRef.current?.setData(emaData);
-    setDataCountRef.current += 1;
-    if (hostRef.current) hostRef.current.dataset.setDataCount = String(setDataCountRef.current);
+    const candle = candleRef.current, ema = emaRef.current;
+    if (candle) {
+      const plan = scalperV2SeriesUpdatePlan(candleDataRef.current, data);
+      if (plan.kind === "replace") { candle.setData(plan.rows); setDataCountRef.current += 1; }
+      else if (plan.kind === "update") { plan.rows.forEach((row) => candle.update(row)); updateCountRef.current += plan.rows.length; }
+      candleDataRef.current = data;
+    }
+    if (ema) {
+      const plan = scalperV2SeriesUpdatePlan(emaDataRef.current, emaData);
+      if (plan.kind === "replace") ema.setData(plan.rows);
+      else if (plan.kind === "update") plan.rows.forEach((row) => ema.update(row));
+      emaDataRef.current = emaData;
+    }
+    if (hostRef.current) { hostRef.current.dataset.setDataCount = String(setDataCountRef.current); hostRef.current.dataset.updateCount = String(updateCountRef.current); }
     candleRef.current?.applyOptions({ autoscaleInfoProvider: verticalView === "session" && renderBounds ? () => ({ priceRange: { minValue: renderBounds.low, maxValue: renderBounds.high } }) : undefined });
     chartRef.current?.priceScale("right").setAutoScale(verticalView !== "manual" && !yLocked);
     scheduleProfile();
@@ -245,6 +331,7 @@ export function ScalperV2Chart({
       </span></header>
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
+      {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{pendingDrawingCount + 1}/{drawingAnchorCount(drawingTool)} · click {pendingDrawingCount === 0 ? "first" : "next"} anchor</div>}
       {id === "underlying" && profileGeometry.length > 0 && <div className={css.oiProfile} data-testid="v2-oi-profile" aria-hidden="true"><span>Current OI</span>{profileGeometry.map((row) => <i key={`${row.side}-${row.strike}`} className={row.side === "CE" ? css.profileCe : css.profilePe} style={{ top: row.top + (row.side === "CE" ? -5 : 2), width: row.width, maxWidth: row.lane }} title={`${row.side} ${row.strike} OI ${row.currentOi}`} />)}</div>}
     </div>
   </section>;

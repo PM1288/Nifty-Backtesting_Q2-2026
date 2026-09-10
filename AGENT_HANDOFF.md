@@ -4299,3 +4299,26 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:pre-morning-participant-9d8e20b`.
 - Full record:
   `docs/trading-analytics/MORNING_PARTICIPANT_YESTERDAY_COMPARISON_20260910.md`.
+
+## 2026-09-10 — Scalper V2 Test package and native strike Delta OI integration
+
+- Reviewed every Markdown and ZIP input in `/home/novius2/NIFTY50/Test` as
+  evidence, including the reference code/tests/images and the 89-case v4
+  acceptance contract. No reference app or synthetic fixture was copied into
+  production.
+- Replaced the existing DOM strike profile with a Lightweight Charts series
+  primitive attached to the underlying candles. Horizontal Delta OI bars now
+  use the native right-side price transform, one 120px/18% bounded lane and the
+  full selected cohort denominator. Positive/negative/zero/missing and CE/PE
+  identity remain separate meanings.
+- Added single-baseline normalization, duplicate exclusion and a structured
+  Delta OI profile inspector containing exact current, baseline, signed change,
+  source/time/unit evidence. The separate horizontal Delta OI panel keeps
+  strike on the right Y axis.
+- Focused tests 22/22, reference tests 30/30, web tests/typecheck/build and API
+  194/194 tests/typecheck/build pass. Authenticated local browser regression:
+  54 PASS, 0 FAIL, headed-DPR2 crispness BLOCKED. Native Y-axis manipulation
+  retained 0px profile-coordinate error. Pointer p95 was 17.1ms over 500 moves
+  and cached interval switching was 142ms.
+- Full evidence and deliberately unclaimed later v4 stages:
+  `docs/trading-analytics/SCALPER_V2_TEST_PACKAGE_INTEGRATION_20260910.md`.

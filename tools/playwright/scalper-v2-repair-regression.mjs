@@ -133,12 +133,22 @@ try {
   await page.getByTestId("v2-chart-body-underlying").waitFor({ state: "attached", timeout: 90_000 });
   const profileAlignment = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => {
     const geometry = JSON.parse(body.dataset.profileGeometry || "[]");
-    const bars = [...body.querySelectorAll('[data-testid="v2-oi-profile"] i')];
-    const errors = geometry.filter((row) => row.width > 0).map((row, index) => Math.abs(Number.parseFloat(bars[index]?.style.top || "NaN") - (row.coordinate + (row.side === "CE" ? -5 : 2))));
-    return { count: errors.length, maximumError: errors.length ? Math.max(...errors) : null };
+    const positiveWidth = geometry.filter((row) => row.width > 0);
+    return { count: positiveWidth.length, finiteCoordinates: positiveWidth.every((row) => Number.isFinite(row.coordinate)), maximumError: Number(body.dataset.profileMaxAlignmentError), lane: Number(body.dataset.profileLaneWidth), visibleStrikes: Number(body.dataset.profileVisibleStrikes), totalStrikes: Number(body.dataset.profileTotalStrikes) };
   });
-  check("SV2-FIX-037", profileAlignment.count > 0 && profileAlignment.maximumError <= 2, JSON.stringify(profileAlignment));
+  check("SV2-FIX-037", profileAlignment.count > 0 && profileAlignment.finiteCoordinates && profileAlignment.maximumError <= 2 && profileAlignment.visibleStrikes <= profileAlignment.totalStrikes, JSON.stringify(profileAlignment));
+  check("SV2-FIX-039", profileAlignment.lane > 0 && profileAlignment.lane <= 120, JSON.stringify(profileAlignment));
+  const profileBodyBox = await page.getByTestId("v2-chart-body-underlying").boundingBox();
+  if (profileBodyBox) {
+    const axisX = profileBodyBox.x + profileBodyBox.width - 14, axisY = profileBodyBox.y + profileBodyBox.height * .48;
+    await page.mouse.move(axisX, axisY); await page.mouse.down(); await page.mouse.move(axisX, axisY - 45, { steps: 5 }); await page.mouse.up(); await page.waitForTimeout(100);
+    const afterAxisGesture = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => Number(body.dataset.profileMaxAlignmentError));
+    check("SV2-FIX-038", afterAxisGesture <= 2, `native-axis gesture max strike alignment error ${afterAxisGesture}px`);
+  } else check("SV2-FIX-038", false, "Underlying chart body geometry unavailable");
   check("SV2-PROFILE-DELTAOI-DEFAULT", await page.getByTestId("v2-oi-profile").getAttribute("data-mode") === "change", await page.getByTestId("v2-oi-profile").getAttribute("aria-label"));
+  await page.getByRole("tab", { name: "ΔOI profile", exact: true }).click();
+  check("SV2-PROFILE-ACCESSIBLE-EVIDENCE", await page.locator("section[aria-label='Accessible strike change in open interest profile'] table").count() === 1 && /Baseline OI/.test(await page.locator("section[aria-label='Accessible strike change in open interest profile']").innerText()), "Profile has a keyboard-readable exact-value alternative");
+  await page.getByRole("tab", { name: "Snapshot", exact: true }).click();
   await page.getByRole("button", { name: "Profile OI", exact: true }).click();
   check("SV2-PROFILE-CURRENT-TOGGLE", await page.getByTestId("v2-oi-profile").getAttribute("data-mode") === "current", await page.getByTestId("v2-oi-profile").getAttribute("aria-label"));
   await page.getByRole("button", { name: "Profile ΔOI", exact: true }).click();

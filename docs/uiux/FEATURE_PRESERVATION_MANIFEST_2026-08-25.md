@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 Scalper V2 native strike Delta OI profile: the existing underlying
+candlestick now owns a native series primitive whose horizontal Delta OI bars
+are vertically aligned to actual strike coordinates on the right price scale.
+One declared baseline kind, full-cohort magnitude scaling, CE/PE identity,
+signed colours, zero/missing distinction and a keyboard-readable evidence table
+are preserved. The separate horizontal Delta OI chart retains strike on its
+right Y axis. V1, V7, A-open/B-close, exact contracts, routes, collectors,
+orders and permissions are unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_TEST_PACKAGE_INTEGRATION_20260910.md`.
+
 2026-09-10 MANEESH Morning View participant comparison: the existing Morning
 View now exposes FII, Pro, Client and DII index-option current/prior/change
 values plus an expanded calculation audit for call/put long, short and net

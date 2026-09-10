@@ -105,9 +105,9 @@ Final results:
 - Deployed geometry at 1920x1080: underlying host/native width
   812.23/812.23px and plot body 601.22px; CE/PE host/native width
   637.77/637.77px and plot body 267.22px; native time axes 28px.
-- Deployed interaction profile: 500 pointer moves, 17.3ms p95 in headless
+- Deployed interaction profile: 500 pointer moves, 17.5ms p95 in headless
   Chromium at DPR1; no V2 chart/context request during the pointer loop; cached
-  5m-to-1m route redraw 120ms. These are measurements on this test host, not a
+  5m-to-1m route redraw 153ms. These are measurements on this test host, not a
   universal performance guarantee.
 
 Ignored evidence: `/tmp/scalper-v2-repair-local-final/` and

@@ -4109,8 +4109,8 @@ or outcomes were deleted.
   canonical gate, local browser 29/29 and deployed browser 29/29 PASS. Deployed
   1920px geometry reconciles host/native widths exactly within subpixel
   rounding; plot bodies are 601px/267px/267px. Production pointer test measured
-  17.3ms p95 over 500 moves with zero V2 hover requests; cached interval switch
-  was 120ms.
+  17.5ms p95 over 500 moves with zero V2 hover requests; cached interval switch
+  was 153ms.
 - Release `ed10c9c` is pushed to canonical master. Dashboard image
   `sha256:e46f6f84efed44c406182741395ce0d5df25588d5750850bb24b99653f55eca9`
   is healthy with zero restarts; public `/n50/` returns HTTP 200. Only

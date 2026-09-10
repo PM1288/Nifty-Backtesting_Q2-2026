@@ -40,7 +40,16 @@ type Payload = {
     coverage: Record<string, number>;
     feature_coverage: Record<string, number>;
     limitations: string[];
-    config: { label_policy: string; minimum_sessions: number; features: string[] };
+    as_of_date?: string;
+    window_start_date?: string;
+    config: {
+      label_policy: string;
+      rolling_window_days?: number;
+      schedule?: string;
+      minimum_complete_rows?: number;
+      minimum_sessions?: number;
+      features: string[];
+    };
   };
   rows: Row[];
   executionEnabled: false;
@@ -93,6 +102,28 @@ function TradeWaterfall({ row }: { row: Row }) {
   </section>;
 }
 
+function DailyFeatureImportance({ rows }: { rows: Row[] }) {
+  const explained = rows.filter((row) => row.explanation && row.prediction);
+  if (!explained.length) return null;
+  const names = explained[0].explanation?.feature_names ?? [];
+  const items = names.map((name, index) => ({
+    name,
+    value: explained.reduce((sum, row) => sum + Math.abs(row.explanation?.contributions[index] ?? 0), 0) / explained.length,
+  })).sort((a, b) => b.value - a.value);
+  const scale = Math.max(...items.map((item) => item.value), .000001);
+  return <section className={styles.tradeExplanation} aria-label="Daily held-out SHAP feature importance">
+    <h2>Daily held-out SHAP analysis</h2>
+    <p>Mean absolute contribution across {explained.length} chronologically held-out trades. Raw log-odds influence, not profit and not percentage points.</p>
+    <div className={styles.factorBars}>
+      {items.map((item) => <div key={item.name}>
+        <span>{item.name.replaceAll("_", " ")}</span>
+        <i style={{ width: `${Math.max(2, item.value / scale * 100)}%` }} data-sign="positive" />
+        <b>{number(item.value, 5)}</b>
+      </div>)}
+    </div>
+  </section>;
+}
+
 export default function TradeQualityResearch() {
   const query = useQuery({
     queryKey: ["nifty-context", "trade-quality"],
@@ -121,31 +152,33 @@ export default function TradeQualityResearch() {
   const data = query.data;
   if (!data?.report) return <p>No trade-quality experiment has completed yet.</p>;
   const hasShap = data.rows.some((row) => row.explanation && row.prediction);
-  const sessionCount = data.report.coverage.model_eligible_sessions ?? 0;
-  const requiredSessions = data.report.config.minimum_sessions;
+  const eligibleRows = data.report.coverage.model_eligible_rows ?? 0;
+  const requiredRows = data.report.config.minimum_complete_rows ?? 0;
   return <section data-testid="trade-quality-research" className={styles.tradeQuality}>
     <div className={styles.tradeHeading}>
-      <div><h2>Good-trade outcome research</h2><p>{data.state.replaceAll("_", " ")} · {data.report.reason}</p></div>
+      <div><h2>Daily 30-day good-trade SHAP research</h2><p>{data.state.replaceAll("_", " ")} · {data.report.reason}</p></div>
       <button onClick={() => void query.refetch()} disabled={query.isFetching}>Refresh</button>
       <button onClick={() => void exportEvidence()}>Export full evidence</button>
     </div>
     <div className={styles.status}>
-      <p><b>Good trade:</b> exact selected option has positive one-lot EOD net P&amp;L after the versioned charge policy.</p>
+      <p><b>Good trade:</b> exact selected option has positive one-lot net P&amp;L at 15 minutes after the versioned charge policy.</p>
+      <p>Rolling {data.report.config.rolling_window_days ?? 30}-calendar-day research window · scheduled {data.report.config.schedule ?? "after 16:00 IST on trading days"} · as of {data.report.as_of_date ?? "—"}.</p>
       <p>Research-only quote path; not booked/executable P&amp;L. Future 15m/30m/EOD data is outcome evidence and is never a model input.</p>
     </div>
     <section className={styles.metrics} aria-label="Trade quality coverage" tabIndex={0}>
       {Object.entries(data.report.coverage).map(([name, value]) => <div key={name}><span>{name.replaceAll("_", " ")}</span><b>{number(value, 0)}</b></div>)}
     </section>
+    {hasShap && <DailyFeatureImportance rows={data.rows} />}
     {!hasShap && <section className={styles.shapGate} aria-label="SHAP chart status" data-testid="shap-chart-gate">
       <div>
         <h2>SHAP chart status</h2>
         <b>Not calculated yet — evidence gate is still locked</b>
-        <p>{sessionCount} independent session of {requiredSessions} required sessions is available. A genuine SHAP waterfall will appear here automatically after chronological training and held-out validation become eligible.</p>
+        <p>{eligibleRows} complete labelled trades of {requiredRows || "the required"} minimum are available. A genuine SHAP waterfall will appear automatically after chronological training has both outcome classes.</p>
         <p>Trade outcomes and input coverage remain visible below. No placeholder contribution, probability or synthetic feature importance is being shown as SHAP.</p>
       </div>
-      <div className={styles.shapGateChart} role="img" aria-label={`SHAP unavailable: ${sessionCount} of ${requiredSessions} independent sessions`}>
-        <span style={{ width: `${Math.min(100, requiredSessions > 0 ? sessionCount / requiredSessions * 100 : 0)}%` }} />
-        <strong>{sessionCount} / {requiredSessions} sessions</strong>
+      <div className={styles.shapGateChart} role="img" aria-label={`SHAP unavailable: ${eligibleRows} of ${requiredRows} complete labelled trades`}>
+        <span style={{ width: `${Math.min(100, requiredRows > 0 ? eligibleRows / requiredRows * 100 : 0)}%` }} />
+        <strong>{eligibleRows} / {requiredRows || "—"} trades</strong>
       </div>
     </section>}
     <div className={styles.controls}>
@@ -174,7 +207,7 @@ export default function TradeQualityResearch() {
             onClick={() => setSelectedKey(row.signal_key)}
             onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedKey(row.signal_key); } }}>
             <th>{item.symbol}<small>{item.trade_date} · {item.interval_minutes}m · {item.direction}<br />Selected {item.selected_option}<br />Qty {item.pnl?.quantity ?? "—"} · strike {number(item.strike)} · exp {item.expiry}</small></th>
-            <td><b className={item.label === 1 ? styles.positive : item.label === 0 ? styles.negative : ""}>{item.label_name.replaceAll("_", " ")}</b><small>{item.maturity}<br />Selected EOD net {money(item.pnl?.net)}<br />Click row for all evidence</small></td>
+            <td><b className={item.label === 1 ? styles.positive : item.label === 0 ? styles.negative : ""}>{item.label_name.replaceAll("_", " ")}</b><small>15m {item.maturity}<br />Selected 15m net {money(item.pnl?.net)}<br />Click row for all evidence</small></td>
             {(["ce", "pe"] as const).flatMap((leg) => (["15m", "30m", "eod"] as const).map((horizon) =>
               <ComparativePnlCell key={`${leg}-${horizon}`} item={item} leg={leg} horizon={horizon} />))}
             <td>Body {number(item.features.underlying_body_fraction != null ? item.features.underlying_body_fraction * 100 : null)}%<small>EMA distance {number(item.features.underlying_ema_distance_pct, 4)}% · entry gap {number(item.features.underlying_entry_gap_pct, 4)}%</small></td>
@@ -186,7 +219,7 @@ export default function TradeQualityResearch() {
       </table>
     </div>
     {selected && <>
-      {hasShap && <TradeWaterfall row={selected} />}
+      {selected.prediction && selected.explanation && <TradeWaterfall row={selected} />}
       <details key={selected.signal_key} className={styles.rawEvidence} open={selectedKey !== ""}><summary>Selected trade: all conditions, indicators and outcome evidence</summary><pre>{JSON.stringify(selected.evidence, null, 2)}</pre></details>
     </>}
     <details><summary>Feature availability and research limitations</summary>

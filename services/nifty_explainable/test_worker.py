@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 from worker import (CONFIG, FEATURES, build_examples, features, explain_and_fit,
-                    load, prospective_snapshot, recovery_snapshot)
+                    load, prospective_snapshot, recovery_snapshot, trade_quality_due)
 
 
 def session_fixture():
@@ -17,6 +17,21 @@ def session_fixture():
 
 
 class ResearchTests(unittest.TestCase):
+    def test_trade_quality_schedule_is_after_4pm_trading_day_and_durable(self):
+        class Result:
+            def __init__(self, value): self.value = value
+            def fetchone(self): return self.value
+        class ScheduleConnection:
+            def __init__(self, trading=True, complete=False):
+                self.values = [Result({"due": trading}), Result({"complete": complete})]
+            def execute(self, *_args): return self.values.pop(0)
+        before = pd.Timestamp("2026-09-10T15:59:00", tz="Asia/Kolkata")
+        after = pd.Timestamp("2026-09-10T16:00:00", tz="Asia/Kolkata")
+        self.assertFalse(trade_quality_due(ScheduleConnection(), before))
+        self.assertTrue(trade_quality_due(ScheduleConnection(), after))
+        self.assertFalse(trade_quality_due(ScheduleConnection(trading=False), after))
+        self.assertFalse(trade_quality_due(ScheduleConnection(complete=True), after))
+
     def test_prospective_outcome_cannot_start_before_capture(self):
         b,s,now=session_fixture(); x=build_examples(b,s,now)[0][0]
         captured_at=pd.Timestamp(x['cutoff'])+pd.Timedelta(seconds=30)

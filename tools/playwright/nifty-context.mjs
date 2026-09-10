@@ -139,12 +139,16 @@ try {
             ["15m", "30m", "eod"].some((horizon) =>
               ["ce", "pe"].some((leg) =>
                 typeof row.evidence?.comparative_pnl?.[horizon]?.[leg]?.net === "number"))));
-        record(`${viewport.width} honest insufficient state`,
-          tradePayload.state === "DATA_INSUFFICIENT" &&
-          (await root.getByText(/Need 20 complete independent sessions/).count()) > 0);
-        record(`${viewport.width} SHAP gate visibly explained`,
-          (await root.getByTestId("shap-chart-gate").count()) === 1 &&
-          (await root.getByText(/Not calculated yet.*evidence gate is still locked/).count()) === 1);
+        record(`${viewport.width} daily 30-day 15m policy`,
+          tradePayload.report?.config?.rolling_window_days === 30 &&
+          tradePayload.report?.config?.outcome_horizon?.startsWith("15-minute") &&
+          String(tradePayload.report?.config?.schedule).includes("16:00 Asia/Kolkata"));
+        const hasPrediction = comparisonRows.some((row) => row.prediction && row.explanation);
+        record(`${viewport.width} SHAP state is truthful`, hasPrediction
+          ? tradePayload.state === "EXPLORATORY" &&
+            (await root.getByLabel("Daily held-out SHAP feature importance").count()) === 1
+          : tradePayload.state === "DATA_INSUFFICIENT" &&
+            (await root.getByTestId("shap-chart-gate").count()) === 1);
         record(`${viewport.width} comparative CE and PE horizons visible`,
           (await root.getByRole("columnheader", { name: "CE · 15m P&L" }).count()) === 1 &&
           (await root.getByRole("columnheader", { name: "PE · EOD P&L" }).count()) === 1);

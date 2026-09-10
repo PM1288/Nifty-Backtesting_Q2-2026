@@ -1,20 +1,24 @@
 """Explainable V7 trade-quality research. Read-only inputs; additive outputs only."""
 from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime, timedelta
 import hashlib
 import json
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 from psycopg.types.json import Jsonb
 
 
-VERSION = "MANEESH_V7_GOOD_TRADE_SHAP_1"
+VERSION = "MANEESH_V7_GOOD_TRADE_SHAP_2_DAILY_30D"
 RULE_VERSION = "FNO_PAIRED_EMA9_POSITION_BODY70_NEXT_OPEN_V7"
-LABEL_POLICY = "GOOD_TRADE_NET_POSITIVE_EOD_ZERODHA_20260909_ONE_LOT"
+LABEL_POLICY = "GOOD_TRADE_NET_POSITIVE_15M_ZERODHA_20260909_ONE_LOT"
 CHARGE_POLICY = "ZERODHA_NSE_OPTIONS_CALCULATOR_20260909"
-MINIMUM_SESSIONS = 20
-MINIMUM_TRAINING_ROWS = 100
-HOLDOUT_SESSIONS = 5
+ROLLING_WINDOW_DAYS = 30
+MINIMUM_COMPLETE_ROWS = 20
+MINIMUM_TRAINING_ROWS = 12
+MINIMUM_HOLDOUT_ROWS = 5
+HOLDOUT_FRACTION = .20
 FEATURES = [
     "interval_minutes", "direction_call", "strike_distance_pct",
     "underlying_body_fraction", "option_body_fraction",
@@ -25,7 +29,13 @@ FEATURES = [
     "selected_macd_signal9", "selected_macd_histogram",
     "opposite_rsi14", "opposite_macd", "opposite_macd_signal9",
     "opposite_macd_histogram", "underlying_precursor_red_count",
-    "option_precursor_red_count",
+    "underlying_precursor_green_count", "option_precursor_red_count",
+    "option_precursor_green_count", "underlying_body70_pass",
+    "selected_option_body70_pass", "next_underlying_open_pass",
+    "underlying_precursor_open_mean_distance_pct",
+    "underlying_precursor_close_mean_distance_pct",
+    "option_precursor_open_mean_distance_pct",
+    "option_precursor_close_mean_distance_pct",
 ]
 GROUPS = [
     "Session", "Direction", "Structure", "Setup", "Setup", "Price", "Option",
@@ -35,16 +45,22 @@ GROUPS = [
     "Selected option indicators", "Opposite option indicators",
     "Opposite option indicators", "Opposite option indicators",
     "Opposite option indicators", "Candle context", "Candle context",
+    "Candle context", "Candle context", "Rule evidence", "Rule evidence",
+    "Rule evidence", "Candle context", "Candle context", "Candle context",
+    "Candle context",
 ]
 CONFIG = {
     "version": VERSION,
     "rule_version": RULE_VERSION,
     "label_policy": LABEL_POLICY,
     "charge_policy": CHARGE_POLICY,
-    "outcome_horizon": "EOD endpoint of the exact selected option",
-    "minimum_sessions": MINIMUM_SESSIONS,
+    "outcome_horizon": "15-minute endpoint of the exact selected option",
+    "rolling_window_days": ROLLING_WINDOW_DAYS,
+    "schedule": "16:00 Asia/Kolkata on trading days; same-day catch-up after restart",
+    "minimum_complete_rows": MINIMUM_COMPLETE_ROWS,
     "minimum_training_rows": MINIMUM_TRAINING_ROWS,
-    "holdout_sessions": HOLDOUT_SESSIONS,
+    "minimum_holdout_rows": MINIMUM_HOLDOUT_ROWS,
+    "holdout_fraction": HOLDOUT_FRACTION,
     "features": FEATURES,
     "seed": 42,
     "execution_enabled": False,
@@ -63,6 +79,10 @@ def _number(value):
         return result if np.isfinite(result) else None
     except (TypeError, ValueError):
         return None
+
+
+def _boolean(value):
+    return float(value) if isinstance(value, bool) else None
 
 
 def _money(value):
@@ -107,15 +127,19 @@ def _pct_distance(value, reference):
     return None if value is None or reference in (None, 0) else (value / reference - 1) * 100
 
 
+def _mean_precursor_distance(precursors, field):
+    values = [_pct_distance(item.get(field), item.get("ema9")) for item in precursors]
+    values = [value for value in values if value is not None]
+    return float(np.mean(values)) if values else None
+
+
 def build_trade_example(row):
     direction = row["direction"]
     selected_key, opposite_key = ("ce", "pe") if direction == "CALL" else ("pe", "ce")
     indicators = row.get("indicator_evidence") or {}
     conditions = row.get("condition_evidence") or {}
     outcomes = row.get("outcome_evidence") or {}
-    eod = outcomes.get("eod") or {}
-    selected_outcome = eod.get(selected_key) or {}
-    selected_entry = row.get(f"{selected_key}_entry_open")
+    fifteen = outcomes.get("15m") or {}
     selected_lot = row.get(f"{selected_key}_lot_size")
     comparative_pnl = {
         horizon: {
@@ -126,7 +150,7 @@ def build_trade_example(row):
         }
         for horizon in ("15m", "30m", "eod")
     }
-    pnl = comparative_pnl["eod"][selected_key]
+    pnl = comparative_pnl["15m"][selected_key]
     precursors = conditions.get("underlying_precursors") or []
     option_precursors = conditions.get("selected_option_precursors") or []
     feature_values = {
@@ -152,9 +176,18 @@ def build_trade_example(row):
         "opposite_macd_signal9": _indicator(indicators, opposite_key, "macd_signal9"),
         "opposite_macd_histogram": _indicator(indicators, opposite_key, "macd_histogram"),
         "underlying_precursor_red_count": float(sum(x.get("colour") == "RED" for x in precursors)),
+        "underlying_precursor_green_count": float(sum(x.get("colour") == "GREEN" for x in precursors)),
         "option_precursor_red_count": float(sum(x.get("colour") == "RED" for x in option_precursors)),
+        "option_precursor_green_count": float(sum(x.get("colour") == "GREEN" for x in option_precursors)),
+        "underlying_body70_pass": _boolean(conditions.get("underlying_body70_pass")),
+        "selected_option_body70_pass": _boolean(conditions.get("selected_option_body70_pass")),
+        "next_underlying_open_pass": _boolean(conditions.get("next_underlying_open_pass")),
+        "underlying_precursor_open_mean_distance_pct": _mean_precursor_distance(precursors, "open"),
+        "underlying_precursor_close_mean_distance_pct": _mean_precursor_distance(precursors, "close"),
+        "option_precursor_open_mean_distance_pct": _mean_precursor_distance(option_precursors, "open"),
+        "option_precursor_close_mean_distance_pct": _mean_precursor_distance(option_precursors, "close"),
     }
-    mature = row.get("outcome_state") == "MATURE_EOD" and eod.get("maturity") == "MATURE"
+    mature = fifteen.get("maturity") == "MATURE"
     return {
         "signal_key": row["signal_key"], "trade_date": row["trade_date"],
         "entry_end": str(row["entry_end"]), "symbol": row["underlying_symbol"],
@@ -163,7 +196,7 @@ def build_trade_example(row):
         "selected_option": row.get(f"{selected_key}_symbol"),
         "opposite_option": row.get(f"{opposite_key}_symbol"),
         "lot_size": selected_lot, "lot_size_basis": "CURRENT_EXACT_CONTRACT_MASTER_NOT_HISTORICAL",
-        "label_policy": LABEL_POLICY, "maturity": row.get("outcome_state"),
+        "label_policy": LABEL_POLICY, "maturity": fifteen.get("maturity") or "UNAVAILABLE",
         "label": None if not mature or pnl is None else int(pnl["net"] > 0),
         "label_name": "GOOD_TRADE" if mature and pnl and pnl["net"] > 0 else "NON_POSITIVE" if mature and pnl else "UNAVAILABLE",
         "pnl": pnl, "comparative_pnl": comparative_pnl, "features": feature_values,
@@ -173,7 +206,13 @@ def build_trade_example(row):
     }
 
 
-def load_trade_examples(conn):
+def rolling_window(as_of_date=None):
+    as_of = as_of_date or datetime.now(ZoneInfo("Asia/Kolkata")).date()
+    return as_of - timedelta(days=ROLLING_WINDOW_DAYS - 1), as_of
+
+
+def load_trade_examples(conn, as_of_date=None):
+    window_start, window_end = rolling_window(as_of_date)
     rows = conn.execute("""
       SELECT s.signal_key,s.trade_date::text,s.interval_minutes,s.entry_end,s.direction,
         s.underlying_symbol,s.expiry::text,s.strike::float8,s.underlying_setup_close::float8,
@@ -190,8 +229,9 @@ def load_trade_examples(conn):
       LEFT JOIN LATERAL (SELECT lotsize FROM instruments WHERE exchange='NFO'
         AND tradingsymbol=o.pe_symbol AND symbol_token=o.pe_token AND expiry=s.expiry
         ORDER BY updated_at DESC LIMIT 1) pe ON true
-      WHERE s.rule_version=%s ORDER BY s.trade_date,s.entry_end,s.underlying_symbol
-    """, (RULE_VERSION,)).fetchall()
+      WHERE s.rule_version=%s AND s.trade_date BETWEEN %s AND %s
+      ORDER BY s.trade_date,s.entry_end,s.underlying_symbol
+    """, (RULE_VERSION, window_start, window_end)).fetchall()
     return [build_trade_example(row) for row in rows]
 
 
@@ -208,12 +248,23 @@ def fit_trade_quality(examples):
     coverage = {name: sum(x["features"][name] is not None for x in examples) for name in FEATURES}
     base = {"predictions": [], "models": [], "feature_coverage": coverage,
             "model_eligible_rows": len(complete), "model_eligible_sessions": len(sessions)}
-    if len(sessions) < MINIMUM_SESSIONS:
+    if len(complete) < MINIMUM_COMPLETE_ROWS:
         return {**base, "state": "DATA_INSUFFICIENT",
-                "reason": f"Need {MINIMUM_SESSIONS} complete independent sessions; have {len(sessions)}"}
-    test_days = sessions[-HOLDOUT_SESSIONS:]
-    train = [x for x in complete if x["trade_date"] not in test_days]
-    test = [x for x in complete if x["trade_date"] in test_days]
+                "reason": f"Need {MINIMUM_COMPLETE_ROWS} complete labelled trades; have {len(complete)}"}
+    ordered = sorted(complete, key=lambda x: (x["entry_end"], x["signal_key"]))
+    desired_holdout = max(MINIMUM_HOLDOUT_ROWS, int(np.ceil(len(ordered) * HOLDOUT_FRACTION)))
+    decision_times = sorted({x["entry_end"] for x in ordered})
+    test_times, grouped_count = [], 0
+    for decision_time in reversed(decision_times):
+        test_times.append(decision_time)
+        grouped_count += sum(x["entry_end"] == decision_time for x in ordered)
+        if grouped_count >= desired_holdout:
+            break
+    test_time_set = set(test_times)
+    test = [x for x in ordered if x["entry_end"] in test_time_set]
+    first_test = datetime.fromisoformat(min(test_times).replace("Z", "+00:00"))
+    train = [x for x in ordered if x["entry_end"] not in test_time_set and
+             datetime.fromisoformat(x["entry_end"].replace("Z", "+00:00")) + timedelta(minutes=15) < first_test]
     if len(train) < MINIMUM_TRAINING_ROWS or len({x["label"] for x in train}) < 2:
         return {**base, "state": "DATA_INSUFFICIENT",
                 "reason": f"Need {MINIMUM_TRAINING_ROWS} training rows and both outcome classes"}
@@ -246,22 +297,27 @@ def fit_trade_quality(examples):
                 "feature_names": FEATURES, "groups": GROUPS,
                 "contributions": explanation.values[index].tolist()}})
     return {**base, "state": "EXPLORATORY", "reason": "Held-out research only; no execution use approved",
-            "train_rows": len(train), "test_rows": len(test), "test_sessions": test_days,
+            "train_rows": len(train), "test_rows": len(test),
+            "split_policy": "chronological decision-time groups; training 15m labels mature before first holdout entry",
+            "train_sessions": sorted({x["trade_date"] for x in train}),
+            "test_sessions": sorted({x["trade_date"] for x in test}),
             "metrics": metrics, "shap_max_error": max_error, "predictions": predictions,
             "models": [{"name": "logistic", "parameters": {"C": .5}},
                        {"name": "xgboost", "parameters": {"n_estimators": 60, "max_depth": 2, "learning_rate": .05}}]}
 
 
-def run_trade_quality(conn, code_commit="unknown"):
+def run_trade_quality(conn, code_commit="unknown", as_of_date=None):
     Path("schema.sql").read_text()  # Fail early if the packaged schema is missing.
-    examples = load_trade_examples(conn)
+    window_start, window_end = rolling_window(as_of_date)
+    examples = load_trade_examples(conn, window_end)
     result = fit_trade_quality(examples)
     worker_sha256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-    run_id = _digest({"config": CONFIG, "examples": examples, "code_commit": code_commit,
+    run_id = _digest({"config": CONFIG, "as_of_date": str(window_end), "examples": examples, "code_commit": code_commit,
                       "worker_sha256": worker_sha256})
     report = {
         "run_id": run_id, "version": VERSION, "state": result["state"], "reason": result["reason"],
-        "config": CONFIG, "code_commit": code_commit, "worker_sha256": worker_sha256,
+        "config": CONFIG, "as_of_date": str(window_end), "window_start_date": str(window_start),
+        "code_commit": code_commit, "worker_sha256": worker_sha256,
         "execution_enabled": False,
         "coverage": {"observations": len(examples),
                      "mature": sum(x["label"] is not None for x in examples),
@@ -273,11 +329,13 @@ def run_trade_quality(conn, code_commit="unknown"):
         "feature_coverage": result["feature_coverage"],
         "evaluation": {k: v for k, v in result.items() if k not in ("predictions", "models", "feature_coverage")},
         "limitations": [
-            "Good trade means quote-based EOD net P&L above zero for one lot; it is not booked P&L.",
+            "Good trade means quote-based 15-minute net P&L above zero for the exact selected option and one lot; it is not booked P&L.",
             "Charges use the versioned current Zerodha NSE options calculator policy.",
             "Lot size is the current exact contract-master value and may not represent historical lot size.",
-            "Only entry-time inputs are features; 15m, 30m and EOD paths are outcomes and never model inputs.",
+            "Only entry-time V7 conditions and indicators are features; all 15m, 30m and EOD paths are outcomes and never model inputs.",
             "Rows with missing indicators remain visible but are excluded from model fitting; missing is never zero.",
+            "The rolling population is the latest 30 calendar days and is recalculated after 16:00 IST on each trading day.",
+            "The session-count gate was removed. Multiple trades from one session are correlated, so results remain exploratory and are not execution-approved.",
         ],
     }
     conn.execute("INSERT INTO nifty_context.trade_quality_runs(id,report) VALUES(%s,%s) ON CONFLICT DO NOTHING",

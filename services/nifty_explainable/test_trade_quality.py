@@ -3,7 +3,7 @@ import unittest
 from copy import deepcopy
 from datetime import date, timedelta
 
-from trade_quality import FEATURES, build_trade_example, fit_trade_quality, option_pnl
+from trade_quality import FEATURES, build_trade_example, fit_trade_quality, option_pnl, rolling_window
 
 
 def row(indicators=True, endpoint=12.0):
@@ -18,11 +18,23 @@ def row(indicators=True, endpoint=12.0):
         "option_ema9": 9.5, "option_body_fraction": .8, "option_entry_open": 10.0,
         "ce_symbol": "TESTCE", "pe_symbol": "TESTPE", "ce_entry_open": 10.0,
         "pe_entry_open": 8.0, "ce_lot_size": 65, "pe_lot_size": 65,
-        "condition_evidence": {"underlying_precursors": [{"colour": "RED"}, {"colour": "GREEN"}],
-                               "selected_option_precursors": [{"colour": "RED"}, {"colour": "RED"}]},
+        "condition_evidence": {
+            "underlying_precursors": [
+                {"colour": "RED", "open": 99.0, "close": 99.5, "ema9": 100.0},
+                {"colour": "GREEN", "open": 99.5, "close": 99.8, "ema9": 100.0},
+            ],
+            "selected_option_precursors": [
+                {"colour": "RED", "open": 8.8, "close": 9.0, "ema9": 9.5},
+                {"colour": "RED", "open": 9.0, "close": 9.2, "ema9": 9.5},
+            ],
+            "underlying_body70_pass": True, "selected_option_body70_pass": True,
+            "next_underlying_open_pass": True,
+        },
         "indicator_evidence": indicator if indicators else {"underlying": {}, "ce": {}, "pe": {}},
-        "outcome_state": "MATURE_EOD",
-        "outcome_evidence": {"15m": {"maturity": "MATURE"}, "30m": {"maturity": "MATURE"},
+        "outcome_state": "DEVELOPING",
+        "outcome_evidence": {"15m": {"maturity": "MATURE", "ce": {"endpoint": endpoint},
+                                                     "pe": {"endpoint": 7.0}},
+                             "30m": {"maturity": "MATURE"},
                              "eod": {"maturity": "MATURE", "ce": {"endpoint": endpoint},
                                      "pe": {"endpoint": 7.0}}},
     }
@@ -35,8 +47,7 @@ class TradeQualityTests(unittest.TestCase):
         self.assertEqual(example["label_name"], "GOOD_TRADE")
         self.assertEqual(example["selected_option"], "TESTCE")
         self.assertGreater(example["pnl"]["gross"], example["pnl"]["net"])
-        self.assertEqual(example["comparative_pnl"]["eod"]["ce"], example["pnl"])
-        self.assertIsNone(example["comparative_pnl"]["15m"]["ce"])
+        self.assertEqual(example["comparative_pnl"]["15m"]["ce"], example["pnl"])
         self.assertEqual(list(example["features"]), FEATURES)
 
     def test_non_positive_and_missing_are_not_converted_to_wins_or_zero(self):
@@ -54,6 +65,14 @@ class TradeQualityTests(unittest.TestCase):
         self.assertEqual(first["features"], second["features"])
         self.assertNotEqual(first["pnl"], second["pnl"])
 
+    def test_label_uses_15_minute_not_eod_outcome(self):
+        source = row(endpoint=12.0)
+        source["outcome_evidence"]["eod"]["ce"]["endpoint"] = 7.0
+        example = build_trade_example(source)
+        self.assertEqual(example["label"], 1)
+        self.assertGreater(example["pnl"]["net"], 0)
+        self.assertLess(example["comparative_pnl"]["eod"]["ce"]["net"], 0)
+
     def test_both_legs_and_all_horizons_have_independent_pnl(self):
         source = row(endpoint=12.0)
         source["outcome_evidence"] = {
@@ -68,10 +87,28 @@ class TradeQualityTests(unittest.TestCase):
         self.assertLess(example["comparative_pnl"]["30m"]["ce"]["net"], 0)
         self.assertGreater(example["comparative_pnl"]["30m"]["pe"]["net"], 0)
 
-    def test_too_few_sessions_does_not_create_shap(self):
+    def test_too_few_complete_trades_does_not_create_shap(self):
         result = fit_trade_quality([build_trade_example(row())])
         self.assertEqual(result["state"], "DATA_INSUFFICIENT")
         self.assertEqual(result["predictions"], [])
+
+    def test_many_trades_from_one_session_can_create_exploratory_shap(self):
+        examples = []
+        for sample in range(30):
+            source = deepcopy(row(endpoint=12.0 if sample % 2 else 8.0))
+            source["signal_key"] = f"same-day-{sample}"
+            source["entry_end"] = f"2026-09-09T{3 + sample // 6:02d}:{(sample % 6) * 5:02d}:00Z"
+            source["underlying_body_fraction"] = .70 + sample * .001
+            examples.append(build_trade_example(source))
+        result = fit_trade_quality(examples)
+        self.assertEqual(result["state"], "EXPLORATORY")
+        self.assertEqual(result["model_eligible_sessions"], 1)
+        self.assertEqual(result["test_rows"], 6)
+
+    def test_rolling_window_is_30_calendar_days_inclusive(self):
+        start, end = rolling_window(date(2026, 9, 10))
+        self.assertEqual(start, date(2026, 8, 12))
+        self.assertEqual((end - start).days + 1, 30)
 
     def test_chronological_binary_model_and_shap_reconcile(self):
         examples = []
@@ -79,7 +116,9 @@ class TradeQualityTests(unittest.TestCase):
             for sample in range(8):
                 source = deepcopy(row(endpoint=12.0 if (day + sample) % 2 else 8.0))
                 source["signal_key"] = f"test-{day}-{sample}"
-                source["trade_date"] = str(date(2026, 7, 1) + timedelta(days=day))
+                trade_day = date(2026, 7, 1) + timedelta(days=day)
+                source["trade_date"] = str(trade_day)
+                source["entry_end"] = f"{trade_day}T04:00:00Z"
                 source["underlying_body_fraction"] = .70 + sample * .01
                 source["option_body_fraction"] = .71 + day * .001
                 examples.append(build_trade_example(source))

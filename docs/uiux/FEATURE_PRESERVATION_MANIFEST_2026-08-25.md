@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-10 MANEESH daily trade SHAP V2: the read-only Good-trade experiment now
+uses a rolling 30-calendar-day population and an exact selected-option positive
+15-minute net P&L label after versioned charges. The old 20-session gate is
+removed; a chronological trade-level holdout remains, and same-session
+correlation is disclosed as an exploratory limitation. The durable scheduler
+runs once at/after 16:00 IST on trading days and catches up after a same-day
+restart. Full V7 condition/indicator JSON, CE/PE 15m/30m/EOD comparisons,
+exports, entry logic, paper/live permissions and notifications remain unchanged.
+
 2026-09-09 current stock-F&O collection reconciliation: Trading Analytics and
 the collector now use the same current SmartAPI stock-F&O membership boundary.
 Missing cash underlyings are resolved from the real NSE master, startup prices

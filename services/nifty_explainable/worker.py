@@ -16,7 +16,7 @@ import pandas as pd
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
-from trade_quality import run_trade_quality
+from trade_quality import VERSION as TRADE_QUALITY_VERSION, run_trade_quality
 
 LOG = logging.getLogger("nifty_context")
 VERSION = "NIFTY_CONTEXT_EXPERIMENT_1"
@@ -316,13 +316,38 @@ def experiment():
 
 
 _last_recovery_attempt = None
-_last_trade_quality_date = None
+TRADE_QUALITY_SCHEDULE_HOUR_IST = 16
+
+
+def trade_quality_due(conn, local_now):
+    """Use durable run evidence so restarts neither skip nor duplicate the daily job."""
+    if local_now.hour < TRADE_QUALITY_SCHEDULE_HOUR_IST:
+        return False
+    if not conn.execute(
+        "SELECT EXISTS(SELECT 1 FROM public.trading_calendar WHERE trade_date=%s AND is_trading_day) due",
+        (local_now.date(),),
+    ).fetchone()["due"]:
+        return False
+    return not conn.execute(
+        """SELECT EXISTS(SELECT 1 FROM nifty_context.trade_quality_runs
+             WHERE report->>'version'=%s AND report->>'as_of_date'=%s) complete""",
+        (TRADE_QUALITY_VERSION, str(local_now.date())),
+    ).fetchone()["complete"]
+
+
+def run_scheduled_trade_quality(conn, local_now):
+    report = run_trade_quality(conn, os.getenv("CODE_COMMIT", "unknown"), local_now.date())
+    LOG.info("trade_quality_daily_complete as_of=%s state=%s run_id=%s",
+             local_now.date(), report["state"], report["run_id"])
+    return report
 
 
 def capture():
-    global _last_recovery_attempt, _last_trade_quality_date
+    global _last_recovery_attempt
     now=pd.Timestamp.now(tz='UTC')
     with connect() as conn:
+        local_now = now.tz_convert('Asia/Kolkata')
+        daily_trade_quality_due = trade_quality_due(conn, local_now)
         sessions=conn.execute("""SELECT trade_date,market_open_ts,market_close_ts FROM public.trading_calendar
           WHERE is_trading_day AND trade_date >= (now() AT TIME ZONE 'Asia/Kolkata')::date-%s
           AND trade_date <= (now() AT TIME ZONE 'Asia/Kolkata')::date ORDER BY trade_date""",
@@ -346,6 +371,8 @@ def capture():
         recovery_due=bool(missing or pending_exists) and (_last_recovery_attempt is None or
           (now-_last_recovery_attempt).total_seconds()>=CONFIG['recovery_retry_seconds'])
         if not scheduled_tick and not recovery_due:
+            if daily_trade_quality_due:
+                run_scheduled_trade_quality(conn, local_now)
             return
         bars,_=load(conn,CONFIG['recovery_lookback_days'] if recovery_due else 1)
         local_day=now.tz_convert('Asia/Kolkata').date()
@@ -400,11 +427,8 @@ def capture():
             if 0 <= (now-pd.Timestamp(item['cutoff'])).total_seconds()<60:
                 LOG.info('snapshot_abstained cutoff=%s reason=%s',item['cutoff'],item['reason'])
         conn.commit()
-        local_now = now.tz_convert('Asia/Kolkata')
-        if local_now.hour >= 16 and _last_trade_quality_date != local_now.date():
-            report = run_trade_quality(conn, os.getenv('CODE_COMMIT', 'unknown'))
-            _last_trade_quality_date = local_now.date()
-            LOG.info('trade_quality_complete state=%s run_id=%s', report['state'], report['run_id'])
+        if daily_trade_quality_due:
+            run_scheduled_trade_quality(conn, local_now)
 
 
 if __name__=='__main__':
@@ -417,7 +441,8 @@ if __name__=='__main__':
         experiment()
     elif args.command=='trade-experiment':
         with connect() as conn:
-            report=run_trade_quality(conn,os.getenv('CODE_COMMIT','unknown'))
+            report=run_trade_quality(conn,os.getenv('CODE_COMMIT','unknown'),
+                                     pd.Timestamp.now(tz='Asia/Kolkata').date())
             LOG.info('trade_quality_complete state=%s run_id=%s',report['state'],report['run_id'])
     elif args.command=='capture':
         capture()

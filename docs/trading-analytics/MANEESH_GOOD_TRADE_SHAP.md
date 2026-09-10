@@ -19,18 +19,22 @@ docker compose -p trading-stack-novius2 \
   run --rm nifty-context python worker.py trade-experiment
 ```
 
-The long-running worker also runs the idempotent experiment once after 16:00 IST each trading day.
+The long-running worker runs the idempotent experiment once at or after 16:00
+IST each trading day. A durable run lookup prevents a restart from duplicating
+the date; a restart later that day catches up a missed 16:00 run.
 
 ## Population and outcome
 
 Population: every stored observation produced by `FNO_PAIRED_EMA9_POSITION_BODY70_NEXT_OPEN_V7`. No winning-only sample is used. Positive, non-positive and unavailable outcomes remain separately visible.
 
-Versioned label: `GOOD_TRADE_NET_POSITIVE_EOD_ZERODHA_20260909_ONE_LOT`.
+Versioned experiment: `MANEESH_V7_GOOD_TRADE_SHAP_2_DAILY_30D`.
+
+Versioned label: `GOOD_TRADE_NET_POSITIVE_15M_ZERODHA_20260909_ONE_LOT`.
 
 For the exact selected option (CE for CALL, PE for PUT):
 
 ```text
-gross = (stored EOD endpoint premium - stored entry-open premium) * one exact-contract lot
+gross = (stored 15-minute endpoint premium - stored entry-open premium) * one exact-contract lot
 net   = gross - versioned NSE option charges
 GOOD_TRADE = net > 0
 ```
@@ -41,14 +45,18 @@ This is quote-path research, not booked or guaranteed executable P&L. Lot size c
 
 ## Feature boundary
 
-Only evidence known at entry is eligible as a model input:
+Every run selects signals from the latest 30 calendar days, inclusive of its
+IST as-of date. Only evidence known at entry is eligible as a model input:
 
 - interval and CALL/PUT direction;
 - strike distance;
 - underlying and selected-option body fractions;
 - EMA distance and next-open gap for underlying and selected option;
 - entry-time RSI14, MACD, signal and histogram for underlying, selected option and opposite option;
-- prior-candle colour counts as optional context.
+- prior-candle red/green counts as optional context;
+- the stored V7 body and next-open condition results;
+- mean signed open/close distance from EMA9 across the two required precursor
+  candles for the underlying and selected option.
 
 The complete original condition and indicator JSON remains exportable. Stored 15-minute, 30-minute and EOD max/min/endpoint paths are outcomes only. They are never input features, preventing look-ahead leakage.
 
@@ -56,10 +64,12 @@ Missing input values remain null. Rows remain visible in evidence but are exclud
 
 ## Model and SHAP gate
 
-- chronological split by trading session;
-- last five eligible sessions held out;
-- minimum 20 complete independent sessions;
-- minimum 100 training observations and both labels;
+- chronological split by complete decision-time groups, so simultaneous stock
+  setups cannot straddle training and test;
+- final 20% of complete labelled trades held out, with a minimum five rows;
+- every retained training label must mature before the first held-out entry;
+- minimum 20 complete labelled observations overall;
+- minimum 12 training observations and both labels;
 - regularised logistic baseline;
 - small CPU XGBoost binary classifier;
 - TreeExplainer with interventional background;
@@ -67,11 +77,19 @@ Missing input values remain null. Rows remain visible in evidence but are exclud
 - contribution units are raw binary log-odds margin, not probability percentage points;
 - no threshold search, execution promotion or notification use.
 
-The dashboard shows the full outcomes table even when the model gate is not met. It shows a waterfall only for genuine held-out predictions.
+There is no longer a 20-session eligibility gate. This permits the daily model
+to mature from the many exact-option setups already captured. Trades within one
+session are correlated rather than independent, so the dashboard and export
+continue to label the result `EXPLORATORY`; it is not approved for order entry.
+
+The dashboard shows the full outcomes table even when the model gate is not
+met. Once eligible, it shows a genuine daily mean-absolute SHAP importance
+chart across held-out trades and a signed waterfall for a selected held-out
+trade. Neither chart uses synthetic or future-outcome features.
 
 The primary table compares both exact legs irrespective of the original direction. CE and PE each show 15-minute, 30-minute and EOD net P&L, gross P&L, charges, endpoint premium and the observed high/low excursion. The original selected leg remains explicit and alone determines the versioned good-trade label. Selecting anywhere on a row opens the unchanged complete evidence inspector.
 
-## Initial live evidence — 9 September 2026
+## Superseded V1 evidence — 9 September 2026
 
 | Measure | Value |
 |---|---:|
@@ -85,7 +103,9 @@ The primary table compares both exact legs irrespective of the original directio
 
 Reason: `Need 20 complete independent sessions; have 1`.
 
-No SHAP values or predictive probabilities were fabricated from this one-session sample. Daily accumulation and the after-close runner will make the model eligible only after the frozen minimum is genuinely reached.
+This records why V1 showed no chart. V2 intentionally replaces that session
+gate with the trade-level gate above and changes the label horizon from EOD to
+15 minutes. It does not rewrite any stored V1 run.
 
 ## Persistence
 
@@ -99,7 +119,11 @@ Inputs are read from `nse_ops.scalper_entry_signal` and `nse_ops.scalper_trade_o
 
 ## Validation and rollback
 
-Synthetic tests cover charge arithmetic, positive and non-positive labels, missingness, outcome leakage, minimum-session abstention and the pre-existing NIFTY SHAP reconciliation suite.
+Synthetic tests cover charge arithmetic, the exact 15-minute label, positive
+and non-positive labels, missingness, outcome leakage, the 30-day boundary,
+single-session multi-trade eligibility, scheduler timing/idempotency and SHAP
+reconciliation. The separate hourly NIFTY model retains its own independent
+20-session research gate.
 
 ```bash
 docker run --rm \
@@ -126,8 +150,7 @@ outcomes and gate reason but no fake SHAP waterfall. Authenticated deployed
 browser verification passed 114/114 checks; evidence is at
 `output/playwright/nifty-context-deployed-v2/`.
 
-The Good-trade SHAP lens now includes a dedicated chart-status panel whenever
-the model gate is locked. It displays eligible independent sessions versus the
-required minimum and states that the waterfall has not been calculated. Once
-real held-out explanations exist, the same lens renders the actual per-trade
-waterfall; it never substitutes an outcome chart or synthetic importance bars.
+The Good-trade SHAP lens includes a dedicated chart-status panel whenever the
+trade-level model gate is locked. Once genuine held-out explanations exist, the
+same lens renders the actual per-trade waterfall; it never substitutes an
+outcome chart or synthetic importance bars.

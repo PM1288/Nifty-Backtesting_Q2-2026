@@ -6,6 +6,17 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 NSE India report download health: the existing authenticated
+`/institutional/nse-intelligence/reports` view now exposes per-file downloader
+and loader status, source date, exact file, bytes, SHA-256, rows, timings,
+recorded source attempts and failure reasons, plus the last 30 scheduled jobs.
+All/Core/Ancillary/Issues filters and complete CSV/JSON evidence are additive.
+Missing files remain unavailable rather than zero, while skipped/reused files
+are labelled as already loaded. Existing NSE Intelligence views, institutional
+report ingestion, navigation, authentication, collectors, data and permissions
+remain unchanged. Evidence:
+`docs/nse-reports/NSE_REPORT_DOWNLOAD_HEALTH_20260911.md`.
+
 2026-09-11 Strategy Scalper Dashboard: `/strategy/scalper-dashboard` adds a
 separate read-only current-month filter ledger for the current NSE stock F&O
 universe. It exposes current price plus open and close/as-of anchors for today,

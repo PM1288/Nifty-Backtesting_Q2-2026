@@ -4,6 +4,7 @@ import {
   BarChart3,
   ClipboardList,
   Database,
+  FileCheck2,
   FileClock,
   FlaskConical,
   Globe2,
@@ -169,6 +170,7 @@ export const MORE_MENU_ROUTES: readonly HeaderNavigationItem[] = [
   { id: "system-health", label: "System Health", description: "Sources, services, runtime status and provenance", path: "/analytics/system/map", icon: Activity },
   { id: "run-monitor", label: "Run Monitor", description: "Active, completed and failed processing runs", path: "/backtesting/runs", icon: FileClock },
   { id: "nse-intelligence", label: "NSE Intelligence", description: "Official reports, market activity and ingestion health", path: "/institutional/nse-intelligence", icon: Network },
+  { id: "nse-report-health", label: "NSE Report Health", description: "Per-file NSE India download, load and scheduler evidence", path: "/institutional/nse-intelligence/reports", icon: FileCheck2 },
   { id: "administration", label: "Administration", description: "Authorised database and system controls", path: "/control-plane", icon: ShieldCheck, adminOnly: true },
 ] as const;
 

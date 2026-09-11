@@ -175,6 +175,8 @@ export default function App() {
           <Route path="/institutional/flow" element={<AnalyticsFiiFlowPage />} />
           <Route path="/institutional/reports" element={<AnalyticsFiiReportsPage />} />
           <Route path="/nse-intelligence" element={<Navigate to="/institutional/nse-intelligence" replace />} />
+          <Route path="/nse-report-health" element={<Navigate to="/institutional/nse-intelligence/reports" replace />} />
+          <Route path="/institutional/nse-report-health" element={<Navigate to="/institutional/nse-intelligence/reports" replace />} />
           <Route path="/institutional/nse-intelligence" element={<NseIntelligencePage />} />
           <Route path="/institutional/nse-intelligence/sectors" element={<NseIntelligencePage />} />
           <Route path="/institutional/nse-intelligence/fno" element={<NseIntelligencePage />} />

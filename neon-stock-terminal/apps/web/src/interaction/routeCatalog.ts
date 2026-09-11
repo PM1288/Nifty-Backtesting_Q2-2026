@@ -31,6 +31,7 @@ export const ROUTE_COMMANDS: readonly RouteEntry[] = [
   { id: "institutional-flow", label: "FII / DII Flow", to: "/institutional/flow", description: "Dated institutional flow evidence", keywords: ["institutional flow"] },
   { id: "institutional-reports", label: "Institutional Report Ingestion", to: "/institutional/reports", description: "Source reports and ingestion status" },
   { id: "nse-intelligence", label: "NSE Intelligence", to: "/institutional/nse-intelligence", description: "Official bhavcopy intelligence and report health", keywords: ["bhavcopy", "Nifty reports", "NSE reports", "daily ingestion"] },
+  { id: "nse-report-health", label: "NSE Report Download Health", to: "/institutional/nse-intelligence/reports", description: "Per-file NSE India download, checksum, load and scheduler evidence", keywords: ["NSE India", "download health", "missing files", "ingestion"] },
   { id: "options-structure", label: "Options Structure", to: "/options/structure", description: "OI structure, walls and skew" },
   { id: "options-overview", label: "Options Snapshot", to: "/options/intelligence", description: "Current chain, expiry and expected move", keywords: ["option chain"] },
   { id: "options-advanced", label: "Options Advanced Data", to: "/options/snapshot", description: "Detailed options evidence" },

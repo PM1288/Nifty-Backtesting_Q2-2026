@@ -23,8 +23,16 @@ function reportLabel(reportName: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+const AVAILABLE_REPORT_STATES = new Set(["LOADED", "REUSED", "SKIPPED"]);
+
+function elapsedMs(startedAt: unknown, finishedAt: unknown) {
+  if (!startedAt || !finishedAt) return null;
+  const value = new Date(String(finishedAt)).getTime() - new Date(String(startedAt)).getTime();
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
 async function buildNseIntelligence(prisma: PrismaClient) {
-  const [jobs, reports, breadth, movers, events] = await Promise.all([
+  const [jobs, reports, breadth, movers, events, recentJobs] = await Promise.all([
     prisma.$queryRawUnsafe<AnyRow[]>(
       `SELECT d.id,d.job_date,d.source_trade_date,d.run_id,d.scheduled_for,d.status,
         d.metrics,d.started_at,d.finished_at,
@@ -40,7 +48,7 @@ async function buildNseIntelligence(prisma: PrismaClient) {
       `WITH latest AS (SELECT run_id FROM nse.daily_job_run ORDER BY job_date DESC LIMIT 1)
        SELECT rr.report_name,rr.source_date,rr.file_name,rr.file_sha256,rr.bytes_downloaded,
          rr.rows_loaded,upper(rr.status) AS status,rr.started_at,rr.finished_at,rr.message,
-         fr.load_status,fr.loaded_at,fr.metadata
+         rr.metadata AS run_metadata,fr.load_status,fr.loaded_at,fr.metadata AS registry_metadata
        FROM nse.ingest_run_reports rr
        JOIN latest l ON l.run_id=rr.run_id
        LEFT JOIN nse.file_registry fr ON fr.report_name=rr.report_name
@@ -74,26 +82,50 @@ async function buildNseIntelligence(prisma: PrismaClient) {
       `SELECT report_date,event_type,symbol,headline,raw_text,source_file,loaded_at
        FROM nse.fact_text_events ORDER BY report_date DESC,loaded_at DESC LIMIT 30`,
     ),
+    prisma.$queryRawUnsafe<AnyRow[]>(
+      `SELECT id,job_date,source_trade_date,run_id,scheduled_for,status,metrics,
+         started_at,finished_at
+       FROM nse.daily_job_run
+       ORDER BY job_date DESC LIMIT 30`,
+    ),
   ]);
 
   const job = jobs[0] ?? null;
   const metrics = (job?.metrics && typeof job.metrics === "object") ? job.metrics : {};
-  const normalizedReports = reports.map((row) => ({
-    reportId: String(row.report_name),
-    report: reportLabel(String(row.report_name)),
-    priority: CORE_REPORTS.has(String(row.report_name)) ? "CORE" : "ANCILLARY",
-    requiredForCashOverview: CORE_REPORTS.has(String(row.report_name)),
-    status: String(row.status),
-    sourceDate: row.source_date,
-    fileName: row.file_name,
-    checksum: row.file_sha256,
-    bytes: asNumber(row.bytes_downloaded),
-    rows: asNumber(row.rows_loaded),
-    loadedAt: row.loaded_at ?? row.finished_at,
-    message: row.message,
-  }));
-  const availableReports = normalizedReports.filter((row) => ["LOADED", "REUSED"].includes(row.status));
-  const coreAvailable = normalizedReports.filter((row) => row.requiredForCashOverview && ["LOADED", "REUSED"].includes(row.status));
+  const normalizedReports = reports.map((row) => {
+    const status = String(row.status).toUpperCase();
+    const metadata = row.run_metadata && typeof row.run_metadata === "object" ? row.run_metadata : {};
+    const attemptedUrls = Array.isArray(metadata.attempted_urls)
+      ? metadata.attempted_urls.filter((value: unknown) => typeof value === "string")
+      : [];
+    return {
+      reportId: String(row.report_name),
+      report: reportLabel(String(row.report_name)),
+      priority: CORE_REPORTS.has(String(row.report_name)) ? "CORE" : "ANCILLARY",
+      requiredForCashOverview: CORE_REPORTS.has(String(row.report_name)),
+      status,
+      downloadState: status === "LOADED" ? "DOWNLOADED_AND_LOADED"
+        : ["REUSED", "SKIPPED"].includes(status) ? "ALREADY_LOADED"
+        : status === "UNAVAILABLE" ? "SOURCE_UNAVAILABLE"
+        : status === "FAILED" ? "LOAD_FAILED"
+        : status === "RUNNING" ? "IN_PROGRESS"
+        : status,
+      sourceDate: row.source_date,
+      fileName: row.file_name,
+      checksum: row.file_sha256,
+      bytes: asNumber(row.bytes_downloaded),
+      rows: asNumber(row.rows_loaded),
+      startedAt: row.started_at,
+      finishedAt: row.finished_at,
+      durationMs: elapsedMs(row.started_at, row.finished_at),
+      loadStatus: row.load_status ? String(row.load_status).toUpperCase() : null,
+      loadedAt: row.loaded_at ?? row.finished_at,
+      message: row.message,
+      attemptedUrls,
+    };
+  });
+  const availableReports = normalizedReports.filter((row) => AVAILABLE_REPORT_STATES.has(row.status));
+  const coreAvailable = normalizedReports.filter((row) => row.requiredForCashOverview && AVAILABLE_REPORT_STATES.has(row.status));
   const coreExpected = normalizedReports.filter((row) => row.requiredForCashOverview).length;
   const latestBreadth = breadth.at(-1) ?? null;
   const coreReady = coreExpected > 0 && coreAvailable.length === coreExpected;
@@ -105,13 +137,13 @@ async function buildNseIntelligence(prisma: PrismaClient) {
     dataAsOf: job?.finished_at ?? latestBreadth?.trade_date ?? null,
     generatedAt: new Date().toISOString(),
     timezone: "Asia/Kolkata",
-    featureVersion: "nse-intelligence-cash-v1",
+    featureVersion: "nse-intelligence-cash-v2",
     quality: {
       readiness,
       jobStatus: overallStatus,
       requiredInputs: coreExpected,
       availableInputs: coreAvailable.length,
-      missingInputs: normalizedReports.filter((row) => row.requiredForCashOverview && !["LOADED", "REUSED"].includes(row.status)).map((row) => row.reportId),
+      missingInputs: normalizedReports.filter((row) => row.requiredForCashOverview && !AVAILABLE_REPORT_STATES.has(row.status)).map((row) => row.reportId),
       allExpectedInputs: Number(metrics.expected_files ?? normalizedReports.length),
       allAvailableInputs: Number(metrics.available_files ?? availableReports.length),
       missingReportCount: Number(metrics.missing_count ?? normalizedReports.length - availableReports.length),
@@ -131,6 +163,39 @@ async function buildNseIntelligence(prisma: PrismaClient) {
         error: job.notification_error,
       },
     } : null,
+    downloadHealth: {
+      state: !job ? "NO_DATA"
+        : overallStatus === "FAILED" || normalizedReports.some((row) => row.status === "FAILED") ? "FAILED"
+        : overallStatus !== "SUCCESS" || Number(metrics.missing_count ?? normalizedReports.length - availableReports.length) > 0 ? "DEGRADED"
+        : "HEALTHY",
+      expected: Number(metrics.expected_files ?? normalizedReports.length),
+      downloaded: normalizedReports.filter((row) => row.bytes != null && row.bytes > 0).length,
+      loaded: availableReports.length,
+      missing: normalizedReports.filter((row) => row.status === "UNAVAILABLE").length,
+      failed: normalizedReports.filter((row) => row.status === "FAILED").length,
+      totalBytes: normalizedReports.reduce((total, row) => total + (row.bytes ?? 0), 0),
+      latestFinishedAt: job?.finished_at ?? null,
+      reports: normalizedReports,
+      recentRuns: recentJobs.map((row) => {
+        const rowMetrics = row.metrics && typeof row.metrics === "object" ? row.metrics : {};
+        return {
+          jobId: asNumber(row.id),
+          runId: asNumber(row.run_id),
+          jobDate: row.job_date,
+          sourceTradeDate: row.source_trade_date,
+          scheduledFor: row.scheduled_for,
+          startedAt: row.started_at,
+          finishedAt: row.finished_at,
+          durationMs: elapsedMs(row.started_at, row.finished_at),
+          status: String(row.status).toUpperCase(),
+          expectedFiles: asNumber(rowMetrics.expected_files),
+          availableFiles: asNumber(rowMetrics.available_files),
+          missingCount: asNumber(rowMetrics.missing_count),
+          rowsLoaded: asNumber(rowMetrics.rows_total),
+          errors: asNumber(rowMetrics.errors),
+        };
+      }),
+    },
     market: latestBreadth ? {
       tradeDate: latestBreadth.trade_date,
       securities: asNumber(latestBreadth.securities),

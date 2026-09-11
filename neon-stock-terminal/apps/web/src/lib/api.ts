@@ -92,9 +92,57 @@ export type NseIntelligenceResponse = {
   breadthTrend: Array<{ tradeDate: string; securities: number; advancers: number; decliners: number; unchanged: number; breadthPct: number | null; totalVolume: string | number | null; totalValue: string | number | null }>;
   movers: Array<{ tradeDate: string; symbol: string; name: string | null; close: string | number; previousClose: string | number; changePct: string | number; volume: string | number; tradedValue: string | number; direction: "GAINER" | "LOSER" }>;
   events: Array<{ reportDate: string; eventType: string; symbol: string | null; headline: string | null; detail: string; sourceFile: string | null; loadedAt: string }>;
-  reports: Array<{ reportId: string; report: string; priority: "CORE" | "ANCILLARY"; requiredForCashOverview: boolean; status: string; sourceDate: string; fileName: string; checksum: string | null; bytes: number | null; rows: number | null; loadedAt: string | null; message: string | null }>;
+  reports: NseDownloadReport[];
+  downloadHealth: {
+    state: "HEALTHY" | "DEGRADED" | "FAILED" | "NO_DATA";
+    expected: number;
+    downloaded: number;
+    loaded: number;
+    missing: number;
+    failed: number;
+    totalBytes: number;
+    latestFinishedAt: string | null;
+    reports: NseDownloadReport[];
+    recentRuns: Array<{
+      jobId: number | null;
+      runId: number | null;
+      jobDate: string;
+      sourceTradeDate: string;
+      scheduledFor: string;
+      startedAt: string;
+      finishedAt: string | null;
+      durationMs: number | null;
+      status: string;
+      expectedFiles: number | null;
+      availableFiles: number | null;
+      missingCount: number | null;
+      rowsLoaded: number | null;
+      errors: number | null;
+    }>;
+  };
   unavailableModules: Array<{ module: string; reason: string }>;
   sources: Array<{ schema: string; dataset: string; role: string }>;
+};
+
+export type NseDownloadReport = {
+  reportId: string;
+  report: string;
+  priority: "CORE" | "ANCILLARY";
+  requiredForCashOverview: boolean;
+  status: string;
+  downloadState: string;
+  sourceDate: string;
+  fileName: string;
+  checksum: string | null;
+  bytes: number | null;
+  rows: number | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  durationMs: number | null;
+  loadStatus: string | null;
+  loadedAt: string | null;
+  message: string | null;
+  attemptedUrls: string[];
 };
 
 function shouldPreserveGatewayPath(path: string): boolean {

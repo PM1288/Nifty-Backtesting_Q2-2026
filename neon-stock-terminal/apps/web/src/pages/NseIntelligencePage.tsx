@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router-dom";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, CalendarClock, Database, FileCheck2, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, CalendarClock, Database, Download, FileCheck2, RefreshCw } from "lucide-react";
 import { CompactEmptyState, DecisionHero, ErrorState, ExecutiveKpiStrip, LoadingSkeleton, MetricTile } from "../design-system/WorkspacePrimitives";
 import { StatusPill } from "../design-system/TradingPrimitives";
 import { fetchNseIntelligence } from "../lib/api";
+import { nseReportHealthCsv, nseReportHealthJson, reportHealthFilter } from "../lib/nseReportHealth";
 import styles from "./NseIntelligencePage.module.css";
 
 const views = [
@@ -31,6 +32,29 @@ function statusTone(value: string) {
   return ["LOADED", "REUSED", "READY", "SUCCESS", "SENT"].includes(value) ? "success" : ["PARTIAL", "DEGRADED", "PENDING", "RETRY"].includes(value) ? "warning" : "danger";
 }
 
+function bytes(value: number | null | undefined) {
+  if (value == null) return "—";
+  if (value < 1024) return `${number(value)} B`;
+  if (value < 1024 * 1024) return `${number(value / 1024, 1)} KB`;
+  return `${number(value / (1024 * 1024), 2)} MB`;
+}
+
+function duration(value: number | null | undefined) {
+  if (value == null) return "—";
+  if (value < 1000) return `${number(value)} ms`;
+  if (value < 60_000) return `${number(value / 1000, 1)} s`;
+  return `${number(value / 60_000, 1)} min`;
+}
+
+function downloadText(fileName: string, body: string, type: string) {
+  const url = URL.createObjectURL(new Blob([body], { type }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 function BreadthTrend({ rows }: { rows: Array<{ tradeDate: string; breadthPct: number | null }> }) {
   if (!rows.length) return <CompactEmptyState kind="NO_DATA" title="Breadth history unavailable" detail="No official cash-market observations are available for the trend." />;
   return <div className={styles.trend} role="img" aria-label="Official advance minus decline breadth trend">
@@ -47,24 +71,60 @@ function BreadthTrend({ rows }: { rows: Array<{ tradeDate: string; breadthPct: n
 }
 
 function Reports({ data }: { data: Awaited<ReturnType<typeof fetchNseIntelligence>> }) {
-  return <section className={styles.section}>
-    <div className={styles.sectionHeading}><div><span>Source control</span><h2>Reports &amp; Health</h2><p>Scheduler health and dataset readiness are separate. A partial job does not erase successfully loaded core cash data.</p></div></div>
+  const [filter, setFilter] = useState<"ALL" | "CORE" | "ANCILLARY" | "ISSUES">("ALL");
+  const health = data.downloadHealth;
+  const reports = reportHealthFilter(health.reports, filter);
+  const issueCount = health.reports.filter((row) => !["LOADED", "REUSED", "SKIPPED"].includes(row.status)).length;
+  const exportDate = data.ingestion?.sourceTradeDate ?? data.tradeDate ?? "no-data";
+  return <section className={styles.reportPage} data-testid="nse-report-download-health">
+    <div className={styles.sectionHeading}><div><span>Official NSE India files</span><h2>NSE India report download health</h2><p>Download, parsing and scheduler evidence from the canonical NSE ingestor. A successful request is not treated as proof that every report is available.</p></div>
+      <div className={styles.exportActions}>
+        <button type="button" onClick={() => downloadText(`nse-report-health-${exportDate}.csv`, nseReportHealthCsv(data), "text/csv;charset=utf-8")}><Download />CSV evidence</button>
+        <button type="button" onClick={() => downloadText(`nse-report-health-${exportDate}.json`, nseReportHealthJson(data), "application/json;charset=utf-8")}><Download />JSON evidence</button>
+      </div>
+    </div>
+    <div className={styles.healthSummary} data-health={health.state}>
+      <div className={styles.healthLead}><span>Download health</span><strong>{health.state}</strong><small>Source session {date(data.ingestion?.sourceTradeDate)}</small></div>
+      <dl>
+        <div><dt>Downloaded now</dt><dd>{health.downloaded}/{health.expected}</dd></div>
+        <div><dt>Loaded or reused</dt><dd>{health.loaded}/{health.expected}</dd></div>
+        <div><dt>Missing source</dt><dd>{health.missing}</dd></div>
+        <div><dt>Failed</dt><dd>{health.failed}</dd></div>
+        <div><dt>Downloaded bytes</dt><dd>{bytes(health.totalBytes)}</dd></div>
+      </dl>
+    </div>
     <div className={styles.runTimeline}>
       <div><CalendarClock /><span>Scheduled</span><strong>{date(data.ingestion?.scheduledFor, true)}</strong></div>
       <div><RefreshCw /><span>Started</span><strong>{date(data.ingestion?.startedAt, true)}</strong></div>
       <div><FileCheck2 /><span>Finished</span><strong>{date(data.ingestion?.finishedAt, true)}</strong></div>
       <div><Database /><span>Notification</span><strong>{data.ingestion?.notification.status ?? "—"}</strong></div>
     </div>
+    <div className={styles.reportToolbar}>
+      <div role="group" aria-label="Filter NSE reports">
+        {(["ALL", "CORE", "ANCILLARY", "ISSUES"] as const).map((value) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === "ALL" ? "All reports" : value === "ISSUES" ? `Issues (${issueCount})` : value === "CORE" ? "Core" : "Ancillary"}</button>)}
+      </div>
+      <span>{reports.length} of {health.reports.length} reports</span>
+    </div>
     <div className={styles.tableWrap}>
-      <table>
-        <thead><tr><th>Report</th><th>Scope</th><th>Status</th><th>Source date</th><th>Rows</th><th>Loaded</th><th>Reason</th></tr></thead>
-        <tbody>{data.reports.map((row) => <tr key={row.reportId}>
+      <table data-testid="nse-report-latest-table">
+        <thead><tr><th>Report</th><th>Scope</th><th>Download state</th><th>Source date</th><th>Size</th><th>Rows</th><th>Duration</th><th>Loaded</th><th>Evidence</th></tr></thead>
+        <tbody>{reports.map((row) => <tr key={row.reportId} data-status={row.status}>
           <th scope="row"><strong>{row.report}</strong><small>{row.fileName}</small></th>
-          <td>{row.priority}</td><td><StatusPill tone={statusTone(row.status)}>{row.status}</StatusPill></td>
-          <td>{date(row.sourceDate)}</td><td>{number(row.rows)}</td><td>{date(row.loadedAt, true)}</td><td>{row.message || "—"}</td>
+          <td>{row.priority}</td><td><StatusPill tone={statusTone(row.status)}>{row.downloadState.replaceAll("_", " ")}</StatusPill><small>{row.status}{row.loadStatus ? ` · registry ${row.loadStatus}` : ""}</small></td>
+          <td>{date(row.sourceDate)}</td><td>{bytes(row.bytes)}</td><td>{number(row.rows)}</td><td>{duration(row.durationMs)}</td><td>{date(row.loadedAt, true)}</td>
+          <td>{row.message || (row.checksum ? <code title={row.checksum}>{row.checksum.slice(0, 12)}…</code> : "—")}{row.attemptedUrls.length ? <details><summary>{row.attemptedUrls.length} attempted source{row.attemptedUrls.length === 1 ? "" : "s"}</summary>{row.attemptedUrls.map((url) => <a key={url} href={url} target="_blank" rel="noreferrer">{url}</a>)}</details> : null}</td>
         </tr>)}</tbody>
       </table>
     </div>
+    {!reports.length ? <CompactEmptyState kind="NO_DATA" title="No reports match this filter" detail="Choose another scope to inspect the latest run." /> : null}
+    <section className={styles.historySection}>
+      <div className={styles.sectionHeading}><div><span>Last 30 scheduled jobs</span><h3>Download run history</h3><p>Coverage and failures by job date. This table does not fill absent reports with zero.</p></div></div>
+      {health.recentRuns.length ? <div className={styles.tableWrap}><table className={styles.historyTable} data-testid="nse-report-history-table">
+        <thead><tr><th>Job date</th><th>Source session</th><th>Status</th><th>Coverage</th><th>Missing</th><th>Errors</th><th>Rows</th><th>Duration</th><th>Finished</th></tr></thead>
+        <tbody>{health.recentRuns.map((run) => <tr key={`${run.jobId}-${run.jobDate}`}><th scope="row">{date(run.jobDate)}</th><td>{date(run.sourceTradeDate)}</td><td><StatusPill tone={statusTone(run.status)}>{run.status}</StatusPill></td><td>{run.availableFiles == null || run.expectedFiles == null ? "—" : `${run.availableFiles}/${run.expectedFiles}`}</td><td>{number(run.missingCount)}</td><td>{number(run.errors)}</td><td>{number(run.rowsLoaded)}</td><td>{duration(run.durationMs)}</td><td>{date(run.finishedAt, true)}</td></tr>)}</tbody>
+      </table></div> : <CompactEmptyState kind="NO_DATA" title="No scheduled run history" detail="The scheduler has not recorded a daily NSE report job in the retained database." />}
+    </section>
+    <p className={styles.healthFootnote}>Health is based on recorded downloader and loader evidence. Source availability, load success, freshness and notification delivery are separate states.</p>
   </section>;
 }
 

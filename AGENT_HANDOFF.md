@@ -4506,3 +4506,21 @@ or outcomes were deleted.
   BLOCKED result. The container is healthy with zero restarts; local Scalper V2
   and public `https://n50.nifty50today.co.in/n50/` return HTTP 200. Rollback:
   `trading-stack-n50-dashboard:pre-scalper-v2-all-strikes-e8d3645`.
+# 2026-09-11 — NSE India report download health
+
+- Expanded the existing authenticated NSE Intelligence Reports & Health route;
+  no duplicate page, downloader, collector, schema or report source was added.
+- The page now shows download/load state, exact file evidence, bytes, SHA-256,
+  rows, durations, attempted official URLs, missing reasons and the last 30
+  scheduled jobs. Added direct More-menu/search access and CSV/JSON evidence.
+- Corrected availability semantics so `SKIPPED`/`REUSED` are visibly already
+  loaded, while unavailable/failed/missing remain distinct from zero.
+- The isolated candidate read the retained 10 September source session as 5/17
+  available, 12 source-unavailable, zero failed and 2.61 MB downloaded. These
+  values are runtime-derived and are not production defaults.
+- Web/API typechecks, tests and builds pass; API 200/200. Authenticated isolated
+  browser regression passes 29/29 at desktop and mobile, including API/UI
+  parity and CSV/JSON downloads. Evidence and screenshots are kept under
+  `/tmp/nse-report-health-browser` and not committed.
+- Production was not deployed and the production container was not changed.
+  Full record: `docs/nse-reports/NSE_REPORT_DOWNLOAD_HEALTH_20260911.md`.

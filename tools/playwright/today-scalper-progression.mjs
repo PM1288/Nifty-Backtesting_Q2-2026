@@ -29,11 +29,14 @@ try {
   }
   const page = await context.newPage();
   const errors = [];
+  const consoleErrors = [];
   page.on("pageerror", (error) => errors.push(String(error)));
+  page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
+  page.on("requestfailed", (request) => consoleErrors.push(`${request.url()}: ${request.failure()?.errorText ?? "request failed"}`));
   await page.goto(base, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const widget = page.getByTestId("today-scalper-progression");
   await widget.waitFor({ state: "visible", timeout: 30_000 }).catch(async () => {
-    throw new Error(`Today progression did not mount: ${JSON.stringify({ url: page.url(), body: (await page.locator("body").innerText()).slice(0, 2_000), errors })}`);
+    throw new Error(`Today progression did not mount: ${JSON.stringify({ url: page.url(), body: (await page.locator("body").innerText()).slice(0, 2_000), errors, consoleErrors })}`);
   });
   await widget.getByText(/\d+\/\d+ all green · best first/).waitFor({ state: "visible", timeout: 30_000 });
   const text = await widget.innerText();

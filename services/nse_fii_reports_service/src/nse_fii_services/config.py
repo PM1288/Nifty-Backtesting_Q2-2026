@@ -59,6 +59,7 @@ class Settings:
     auto_pull_time: str = "06:00"
     auto_pull_run_on_start: bool = True
     auto_load_enabled: bool = True
+    fovolt_pull_enabled: bool = False
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -82,6 +83,7 @@ class Settings:
             postgres_schema=_env_text("POSTGRES_SCHEMA", "market_data"),
             postgres_audit_schema=_env_text("POSTGRES_AUDIT_SCHEMA", "audit"),
             truncate_tables_on_load=_env_flag("TRUNCATE_TABLES_ON_LOAD", False),
+            fovolt_pull_enabled=_env_flag("FOVOLT_PULL_ENABLED", True),
         )
 
     def with_overrides(self, **overrides: object) -> "Settings":
@@ -116,3 +118,7 @@ class Settings:
             f"user={self.postgres_user} "
             f"password={self.postgres_password}"
         )
+
+    @property
+    def fovolt_daily_root(self) -> Path:
+        return self.output_dir / "fovolt_daily"

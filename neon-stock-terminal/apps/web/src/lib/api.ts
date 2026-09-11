@@ -714,6 +714,44 @@ export function fetchFnoVolatilityDashboard(): Promise<FnoVolatilityDashboard> {
   return getJson<FnoVolatilityDashboard>("/v1/fno-volatility/dashboard");
 }
 
+export type FuturesVolatilityRow = {
+  matchRank: number | null; rankInValidReport: number | null; symbol: string;
+  reportDate: string; analysisSession: string | null; sourceRevisionId: string;
+  sourceCsvLine: number; previousFuturesDailyVol: string | null;
+  currentFuturesDailyVol: string | null; deltaRaw: string | null;
+  deltaBasisPoints: string | null; qualifies: boolean | null; screenState: string;
+  mappingState: string; qualityFlags: string[]; isStock: boolean;
+  reportUnderlyingClose: string | null; reportUnderlyingPreviousClose: string | null;
+  reportFuturesClose: string | null; reportFuturesPreviousClose: string | null;
+  underlyingLogReturn: string | null; underlyingVolPrevious: string | null;
+  underlyingVolCurrent: string | null; underlyingVolAnnual: string | null;
+  futuresLogReturn: string | null; futuresVolAnnual: string | null;
+  applicableVolDaily: string | null; applicableVolAnnual: string | null;
+  rawFields: Record<string, string>; targetPreviousClose: string | null;
+  targetOpen: string | null; targetHigh: string | null; targetLow: string | null;
+  targetClose: string | null; outcomeAsOf: string | null; outcomeState: string;
+  openCloseChangePct: string | null; previousCloseChangePct: string | null;
+  lowHighRangePct: string | null; openCloseChange: string | null;
+  previousCloseChange: string | null; lowHighRange: string | null;
+};
+
+export type FuturesVolatilityScreener = {
+  readiness: "READY" | "REPORT_NOT_READY"; requestedAnalysisDate: string | null;
+  ruleVersion: "FOVOLT_FUT_DAILY_DELTA_GT_0001_V1"; thresholdRaw: "0.0001";
+  scope?: "stocks" | "indices" | "all"; matchesOnly?: boolean;
+  run: null | Record<string, unknown>;
+  counts: { displayed: number; sourceRows: number; computable?: number; matched: number; priceCovered: number };
+  rows: FuturesVolatilityRow[];
+};
+
+export function fetchFuturesVolatilityScreener(options: { reportDate?: string; scope?: "stocks" | "indices" | "all"; matchesOnly?: boolean } = {}): Promise<FuturesVolatilityScreener> {
+  const params = new URLSearchParams();
+  if (options.reportDate) params.set("reportDate", options.reportDate);
+  params.set("scope", options.scope ?? "stocks");
+  params.set("matchesOnly", String(options.matchesOnly ?? true));
+  return getJson<FuturesVolatilityScreener>(`/v1/futures-volatility/screener?${params}`);
+}
+
 export type RollingMonthlyDashboard = {
   strategyFamily: "ROLLING_MONTHLY";
   independentFromOiis: true;

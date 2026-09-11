@@ -44,6 +44,12 @@ async function withServer(run: (baseUrl: string) => Promise<void>) {
         max_lookback_days: payload.max_lookback_days ?? 10
       };
     },
+    async pullLatestFovolt(payload) {
+      return {
+        operation: "fovolt-pull-latest",
+        max_lookback_days: payload.max_lookback_days ?? 10
+      };
+    },
     async backfill(payload) {
       return {
         operation: "backfill",
@@ -101,6 +107,18 @@ test("FII reports backfill route rejects malformed request bodies", async () =>
     assert.equal(response.status, 400);
     const payload = (await response.json()) as { error: { code: string } };
     assert.equal(payload.error.code, "FII_REPORTS_BACKFILL_INVALID_REQUEST");
+  }));
+
+test("FOVOLT refresh uses the independent authenticated proxy path", async () =>
+  withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/v1/fii-reports/fovolt/latest`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ max_lookback_days: 4 })
+    });
+    assert.equal(response.status, 200);
+    const payload = (await response.json()) as { operation: string; max_lookback_days: number };
+    assert.equal(payload.operation, "fovolt-pull-latest");
+    assert.equal(payload.max_lookback_days, 4);
   }));
 
 test("FII reports routes expose runs catalog and run detail", async () =>

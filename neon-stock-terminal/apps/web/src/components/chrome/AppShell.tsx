@@ -98,6 +98,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Options Overview", to: "/options/intelligence", match: (path) => path === "/options/intelligence" },
     { label: "Structure", to: "/options/structure" },
     { label: "Volatility Signals", to: "/options/volatility-signals" },
+    { label: "Futures Volatility", to: "/futures/volatility" },
     { label: "Futures", to: "/futures" },
     { label: "Advanced Data", to: "/options/snapshot" }
   ];

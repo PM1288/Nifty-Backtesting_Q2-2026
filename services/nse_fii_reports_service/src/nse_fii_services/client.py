@@ -10,7 +10,7 @@ from requests import Response, Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from .endpoints import REPORT_SPECS, ReportSpec, parse_trade_date
+from .endpoints import CORE_REPORT_KEYS, REPORT_SPECS, ReportSpec, parse_trade_date
 
 LOGGER = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class NSEFIIReportsClient:
         )
 
     def fetch_all_reports(self, trade_date: str | datetime) -> dict[str, DownloadedReport]:
-        return {key: self.fetch_report(key, trade_date) for key in REPORT_SPECS}
+        return {key: self.fetch_report(key, trade_date) for key in CORE_REPORT_KEYS}
 
     @staticmethod
     def _fallback_filename(spec: ReportSpec, trade_dt: datetime) -> str:
@@ -149,5 +149,6 @@ class NSEFIIReportsClient:
         stem = {
             "participant_oi": "fao_participant_oi",
             "participant_volume": "fao_participant_vol",
+            "fovolt": "FOVOLT",
         }[spec.key]
         return f"{stem}_{trade_dt.strftime('%d%m%Y')}.{spec.file_ext}"

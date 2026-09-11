@@ -11,6 +11,7 @@ import {
 import { BreadthBar, MarketSummaryStrip, Move, PanelState, QuickView, type QuickViewState, SectorIcon, StockRow } from "./TodayShared";
 import { useTodayData } from "./useTodayData";
 import styles from "./Today.module.css";
+import { FuturesVolatilityPreview } from "../../components/FuturesVolatilityPreview";
 
 export function TodaySummaryPage() {
   const { model, overview, progression, profiles, live, authReady } = useTodayData();
@@ -62,6 +63,7 @@ function MarketStoryLens(props: LensProps) {
       <section className={styles.panel}><header><div><strong>{useSetups ? "TRADE OPPORTUNITIES" : "MARKET MOVERS"}</strong><small>{useSetups ? "Canonical OIIS score" : "Opportunity classification unavailable; showing price movers."}</small></div></header><div className={styles.opportunities}><h3>{useSetups ? "STRONGEST SETUPS" : "STRONGEST MOVERS"}</h3>{(useSetups ? model.oiisStrongest : model.strongestMovers).map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} score={useSetups ? stock.oiisScore : null} onOpen={onOpenStock} />)}<h3>{useSetups ? "WEAKEST SETUPS" : "WEAKEST MOVERS"}</h3>{(useSetups ? model.oiisWeakest : model.weakestMovers).map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} score={useSetups ? stock.oiisScore : null} onOpen={onOpenStock} />)}</div></section>
     </div>
     <ScalperProgressionStrip {...props} />
+    <FuturesVolatilityPreview />
     <RiskStrip model={model} onOpenStock={onOpenStock} />
   </div>;
 }
@@ -76,6 +78,7 @@ function SectorMatrixLens(props: LensProps & { selected: TodaySector; onSelect: 
       <section className={`${styles.panel} ${styles.selectedSector}`}><header><div><strong>SELECTED SECTOR: {selected.name.toUpperCase()}</strong><small>Rank #{selected.rank} · conviction unavailable</small></div><Link to={`/full-board?sector=${selected.id}`}>Open Full Board</Link></header><div className={styles.sectorStats}><Move value={selected.movePct} /><span>{selected.breadth.advancing} advancing · {selected.breadth.declining} declining</span><BreadthBar breadth={selected.breadth} /></div><div className={styles.chartEmpty}>Sector intraday series unavailable</div><h3>TOP STOCKS IN {selected.name.toUpperCase()}</h3><div className={styles.selectedStocks}>{top.map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} onOpen={onOpenStock} />)}</div></section>
     </div>
     <ScalperProgressionStrip {...props} />
+    <FuturesVolatilityPreview />
     <RiskStrip model={model} onOpenStock={onOpenStock} />
   </div>;
 }

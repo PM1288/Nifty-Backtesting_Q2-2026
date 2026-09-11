@@ -96,6 +96,7 @@ const NiftyContextPage = lazy(() => import('./pages/NiftyContextPage'));
 const NseIntelligencePage = lazy(async () => ({ default: (await preloadNseIntelligencePage()).NseIntelligencePage }));
 const OiisRunHistoryPage = lazy(async () => ({ default: (await import("./pages/OiisRunHistoryPage")).OiisRunHistoryPage }));
 const FnoVolatilityPage = lazy(async () => ({ default: (await import("./pages/FnoVolatilityPage")).FnoVolatilityPage }));
+const FuturesVolatilityPage = lazy(async () => ({ default: (await import("./pages/FuturesVolatilityPage")).FuturesVolatilityPage }));
 const OptionsIntelligencePage = lazy(async () => ({ default: (await import("./pages/OptionsIntelligencePage")).OptionsIntelligencePage }));
 const PaperTradingPage = lazy(async () => ({ default: (await import("./pages/PaperTradingCommandCenter")).PaperTradingCommandCenter }));
 const Nifty500Page = lazy(async () => ({ default: (await import("./pages/WorkspacePages")).Nifty500Page }));
@@ -186,6 +187,7 @@ export default function App() {
           <Route path="/options/structure" element={<AnalyticsOptionsStructurePage />} />
           <Route path="/options/snapshot" element={<AnalyticsOptionsPage />} />
           <Route path="/options/volatility-signals" element={<FnoVolatilityPage />} />
+          <Route path="/futures/volatility" element={<FuturesVolatilityPage />} />
           <Route path="/options/intelligence" element={<OptionsIntelligencePage />} />
           <Route path="/strategy" element={<Navigate to="/strategy/evaluation" replace />} />
           <Route path="/strategy/evaluation" element={<Navigate to="/strategy/oiis-live?tab=strategy-definition" replace />} />

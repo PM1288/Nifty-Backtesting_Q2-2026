@@ -66,3 +66,16 @@ test("FII reports client sends load requests to the expected endpoint", async ()
   assert.deepEqual(JSON.parse(capturedBody), { kind: "backfill", run_id: "2026-03-01__2026-03-31" });
   assert.equal(response.operation, "load");
 });
+
+test("FII reports client keeps FOVOLT on its independent endpoint", async () => {
+  let capturedUrl = "";
+  const client = createFiiReportsClient({
+    baseUrl: "http://service:8000/", timeoutMs: 1000,
+    fetchImpl: (async (input) => {
+      capturedUrl = String(input);
+      return new Response(JSON.stringify({ operation: "fovolt-pull-latest" }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as typeof fetch
+  });
+  await client.pullLatestFovolt({ max_lookback_days: 3 });
+  assert.equal(capturedUrl, "http://service:8000/fovolt/pull-latest");
+});

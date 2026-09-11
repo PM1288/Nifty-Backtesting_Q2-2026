@@ -101,6 +101,57 @@ def test_refresh_pulls_and_loads_expected_completed_session(tmp_path, monkeypatc
     assert scheduler.last_error is None
 
 
+def test_fovolt_failure_is_reported_without_blocking_core_refresh(tmp_path, monkeypatch):
+    calls: list[tuple[str, object]] = []
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def execute(self, query, _params):
+            self.result = (True,) if "pg_try_advisory_lock" in query else (("2026-09-08",) if "max(trade_date)" in query else (True,))
+
+        def fetchone(self):
+            return self.result
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def cursor(self):
+            return Cursor()
+
+    class FailingFovoltService:
+        def __init__(self, **_kwargs):
+            pass
+
+        def pull_latest(self, **_kwargs):
+            raise ValueError("synthetic FOVOLT failure")
+
+    monkeypatch.setitem(sys.modules, "psycopg2", SimpleNamespace(connect=lambda _dsn: Connection()))
+    monkeypatch.setattr("nse_fii_services.scheduler.FovoltDailyService", FailingFovoltService)
+    monkeypatch.setattr(
+        "nse_fii_services.scheduler.run_latest_pull",
+        lambda *_args, **_kwargs: {"trade_date": "08-09-2026"},
+    )
+    monkeypatch.setattr(
+        "nse_fii_services.scheduler.load_run",
+        lambda *_args, **kwargs: calls.append(("load", kwargs["run_id"])),
+    )
+
+    scheduler = AutoPullScheduler(settings(tmp_path).with_overrides(fovolt_pull_enabled=True))
+    assert scheduler._refresh_once() is True
+    assert scheduler.fovolt_last_error == "ValueError"
+    assert scheduler.last_error is None
+    assert calls == [("load", "2026-09-08")]
+
+
 def test_refresh_retries_when_latest_report_is_stale(tmp_path, monkeypatch):
     class Cursor:
         def __enter__(self):
@@ -134,4 +185,3 @@ def test_refresh_retries_when_latest_report_is_stale(tmp_path, monkeypatch):
     scheduler = AutoPullScheduler(settings(tmp_path))
     assert scheduler._refresh_once() is False
     assert scheduler.last_error == "RuntimeError"
-

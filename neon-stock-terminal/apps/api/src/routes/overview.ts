@@ -111,6 +111,18 @@ export type ScalperProgressionRow = {
   previousMonthClose: number | null;
   twoMonthsAgoOpen: number | null;
   twoMonthsAgoClose: number | null;
+  currentHourOpen: number | null;
+  previousHourOpen: number | null;
+  currentHourStartedAt: string | null;
+  previousHourStartedAt: string | null;
+  current15mOpen: number | null;
+  previous15mOpen: number | null;
+  current15mStartedAt: string | null;
+  previous15mStartedAt: string | null;
+  current5mOpen: number | null;
+  previous5mOpen: number | null;
+  current5mStartedAt: string | null;
+  previous5mStartedAt: string | null;
   historyThrough: string | null;
   observedAt: string | null;
   conditions: ScalperScreenerCondition[];
@@ -1262,11 +1274,26 @@ export async function getScalperProgression(prisma: PrismaClient) {
     previous_month_close: number | string | null;
     two_months_ago_open: number | string | null;
     two_months_ago_close: number | string | null;
+    current_hour_open: number | string | null;
+    previous_hour_open: number | string | null;
+    current_hour_started_at: Date | string | null;
+    previous_hour_started_at: Date | string | null;
+    current_15m_open: number | string | null;
+    previous_15m_open: number | string | null;
+    current_15m_started_at: Date | string | null;
+    previous_15m_started_at: Date | string | null;
+    current_5m_open: number | string | null;
+    previous_5m_open: number | string | null;
+    current_5m_started_at: Date | string | null;
+    previous_5m_started_at: Date | string | null;
     history_through: Date | string | null;
     observed_at: Date | string | null;
   }>>(Prisma.sql`
     WITH clock AS (
-      SELECT (NOW() AT TIME ZONE 'Asia/Kolkata')::date AS today
+      SELECT
+        (NOW() AT TIME ZONE 'Asia/Kolkata')::date AS today,
+        date_trunc('day', NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata' AS today_start,
+        (date_trunc('day', NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '1 day') AT TIME ZONE 'Asia/Kolkata' AS tomorrow_start
     ),
     fno_underlyings AS (
       SELECT DISTINCT UPPER(TRIM(iu.underlying)) AS symbol
@@ -1412,6 +1439,64 @@ export async function getScalperProgression(prisma: PrismaClient) {
       FROM canonical d
       CROSS JOIN clock c
       GROUP BY d.symbol
+    ),
+    intraday_source AS (
+      SELECT
+        u.symbol,
+        b.ts,
+        b.open::double precision AS open,
+        b.ts AT TIME ZONE 'Asia/Kolkata' AS local_ts
+      FROM bars_1m b
+      JOIN universe u ON u.symbol_token = b.symbol_token
+      CROSS JOIN clock c
+      WHERE b.exchange = 'NSE'
+        AND b.ts >= c.today_start
+        AND b.ts < c.tomorrow_start
+        AND b.open IS NOT NULL
+    ),
+    intraday_buckets AS (
+      SELECT symbol, '60m' AS frame,
+        date_trunc('hour', local_ts) AS bucket_start,
+        (ARRAY_AGG(open ORDER BY ts))[1] AS bucket_open
+      FROM intraday_source GROUP BY symbol, date_trunc('hour', local_ts)
+      UNION ALL
+      SELECT symbol, '15m' AS frame,
+        date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 15) * INTERVAL '15 minutes' AS bucket_start,
+        (ARRAY_AGG(open ORDER BY ts))[1] AS bucket_open
+      FROM intraday_source
+      GROUP BY symbol, date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 15) * INTERVAL '15 minutes'
+      UNION ALL
+      SELECT symbol, '5m' AS frame,
+        date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 5) * INTERVAL '5 minutes' AS bucket_start,
+        (ARRAY_AGG(open ORDER BY ts))[1] AS bucket_open
+      FROM intraday_source
+      GROUP BY symbol, date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 5) * INTERVAL '5 minutes'
+    ),
+    intraday_ranked AS (
+      SELECT *,
+        ROW_NUMBER() OVER (PARTITION BY symbol, frame ORDER BY bucket_start DESC) AS recency,
+        LEAD(bucket_open) OVER (PARTITION BY symbol, frame ORDER BY bucket_start DESC) AS previous_bucket_open,
+        LEAD(bucket_start) OVER (PARTITION BY symbol, frame ORDER BY bucket_start DESC) AS previous_bucket_start
+      FROM intraday_buckets
+    ),
+    intraday_values AS (
+      SELECT
+        symbol,
+        MAX(bucket_open) FILTER (WHERE frame = '60m' AND recency = 1) AS current_hour_open,
+        MAX(CASE WHEN frame = '60m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '1 hour' THEN previous_bucket_open END) AS previous_hour_open,
+        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE frame = '60m' AND recency = 1) AS current_hour_started_at,
+        MAX(CASE WHEN frame = '60m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '1 hour' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_hour_started_at,
+        MAX(bucket_open) FILTER (WHERE frame = '15m' AND recency = 1) AS current_15m_open,
+        MAX(CASE WHEN frame = '15m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_open END) AS previous_15m_open,
+        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE frame = '15m' AND recency = 1) AS current_15m_started_at,
+        MAX(CASE WHEN frame = '15m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_15m_started_at,
+        MAX(bucket_open) FILTER (WHERE frame = '5m' AND recency = 1) AS current_5m_open,
+        MAX(CASE WHEN frame = '5m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '5 minutes' THEN previous_bucket_open END) AS previous_5m_open,
+        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE frame = '5m' AND recency = 1) AS current_5m_started_at,
+        MAX(CASE WHEN frame = '5m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '5 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_5m_started_at
+      FROM intraday_ranked
+      WHERE recency = 1
+      GROUP BY symbol
     )
     SELECT
       u.symbol,
@@ -1434,11 +1519,24 @@ export async function getScalperProgression(prisma: PrismaClient) {
       refs.previous_month_close,
       refs.two_months_ago_open,
       refs.two_months_ago_close,
+      intraday.current_hour_open,
+      intraday.previous_hour_open,
+      intraday.current_hour_started_at,
+      intraday.previous_hour_started_at,
+      intraday.current_15m_open,
+      intraday.previous_15m_open,
+      intraday.current_15m_started_at,
+      intraday.previous_15m_started_at,
+      intraday.current_5m_open,
+      intraday.previous_5m_open,
+      intraday.current_5m_started_at,
+      intraday.previous_5m_started_at,
       refs.history_through,
       st.last_seen_ts AS observed_at
     FROM universe u
     LEFT JOIN instrument_state st ON st.exchange = 'NSE' AND st.symbol_token = u.symbol_token
     LEFT JOIN reference_values refs ON refs.symbol = u.symbol
+    LEFT JOIN intraday_values intraday ON intraday.symbol = u.symbol
     ORDER BY u.symbol
   `);
   const data: ScalperProgressionRow[] = rows.map((row) => {
@@ -1463,6 +1561,18 @@ export async function getScalperProgression(prisma: PrismaClient) {
       previousMonthClose: nullableNumber(row.previous_month_close),
       twoMonthsAgoOpen: nullableNumber(row.two_months_ago_open),
       twoMonthsAgoClose: nullableNumber(row.two_months_ago_close),
+      currentHourOpen: nullableNumber(row.current_hour_open),
+      previousHourOpen: nullableNumber(row.previous_hour_open),
+      currentHourStartedAt: row.current_hour_started_at == null ? null : toIso(row.current_hour_started_at),
+      previousHourStartedAt: row.previous_hour_started_at == null ? null : toIso(row.previous_hour_started_at),
+      current15mOpen: nullableNumber(row.current_15m_open),
+      previous15mOpen: nullableNumber(row.previous_15m_open),
+      current15mStartedAt: row.current_15m_started_at == null ? null : toIso(row.current_15m_started_at),
+      previous15mStartedAt: row.previous_15m_started_at == null ? null : toIso(row.previous_15m_started_at),
+      current5mOpen: nullableNumber(row.current_5m_open),
+      previous5mOpen: nullableNumber(row.previous_5m_open),
+      current5mStartedAt: row.current_5m_started_at == null ? null : toIso(row.current_5m_started_at),
+      previous5mStartedAt: row.previous_5m_started_at == null ? null : toIso(row.previous_5m_started_at),
       historyThrough: row.history_through == null ? null : toIso(row.history_through),
       observedAt: row.observed_at == null ? null : toIso(row.observed_at),
     };
@@ -1478,7 +1588,7 @@ export async function getScalperProgression(prisma: PrismaClient) {
     generatedAt: new Date().toISOString(),
     sessionDate: marketDayIso(),
     scope: "CURRENT_NSE_STOCK_FNO_UNIVERSE",
-    basis: "Current/as-of values plus canonical daily period opens and completed prior-period closes",
+    basis: "Current/as-of values, canonical daily period anchors, and contiguous latest NSE one-minute-derived clock-hour/15-minute/5-minute opens",
     rows: data,
   };
 }
@@ -1493,6 +1603,12 @@ const SCALPER_SCREENER_EXPORT_COLUMNS = [
   ["currentMonthOpen", "Current month open"], ["currentMonthClose", "Current month close / as-of"],
   ["previousMonthOpen", "Previous month open"], ["previousMonthClose", "Previous month close"],
   ["twoMonthsAgoOpen", "Two months ago open"], ["twoMonthsAgoClose", "Two months ago close"],
+  ["currentHourOpen", "Latest clock-hour open"], ["previousHourOpen", "Previous contiguous clock-hour open"],
+  ["currentHourStartedAt", "Latest clock-hour start"], ["previousHourStartedAt", "Previous clock-hour start"],
+  ["current15mOpen", "Latest 15-minute open"], ["previous15mOpen", "Previous contiguous 15-minute open"],
+  ["current15mStartedAt", "Latest 15-minute start"], ["previous15mStartedAt", "Previous 15-minute start"],
+  ["current5mOpen", "Latest 5-minute open"], ["previous5mOpen", "Previous contiguous 5-minute open"],
+  ["current5mStartedAt", "Latest 5-minute start"], ["previous5mStartedAt", "Previous 5-minute start"],
   ["passedConditionCount", "Conditions passed"], ["availableConditionCount", "Conditions available"],
   ["M2_RED", "M2 red state"], ["M1_GREEN", "M1 green state"],
   ["D0_OPEN_ABOVE_W0_OPEN", "Today open > current week open"],

@@ -6,6 +6,18 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Home scalper intraday progression: the existing Today progression
+table remains read-only and now adds contiguous current-versus-prior clock-hour,
+15-minute and 5-minute open gates after its two independent monthly routes and
+daily/weekly gates. It appears above Risk & Anomaly, renders two compact rows
+per stock, shows both operands in every green/red/missing cell, and sorts any
+fully green route first without redefining Monthly Open strategy calculations.
+Intraday values use canonical NSE one-minute bars and exact IST-adjacent bucket
+starts; missing intervals remain unavailable. Risk/Anomaly, sector lenses,
+Quick View, Monthly strategies, Scalper V1/V2, Trade Log, SHAP, collectors,
+authentication and order permissions remain unchanged. Evidence:
+`docs/uiux/HOME_SCALPER_PROGRESSION_20260911.md`.
+
 2026-09-11 NSE India report download health: the existing authenticated
 `/institutional/nse-intelligence/reports` view now exposes per-file downloader
 and loader status, source date, exact file, bytes, SHA-256, rows, timings,
@@ -35,16 +47,6 @@ five eligibility gates. The 36-month rerun is additive: v2 remains stored with
 Expiry, First Session, comparison identity, evidence/export fields, other
 strategies, collectors and order permissions are unchanged. Evidence:
 `docs/rolling-monthly/MONTHLY_OPEN_V3_GREEN_PREVIOUS_MONTH_20260911.md`.
-
-2026-09-11 Home scalper progression: the existing Today Market Story and Sector
-Matrix lenses retain their sector, risk/anomaly and Quick View behavior and add
-one fixed-height horizontally scrollable stock row below Risk & Anomaly. Two
-alternative monthly-open comparisons remain separate; current-week,
-previous-week and current-day confirmations are additive AND gates. Missing
-references remain unavailable. Existing monthly strategies, Scalper V1/V2,
-Trade Log, SHAP, navigation, authentication, collectors and order permissions
-are unchanged. Evidence:
-`docs/uiux/HOME_SCALPER_PROGRESSION_20260911.md`.
 
 2026-09-11 Scalper V2 underlying max-pain line: the existing V2 underlying
 candlestick draws each eligible latest retained-snapshot max-pain candidate as

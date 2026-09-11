@@ -1,5 +1,28 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Home scalper progression adds 1H, 15m and 5m gates
+
+- Branch `feat/home-scalper-intraday-progression` extends the existing Home
+  progression table with three additive comparisons: current clock-hour open
+  greater than previous clock-hour open, and equivalent 15-minute and 5-minute
+  comparisons. The two alternative monthly routes and their strategy formulas
+  are unchanged.
+- The widget is now a compact two-row-per-stock table above Risk & Anomaly.
+  Every gate shows both operands and an explicit pass/fail/missing state. Any
+  all-seven-green route sorts first and is highlighted green; failing cells are
+  red. Mobile overflow is contained by the widget's horizontal scroller.
+- Intraday anchors are derived read-only from canonical NSE `bars_1m` with IST
+  clock buckets. Only exactly adjacent bucket starts compare; missing gaps stay
+  unavailable. A real database run returned 210 rows and 210/210 comparable
+  pairs for each cadence in about 2.9 seconds on this machine.
+- API and web typechecks/tests/builds pass (API 200/200; web 162/162).
+  Authenticated isolated Chromium passes 12/12 at desktop/mobile sizes;
+  evidence is `/tmp/today-scalper-intraday-progression/` and is not committed.
+- This branch was validated in an isolated candidate container only. Production
+  was not changed by this work; deployment requires a separate authorised
+  release action. Full report:
+  `docs/uiux/HOME_SCALPER_PROGRESSION_20260911.md`.
+
 ## 2026-09-11 — Last-24-hour N50 feature release deployed and audited
 
 - Production release source: pushed `master` commit

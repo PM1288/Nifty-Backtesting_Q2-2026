@@ -9,33 +9,44 @@
 .matrixTable>button[data-selected=true]{outline:1px solid var(--n50-selected);outline-offset:-1px;background:#eaf0ff}
 .summaryPage,.fullBoardPage{--n50-text-3:#52647b}.marketStrip:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:2px}
 
-.lensBody{grid-template-rows:58px minmax(0,1fr) 124px 142px}
+.lensBody{grid-template-rows:58px minmax(180px,1fr) 204px 124px}
 .progressionStrip{min-width:0;min-height:0;display:grid;grid-template-rows:30px minmax(0,1fr);overflow:hidden;border:1px solid var(--n50-border);border-radius:8px;background:var(--n50-surface);box-shadow:0 1px 2px rgba(11,31,58,.06)}
 .progressionStrip>header{min-width:0;border-bottom:1px solid var(--n50-border);padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .progressionStrip>header>div{min-width:0;display:flex;align-items:baseline;gap:9px}
 .progressionStrip>header strong{font-size:11px;letter-spacing:.03em;white-space:nowrap}
 .progressionStrip>header small,.progressionStrip>header span{font-size:9px;color:var(--n50-text-3);white-space:nowrap}
-.progressionScroller{min-width:0;min-height:0;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:5px 7px 7px;scrollbar-gutter:stable;outline:none}
+.progressionScroller{min-width:0;min-height:0;overflow:auto;scrollbar-gutter:stable;outline:none}
 .progressionScroller:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:-2px}
-.progressionCard{flex:0 0 286px;height:96px;border:1px solid var(--n50-border);border-radius:6px;background:#fff;padding:4px 6px;color:var(--n50-text-1);text-align:left;display:grid;grid-template-rows:22px 1fr 1fr;gap:3px}
-.progressionCard:hover{border-color:#9bb3d6;background:#f8faff}
-.progressionCard:focus-visible{outline:2px solid rgba(49,90,215,.45);outline-offset:-2px}
-.progressionStock{min-width:0;display:grid;grid-template-columns:18px minmax(45px,1fr) 30px auto;align-items:center;gap:4px}
-.progressionStock>b{font-size:11px;overflow:hidden;text-overflow:ellipsis}
-.progressionStock>em{font:700 10px "IBM Plex Mono",monospace;color:#6847d8}
-.progressionStock>strong{font:700 11px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
-.progressionBranch{display:grid;grid-template-columns:68px minmax(0,1fr);align-items:center;gap:5px;padding:2px 3px;border-radius:4px;background:#f6f8fb}
-.progressionBranch[data-active=true]{background:#eef5ff}
-.progressionBranch>span:first-child{display:flex;flex-direction:column}
-.progressionBranch>span:first-child b{font-size:9px}
-.progressionBranch>span:first-child em{font:8px "IBM Plex Mono",monospace;color:var(--n50-text-3)}
-.progressionChecks{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
-.progressionChecks>span{height:22px;border:1px solid #d8e0eb;border-radius:4px;background:white;display:flex;align-items:center;justify-content:center;gap:3px;font:9px "IBM Plex Mono",monospace}
-.progressionChecks>span b{font-weight:600;color:var(--n50-text-3)}
-.progressionChecks>span i{font-style:normal;font-weight:800}
-.progressionChecks>span[data-state=pass]{border-color:#8bc8ae;background:#eefaf4;color:var(--n50-positive)}
-.progressionChecks>span[data-state=fail]{border-color:#e5a6af;background:#fff4f5;color:var(--n50-negative)}
-.progressionChecks>span[data-state=missing]{color:#7d8998;background:#f7f8fa}
+.progressionTable{width:100%;min-width:1120px;border-collapse:separate;border-spacing:0;background:white;font-size:10px;font-variant-numeric:tabular-nums}
+.progressionTable thead{position:sticky;top:0;z-index:3}
+.progressionTable thead th{height:26px;padding:0 6px;border-right:1px solid #e4eaf2;border-bottom:1px solid #cbd5e2;background:#eef3f9;color:var(--n50-text-2);text-align:center;font-size:10px;white-space:nowrap}
+.progressionTable thead th:first-child{text-align:left;left:0;z-index:4}
+.progressionTable tbody tr{height:29px}
+.progressionTable tbody th,.progressionTable tbody td{padding:2px 5px;border-right:1px solid #edf1f6;border-bottom:1px solid #edf1f6;background:#fff;text-align:center;white-space:nowrap}
+.progressionTable tbody tr:nth-child(4n+3)>*,.progressionTable tbody tr:nth-child(4n+4)>*{background:#fafbfd}
+.progressionTable tbody tr[data-state=fail]>th[scope=row],.progressionTable tbody tr[data-state=fail]>.progressionScore{background:#fff1f3;color:var(--n50-negative)}
+.progressionTable tbody tr[data-state=pass]>*{background:#e9f8f0;border-bottom-color:#b9dec9}
+.progressionTable tbody tr[data-all-green=true]>th[scope=rowgroup],.progressionTable tbody tr[data-all-green=true]>.progressionCurrent{background:#d8f2e4;border-bottom-color:#9fd1b4;color:var(--n50-positive)}
+.progressionTable tbody th[scope=rowgroup]{position:sticky;left:0;z-index:2;min-width:150px;padding:0;background:white;text-align:left}
+.progressionTable tbody th[scope=rowgroup] button{width:100%;height:58px;border:0;background:transparent;padding:4px 7px;display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:5px;color:inherit;text-align:left}
+.progressionTable tbody th[scope=rowgroup] button:hover{background:#f1f6ff}
+.progressionTable tbody th[scope=rowgroup] button:focus-visible{outline:2px solid rgba(49,90,215,.45);outline-offset:-2px}
+.progressionTable tbody th[scope=rowgroup] span{min-width:0;display:flex;flex-direction:column}
+.progressionTable tbody th[scope=rowgroup] b{font-size:11px}
+.progressionTable tbody th[scope=rowgroup] small{max-width:112px;overflow:hidden;text-overflow:ellipsis;color:var(--n50-text-3);font-size:8px}
+.progressionTable tbody th[scope=row]{width:76px;color:var(--n50-text-2);font-weight:650}
+.progressionTable tbody td[data-state]{min-width:91px;font-family:"IBM Plex Mono",monospace}
+.progressionTable tbody td[data-state] b{display:inline-block;min-width:12px;margin-right:3px;font-size:12px}
+.progressionTable tbody td[data-state] span{font-weight:650}
+.progressionTable tbody td[data-state] small{margin-left:3px;color:inherit;font-size:8px}
+.progressionTable tbody td[data-state=pass]{background:#e9f8f0;color:var(--n50-positive)}
+.progressionTable tbody td[data-state=fail]{background:#fff0f2;color:var(--n50-negative)}
+.progressionTable tbody td[data-state=missing]{background:#f5f7fa;color:#718096}
+.progressionCurrent{min-width:78px;font:700 11px "IBM Plex Mono",monospace}
+.progressionScore{min-width:58px;font:750 11px "IBM Plex Mono",monospace}
+.progressionScore[data-state=pass]{background:#d8f2e4!important;color:var(--n50-positive)}
+.progressionScore[data-state=fail]{background:#ffe3e7!important;color:var(--n50-negative)}
+.progressionScore[data-state=missing]{color:#718096}
 
-@media(max-width:1023px){.progressionStrip{height:142px;margin-bottom:8px}.progressionStrip>header>div{display:flex;overflow:hidden}.progressionStrip>header small{overflow:hidden;text-overflow:ellipsis}}
-@media(max-width:767px){.progressionStrip>header small{display:none}.progressionCard{flex-basis:274px}}
+@media(max-width:1023px){.progressionStrip{height:260px;margin-bottom:8px}.progressionStrip>header>div{display:flex;overflow:hidden}.progressionStrip>header small{overflow:hidden;text-overflow:ellipsis}}
+@media(max-width:767px){.progressionStrip{height:280px}.progressionStrip>header small{display:none}.progressionTable{min-width:1080px}}

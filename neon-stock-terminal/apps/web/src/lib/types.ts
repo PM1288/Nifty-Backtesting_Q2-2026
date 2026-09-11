@@ -131,6 +131,18 @@ export type ScalperProgressionRow = {
   previousMonthClose: number | null;
   twoMonthsAgoOpen?: number | null;
   twoMonthsAgoClose: number | null;
+  currentHourOpen?: number | null;
+  previousHourOpen?: number | null;
+  currentHourStartedAt?: string | null;
+  previousHourStartedAt?: string | null;
+  current15mOpen?: number | null;
+  previous15mOpen?: number | null;
+  current15mStartedAt?: string | null;
+  previous15mStartedAt?: string | null;
+  current5mOpen?: number | null;
+  previous5mOpen?: number | null;
+  current5mStartedAt?: string | null;
+  previous5mStartedAt?: string | null;
   historyThrough?: string | null;
   observedAt: string | null;
   conditions?: Array<{

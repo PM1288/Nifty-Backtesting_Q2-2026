@@ -176,6 +176,8 @@ export type StockDetailResponse = {
     };
   };
   intraday: IntradayBar[];
+  /** Retained bars before the visible session, used only to warm indicator state. */
+  indicatorWarmup?: IntradayBar[];
 };
 
 export type LeaderboardResponse = {

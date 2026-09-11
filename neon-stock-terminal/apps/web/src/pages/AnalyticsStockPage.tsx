@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { EChartsOption } from "echarts";
 import { useParams } from "react-router-dom";
 import { useAuthGate } from "../auth/AuthGateProvider";
@@ -17,7 +17,6 @@ import {
 import { EChartSurface } from "../components/visual/EChartSurface";
 import { fmtDecimal, fmtPct, fmtPrice, fmtWholeNumber, formatCurrencyINR, formatDateIST, formatTime } from "../lib/format";
 import { useBacktestingCompare, useIntradayAnalyticsStock, useIntradayAnalyticsSummary, useOiisCandidateContext, useOverview, useStock } from "../lib/hooks";
-import type { IntradayBar } from "../lib/types";
 import { useI18n } from "../i18n/LocaleProvider";
 import { useDeferredBusyState } from "../lib/useDeferredBusyState";
 import { AnalyticsHeader, num, text, toneFromNumber, useAnalyticsExperienceMode } from "./AnalyticsChrome";
@@ -25,6 +24,7 @@ import styles from "./AnalyticsPage.module.css";
 import { LearnAboutThisAnalysis, RelatedJourney, ReturnToSource } from "../components/navigation/StrategicPrimitives";
 import { useProfileIndex } from "../lib/stockProfiles";
 import { StockIdentity } from "../components/stocks/StockProfileControls";
+import { buildMwdEmaValueModel, type MwdEmaValueModel, type MwdLevelId } from "../lib/mwdEmaValue";
 
 function signedPct(value: unknown) {
   const parsed = num(value);
@@ -60,72 +60,46 @@ function computeWindowReturnPct(bars: Array<{ c: number }> | undefined) {
   return ((last - first) / first) * 100;
 }
 
-function technicalChartOption(bars: IntradayBar[]): EChartsOption {
-  const rows = bars.slice(-120);
-  const dates = rows.map((row) => row.t.slice(0, 10));
-  const closes = rows.map((row) => row.c);
-  const bollinger = rows.map((_, index) => {
-    if (index < 19) return [null, null, null] as const;
-    const window = closes.slice(index - 19, index + 1);
-    const middle = window.reduce((sum, value) => sum + value, 0) / window.length;
-    const deviation = Math.sqrt(window.reduce((sum, value) => sum + ((value - middle) ** 2), 0) / window.length);
-    return [middle + 2 * deviation, middle, middle - 2 * deviation] as const;
-  });
-  const rsi = rows.map((_, index) => {
-    if (index < 14) return null;
-    let gain = 0;
-    let loss = 0;
-    for (let cursor = index - 13; cursor <= index; cursor += 1) {
-      const change = closes[cursor]! - closes[cursor - 1]!;
-      if (change >= 0) gain += change;
-      else loss -= change;
-    }
-    if (loss === 0) return 100;
-    const rs = (gain / 14) / (loss / 14);
-    return 100 - 100 / (1 + rs);
-  });
-  const pivots = rows.map((_, index) => {
-    if (index === 0) return [null, null, null] as const;
-    const previous = rows[index - 1]!;
-    const pivot = (previous.h + previous.l + previous.c) / 3;
-    return [2 * pivot - previous.l, pivot, 2 * pivot - previous.h] as const;
-  });
-
+function mwdEmaChartOption(model: MwdEmaValueModel, selectedLevel: MwdLevelId | null): EChartsOption {
+  const dates = model.bars.map((row) => row.t);
+  const tradedMaximum = Math.max(0, ...model.tradedValueCr.flatMap((value) => value == null ? [] : [value]));
+  const plottedLevels = model.levels.filter((level) => level.plot && level.value != null);
   return {
     animation: false,
     backgroundColor: "#ffffff",
-    legend: { top: 2, data: ["Price", "BB upper", "BB 20", "BB lower", "R1", "Pivot", "S1", "Volume", "RSI 14"] },
+    legend: { type: "scroll", top: 2, left: 18, right: 18, data: ["Price", "EMA 9", "EMA 21", "EMA 50", "EMA 200", "Traded value", ...plottedLevels.map((level) => level.label)] },
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    axisPointer: { link: [{ xAxisIndex: "all" }] },
-    grid: [
-      { left: 58, right: 28, top: 42, height: "52%" },
-      { left: 58, right: 28, top: "64%", height: "13%" },
-      { left: 58, right: 28, top: "81%", height: "13%" },
-    ],
-    xAxis: [0, 1, 2].map((gridIndex) => ({
+    grid: { left: 64, right: 78, top: 54, bottom: 64 },
+    xAxis: {
       type: "category",
-      gridIndex,
       data: dates,
       boundaryGap: true,
-      axisLabel: { show: gridIndex === 2, color: "#64748b", hideOverlap: true },
+      axisLabel: { color: "#64748b", hideOverlap: true, formatter: (value: string) => formatTime(value, { hour12: false }) },
       axisLine: { lineStyle: { color: "#cbd5e1" } },
-    })),
+    },
     yAxis: [
-      { scale: true, gridIndex: 0, axisLabel: { color: "#64748b" }, splitLine: { lineStyle: { color: "#edf2f7" } } },
-      { scale: true, gridIndex: 1, axisLabel: { color: "#64748b" }, splitLine: { show: false } },
-      { min: 0, max: 100, gridIndex: 2, axisLabel: { color: "#64748b" }, splitLine: { lineStyle: { color: "#edf2f7" } } },
+      { type: "value", scale: true, name: "Price", axisLabel: { color: "#64748b" }, splitLine: { lineStyle: { color: "#edf2f7" } } },
+      { type: "value", min: 0, max: tradedMaximum > 0 ? tradedMaximum * 4 : 1, show: false },
     ],
-    dataZoom: [{ type: "inside", xAxisIndex: [0, 1, 2], start: 30, end: 100 }, { type: "slider", xAxisIndex: [0, 1, 2], bottom: 0, height: 18, start: 30, end: 100 }],
+    dataZoom: [{ type: "inside", start: 0, end: 100 }, { type: "slider", bottom: 12, height: 18, start: 0, end: 100 }],
     series: [
-      { name: "Price", type: "candlestick", xAxisIndex: 0, yAxisIndex: 0, data: rows.map((row) => [row.o, row.c, row.l, row.h]), itemStyle: { color: "#15965f", color0: "#d1434b", borderColor: "#15965f", borderColor0: "#d1434b" } },
-      { name: "BB upper", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: bollinger.map((item) => item[0]), lineStyle: { color: "#6d5bd0", width: 1 } },
-      { name: "BB 20", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: bollinger.map((item) => item[1]), lineStyle: { color: "#2563a8", width: 1.5 } },
-      { name: "BB lower", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: bollinger.map((item) => item[2]), lineStyle: { color: "#6d5bd0", width: 1 } },
-      { name: "R1", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: pivots.map((item) => item[0]), lineStyle: { color: "#df6f38", width: 1, type: "dashed" } },
-      { name: "Pivot", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: pivots.map((item) => item[1]), lineStyle: { color: "#8a6b21", width: 1, type: "dashed" } },
-      { name: "S1", type: "line", showSymbol: false, xAxisIndex: 0, yAxisIndex: 0, data: pivots.map((item) => item[2]), lineStyle: { color: "#26946a", width: 1, type: "dashed" } },
-      { name: "Volume", type: "bar", xAxisIndex: 1, yAxisIndex: 1, data: rows.map((row) => row.v ?? 0), itemStyle: { color: "#9db8d3" } },
-      { name: "RSI 14", type: "line", showSymbol: false, xAxisIndex: 2, yAxisIndex: 2, data: rsi, lineStyle: { color: "#7c3aed", width: 1.5 }, markLine: { silent: true, symbol: "none", data: [{ yAxis: 70 }, { yAxis: 30 }], lineStyle: { color: "#cbd5e1", type: "dashed" } } },
+      { name: "Traded value", type: "bar", yAxisIndex: 1, z: 1, barWidth: "70%", data: model.tradedValueCr, itemStyle: { color: (params: { dataIndex: number }) => model.bars[params.dataIndex]!.c >= model.bars[params.dataIndex]!.o ? "rgba(5,150,105,.42)" : "rgba(220,38,38,.42)" } },
+      { name: "Price", type: "candlestick", yAxisIndex: 0, z: 4, data: model.bars.map((row) => [row.o, row.c, row.l, row.h]), itemStyle: { color: "#059669", color0: "#dc2626", borderColor: "#059669", borderColor0: "#dc2626" } },
+      { name: "EMA 9", type: "line", yAxisIndex: 0, showSymbol: false, z: 6, data: model.ema9, lineStyle: { color: "#d97706", width: 2 } },
+      { name: "EMA 21", type: "line", yAxisIndex: 0, showSymbol: false, z: 6, data: model.ema21, lineStyle: { color: "#c026d3", width: 2 } },
+      { name: "EMA 50", type: "line", yAxisIndex: 0, showSymbol: false, z: 6, data: model.ema50, lineStyle: { color: "#0891b2", width: 2 } },
+      { name: "EMA 200", type: "line", yAxisIndex: 0, showSymbol: false, z: 6, data: model.ema200, lineStyle: { color: "#ca8a04", width: 2 } },
+      ...plottedLevels.map((level) => ({
+        name: level.label,
+        type: "line" as const,
+        yAxisIndex: 0,
+        showSymbol: false,
+        connectNulls: false,
+        z: selectedLevel === level.id ? 9 : 5,
+        data: model.bars.map((_, index) => index >= level.startIndex ? level.value : null),
+        lineStyle: { color: level.color, width: selectedLevel === level.id ? 4 : 1.5, type: level.id === "pdc" ? "dashed" as const : "solid" as const },
+        endLabel: { show: true, formatter: level.label, color: level.color, fontWeight: 700 },
+      })),
     ],
   };
 }
@@ -187,6 +161,7 @@ export function AnalyticsStockPage() {
   const stock = useIntradayAnalyticsStock(symbol, authReady);
   const summary = useIntradayAnalyticsSummary(authReady);
   const overview = useOverview(authReady);
+  const dayHistory = useStock(symbol, "1D", authReady);
   const monthHistory = useStock(symbol, "1M", authReady);
   const yearHistory = useStock(symbol, "1Y", authReady);
   const oiisContext = useOiisCandidateContext(symbol, authReady);
@@ -197,6 +172,7 @@ export function AnalyticsStockPage() {
     queries: [
       { name: `intraday-analytics-stock:${symbol}`, isLoading: stock.isLoading, isError: !!stock.error },
       { name: "intraday-analytics-summary", isLoading: summary.isLoading, isError: !!summary.error },
+      { name: `stock:${symbol}:1D`, isLoading: dayHistory.isLoading, isError: !!dayHistory.error },
       { name: `stock:${symbol}:1M`, isLoading: monthHistory.isLoading, isError: !!monthHistory.error },
       { name: `stock:${symbol}:1Y`, isLoading: yearHistory.isLoading, isError: !!yearHistory.error },
       { name: `oiis-candidate-context:${symbol}`, isLoading: oiisContext.isLoading, isError: !!oiisContext.error },
@@ -205,10 +181,16 @@ export function AnalyticsStockPage() {
     ],
     extra: { symbol }
   });
+  const [selectedMwdLevel, setSelectedMwdLevel] = useState<MwdLevelId | null>(null);
   const loading = !authReady || stock.isLoading || summary.isLoading;
   const showLoading = useDeferredBusyState(loading);
   const yearBars = yearHistory.data?.intraday ?? [];
-  const technicalOption = useMemo(() => technicalChartOption(yearBars), [yearBars]);
+  const mwdModel = useMemo(() => buildMwdEmaValueModel(
+    dayHistory.data?.intraday ?? [],
+    yearBars,
+    dayHistory.data?.indicatorWarmup ?? [],
+  ), [dayHistory.data?.indicatorWarmup, dayHistory.data?.intraday, yearBars]);
+  const technicalOption = useMemo(() => mwdEmaChartOption(mwdModel, selectedMwdLevel), [mwdModel, selectedMwdLevel]);
 
   if (loading) {
     if (!showLoading) return null;
@@ -440,8 +422,18 @@ export function AnalyticsStockPage() {
         <DataState kind={oiisContext.isLoading ? "loading" : "empty"} title={oiisContext.isLoading ? "Loading latest OIIS evidence" : "No current OIIS candidate evidence"} body="The stock page remains available, but this symbol is not present in the latest completed all-F&O run." />
       )}
 
-      <ChartCard title={tr("Historical price, Bollinger bands, pivots, volume and RSI")} subtitle={tr("Up to 120 completed daily bars from PostgreSQL bars_1d. Pivot R1/P/S1 uses the previous completed trading day; Bollinger bands use 20 sessions and two standard deviations.")}>
-        {yearBars.length ? <EChartSurface appearance="light" ariaLabel={`${symbol} daily technical history`} className={styles.stockTechnicalChart} option={technicalOption} /> : <DataState kind="empty" title="Daily history unavailable" body="No completed daily OHLCV bars were returned for this stock." />}
+      <ChartCard title={tr("MWD + EMA + traded value")} subtitle={tr("Core stock drill-down methodology: session-aligned 15m and 1H opens; daily, weekly, monthly, 3-month and yearly opens; previous-day close; EMA 9/21/50/200; and VWAP-based traded value in ₹ crore. Select a level to emphasise it without changing the data.")}>
+        {dayHistory.isLoading ? <DataState kind="loading" title="Loading MWD evidence" body="Loading the current intraday session and retained indicator warm-up." /> : mwdModel.bars.length ? <div className={styles.mwdWorkspace} data-testid="mwd-ema-value-drilldown">
+          <EChartSurface appearance="light" ariaLabel={`${symbol} intraday candlestick chart using only the MWD EMA Value methodology`} className={styles.stockTechnicalChart} option={technicalOption} />
+          <div className={styles.mwdLevelTable} role="list" aria-label="MWD level drill-down">
+            <div className={styles.mwdLevelHead}><span>Level</span><span>Exact value</span><span>Price bias</span></div>
+            {mwdModel.levels.map((level) => <button key={level.id} type="button" role="listitem" data-selected={selectedMwdLevel === level.id ? "true" : "false"} data-bias={level.bias.toLowerCase()} onClick={() => setSelectedMwdLevel((current) => current === level.id ? null : level.id)} title={level.basis}>
+              <span><i style={{ background: level.color }} />{level.label}</span>
+              <strong>{level.value == null ? "—" : fmtPrice(level.value)}</strong>
+              <em>{level.bias === "UP" ? "▲ Up" : level.bias === "DOWN" ? "▼ Down" : "— Missing"}</em>
+            </button>)}
+          </div>
+        </div> : <DataState kind="empty" title="Intraday MWD history unavailable" body="No canonical intraday OHLCV bars were returned. Levels and EMAs were not fabricated from daily closes." />}
       </ChartCard>
 
       <DataTable
@@ -781,8 +773,8 @@ export function AnalyticsStockPage() {
       ]} />
       <LearnAboutThisAnalysis sections={[
         { id: "read", title: "How to read this page", content: <p>Start with the current quote and price path, then relative performance and drawdown, and only then interpret signals and strategy fit.</p> },
-        { id: "methodology", title: "Methodology and calculation rules", content: <p>Indicators are calculated for the displayed timeframe and preserve the source adjustment policy. Strategy evidence remains separate from a current trade authorisation.</p> },
-        { id: "definitions", title: "Definitions", content: <p>VWAP is the session volume-weighted price. Relative volume compares current activity with the stock’s historical intraday profile. ATR measures recent trading range.</p> },
+        { id: "methodology", title: "Methodology and calculation rules", content: <p>The technical chart uses only the supplied MWD EMA Value method: current NSE-session 15-minute and 60-minute opens; trading-day, week, calendar-month, calendar-quarter and calendar-year opens; previous-day close; EMA 9/21/50/200 calculated with retained pre-session warm-up; and per-bar traded value = session VWAP × volume ÷ 1 crore. Price above a level is Up; equality or below is Down. Strategy evidence remains separate from trade authorisation.</p> },
+        { id: "definitions", title: "Definitions", content: <p>VWAP is the session cumulative volume-weighted HLC3 price. The traded-value bars use ₹ crore and a separate hidden visual scale so they do not distort the price axis. Previous-day, previous-week and previous-month opens are confirmed historical reference rows.</p> },
         { id: "sources", title: "Data sources and freshness", content: <p>Cash OHLCV, canonical indicators, benchmark and sector series, strategy results, events and available F&amp;O evidence retain their individual timestamps and readiness states.</p> },
         { id: "limitations", title: "Limitations and assumptions", content: <p>Missing indicators, events or derivatives evidence remain unavailable rather than being converted to zero. Historical relationships do not guarantee a current outcome.</p> },
         { id: "related", title: "Related dashboards", content: <p>Use the context-aware links immediately above to continue into OIIS, Paper Trading, historical evidence or Options without changing the selected stock.</p> },

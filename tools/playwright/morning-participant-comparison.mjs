@@ -3,6 +3,7 @@ import path from "node:path";
 import { chromium } from "playwright";
 
 const appOrigin = process.env.MORNING_APP_ORIGIN ?? "http://127.0.0.1:19090";
+const apiOrigin = process.env.MORNING_API_ORIGIN ?? appOrigin;
 const authOrigin = process.env.MORNING_AUTH_ORIGIN ?? "https://n50.nifty50today.co.in";
 const output = path.resolve(process.env.MORNING_OUTPUT ?? "/tmp/morning-participant-comparison");
 const password = (await fs.readFile(process.env.PLAYWRIGHT_ENV_FILE ?? ".env", "utf8"))
@@ -27,7 +28,7 @@ try {
   if (new URL(appOrigin).hostname === "127.0.0.1" && session)
     await context.addCookies([{ ...session, domain: "127.0.0.1", path: "/", secure: false, sameSite: "Lax" }]);
 
-  const api = await context.request.get(`${appOrigin}/v1/trading-analytics`);
+  const api = await context.request.get(`${apiOrigin}/v1/trading-analytics`);
   check("API", api.ok(), `HTTP ${api.status()}`);
   const payload = await api.json();
   const page = await context.newPage();
@@ -37,8 +38,10 @@ try {
   await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=morning`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const summary = page.getByTestId("morning-participant-summary-table");
   const calculations = page.getByTestId("morning-participant-calculation-table");
+  const history = page.getByTestId("morning-participant-history");
   await summary.waitFor({ state: "visible", timeout: 90_000 });
   await calculations.waitFor({ state: "visible", timeout: 90_000 });
+  await history.waitFor({ state: "visible", timeout: 90_000 });
   // Ignore only requests cancelled while the authenticated local gateway page
   // hydrates; errors emitted during the stable inspection below still fail.
   errors.length = 0;
@@ -91,6 +94,19 @@ try {
     return signed.length === 0 || Math.max(...signed.map((cell) => cell.strength)) === 1;
   })), "The strongest positive and strongest negative value in each populated column use full intensity");
   check("DETAIL-HEATMAP-COVERAGE", await calculations.locator("tbody td[data-heatmap-tone]").count() === 24, `${await calculations.locator("tbody td[data-heatmap-tone]").count()}/24 detailed net/proxy cells use the same scale`);
+  const historyPayload = payload.participantHistory;
+  check("HISTORY-SOURCE", historyPayload?.scope === "LATEST_RETAINED_REVISION_PER_REPORT_DATE", `${historyPayload?.scope ?? "missing"} · ${historyPayload?.reportCount ?? 0} dates`);
+  check("HISTORY-ROWS", Array.isArray(historyPayload?.rows) && historyPayload.rows.length > 0, `${historyPayload?.rows?.length ?? 0} retained participant rows`);
+  const historyCanvas = history.locator("canvas");
+  await historyCanvas.first().waitFor({ state: "visible", timeout: 30_000 });
+  check("HISTORY-CHART", await historyCanvas.count() >= 1, `${await historyCanvas.count()} chart canvases`);
+  const metricSelector = page.getByTestId("morning-participant-history-metric");
+  const metricKeys = ["net_calls", "net_puts", "options_proxy", "option_index_call_long", "option_index_call_short", "option_index_put_long", "option_index_put_short"];
+  for (const metric of metricKeys) {
+    await metricSelector.selectOption(metric);
+    check(`HISTORY-METRIC-${metric}`, await metricSelector.inputValue() === metric, `Selected ${metric}`);
+  }
+  await metricSelector.selectOption("options_proxy");
   const disclosure = await page.getByTestId("morning-participant-comparison").innerText();
   check("CLIENT-DISCLOSURE", /not asserted to be retail-only/.test(disclosure), "Client class is not mislabeled as verified retail");
   check("FORMULA-DISCLOSURE", /Net calls = index-call long contracts − index-call short contracts/.test(disclosure) && /Options proxy = net calls − net puts/.test(disclosure), "Call, put and proxy formulas are visible");

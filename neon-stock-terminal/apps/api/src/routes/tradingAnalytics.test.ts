@@ -108,6 +108,22 @@ test("older cash history stays descriptive and does not fill missing selected-da
   assert.equal(d.morning.matrix,"INSUFFICIENT_DATA");
   assert.ok(calls.some(c=>c.sql.includes("market_date<=")&&c.args[0]==="2026-09-07"));
 });
+test("participant history keeps each daily current report revision and derived index-option values",async()=>{
+  const historyRows=[
+    {payload:{trade_date:"2026-09-04",client_type:"FII",run_id:"r1",option_index_call_long:100,option_index_call_short:70,option_index_put_long:90,option_index_put_short:80}},
+    {payload:{trade_date:"2026-09-07",client_type:"FII",run_id:"r2",option_index_call_long:125,option_index_call_short:75,option_index_put_long:85,option_index_put_short:95}},
+  ];
+  const prisma={$queryRawUnsafe:async(sql:string)=>sql.includes("WITH latest_runs AS")?historyRows:[]} as unknown as PrismaClient;
+  const data=await loadTradingAnalytics(prisma,"2026-09-07T12:00:00Z","2026-09-07");
+  assert.equal(data.participantHistory.reportCount,2);
+  assert.equal(data.participantHistory.oldestDate,"2026-09-04");
+  assert.equal(data.participantHistory.latestDate,"2026-09-07");
+  assert.equal(data.participantHistory.scope,"LATEST_RETAINED_REVISION_PER_REPORT_DATE");
+  assert.deepEqual(data.participantHistory.rows.map((row)=>[row.trade_date,row.net_calls,row.net_puts,row.options_proxy]),[
+    ["2026-09-04",30,10,20],
+    ["2026-09-07",50,-10,60],
+  ]);
+});
 test("read-only API validates input and reports partial source failure without leaking errors", async () => {
   const app = express();
   const prisma = {

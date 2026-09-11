@@ -4,6 +4,7 @@ import {
   participantHeatmapReading,
   type ParticipantHeatmapExtent,
 } from "../lib/participantHeatmap";
+import { ParticipantOptionsHistoryChart } from "./ParticipantOptionsHistoryChart";
 import styles from "./TradingAnalyticsPage.module.css";
 type Row = Record<string, unknown>;
 const matrix = [
@@ -44,6 +45,7 @@ const participantLabel = (type: unknown) =>
 export function TradingAnalyticsMorning({
   activity,
   participants,
+  participantHistory,
   morning,
   smartapi,
   onInspect,
@@ -51,6 +53,16 @@ export function TradingAnalyticsMorning({
 }: {
   activity: Row[];
   participants: Row[];
+  participantHistory?: {
+    rows: Row[];
+    reportCount: number;
+    oldestDate: string | null;
+    latestDate: string | null;
+    state: string;
+    scope: string;
+    unit: string;
+    limit: number;
+  };
   morning: {
     matrix: string;
     cash: Row[];
@@ -298,6 +310,7 @@ export function TradingAnalyticsMorning({
           Change = current report minus the preceding retained trading report for the same participant.
           Client is the exchange-reported client class; it is not asserted to be retail-only.
         </p>
+        <ParticipantOptionsHistoryChart history={participantHistory} />
         <details open>
           <summary>Yesterday comparison · detailed call/put calculations</summary>
           <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Detailed participant option calculations scroll area">

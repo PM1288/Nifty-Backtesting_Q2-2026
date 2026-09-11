@@ -80,7 +80,7 @@ export async function loadTradingAnalytics(
   )
     throw new Error("Future report date");
   // Select one complete load revision, never stitch rows from different ingests.
-  const [rawStats, rawPeople, cash, expiries, dayBars, smartapi, cashHistory] =
+  const [rawStats, rawPeople, cash, expiries, dayBars, smartapi, cashHistory, rawParticipantHistory] =
     await Promise.all([
       read(
         "derivatives",
@@ -118,6 +118,29 @@ export async function loadTradingAnalytics(
         `SELECT participant_type,buy_value,sell_value,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date<=$1::date AND source_dataset='nse_fii_dii_nse_only' ORDER BY market_date DESC,participant_type LIMIT 740`,
         selected,
       ),
+      read(
+        "participant_oi_history",
+        `WITH latest_runs AS (
+           SELECT DISTINCT ON (trade_date) trade_date,run_id
+           FROM (
+             SELECT trade_date,run_id,max(loaded_at) loaded_at
+             FROM market_data.nse_fii_participant_open_interest
+             WHERE trade_date<=$2::date AND loaded_at<=$1::timestamptz
+             GROUP BY trade_date,run_id
+           ) revisions
+           ORDER BY trade_date,loaded_at DESC,run_id DESC
+         ), selected_runs AS (
+           SELECT trade_date,run_id FROM latest_runs ORDER BY trade_date DESC LIMIT 120
+         )
+         SELECT to_jsonb(p) payload
+         FROM selected_runs r
+         JOIN market_data.nse_fii_participant_open_interest p
+           ON p.trade_date=r.trade_date AND p.run_id=r.run_id
+         WHERE p.loaded_at<=$1::timestamptz
+         ORDER BY p.trade_date,p.client_type`,
+        asOf,
+        selected,
+      ),
     ]);
   const [priorPeopleRows, dailyCalendar] = await Promise.all([
     read(
@@ -141,6 +164,12 @@ export async function loadTradingAnalytics(
   const currentPeople = rawPeople.map((r) => participant(r.payload as Facts));
   const priorPeople = priorPeopleRows.map((r) => participant(r.payload as Facts));
   const people = participantComparison(currentPeople, priorPeople);
+  const participantHistoryRows: Facts[] = rawParticipantHistory.map((r) => participant(r.payload as Facts));
+  const participantHistoryDates = [
+    ...new Set(participantHistoryRows
+      .map((row) => row.trade_date == null ? "" : String(row.trade_date).slice(0, 10))
+      .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))),
+  ];
   const selectedExpiry =
     expiry ?? (expiries[0]?.expiry_date as string | undefined);
   const snapshots = selectedExpiry
@@ -264,6 +293,16 @@ export async function loadTradingAnalytics(
     },
     activity: stats,
     participants: people,
+    participantHistory: {
+      rows: participantHistoryRows,
+      reportCount: participantHistoryDates.length,
+      oldestDate: participantHistoryDates[0] ?? null,
+      latestDate: participantHistoryDates.at(-1) ?? null,
+      state: participantHistoryRows.length ? "OBSERVED_REPORT_HISTORY" : "DATA_INSUFFICIENT",
+      scope: "LATEST_RETAINED_REVISION_PER_REPORT_DATE",
+      unit: "contracts",
+      limit: 120,
+    },
     issues,
     errors,
     candles,

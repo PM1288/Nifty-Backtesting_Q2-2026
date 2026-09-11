@@ -46,6 +46,16 @@ type Payload = {
   evidenceId: string;
   activity: Row[];
   participants: Row[];
+  participantHistory?: {
+    rows: Row[];
+    reportCount: number;
+    oldestDate: string | null;
+    latestDate: string | null;
+    state: string;
+    scope: string;
+    unit: string;
+    limit: number;
+  };
   issues: Row[];
   errors: Row[];
   candles: Row[];
@@ -720,6 +730,7 @@ export function TradingAnalyticsPage() {
                 <TradingAnalyticsMorning
                   activity={d.activity}
                   participants={d.participants}
+                  participantHistory={d.participantHistory}
                   morning={d.morning}
                   smartapi={d.smartapi}
                   onInspect={inspect}

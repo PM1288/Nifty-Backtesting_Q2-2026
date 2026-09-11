@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Scalper V2 Delta OI identity colours: both the underlying
+strike-aligned profile and the separate horizontal Change-in-OI chart now fill
+CE bars blue and PE bars yellow. Signed direction is preserved geometrically
+(negative left, positive right) and numerically with explicit signs; zero and
+missing remain neutral. OI values, baselines, proportional widths, V1, V7,
+A-open/B-close measurement, collectors and order permissions are unchanged.
+Evidence:
+`docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
+
 2026-09-11 NSE India report download health: the existing authenticated
 `/institutional/nse-intelligence/reports` view now exposes per-file downloader
 and loader status, source date, exact file, bytes, SHA-256, rows, timings,

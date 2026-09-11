@@ -7,27 +7,27 @@ const signedDeltaLabel = (value: DeltaOiValue) => value == null
   ? "—"
   : `${value > 0 ? "+" : ""}${formatOiAxisValue(value)}`;
 
-const POSITIVE = "#117a40";
-const NEGATIVE = "#c6283d";
 const NEUTRAL = "#64748b";
+const CALL = "#2563eb";
+const CALL_BORDER = "#1d4ed8";
+const PUT = "#eab308";
+const PUT_BORDER = "#8a6200";
 
-/** Change sign owns the fill; option identity owns the outline. */
-const deltaBar = (value: DeltaOiValue, borderColor: string) => value == null ? null : ({
+/** Option identity owns the fill; sign remains encoded by left/right geometry and the signed label. */
+const deltaBar = (value: DeltaOiValue, color: string, borderColor: string) => value == null ? null : ({
   value,
   itemStyle: {
-    color: value > 0 ? POSITIVE : value < 0 ? NEGATIVE : NEUTRAL,
+    color: value === 0 ? NEUTRAL : color,
     borderColor,
     borderWidth: 2,
   },
 });
 
-const richDelta = (value: DeltaOiValue) => value == null
+const richDelta = (value: DeltaOiValue, side: "ce" | "pe") => value == null
   ? `{missing|—}`
-  : value > 0
-    ? `{positive|${signedDeltaLabel(value)}}`
-    : value < 0
-      ? `{negative|${signedDeltaLabel(value)}}`
-      : `{zero|0}`;
+  : value === 0
+    ? `{zero|0}`
+    : `{${side}Value|${signedDeltaLabel(value)}}`;
 
 export function scalperV2HorizontalDeltaOiOption(
   strikes: number[],
@@ -71,14 +71,14 @@ export function scalperV2HorizontalDeltaOiOption(
         formatter: (_value: string, index: number) => {
           const strike = Number(strikes[index]);
           const strikeLabel = Number.isFinite(strike) ? strike.toLocaleString("en-IN") : "—";
-          return `{strike|${strikeLabel}}  {ce|CE} ${richDelta(ceChanges[index] ?? null)}  {pe|PE} ${richDelta(peChanges[index] ?? null)}`;
+          return `{strike|${strikeLabel}}  {ce|CE} ${richDelta(ceChanges[index] ?? null, "ce")}  {pe|PE} ${richDelta(peChanges[index] ?? null, "pe")}`;
         },
         rich: {
           strike: { color: "#14243a", fontWeight: 700, width: 62, fontSize: 12 },
           ce: { color: "#1d4ed8", fontWeight: 700, width: 20 },
           pe: { color: "#785500", fontWeight: 700, width: 20 },
-          positive: { color: POSITIVE, fontWeight: 700, width: 54, align: "right" },
-          negative: { color: NEGATIVE, fontWeight: 700, width: 54, align: "right" },
+          ceValue: { color: CALL_BORDER, fontWeight: 700, width: 54, align: "right" },
+          peValue: { color: "#785500", fontWeight: 700, width: 54, align: "right" },
           zero: { color: NEUTRAL, fontWeight: 650, width: 54, align: "right" },
           missing: { color: NEUTRAL, width: 54, align: "right" },
         },
@@ -91,8 +91,8 @@ export function scalperV2HorizontalDeltaOiOption(
         barMaxWidth: 14,
         barGap: "18%",
         barCategoryGap: "28%",
-        itemStyle: { color: NEUTRAL, borderColor: "#2563eb", borderWidth: 2 },
-        data: ceChanges.map((value) => deltaBar(value, "#2563eb")),
+        itemStyle: { color: CALL, borderColor: CALL_BORDER, borderWidth: 2 },
+        data: ceChanges.map((value) => deltaBar(value, CALL, CALL_BORDER)),
         markLine: {
           silent: true,
           symbol: "none",
@@ -123,8 +123,8 @@ export function scalperV2HorizontalDeltaOiOption(
         barMaxWidth: 14,
         barGap: "18%",
         barCategoryGap: "28%",
-        itemStyle: { color: NEUTRAL, borderColor: "#eab308", borderWidth: 2 },
-        data: peChanges.map((value) => deltaBar(value, "#eab308")),
+        itemStyle: { color: PUT, borderColor: PUT_BORDER, borderWidth: 2 },
+        data: peChanges.map((value) => deltaBar(value, PUT, PUT_BORDER)),
       },
     ],
   };

@@ -136,7 +136,7 @@ try {
     return { card: rect(card), chart: rect(chart), canvas: rect(canvas), label: chart?.getAttribute("aria-label") ?? "" };
   });
   check("SV2-DELTAOI-READABLE-GEOMETRY", Boolean(deltaOiGeometry.card && deltaOiGeometry.chart && deltaOiGeometry.canvas && deltaOiGeometry.chart.width >= deltaOiGeometry.card.width - 20 && deltaOiGeometry.chart.height >= 360 && Math.abs(deltaOiGeometry.chart.width - deltaOiGeometry.canvas.width) <= 2), JSON.stringify(deltaOiGeometry));
-  check("SV2-DELTAOI-SIGN-AND-IDENTITY", /positive bars are green and negative bars red/.test(deltaOiGeometry.label) && /CE has a blue outline and PE a yellow outline/.test(deltaOiGeometry.label), deltaOiGeometry.label);
+  check("SV2-DELTAOI-SIGN-AND-IDENTITY", /CE bars are blue and PE bars are yellow/.test(deltaOiGeometry.label) && /negative values extend left and positive values extend right/.test(deltaOiGeometry.label), deltaOiGeometry.label);
   await page.getByTestId("v2-deltaoi-chart").screenshot({ path: path.join(output, "screenshots", "deltaoi-complete-right-y-axis.png") });
 
   await page.getByTestId("v2-chart-body-underlying").waitFor({ state: "attached", timeout: 90_000 });

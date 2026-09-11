@@ -35,6 +35,14 @@ def test_bounded_backfill_preserves_each_report_and_missing_date(tmp_path):
         )
 
 
+def test_platform_iso_dates_are_accepted_for_latest_date_and_backfill(tmp_path):
+    service = FovoltDailyService(FakeClient(), tmp_path)
+    assert service.pull_date("2026-09-01").report.trade_date == "01-09-2026"
+    result = service.pull_range(start_date="2026-09-01", end_date="2026-09-03")
+    assert result.start_date == "2026-09-01"
+    assert result.end_date == "2026-09-03"
+
+
 def test_loader_fails_calendar_gap_closed_instead_of_jumping_session(tmp_path):
     pulled = FovoltDailyService(FakeClient(), tmp_path).pull_date("01-09-2026")
 

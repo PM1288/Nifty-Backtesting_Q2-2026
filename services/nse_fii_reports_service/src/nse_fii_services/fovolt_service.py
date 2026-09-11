@@ -48,7 +48,7 @@ class FovoltDailyService:
         self.output_root = Path(output_root)
 
     def pull_latest(self, *, as_of_date: str | datetime | None = None, max_lookback_days: int = 10) -> FovoltPullResult:
-        start = parse_trade_date(as_of_date) if as_of_date else datetime.today()
+        start = _parse_fovolt_date(as_of_date) if as_of_date else datetime.today()
         last_error: Exception | None = None
         for offset in range(max_lookback_days + 1):
             candidate = start - timedelta(days=offset)
@@ -63,7 +63,7 @@ class FovoltDailyService:
         raise NSEReportNotFound(f"No valid FOVOLT report within {max_lookback_days} days. Last error: {last_error}")
 
     def pull_date(self, trade_date: str | datetime) -> FovoltPullResult:
-        requested = parse_trade_date(trade_date)
+        requested = _parse_fovolt_date(trade_date)
         report = self.client.fetch_report("fovolt", requested)
         rows = rank_fovolt_rows(parse_fovolt_csv(report.content, expected_date=requested.date()))
         return self._persist(report, rows)
@@ -76,7 +76,7 @@ class FovoltDailyService:
         continue_on_error: bool = True,
         max_calendar_days: int = 366,
     ) -> FovoltBackfillResult:
-        start, end = parse_trade_date(start_date), parse_trade_date(end_date)
+        start, end = _parse_fovolt_date(start_date), _parse_fovolt_date(end_date)
         if end < start:
             raise ValueError("end_date must not be before start_date")
         if (end.date() - start.date()).days + 1 > max_calendar_days:
@@ -121,6 +121,16 @@ class FovoltDailyService:
         if not manifest_path.exists():
             manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         return FovoltPullResult(report, rows, revision_id, raw_path, manifest_path)
+
+
+def _parse_fovolt_date(value: str | datetime) -> datetime:
+    """Accept the service's legacy DD-MM-YYYY and platform ISO date contract."""
+    if isinstance(value, datetime):
+        return value
+    try:
+        return parse_trade_date(value)
+    except ValueError:
+        return datetime.strptime(value, "%Y-%m-%d")
 
 
 def load_fovolt_result(conn: Any, result: FovoltPullResult, *, source_basis: str = "NSE_ARCHIVE_OBSERVED_DOWNLOAD") -> dict[str, object]:

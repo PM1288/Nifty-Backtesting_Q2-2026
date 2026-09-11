@@ -1,3 +1,9 @@
+import { useMemo, type CSSProperties } from "react";
+import {
+  participantHeatmapExtent,
+  participantHeatmapReading,
+  type ParticipantHeatmapExtent,
+} from "../lib/participantHeatmap";
 import styles from "./TradingAnalyticsPage.module.css";
 type Row = Record<string, unknown>;
 const matrix = [
@@ -27,6 +33,12 @@ const tint = (v: unknown) =>
         ? styles.positive
         : "";
 const participantOrder = ["FII", "Pro", "Client", "DII"];
+const participantHeatmapKeys = [
+  "previous_net_calls", "net_calls", "delta_net_calls",
+  "previous_net_puts", "net_puts", "delta_net_puts",
+  "previous_options_proxy", "options_proxy", "delta_options_proxy",
+] as const;
+type ParticipantHeatmapKey = (typeof participantHeatmapKeys)[number];
 const participantLabel = (type: unknown) =>
   type === "Client" ? "Client (reported)" : String(type ?? "Unavailable");
 export function TradingAnalyticsMorning({
@@ -54,6 +66,48 @@ export function TradingAnalyticsMorning({
   onStructure: () => void;
 }) {
   const fii = participants.find((r) => r.client_type === "FII");
+  const participantRows = useMemo(
+    () => new Map(participants.map((row) => [String(row.client_type), row])),
+    [participants],
+  );
+  const participantHeatmapExtents = useMemo(
+    () => Object.fromEntries(participantHeatmapKeys.map((key) => [
+      key,
+      participantHeatmapExtent(participantOrder.map((type) => participantRows.get(type)?.[key])),
+    ])) as Record<ParticipantHeatmapKey, ParticipantHeatmapExtent>,
+    [participantRows],
+  );
+  const participantHeatCell = (candidate: unknown, key: ParticipantHeatmapKey) => {
+    const reading = participantHeatmapReading(candidate, participantHeatmapExtents[key]);
+    const percentage = Math.round(reading.strength * 100);
+    return {
+      className: `${styles.participantHeatCell} ${
+        reading.tone === "positive"
+          ? styles.participantHeatPositive
+          : reading.tone === "negative"
+            ? styles.participantHeatNegative
+            : reading.tone === "missing"
+              ? styles.participantHeatMissing
+              : styles.participantHeatNeutral
+      }`,
+      style: {
+        "--participant-heat-alpha": (
+          reading.tone === "positive"
+            ? 0.10 + reading.strength * 0.34
+            : reading.tone === "negative"
+              ? 0.09 + reading.strength * 0.32
+              : 0
+        ).toFixed(4),
+      } as CSSProperties,
+      "data-heatmap-tone": reading.tone,
+      "data-heatmap-strength": reading.strength.toFixed(4),
+      title: reading.tone === "missing"
+        ? "Unavailable · excluded from heatmap range"
+        : reading.tone === "neutral"
+          ? "Zero · neutral"
+          : `${reading.tone === "positive" ? "Positive" : "Negative"} · ${percentage}% of this column's ${reading.tone} extreme`,
+    };
+  };
   return (
     <div className={styles.morningSheet}>
       <section>
@@ -191,6 +245,11 @@ export function TradingAnalyticsMorning({
       </section>
       <section className={styles.morningWideSection} data-testid="morning-participant-comparison">
         <h2>Participant index options · current vs previous report</h2>
+        <div className={styles.participantHeatLegend} aria-label="Participant heatmap legend">
+          <span><i className={styles.participantHeatPositive} aria-hidden="true" /> Positive · green</span>
+          <span><i className={styles.participantHeatNegative} aria-hidden="true" /> Negative · red</span>
+          <span>Deeper shade = larger magnitude within that column; zero and unavailable are neutral.</span>
+        </div>
         <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Participant call and put comparison scroll area">
           <table aria-label="FII Pro Client and DII call put comparison" data-testid="morning-participant-summary-table">
             <thead>
@@ -210,20 +269,20 @@ export function TradingAnalyticsMorning({
             </thead>
             <tbody>
               {participantOrder.map((type) => {
-                const row = participants.find((candidate) => candidate.client_type === type);
+                const row = participantRows.get(type);
                 return (
                   <tr key={type}>
                     <th>{participantLabel(type)}</th>
                     <td>{value(row?.previous_trade_date)}</td>
-                    <td className={tint(row?.previous_net_calls)}>{value(row?.previous_net_calls)}</td>
-                    <td className={tint(row?.net_calls)}>{value(row?.net_calls)}</td>
-                    <td className={tint(row?.delta_net_calls)}>{value(row?.delta_net_calls)}</td>
-                    <td className={tint(row?.previous_net_puts)}>{value(row?.previous_net_puts)}</td>
-                    <td className={tint(row?.net_puts)}>{value(row?.net_puts)}</td>
-                    <td className={tint(row?.delta_net_puts)}>{value(row?.delta_net_puts)}</td>
-                    <td className={tint(row?.previous_options_proxy)}>{value(row?.previous_options_proxy)}</td>
-                    <td className={tint(row?.options_proxy)}>{value(row?.options_proxy)}</td>
-                    <td className={tint(row?.delta_options_proxy)}>{value(row?.delta_options_proxy)}</td>
+                    <td {...participantHeatCell(row?.previous_net_calls, "previous_net_calls")}>{value(row?.previous_net_calls)}</td>
+                    <td {...participantHeatCell(row?.net_calls, "net_calls")}>{value(row?.net_calls)}</td>
+                    <td {...participantHeatCell(row?.delta_net_calls, "delta_net_calls")}>{value(row?.delta_net_calls)}</td>
+                    <td {...participantHeatCell(row?.previous_net_puts, "previous_net_puts")}>{value(row?.previous_net_puts)}</td>
+                    <td {...participantHeatCell(row?.net_puts, "net_puts")}>{value(row?.net_puts)}</td>
+                    <td {...participantHeatCell(row?.delta_net_puts, "delta_net_puts")}>{value(row?.delta_net_puts)}</td>
+                    <td {...participantHeatCell(row?.previous_options_proxy, "previous_options_proxy")}>{value(row?.previous_options_proxy)}</td>
+                    <td {...participantHeatCell(row?.options_proxy, "options_proxy")}>{value(row?.options_proxy)}</td>
+                    <td {...participantHeatCell(row?.delta_options_proxy, "delta_options_proxy")}>{value(row?.delta_options_proxy)}</td>
                     <td>
                       <button className={styles.metricButton} onClick={() => onInspect(row ?? { client_type: type, reason: "Participant unavailable" })}>
                         {String(row?.comparison_state ?? "Unavailable").replaceAll("_", " ")}
@@ -253,16 +312,16 @@ export function TradingAnalyticsMorning({
               </thead>
               <tbody>
                 {participantOrder.flatMap((type) => {
-                  const row = participants.find((candidate) => candidate.client_type === type);
+                  const row = participantRows.get(type);
                   return ([
                     ["Previous", "previous_option_index_call_long", "previous_option_index_call_short", "previous_net_calls", "previous_option_index_put_long", "previous_option_index_put_short", "previous_net_puts", "previous_options_proxy"],
                     ["Current", "option_index_call_long", "option_index_call_short", "net_calls", "option_index_put_long", "option_index_put_short", "net_puts", "options_proxy"],
                   ] as const).map(([report, callLong, callShort, netCalls, putLong, putShort, netPuts, proxy]) => (
                     <tr key={`${type}-${report}`}>
                       <th>{participantLabel(type)}</th><th>{report}</th>
-                      <td>{value(row?.[callLong])}</td><td>{value(row?.[callShort])}</td><td className={tint(row?.[netCalls])}>{value(row?.[netCalls])}</td>
-                      <td>{value(row?.[putLong])}</td><td>{value(row?.[putShort])}</td><td className={tint(row?.[netPuts])}>{value(row?.[netPuts])}</td>
-                      <td className={tint(row?.[proxy])}>{value(row?.[proxy])}</td>
+                      <td>{value(row?.[callLong])}</td><td>{value(row?.[callShort])}</td><td {...participantHeatCell(row?.[netCalls], netCalls)}>{value(row?.[netCalls])}</td>
+                      <td>{value(row?.[putLong])}</td><td>{value(row?.[putShort])}</td><td {...participantHeatCell(row?.[netPuts], netPuts)}>{value(row?.[netPuts])}</td>
+                      <td {...participantHeatCell(row?.[proxy], proxy)}>{value(row?.[proxy])}</td>
                     </tr>
                   ));
                 })}

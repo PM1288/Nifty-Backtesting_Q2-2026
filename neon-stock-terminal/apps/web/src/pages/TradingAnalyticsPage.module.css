@@ -296,6 +296,49 @@
   padding: 10px;
   font-weight: 700;
 }
+.participantHeatLegend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #d2dae3;
+  color: #526175;
+  font-size: 12px;
+}
+.participantHeatLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.participantHeatLegend i {
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  --participant-heat-alpha: 0.34;
+}
+.participantHeatCell {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 650;
+  background-image: none !important;
+}
+.participantHeatPositive {
+  color: #0a512b !important;
+  background-color: rgb(22 163 74 / var(--participant-heat-alpha)) !important;
+}
+.participantHeatNegative {
+  color: #841b2b !important;
+  background-color: rgb(220 38 38 / var(--participant-heat-alpha)) !important;
+}
+.participantHeatNeutral {
+  color: #526175 !important;
+  background-color: #f5f7fa !important;
+}
+.participantHeatMissing {
+  color: #64748b !important;
+  background-color: #f8fafc !important;
+}
 .morningSheet h3,
 .page .morningSheet h2,
 .ladder h3 {

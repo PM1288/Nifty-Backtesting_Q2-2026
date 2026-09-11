@@ -51,6 +51,15 @@ try {
   check("FOUR-PARTICIPANTS", await summaryRows.count() === 4, `${await summaryRows.count()} summary rows`);
   check("TWO-REPORT-ROWS", await calculationRows.count() === 8, `${await calculationRows.count()} calculation rows`);
 
+  const heatmap = await summary.locator("tbody td[data-heatmap-tone]").evaluateAll((cells) => cells.map((cell) => ({
+    tone: cell.getAttribute("data-heatmap-tone"),
+    strength: Number(cell.getAttribute("data-heatmap-strength")),
+    backgroundColor: getComputedStyle(cell).backgroundColor,
+  })));
+  check("HEATMAP-COVERAGE", heatmap.length === 36, `${heatmap.length}/36 Previous, Current and Change cells have heatmap metadata`);
+  check("HEATMAP-STRENGTH-RANGE", heatmap.every((cell) => Number.isFinite(cell.strength) && cell.strength >= 0 && cell.strength <= 1), "All heatmap strengths are within 0..1");
+  check("HEATMAP-PAINTED", heatmap.filter((cell) => cell.tone === "positive" || cell.tone === "negative").every((cell) => !/rgba?\(0, 0, 0(?:, 0)?\)/.test(cell.backgroundColor)), "Signed cells have a computed heatmap background");
+
   const participantTypes = ["FII", "Pro", "Client", "DII"];
   for (let index = 0; index < participantTypes.length; index += 1) {
     const type = participantTypes[index];
@@ -59,6 +68,13 @@ try {
     check(`IDENTITY-${type}`, text.includes(type), text.replace(/\s+/g, " "));
     for (const key of ["previous_net_calls", "net_calls", "delta_net_calls", "previous_net_puts", "net_puts", "delta_net_puts", "previous_options_proxy", "options_proxy", "delta_options_proxy"])
       check(`${type}-${key}`, text.includes(number(row?.[key])), `${key}=${number(row?.[key])}`);
+    const cells = summaryRows.nth(index).locator("td[data-heatmap-tone]");
+    const values = [row?.previous_net_calls, row?.net_calls, row?.delta_net_calls, row?.previous_net_puts, row?.net_puts, row?.delta_net_puts, row?.previous_options_proxy, row?.options_proxy, row?.delta_options_proxy];
+    for (let cellIndex = 0; cellIndex < values.length; cellIndex += 1) {
+      const numeric = values[cellIndex] == null ? null : Number(values[cellIndex]);
+      const expectedTone = numeric == null || !Number.isFinite(numeric) ? "missing" : numeric > 0 ? "positive" : numeric < 0 ? "negative" : "neutral";
+      check(`${type}-HEAT-${cellIndex + 1}`, await cells.nth(cellIndex).getAttribute("data-heatmap-tone") === expectedTone, `${number(values[cellIndex])} is ${expectedTone}`);
+    }
     if (row?.comparison_state === "COMPARABLE_PREVIOUS_REPORT") {
       check(`${type}-CALL-ARITHMETIC`, Number(row.net_calls) === Number(row.option_index_call_long) - Number(row.option_index_call_short), `${row.option_index_call_long} - ${row.option_index_call_short} = ${row.net_calls}`);
       check(`${type}-PUT-ARITHMETIC`, Number(row.net_puts) === Number(row.option_index_put_long) - Number(row.option_index_put_short), `${row.option_index_put_long} - ${row.option_index_put_short} = ${row.net_puts}`);
@@ -66,6 +82,15 @@ try {
       check(`${type}-CHANGE-ARITHMETIC`, Number(row.delta_options_proxy) === Number(row.options_proxy) - Number(row.previous_options_proxy), `${row.options_proxy} - ${row.previous_options_proxy} = ${row.delta_options_proxy}`);
     }
   }
+  const heatmapColumns = await summary.locator("tbody tr").evaluateAll((rows) => Array.from({ length: 9 }, (_, offset) => rows.map((row) => {
+    const cell = row.querySelectorAll("td[data-heatmap-tone]")[offset];
+    return cell ? { tone: cell.getAttribute("data-heatmap-tone"), strength: Number(cell.getAttribute("data-heatmap-strength")) } : null;
+  }).filter(Boolean)));
+  check("HEATMAP-COLUMN-EXTREMES", heatmapColumns.every((column) => ["positive", "negative"].every((tone) => {
+    const signed = column.filter((cell) => cell.tone === tone);
+    return signed.length === 0 || Math.max(...signed.map((cell) => cell.strength)) === 1;
+  })), "The strongest positive and strongest negative value in each populated column use full intensity");
+  check("DETAIL-HEATMAP-COVERAGE", await calculations.locator("tbody td[data-heatmap-tone]").count() === 24, `${await calculations.locator("tbody td[data-heatmap-tone]").count()}/24 detailed net/proxy cells use the same scale`);
   const disclosure = await page.getByTestId("morning-participant-comparison").innerText();
   check("CLIENT-DISCLOSURE", /not asserted to be retail-only/.test(disclosure), "Client class is not mislabeled as verified retail");
   check("FORMULA-DISCLOSURE", /Net calls = index-call long contracts − index-call short contracts/.test(disclosure) && /Options proxy = net calls − net puts/.test(disclosure), "Call, put and proxy formulas are visible");

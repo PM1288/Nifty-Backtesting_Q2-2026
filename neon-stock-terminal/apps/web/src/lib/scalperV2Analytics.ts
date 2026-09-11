@@ -7,14 +7,27 @@ const signedDeltaLabel = (value: DeltaOiValue) => value == null
   ? "—"
   : `${value > 0 ? "+" : ""}${formatOiAxisValue(value)}`;
 
-const deltaBar = (value: DeltaOiValue, identity: string, borderColor: string) => value == null ? null : ({
+const POSITIVE = "#117a40";
+const NEGATIVE = "#c6283d";
+const NEUTRAL = "#64748b";
+
+/** Change sign owns the fill; option identity owns the outline. */
+const deltaBar = (value: DeltaOiValue, borderColor: string) => value == null ? null : ({
   value,
   itemStyle: {
-    color: identity,
+    color: value > 0 ? POSITIVE : value < 0 ? NEGATIVE : NEUTRAL,
     borderColor,
-    borderWidth: 1,
+    borderWidth: 2,
   },
 });
+
+const richDelta = (value: DeltaOiValue) => value == null
+  ? `{missing|—}`
+  : value > 0
+    ? `{positive|${signedDeltaLabel(value)}}`
+    : value < 0
+      ? `{negative|${signedDeltaLabel(value)}}`
+      : `{zero|0}`;
 
 export function scalperV2HorizontalDeltaOiOption(
   strikes: number[],
@@ -26,17 +39,20 @@ export function scalperV2HorizontalDeltaOiOption(
   const maximum = Math.max(1, ...[...ceChanges, ...peChanges].flatMap((value) => value == null || !Number.isFinite(value) ? [] : [Math.abs(value)]));
   const nearestStrikeIndex = nearestStrike == null ? -1 : strikes.indexOf(nearestStrike);
   return {
+    animation: false,
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["CE ΔOI", "PE ΔOI"], top: 2, left: 28 },
-    grid: { left: 28, right: 218, top: 38, bottom: 52 },
+    grid: { left: 36, right: 278, top: 82, bottom: 22, containLabel: false },
     xAxis: {
       type: "value",
       name: "Signed ΔOI · provider units",
+      position: "top",
       nameLocation: "middle",
-      nameGap: 34,
+      nameGap: 42,
       axisLine: { show: true },
       axisTick: { show: true },
       axisLabel: { formatter: formatOiAxisValue, margin: 9 },
+      splitLine: { show: true, lineStyle: { color: "rgba(100,116,139,.16)" } },
       splitNumber: 5,
       min: -maximum,
       max: maximum,
@@ -55,12 +71,16 @@ export function scalperV2HorizontalDeltaOiOption(
         formatter: (_value: string, index: number) => {
           const strike = Number(strikes[index]);
           const strikeLabel = Number.isFinite(strike) ? strike.toLocaleString("en-IN") : "—";
-          return `{strike|${strikeLabel}}  {ce|CE ${signedDeltaLabel(ceChanges[index] ?? null)}}  {pe|PE ${signedDeltaLabel(peChanges[index] ?? null)}}`;
+          return `{strike|${strikeLabel}}  {ce|CE} ${richDelta(ceChanges[index] ?? null)}  {pe|PE} ${richDelta(peChanges[index] ?? null)}`;
         },
         rich: {
-          strike: { color: "#14243a", fontWeight: 650, width: 58 },
-          ce: { color: "#1d4ed8", fontWeight: 600, width: 68 },
-          pe: { color: "#785500", fontWeight: 600, width: 68 },
+          strike: { color: "#14243a", fontWeight: 700, width: 62, fontSize: 12 },
+          ce: { color: "#1d4ed8", fontWeight: 700, width: 20 },
+          pe: { color: "#785500", fontWeight: 700, width: 20 },
+          positive: { color: POSITIVE, fontWeight: 700, width: 54, align: "right" },
+          negative: { color: NEGATIVE, fontWeight: 700, width: 54, align: "right" },
+          zero: { color: NEUTRAL, fontWeight: 650, width: 54, align: "right" },
+          missing: { color: NEUTRAL, width: 54, align: "right" },
         },
       },
     },
@@ -69,8 +89,10 @@ export function scalperV2HorizontalDeltaOiOption(
         name: "CE ΔOI",
         type: "bar",
         barMaxWidth: 14,
-        itemStyle: { color: "#2563eb", borderColor: "#1d4ed8", borderWidth: 1 },
-        data: ceChanges.map((value) => deltaBar(value, "#2563eb", "#1d4ed8")),
+        barGap: "18%",
+        barCategoryGap: "28%",
+        itemStyle: { color: NEUTRAL, borderColor: "#2563eb", borderWidth: 2 },
+        data: ceChanges.map((value) => deltaBar(value, "#2563eb")),
         markLine: {
           silent: true,
           symbol: "none",
@@ -99,8 +121,10 @@ export function scalperV2HorizontalDeltaOiOption(
         name: "PE ΔOI",
         type: "bar",
         barMaxWidth: 14,
-        itemStyle: { color: "#eab308", borderColor: "#8a6200", borderWidth: 1 },
-        data: peChanges.map((value) => deltaBar(value, "#eab308", "#8a6200")),
+        barGap: "18%",
+        barCategoryGap: "28%",
+        itemStyle: { color: NEUTRAL, borderColor: "#eab308", borderWidth: 2 },
+        data: peChanges.map((value) => deltaBar(value, "#eab308")),
       },
     ],
   };

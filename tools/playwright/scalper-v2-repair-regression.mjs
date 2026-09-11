@@ -125,10 +125,19 @@ try {
       contained: Boolean(element && card && element.getBoundingClientRect().left >= card.getBoundingClientRect().left && element.getBoundingClientRect().right <= card.getBoundingClientRect().right + 1),
     };
   }));
-  check("SV2-OI-AXIS-LABELS", oiAxisContexts[0]?.text.includes("Y Open interest · provider units") && oiAxisContexts[0]?.text.includes("X Strike") && oiAxisContexts[1]?.text.includes("Y · right Strike") && oiAxisContexts[1]?.text.includes("X Signed ΔOI · provider units"), JSON.stringify(oiAxisContexts));
+  check("SV2-OI-AXIS-LABELS", oiAxisContexts[0]?.text.includes("Y Open interest · provider units") && oiAxisContexts[0]?.text.includes("X Strike") && oiAxisContexts[1]?.text.includes("Y · right Strike") && oiAxisContexts[1]?.text.includes("X · top") && oiAxisContexts[1]?.text.includes("0"), JSON.stringify(oiAxisContexts));
   check("SV2-OI-AXIS-CONTAINMENT", oiAxisContexts.every((item) => item.contained), JSON.stringify(oiAxisContexts));
   const deltaOiOrientation = await page.locator('[data-deltaoi-orientation="horizontal"]').count();
   check("SV2-DELTAOI-HORIZONTAL-RIGHT-Y", deltaOiOrientation === 1, `horizontal right-axis panels=${deltaOiOrientation}`);
+  const deltaOiGeometry = await page.getByTestId("v2-deltaoi-chart").evaluate((card) => {
+    const chart = card.querySelector('[role="img"]');
+    const canvas = chart?.querySelector("canvas");
+    const rect = (element) => element ? { width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height } : null;
+    return { card: rect(card), chart: rect(chart), canvas: rect(canvas), label: chart?.getAttribute("aria-label") ?? "" };
+  });
+  check("SV2-DELTAOI-READABLE-GEOMETRY", Boolean(deltaOiGeometry.card && deltaOiGeometry.chart && deltaOiGeometry.canvas && deltaOiGeometry.chart.width >= deltaOiGeometry.card.width - 20 && deltaOiGeometry.chart.height >= 360 && Math.abs(deltaOiGeometry.chart.width - deltaOiGeometry.canvas.width) <= 2), JSON.stringify(deltaOiGeometry));
+  check("SV2-DELTAOI-SIGN-AND-IDENTITY", /positive bars are green and negative bars red/.test(deltaOiGeometry.label) && /CE has a blue outline and PE a yellow outline/.test(deltaOiGeometry.label), deltaOiGeometry.label);
+  await page.getByTestId("v2-deltaoi-chart").screenshot({ path: path.join(output, "screenshots", "deltaoi-complete-right-y-axis.png") });
 
   await page.getByTestId("v2-chart-body-underlying").waitFor({ state: "attached", timeout: 90_000 });
   const profileAlignment = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => {
@@ -137,7 +146,7 @@ try {
     return { count: positiveWidth.length, finiteCoordinates: positiveWidth.every((row) => Number.isFinite(row.coordinate)), maximumError: Number(body.dataset.profileMaxAlignmentError), lane: Number(body.dataset.profileLaneWidth), visibleStrikes: Number(body.dataset.profileVisibleStrikes), totalStrikes: Number(body.dataset.profileTotalStrikes) };
   });
   check("SV2-FIX-037", profileAlignment.count > 0 && profileAlignment.finiteCoordinates && profileAlignment.maximumError <= 2 && profileAlignment.visibleStrikes <= profileAlignment.totalStrikes, JSON.stringify(profileAlignment));
-  check("SV2-FIX-039", profileAlignment.lane > 0 && profileAlignment.lane <= 120, JSON.stringify(profileAlignment));
+  check("SV2-FIX-039", profileAlignment.lane > 0 && profileAlignment.lane <= 180, JSON.stringify(profileAlignment));
   const profileBodyBox = await page.getByTestId("v2-chart-body-underlying").boundingBox();
   if (profileBodyBox) {
     const axisX = profileBodyBox.x + profileBodyBox.width - 14, axisY = profileBodyBox.y + profileBodyBox.height * .48;

@@ -12,6 +12,7 @@ test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", ()
 
   assert.equal(xAxis.type, "value");
   assert.equal(xAxis.name, "Signed ΔOI · provider units");
+  assert.equal(xAxis.position, "top");
   assert.equal(xAxis.min, -40);
   assert.equal(xAxis.max, 40);
   assert.equal(yAxis.type, "category");
@@ -19,12 +20,12 @@ test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", ()
   assert.deepEqual(yAxis.data, [23_450, 23_500]);
   assert.equal(axisLabel.interval, 0);
   assert.equal(axisLabel.hideOverlap, false);
-  assert.match(axisLabel.formatter("23450", 0), /23,450.*CE \+40.*PE −20/);
-  assert.match(axisLabel.formatter("23500", 1), /23,500.*CE —.*PE 0/);
+  assert.match(axisLabel.formatter("23450", 0), /23,450.*CE.*\+40.*PE.*−20/);
+  assert.match(axisLabel.formatter("23500", 1), /23,500.*CE.*—.*PE.*0/);
   assert.equal(series[0].type, "bar");
   assert.equal(series[1].type, "bar");
-  assert.equal((series[0].itemStyle as { color: string }).color, "#2563eb");
-  assert.equal((series[1].itemStyle as { color: string }).color, "#eab308");
+  assert.equal((series[0].itemStyle as { borderColor: string }).borderColor, "#2563eb");
+  assert.equal((series[1].itemStyle as { borderColor: string }).borderColor, "#eab308");
   assert.deepEqual(markLine.data, [{ xAxis: 0 }]);
 });
 
@@ -33,13 +34,13 @@ test("Scalper V2 horizontal ΔOI preserves signs, observed zero, and missingness
   const series = option.series as Array<{ data: Array<null | { value: number; itemStyle: { color: string; borderColor: string } }> }>;
 
   assert.equal(series[0].data[0]?.value, 40);
-  assert.equal(series[0].data[0]?.itemStyle.color, "#2563eb");
-  assert.equal(series[0].data[0]?.itemStyle.borderColor, "#1d4ed8");
+  assert.equal(series[0].data[0]?.itemStyle.color, "#117a40");
+  assert.equal(series[0].data[0]?.itemStyle.borderColor, "#2563eb");
   assert.equal(series[0].data[1], null);
   assert.equal(series[1].data[0]?.value, -20);
-  assert.equal(series[1].data[0]?.itemStyle.color, "#eab308");
+  assert.equal(series[1].data[0]?.itemStyle.color, "#c6283d");
   assert.equal(series[1].data[1]?.value, 0);
-  assert.equal(series[1].data[1]?.itemStyle.color, "#eab308");
+  assert.equal(series[1].data[1]?.itemStyle.color, "#64748b");
 });
 
 test("Scalper V2 horizontal ΔOI shows NIFTY current on its strike axis", () => {

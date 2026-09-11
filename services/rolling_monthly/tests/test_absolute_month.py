@@ -122,9 +122,8 @@ def test_absolute_month_quarantines_unresolved_price_scale_break() -> None:
 
 def test_absolute_open_month_uses_open_references_and_same_session_path() -> None:
     frame = fixture_frame()
-    # Make the prior monthly open advance while retaining the red-to-green
-    # candle transition, then create a Tuesday open above all known references.
-    frame.loc[frame.trade_date == "2026-02-02", "open"] = 102
+    # Retain the red-to-green monthly transition, then create a Tuesday open
+    # above all five retained references.
     frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [116, 115]
     frame.loc[frame.trade_date == "2026-03-03", "open"] = 103
     frame.loc[frame.trade_date == "2026-03-09", ["open", "high", "low", "close"]] = [109, 111, 107, 108]
@@ -153,7 +152,6 @@ def test_absolute_open_month_uses_open_references_and_same_session_path() -> Non
 
 def test_absolute_open_month_does_not_use_signal_close_for_selection() -> None:
     frame = fixture_frame()
-    frame.loc[frame.trade_date == "2026-02-02", "open"] = 102
     frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [116, 115]
     frame.loc[frame.trade_date == "2026-03-03", "open"] = 103
     frame.loc[frame.trade_date == "2026-03-09", ["open", "close"]] = [109, 108]
@@ -169,7 +167,6 @@ def test_absolute_open_month_does_not_use_signal_close_for_selection() -> None:
 
 def test_absolute_open_month_does_not_require_open_above_previous_close() -> None:
     frame = fixture_frame()
-    frame.loc[frame.trade_date == "2026-02-02", "open"] = 102
     frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [116, 115]
     frame.loc[frame.trade_date == "2026-03-03", "open"] = 103
     # The previous session closes above the signal open. Every retained open
@@ -181,13 +178,49 @@ def test_absolute_open_month_does_not_require_open_above_previous_close() -> Non
         "2026-03", "2026-03", "2026-04-01",
     )
     assert result.runs[0]["qualified_count"] == 1
-    assert result.runs[0]["methodology"]["eligibility_condition_count"] == 6
+    assert result.runs[0]["methodology"]["eligibility_condition_count"] == 5
     assert result.runs[0]["methodology"]["previous_session_close_gate"] is False
     candidate = result.candidates[0]
     assert candidate["signal_date"].isoformat() == "2026-03-10"
     assert candidate["signal_day_open"] == 110
     assert candidate["previous_day_close"] == 112
     assert not any(condition["code"] == "D0_OPEN_ABOVE_D1_CLOSE" for condition in candidate["conditions"])
+
+
+def test_absolute_open_month_removes_previous_open_above_two_month_open_gate() -> None:
+    frame = fixture_frame()
+    # February opens below January's open (82 < 100), but February still closes
+    # green (110 > 82). The removed v2 crossover must not block the v3 signal.
+    frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [116, 115]
+    frame.loc[frame.trade_date == "2026-03-03", "open"] = 103
+    frame.loc[frame.trade_date == "2026-03-09", ["open", "high", "low", "close"]] = [109, 111, 107, 108]
+    frame.loc[frame.trade_date == "2026-03-10", ["open", "high", "low", "close"]] = [110, 114, 106, 107]
+
+    result = evaluate_absolute_open_months(
+        frame, {"TEST"}, {}, list(pd.to_datetime(frame.trade_date)),
+        "2026-03", "2026-03", "2026-04-01",
+    )
+
+    assert result.runs[0]["qualified_count"] == 1
+    candidate = result.candidates[0]
+    eligibility = [condition for condition in candidate["conditions"] if not condition.get("informational")]
+    assert len(eligibility) == 5
+    assert not any(condition["code"] == "M1_OPEN_ABOVE_M2_OPEN" for condition in eligibility)
+    green = next(condition for condition in eligibility if condition["code"] == "M1_GREEN")
+    assert green["left"] == 115
+    assert green["right"] == 82
+    assert green["pass"] is True
+
+
+def test_absolute_open_month_still_requires_previous_month_green_candle() -> None:
+    frame = fixture_frame()
+    frame.loc[frame.trade_date == "2026-02-27", ["high", "close"]] = [91, 81]
+    result = evaluate_absolute_open_months(
+        frame, {"TEST"}, {}, list(pd.to_datetime(frame.trade_date)),
+        "2026-03", "2026-03", "2026-04-01",
+    )
+    assert result.runs[0]["qualified_count"] == 0
+    assert result.candidates == []
 
 
 def test_absolute_month_rejects_unknown_comparison_basis() -> None:

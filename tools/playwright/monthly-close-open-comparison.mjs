@@ -3,6 +3,9 @@ import path from "node:path";
 import { chromium } from "playwright";
 
 const origin = (process.env.PLAYWRIGHT_ORIGIN ?? "http://127.0.0.1:19090").replace(/\/$/, "");
+const appBasePath = `/${(process.env.PLAYWRIGHT_APP_BASE_PATH ?? "n50").replace(/^\/+|\/+$/g, "")}`.replace(/^\/$/, "");
+const authBase = (process.env.PLAYWRIGHT_AUTH_BASE_URL ?? `${origin}/n50`).replace(/\/$/, "");
+const apiBase = (process.env.PLAYWRIGHT_API_BASE_URL ?? `${origin}/n50`).replace(/\/$/, "");
 const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD;
 const outputDir = path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR ?? "/tmp/monthly-close-open-comparison");
 if (!password) throw new Error("PLAYWRIGHT_ADMIN_PASSWORD is required");
@@ -22,18 +25,18 @@ try {
     { name: "mobile-390x844", width: 390, height: 844 },
   ]) {
     const context = await browser.newContext({ viewport });
-    const login = await context.request.post(`${origin}/n50/auth/session/dev-login`, {
+    const login = await context.request.post(`${authBase}/auth/session/dev-login`, {
       data: { identifier: "admin", password },
     });
     check(`${viewport.name} login`, login.ok(), `status=${login.status()}`);
     const page = await context.newPage();
     const failures = [];
     page.on("response", (response) => {
-      if (response.status() >= 400 && /\/n50\/(v1|auth)\//.test(response.url())) {
+      if (response.status() >= 400 && /\/(?:n50\/)?(?:v1|auth)\//.test(response.url())) {
         failures.push(`${response.status()} ${response.url()}`);
       }
     });
-    await page.goto(`${origin}/n50/strategy/monthly?compare=close-open`, {
+    await page.goto(`${origin}${appBasePath}/strategy/monthly?compare=close-open`, {
       waitUntil: "networkidle",
       timeout: 120_000,
     });
@@ -42,10 +45,10 @@ try {
     check(`${viewport.name} Open tab`, await page.getByRole("link", { name: "Monthly Open", exact: true }).count() === 1);
     check(`${viewport.name} comparison tab`, await page.getByRole("link", { name: "Close vs Open", exact: true }).count() === 1);
 
-    const payloads = await page.evaluate(async () => {
+    const payloads = await page.evaluate(async (baseUrl) => {
       const [closeResponse, openResponse] = await Promise.all([
-        fetch("/n50/v1/rolling-monthly/absolute-months?basis=close&includeEvaluations=false", { credentials: "include" }),
-        fetch("/n50/v1/rolling-monthly/absolute-months?basis=open&includeEvaluations=false", { credentials: "include" }),
+        fetch(`${baseUrl}/v1/rolling-monthly/absolute-months?basis=close&includeEvaluations=false`, { credentials: "include" }),
+        fetch(`${baseUrl}/v1/rolling-monthly/absolute-months?basis=open&includeEvaluations=false`, { credentials: "include" }),
       ]);
       return {
         closeStatus: closeResponse.status,
@@ -53,10 +56,10 @@ try {
         close: await closeResponse.json(),
         open: await openResponse.json(),
       };
-    });
+    }, apiBase);
     check(`${viewport.name} both APIs`, payloads.closeStatus === 200 && payloads.openStatus === 200);
     check(`${viewport.name} Close version`, payloads.close.strategyVersion === "absolute_monthly_closure_bullish_long_v1");
-    check(`${viewport.name} Open version`, payloads.open.strategyVersion === "absolute_monthly_open_bullish_long_v2");
+    check(`${viewport.name} Open version`, payloads.open.strategyVersion === "absolute_monthly_open_bullish_long_v3");
     check(`${viewport.name} populated strategies`, payloads.close.candidates.length > 0 && payloads.open.candidates.length > 0);
 
     const closeKeys = new Set(payloads.close.candidates.map(key));

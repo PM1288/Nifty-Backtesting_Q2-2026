@@ -115,7 +115,7 @@ test("absolute monthly open exposes independently versioned open-basis backtest"
     assert.equal(count(), 4);
     assert.equal(payload.variant, "ABSOLUTE_MONTHLY_OPEN");
     assert.equal(payload.comparisonBasis, "OPEN");
-    assert.equal(payload.strategyVersion, "absolute_monthly_open_bullish_long_v2");
+    assert.equal(payload.strategyVersion, "absolute_monthly_open_bullish_long_v3");
     assert.equal(payload.methodology.comparison_basis, "OPEN");
     assert.equal(payload.candidates[0].entry_price, "2500");
     assert.deepEqual(payload.evaluations, []);

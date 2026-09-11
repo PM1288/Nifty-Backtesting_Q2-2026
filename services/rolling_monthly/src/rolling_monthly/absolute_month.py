@@ -9,7 +9,7 @@ import pandas as pd
 
 
 STRATEGY_VERSION = "absolute_monthly_closure_bullish_long_v1"
-OPEN_STRATEGY_VERSION = "absolute_monthly_open_bullish_long_v2"
+OPEN_STRATEGY_VERSION = "absolute_monthly_open_bullish_long_v3"
 RESEARCH_NOTIONAL_PER_TRADE = 100_000.0
 
 
@@ -175,7 +175,6 @@ def evaluate_absolute_months(
                     checks = [
                         m2_close < m2_open,
                         m1_close > m1_open,
-                        m1_open > m2_open,
                         float(row.open) > w0_open,
                         float(row.open) > w1_open,
                         float(row.open) > float(previous_day.open),
@@ -237,8 +236,7 @@ def evaluate_absolute_months(
             else:
                 conditions = [
                     {"code": "M2_RED", "label": "Two months ago close < open (candle direction)", "left": m2_close, "operator": "<", "right": m2_open, "pass": True},
-                    {"code": "M1_GREEN", "label": "Previous month close > open (candle direction)", "left": m1_close, "operator": ">", "right": m1_open, "pass": True},
-                    {"code": "M1_OPEN_ABOVE_M2_OPEN", "label": "Previous-month open > two-month open", "left": m1_open, "operator": ">", "right": m2_open, "pass": True},
+                    {"code": "M1_GREEN", "label": "Previous-month close > previous-month open (green candle)", "left": m1_close, "operator": ">", "right": m1_open, "pass": True},
                     {"code": "D0_OPEN_ABOVE_W0_OPEN", "label": "Signal open > current-week open", "left": float(row.open), "operator": ">", "right": selected["w0_open"], "pass": True},
                     {"code": "D0_OPEN_ABOVE_W1_OPEN", "label": "Signal open > previous-week open", "left": float(row.open), "operator": ">", "right": selected["w1_open"], "pass": True},
                     {"code": "D0_OPEN_ABOVE_D1_OPEN", "label": "Signal open > previous-day open", "left": float(row.open), "operator": ">", "right": float(selected["previous_day"].open), "pass": True},
@@ -293,7 +291,7 @@ def evaluate_absolute_months(
                             "entry": "SIGNAL_SESSION_CLOSE" if comparison_basis == "close" else "SIGNAL_SESSION_OPEN",
                             "exit": "FINAL_EXCHANGE_SESSION_CLOSE_IN_SAME_CALENDAR_MONTH",
                             "signal_selection": "FIRST_QUALIFYING_SESSION_PER_SYMBOL_PER_MONTH",
-                            "eligibility_condition_count": 7 if comparison_basis == "close" else 6,
+                            "eligibility_condition_count": 7 if comparison_basis == "close" else 5,
                             "previous_session_close_gate": comparison_basis == "close",
                             "post_entry_extremes": "NEXT_SESSION_ONWARD" if comparison_basis == "close" else "SIGNAL_SESSION_ONWARD",
                             "research_notional_per_trade": RESEARCH_NOTIONAL_PER_TRADE},

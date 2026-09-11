@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Monthly Open v3: the independently versioned Monthly Open strategy
+removes `Previous-month open > two-month open` and retains the explicit
+`Previous-month close > previous-month open (green candle)` test. It now has
+five eligibility gates. The 36-month rerun is additive: v2 remains stored with
+36 runs/98 candidates and v3 adds 36 runs/2,026 candidates. Monthly Close,
+Expiry, First Session, comparison identity, evidence/export fields, other
+strategies, collectors and order permissions are unchanged. Evidence:
+`docs/rolling-monthly/MONTHLY_OPEN_V3_GREEN_PREVIOUS_MONTH_20260911.md`.
+
 2026-09-11 Home scalper progression: the existing Today Market Story and Sector
 Matrix lenses retain their sector, risk/anomaly and Quick View behavior and add
 one fixed-height horizontally scrollable stock row below Risk & Anomaly. Two

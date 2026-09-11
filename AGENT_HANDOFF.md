@@ -1,5 +1,19 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Monthly Open v3 removes the prior-month-open crossover
+
+- Removed only `Previous-month open > two-month open` from Monthly Open.
+  Retained and explicitly labelled `Previous-month close > previous-month open
+  (green candle)`; Monthly Close and other strategies are unchanged.
+- Added version `absolute_monthly_open_bullish_long_v3` and reran 36 months
+  additively. v3 produced 2,026 candidates (1,016 positive / 1,010 negative),
+  while all 36 v2 runs and 98 v2 candidates remain intact.
+- Calculation 28/28, API 198/198, web 153/153, both typechecks and builds pass.
+  Authenticated isolated Chromium passes 38/38 for Monthly Open and 40/40 for
+  Close/Open comparison at desktop/mobile sizes. Production was not changed.
+  Full report:
+  `docs/rolling-monthly/MONTHLY_OPEN_V3_GREEN_PREVIOUS_MONTH_20260911.md`.
+
 ## 2026-09-11 — Home scalper progression to Monthly Open
 
 - Added a fixed-height, horizontally scrollable progression row below the

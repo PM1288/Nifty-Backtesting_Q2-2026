@@ -33,6 +33,32 @@ export function levelInObservedSession(price: unknown, bounds: PriceBounds | nul
   return value != null && bounds != null && value >= bounds.low && value <= bounds.high;
 }
 
+export type MaxPainOverlayState = {
+  candidates: number[];
+  visible: number[];
+  hidden: number[];
+};
+
+/**
+ * Keeps the normal session scale strict while allowing the explicit
+ * all-strikes view to reveal snapshot max-pain candidates outside that range.
+ */
+export function maxPainOverlayState(
+  strikes: unknown[],
+  sessionBounds: PriceBounds | null,
+  expandedBounds: PriceBounds | null,
+  expanded: boolean,
+): MaxPainOverlayState {
+  const candidates = [...new Set(strikes.flatMap((strike) => {
+    const value = finite(strike);
+    return value == null ? [] : [value];
+  }))].sort((left, right) => left - right);
+  const bounds = expanded ? expandedBounds : sessionBounds;
+  const visible = candidates.filter((strike) => levelInObservedSession(strike, bounds));
+  const visibleSet = new Set(visible);
+  return { candidates, visible, hidden: candidates.filter((strike) => !visibleSet.has(strike)) };
+}
+
 export function profileWidth(value: unknown, maximum: unknown, laneWidth: number) {
   const amount = finite(value);
   const max = finite(maximum);

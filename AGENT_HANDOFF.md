@@ -1,5 +1,17 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Scalper V2 max-pain line on underlying chart
+
+- The existing V2 underlying candlestick now draws latest retained-snapshot
+  max-pain candidate(s) as purple dotted price lines with right-axis labels.
+- Session Y stays strict: an outside-session candidate is disclosed without
+  stretching the normal price scale. The existing All strikes Y control plots
+  it against the retained strike cohort. Tied minima are preserved.
+- Web typecheck, 151/151 tests, production build and focused authenticated
+  Chromium 5/5 pass. Live-backed evidence plotted max pain 23,500; production
+  was not changed. Full report:
+  `docs/trading-analytics/SCALPER_V2_MAX_PAIN_PRICE_LINE_20260911.md`.
+
 ## 2026-09-11 — Scalper V2 normalised CE/PE price action
 
 - Added a sixth full-width chart to existing `view=scalper_v2`: timestamp in

@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Scalper V2 underlying max-pain line: the existing V2 underlying
+candlestick draws each eligible latest retained-snapshot max-pain candidate as
+a purple dotted price line with a right-axis label. Normal Session Y remains
+strictly based on observed underlying prices; an outside-session candidate is
+disclosed and becomes visible through the explicit All strikes Y view. Tied
+minima, payout evidence, V1, V7, A-open/B-close, collectors and no-order
+permissions remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_MAX_PAIN_PRICE_LINE_20260911.md`.
+
 2026-09-11 Scalper V2 normalised option-price chart: the existing V2 analytics
 area adds a full-width timestamp view for every retained CE/PE strike. Each
 contract independently maps its first retained session price to 0, observed

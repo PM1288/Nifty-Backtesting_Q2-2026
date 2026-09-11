@@ -4,6 +4,7 @@ import { chromium } from "playwright";
 
 const base = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:15184/n50";
 const authBase = process.env.PLAYWRIGHT_AUTH_BASE_URL ?? base;
+const authOrigin = process.env.PLAYWRIGHT_AUTH_ORIGIN ?? new URL(base).origin;
 const output = process.env.PLAYWRIGHT_OUTPUT_DIR ?? "/tmp/scalper-v2-signed-oi-drawings";
 const env = await fs.readFile(process.env.PLAYWRIGHT_ENV_FILE ?? ".env", "utf8");
 const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD ?? env.split(/\r?\n/).find((line) => line.startsWith("DEV_LOCAL_AUTH_PASSWORD="))?.split("=").slice(1).join("=").trim();
@@ -18,7 +19,7 @@ const check = (name, pass, detail) => {
 const browser = await chromium.launch({ headless: true });
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
-  const login = await context.request.post(`${authBase}/auth/session/dev-login`, { data: { identifier: "admin", password }, headers: { Origin: new URL(base).origin } });
+  const login = await context.request.post(`${authBase}/auth/session/dev-login`, { data: { identifier: "admin", password }, headers: { Origin: authOrigin } });
   check("Authenticated isolated candidate", login.ok(), `HTTP ${login.status()}`);
   // The production environment emits a Secure session cookie. This candidate
   // is loopback HTTP only, so clone that same session cookie without Secure.
@@ -38,10 +39,30 @@ try {
   });
 
   const profile = page.getByTestId("v2-oi-profile");
+  const body = page.getByTestId("v2-chart-body-underlying");
   await profile.waitFor({ state: "visible" });
   const caption = await profile.innerText();
   check("Profile scale is visible above chart", caption.includes("← 0 →") && caption.includes("shared maximum"), caption);
   check("Profile identity legend is visible", caption.includes("CE") && caption.includes("PE"), caption);
+  const maxPainStatus = page.getByTestId("v2-max-pain-chart-status");
+  await maxPainStatus.waitFor({ state: "visible" });
+  const initialMaxPain = await maxPainStatus.innerText();
+  check("Underlying chart declares snapshot max pain", /^Max pain [\d,]+/.test(initialMaxPain), initialMaxPain);
+
+  const allStrikesY = page.getByRole("button", { name: "All strikes Y", exact: true });
+  if ((await body.getAttribute("data-max-pain-visible")) === "") {
+    await allStrikesY.click();
+    await page.waitForFunction(() => {
+      const element = document.querySelector('[data-testid="v2-chart-body-underlying"]');
+      return Boolean(element?.getAttribute("data-max-pain-visible"));
+    });
+  }
+  const plottedMaxPain = await body.evaluate((element) => ({
+    candidates: element.dataset.maxPainStrikes ?? "",
+    visible: element.dataset.maxPainVisible ?? "",
+    status: element.dataset.maxPainStatus ?? "",
+  }));
+  check("Underlying chart plots max pain in an eligible Y view", plottedMaxPain.status === "plotted" && plottedMaxPain.visible === plottedMaxPain.candidates, JSON.stringify(plottedMaxPain));
 
   const oiCardText = await page.getByRole("heading", { name: "OI by strike", exact: true }).locator("..").innerText();
   const deltaOiCardText = await page.getByRole("heading", { name: "Change in OI by strike", exact: true }).locator("..").innerText();
@@ -64,7 +85,6 @@ try {
   check("Normalized option chart declares distance opacity", normalizedText.includes("fully opaque") && normalizedText.includes("farther strikes fade progressively"), normalizedText);
   check("Normalized option chart renders retained CE and PE history", !normalizedText.includes("Option price history unavailable") && /\d+ CE\/PE strike lines/.test(normalizedText) && await normalizedPrice.locator("canvas").count() > 0, normalizedText);
 
-  const body = page.getByTestId("v2-chart-body-underlying");
   await page.waitForTimeout(1_000);
   const geometry = await body.evaluate((element) => ({
     anchor: Number(element.dataset.profileAnchorX),

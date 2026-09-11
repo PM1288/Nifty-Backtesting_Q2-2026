@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   levelInObservedSession,
+  maxPainOverlayState,
   observedSessionBounds,
   oiComparisonState,
   paddedSessionBounds,
@@ -20,6 +21,17 @@ test("Scalper V2 uses independent observed OHLC bounds and equal padding", () =>
 test("Scalper V2 strict level eligibility ignores padded display bounds", () => {
   const bounds = { low: 23_400, high: 23_480 };
   assert.deepEqual([23_396, 23_400, 23_450, 23_480, 23_484].filter((value) => levelInObservedSession(value, bounds)), [23_400, 23_450, 23_480]);
+});
+
+test("Scalper V2 max pain stays strict in Session Y and appears in explicit All strikes Y", () => {
+  const session = { low: 23_400, high: 23_480 };
+  const expanded = { low: 23_300, high: 23_550 };
+  assert.deepEqual(maxPainOverlayState([23_500, 23_500, null, "bad"], session, expanded, false), {
+    candidates: [23_500], visible: [], hidden: [23_500],
+  });
+  assert.deepEqual(maxPainOverlayState([23_500, 23_450], session, expanded, true), {
+    candidates: [23_450, 23_500], visible: [23_450, 23_500], hidden: [],
+  });
 });
 
 test("Scalper V2 flat sessions use two verified ticks on each side", () => {

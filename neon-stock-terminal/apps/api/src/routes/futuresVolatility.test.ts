@@ -37,3 +37,26 @@ test("futures volatility route distinguishes report-not-ready from zero matches"
   assert.equal(payload.readiness, "REPORT_NOT_READY");
   assert.deepEqual(payload.rows, []);
 });
+
+test("futures volatility backtest compares covered matches with the same-report benchmark", async () => {
+  const handlers = new Map<string, Function>();
+  const app = { get(path: string, handler: Function) { handlers.set(path, handler); } } as any;
+  registerFuturesVolatility(app, { async $queryRawUnsafe() { return [{
+    reportDate: "2026-09-09", targetSession: "2026-09-10", calendarState: "VERIFIED",
+    sourceRows: 221, sourceMatches: 4, matchedCovered: 4, nonmatchedCovered: 206,
+    matchedPositive: 3, matchedNegative: 1, matchedFlat: 0,
+    nonmatchedPositive: 100, nonmatchedNegative: 105, nonmatchedFlat: 1,
+    matchedSumOcPct: "6", nonmatchedSumOcPct: "-10.3",
+    matchedSumAbsOcPct: "8", nonmatchedSumAbsOcPct: "206",
+    matchedSumRangePct: "12", nonmatchedSumRangePct: "412",
+  }]; } } as any);
+  let payload: any;
+  const res = { status() { return this; }, json(value: any) { payload = value; return value; } };
+  await handlers.get("/v1/futures-volatility/backtest")!({ query: { from: "2026-09-01", to: "2026-09-10" } }, res);
+  assert.equal(payload.timingMode, "ARCHIVE_TIMING_ASSUMED");
+  assert.equal(payload.matched.observations, 4);
+  assert.equal(payload.nonmatched.observations, 206);
+  assert.equal(payload.matched.meanAbsoluteOpenClosePct, 2);
+  assert.equal(payload.counts.independentCoveredSessions, 1);
+  assert.equal(payload.dayClusterSummary.matchedHigherAbsoluteMovementDays, 1);
+});

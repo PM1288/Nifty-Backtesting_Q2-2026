@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
 
 from nse_fii_services import api
@@ -39,6 +41,23 @@ def test_backfill_proxies_to_orchestrator(monkeypatch):
     response = client.post("/backfill", json={"start_date": "02-10-2023", "end_date": "06-10-2023"})
     assert response.status_code == 200
     assert response.json()["operation"] == "backfill"
+
+
+def test_fovolt_backfill_is_bounded_and_reports_missing_dates(monkeypatch):
+    class FakeService:
+        def __init__(self, **_kwargs): pass
+        def pull_range(self, **_kwargs):
+            return SimpleNamespace(
+                start_date="2026-09-01", end_date="2026-09-03", reports=[],
+                missing=[{"report_date": "2026-09-02", "reason": "NSEReportNotFound"}],
+            )
+
+    monkeypatch.setattr(api, "FovoltDailyService", FakeService)
+    client = TestClient(api.app)
+    response = client.post("/fovolt/backfill", json={"start_date": "01-09-2026", "end_date": "03-09-2026"})
+    assert response.status_code == 200
+    assert response.json()["operation"] == "fovolt-backfill"
+    assert response.json()["missing"][0]["report_date"] == "2026-09-02"
 
 
 def test_runs_and_run_detail_proxies(monkeypatch):

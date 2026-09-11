@@ -4636,3 +4636,25 @@ or outcomes were deleted.
   `/tmp/nse-report-health-browser` and not committed.
 - Production was not deployed and the production container was not changed.
   Full record: `docs/nse-reports/NSE_REPORT_DOWNLOAD_HEALTH_20260911.md`.
+
+## 2026-09-11 — FOVOLT archive backfill and historical evaluation
+
+- Added an independent, bounded FOVOLT previous-report backfill and a read-only
+  `/v1/futures-volatility/backtest` screen-outcome study. The dashboard exposes
+  an explicit Historical Evaluation section; this is not an executable return
+  simulation and does not alter `/options/volatility-signals`.
+- A real temporary NSE archive run for 1 June–10 September downloaded 73
+  reports, with 26 June explicitly missing. It parsed 16,065 rows and 821 fixed
+  rule matches. Runtime evidence remains outside Git under
+  `/tmp/fovolt-backtest-20260911-jun-sep/`.
+- The run exposed a canonical trading-calendar coverage gap from 21 June through
+  19 July. The loader now fails closed with `CALENDAR_COVERAGE_GAP`; it cannot
+  jump a report to a distant later session.
+- After calendar and target-price exclusions, 9,003 complete observations across
+  43 sessions remained: 410 matches and 8,593 same-report nonmatches. Mean
+  absolute open-to-close movement was 1.4841% versus 1.1340%; this descriptive
+  +0.3502 percentage-point difference is not a profitability claim.
+- Full implementation and limitations:
+  `docs/futures-volatility/FOVOLT_FUTURES_VOLATILITY_SCREENER_20260911.md`.
+- Production migration, data load and deployment remain not performed pending
+  the separate authorised release process.

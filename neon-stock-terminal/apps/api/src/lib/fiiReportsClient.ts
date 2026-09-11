@@ -122,6 +122,12 @@ export function createFiiReportsClient(options?: {
         body: JSON.stringify(payload)
       });
     },
+    backfillFovolt(payload: FiiReportsBackfillRequest) {
+      return requestJson<FiiReportsRunResponse>("/fovolt/backfill", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+    },
     backfill(payload: FiiReportsBackfillRequest) {
       return requestJson<FiiReportsRunResponse>("/backfill", {
         method: "POST",

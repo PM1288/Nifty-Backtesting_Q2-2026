@@ -752,6 +752,26 @@ export function fetchFuturesVolatilityScreener(options: { reportDate?: string; s
   return getJson<FuturesVolatilityScreener>(`/v1/futures-volatility/screener?${params}`);
 }
 
+export type FuturesVolatilityBacktestGroup = {
+  observations: number; positiveOpenClose: number; negativeOpenClose: number; flatOpenClose: number;
+  meanOpenClosePct: number | null; meanAbsoluteOpenClosePct: number | null; meanLowHighRangePct: number | null;
+};
+
+export type FuturesVolatilityBacktest = {
+  study: string; timingMode: "ARCHIVE_TIMING_ASSUMED"; ruleVersion: string; thresholdRaw: string;
+  from: string; to: string;
+  counts: { downloadedReports: number; calendarVerifiedReports: number; independentCoveredSessions: number; sourceRows: number; sourceMatches: number; coveredObservations: number };
+  matched: FuturesVolatilityBacktestGroup; nonmatched: FuturesVolatilityBacktestGroup;
+  difference: { meanOpenClosePct: number | null; meanAbsoluteOpenClosePct: number | null; meanLowHighRangePct: number | null };
+  dayClusterSummary: { daysCompared: number; matchedHigherAbsoluteMovementDays: number; matchedLowerAbsoluteMovementDays: number; meanDayLevelAbsoluteMovementDifference: number | null };
+  sessions: Array<Record<string, unknown>>; limitations: string[];
+};
+
+export function fetchFuturesVolatilityBacktest(from: string, to: string): Promise<FuturesVolatilityBacktest> {
+  const params = new URLSearchParams({ from, to });
+  return getJson<FuturesVolatilityBacktest>(`/v1/futures-volatility/backtest?${params}`);
+}
+
 export type RollingMonthlyDashboard = {
   strategyFamily: "ROLLING_MONTHLY";
   independentFromOiis: true;

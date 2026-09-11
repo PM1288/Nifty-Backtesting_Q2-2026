@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .client import DownloadedReport, NSEFIIReportsClient, NSEReportNotFound
-from .endpoints import parse_trade_date
+from .endpoints import iter_business_dates, parse_trade_date
 from .parsers import FOVOLT_RULE_VERSION, FOVOLT_THRESHOLD, rank_fovolt_rows, parse_fovolt_csv
 
 PARSER_VERSION = "FOVOLT_SEMANTIC_HEADERS_V1"
@@ -30,6 +30,14 @@ class FovoltPullResult:
     revision_id: str
     raw_path: Path
     manifest_path: Path
+
+
+@dataclass(frozen=True)
+class FovoltBackfillResult:
+    start_date: str
+    end_date: str
+    reports: list[FovoltPullResult]
+    missing: list[dict[str, str]]
 
 
 class FovoltDailyService:
@@ -53,6 +61,40 @@ class FovoltDailyService:
             except NSEReportNotFound as exc:
                 last_error = exc
         raise NSEReportNotFound(f"No valid FOVOLT report within {max_lookback_days} days. Last error: {last_error}")
+
+    def pull_date(self, trade_date: str | datetime) -> FovoltPullResult:
+        requested = parse_trade_date(trade_date)
+        report = self.client.fetch_report("fovolt", requested)
+        rows = rank_fovolt_rows(parse_fovolt_csv(report.content, expected_date=requested.date()))
+        return self._persist(report, rows)
+
+    def pull_range(
+        self,
+        *,
+        start_date: str | datetime,
+        end_date: str | datetime,
+        continue_on_error: bool = True,
+        max_calendar_days: int = 366,
+    ) -> FovoltBackfillResult:
+        start, end = parse_trade_date(start_date), parse_trade_date(end_date)
+        if end < start:
+            raise ValueError("end_date must not be before start_date")
+        if (end.date() - start.date()).days + 1 > max_calendar_days:
+            raise ValueError(f"FOVOLT backfill is limited to {max_calendar_days} calendar days")
+        reports: list[FovoltPullResult] = []
+        missing: list[dict[str, str]] = []
+        for requested in iter_business_dates(start, end):
+            try:
+                reports.append(self.pull_date(requested))
+            except Exception as exc:
+                missing.append({
+                    "report_date": requested.date().isoformat(),
+                    "reason": type(exc).__name__,
+                    "detail": str(exc)[:240],
+                })
+                if not continue_on_error:
+                    raise
+        return FovoltBackfillResult(start.date().isoformat(), end.date().isoformat(), reports, missing)
 
     def _persist(self, report: DownloadedReport, rows: list[dict[str, object]]) -> FovoltPullResult:
         digest = hashlib.sha256(report.content).hexdigest()
@@ -113,16 +155,36 @@ def load_fovolt_result(conn: Any, result: FovoltPullResult, *, source_basis: str
                  "REQUIRES_DATE_EFFECTIVE_MASTER"),
             )
         cur.execute(
-            "SELECT min(trade_date) FROM public.trading_calendar WHERE is_trading_day AND trade_date>%s",
-            (report_date,),
+            """WITH candidate AS (
+                   SELECT min(trade_date) AS target
+                     FROM public.trading_calendar
+                    WHERE is_trading_day AND trade_date>%s
+               ), coverage AS (
+                   SELECT candidate.target,
+                          EXISTS (SELECT 1 FROM public.trading_calendar
+                                   WHERE trade_date=%s AND is_trading_day) AS report_day_verified,
+                          count(calendar.trade_date) AS covered_days
+                     FROM candidate
+                     LEFT JOIN public.trading_calendar calendar
+                       ON calendar.trade_date BETWEEN %s AND candidate.target
+                    GROUP BY candidate.target
+               )
+               SELECT CASE WHEN report_day_verified AND target IS NOT NULL
+                                 AND covered_days=(target-%s)+1 THEN target END,
+                      CASE WHEN NOT report_day_verified THEN 'REPORT_DATE_UNVERIFIED'
+                           WHEN target IS NULL THEN 'NEXT_SESSION_UNAVAILABLE'
+                           WHEN covered_days<>(target-%s)+1 THEN 'CALENDAR_COVERAGE_GAP'
+                           ELSE 'VERIFIED' END
+                 FROM coverage""",
+            (report_date, report_date, report_date, report_date, report_date),
         )
-        analysis_session = cur.fetchone()[0]
+        analysis_session, calendar_state = cur.fetchone()
         cur.execute(
             """INSERT INTO market_data.nse_fovolt_screen_run
-               (run_id,revision_id,report_date,analysis_session,rule_version,threshold_raw,timing_mode,
+               (run_id,revision_id,report_date,analysis_session,calendar_state,rule_version,threshold_raw,timing_mode,
                 cohort_frozen_at,source_row_count,computable_count,matched_count,status)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'PUBLISHED') ON CONFLICT (run_id) DO NOTHING""",
-            (run_id, result.revision_id, report_date, analysis_session, FOVOLT_RULE_VERSION, FOVOLT_THRESHOLD,
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'PUBLISHED') ON CONFLICT (run_id) DO NOTHING""",
+            (run_id, result.revision_id, report_date, analysis_session, calendar_state, FOVOLT_RULE_VERSION, FOVOLT_THRESHOLD,
              "OBSERVED_DOWNLOAD_TIME", frozen_at, len(result.rows),
              sum(row["delta_futures_vol_raw"] is not None for row in result.rows),
              sum(row["rule_match"] is True for row in result.rows)),
@@ -145,4 +207,5 @@ def load_fovolt_result(conn: Any, result: FovoltPullResult, *, source_basis: str
     conn.commit()
     return {"revision_id": result.revision_id, "run_id": run_id, "report_date": str(report_date),
             "analysis_session": str(analysis_session) if analysis_session else None,
+            "calendar_state": calendar_state,
             "row_count": len(result.rows), "matched_count": match_rank}

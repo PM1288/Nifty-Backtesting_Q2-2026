@@ -26,6 +26,12 @@ class BackfillRequest(BaseModel):
     continue_on_error: bool = True
 
 
+class FovoltBackfillRequest(BaseModel):
+    start_date: str
+    end_date: str
+    continue_on_error: bool = True
+
+
 class LoadRequest(BaseModel):
     kind: str | None = None
     run_id: str | None = None
@@ -86,6 +92,10 @@ def runs(limit: int = 20) -> dict[str, Any]:
         return list_runs(settings, limit=limit)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/runs/{kind}/{run_id}")
@@ -170,3 +180,44 @@ def pull_latest_fovolt(request: PullLatestRequest) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/fovolt/backfill")
+def backfill_fovolt(request: FovoltBackfillRequest) -> dict[str, Any]:
+    """Bounded FOVOLT archive pull. Each validated revision is loaded independently."""
+    try:
+        result = FovoltDailyService(output_root=settings.fovolt_daily_root).pull_range(
+            start_date=request.start_date,
+            end_date=request.end_date,
+            continue_on_error=request.continue_on_error,
+        )
+        loads: list[dict[str, object]] = []
+        if settings.auto_load_enabled and result.reports:
+            import psycopg2
+            with psycopg2.connect(settings.postgres_dsn) as conn:
+                for report in result.reports:
+                    loads.append(load_fovolt_result(conn, report))
+        return {
+            "operation": "fovolt-backfill",
+            "start_date": result.start_date,
+            "end_date": result.end_date,
+            "downloaded_count": len(result.reports),
+            "loaded_count": len(loads),
+            "source_row_count": sum(len(report.rows) for report in result.reports),
+            "matched_count": sum(
+                row["rule_match"] is True for report in result.reports for row in report.rows
+            ),
+            "reports": [
+                {
+                    "report_date": report.report.trade_date,
+                    "revision_id": report.revision_id,
+                    "row_count": len(report.rows),
+                }
+                for report in result.reports
+            ],
+            "loads": loads,
+            "missing": result.missing,
+            "timing_mode": "ARCHIVE_TIMING_ASSUMED",
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

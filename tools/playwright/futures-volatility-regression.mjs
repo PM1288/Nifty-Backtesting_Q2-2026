@@ -31,6 +31,16 @@ const fixture = {
   run: { report_date: "2026-09-10", analysis_session: "2026-09-11", timing_mode: "SYNTHETIC_BROWSER_FIXTURE" },
   counts: { displayed: 1, sourceRows: 221, computable: 221, matched: 4, priceCovered: 1 }, rows: [row],
 };
+const backtestFixture = {
+  study: "FOVOLT fixed-rule next-session screen-outcome study", timingMode: "ARCHIVE_TIMING_ASSUMED",
+  ruleVersion: "FOVOLT_FUT_DAILY_DELTA_GT_0001_V1", thresholdRaw: "0.0001", from: "2026-06-01", to: "2026-09-10",
+  counts: { downloadedReports: 73, calendarVerifiedReports: 53, independentCoveredSessions: 43, sourceRows: 16065, sourceMatches: 821, coveredObservations: 9003 },
+  matched: { observations: 410, positiveOpenClose: 177, negativeOpenClose: 233, flatOpenClose: 0, meanOpenClosePct: -0.1609, meanAbsoluteOpenClosePct: 1.4841, meanLowHighRangePct: 3.0127 },
+  nonmatched: { observations: 8593, positiveOpenClose: 3799, negativeOpenClose: 4724, flatOpenClose: 70, meanOpenClosePct: -0.0804, meanAbsoluteOpenClosePct: 1.1340, meanLowHighRangePct: 2.3760 },
+  difference: { meanOpenClosePct: -0.0805, meanAbsoluteOpenClosePct: 0.3501, meanLowHighRangePct: 0.6367 },
+  dayClusterSummary: { daysCompared: 43, matchedHigherAbsoluteMovementDays: 36, matchedLowerAbsoluteMovementDays: 7, meanDayLevelAbsoluteMovementDifference: 0.2889 },
+  sessions: [], limitations: ["Synthetic browser fixture; archive timing is not verified historical pre-open timing."],
+};
 
 const browser = await chromium.launch({ headless: true });
 try {
@@ -43,6 +53,7 @@ try {
     });
     await page.route("**/auth/session", route => route.fulfill({ json: { authenticated: true, csrfToken: "synthetic", user: { uid: "browser-test", email: "browser@example.test", displayName: "Browser Test", role: "admin" } } }));
     await page.route("**/v1/futures-volatility/screener?**", route => route.fulfill({ json: fixture }));
+    await page.route("**/v1/futures-volatility/backtest?**", route => route.fulfill({ json: backtestFixture }));
     const quote = { symbol: "NIFTY50", name: "NIFTY 50", last: 0, change: 0, changePct: 0 };
     await page.route("**/v1/overview/header", route => route.fulfill({ json: { asOf: "2026-09-11T12:00:00Z", market: { isOpen: false, label: "CLOSED" }, indices: { nifty50: quote, bankNifty: { ...quote, symbol: "BANKNIFTY", name: "BANK NIFTY" }, indiaVix: { ...quote, symbol: "INDIAVIX", name: "INDIA VIX" } }, tickerTape: [] } }));
     await page.route("**/v1/paper/notifications?**", route => route.fulfill({ json: { asOf: "2026-09-11T12:00:00Z", source: "paper_trading.trade_events", items: [] } }));
@@ -52,6 +63,9 @@ try {
     await page.getByText("SYNTHPASS", { exact: false }).first().waitFor();
     if (await page.getByText("1.2048", { exact: true }).count() === 0) throw new Error("exact delta display missing");
     if (await page.getByText("All 16 physical source fields", { exact: true }).count() === 0) throw new Error("raw-field inspector missing");
+    await page.getByRole("button", { name: "Run evaluation" }).click();
+    await page.getByText("410", { exact: true }).waitFor();
+    await page.getByText("+0.35 pp", { exact: true }).waitFor();
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: true });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
     if (viewport.name === "mobile" && overflow) throw new Error("mobile page has accidental horizontal overflow");

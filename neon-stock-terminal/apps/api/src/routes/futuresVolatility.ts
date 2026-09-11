@@ -10,6 +10,31 @@ export const FUTURES_VOLATILITY_THRESHOLD_RAW = "0.0001";
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const scopeSchema = z.enum(["stocks", "indices", "all"]);
 
+type BacktestSession = {
+  reportDate: string; targetSession: string | null; calendarState: string;
+  sourceRows: number; sourceMatches: number; matchedCovered: number; nonmatchedCovered: number;
+  matchedPositive: number; matchedNegative: number; matchedFlat: number;
+  nonmatchedPositive: number; nonmatchedNegative: number; nonmatchedFlat: number;
+  matchedSumOcPct: string | null; nonmatchedSumOcPct: string | null;
+  matchedSumAbsOcPct: string | null; nonmatchedSumAbsOcPct: string | null;
+  matchedSumRangePct: string | null; nonmatchedSumRangePct: string | null;
+};
+
+function backtestGroup(rows: BacktestSession[], prefix: "matched" | "nonmatched") {
+  const n = rows.reduce((sum, row) => sum + row[`${prefix}Covered`], 0);
+  const total = (field: "SumOcPct" | "SumAbsOcPct" | "SumRangePct") =>
+    rows.reduce((sum, row) => sum + Number(row[`${prefix}${field}`] ?? 0), 0);
+  return {
+    observations: n,
+    positiveOpenClose: rows.reduce((sum, row) => sum + row[`${prefix}Positive`], 0),
+    negativeOpenClose: rows.reduce((sum, row) => sum + row[`${prefix}Negative`], 0),
+    flatOpenClose: rows.reduce((sum, row) => sum + row[`${prefix}Flat`], 0),
+    meanOpenClosePct: n ? total("SumOcPct") / n : null,
+    meanAbsoluteOpenClosePct: n ? total("SumAbsOcPct") / n : null,
+    meanLowHighRangePct: n ? total("SumRangePct") / n : null,
+  };
+}
+
 function errorPayload(message: string) {
   return { error: { code: "FUTURES_VOLATILITY_UNAVAILABLE", message } };
 }
@@ -34,7 +59,7 @@ async function reportCatalog(prisma: PrismaClient) {
 async function selectedRun(prisma: PrismaClient, analysisDate?: string, reportDate?: string) {
   const values = await prisma.$queryRawUnsafe<Row[]>(`
     SELECT s.run_id,s.revision_id,s.report_date::text report_date,
-           s.analysis_session::text analysis_session,s.rule_version,s.threshold_raw::text threshold_raw,
+           s.analysis_session::text analysis_session,s.calendar_state,s.rule_version,s.threshold_raw::text threshold_raw,
            s.timing_mode,s.intended_decision_cutoff::text intended_decision_cutoff,
            s.cohort_frozen_at::text cohort_frozen_at,s.source_row_count,s.computable_count,
            s.matched_count,s.status,r.source_filename,r.source_url,r.source_basis,
@@ -170,6 +195,98 @@ export function registerFuturesVolatility(app: Express, prisma: PrismaClient) {
       return res.json({ symbol: parsed.data.symbol.toUpperCase(), rows });
     } catch {
       return res.status(503).json(errorPayload("FOVOLT history is unavailable."));
+    }
+  });
+
+  app.get("/v1/futures-volatility/backtest", async (req, res) => {
+    const parsed = z.object({ from: dateSchema, to: dateSchema }).safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_FUTURES_VOLATILITY_BACKTEST_QUERY", message: "from and to must use YYYY-MM-DD" } });
+    const from = new Date(`${parsed.data.from}T00:00:00Z`);
+    const to = new Date(`${parsed.data.to}T00:00:00Z`);
+    const spanDays = Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1;
+    if (spanDays < 1 || spanDays > 366) return res.status(400).json({ error: { code: "INVALID_FUTURES_VOLATILITY_BACKTEST_RANGE", message: "Backtest range must be between 1 and 366 calendar days." } });
+    try {
+      const sessions = await prisma.$queryRawUnsafe<BacktestSession[]>(`
+        WITH chosen AS (
+          SELECT DISTINCT ON (report_date) run_id,report_date,analysis_session,calendar_state
+            FROM market_data.nse_fovolt_screen_run
+           WHERE report_date BETWEEN $1::date AND $2::date AND status='PUBLISHED'
+           ORDER BY report_date,cohort_frozen_at DESC
+        ), observations AS (
+          SELECT chosen.report_date,chosen.analysis_session,chosen.calendar_state,row.qualifies,
+                 CASE WHEN price.open_price>0 AND price.close_price IS NOT NULL
+                      THEN (price.close_price-price.open_price)*100/price.open_price END oc_pct,
+                 CASE WHEN price.low_price>0 AND price.high_price IS NOT NULL
+                      THEN (price.high_price-price.low_price)*100/price.low_price END range_pct,
+                 price.open_price>0 AND price.low_price>0 AND price.prev_close>0
+                   AND price.high_price>=price.low_price
+                   AND price.open_price BETWEEN price.low_price AND price.high_price
+                   AND price.close_price BETWEEN price.low_price AND price.high_price AS complete
+            FROM chosen
+            JOIN market_data.nse_fovolt_screen_row row ON row.run_id=chosen.run_id
+            LEFT JOIN nse.fact_eod_prices price ON price.trade_date=chosen.analysis_session
+             AND upper(price.symbol)=upper(row.symbol) AND price.series='EQ'
+        )
+        SELECT report_date::text "reportDate",analysis_session::text "targetSession",calendar_state "calendarState",
+               count(*)::int "sourceRows",count(*) FILTER (WHERE qualifies IS TRUE)::int "sourceMatches",
+               count(*) FILTER (WHERE qualifies IS TRUE AND complete)::int "matchedCovered",
+               count(*) FILTER (WHERE qualifies IS FALSE AND complete)::int "nonmatchedCovered",
+               count(*) FILTER (WHERE qualifies IS TRUE AND complete AND oc_pct>0)::int "matchedPositive",
+               count(*) FILTER (WHERE qualifies IS TRUE AND complete AND oc_pct<0)::int "matchedNegative",
+               count(*) FILTER (WHERE qualifies IS TRUE AND complete AND oc_pct=0)::int "matchedFlat",
+               count(*) FILTER (WHERE qualifies IS FALSE AND complete AND oc_pct>0)::int "nonmatchedPositive",
+               count(*) FILTER (WHERE qualifies IS FALSE AND complete AND oc_pct<0)::int "nonmatchedNegative",
+               count(*) FILTER (WHERE qualifies IS FALSE AND complete AND oc_pct=0)::int "nonmatchedFlat",
+               sum(oc_pct) FILTER (WHERE qualifies IS TRUE AND complete)::text "matchedSumOcPct",
+               sum(oc_pct) FILTER (WHERE qualifies IS FALSE AND complete)::text "nonmatchedSumOcPct",
+               sum(abs(oc_pct)) FILTER (WHERE qualifies IS TRUE AND complete)::text "matchedSumAbsOcPct",
+               sum(abs(oc_pct)) FILTER (WHERE qualifies IS FALSE AND complete)::text "nonmatchedSumAbsOcPct",
+               sum(range_pct) FILTER (WHERE qualifies IS TRUE AND complete)::text "matchedSumRangePct",
+               sum(range_pct) FILTER (WHERE qualifies IS FALSE AND complete)::text "nonmatchedSumRangePct"
+          FROM observations GROUP BY report_date,analysis_session,calendar_state ORDER BY report_date`, parsed.data.from, parsed.data.to);
+      const matched = backtestGroup(sessions, "matched");
+      const nonmatched = backtestGroup(sessions, "nonmatched");
+      const coveredDayDifferences = sessions.flatMap(row => {
+        if (!row.matchedCovered || !row.nonmatchedCovered) return [];
+        return [Number(row.matchedSumAbsOcPct ?? 0) / row.matchedCovered - Number(row.nonmatchedSumAbsOcPct ?? 0) / row.nonmatchedCovered];
+      });
+      return res.json({
+        study: "FOVOLT fixed-rule next-session screen-outcome study",
+        timingMode: "ARCHIVE_TIMING_ASSUMED",
+        ruleVersion: FUTURES_VOLATILITY_RULE_VERSION,
+        thresholdRaw: FUTURES_VOLATILITY_THRESHOLD_RAW,
+        from: parsed.data.from, to: parsed.data.to,
+        counts: {
+          downloadedReports: sessions.length,
+          calendarVerifiedReports: sessions.filter(row => row.calendarState === "VERIFIED").length,
+          independentCoveredSessions: sessions.filter(row => row.matchedCovered + row.nonmatchedCovered > 0).length,
+          sourceRows: sessions.reduce((sum, row) => sum + row.sourceRows, 0),
+          sourceMatches: sessions.reduce((sum, row) => sum + row.sourceMatches, 0),
+          coveredObservations: matched.observations + nonmatched.observations,
+        },
+        matched, nonmatched,
+        difference: {
+          meanOpenClosePct: matched.meanOpenClosePct == null || nonmatched.meanOpenClosePct == null ? null : matched.meanOpenClosePct - nonmatched.meanOpenClosePct,
+          meanAbsoluteOpenClosePct: matched.meanAbsoluteOpenClosePct == null || nonmatched.meanAbsoluteOpenClosePct == null ? null : matched.meanAbsoluteOpenClosePct - nonmatched.meanAbsoluteOpenClosePct,
+          meanLowHighRangePct: matched.meanLowHighRangePct == null || nonmatched.meanLowHighRangePct == null ? null : matched.meanLowHighRangePct - nonmatched.meanLowHighRangePct,
+        },
+        dayClusterSummary: {
+          daysCompared: coveredDayDifferences.length,
+          matchedHigherAbsoluteMovementDays: coveredDayDifferences.filter(value => value > 0).length,
+          matchedLowerAbsoluteMovementDays: coveredDayDifferences.filter(value => value < 0).length,
+          meanDayLevelAbsoluteMovementDifference: coveredDayDifferences.length
+            ? coveredDayDifferences.reduce((sum, value) => sum + value, 0) / coveredDayDifferences.length
+            : null,
+        },
+        sessions,
+        limitations: [
+          "Archive retrieval time does not prove historical pre-open availability.",
+          "This is a screen-outcome study, not an executable trading-strategy simulation.",
+          "Calendar gaps and missing target prices remain excluded, never guessed or zero-filled.",
+        ],
+      });
+    } catch {
+      return res.status(503).json(errorPayload("FOVOLT backtest evidence is unavailable from the canonical database."));
     }
   });
 }

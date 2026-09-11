@@ -50,6 +50,13 @@ async function withServer(run: (baseUrl: string) => Promise<void>) {
         max_lookback_days: payload.max_lookback_days ?? 10
       };
     },
+    async backfillFovolt(payload) {
+      return {
+        operation: "fovolt-backfill",
+        start_date: payload.start_date,
+        end_date: payload.end_date
+      };
+    },
     async backfill(payload) {
       return {
         operation: "backfill",
@@ -119,6 +126,18 @@ test("FOVOLT refresh uses the independent authenticated proxy path", async () =>
     const payload = (await response.json()) as { operation: string; max_lookback_days: number };
     assert.equal(payload.operation, "fovolt-pull-latest");
     assert.equal(payload.max_lookback_days, 4);
+  }));
+
+test("FOVOLT backfill uses a bounded independent authenticated proxy path", async () =>
+  withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/v1/fii-reports/fovolt/backfill`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start_date: "01-06-2026", end_date: "10-09-2026" })
+    });
+    assert.equal(response.status, 200);
+    const payload = (await response.json()) as { operation: string; start_date: string };
+    assert.equal(payload.operation, "fovolt-backfill");
+    assert.equal(payload.start_date, "01-06-2026");
   }));
 
 test("FII reports routes expose runs catalog and run detail", async () =>

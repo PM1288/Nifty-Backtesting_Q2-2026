@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS market_data.nse_fovolt_screen_run (
     revision_id TEXT NOT NULL REFERENCES audit.nse_fovolt_report_revision(revision_id),
     report_date DATE NOT NULL,
     analysis_session DATE,
+    calendar_state TEXT NOT NULL,
     rule_version TEXT NOT NULL,
     threshold_raw NUMERIC NOT NULL,
     timing_mode TEXT NOT NULL,
@@ -61,6 +62,13 @@ CREATE TABLE IF NOT EXISTS market_data.nse_fovolt_screen_run (
     matched_count INTEGER NOT NULL,
     status TEXT NOT NULL
 );
+
+-- Keep the migration forward-safe if an earlier review build created the table
+-- before calendar coverage became an explicit fail-closed state.
+ALTER TABLE market_data.nse_fovolt_screen_run
+    ADD COLUMN IF NOT EXISTS calendar_state TEXT NOT NULL DEFAULT 'UNVERIFIED_LEGACY';
+ALTER TABLE market_data.nse_fovolt_screen_run
+    ALTER COLUMN calendar_state DROP DEFAULT;
 
 CREATE TABLE IF NOT EXISTS market_data.nse_fovolt_screen_row (
     run_id TEXT NOT NULL REFERENCES market_data.nse_fovolt_screen_run(run_id),

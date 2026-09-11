@@ -43,6 +43,7 @@ This service integrates the upstream `nse_fii_services` pack into the main tradi
 - `POST /backfill`
 - `POST /load`
 - `POST /fovolt/pull-latest`
+- `POST /fovolt/backfill` (bounded prior-report archive acquisition with explicit missing dates)
 
 ## CLI
 

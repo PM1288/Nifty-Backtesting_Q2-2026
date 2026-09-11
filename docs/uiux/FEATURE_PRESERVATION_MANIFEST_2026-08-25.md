@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Scalper V2 bottom-chart NIFTY context: OI by strike and max-pain
+payout now show a dotted vertical guide at the nearest plotted strike, labelled
+with the exact current NIFTY value. The horizontal Delta OI chart shows the same
+context as a dotted horizontal guide because strike is its right Y axis and
+signed Delta OI is its X axis. Category indexes are resolved explicitly so a
+numeric strike cannot be mistaken for an out-of-range ECharts index. Existing
+signed bars, missingness, V1, V7, A-open/B-close, collectors and order
+permissions remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
+
 2026-09-11 Scalper V2 signed Delta OI and drawing cleanup: the existing
 underlying-attached profile and separate Change in OI chart use one symmetric
 maximum-absolute scale, positive-right/negative-left geometry, blue CE and

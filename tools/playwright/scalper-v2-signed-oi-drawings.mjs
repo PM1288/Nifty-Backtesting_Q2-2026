@@ -43,6 +43,13 @@ try {
   check("Profile scale is visible above chart", caption.includes("← 0 →") && caption.includes("shared maximum"), caption);
   check("Profile identity legend is visible", caption.includes("CE") && caption.includes("PE"), caption);
 
+  const oiCardText = await page.getByRole("heading", { name: "OI by strike", exact: true }).locator("..").innerText();
+  const deltaOiCardText = await page.getByRole("heading", { name: "Change in OI by strike", exact: true }).locator("..").innerText();
+  const payoutCardText = await page.getByRole("heading", { name: "Max-pain payout distribution", exact: true }).locator("..").innerText();
+  check("OI chart declares dotted NIFTY current guide", oiCardText.includes("dotted NIFTY current") && oiCardText.includes("nearest strike"), oiCardText);
+  check("Delta OI chart declares strike-axis NIFTY current guide", deltaOiCardText.includes("dotted NIFTY current") && deltaOiCardText.includes("nearest strike"), deltaOiCardText);
+  check("Max-pain chart declares dotted NIFTY current guide", payoutCardText.includes("dotted NIFTY current") && payoutCardText.includes("nearest settlement strike"), payoutCardText);
+
   const body = page.getByTestId("v2-chart-body-underlying");
   await page.waitForTimeout(1_000);
   const geometry = await body.evaluate((element) => ({
@@ -70,7 +77,7 @@ try {
   await page.getByRole("button", { name: "Undo drawing", exact: true }).click();
   check("Undo restores cleared drawings", await clear.isEnabled(), await page.getByTestId("v2-drawing-objects").innerText());
   check("No browser errors", errors.length === 0, errors.join(" | "));
-  await page.screenshot({ path: path.join(output, "scalper-v2-signed-oi-and-clear.png"), fullPage: true });
+  await page.screenshot({ path: path.join(output, "scalper-v2-nifty-guides-signed-oi-and-clear.png"), fullPage: true });
 } finally {
   await browser.close();
   await fs.writeFile(path.join(output, "results.json"), JSON.stringify(results, null, 2));

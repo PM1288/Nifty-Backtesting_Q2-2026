@@ -41,3 +41,13 @@ test("Scalper V2 horizontal ΔOI preserves signs, observed zero, and missingness
   assert.equal(series[1].data[1]?.value, 0);
   assert.equal(series[1].data[1]?.itemStyle.color, "#eab308");
 });
+
+test("Scalper V2 horizontal ΔOI shows NIFTY current on its strike axis", () => {
+  const option = scalperV2HorizontalDeltaOiOption([23_450, 23_500], [40, 10], [-20, -5], 23_477.8, 23_500);
+  const series = option.series as Array<{ markLine?: { data: Array<Record<string, unknown>> } }>;
+  const guide = series[0].markLine?.data[1] as { yAxis: number; lineStyle: { type: string }; label: { formatter: string } };
+  assert.equal(guide.yAxis, 1);
+  assert.equal(guide.lineStyle.type, "dotted");
+  assert.match(guide.label.formatter, /NIFTY current 23,477\.80/);
+  assert.match(guide.label.formatter, /nearest strike 23,500/);
+});

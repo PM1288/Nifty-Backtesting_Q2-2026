@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Scalper V2 bottom-chart NIFTY current guides
+
+- OI by strike and max-pain payout now render a dotted vertical line at the
+  nearest listed strike, with the exact current NIFTY value and nearest strike
+  in the label.
+- The horizontal Change in OI chart renders a dotted horizontal line at that
+  strike because its right Y axis is strike and its X axis is signed Delta OI.
+- Root cause of the previously missing line: numeric strikes were supplied to
+  categorical ECharts axes and interpreted as category indexes. The repair uses
+  resolved indexes without changing financial data or calculations.
+- Web typecheck, 148/148 tests and production build pass. Authenticated isolated
+  Chromium passes 12/12; visual evidence is under
+  `/tmp/scalper-v2-nifty-guide`. Production was not changed. Full report:
+  `docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
+
 ## 2026-09-11 — Scalper V2 signed OI profile and clear drawings
 
 - Fixed the native Delta OI overlay defect that painted both signs on the same

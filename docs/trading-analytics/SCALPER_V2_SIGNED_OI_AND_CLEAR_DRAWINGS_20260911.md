@@ -19,6 +19,13 @@ the shared-maximum basis. The separate Change in OI chart uses the same symmetri
 X bounds and CE/PE colours; every strike retains its signed CE/PE values on the
 right Y axis.
 
+The three bottom strike views now also expose the current underlying context.
+OI by strike and max-pain payout draw a dotted vertical line at the nearest
+listed strike and label it with the exact current NIFTY value. Because Change in
+OI is intentionally horizontal (strike is its right Y axis), it draws the same
+truthful context as a dotted horizontal strike line. This avoids misrepresenting
+NIFTY price as a Delta OI magnitude on that chart's X axis.
+
 ## Root cause
 
 The prior native profile correctly calculated absolute Delta OI widths but
@@ -28,20 +35,27 @@ occupied the same left-hand side. Geometry now records explicit `startX` and
 start to its left, and zero remains at the anchor. Bar size is proportional to
 `abs(value) / max(abs(all comparable values))`.
 
+The earlier bottom-chart mark line passed a numeric strike directly to an
+ECharts category axis. ECharts treated that number as a category index, placing
+the guide outside the plotted categories. The repaired charts resolve the
+nearest strike to its real category index while keeping the exact NIFTY value
+and nearest strike in the visible label.
+
 ## Verification
 
 - Focused Delta OI/profile tests: PASS, 6/6.
 - Web typecheck: PASS.
-- Full web tests: PASS, 147/147.
+- Full web tests: PASS, 148/148.
 - Web production build: PASS.
-- Authenticated isolated Chromium: PASS, 9/9.
+- Authenticated isolated Chromium: PASS, 12/12.
   - visible top profile scale and CE/PE legend;
   - positive and negative geometry on opposite sides of one anchor;
   - positive shared maximum;
   - Clear all drawings removes the complete set;
   - Undo restores that set;
+  - OI, Delta OI and max-pain panels disclose the current-NIFTY guide;
   - no page exceptions.
-- Screenshot: `/tmp/scalper-v2-signed-oi-drawings/scalper-v2-signed-oi-and-clear.png`
+- Screenshot: `/tmp/scalper-v2-nifty-guide/scalper-v2-nifty-guides-signed-oi-and-clear.png`
   (runtime evidence, intentionally outside source control).
 
 No API, collector, V7 signal, A-open/B-close measurement, order permission or

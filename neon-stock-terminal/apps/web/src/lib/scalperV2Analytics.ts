@@ -20,8 +20,11 @@ export function scalperV2HorizontalDeltaOiOption(
   strikes: number[],
   ceChanges: DeltaOiValue[],
   peChanges: DeltaOiValue[],
+  underlyingValue: number | null = null,
+  nearestStrike: number | null = null,
 ): EChartsOption {
   const maximum = Math.max(1, ...[...ceChanges, ...peChanges].flatMap((value) => value == null || !Number.isFinite(value) ? [] : [Math.abs(value)]));
+  const nearestStrikeIndex = nearestStrike == null ? -1 : strikes.indexOf(nearestStrike);
   return {
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["CE ΔOI", "PE ΔOI"], top: 2, left: 28 },
@@ -73,7 +76,23 @@ export function scalperV2HorizontalDeltaOiOption(
           symbol: "none",
           label: { show: false },
           lineStyle: { color: "#64748b", width: 1 },
-          data: [{ xAxis: 0 }],
+          data: [
+            { xAxis: 0 },
+            ...(underlyingValue != null && Number.isFinite(underlyingValue) && nearestStrike != null && Number.isFinite(nearestStrike) && nearestStrikeIndex >= 0 ? [{
+              // ECharts category-axis mark lines take the category index here.
+              // Passing the numeric strike is interpreted as an out-of-range index.
+              yAxis: nearestStrikeIndex,
+              lineStyle: { color: "#0f766e", type: "dotted" as const, width: 2 },
+              label: {
+                show: true,
+                color: "#0f5f59",
+                backgroundColor: "rgba(255,255,255,.92)",
+                padding: [3, 5] as [number, number],
+                formatter: `NIFTY current ${underlyingValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\nnearest strike ${nearestStrike.toLocaleString("en-IN")}`,
+                position: "insideEndTop" as const,
+              },
+            }] : []),
+          ],
         },
       },
       {

@@ -27,12 +27,14 @@ async function prepare(context) {
     name: pair.slice(0, separator), value: pair.slice(separator + 1),
     domain: new URL(base).hostname, path: "/", httpOnly: true, secure: false, sameSite: "Lax",
   }]);
-  await context.route(`${base}/**`, async (route) => {
-    const incoming = new URL(route.request().url());
-    const upstream = `${authBase}${incoming.pathname.replace(/^\/n50-stage/, "")}${incoming.search}`;
-    const response = await route.fetch({ url: upstream, timeout: 90_000 });
-    await route.fulfill({ response });
-  });
+  if (base !== authBase) {
+    await context.route(`${base}/**`, async (route) => {
+      const incoming = new URL(route.request().url());
+      const upstream = `${authBase}${incoming.pathname.replace(/^\/n50-stage/, "")}${incoming.search}`;
+      const response = await route.fetch({ url: upstream, timeout: 90_000 });
+      await route.fulfill({ response });
+    });
+  }
 }
 
 const browser = await chromium.launch({ headless: true });

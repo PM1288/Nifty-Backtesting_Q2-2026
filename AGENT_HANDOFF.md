@@ -4674,3 +4674,41 @@ or outcomes were deleted.
   `docs/futures-volatility/FOVOLT_FUTURES_VOLATILITY_SCREENER_20260911.md`.
 - Production migration, data load and deployment remain not performed pending
   the separate authorised release process.
+
+## 2026-09-11 — Evening consolidation, vertical homepage progression and production release
+
+- Audited canonical history from 10 September 20:00 IST onward and consolidated
+  the outstanding homepage intraday progression, Scalper V2 CE/PE Delta OI
+  colours, stock M/W/D EMA drilldown, FOVOLT screener and FOVOLT historical
+  evaluation onto canonical `master`. Earlier same-window monthly-open,
+  strategy-screener, participant heatmap/history, NSE report-health and Scalper
+  chart changes were already present and remain reachable.
+- Replaced the homepage's horizontally scrolling progression cards/wide table
+  with a vertical table. Each stock uses two monthly-route rows and each route
+  stacks M, W0, W-1, D0, 1H, 15m and 5m conditions with exact actual/reference
+  values and explicit pass/fail/unavailable marks. It remains above Risk &
+  Anomaly and fits desktop and 390px mobile without horizontal scrolling.
+- Fixed the post-midnight IST progression gap: intraday comparisons now use the
+  latest observed NSE one-minute session within seven calendar days rather than
+  returning all-null values for a new calendar day. The authenticated deployed
+  response contains 210 rows and 210/210 comparable 1H, 15m and 5m pairs; its
+  latest 5m bucket begins at `2026-09-11T10:35:00.000Z`.
+- Applied additive migration `db/sql/058_futures_volatility_screener.sql` and
+  loaded 73 production FOVOLT reports from 1 June through 10 September: 16,065
+  source rows and 821 fixed-rule matches. The 26 June report remains explicitly
+  source-missing. Backtest timing remains `ARCHIVE_TIMING_ASSUMED`; 43
+  independently covered sessions contain 410 matches and 8,593 nonmatches.
+  The latest 10-to-11 September report had zero target-price coverage at final
+  verification because the canonical 11 September EOD rows were not yet
+  available; no outcome was fabricated.
+- Validation: web typecheck/build and 166/166 tests pass; API typecheck/build and
+  208/208 tests pass; report service 39/39 tests pass with one existing Starlette
+  deprecation warning; canonical repository gate passes. Authenticated deployed
+  browser checks pass homepage 14/14, Scalper V2 signed OI/drawings 21/21 and
+  stock M/W/D drilldown 17/17. Deployed FOVOLT synthetic browser checks pass at
+  1440x900 and 390x844, while real authenticated APIs report READY/backtest data.
+- Canonical `master` is pushed through application commit `a980168`. Dashboard
+  image `sha256:60b039d70c643fd6f2f597f8b977a9e20cea727ddf0dfb7b1d5e5ba5bc8e9beb`
+  is healthy with zero restarts; report-service image
+  `sha256:1b94983f33b9b225ae1002ce05497ba799b8d49e34c220d4eb6148dda2c7227c`
+  is running with zero restarts. Only those two scoped services were recreated.

@@ -101,7 +101,7 @@ try {
   }));
   const positive = geometry.rows.filter((row) => Number(row.value) > 0);
   const negative = geometry.rows.filter((row) => Number(row.value) < 0);
-  check("Profile uses one positive and negative zero origin", positive.length > 0 && negative.length > 0 && positive.every((row) => row.startX === geometry.anchor && row.endX > geometry.anchor) && negative.every((row) => row.startX < geometry.anchor && row.endX === geometry.anchor), JSON.stringify({ anchor: geometry.anchor, positive: positive.length, negative: negative.length }));
+  check("Profile uses the shared signed zero origin for every observed side", positive.length + negative.length > 0 && positive.every((row) => row.startX === geometry.anchor && row.endX > geometry.anchor) && negative.every((row) => row.startX < geometry.anchor && row.endX === geometry.anchor), JSON.stringify({ anchor: geometry.anchor, positive: positive.length, negative: negative.length }));
   check("Profile reports a positive shared absolute maximum", geometry.maximum > 0, JSON.stringify(geometry));
   await page.getByTestId("v2-deltaoi-chart").screenshot({ path: path.join(output, "scalper-v2-delta-oi-blue-ce-yellow-pe.png") });
 

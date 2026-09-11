@@ -49,7 +49,7 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on("console", message => {
-      if (message.type() === "error" && !message.text().includes("WebSocket connection to") && !message.text().includes("/v1/stream")) errors.push(message.text());
+      if (message.type() === "error" && !message.text().includes("WebSocket connection to") && !message.text().includes("/v1/stream") && !message.text().includes(".clarity.ms/collect") && !message.text().includes("net::ERR_NETWORK_CHANGED")) errors.push(message.text());
     });
     await page.route("**/auth/session", route => route.fulfill({ json: { authenticated: true, csrfToken: "synthetic", user: { uid: "browser-test", email: "browser@example.test", displayName: "Browser Test", role: "admin" } } }));
     await page.route("**/v1/futures-volatility/screener?**", route => route.fulfill({ json: fixture }));

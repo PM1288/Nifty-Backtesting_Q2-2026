@@ -9,9 +9,11 @@ set in one step.
 
 The strike-aligned Delta OI profile now uses a true centred zero origin.
 Positive changes extend right, negative changes extend left, and both directions
-use one maximum absolute Delta OI from the declared comparison cohort. CE bars
-are blue and PE bars are yellow. Signed numerical labels continue to distinguish
-increase, decrease, observed zero and unavailable values.
+use one maximum absolute Delta OI from the declared comparison cohort. The
+actual fills—not only the outlines—are blue for CE and yellow for PE in both the
+underlying profile and the separate Change in OI chart. Signed direction and
+`+`/`−` numerical labels continue to distinguish increase from decrease;
+observed zero and unavailable values remain neutral.
 
 The profile caption at the top of the underlying chart exposes the current
 `-maximum <- 0 -> +maximum` scale, identity colours, visible-strike coverage and
@@ -43,11 +45,11 @@ and nearest strike in the visible label.
 
 ## Verification
 
-- Focused Delta OI/profile tests: PASS, 6/6.
+- Focused Delta OI/profile tests: PASS, 7/7.
 - Web typecheck: PASS.
-- Full web tests: PASS, 148/148.
+- Full web tests: PASS, 162/162.
 - Web production build: PASS.
-- Authenticated isolated Chromium: PASS, 12/12.
+- Authenticated isolated Chromium: PASS, 21/21.
   - visible top profile scale and CE/PE legend;
   - positive and negative geometry on opposite sides of one anchor;
   - positive shared maximum;
@@ -55,8 +57,9 @@ and nearest strike in the visible label.
   - Undo restores that set;
   - OI, Delta OI and max-pain panels disclose the current-NIFTY guide;
   - no page exceptions.
-- Screenshot: `/tmp/scalper-v2-nifty-guide/scalper-v2-nifty-guides-signed-oi-and-clear.png`
-  (runtime evidence, intentionally outside source control).
+- Screenshots: `/tmp/scalper-v2-delta-oi-colours/`, including the isolated
+  Change-in-OI panel and the complete V2 page (runtime evidence, intentionally
+  outside source control).
 
 No API, collector, V7 signal, A-open/B-close measurement, order permission or
 production container was changed. Deployment remains a separate authorised

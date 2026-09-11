@@ -22,6 +22,21 @@
   was not changed by this work; deployment requires a separate authorised
   release action. Full report:
   `docs/uiux/HOME_SCALPER_PROGRESSION_20260911.md`.
+## 2026-09-11 — Scalper V2 Delta OI uses CE blue and PE yellow fills
+
+- Branch `fix/scalper-v2-delta-oi-colors` changes both V2 Delta OI renderers:
+  the underlying strike-aligned native profile and the separate horizontal
+  Change-in-OI chart now use blue-filled CE bars and yellow-filled PE bars.
+- Sign remains truthful through the shared zero axis: negative values extend
+  left, positive values extend right, and exact values retain `+`/`−`. True
+  zero and missing remain neutral. Calculations, baselines and bar geometry did
+  not change.
+- Focused tests pass 7/7; web typecheck, full 162/162 tests and production build
+  pass. Authenticated isolated Chromium passes 21/21, with visual evidence in
+  `/tmp/scalper-v2-delta-oi-colours/`.
+- Candidate-tested only. Production was not changed; deployment remains a
+  separate authorised release action. Full report:
+  `docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
 
 ## 2026-09-11 — Last-24-hour N50 feature release deployed and audited
 

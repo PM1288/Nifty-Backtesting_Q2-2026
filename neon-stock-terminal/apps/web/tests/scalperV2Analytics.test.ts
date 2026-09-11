@@ -24,21 +24,21 @@ test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", ()
   assert.match(axisLabel.formatter("23500", 1), /23,500.*CE.*—.*PE.*0/);
   assert.equal(series[0].type, "bar");
   assert.equal(series[1].type, "bar");
-  assert.equal((series[0].itemStyle as { borderColor: string }).borderColor, "#2563eb");
-  assert.equal((series[1].itemStyle as { borderColor: string }).borderColor, "#eab308");
+  assert.equal((series[0].itemStyle as { color: string }).color, "#2563eb");
+  assert.equal((series[1].itemStyle as { color: string }).color, "#eab308");
   assert.deepEqual(markLine.data, [{ xAxis: 0 }]);
 });
 
-test("Scalper V2 horizontal ΔOI preserves signs, observed zero, and missingness", () => {
+test("Scalper V2 horizontal ΔOI uses side colours and preserves signs, observed zero, and missingness", () => {
   const option = scalperV2HorizontalDeltaOiOption([100, 200], [40, null], [-20, 0]);
   const series = option.series as Array<{ data: Array<null | { value: number; itemStyle: { color: string; borderColor: string } }> }>;
 
   assert.equal(series[0].data[0]?.value, 40);
-  assert.equal(series[0].data[0]?.itemStyle.color, "#117a40");
-  assert.equal(series[0].data[0]?.itemStyle.borderColor, "#2563eb");
+  assert.equal(series[0].data[0]?.itemStyle.color, "#2563eb");
+  assert.equal(series[0].data[0]?.itemStyle.borderColor, "#1d4ed8");
   assert.equal(series[0].data[1], null);
   assert.equal(series[1].data[0]?.value, -20);
-  assert.equal(series[1].data[0]?.itemStyle.color, "#c6283d");
+  assert.equal(series[1].data[0]?.itemStyle.color, "#eab308");
   assert.equal(series[1].data[1]?.value, 0);
   assert.equal(series[1].data[1]?.itemStyle.color, "#64748b");
 });

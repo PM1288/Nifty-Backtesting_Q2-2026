@@ -27,9 +27,7 @@ class ProfileRenderer implements IPrimitivePaneRenderer {
           continue;
         }
         const startX = bar.startX ?? layout.anchorX;
-        context.fillStyle = this.mode === "change"
-          ? (bar.changeOi ?? 0) > 0 ? "#117a40" : "#c6283d"
-          : bar.side === "CE" ? "#2563eb" : "#eab308";
+        context.fillStyle = bar.side === "CE" ? "#2563eb" : "#eab308";
         context.globalAlpha = bar.side === "CE" ? .9 : .76;
         context.fillRect(startX, bar.centerY - height / 2, bar.width, height);
         context.globalAlpha = 1;

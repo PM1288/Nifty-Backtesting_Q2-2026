@@ -43,7 +43,7 @@ try {
   await profile.waitFor({ state: "visible" });
   const caption = await profile.innerText();
   check("Profile scale is visible above chart", caption.includes("← 0 →") && caption.includes("shared maximum"), caption);
-  check("Profile identity legend is visible", caption.includes("CE") && caption.includes("PE"), caption);
+  check("Profile identity legend declares blue CE and yellow PE", caption.includes("CE blue") && caption.includes("PE yellow") && caption.includes("− left · + right"), caption);
   const maxPainStatus = page.getByTestId("v2-max-pain-chart-status");
   await maxPainStatus.waitFor({ state: "visible" });
   const initialMaxPain = await maxPainStatus.innerText();
@@ -69,6 +69,7 @@ try {
   const payoutCardText = await page.getByRole("heading", { name: "Max-pain payout distribution", exact: true }).locator("..").innerText();
   check("OI chart declares dotted NIFTY current guide", oiCardText.includes("dotted NIFTY current") && oiCardText.includes("nearest strike"), oiCardText);
   check("Delta OI chart declares strike-axis NIFTY current guide", deltaOiCardText.includes("dotted NIFTY current") && deltaOiCardText.includes("nearest strike"), deltaOiCardText);
+  check("Delta OI chart declares blue CE and yellow PE fills", deltaOiCardText.includes("CE blue · PE yellow") && deltaOiCardText.includes("negative extends left · positive extends right"), deltaOiCardText);
   check("Max-pain chart declares dotted NIFTY current guide", payoutCardText.includes("dotted NIFTY current") && payoutCardText.includes("nearest settlement strike"), payoutCardText);
 
   const cumulativeOi = page.getByTestId("v2-cumulative-oi-time");
@@ -102,6 +103,7 @@ try {
   const negative = geometry.rows.filter((row) => Number(row.value) < 0);
   check("Profile uses one positive and negative zero origin", positive.length > 0 && negative.length > 0 && positive.every((row) => row.startX === geometry.anchor && row.endX > geometry.anchor) && negative.every((row) => row.startX < geometry.anchor && row.endX === geometry.anchor), JSON.stringify({ anchor: geometry.anchor, positive: positive.length, negative: negative.length }));
   check("Profile reports a positive shared absolute maximum", geometry.maximum > 0, JSON.stringify(geometry));
+  await page.getByTestId("v2-deltaoi-chart").screenshot({ path: path.join(output, "scalper-v2-delta-oi-blue-ce-yellow-pe.png") });
 
   const now = new Date().toISOString();
   await page.evaluate(({ now }) => localStorage.setItem("trading-analytics:scalper-v2:drawings:v1:default:NIFTY", JSON.stringify([{

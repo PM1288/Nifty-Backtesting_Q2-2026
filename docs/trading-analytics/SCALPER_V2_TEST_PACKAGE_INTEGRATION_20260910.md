@@ -44,10 +44,11 @@ problems:
 - The profile occupies at most 120 CSS pixels and 18 percent of the native plot,
   immediately inside its right price scale. Its maximum is calculated from the
   full selected cohort before off-screen strikes are clipped.
-- Horizontal length represents absolute magnitude. Positive change is green,
-  negative red, observed zero a neutral zero mark, and missing comparison a
-  dashed neutral mark. CE uses a solid blue outline; PE uses a dashed dark-yellow
-  outline. Both lanes share the exact strike centre.
+- Horizontal length represents absolute magnitude and direction preserves sign.
+  The 11 September identity-colour follow-up supersedes the original fill
+  treatment: CE is blue and PE is yellow, while negative extends left and
+  positive extends right. Observed zero remains neutral and missing comparison
+  remains a dashed neutral mark. Both lanes share the exact strike centre.
 - Added a normalizer that deduplicates strike-side identities and chooses one
   declared comparison basis by priority. Rows with another baseline definition
   remain visible as incompatible/unavailable; they are not mixed or zero-filled.

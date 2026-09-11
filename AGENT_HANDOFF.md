@@ -1,5 +1,57 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Last-24-hour N50 feature release deployed and audited
+
+- Production release source: pushed `master` commit
+  `4ef2f7ff1735f56acca62acca913c107c7177b65`. This fast-forward includes the
+  Scalper V1/V2 independent CE/PE selectors; Scalper V2 geometry, signed
+  strike-aligned Delta OI, clear drawings, NIFTY guides, max-pain line,
+  cumulative-OI and normalized-option charts; Home progression; Monthly Open
+  v3 and Close/Open comparison; Strategy Scalper Dashboard; Morning participant
+  heatmap/history; and NSE report health.
+- Deployed dashboard container
+  `trading-stack-novius2-n50-dashboard-1` uses image
+  `sha256:d8c0f0b5f153b569df2c742621910f99f002e905ee21bf2698377278fb9109db`,
+  started `2026-09-11T07:43:15.486943175Z`, serves
+  `index-DoQWfnmD.js`, is healthy and has zero restarts. Public `/n50/` and
+  `/n50/api/health` both returned HTTP 200 after release.
+- Deployed rolling-monthly container
+  `trading-stack-novius2-rolling-monthly-1` uses image
+  `sha256:d5a33edd128f75fed07be144f6405cddaf66e4a638036e7fa63b7627691ac300`,
+  started `2026-09-11T07:43:42.835288843Z`, is healthy with zero restarts, and
+  reports `absolute_monthly_open_bullish_long_v3` as current.
+- Pre-release checks passed: API typecheck/tests/build (`200/200`), web
+  typecheck/tests/build (`162/162`), and
+  `scripts/verify/canonical-repository-gate.sh`.
+- Post-release authenticated production browser evidence:
+  - Scalper V2 repair `58 PASS / 0 FAIL / 1 BLOCKED`; only the headed-DPR2
+    sharpness check is blocked by the headless runner. Native/host widths
+    reconcile, underlying plot body is `601.219px`, CE/PE bodies are
+    `267.219px`, 500-move pointer p95 is `17.1ms`, and cached timeframe switch
+    is `176ms`. Evidence: `/tmp/last24h-deployed-scalper-v2/`.
+  - Signed OI/drawings/max-pain/NIFTY guides/cumulative OI/normalized price
+    `20/20`; independent CE/PE V1/V2 `11/11`; Scalper Dashboard `16/16`; Home
+    progression `11/11`; Morning participant comparison/history `115/115`.
+    Evidence is under `/tmp/last24h-deployed-*` with the corresponding name.
+  - SHAP Research `114/114`; Monthly Close/Open comparison `40/40`, including
+    v3 identity at desktop/mobile; Trade Log deployment check confirms the
+    default `All columns + P&L` preset, 38 headers, all six CE/PE horizon P&L
+    columns and its SHAP link. NSE report health returned 17/17 UI/API rows and
+    exposes CSV/JSON evidence exports.
+- The standard NSE browser harness's `console clean` assertion remains BLOCKED
+  by an external resource `ERR_ADDRESS_UNREACHABLE`; its functional assertions
+  reached the page successfully, and the application-only rerun passed after
+  external analytics resources were isolated. Public DNS also returned one
+  transient `EAI_AGAIN` during a redundant test, while direct public root and
+  health requests subsequently returned 200.
+- Rollback: the prior rolling-monthly image is retained as
+  `trading-stack-rolling-monthly:pre-monthly-open-v3-4ef2f7f`. Docker had
+  already garbage-collected the exact prior dashboard image content, so the
+  nearest known dashboard fallback is retained as
+  `trading-stack-n50-dashboard:rollback-pre-last24h-fallback-4ef2f7f`; exact
+  one-image dashboard rollback is therefore unavailable and must not be
+  claimed. No unrelated service was intentionally recreated.
+
 ## 2026-09-11 — Strategy Scalper Dashboard current-month screener
 
 - Added `/strategy/scalper-dashboard` as a separate Strategy destination for

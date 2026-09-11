@@ -65,7 +65,7 @@ try {
   check("Underlying chart plots max pain in an eligible Y view", plottedMaxPain.status === "plotted" && plottedMaxPain.visible === plottedMaxPain.candidates, JSON.stringify(plottedMaxPain));
 
   const oiCardText = await page.getByRole("heading", { name: "OI by strike", exact: true }).locator("..").innerText();
-  const deltaOiCardText = await page.getByRole("heading", { name: "Change in OI by strike", exact: true }).locator("..").innerText();
+  const deltaOiCardText = await page.getByRole("heading", { name: /^Change in OI by strike/ }).locator("..").innerText();
   const payoutCardText = await page.getByRole("heading", { name: "Max-pain payout distribution", exact: true }).locator("..").innerText();
   check("OI chart declares dotted NIFTY current guide", oiCardText.includes("dotted NIFTY current") && oiCardText.includes("nearest strike"), oiCardText);
   check("Delta OI chart declares strike-axis NIFTY current guide", deltaOiCardText.includes("dotted NIFTY current") && deltaOiCardText.includes("nearest strike"), deltaOiCardText);
@@ -85,6 +85,13 @@ try {
   check("Normalized option chart declares distance opacity", normalizedText.includes("fully opaque") && normalizedText.includes("farther strikes fade progressively"), normalizedText);
   check("Normalized option chart renders retained CE and PE history", !normalizedText.includes("Option price history unavailable") && /\d+ CE\/PE strike lines/.test(normalizedText) && await normalizedPrice.locator("canvas").count() > 0, normalizedText);
 
+  // Session Y intentionally clips strikes outside the observed underlying
+  // range. Inspect the complete cohort before asserting that both signs use
+  // the shared zero origin.
+  if (await allStrikesY.isVisible()) {
+    await allStrikesY.click();
+    await page.waitForTimeout(500);
+  }
   await page.waitForTimeout(1_000);
   const geometry = await body.evaluate((element) => ({
     anchor: Number(element.dataset.profileAnchorX),

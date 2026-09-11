@@ -34,7 +34,34 @@ import css from "./scalper-v2/ScalperV2.module.css";
 const Chart = lazy(async () => ({ default: (await import("../components/visual/EChartSurface")).EChartSurface }));
 type Row = Record<string, unknown>;
 type ChartPane = { identity: Row; bars: Row[]; coverage: Row[]; sourceMinuteCount: number; oiHistory: Row[] };
-type ChartPayload = { panes: ChartPane[]; availableContracts: AvailableScalperContract[]; limitations: string[]; interval: number; asOf: string };
+type CumulativeOiPoint = {
+  snapshotId: string;
+  capturedAt: string;
+  source: unknown;
+  strikesAround: number | null;
+  strikeCount: number | null;
+  ceContractCount: number | null;
+  ceObservedCount: number | null;
+  ceOi: number | null;
+  peContractCount: number | null;
+  peObservedCount: number | null;
+  peOi: number | null;
+  state: "COMPLETE" | "PARTIAL";
+};
+type ChartPayload = {
+  panes: ChartPane[];
+  availableContracts: AvailableScalperContract[];
+  limitations: string[];
+  interval: number;
+  asOf: string;
+  cumulativeOiHistory?: {
+    expiry: string | null;
+    unit: "provider_native_oi";
+    scope: "ALL_STRIKES_CAPTURED_PER_SNAPSHOT";
+    points: CumulativeOiPoint[];
+    limitations: string[];
+  };
+};
 type RailTab = "time" | "chain" | "profile" | "levels" | "rules" | "measure" | "objects" | "health";
 
 const numeric = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
@@ -60,6 +87,9 @@ const legSpread = (row: Row | undefined) => {
   const bid = numeric(row?.bid_price), ask = numeric(row?.ask_price);
   return bid == null || ask == null ? null : ask - bid;
 };
+const istClock = (value: number) => new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false,
+}).format(new Date(value));
 
 function Snapshot({ name, row }: { name: string; row: Row | undefined }) {
   const ema = numeric(row?.ema9), close = numeric(row?.close), distance = ema == null || close == null ? null : close - ema;
@@ -192,6 +222,52 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   ), [profileRows]);
   const deltaMaximum = Math.max(0, ...[...ceChanges, ...peChanges].flatMap((value) => value == null ? [] : [Math.abs(value)]));
   const profileComparable = profileRows.filter((row) => row.state === "comparable").length;
+  const cumulativeOiPoints = useMemo(
+    () => (activeData?.cumulativeOiHistory?.points ?? []).filter((point) => istDay(point.capturedAt) === tradingDay),
+    [activeData?.cumulativeOiHistory?.points, tradingDay],
+  );
+  const cumulativeOiComplete = cumulativeOiPoints.filter((point) => point.state === "COMPLETE").length;
+  const cumulativeStrikeCounts = [...new Set(cumulativeOiPoints.map((point) => point.strikeCount).filter((value): value is number => value != null))].sort((a, b) => a - b);
+  const cumulativeOiOption = useMemo<EChartsOption>(() => ({
+    animation: false,
+    tooltip: { trigger: "axis" },
+    legend: { data: ["Cumulative CE OI", "Cumulative PE OI"], top: 2 },
+    grid: { left: 72, right: 24, top: 42, bottom: 52 },
+    xAxis: {
+      type: "time",
+      name: "Timestamp · IST",
+      nameGap: 30,
+      axisLabel: { formatter: (value: number) => istClock(value) },
+    },
+    yAxis: {
+      type: "value",
+      min: 0,
+      name: "Summed OI · provider units",
+      axisLabel: { formatter: formatOiAxisValue },
+    },
+    series: [
+      {
+        name: "Cumulative CE OI",
+        type: "line",
+        data: cumulativeOiPoints.map((point) => [Date.parse(point.capturedAt), point.ceOi]),
+        connectNulls: false,
+        showSymbol: cumulativeOiPoints.length <= 1,
+        symbolSize: 7,
+        lineStyle: { color: "#2563eb", width: 2 },
+        itemStyle: { color: "#2563eb" },
+      },
+      {
+        name: "Cumulative PE OI",
+        type: "line",
+        data: cumulativeOiPoints.map((point) => [Date.parse(point.capturedAt), point.peOi]),
+        connectNulls: false,
+        showSymbol: cumulativeOiPoints.length <= 1,
+        symbolSize: 7,
+        lineStyle: { color: "#eab308", width: 2 },
+        itemStyle: { color: "#eab308" },
+      },
+    ],
+  }), [cumulativeOiPoints]);
   const niftyCurrentGuide = (categoryIndex: number) => spot == null || nearestSpotStrike == null || categoryIndex < 0 ? undefined : ({
     silent: true,
     symbol: "none",
@@ -342,6 +418,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         <article className={css.analyticCard} data-deltaoi-orientation="horizontal"><h3>Change in OI by strike</h3><p>CE blue · PE yellow · right is positive · left is negative · {deltaBasisLabel} · {spot == null || nearestSpotStrike == null ? "NIFTY current guide unavailable" : `dotted NIFTY current ${number(spot)} · nearest strike ${nearestSpotStrike.toLocaleString("en-IN")}`}</p><div className={css.axisContext} data-testid="v2-deltaoi-axis-context"><span><b>Y · right</b> Strike · CE ΔOI · PE ΔOI</span><span><b>X</b> −{formatOiAxisValue(deltaMaximum)} ← 0 → +{formatOiAxisValue(deltaMaximum)}</span></div>{deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.stateCard} data-testid="v2-deltaoi-state"><div><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts · missing is not zero</span><small>Horizontal ΔOI bars appear when a comparable baseline exists.</small></div></div> : <><p data-testid="v2-deltaoi-state">{deltaState.state === "partial" ? `Partial coverage · ${deltaState.comparable}/${deltaState.total} comparable` : `Comparable · ${deltaState.comparable}/${deltaState.total}`}</p><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Change in OI by strike; CE blue and PE yellow horizontal bars; positive right and negative left; right Y axis shows strike and exact signed change; X axis is symmetric signed change in provider units; dotted horizontal guide shows NIFTY current value at the nearest listed strike" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></>}</article>
         <article className={css.analyticCard}><h3>PCR context</h3><p>Observed-scope OI PCR · snapshot, not an intraday trend</p><div className={css.stateCard}><div><strong className={css.pcrValue}>{pcr == null ? "—" : pcr.toFixed(2)}</strong><span>{tradingDay || "Current observation"} · {pcr == null ? "eligible CE/PE cohort unavailable" : "one retained snapshot"}</span></div></div></article>
         <article className={css.analyticCard}><h3>Max-pain payout distribution</h3><p>Common-unit estimate; hypothetical settlement, not a forecast · {spot == null || nearestSpotStrike == null ? "NIFTY current guide unavailable" : `dotted NIFTY current ${number(spot)} · nearest settlement strike ${nearestSpotStrike.toLocaleString("en-IN")}`}</p><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Max-pain payout distribution; dotted vertical guide shows NIFTY current value at the nearest settlement strike" axisExtentPolicy="native" option={analyticOptions[2]} activeCategoryIndex={hoveredPayoutIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : maxPain.points[index]?.settlement ?? null)} /></Suspense></article>
+        <article className={`${css.analyticCard} ${css.analyticCardWide}`} data-testid="v2-cumulative-oi-time"><h3>Cumulative OI vs timestamp</h3><p>Each point sums all strikes captured in that snapshot · blue CE / yellow PE · provider-native OI · not a running total across time · {cumulativeOiPoints.length} timestamps · {cumulativeOiComplete}/{cumulativeOiPoints.length} complete · strikes per snapshot {cumulativeStrikeCounts.length ? cumulativeStrikeCounts.join("–") : "unavailable"}</p><div className={css.axisContext}><span><b>Y</b> Summed open interest · captured strike cohort</span><span><b>X</b> Snapshot timestamp · IST</span></div>{cumulativeOiPoints.length === 0 ? <div className={css.stateCard} data-testid="v2-cumulative-oi-state"><div><strong>OI history unavailable</strong><span>No retained option-chain snapshots exist for this session and expiry.</span><small>No line is manufactured from the latest value.</small></div></div> : <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.cumulativeOiChart} ariaLabel="Cumulative open interest over timestamp; blue line is summed CE open interest and yellow line is summed PE open interest across every strike captured in each snapshot" axisExtentPolicy="native" option={cumulativeOiOption} /></Suspense>}</article>
       </div>
     </section>
     <details><summary>Indicator evidence</summary><p>Underlying RSI14 and MACD are calculated from retained completed bars before the selected day is sliced for display.</p><table className={css.snapshotGrid}><thead><tr><th>End</th><th>RSI14</th><th>MACD</th><th>Signal</th></tr></thead><tbody>{indicators.filter((row) => istDay(row.time) === tradingDay).slice(-20).map((row) => <tr key={row.time}><td>{row.time}</td><td>{row.rsi?.toFixed(2) ?? "—"}</td><td>{row.macd?.toFixed(4) ?? "—"}</td><td>{row.signal?.toFixed(4) ?? "—"}</td></tr>)}</tbody></table></details>

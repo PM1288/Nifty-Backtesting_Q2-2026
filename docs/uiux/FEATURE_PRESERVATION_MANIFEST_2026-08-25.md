@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Scalper V2 cumulative OI time chart: the existing V2 analytics area
+adds a full-width timestamp chart whose blue CE and yellow PE lines separately
+sum every strike retained in each canonical option-chain snapshot. Coverage,
+unit and captured-window scope are explicit; incomplete sides remain missing,
+and the cross-strike sum is not presented as a temporal running total or a full
+exchange-chain claim. The additive API evidence remains in JSON export. V1,
+V7, A-open/B-close, exact contracts, collectors and order permissions are
+unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_CUMULATIVE_OI_TIME_20260911.md`.
+
 2026-09-11 Scalper V2 bottom-chart NIFTY context: OI by strike and max-pain
 payout now show a dotted vertical guide at the nearest plotted strike, labelled
 with the exact current NIFTY value. The horizontal Delta OI chart shows the same

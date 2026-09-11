@@ -30,6 +30,13 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
           { exchange: "NFO", symbol_token: "pe-token", tradingsymbol: "NIFTY15SEP2623400PE", expiry: "2026-09-15", strike: 23400 },
         ];
       }
+      if (sql.includes("ALL_STRIKES_CAPTURED_PER_SNAPSHOT") || (sql.includes("sum(l.open_interest)") && sql.includes("option_chain_snapshots s"))) {
+        return [{
+          snapshot_id: "91", captured_at: "2026-09-10T09:55:00.000Z", source: "fixture", strikes_around: 6,
+          strike_count: 13, ce_contract_count: 13, ce_observed_count: 13, ce_oi: "1300",
+          pe_contract_count: 13, pe_observed_count: 13, pe_oi: "1170",
+        }];
+      }
       return [];
     },
   } as unknown as PrismaClient;
@@ -39,12 +46,23 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
   try {
     const response = await fetch(`${base}/v1/trading-analytics/charts?asOf=2026-09-10T10:00:00Z&expiry=2026-09-15&ceStrike=23500&peStrike=23400`);
     assert.equal(response.status, 200);
-    const body = await response.json() as { panes: Array<{ identity: { tradingsymbol: string; strike?: number } }>; availableContracts: Array<{ strike: number; ce_contracts: number; pe_contracts: number }> };
+    const body = await response.json() as {
+      panes: Array<{ identity: { tradingsymbol: string; strike?: number } }>;
+      availableContracts: Array<{ strike: number; ce_contracts: number; pe_contracts: number }>;
+      cumulativeOiHistory: { scope: string; unit: string; points: Array<{ capturedAt: string; strikeCount: number; ceOi: number; peOi: number; state: string }> };
+    };
     assert.deepEqual(body.panes.slice(1).map((pane) => [pane.identity.tradingsymbol, pane.identity.strike]), [
       ["NIFTY15SEP2623500CE", 23500],
       ["NIFTY15SEP2623400PE", 23400],
     ]);
     assert.equal(body.availableContracts.length, 2);
+    assert.equal(body.cumulativeOiHistory.scope, "ALL_STRIKES_CAPTURED_PER_SNAPSHOT");
+    assert.equal(body.cumulativeOiHistory.unit, "provider_native_oi");
+    assert.deepEqual(body.cumulativeOiHistory.points[0], {
+      snapshotId: "91", capturedAt: "2026-09-10T09:55:00.000Z", source: "fixture", strikesAround: 6,
+      strikeCount: 13, ceContractCount: 13, ceObservedCount: 13, ceOi: 1300,
+      peContractCount: 13, peObservedCount: 13, peOi: 1170, state: "COMPLETE",
+    });
     const contractRead = calls.find((call) => call.sql.includes("strike=$3::numeric") && call.sql.includes("strike=$4::numeric"));
     assert.deepEqual(contractRead?.args.slice(2, 4), [23500, 23400]);
   } finally {

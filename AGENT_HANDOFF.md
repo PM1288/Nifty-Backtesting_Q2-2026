@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Scalper V2 cumulative OI versus timestamp
+
+- Added a full-width fifth analytics chart to existing `view=scalper_v2`:
+  timestamp in IST on X, summed provider-native OI on Y, cumulative CE OI in
+  blue and cumulative PE OI in yellow.
+- The read-only charts API now supplies per-snapshot sums across every captured
+  strike with contract/observation counts, source, scope and missingness. This
+  is explicitly a cross-strike sum per timestamp, not a temporal running total
+  or complete-exchange-chain claim.
+- Web 148/148 and API 196/196 tests, both typechecks/builds, authenticated
+  Chromium 15/15 and visual inspection pass. Verified retained data contained
+  192 complete timestamps and 13 strikes per snapshot for the selected session.
+  Production was not changed. Full report:
+  `docs/trading-analytics/SCALPER_V2_CUMULATIVE_OI_TIME_20260911.md`.
+
 ## 2026-09-11 — Scalper V2 bottom-chart NIFTY current guides
 
 - OI by strike and max-pain payout now render a dotted vertical line at the

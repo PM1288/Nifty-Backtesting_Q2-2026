@@ -573,8 +573,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         },
         ...contracts,
       ];
-      const panes = await Promise.all(
-        identities.map(async (identity) => {
+      const [panes, cumulativeOiRows] = await Promise.all([
+        Promise.all(identities.map(async (identity) => {
           const minutes = await prisma.$queryRawUnsafe<Facts[]>(
             `SELECT DISTINCT ON (ts) ts,created_at,open::float8,high::float8,low::float8,close::float8,volume::text,oi::text,source
              FROM bars_1m WHERE exchange=$2 AND symbol_token=$3
@@ -602,8 +602,49 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
             sourceMinuteCount: minutes.length,
             oiHistory: sessionAlignedOi(rawOi,sessions,q.data.interval,asOf),
           };
-        }),
-      );
+        })),
+        q.data.expiry
+          ? prisma.$queryRawUnsafe<Facts[]>(
+              `SELECT s.id::text snapshot_id,
+                      s.captured_at,
+                      s.source,
+                      s.strikes_around,
+                      count(DISTINCT l.strike)::int strike_count,
+                      count(*) FILTER (WHERE l.option_type='CE')::int ce_contract_count,
+                      count(l.open_interest) FILTER (WHERE l.option_type='CE')::int ce_observed_count,
+                      CASE WHEN count(*) FILTER (WHERE l.option_type='CE') > 0
+                                  AND count(l.open_interest) FILTER (WHERE l.option_type='CE') = count(*) FILTER (WHERE l.option_type='CE')
+                           THEN (sum(l.open_interest) FILTER (WHERE l.option_type='CE'))::text ELSE NULL END ce_oi,
+                      count(*) FILTER (WHERE l.option_type='PE')::int pe_contract_count,
+                      count(l.open_interest) FILTER (WHERE l.option_type='PE')::int pe_observed_count,
+                      CASE WHEN count(*) FILTER (WHERE l.option_type='PE') > 0
+                                  AND count(l.open_interest) FILTER (WHERE l.option_type='PE') = count(*) FILTER (WHERE l.option_type='PE')
+                           THEN (sum(l.open_interest) FILTER (WHERE l.option_type='PE'))::text ELSE NULL END pe_oi
+               FROM option_chain_snapshots s
+               JOIN option_chain_legs l ON l.snapshot_id=s.id
+               WHERE s.symbol=$3 AND s.expiry_date=$2::date
+                 AND s.captured_at BETWEEN $1::timestamptz-make_interval(days=>$4::int) AND $1::timestamptz
+               GROUP BY s.id,s.captured_at,s.source,s.strikes_around
+               ORDER BY s.captured_at
+               LIMIT 5000`,
+              asOf,q.data.expiry,underlying.symbol,q.data.historyDays,
+            )
+          : Promise.resolve([] as Facts[]),
+      ]);
+      const cumulativeOiHistory = cumulativeOiRows.map((row) => ({
+        snapshotId: String(row.snapshot_id),
+        capturedAt: new Date(String(row.captured_at)).toISOString(),
+        source: row.source,
+        strikesAround: numeric(row.strikes_around),
+        strikeCount: numeric(row.strike_count),
+        ceContractCount: numeric(row.ce_contract_count),
+        ceObservedCount: numeric(row.ce_observed_count),
+        ceOi: numeric(row.ce_oi),
+        peContractCount: numeric(row.pe_contract_count),
+        peObservedCount: numeric(row.pe_observed_count),
+        peOi: numeric(row.pe_oi),
+        state: numeric(row.ce_oi) == null || numeric(row.pe_oi) == null ? "PARTIAL" : "COMPLETE",
+      }));
       return res.json({
         version: VERSION,
         asOf,
@@ -617,6 +658,16 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         underlying,
         availableContracts,
         panes,
+        cumulativeOiHistory: {
+          expiry: q.data.expiry ?? null,
+          unit: "provider_native_oi",
+          scope: "ALL_STRIKES_CAPTURED_PER_SNAPSHOT",
+          points: cumulativeOiHistory,
+          limitations: [
+            "Each timestamp sums every strike retained in that captured option-chain snapshot; it is not a temporal running total.",
+            "The captured strike window may change with the underlying and is not claimed to be the complete exchange expiry chain.",
+          ],
+        },
         state: "PREVIEW_UNAPPROVED",
         limitations: [
           "Calendar rows are date-effective retained session boundaries; segment/security phase provenance remains explicit in the calendar payload.",

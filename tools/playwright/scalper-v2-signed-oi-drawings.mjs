@@ -50,6 +50,13 @@ try {
   check("Delta OI chart declares strike-axis NIFTY current guide", deltaOiCardText.includes("dotted NIFTY current") && deltaOiCardText.includes("nearest strike"), deltaOiCardText);
   check("Max-pain chart declares dotted NIFTY current guide", payoutCardText.includes("dotted NIFTY current") && payoutCardText.includes("nearest settlement strike"), payoutCardText);
 
+  const cumulativeOi = page.getByTestId("v2-cumulative-oi-time");
+  await cumulativeOi.waitFor({ state: "visible" });
+  const cumulativeText = await cumulativeOi.innerText();
+  check("Cumulative OI chart declares timestamp and summed-strike scope", cumulativeText.includes("Cumulative OI vs timestamp") && cumulativeText.includes("all strikes captured") && cumulativeText.includes("not a running total across time"), cumulativeText);
+  check("Cumulative OI chart exposes CE and PE identity", cumulativeText.includes("blue CE / yellow PE"), cumulativeText);
+  check("Cumulative OI chart renders retained history", !cumulativeText.includes("OI history unavailable") && await cumulativeOi.locator("canvas").count() > 0, cumulativeText);
+
   const body = page.getByTestId("v2-chart-body-underlying");
   await page.waitForTimeout(1_000);
   const geometry = await body.evaluate((element) => ({

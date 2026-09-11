@@ -116,6 +116,12 @@ export function createFiiReportsClient(options?: {
         body: JSON.stringify(payload)
       });
     },
+    pullLatestFovolt(payload: FiiReportsLatestPullRequest) {
+      return requestJson<FiiReportsRunResponse>("/fovolt/pull-latest", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+    },
     backfill(payload: FiiReportsBackfillRequest) {
       return requestJson<FiiReportsRunResponse>("/backfill", {
         method: "POST",

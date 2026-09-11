@@ -1,6 +1,7 @@
 # NSE FII Reports Service
 
-Single-service wrapper for NSE daily F&O participant and FII derivatives reports.
+Single-service wrapper for NSE daily F&O participant, FII derivatives and the
+independently published F&O Daily Volatility (FOVOLT) report.
 
 The production container runs an idempotent morning publish at `06:00
 Asia/Kolkata` by default. It downloads the latest complete official report set,
@@ -30,6 +31,7 @@ This service integrates the upstream `nse_fii_services` pack into the main tradi
 - `F&O - Participant wise Open Interest(csv)`
 - `F&O - Participant wise Trading Volumes(csv)`
 - `F&O - FII Derivatives Statistics`
+- `F&O - Daily Volatility` (independent family; its absence cannot roll back the original bundle)
 
 ## API
 
@@ -40,6 +42,7 @@ This service integrates the upstream `nse_fii_services` pack into the main tradi
 - `POST /pull-latest`
 - `POST /backfill`
 - `POST /load`
+- `POST /fovolt/pull-latest`
 
 ## CLI
 
@@ -90,9 +93,14 @@ data/
 - `POSTGRES_SCHEMA`
 - `POSTGRES_AUDIT_SCHEMA`
 - `TRUNCATE_TABLES_ON_LOAD`
+- `FOVOLT_PULL_ENABLED` (defaults to `true` for environment-configured service runs)
 
 ## Notes
 
 - These are daily post-close NSE reports, not streaming intraday data.
 - The `.xls` FII statistics report needs `xlrd`.
 - Raw files are retained even when parsing fails.
+- FOVOLT keeps immutable content revisions and uses the exact rule
+  `FOVOLT_FUT_DAILY_DELTA_GT_0001_V1`: reported current futures daily
+  volatility minus reported previous futures daily volatility is strictly
+  greater than `0.0001`.

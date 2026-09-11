@@ -10,7 +10,7 @@ from typing import Any
 import pandas as pd
 
 from .client import DownloadedReport, NSEFIIReportsClient, NSEReportNotFound
-from .endpoints import REPORT_SPECS, iter_business_dates, parse_trade_date
+from .endpoints import CORE_REPORT_KEYS, iter_business_dates, parse_trade_date
 from .parsers import parse_fii_stats_excel, parse_participant_csv
 
 LOGGER = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class HistoryBackfillService:
             if save_parsed:
                 parsed_dir.mkdir(parents=True, exist_ok=True)
 
-            for report_key in REPORT_SPECS:
+            for report_key in CORE_REPORT_KEYS:
                 try:
                     report = self.client.fetch_report(report_key, trade_dt)
                 except Exception as exc:
@@ -96,7 +96,7 @@ class HistoryBackfillService:
             "start_date": start_dt.strftime("%d-%m-%Y"),
             "end_date": end_dt.strftime("%d-%m-%Y"),
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
-            "reports_expected_per_day": len(REPORT_SPECS),
+            "reports_expected_per_day": len(CORE_REPORT_KEYS),
             "reports_downloaded": int(len(manifest_df)),
             "reports_missing": int(len(missing_df)),
             "dates_touched": int(sum(1 for _ in iter_business_dates(start_dt, end_dt))),

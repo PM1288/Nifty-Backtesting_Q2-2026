@@ -130,6 +130,23 @@ export function registerFiiReports(
     }
   });
 
+  app.post("/v1/fii-reports/fovolt/latest", async (req, res) => {
+    const parsed = latestRequestSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: {
+          code: "FOVOLT_LATEST_INVALID_REQUEST",
+          message: parsed.error.issues.map((issue) => issue.message).join("; ")
+        }
+      });
+    }
+    try {
+      return res.json(await client.pullLatestFovolt(parsed.data as FiiReportsLatestPullRequest));
+    } catch (error) {
+      return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FOVOLT_LATEST_FAILED", error));
+    }
+  });
+
   app.post("/v1/fii-reports/backfill", async (req, res) => {
     const parsed = backfillRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {

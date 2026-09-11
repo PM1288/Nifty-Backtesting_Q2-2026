@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from datetime import datetime
 
-from nse_fii_services.endpoints import REPORT_SPECS, iter_business_dates, parse_trade_date
+from nse_fii_services.endpoints import CORE_REPORT_KEYS, REPORT_SPECS, iter_business_dates, parse_trade_date
 
 
 class EndpointsTest(unittest.TestCase):
@@ -38,6 +38,15 @@ class EndpointsTest(unittest.TestCase):
         self.assertIn("date=02-Apr-2026", url)
         self.assertIn("F%26O%20-%20Participant%20wise%20Open%20Interest%28csv%29", url)
         self.assertIn("mode=single", url)
+
+    def test_fovolt_is_independent_from_core_bundle(self) -> None:
+        trade_dt = parse_trade_date("10-09-2026")
+        self.assertNotIn("fovolt", CORE_REPORT_KEYS)
+        self.assertEqual(
+            REPORT_SPECS["fovolt"].archive_urls(trade_dt)[0],
+            "https://nsearchives.nseindia.com/archives/nsccl/volt/FOVOLT_10092026.csv",
+        )
+        self.assertIn("F%26O%20-%20Daily%20Volatility", REPORT_SPECS["fovolt"].reports_api_url(trade_dt))
 
     def test_iter_business_dates_skips_weekends(self) -> None:
         start = parse_trade_date("03-04-2026")  # Friday

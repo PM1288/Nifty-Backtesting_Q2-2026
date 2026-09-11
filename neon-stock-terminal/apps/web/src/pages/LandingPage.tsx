@@ -22,6 +22,7 @@ import { PerformanceDebugPanel } from "../analytics/PerformanceDebugPanel";
 import type { AnalyticsParams } from "../analytics/types";
 import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
 import { StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
+import { FuturesVolatilityPreview } from "../components/FuturesVolatilityPreview";
 
 function mergeQuote<T extends Quote>(
   quote: T,
@@ -562,6 +563,8 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      <FuturesVolatilityPreview />
 
       {q.data.derivatives.anomalies.length ? (
         <section className={styles.anomalyFlash} data-analytics-section="home_fno_anomaly_flash" aria-label={tr("Live F&O anomalies")}>

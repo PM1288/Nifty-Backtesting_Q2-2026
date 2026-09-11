@@ -71,7 +71,20 @@ REPORT_SPECS: dict[str, ReportSpec] = {
         ),
         reports_api_name="F&O - FII Derivatives Statistics",
     ),
+    "fovolt": ReportSpec(
+        key="fovolt",
+        file_ext="csv",
+        archive_paths=(
+            "https://nsearchives.nseindia.com/archives/nsccl/volt/FOVOLT_{date}.csv",
+            "https://archives.nseindia.com/archives/nsccl/volt/FOVOLT_{date}.csv",
+        ),
+        reports_api_name="F&O - Daily Volatility",
+    ),
 }
+
+# FOVOLT is published independently and must never make the original daily
+# participant/FII bundle fall back to an older date.
+CORE_REPORT_KEYS = ("participant_oi", "participant_volume", "fii_stats")
 
 
 def parse_trade_date(trade_date: str | datetime) -> datetime:

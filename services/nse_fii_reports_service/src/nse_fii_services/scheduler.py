@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from .config import Settings
 from .orchestrator import load_run, run_latest_pull
+from .fovolt_service import FovoltDailyService, load_fovolt_result
 
 
 LOGGER = logging.getLogger(__name__)
@@ -48,6 +49,9 @@ class AutoPullScheduler:
         self.last_trade_date: str | None = None
         self.last_error: str | None = None
         self.next_run_at: str | None = None
+        self.fovolt_last_success_at: str | None = None
+        self.fovolt_last_report_date: str | None = None
+        self.fovolt_last_error: str | None = None
 
     @property
     def running(self) -> bool:
@@ -120,6 +124,21 @@ class AutoPullScheduler:
                     LOGGER.info("NSE FII morning refresh skipped because another worker holds the lock")
                     return True
                 try:
+                    if self.settings.fovolt_pull_enabled:
+                        try:
+                            fovolt = FovoltDailyService(output_root=self.settings.fovolt_daily_root).pull_latest(
+                                max_lookback_days=self.settings.auto_pull_max_lookback_days,
+                            )
+                            if self.settings.auto_load_enabled:
+                                load_fovolt_result(conn, fovolt)
+                            self.fovolt_last_report_date = fovolt.report.trade_date
+                            self.fovolt_last_success_at = datetime.now(IST).isoformat()
+                            self.fovolt_last_error = None
+                        except Exception as exc:
+                            # Independent family: its failure must not block or
+                            # change the date selected for the original bundle.
+                            self.fovolt_last_error = type(exc).__name__
+                            LOGGER.exception("Independent FOVOLT pull/load failed")
                     payload = run_latest_pull(
                         self.settings,
                         max_lookback_days=self.settings.auto_pull_max_lookback_days,

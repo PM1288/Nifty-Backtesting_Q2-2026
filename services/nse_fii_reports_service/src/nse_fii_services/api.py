@@ -10,6 +10,7 @@ from .config import Settings
 from .logging_utils import configure_logging
 from .orchestrator import get_run_detail, list_runs, load_run, read_latest_metadata, run_backfill, run_latest_pull
 from .scheduler import AutoPullScheduler
+from .fovolt_service import FovoltDailyService, load_fovolt_result
 
 
 class PullLatestRequest(BaseModel):
@@ -64,6 +65,10 @@ def health() -> dict[str, Any]:
         "last_trade_date": scheduler.last_trade_date,
         "last_error": scheduler.last_error,
         "next_run_at": scheduler.next_run_at,
+        "fovolt_enabled": settings.fovolt_pull_enabled,
+        "fovolt_last_success_at": scheduler.fovolt_last_success_at,
+        "fovolt_last_report_date": scheduler.fovolt_last_report_date,
+        "fovolt_last_error": scheduler.fovolt_last_error,
     }
 
 
@@ -131,6 +136,34 @@ def load(request: LoadRequest) -> dict[str, Any]:
             run_id=request.run_id,
             truncate_tables_on_load=request.truncate_tables_on_load,
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/fovolt/pull-latest")
+def pull_latest_fovolt(request: PullLatestRequest) -> dict[str, Any]:
+    """Authorised server-side FOVOLT refresh, independent of the core report bundle."""
+    try:
+        result = FovoltDailyService(output_root=settings.fovolt_daily_root).pull_latest(
+            as_of_date=request.as_of_date,
+            max_lookback_days=request.max_lookback_days,
+        )
+        payload: dict[str, Any] = {
+            "report_date": result.report.trade_date,
+            "revision_id": result.revision_id,
+            "row_count": len(result.rows),
+            "matched_count": sum(row["rule_match"] is True for row in result.rows),
+            "manifest_path": str(result.manifest_path),
+        }
+        if settings.auto_load_enabled:
+            import psycopg2
+            with psycopg2.connect(settings.postgres_dsn) as conn:
+                payload["load"] = load_fovolt_result(conn, result)
+        return payload
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except FileNotFoundError as exc:

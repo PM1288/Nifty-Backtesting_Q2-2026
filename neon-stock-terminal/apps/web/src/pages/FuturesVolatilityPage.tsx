@@ -1,0 +1,49 @@
+import { useEffect, useMemo, useState } from "react";
+import { Download, RefreshCw } from "lucide-react";
+import { fetchFuturesVolatilityScreener, type FuturesVolatilityRow, type FuturesVolatilityScreener } from "../lib/api";
+import styles from "./FuturesVolatilityPage.module.css";
+
+const exact = (value: string | null) => value ?? "—";
+const number = (value: string | null, digits = 2) => value == null ? "—" : Number(value).toLocaleString("en-IN", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+const pct = (value: string | null) => value == null ? "—" : `${Number(value) >= 0 ? "+" : ""}${number(value)}%`;
+const volPct = (value: string | null) => value == null ? "—" : `${number(String(Number(value) * 100), 4)}%`;
+const tone = (value: string | null) => value == null || Number(value) === 0 ? "neutral" : Number(value) > 0 ? "positive" : "negative";
+
+function download(name: string, body: string, type: string) {
+  const url = URL.createObjectURL(new Blob([body], { type }));
+  const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url);
+}
+const exactNumericText = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+function csvCell(value: unknown) {
+  const raw = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+  // Preserve signed exact decimal evidence while preventing spreadsheet formula execution in text fields.
+  const text = /^[=+\-@]/.test(raw) && !exactNumericText.test(raw) ? `'${raw}` : raw;
+  return `"${text.replaceAll('"', '""')}"`;
+}
+function exportCsv(rows: FuturesVolatilityRow[]) {
+  const columns = rows.length ? Object.keys(rows[0]) as Array<keyof FuturesVolatilityRow> : [];
+  return [columns.map(csvCell).join(","), ...rows.map(row => columns.map(column => csvCell(row[column])).join(","))].join("\n");
+}
+
+export function FuturesVolatilityPage() {
+  const [data, setData] = useState<FuturesVolatilityScreener | null>(null);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [scope, setScope] = useState<"stocks" | "indices" | "all">("stocks");
+  const [matchesOnly, setMatchesOnly] = useState(true);
+  const [selected, setSelected] = useState<FuturesVolatilityRow | null>(null);
+  const load = () => fetchFuturesVolatilityScreener({ scope, matchesOnly }).then(value => { setData(value); setSelected(current => value.rows.find(row => row.symbol === current?.symbol) ?? value.rows[0] ?? null); setError(""); }).catch(reason => setError(reason instanceof Error ? reason.message : String(reason)));
+  useEffect(() => { void load(); }, [scope, matchesOnly]);
+  const rows = useMemo(() => (data?.rows ?? []).filter(row => !query || row.symbol.toLowerCase().includes(query.toLowerCase())), [data, query]);
+  const run = data?.run ?? {};
+  return <main className={styles.page} data-testid="futures-volatility-page">
+    <header className={styles.hero}><div><span>Read-only NSE report evidence</span><h1>Futures Volatility Screener</h1><p>Reported physical FOVOLT futures daily volatility: current K minus previous J, strictly greater than 0.0001.</p></div><div className={styles.actions}><button onClick={load}><RefreshCw size={15}/>Refresh</button><button disabled={!data} onClick={() => data && download("futures-volatility-screener.json", JSON.stringify(data, null, 2), "application/json")}><Download size={15}/>JSON</button><button disabled={!rows.length} onClick={() => download("futures-volatility-screener.csv", exportCsv(rows), "text/csv;charset=utf-8")}><Download size={15}/>CSV</button></div></header>
+    {error ? <div className={styles.error}>FOVOLT evidence unavailable: {error}</div> : null}
+    <section className={styles.context}><strong>Report {String(run.report_date ?? "not ready")} → Evaluation {String(run.analysis_session ?? "unresolved")}</strong><span>Rule {data?.ruleVersion ?? "FOVOLT_FUT_DAILY_DELTA_GT_0001_V1"}</span><span>Threshold &gt; 1.0000 bp</span><span>{String(run.timing_mode ?? "Source timing unavailable")}</span></section>
+    <section className={styles.metrics}><article><span>Qualifying rows</span><b>{data?.counts.matched ?? "—"}</b></article><article><span>Source rows</span><b>{data?.counts.sourceRows ?? "—"}</b></article><article><span>Displayed</span><b>{rows.length}</b></article><article><span>Final outcomes</span><b>{data?.counts.priceCovered ?? "—"}</b></article></section>
+    <section className={styles.panel}><div className={styles.filters}><input aria-label="Filter symbol" placeholder="Filter symbol" value={query} onChange={event => setQuery(event.target.value)} /><select value={scope} onChange={event => setScope(event.target.value as typeof scope)}><option value="stocks">Stocks</option><option value="indices">Indices</option><option value="all">All report rows</option></select><label><input type="checkbox" checked={matchesOnly} onChange={event => setMatchesOnly(event.target.checked)} /> Matches only</label></div>
+      {data?.readiness === "REPORT_NOT_READY" ? <div className={styles.empty}>Report not ready. No zero-match claim has been made.</div> : <div className={styles.tableWrap}><table><thead><tr><th rowSpan={2}>Rank / stock</th><th colSpan={3}>Selection from report R</th><th colSpan={5}>Prices on session T</th><th colSpan={3}>Outcomes on T</th><th rowSpan={2}>Status</th></tr><tr><th>Δ vol bp</th><th>Previous vol</th><th>Current vol</th><th>Prev close</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Open→Close</th><th>Prev close→Close</th><th>Range</th></tr></thead><tbody>{rows.map(row => <tr key={`${row.sourceRevisionId}:${row.sourceCsvLine}`} data-selected={selected?.symbol === row.symbol} onClick={() => setSelected(row)}><td><b>#{row.matchRank ?? row.rankInValidReport ?? "—"} {row.symbol}</b><small>{row.qualifies ? "Matched" : row.screenState}</small></td><td className={styles.delta} data-tone={tone(row.deltaBasisPoints)}>{number(row.deltaBasisPoints, 4)}</td><td>{volPct(row.previousFuturesDailyVol)}</td><td>{volPct(row.currentFuturesDailyVol)}</td><td>{number(row.targetPreviousClose)}</td><td>{number(row.targetOpen)}</td><td>{number(row.targetHigh)}</td><td>{number(row.targetLow)}</td><td>{number(row.targetClose)}</td><td data-tone={tone(row.openCloseChangePct)}>{pct(row.openCloseChangePct)}</td><td data-tone={tone(row.previousCloseChangePct)}>{pct(row.previousCloseChangePct)}</td><td>{row.lowHighRangePct == null ? "—" : `${number(row.lowHighRangePct)}%`}</td><td>{row.outcomeState.replaceAll("_", " ")}</td></tr>)}</tbody></table></div>}
+    </section>
+    {selected ? <section className={styles.inspector}><header><div><span>Selected source row</span><h2>{selected.symbol}</h2></div><strong>{selected.qualifies ? "MATCHED" : selected.screenState}</strong></header><div className={styles.inspectorGrid}><div><span>Exact delta raw</span><b>{exact(selected.deltaRaw)}</b></div><div><span>Exact delta bp</span><b>{exact(selected.deltaBasisPoints)}</b></div><div><span>Source revision</span><code>{selected.sourceRevisionId}</code></div><div><span>Mapping</span><b>{selected.mappingState.replaceAll("_", " ")}</b></div><div><span>Report underlying close</span><b>{exact(selected.reportUnderlyingClose)}</b></div><div><span>Report futures close</span><b>{exact(selected.reportFuturesClose)}</b></div></div><details><summary>All 16 physical source fields</summary><pre>{JSON.stringify(selected.rawFields, null, 2)}</pre></details></section> : null}
+  </main>;
+}

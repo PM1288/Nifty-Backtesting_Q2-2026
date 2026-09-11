@@ -22,6 +22,7 @@ export type WorkspaceRouteId =
   | "oiis-lab"
   | "rolling-monthly"
   | "monthly-strategy"
+  | "scalper-dashboard"
   | "trendlyne-summary"
   | "long-options"
   | "nifty-weekly-options"
@@ -79,6 +80,13 @@ export const STRATEGY_MENU_ROUTES = [
     description: "Monthly Close, Monthly Open, expiry and first-session entries",
     path: "/strategy/monthly",
     icon: CalendarRange,
+  },
+  {
+    id: "scalper-dashboard",
+    label: "Scalper Dashboard",
+    description: "Current-month stock screener with daily, weekly and monthly anchors",
+    path: "/strategy/scalper-dashboard",
+    icon: BarChart3,
   },
   {
     id: "rolling-monthly",
@@ -143,6 +151,7 @@ const strategyHeaderOrder = [
   ["oiss-v1-202608", "LIVE & CURRENT"],
   ["trendlyne-summary", "RESEARCH"],
   ["monthly-strategy", "RESEARCH"],
+  ["scalper-dashboard", "RESEARCH"],
   ["rolling-monthly", "RESEARCH"],
   ["nifty-context", "RESEARCH"],
   ["long-options", "DERIVATIVE STRATEGIES"],
@@ -224,6 +233,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     match: (pathname) =>
       (pathname.startsWith("/strategy/") &&
         !pathname.startsWith("/strategy/monthly") &&
+        !pathname.startsWith("/strategy/scalper-dashboard") &&
         !pathname.startsWith("/strategy/rolling-monthly") &&
         !pathname.startsWith("/strategy/trendlyne-summary") &&
         !pathname.startsWith("/strategy/long-options") &&
@@ -260,6 +270,18 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     primaryMobile: false,
     parentId: "oiis-lab",
     match: (pathname) => pathname.startsWith("/strategy/monthly"),
+  },
+  {
+    id: "scalper-dashboard",
+    label: "Scalper Dashboard",
+    compactLabel: "Scalper",
+    description: "Current-month daily, weekly and monthly stock filter",
+    path: "/strategy/scalper-dashboard",
+    icon: BarChart3,
+    primaryDesktop: false,
+    primaryMobile: false,
+    parentId: "oiis-lab",
+    match: (pathname) => pathname.startsWith("/strategy/scalper-dashboard"),
   },
   {
     id: "rolling-monthly",

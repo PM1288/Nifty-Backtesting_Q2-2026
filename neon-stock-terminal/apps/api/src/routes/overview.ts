@@ -92,15 +92,65 @@ type SectorGroup = { sector: string; stocks: Quote[] };
 
 export type ScalperProgressionRow = {
   symbol: string;
+  companyName: string;
+  sector: string;
   currentValue: number | null;
   todayOpen: number | null;
+  todayClose: number | null;
+  previousDayOpen: number | null;
+  previousDayClose: number | null;
   currentWeekOpen: number | null;
+  currentWeekClose: number | null;
   previousWeekOpen: number | null;
+  previousWeekClose: number | null;
+  twoWeeksAgoOpen: number | null;
+  twoWeeksAgoClose: number | null;
   currentMonthOpen: number | null;
+  currentMonthClose: number | null;
+  previousMonthOpen: number | null;
   previousMonthClose: number | null;
+  twoMonthsAgoOpen: number | null;
   twoMonthsAgoClose: number | null;
+  historyThrough: string | null;
   observedAt: string | null;
+  conditions: ScalperScreenerCondition[];
+  passedConditionCount: number;
+  availableConditionCount: number;
 };
+
+export type ScalperScreenerCondition = {
+  code: "M2_RED" | "M1_GREEN" | "D0_OPEN_ABOVE_W0_OPEN" | "D0_OPEN_ABOVE_W1_OPEN" | "D0_OPEN_ABOVE_D1_OPEN";
+  label: string;
+  left: number | null;
+  operator: "<" | ">";
+  right: number | null;
+  state: "PASS" | "FAIL" | "UNAVAILABLE";
+};
+
+function scalperCondition(
+  code: ScalperScreenerCondition["code"],
+  label: string,
+  left: number | null,
+  operator: ScalperScreenerCondition["operator"],
+  right: number | null,
+): ScalperScreenerCondition {
+  const state = left == null || right == null
+    ? "UNAVAILABLE"
+    : operator === ">"
+      ? left > right ? "PASS" : "FAIL"
+      : left < right ? "PASS" : "FAIL";
+  return { code, label, left, operator, right, state };
+}
+
+export function buildScalperScreenerConditions(row: Omit<ScalperProgressionRow, "conditions" | "passedConditionCount" | "availableConditionCount">): ScalperScreenerCondition[] {
+  return [
+    scalperCondition("M2_RED", "Two months ago close < open", row.twoMonthsAgoClose, "<", row.twoMonthsAgoOpen),
+    scalperCondition("M1_GREEN", "Previous-month close > previous-month open", row.previousMonthClose, ">", row.previousMonthOpen),
+    scalperCondition("D0_OPEN_ABOVE_W0_OPEN", "Today open > current-week open", row.todayOpen, ">", row.currentWeekOpen),
+    scalperCondition("D0_OPEN_ABOVE_W1_OPEN", "Today open > previous-week open", row.todayOpen, ">", row.previousWeekOpen),
+    scalperCondition("D0_OPEN_ABOVE_D1_OPEN", "Today open > previous-day open", row.todayOpen, ">", row.previousDayOpen),
+  ];
+}
 
 type OverviewPayload = {
   asOf: string;
@@ -1193,25 +1243,39 @@ export async function getOverview(prisma: PrismaClient): Promise<OverviewPayload
 export async function getScalperProgression(prisma: PrismaClient) {
   const rows = await prisma.$queryRaw<Array<{
     symbol: string;
+    company_name: string;
+    sector: string;
     current_value: number | string | null;
     today_open: number | string | null;
+    today_close: number | string | null;
+    previous_day_open: number | string | null;
+    previous_day_close: number | string | null;
     current_week_open: number | string | null;
+    current_week_close: number | string | null;
     previous_week_open: number | string | null;
+    previous_week_close: number | string | null;
+    two_weeks_ago_open: number | string | null;
+    two_weeks_ago_close: number | string | null;
     current_month_open: number | string | null;
+    current_month_close: number | string | null;
+    previous_month_open: number | string | null;
     previous_month_close: number | string | null;
+    two_months_ago_open: number | string | null;
     two_months_ago_close: number | string | null;
+    history_through: Date | string | null;
     observed_at: Date | string | null;
   }>>(Prisma.sql`
     WITH clock AS (
       SELECT (NOW() AT TIME ZONE 'Asia/Kolkata')::date AS today
     ),
     fno_underlyings AS (
-      SELECT DISTINCT UPPER(TRIM(i.name)) AS symbol
-      FROM instruments i
-      WHERE i.exchange = 'NFO'
-        AND i.instrumenttype IN ('FUTSTK','OPTSTK')
-        AND i.expiry BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 year'
-        AND UPPER(COALESCE(i.name, '')) NOT LIKE '%TEST%'
+      SELECT DISTINCT UPPER(TRIM(iu.underlying)) AS symbol
+      FROM instrument_universe iu
+      WHERE iu.exchange = 'NFO'
+        AND iu.active_to IS NULL
+        AND iu.instrumenttype IN ('FUTSTK','OPTSTK')
+        AND iu.expiry BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 year'
+        AND UPPER(COALESCE(iu.underlying, '')) NOT LIKE '%TEST%'
     ),
     equity_candidates AS (
       SELECT
@@ -1225,46 +1289,47 @@ export async function getScalperProgression(prisma: PrismaClient) {
       WHERE iu.exchange = 'NSE' AND iu.active_to IS NULL
     ),
     universe AS (
-      SELECT f.symbol, eq.symbol_token
+      SELECT
+        f.symbol,
+        eq.symbol_token,
+        COALESCE(NULLIF(TRIM(ip.company_name), ''), f.symbol) AS company_name,
+        COALESCE(NULLIF(TRIM(ip.sector), ''), 'OTHER') AS sector
       FROM fno_underlyings f
       JOIN equity_candidates eq ON eq.symbol = f.symbol AND eq.rn = 1
+      LEFT JOIN instrument_profiles ip ON ip.symbol = f.symbol
     ),
     history_sources AS (
       SELECT
-        CASE WHEN r.yahoo_symbol = 'LTIM.NS' THEN 'LTM' ELSE UPPER(REGEXP_REPLACE(r.yahoo_symbol, '\\.NS$', '')) END AS symbol,
+        u.symbol,
         r.trade_date,
         r.open_price::double precision AS open,
         r.close_price::double precision AS close,
         0 AS priority
       FROM strategy_eval.stock_daily_regime r
-      JOIN universe u ON u.symbol = CASE
-        WHEN r.yahoo_symbol = 'LTIM.NS' THEN 'LTM'
-        ELSE UPPER(REGEXP_REPLACE(r.yahoo_symbol, '\.NS$', ''))
-      END
+      JOIN universe u ON r.yahoo_symbol = CASE WHEN u.symbol = 'LTM' THEN 'LTIM.NS' ELSE u.symbol || '.NS' END
       CROSS JOIN clock c
       WHERE r.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
       UNION ALL
       SELECT
-        CASE WHEN e.symbol = 'LTIM' THEN 'LTM' ELSE UPPER(e.symbol) END,
+        u.symbol,
         e.trade_date,
         e.open_price::double precision,
         e.close_price::double precision,
         1
       FROM nse.fact_eod_prices e
-      JOIN universe u ON u.symbol = CASE WHEN e.symbol = 'LTIM' THEN 'LTM' ELSE UPPER(e.symbol) END
+      JOIN universe u ON e.symbol = CASE WHEN u.symbol = 'LTM' THEN 'LTIM' ELSE u.symbol END
       CROSS JOIN clock c
       WHERE e.series = 'EQ'
         AND e.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
       UNION ALL
       SELECT
-        CASE WHEN i.name = 'LTIM' THEN 'LTM' ELSE UPPER(i.name) END,
+        u.symbol,
         b.trade_date,
         b.open::double precision,
         b.close::double precision,
         2
       FROM bars_1d b
-      JOIN instruments i ON i.exchange = b.exchange AND i.symbol_token = b.symbol_token
-      JOIN universe u ON u.symbol = CASE WHEN i.name = 'LTIM' THEN 'LTM' ELSE UPPER(i.name) END
+      JOIN universe u ON u.symbol_token = b.symbol_token
       CROSS JOIN clock c
       WHERE b.exchange = 'NSE'
         AND b.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
@@ -1295,60 +1360,177 @@ export async function getScalperProgression(prisma: PrismaClient) {
     reference_values AS (
       SELECT
         d.symbol,
+        MAX(d.trade_date) AS history_through,
         (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
           WHERE d.trade_date >= date_trunc('month', c.today)::date
         ))[1] AS current_month_open,
         (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
-          WHERE d.trade_date < date_trunc('month', c.today)::date
-        ))[1] AS previous_month_close,
+          WHERE d.trade_date >= date_trunc('month', c.today)::date
+        ))[1] AS current_month_close,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
+          WHERE d.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '1 month')::date
+            AND d.trade_date < date_trunc('month', c.today)::date
+        ))[1] AS previous_month_open,
         (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
-          WHERE d.trade_date < (date_trunc('month', c.today)::date - INTERVAL '1 month')::date
+          WHERE d.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '1 month')::date
+            AND d.trade_date < date_trunc('month', c.today)::date
+        ))[1] AS previous_month_close,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
+          WHERE d.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
+            AND d.trade_date < (date_trunc('month', c.today)::date - INTERVAL '1 month')::date
+        ))[1] AS two_months_ago_open,
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
+          WHERE d.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
+            AND d.trade_date < (date_trunc('month', c.today)::date - INTERVAL '1 month')::date
         ))[1] AS two_months_ago_close,
         (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
           WHERE d.trade_date >= date_trunc('week', c.today)::date
         ))[1] AS current_week_open,
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
+          WHERE d.trade_date >= date_trunc('week', c.today)::date
+        ))[1] AS current_week_close,
         (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
           WHERE d.trade_date >= (date_trunc('week', c.today)::date - INTERVAL '1 week')::date
             AND d.trade_date < date_trunc('week', c.today)::date
         ))[1] AS previous_week_open,
-        (ARRAY_AGG(d.open ORDER BY d.trade_date DESC) FILTER (WHERE d.trade_date = c.today))[1] AS today_open
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
+          WHERE d.trade_date >= (date_trunc('week', c.today)::date - INTERVAL '1 week')::date
+            AND d.trade_date < date_trunc('week', c.today)::date
+        ))[1] AS previous_week_close,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
+          WHERE d.trade_date >= (date_trunc('week', c.today)::date - INTERVAL '2 weeks')::date
+            AND d.trade_date < (date_trunc('week', c.today)::date - INTERVAL '1 week')::date
+        ))[1] AS two_weeks_ago_open,
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
+          WHERE d.trade_date >= (date_trunc('week', c.today)::date - INTERVAL '2 weeks')::date
+            AND d.trade_date < (date_trunc('week', c.today)::date - INTERVAL '1 week')::date
+        ))[1] AS two_weeks_ago_close,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date DESC) FILTER (WHERE d.trade_date = c.today))[1] AS today_open,
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (WHERE d.trade_date = c.today))[1] AS today_close,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date DESC) FILTER (WHERE d.trade_date < c.today))[1] AS previous_day_open,
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (WHERE d.trade_date < c.today))[1] AS previous_day_close
       FROM canonical d
       CROSS JOIN clock c
       GROUP BY d.symbol
     )
     SELECT
       u.symbol,
+      u.company_name,
+      u.sector,
       COALESCE(st.last_price, st.last_close)::double precision AS current_value,
       COALESCE(st.last_open::double precision, refs.today_open) AS today_open,
+      refs.today_close,
+      refs.previous_day_open,
+      refs.previous_day_close,
       refs.current_week_open,
+      refs.current_week_close,
       refs.previous_week_open,
+      refs.previous_week_close,
+      refs.two_weeks_ago_open,
+      refs.two_weeks_ago_close,
       refs.current_month_open,
+      refs.current_month_close,
+      refs.previous_month_open,
       refs.previous_month_close,
+      refs.two_months_ago_open,
       refs.two_months_ago_close,
+      refs.history_through,
       st.last_seen_ts AS observed_at
     FROM universe u
     LEFT JOIN instrument_state st ON st.exchange = 'NSE' AND st.symbol_token = u.symbol_token
     LEFT JOIN reference_values refs ON refs.symbol = u.symbol
     ORDER BY u.symbol
   `);
-  const data: ScalperProgressionRow[] = rows.map((row) => ({
-    symbol: row.symbol,
-    currentValue: nullableNumber(row.current_value),
-    todayOpen: nullableNumber(row.today_open),
-    currentWeekOpen: nullableNumber(row.current_week_open),
-    previousWeekOpen: nullableNumber(row.previous_week_open),
-    currentMonthOpen: nullableNumber(row.current_month_open),
-    previousMonthClose: nullableNumber(row.previous_month_close),
-    twoMonthsAgoClose: nullableNumber(row.two_months_ago_close),
-    observedAt: row.observed_at == null ? null : toIso(row.observed_at),
-  }));
+  const data: ScalperProgressionRow[] = rows.map((row) => {
+    const values: Omit<ScalperProgressionRow, "conditions" | "passedConditionCount" | "availableConditionCount"> = {
+      symbol: row.symbol,
+      companyName: row.company_name,
+      sector: row.sector,
+      currentValue: nullableNumber(row.current_value),
+      todayOpen: nullableNumber(row.today_open),
+      todayClose: nullableNumber(row.today_close),
+      previousDayOpen: nullableNumber(row.previous_day_open),
+      previousDayClose: nullableNumber(row.previous_day_close),
+      currentWeekOpen: nullableNumber(row.current_week_open),
+      currentWeekClose: nullableNumber(row.current_week_close),
+      previousWeekOpen: nullableNumber(row.previous_week_open),
+      previousWeekClose: nullableNumber(row.previous_week_close),
+      twoWeeksAgoOpen: nullableNumber(row.two_weeks_ago_open),
+      twoWeeksAgoClose: nullableNumber(row.two_weeks_ago_close),
+      currentMonthOpen: nullableNumber(row.current_month_open),
+      currentMonthClose: nullableNumber(row.current_month_close),
+      previousMonthOpen: nullableNumber(row.previous_month_open),
+      previousMonthClose: nullableNumber(row.previous_month_close),
+      twoMonthsAgoOpen: nullableNumber(row.two_months_ago_open),
+      twoMonthsAgoClose: nullableNumber(row.two_months_ago_close),
+      historyThrough: row.history_through == null ? null : toIso(row.history_through),
+      observedAt: row.observed_at == null ? null : toIso(row.observed_at),
+    };
+    const conditions = buildScalperScreenerConditions(values);
+    return {
+      ...values,
+      conditions,
+      passedConditionCount: conditions.filter((condition) => condition.state === "PASS").length,
+      availableConditionCount: conditions.filter((condition) => condition.state !== "UNAVAILABLE").length,
+    };
+  });
   return {
     generatedAt: new Date().toISOString(),
     sessionDate: marketDayIso(),
     scope: "CURRENT_NSE_STOCK_FNO_UNIVERSE",
-    basis: "Latest retained/live value compared with canonical daily period opens and completed period closes",
+    basis: "Current/as-of values plus canonical daily period opens and completed prior-period closes",
     rows: data,
   };
+}
+
+const SCALPER_SCREENER_EXPORT_COLUMNS = [
+  ["symbol", "Stock symbol"], ["companyName", "Stock name"], ["sector", "Sector"],
+  ["currentValue", "Current price"], ["todayOpen", "Current day open"], ["todayClose", "Current day close / as-of"],
+  ["previousDayOpen", "Previous day open"], ["previousDayClose", "Previous day close"],
+  ["currentWeekOpen", "Current week open"], ["currentWeekClose", "Current week close / as-of"],
+  ["previousWeekOpen", "Previous week open"], ["previousWeekClose", "Previous week close"],
+  ["twoWeeksAgoOpen", "Two weeks ago open"], ["twoWeeksAgoClose", "Two weeks ago close"],
+  ["currentMonthOpen", "Current month open"], ["currentMonthClose", "Current month close / as-of"],
+  ["previousMonthOpen", "Previous month open"], ["previousMonthClose", "Previous month close"],
+  ["twoMonthsAgoOpen", "Two months ago open"], ["twoMonthsAgoClose", "Two months ago close"],
+  ["passedConditionCount", "Conditions passed"], ["availableConditionCount", "Conditions available"],
+  ["M2_RED", "M2 red state"], ["M1_GREEN", "M1 green state"],
+  ["D0_OPEN_ABOVE_W0_OPEN", "Today open > current week open"],
+  ["D0_OPEN_ABOVE_W1_OPEN", "Today open > previous week open"],
+  ["D0_OPEN_ABOVE_D1_OPEN", "Today open > previous day open"],
+  ["historyThrough", "Daily history through"], ["observedAt", "Current price observed at"],
+] as const;
+
+function scalperXml(value: unknown): string {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;",
+  })[char] ?? char);
+}
+
+function scalperSpreadsheetCell(value: unknown, header = false): string {
+  const style = header ? ' ss:StyleID="Header"' : "";
+  const isNumber = typeof value === "number" && Number.isFinite(value);
+  return `<Cell${style}><Data ss:Type="${isNumber ? "Number" : "String"}">${scalperXml(value)}</Data></Cell>`;
+}
+
+export function buildScalperScreenerSpreadsheet(payload: Awaited<ReturnType<typeof getScalperProgression>>): string {
+  const header = `<Row>${SCALPER_SCREENER_EXPORT_COLUMNS.map(([, label]) => scalperSpreadsheetCell(label, true)).join("")}</Row>`;
+  const rows = payload.rows.map((row) => {
+    const conditionStates = new Map(row.conditions.map((condition) => [condition.code, condition.state]));
+    const values = SCALPER_SCREENER_EXPORT_COLUMNS.map(([key]) => {
+      const value = conditionStates.get(key as ScalperScreenerCondition["code"])
+        ?? row[key as keyof ScalperProgressionRow]
+        ?? "";
+      return scalperSpreadsheetCell(value);
+    }).join("");
+    return `<Row>${values}</Row>`;
+  }).join("");
+  const metadataRows = [
+    ["Generated at", payload.generatedAt], ["Session date", payload.sessionDate],
+    ["Scope", payload.scope], ["Basis", payload.basis], ["Row count", payload.rows.length],
+    ["Strategy reference", "absolute_monthly_open_bullish_long_v3"],
+  ].map(([label, value]) => `<Row>${scalperSpreadsheetCell(label, true)}${scalperSpreadsheetCell(value)}</Row>`).join("");
+  return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/></Style></Styles><Worksheet ss:Name="Current month"><Table>${header}${rows}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>1</SplitHorizontal><TopRowBottomPane>1</TopRowBottomPane></WorksheetOptions></Worksheet><Worksheet ss:Name="Scope"><Table>${metadataRows}</Table></Worksheet></Workbook>`;
 }
 
 const OVERVIEW_SNAPSHOT_DEFINITION: SnapshotDefinition<OverviewPayload> = {
@@ -1417,6 +1599,19 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
       const payload = await getScalperProgression(prisma);
       res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
       return res.json(payload);
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  app.get("/v1/overview/scalper-progression/export", async (_req, res, next) => {
+    try {
+      const payload = await getScalperProgression(prisma);
+      const filename = `scalper-dashboard-${payload.sessionDate}.xls`;
+      res.setHeader("Content-Type", "application/vnd.ms-excel; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Cache-Control", "private, no-store");
+      return res.send(buildScalperScreenerSpreadsheet(payload));
     } catch (error) {
       return next(error);
     }

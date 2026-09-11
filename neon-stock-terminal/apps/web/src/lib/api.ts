@@ -426,6 +426,10 @@ export function fetchScalperProgression(): Promise<ScalperProgressionResponse> {
   return getJson<ScalperProgressionResponse>("/v1/overview/scalper-progression");
 }
 
+export function getScalperProgressionExcelUrl(): string {
+  return `${API_BASE_URL}${resolveApiPath("/v1/overview/scalper-progression/export")}`;
+}
+
 export type OiisLiveDashboard = {
   environment: "PAPER";
   policyId: string;

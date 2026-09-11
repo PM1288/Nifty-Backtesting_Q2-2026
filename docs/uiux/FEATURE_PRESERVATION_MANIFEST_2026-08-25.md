@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Strategy Scalper Dashboard: `/strategy/scalper-dashboard` adds a
+separate read-only current-month filter ledger for the current NSE stock F&O
+universe. It exposes current price plus open and close/as-of anchors for today,
+previous day, current/previous/two-weeks-ago, and current/previous/two-months-
+ago, with five explicit Monthly Open v3 condition states and an Excel-readable
+full export. Missing history remains unavailable. Existing Home progression,
+Monthly strategies/backtests, Scalper V1/V2, Trade Log, SHAP, collectors,
+authentication and order permissions are unchanged. Evidence:
+`docs/strategy/SCALPER_DASHBOARD_CURRENT_MONTH_20260911.md`.
+
 2026-09-11 Monthly Open v3: the independently versioned Monthly Open strategy
 removes `Previous-month open > two-month open` and retains the explicit
 `Previous-month close > previous-month open (green candle)` test. It now has

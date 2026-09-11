@@ -112,14 +112,37 @@ export type HeaderMarketSummaryResponse = Pick<OverviewResponse, "asOf" | "marke
 
 export type ScalperProgressionRow = {
   symbol: string;
+  companyName?: string;
+  sector?: string;
   currentValue: number | null;
   todayOpen: number | null;
+  todayClose?: number | null;
+  previousDayOpen?: number | null;
+  previousDayClose?: number | null;
   currentWeekOpen: number | null;
+  currentWeekClose?: number | null;
   previousWeekOpen: number | null;
+  previousWeekClose?: number | null;
+  twoWeeksAgoOpen?: number | null;
+  twoWeeksAgoClose?: number | null;
   currentMonthOpen: number | null;
+  currentMonthClose?: number | null;
+  previousMonthOpen?: number | null;
   previousMonthClose: number | null;
+  twoMonthsAgoOpen?: number | null;
   twoMonthsAgoClose: number | null;
+  historyThrough?: string | null;
   observedAt: string | null;
+  conditions?: Array<{
+    code: "M2_RED" | "M1_GREEN" | "D0_OPEN_ABOVE_W0_OPEN" | "D0_OPEN_ABOVE_W1_OPEN" | "D0_OPEN_ABOVE_D1_OPEN";
+    label: string;
+    left: number | null;
+    operator: "<" | ">";
+    right: number | null;
+    state: "PASS" | "FAIL" | "UNAVAILABLE";
+  }>;
+  passedConditionCount?: number;
+  availableConditionCount?: number;
 };
 
 export type ScalperProgressionResponse = {

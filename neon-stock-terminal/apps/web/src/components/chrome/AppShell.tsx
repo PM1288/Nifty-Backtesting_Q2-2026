@@ -64,6 +64,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Monthly anchors", to: "/strategy/monthly" }
   ];
   if (workspace === "monthly-strategy") return [
+    { label: "Scalper Dashboard", to: "/strategy/scalper-dashboard" },
     { label: "All entry methods", to: "/strategy/monthly" },
     { label: "Close vs Open", to: "/strategy/monthly?compare=close-open" },
     { label: "Expiry", to: "/strategy/monthly?entryMethod=EXPIRY" },
@@ -71,6 +72,12 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Monthly Open", to: "/strategy/monthly?entryMethod=MONTHLY_OPEN" },
     { label: "First session", to: "/strategy/monthly?entryMethod=FIRST_SESSION" },
     { label: "Rolling 5/30/60", to: "/strategy/rolling-monthly" }
+  ];
+  if (workspace === "scalper-dashboard") return [
+    { label: "Current-month screener", to: "/strategy/scalper-dashboard" },
+    { label: "Monthly Strategy", to: "/strategy/monthly" },
+    { label: "Monthly Open", to: "/strategy/monthly?entryMethod=MONTHLY_OPEN" },
+    { label: "Close vs Open", to: "/strategy/monthly?compare=close-open" },
   ];
   if (workspace === "trendlyne-summary") return [
     { label: "Recommendation ledger", to: "/strategy/trendlyne-summary" },

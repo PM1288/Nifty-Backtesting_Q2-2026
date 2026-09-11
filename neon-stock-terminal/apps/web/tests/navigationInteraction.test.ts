@@ -73,6 +73,7 @@ test("top Strategy workspace groups independent strategy dashboards without merg
     "OIIS Lab",
     "OISS v1.202608",
     "Monthly Strategy",
+    "Scalper Dashboard",
     "Rolling Strategy",
     "Long Options",
     "NIFTY Options",
@@ -81,6 +82,8 @@ test("top Strategy workspace groups independent strategy dashboards without merg
   assert.equal(resolveWorkspaceRoute("/strategy/oiis-live").id, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/oiss-v1-202608").id, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/rolling-monthly").parentId, "oiis-lab");
+  assert.equal(resolveWorkspaceRoute("/strategy/scalper-dashboard").id, "scalper-dashboard");
+  assert.equal(resolveWorkspaceRoute("/strategy/scalper-dashboard").parentId, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/nifty-options").parentId, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/trading-analytics").id, "trading-analytics");
   assert.equal(resolveWorkspaceRoute("/strategy/trading-analytics").parentId, "oiis-lab");
@@ -99,6 +102,7 @@ test("single-line command header keeps the Option 4 taxonomy in one central conf
     "OISS v1.202608",
     "Trendlyne Summary",
     "Monthly Strategy",
+    "Scalper Dashboard",
     "Rolling Strategy",
     "NIFTY Model Research",
     "Long Options",
@@ -107,8 +111,8 @@ test("single-line command header keeps the Option 4 taxonomy in one central conf
   ]);
   assert.equal(STRATEGY_HEADER_ROUTES[0]?.section, "LIVE & CURRENT");
   assert.equal(STRATEGY_HEADER_ROUTES[2]?.section, "RESEARCH");
-  assert.equal(STRATEGY_HEADER_ROUTES[5]?.section, "RESEARCH");
-  assert.equal(STRATEGY_HEADER_ROUTES[6]?.section, "DERIVATIVE STRATEGIES");
+  assert.equal(STRATEGY_HEADER_ROUTES[6]?.section, "RESEARCH");
+  assert.equal(STRATEGY_HEADER_ROUTES[7]?.section, "DERIVATIVE STRATEGIES");
   assert.equal(MORE_MENU_ROUTES.some((route) => route.label === "Stocks"), false);
   assert.equal(MORE_MENU_ROUTES.some((route) => route.label === "Derivatives"), false);
   assert.equal(MORE_MENU_ROUTES.some((route) => route.label === "Data & Operations"), true);

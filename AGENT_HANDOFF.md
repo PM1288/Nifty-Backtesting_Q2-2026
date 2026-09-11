@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Strategy Scalper Dashboard current-month screener
+
+- Added `/strategy/scalper-dashboard` as a separate Strategy destination for
+  all 210 currently resolved NSE stock F&O underlyings in the live-backed
+  isolated acceptance run.
+- The horizontally scrollable ledger includes current price and both open and
+  close/as-of values for D0, D-1, W0, W-1, W-2, M0, M-1 and M-2. It supports
+  stock/company/sector, score and five per-condition filters plus full Excel
+  SpreadsheetML export with raw values, condition states, timestamps and scope.
+- Exact indexed symbol joins reduced the real endpoint from 17-30 seconds to
+  150-705 ms in the same candidate environment. API/web suites and builds,
+  authenticated desktop/mobile browser checks, navigation and repository gates
+  pass. Production was not changed. Full report:
+  `docs/strategy/SCALPER_DASHBOARD_CURRENT_MONTH_20260911.md`.
+
 ## 2026-09-11 — Monthly Open v3 removes the prior-month-open crossover
 
 - Removed only `Previous-month open > two-month open` from Monthly Open.

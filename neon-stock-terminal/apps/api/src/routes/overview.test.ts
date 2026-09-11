@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildHeaderStockTickerTape, getScalperProgression } from "./overview.js";
+import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression } from "./overview.js";
 
 test("header ticker contains stock quotes and never repeats index context", () => {
   const ticker = buildHeaderStockTickerTape([
@@ -21,13 +21,26 @@ test("home scalper progression preserves period references, zero and missingness
   const payload = await getScalperProgression({
     $queryRaw: async () => [{
       symbol: "TEST",
+      company_name: "Test Industries",
+      sector: "Industrials",
       current_value: "125.50",
       today_open: 120,
+      today_close: 125,
+      previous_day_open: 117,
+      previous_day_close: 119,
       current_week_open: 118,
+      current_week_close: 125,
       previous_week_open: 115,
+      previous_week_close: 117,
+      two_weeks_ago_open: 112,
+      two_weeks_ago_close: 114,
       current_month_open: 110,
+      current_month_close: 125,
+      previous_month_open: 100,
       previous_month_close: 0,
+      two_months_ago_open: 90,
       two_months_ago_close: null,
+      history_through: "2026-09-11",
       observed_at: "2026-09-11T03:15:00Z",
     }],
   } as never);
@@ -35,13 +48,45 @@ test("home scalper progression preserves period references, zero and missingness
   assert.equal(payload.scope, "CURRENT_NSE_STOCK_FNO_UNIVERSE");
   assert.deepEqual(payload.rows, [{
     symbol: "TEST",
+    companyName: "Test Industries",
+    sector: "Industrials",
     currentValue: 125.5,
     todayOpen: 120,
+    todayClose: 125,
+    previousDayOpen: 117,
+    previousDayClose: 119,
     currentWeekOpen: 118,
+    currentWeekClose: 125,
     previousWeekOpen: 115,
+    previousWeekClose: 117,
+    twoWeeksAgoOpen: 112,
+    twoWeeksAgoClose: 114,
     currentMonthOpen: 110,
+    currentMonthClose: 125,
+    previousMonthOpen: 100,
     previousMonthClose: 0,
+    twoMonthsAgoOpen: 90,
     twoMonthsAgoClose: null,
+    historyThrough: "2026-09-11T00:00:00.000Z",
     observedAt: "2026-09-11T03:15:00.000Z",
+    conditions: [
+      { code: "M2_RED", label: "Two months ago close < open", left: null, operator: "<", right: 90, state: "UNAVAILABLE" },
+      { code: "M1_GREEN", label: "Previous-month close > previous-month open", left: 0, operator: ">", right: 100, state: "FAIL" },
+      { code: "D0_OPEN_ABOVE_W0_OPEN", label: "Today open > current-week open", left: 120, operator: ">", right: 118, state: "PASS" },
+      { code: "D0_OPEN_ABOVE_W1_OPEN", label: "Today open > previous-week open", left: 120, operator: ">", right: 115, state: "PASS" },
+      { code: "D0_OPEN_ABOVE_D1_OPEN", label: "Today open > previous-day open", left: 120, operator: ">", right: 117, state: "PASS" },
+    ],
+    passedConditionCount: 3,
+    availableConditionCount: 4,
   }]);
+
+  const workbook = buildScalperScreenerSpreadsheet(payload);
+  assert.match(workbook, /Worksheet ss:Name="Current month"/);
+  assert.match(workbook, /Current month close \/ as-of/);
+  assert.match(workbook, /Previous month open/);
+  assert.match(workbook, /Two weeks ago close/);
+  assert.match(workbook, /M2 red state/);
+  assert.match(workbook, />UNAVAILABLE</);
+  assert.match(workbook, /ss:Type="Number">0<\/Data>/);
+  assert.doesNotMatch(workbook, /undefined|null/);
 });

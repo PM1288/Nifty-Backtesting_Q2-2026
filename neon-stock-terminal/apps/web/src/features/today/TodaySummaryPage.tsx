@@ -5,7 +5,7 @@ import { StockLogo } from "../../components/stocks/StockProfileControls";
 import { formatWholeNumber } from "../../lib/format";
 import type { Quote } from "../../lib/types";
 import {
-  breadthRatio, breadthWording, buildMarketStory, parseSummaryLens,
+  breadthRatio, breadthWording, buildMarketStory, buildScalperProgressionBranches, parseSummaryLens,
   type TodaySector,
 } from "./todayModel";
 import { BreadthBar, MarketSummaryStrip, Move, PanelState, QuickView, type QuickViewState, SectorIcon, StockRow } from "./TodayShared";
@@ -13,7 +13,7 @@ import { useTodayData } from "./useTodayData";
 import styles from "./Today.module.css";
 
 export function TodaySummaryPage() {
-  const { model, overview, profiles, live, authReady } = useTodayData();
+  const { model, overview, progression, profiles, live, authReady } = useTodayData();
   const [params, setParams] = useSearchParams();
   const [quick, setQuick] = useState<QuickViewState>({ target: null, rect: null });
   const lens = parseSummaryLens(params.get("lens"));
@@ -36,12 +36,12 @@ export function TodaySummaryPage() {
       <span>{live.transport === "CONNECTED" ? "Live" : live.transport === "RECONNECTING" ? "Reconnecting" : "Snapshot"} · {model.asOf ? new Date(model.asOf).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) : "—"}</span>
       <Link to={boardHref}>Open Full Board</Link>
     </div>
-    {lens === "story" ? <MarketStoryLens model={model} profiles={profiles.bySymbol} onSelectSector={selectSector} onOpenStock={(stock, target) => setQuick({ target: { type: "stock", symbol: stock.symbol }, rect: target.getBoundingClientRect() })} /> : selected ? <SectorMatrixLens model={model} selected={selected} profiles={profiles.bySymbol} onSelect={selectSector} onSelectSector={selectSector} onOpenStock={(stock, target) => setQuick({ target: { type: "stock", symbol: stock.symbol }, rect: target.getBoundingClientRect() })} /> : <div className={styles.pageState}>No sector evidence is available.</div>}
+    {lens === "story" ? <MarketStoryLens model={model} progression={progression} profiles={profiles.bySymbol} onSelectSector={selectSector} onOpenStock={(stock, target) => setQuick({ target: { type: "stock", symbol: stock.symbol }, rect: target.getBoundingClientRect() })} /> : selected ? <SectorMatrixLens model={model} progression={progression} selected={selected} profiles={profiles.bySymbol} onSelect={selectSector} onSelectSector={selectSector} onOpenStock={(stock, target) => setQuick({ target: { type: "stock", symbol: stock.symbol }, rect: target.getBoundingClientRect() })} /> : <div className={styles.pageState}>No sector evidence is available.</div>}
     <QuickView state={quick} model={model} profiles={profiles.bySymbol} onClose={() => setQuick({ target: null, rect: null })} onSelectSector={selectSector} />
   </div>;
 }
 
-type LensProps = { model: NonNullable<ReturnType<typeof useTodayData>["model"]>; profiles: ReturnType<typeof useTodayData>["profiles"]["bySymbol"]; onSelectSector: (sector: TodaySector) => void; onOpenStock: (stock: Quote, target: HTMLElement) => void };
+type LensProps = { model: NonNullable<ReturnType<typeof useTodayData>["model"]>; progression: ReturnType<typeof useTodayData>["progression"]; profiles: ReturnType<typeof useTodayData>["profiles"]["bySymbol"]; onSelectSector: (sector: TodaySector) => void; onOpenStock: (stock: Quote, target: HTMLElement) => void };
 
 function StoryBanner({ model }: { model: LensProps["model"] }) {
   const ranked = [...model.sectors].sort((a, b) => a.rank - b.rank);
@@ -62,6 +62,7 @@ function MarketStoryLens(props: LensProps) {
       <section className={styles.panel}><header><div><strong>{useSetups ? "TRADE OPPORTUNITIES" : "MARKET MOVERS"}</strong><small>{useSetups ? "Canonical OIIS score" : "Opportunity classification unavailable; showing price movers."}</small></div></header><div className={styles.opportunities}><h3>{useSetups ? "STRONGEST SETUPS" : "STRONGEST MOVERS"}</h3>{(useSetups ? model.oiisStrongest : model.strongestMovers).map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} score={useSetups ? stock.oiisScore : null} onOpen={onOpenStock} />)}<h3>{useSetups ? "WEAKEST SETUPS" : "WEAKEST MOVERS"}</h3>{(useSetups ? model.oiisWeakest : model.weakestMovers).map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} score={useSetups ? stock.oiisScore : null} onOpen={onOpenStock} />)}</div></section>
     </div>
     <RiskStrip model={model} onOpenStock={onOpenStock} />
+    <ScalperProgressionStrip {...props} />
   </div>;
 }
 
@@ -75,6 +76,7 @@ function SectorMatrixLens(props: LensProps & { selected: TodaySector; onSelect: 
       <section className={`${styles.panel} ${styles.selectedSector}`}><header><div><strong>SELECTED SECTOR: {selected.name.toUpperCase()}</strong><small>Rank #{selected.rank} · conviction unavailable</small></div><Link to={`/full-board?sector=${selected.id}`}>Open Full Board</Link></header><div className={styles.sectorStats}><Move value={selected.movePct} /><span>{selected.breadth.advancing} advancing · {selected.breadth.declining} declining</span><BreadthBar breadth={selected.breadth} /></div><div className={styles.chartEmpty}>Sector intraday series unavailable</div><h3>TOP STOCKS IN {selected.name.toUpperCase()}</h3><div className={styles.selectedStocks}>{top.map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} onOpen={onOpenStock} />)}</div></section>
     </div>
     <RiskStrip model={model} onOpenStock={onOpenStock} />
+    <ScalperProgressionStrip {...props} />
   </div>;
 }
 
@@ -87,4 +89,33 @@ function RiskStrip({ model, onOpenStock }: { model: LensProps["model"]; onOpenSt
   const metrics = [{ label: "F&O anomalies", value: model.derivatives.anomalyCount }, { label: "Excess moves", value: model.derivatives.excessPriceMoveCount }, { label: "Wide spreads", value: model.derivatives.wideSpreadCount }, { label: "Big asks", value: model.derivatives.bigAskCount }, { label: "Big bids", value: model.derivatives.bigBidCount }];
   const alerts = model.allStocks.filter((stock) => stock.alert).slice(0, 5);
   return <section className={styles.riskStrip}><div><header><strong>RISK &amp; ANOMALY SNAPSHOT</strong></header><div className={styles.riskMetrics}>{metrics.map((item) => <Link key={item.label} to="/options/intelligence"><b>{formatWholeNumber(item.value)}</b><span>{item.label}</span></Link>)}</div></div><div><header><strong>TOP ALERTS</strong></header>{alerts.length ? alerts.map((stock) => <button key={stock.symbol} onClick={(event) => onOpenStock(stock, event.currentTarget)}><TriangleAlert size={13} /><b>{stock.symbol}</b><span>{stock.alert?.label}</span></button>) : <span className={styles.emptyInline}>No stock alert in this snapshot.</span>}</div><div><header><strong>TOP ANOMALIES</strong><Link to="/options/intelligence">Open F&amp;O Radar</Link></header>{model.derivatives.anomalies.slice(0, 4).map((alert) => <div className={styles.anomalyRow} key={alert.symbolToken}><b>{alert.tradingSymbol}</b><span>{alert.anomalyTypes.join(" · ")}</span><Move value={alert.changePct} /></div>)}</div></section>;
+}
+
+const progressionPrice = (value: number | null) => value == null ? "—" : value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const progressionShort = { month: "M", week: "W0", "previous-week": "W−1", today: "D0" } as const;
+
+function ScalperProgressionStrip({ model, progression, profiles, onOpenStock }: LensProps) {
+  const source = new Map((progression.data?.rows ?? []).map((row) => [row.symbol, row]));
+  const cards = model.allStocks.map((stock) => {
+    const row = source.get(stock.symbol) ?? {
+      symbol: stock.symbol, currentValue: null, todayOpen: null, currentWeekOpen: null,
+      previousWeekOpen: null, currentMonthOpen: null, previousMonthClose: null,
+      twoMonthsAgoClose: null, observedAt: null,
+    };
+    const branches = buildScalperProgressionBranches(stock, row);
+    return { stock, branches, depth: Math.max(...branches.map((branch) => branch.depth)) };
+  }).sort((left, right) => right.depth - left.depth || left.stock.symbol.localeCompare(right.stock.symbol));
+  const mature = cards.filter((card) => card.depth === 4).length;
+  return <section className={styles.progressionStrip} data-testid="today-scalper-progression" aria-label="Scalper progression to Monthly Open">
+    <header><div><strong>SCALPER PROGRESSION · MONTHLY OPEN</strong><small>Two alternative monthly routes; week and day confirmations are additive AND gates</small></div><span>{progression.isLoading ? "Loading levels…" : progression.error ? "Levels unavailable" : `${mature}/${cards.length} at stage 4`}</span></header>
+    <div className={styles.progressionScroller} tabIndex={0} aria-label="Horizontally scrollable stock progression">
+      {cards.map(({ stock, branches, depth }) => <button className={styles.progressionCard} data-progression-symbol={stock.symbol} key={stock.symbol} onClick={(event) => onOpenStock(stock, event.currentTarget)}>
+        <span className={styles.progressionStock}><StockLogo symbol={stock.symbol} profile={profiles.get(stock.symbol)} size={17} /><b>{stock.symbol}</b><em>{depth}/4</em><strong>₹{progressionPrice(stock.last)}</strong></span>
+        {branches.map((branch) => <span className={styles.progressionBranch} key={branch.id} data-active={branch.depth === depth && depth > 0 ? "true" : "false"}>
+          <span><b>{branch.id === "previous-month" ? "M−1 route" : "M−2 route"}</b><em>{branch.depth}/4 AND</em></span>
+          <span className={styles.progressionChecks}>{branch.checks.map((check) => <span key={check.id} data-state={check.passed == null ? "missing" : check.passed ? "pass" : "fail"} title={`${check.label}: ${progressionPrice(check.left)} > ${progressionPrice(check.right)}`} aria-label={`${check.label}: ${check.passed == null ? "unavailable" : check.passed ? "passed" : "failed"}; ${progressionPrice(check.left)} greater than ${progressionPrice(check.right)}`}><b>{progressionShort[check.id]}</b><i>{check.passed == null ? "—" : check.passed ? "✓" : "×"}</i></span>)}</span>
+        </span>)}
+      </button>)}
+    </div>
+  </section>;
 }

@@ -110,6 +110,26 @@ export type OverviewResponse = {
 
 export type HeaderMarketSummaryResponse = Pick<OverviewResponse, "asOf" | "market" | "indices" | "tickerTape">;
 
+export type ScalperProgressionRow = {
+  symbol: string;
+  currentValue: number | null;
+  todayOpen: number | null;
+  currentWeekOpen: number | null;
+  previousWeekOpen: number | null;
+  currentMonthOpen: number | null;
+  previousMonthClose: number | null;
+  twoMonthsAgoClose: number | null;
+  observedAt: string | null;
+};
+
+export type ScalperProgressionResponse = {
+  generatedAt: string;
+  sessionDate: string;
+  scope: "CURRENT_NSE_STOCK_FNO_UNIVERSE";
+  basis: string;
+  rows: ScalperProgressionRow[];
+};
+
 export type IntradayBar = {
   t: string; // ISO
   o: number;

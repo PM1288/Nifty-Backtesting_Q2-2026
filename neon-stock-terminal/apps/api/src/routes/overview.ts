@@ -90,6 +90,18 @@ type QuoteLite = {
 
 type SectorGroup = { sector: string; stocks: Quote[] };
 
+export type ScalperProgressionRow = {
+  symbol: string;
+  currentValue: number | null;
+  todayOpen: number | null;
+  currentWeekOpen: number | null;
+  previousWeekOpen: number | null;
+  currentMonthOpen: number | null;
+  previousMonthClose: number | null;
+  twoMonthsAgoClose: number | null;
+  observedAt: string | null;
+};
+
 type OverviewPayload = {
   asOf: string;
   market: {
@@ -1178,6 +1190,167 @@ export async function getOverview(prisma: PrismaClient): Promise<OverviewPayload
   }
 }
 
+export async function getScalperProgression(prisma: PrismaClient) {
+  const rows = await prisma.$queryRaw<Array<{
+    symbol: string;
+    current_value: number | string | null;
+    today_open: number | string | null;
+    current_week_open: number | string | null;
+    previous_week_open: number | string | null;
+    current_month_open: number | string | null;
+    previous_month_close: number | string | null;
+    two_months_ago_close: number | string | null;
+    observed_at: Date | string | null;
+  }>>(Prisma.sql`
+    WITH clock AS (
+      SELECT (NOW() AT TIME ZONE 'Asia/Kolkata')::date AS today
+    ),
+    fno_underlyings AS (
+      SELECT DISTINCT UPPER(TRIM(i.name)) AS symbol
+      FROM instruments i
+      WHERE i.exchange = 'NFO'
+        AND i.instrumenttype IN ('FUTSTK','OPTSTK')
+        AND i.expiry BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 year'
+        AND UPPER(COALESCE(i.name, '')) NOT LIKE '%TEST%'
+    ),
+    equity_candidates AS (
+      SELECT
+        UPPER(COALESCE(NULLIF(TRIM(iu.underlying), ''), REGEXP_REPLACE(TRIM(iu.tradingsymbol), '-EQ$', ''))) AS symbol,
+        iu.symbol_token,
+        ROW_NUMBER() OVER (
+          PARTITION BY UPPER(COALESCE(NULLIF(TRIM(iu.underlying), ''), REGEXP_REPLACE(TRIM(iu.tradingsymbol), '-EQ$', '')))
+          ORDER BY CASE WHEN iu.tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END, iu.active_from DESC NULLS LAST
+        ) AS rn
+      FROM instrument_universe iu
+      WHERE iu.exchange = 'NSE' AND iu.active_to IS NULL
+    ),
+    universe AS (
+      SELECT f.symbol, eq.symbol_token
+      FROM fno_underlyings f
+      JOIN equity_candidates eq ON eq.symbol = f.symbol AND eq.rn = 1
+    ),
+    history_sources AS (
+      SELECT
+        CASE WHEN r.yahoo_symbol = 'LTIM.NS' THEN 'LTM' ELSE UPPER(REGEXP_REPLACE(r.yahoo_symbol, '\\.NS$', '')) END AS symbol,
+        r.trade_date,
+        r.open_price::double precision AS open,
+        r.close_price::double precision AS close,
+        0 AS priority
+      FROM strategy_eval.stock_daily_regime r
+      JOIN universe u ON u.symbol = CASE
+        WHEN r.yahoo_symbol = 'LTIM.NS' THEN 'LTM'
+        ELSE UPPER(REGEXP_REPLACE(r.yahoo_symbol, '\.NS$', ''))
+      END
+      CROSS JOIN clock c
+      WHERE r.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
+      UNION ALL
+      SELECT
+        CASE WHEN e.symbol = 'LTIM' THEN 'LTM' ELSE UPPER(e.symbol) END,
+        e.trade_date,
+        e.open_price::double precision,
+        e.close_price::double precision,
+        1
+      FROM nse.fact_eod_prices e
+      JOIN universe u ON u.symbol = CASE WHEN e.symbol = 'LTIM' THEN 'LTM' ELSE UPPER(e.symbol) END
+      CROSS JOIN clock c
+      WHERE e.series = 'EQ'
+        AND e.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
+      UNION ALL
+      SELECT
+        CASE WHEN i.name = 'LTIM' THEN 'LTM' ELSE UPPER(i.name) END,
+        b.trade_date,
+        b.open::double precision,
+        b.close::double precision,
+        2
+      FROM bars_1d b
+      JOIN instruments i ON i.exchange = b.exchange AND i.symbol_token = b.symbol_token
+      JOIN universe u ON u.symbol = CASE WHEN i.name = 'LTIM' THEN 'LTM' ELSE UPPER(i.name) END
+      CROSS JOIN clock c
+      WHERE b.exchange = 'NSE'
+        AND b.trade_date >= (date_trunc('month', c.today)::date - INTERVAL '2 months')::date
+    ),
+    live_today AS (
+      SELECT
+        u.symbol,
+        (st.last_seen_ts AT TIME ZONE 'Asia/Kolkata')::date AS trade_date,
+        st.last_open::double precision AS open,
+        COALESCE(st.last_price, st.last_close)::double precision AS close,
+        -1 AS priority
+      FROM universe u
+      JOIN instrument_state st ON st.exchange = 'NSE' AND st.symbol_token = u.symbol_token
+      CROSS JOIN clock c
+      WHERE (st.last_seen_ts AT TIME ZONE 'Asia/Kolkata')::date = c.today
+    ),
+    canonical AS (
+      SELECT DISTINCT ON (source.symbol, source.trade_date)
+        source.symbol, source.trade_date, source.open, source.close
+      FROM (
+        SELECT * FROM history_sources
+        UNION ALL
+        SELECT * FROM live_today
+      ) source
+      WHERE source.open IS NOT NULL AND source.close IS NOT NULL
+      ORDER BY source.symbol, source.trade_date, source.priority
+    ),
+    reference_values AS (
+      SELECT
+        d.symbol,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
+          WHERE d.trade_date >= date_trunc('month', c.today)::date
+        ))[1] AS current_month_open,
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
+          WHERE d.trade_date < date_trunc('month', c.today)::date
+        ))[1] AS previous_month_close,
+        (ARRAY_AGG(d.close ORDER BY d.trade_date DESC) FILTER (
+          WHERE d.trade_date < (date_trunc('month', c.today)::date - INTERVAL '1 month')::date
+        ))[1] AS two_months_ago_close,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
+          WHERE d.trade_date >= date_trunc('week', c.today)::date
+        ))[1] AS current_week_open,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date) FILTER (
+          WHERE d.trade_date >= (date_trunc('week', c.today)::date - INTERVAL '1 week')::date
+            AND d.trade_date < date_trunc('week', c.today)::date
+        ))[1] AS previous_week_open,
+        (ARRAY_AGG(d.open ORDER BY d.trade_date DESC) FILTER (WHERE d.trade_date = c.today))[1] AS today_open
+      FROM canonical d
+      CROSS JOIN clock c
+      GROUP BY d.symbol
+    )
+    SELECT
+      u.symbol,
+      COALESCE(st.last_price, st.last_close)::double precision AS current_value,
+      COALESCE(st.last_open::double precision, refs.today_open) AS today_open,
+      refs.current_week_open,
+      refs.previous_week_open,
+      refs.current_month_open,
+      refs.previous_month_close,
+      refs.two_months_ago_close,
+      st.last_seen_ts AS observed_at
+    FROM universe u
+    LEFT JOIN instrument_state st ON st.exchange = 'NSE' AND st.symbol_token = u.symbol_token
+    LEFT JOIN reference_values refs ON refs.symbol = u.symbol
+    ORDER BY u.symbol
+  `);
+  const data: ScalperProgressionRow[] = rows.map((row) => ({
+    symbol: row.symbol,
+    currentValue: nullableNumber(row.current_value),
+    todayOpen: nullableNumber(row.today_open),
+    currentWeekOpen: nullableNumber(row.current_week_open),
+    previousWeekOpen: nullableNumber(row.previous_week_open),
+    currentMonthOpen: nullableNumber(row.current_month_open),
+    previousMonthClose: nullableNumber(row.previous_month_close),
+    twoMonthsAgoClose: nullableNumber(row.two_months_ago_close),
+    observedAt: row.observed_at == null ? null : toIso(row.observed_at),
+  }));
+  return {
+    generatedAt: new Date().toISOString(),
+    sessionDate: marketDayIso(),
+    scope: "CURRENT_NSE_STOCK_FNO_UNIVERSE",
+    basis: "Latest retained/live value compared with canonical daily period opens and completed period closes",
+    rows: data,
+  };
+}
+
 const OVERVIEW_SNAPSHOT_DEFINITION: SnapshotDefinition<OverviewPayload> = {
   key: "overview",
   cacheControl: "private, max-age=60, stale-while-revalidate=300",
@@ -1238,6 +1411,16 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
   });
 
   app.get("/v1/overview", async (req, res) => serveSnapshotRoute(req, res, prisma, OVERVIEW_SNAPSHOT_DEFINITION));
+
+  app.get("/v1/overview/scalper-progression", async (_req, res, next) => {
+    try {
+      const payload = await getScalperProgression(prisma);
+      res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
+      return res.json(payload);
+    } catch (error) {
+      return next(error);
+    }
+  });
 
   app.get("/v1/leaderboard", async (req, res) => {
     const limit = Number(req.query.limit ?? 20);

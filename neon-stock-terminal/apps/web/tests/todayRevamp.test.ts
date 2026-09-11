@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildScalperProgressionBranches,
   breadthWording, niftyMovementWording, parseBoardSort, parseQuickView, parseSummaryLens,
   serializeQuickView, slugifySector, vixWording,
 } from "../src/features/today/todayModel";
@@ -30,4 +31,32 @@ test("market story thresholds match the approved boundaries", () => {
 
 test("sector IDs are stable URL-safe slugs", () => {
   assert.equal(slugifySector("Oil, Gas & Consumable Fuels"), "oil-gas-and-consumable-fuels");
+});
+
+test("Home scalper progression keeps alternative month routes and additive confirmations", () => {
+  const branches = buildScalperProgressionBranches(
+    { symbol: "TEST", last: 125, dayOpen: 121 } as never,
+    {
+      symbol: "TEST", currentValue: 124, todayOpen: 121, currentWeekOpen: 120,
+      previousWeekOpen: 122, currentMonthOpen: 110, previousMonthClose: 108,
+      twoMonthsAgoClose: 112, observedAt: "2026-09-11T05:00:00.000Z",
+    },
+  );
+  assert.equal(branches[0].depth, 4);
+  assert.deepEqual(branches[0].checks.map((check) => check.passed), [true, true, true, true]);
+  assert.equal(branches[1].depth, 0);
+  assert.deepEqual(branches[1].checks.map((check) => check.passed), [false, true, true, true]);
+});
+
+test("Home scalper progression preserves missing references and stops the AND depth", () => {
+  const [branch] = buildScalperProgressionBranches(
+    { symbol: "TEST", last: 125, dayOpen: 121 } as never,
+    {
+      symbol: "TEST", currentValue: 125, todayOpen: 121, currentWeekOpen: null,
+      previousWeekOpen: 122, currentMonthOpen: 110, previousMonthClose: 108,
+      twoMonthsAgoClose: 100, observedAt: null,
+    },
+  );
+  assert.deepEqual(branch.checks.map((check) => check.passed), [true, null, true, true]);
+  assert.equal(branch.depth, 1);
 });

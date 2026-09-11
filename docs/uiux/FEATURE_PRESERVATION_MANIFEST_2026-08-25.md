@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Home scalper progression: the existing Today Market Story and Sector
+Matrix lenses retain their sector, risk/anomaly and Quick View behavior and add
+one fixed-height horizontally scrollable stock row below Risk & Anomaly. Two
+alternative monthly-open comparisons remain separate; current-week,
+previous-week and current-day confirmations are additive AND gates. Missing
+references remain unavailable. Existing monthly strategies, Scalper V1/V2,
+Trade Log, SHAP, navigation, authentication, collectors and order permissions
+are unchanged. Evidence:
+`docs/uiux/HOME_SCALPER_PROGRESSION_20260911.md`.
+
 2026-09-11 Scalper V2 underlying max-pain line: the existing V2 underlying
 candlestick draws each eligible latest retained-snapshot max-pain candidate as
 a purple dotted price line with a right-axis label. Normal Session Y remains

@@ -1,5 +1,19 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Home scalper progression to Monthly Open
+
+- Added a fixed-height, horizontally scrollable progression row below the
+  Today page Risk & Anomaly section for all current NSE stock F&O names.
+- Each card shows two alternative monthly routes (`month open > previous-month
+  close` and `month open > two-months-ago close`) followed by additive latest
+  value gates against current-week open, previous-week open and today's open.
+  Depth is the deepest contiguous AND stage; missing remains distinct from zero.
+- Added an additive read-only reference endpoint using retained daily sources
+  and today's instrument state. No strategy, collector, order or database schema
+  changed. Desktop/mobile authenticated browser checks pass; production was not
+  changed. Full report:
+  `docs/uiux/HOME_SCALPER_PROGRESSION_20260911.md`.
+
 ## 2026-09-11 — Scalper V2 max-pain line on underlying chart
 
 - The existing V2 underlying candlestick now draws latest retained-snapshot

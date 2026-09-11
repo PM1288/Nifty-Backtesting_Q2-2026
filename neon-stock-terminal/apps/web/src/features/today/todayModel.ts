@@ -1,4 +1,4 @@
-import type { LiveQuote, OverviewResponse, Quote } from "../../lib/types";
+import type { LiveQuote, OverviewResponse, Quote, ScalperProgressionRow } from "../../lib/types";
 import type { StockProfile, StockProfileFilters } from "../../lib/stockProfiles";
 
 export type SummaryLens = "story" | "sector-matrix";
@@ -6,6 +6,21 @@ export type FullBoardSort = "stable" | "rank" | "move" | "alphabetical" | "volum
 export type QuickViewTarget = { type: "sector"; id: string } | { type: "stock"; symbol: string } | null;
 
 export type TodayBreadth = { advancing: number; declining: number; neutral: number; total: number };
+
+export type ScalperProgressionCheck = {
+  id: "month" | "week" | "previous-week" | "today";
+  label: string;
+  left: number | null;
+  right: number | null;
+  passed: boolean | null;
+};
+
+export type ScalperProgressionBranch = {
+  id: "previous-month" | "two-month";
+  label: string;
+  checks: ScalperProgressionCheck[];
+  depth: number;
+};
 
 export type TodaySector = {
   id: string;
@@ -69,6 +84,38 @@ export function serializeQuickView(target: QuickViewTarget): string | null {
 export function movementState(value: number | null | undefined): "positive" | "negative" | "neutral" | "missing" {
   if (value == null || !Number.isFinite(value)) return "missing";
   return value > 0 ? "positive" : value < 0 ? "negative" : "neutral";
+}
+
+const progressionValue = (value: unknown) => typeof value === "number" && Number.isFinite(value) && value > 0 ? value : null;
+
+export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgressionRow): ScalperProgressionBranch[] {
+  const currentValue = progressionValue(stock.last) ?? progressionValue(row.currentValue);
+  const currentMonthOpen = progressionValue(row.currentMonthOpen);
+  const currentWeekOpen = progressionValue(row.currentWeekOpen);
+  const previousWeekOpen = progressionValue(row.previousWeekOpen);
+  const todayOpen = progressionValue(row.todayOpen) ?? progressionValue(stock.dayOpen);
+  const comparison = (left: number | null, right: number | null) => left == null || right == null ? null : left > right;
+  const shared: ScalperProgressionCheck[] = [
+    { id: "week", label: "Latest > this-week open", left: currentValue, right: currentWeekOpen, passed: comparison(currentValue, currentWeekOpen) },
+    { id: "previous-week", label: "Latest > previous-week open", left: currentValue, right: previousWeekOpen, passed: comparison(currentValue, previousWeekOpen) },
+    { id: "today", label: "Latest > today open", left: currentValue, right: todayOpen, passed: comparison(currentValue, todayOpen) },
+  ];
+  const branch = (id: ScalperProgressionBranch["id"], label: string, right: number | null): ScalperProgressionBranch => {
+    const checks: ScalperProgressionCheck[] = [
+      { id: "month", label, left: currentMonthOpen, right, passed: comparison(currentMonthOpen, right) },
+      ...shared,
+    ];
+    let depth = 0;
+    for (const check of checks) {
+      if (check.passed !== true) break;
+      depth += 1;
+    }
+    return { id, label, checks, depth };
+  };
+  return [
+    branch("previous-month", "Month open > previous-month close", progressionValue(row.previousMonthClose)),
+    branch("two-month", "Month open > two-months-ago close", progressionValue(row.twoMonthsAgoClose)),
+  ];
 }
 
 export function mergeOverviewQuote(quote: Quote, live: Record<string, LiveQuote>): Quote {

@@ -39,6 +39,7 @@ import type {
   OpsRunsPayload,
   OverviewResponse,
   RsiSurfaceResponse,
+  ScalperProgressionResponse,
   StockDetailResponse,
   WillSurfaceResponse,
   WatchlistHistoryPayload,
@@ -419,6 +420,10 @@ export function fetchOverview(): Promise<OverviewResponse> {
 
 export function fetchHeaderMarketSummary(): Promise<HeaderMarketSummaryResponse> {
   return getJson<HeaderMarketSummaryResponse>("/v1/overview/header");
+}
+
+export function fetchScalperProgression(): Promise<ScalperProgressionResponse> {
+  return getJson<ScalperProgressionResponse>("/v1/overview/scalper-progression");
 }
 
 export type OiisLiveDashboard = {

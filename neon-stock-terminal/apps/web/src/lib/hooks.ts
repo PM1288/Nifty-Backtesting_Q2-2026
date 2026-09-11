@@ -39,6 +39,7 @@ import {
   fetchOpsRuns,
   fetchOverview,
   fetchRsiSurface,
+  fetchScalperProgression,
   fetchStock,
   fetchWillSurface,
   fetchWatchlist,
@@ -141,6 +142,17 @@ export function useHeaderMarketSummary(enabled = true) {
     enabled,
     refetchInterval: 30_000,
     staleTime: 10_000
+  });
+}
+
+export function useScalperProgression(enabled = true) {
+  const tokenVersion = useSessionVersion();
+  return useProfiledQuery("scalper-progression", {
+    queryKey: ["scalper-progression", tokenVersion],
+    queryFn: fetchScalperProgression,
+    enabled,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 }
 

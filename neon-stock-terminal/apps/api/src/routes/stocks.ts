@@ -179,6 +179,7 @@ async function getTradingStackStock(prisma: PrismaClient, symbolRaw: string, ran
     null;
 
   let bars: Array<{ t: string; o: number; h: number; l: number; c: number; v: number | string | null }> = [];
+  let indicatorWarmup: Array<{ t: string; o: number; h: number; l: number; c: number; v: number | string | null }> = [];
 
   if (range === "1D") {
     let intradayRows = await prisma.$queryRaw<StackBar1MRow[]>(Prisma.sql`
@@ -187,6 +188,8 @@ async function getTradingStackStock(prisma: PrismaClient, symbolRaw: string, ran
       WHERE exchange = 'NSE'
         AND symbol_token = ${symbolRow.symbol_token}
         AND (ts AT TIME ZONE 'Asia/Kolkata')::date = ${sessionDate}::date
+        AND (ts AT TIME ZONE 'Asia/Kolkata')::time >= TIME '09:15'
+        AND (ts AT TIME ZONE 'Asia/Kolkata')::time < TIME '15:30'
       ORDER BY ts ASC
       LIMIT ${RANGE_LIMITS["1D"]}
     `);
@@ -197,10 +200,35 @@ async function getTradingStackStock(prisma: PrismaClient, symbolRaw: string, ran
         FROM bars_1m
         WHERE exchange = 'NSE'
           AND symbol_token = ${symbolRow.symbol_token}
+          AND (ts AT TIME ZONE 'Asia/Kolkata')::time >= TIME '09:15'
+          AND (ts AT TIME ZONE 'Asia/Kolkata')::time < TIME '15:30'
         ORDER BY ts DESC
         LIMIT ${RANGE_LIMITS["1D"]}
       `);
       intradayRows = intradayRows.reverse();
+    }
+
+    if (intradayRows.length) {
+      const firstDisplayTs = new Date(toIso(intradayRows[0]!.ts));
+      const warmupRows = await prisma.$queryRaw<StackBar1MRow[]>(Prisma.sql`
+        SELECT ts, open, high, low, close, volume
+        FROM bars_1m
+        WHERE exchange = 'NSE'
+          AND symbol_token = ${symbolRow.symbol_token}
+          AND ts < ${firstDisplayTs}
+          AND (ts AT TIME ZONE 'Asia/Kolkata')::time >= TIME '09:15'
+          AND (ts AT TIME ZONE 'Asia/Kolkata')::time < TIME '15:30'
+        ORDER BY ts DESC
+        LIMIT 400
+      `);
+      indicatorWarmup = warmupRows.reverse().map((b) => ({
+        t: toIso(b.ts),
+        o: toNumber(b.open),
+        h: toNumber(b.high),
+        l: toNumber(b.low),
+        c: toNumber(b.close),
+        v: toSafeVolume(b.volume)
+      }));
     }
 
     bars = intradayRows.map((b) => ({
@@ -288,7 +316,8 @@ async function getTradingStackStock(prisma: PrismaClient, symbolRaw: string, ran
             }
           : null)
     },
-    intraday: bars
+    intraday: bars,
+    indicatorWarmup
   };
 }
 
@@ -329,6 +358,7 @@ async function getSeedSchemaStock(prisma: PrismaClient, symbolRaw: string, range
   }
 
   let bars: Array<{ t: string; o: number; h: number; l: number; c: number; v: number | string | null }>;
+  let indicatorWarmup: Array<{ t: string; o: number; h: number; l: number; c: number; v: number | string | null }> = [];
   if (range === "1D") {
     bars = intradayBars.map((b) => ({
       t: b.ts.toISOString(),
@@ -338,6 +368,21 @@ async function getSeedSchemaStock(prisma: PrismaClient, symbolRaw: string, range
       c: toNumber(b.close),
       v: toSafeVolume(b.volume)
     }));
+    if (intradayBars.length) {
+      const warmupBars = await prisma.intradayBar.findMany({
+        where: { stockId: stock.id, ts: { lt: intradayBars[0]!.ts } },
+        orderBy: { ts: "desc" },
+        take: 400
+      });
+      indicatorWarmup = warmupBars.reverse().map((b) => ({
+        t: b.ts.toISOString(),
+        o: toNumber(b.open),
+        h: toNumber(b.high),
+        l: toNumber(b.low),
+        c: toNumber(b.close),
+        v: toSafeVolume(b.volume)
+      }));
+    }
   } else {
     bars = latestSnapshots
       .slice(0, RANGE_LIMITS[range])
@@ -381,7 +426,8 @@ async function getSeedSchemaStock(prisma: PrismaClient, symbolRaw: string, range
           }
         : null
     },
-    intraday: bars
+    intraday: bars,
+    indicatorWarmup
   };
 }
 

@@ -19,6 +19,92 @@
   background: #ffffff;
 }
 
+.mwdWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 286px;
+  gap: 12px;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.mwdLevelTable {
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid #d7e0eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #14243a;
+}
+
+.mwdLevelHead,
+.mwdLevelTable button {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(78px, auto) 68px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 7px 9px;
+  border: 0;
+  border-bottom: 1px solid #e5eaf1;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.mwdLevelHead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 34px;
+  background: #edf3f9;
+  color: #526175;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mwdLevelTable button:hover,
+.mwdLevelTable button:focus-visible,
+.mwdLevelTable button[data-selected="true"] {
+  background: #eff6ff;
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+.mwdLevelTable button > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.mwdLevelTable button i {
+  width: 14px;
+  height: 3px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+}
+
+.mwdLevelTable strong,
+.mwdLevelTable em {
+  font-size: 12px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.mwdLevelTable button[data-bias="up"] em { color: #117a40; }
+.mwdLevelTable button[data-bias="down"] em { color: #c6283d; }
+.mwdLevelTable button[data-bias="unavailable"] em { color: #64748b; }
+
+@media (max-width: 980px) {
+  .mwdWorkspace { grid-template-columns: minmax(0, 1fr); }
+  .mwdLevelTable { max-height: 330px; }
+}
+
 .analyticsHeader {
   display: flex;
   flex-direction: column;

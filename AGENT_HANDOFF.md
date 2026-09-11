@@ -38,6 +38,28 @@
   separate authorised release action. Full report:
   `docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
 
+## 2026-09-11 — Stock 360 MWD EMA Value core drill-down
+
+- The shared `/analytics/stock/:symbol` route now uses the user-supplied MWD
+  EMA Value methodology as its only technical chart: current session-aligned
+  15m/1H opens, D/W/M/3M/Y opens, PDC, EMA 9/21/50/200 and VWAP-based traded
+  value. The previous Bollinger/pivot/RSI technical chart has been removed.
+- Eleven exact level rows expose current levels plus previous D/W/M opens with
+  Up/Down/Missing state. Selecting a row highlights its line without changing
+  calculations. Home progression, Strategy Scalper Dashboard and monthly
+  evidence already use this same Stock 360 destination.
+- `GET /v1/stocks/:symbol?range=1D` additively returns up to 400 preceding
+  canonical one-minute bars as `indicatorWarmup`; those bars seed EMAs and are
+  never added to the visible chart session.
+- Web checks pass (166/166 plus typecheck/build); API checks pass (201/201 plus
+  typecheck/build); authenticated live-backed candidate Chromium passes 17/17
+  at desktop/mobile. Evidence is under `/tmp/stock-mwd-ema-value/` and is not
+  committed. Full report:
+  `docs/analytics/STOCK_360_MWD_EMA_VALUE_20260911.md`.
+- This branch is tested but not deployed. All other Stock 360 evidence,
+  Scalper V1/V2, monthly strategies, Trade Log, SHAP, Paper Trading,
+  authentication, collectors and read-only permissions remain unchanged.
+
 ## 2026-09-11 — Last-24-hour N50 feature release deployed and audited
 
 - Production release source: pushed `master` commit

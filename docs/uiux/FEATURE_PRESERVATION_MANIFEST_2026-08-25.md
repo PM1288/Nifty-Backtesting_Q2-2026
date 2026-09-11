@@ -27,6 +27,18 @@ A-open/B-close measurement, collectors and order permissions are unchanged.
 Evidence:
 `docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
 
+2026-09-11 Stock 360 MWD EMA Value drill-down: the existing shared
+`/analytics/stock/:symbol` technical chart now uses only the supplied
+session-aligned 15m/1H, D/W/M/3M/Y open, PDC, EMA 9/21/50/200 and VWAP-based
+traded-value method. Previous D/W/M opens remain in a selectable exact-value
+table. The old Bollinger/pivot/RSI technical chart is removed, while all other
+Stock 360 evidence and links from Home progression, Strategy Scalper Dashboard
+and monthly evidence remain. The 1D stock response additively exposes retained
+pre-session indicator warm-up; it never enters the visible session. Scalper
+V1/V2, monthly strategies, Trade Log, SHAP, Paper Trading, collectors,
+authentication and permissions are unchanged. Evidence:
+`docs/analytics/STOCK_360_MWD_EMA_VALUE_20260911.md`.
+
 2026-09-11 NSE India report download health: the existing authenticated
 `/institutional/nse-intelligence/reports` view now exposes per-file downloader
 and loader status, source date, exact file, bytes, SHA-256, rows, timings,

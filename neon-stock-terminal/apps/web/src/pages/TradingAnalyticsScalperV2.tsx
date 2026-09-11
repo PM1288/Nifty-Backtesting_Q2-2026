@@ -9,6 +9,7 @@ import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
 import { scalperV2HorizontalDeltaOiOption } from "../lib/scalperV2Analytics";
+import { scalperV2NormalizedPriceSeries, type ScalperV2OptionPricePoint } from "../lib/scalperV2NormalizedPrice";
 import { oiComparisonState } from "../lib/scalperV2Geometry";
 import { normalizeScalperV2ProfileRows, profileBaselineLabel } from "../lib/scalperV2OiProfile";
 import {
@@ -61,6 +62,15 @@ type ChartPayload = {
     points: CumulativeOiPoint[];
     limitations: string[];
   };
+};
+type OptionPriceHistoryPayload = {
+  asOf: string;
+  symbol: string;
+  expiry: string;
+  unit: "INR";
+  scope: "ALL_STRIKES_CAPTURED_PER_SNAPSHOT";
+  points: ScalperV2OptionPricePoint[];
+  limitations: string[];
 };
 type RailTab = "time" | "chain" | "profile" | "levels" | "rules" | "measure" | "objects" | "health";
 
@@ -132,6 +142,13 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const { ceStrike: selectedCeStrike, peStrike: selectedPeStrike } = scalperLegSelection(params, defaultStrike);
   const query = chartQuery(symbol, asOf, expiry, selectedCeStrike, selectedPeStrike, interval);
   const active = useQuery({ queryKey: chartKey(query), queryFn: () => getJson<ChartPayload>(`/v1/trading-analytics/charts?${query}`), staleTime: 30_000, retry: 1 });
+  const optionPriceHistory = useQuery({
+    queryKey: ["trading-analytics-option-price-history", symbol, expiry, asOf],
+    queryFn: () => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, asOf, historyDays: "3" })}`),
+    enabled: Boolean(expiry),
+    staleTime: 30_000,
+    retry: 1,
+  });
   useEffect(() => {
     if (!active.data || (selectedCeStrike && selectedPeStrike)) return;
     const ceStrike = selectedCeStrike || String(nearestScalperStrike(availableScalperStrikes(active.data.availableContracts, expiry, "CE"), spot) ?? "");
@@ -268,6 +285,46 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       },
     ],
   }), [cumulativeOiPoints]);
+  const normalizedPriceModel = useMemo(() => scalperV2NormalizedPriceSeries(
+    (optionPriceHistory.data?.points ?? []).filter((point) => istDay(point.capturedAt) === tradingDay),
+    numeric(selectedCeStrike),
+    numeric(selectedPeStrike),
+  ), [optionPriceHistory.data?.points, selectedCeStrike, selectedPeStrike, tradingDay]);
+  const normalizedPriceOption = useMemo<EChartsOption>(() => ({
+    animation: false,
+    tooltip: {
+      trigger: "axis",
+      formatter: (input: unknown) => {
+        const rows = (Array.isArray(input) ? input : [input]) as Array<{ axisValue?: unknown; seriesName?: string; data?: { value?: [number, number | null]; rawPrice?: number | null } }>;
+        const time = Number(rows[0]?.data?.value?.[0] ?? rows[0]?.axisValue);
+        const heading = Number.isFinite(time) ? new Date(time).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: false }) : "Timestamp unavailable";
+        return [heading, ...rows.flatMap((row) => {
+          const normalized = row.data?.value?.[1];
+          const raw = row.data?.rawPrice;
+          return normalized == null ? [] : [`${row.seriesName ?? "Series"}: ${normalized.toFixed(2)} · raw ${raw == null ? "—" : `₹${number(raw)}`}`];
+        })].join("<br/>");
+      },
+    },
+    legend: { data: normalizedPriceModel.series.map((series) => series.name), top: 2 },
+    grid: { left: 64, right: 24, top: 88, bottom: 70 },
+    dataZoom: [{ type: "inside", xAxisIndex: 0 }, { type: "slider", xAxisIndex: 0, bottom: 10, height: 18 }],
+    xAxis: { type: "time", name: "Timestamp · IST", nameGap: 42, axisLabel: { formatter: (value: number) => istClock(value) } },
+    yAxis: { type: "value", min: -100, max: 100, interval: 50, name: "Normalised price", axisLabel: { formatter: (value: number) => `${value > 0 ? "+" : ""}${value}` } },
+    series: normalizedPriceModel.series.map((series, index) => ({
+      id: series.id,
+      name: series.name,
+      type: "line",
+      data: series.data,
+      connectNulls: false,
+      showSymbol: false,
+      symbol: "none",
+      lineStyle: { color: series.side === "CE" ? "#2563eb" : "#eab308", width: series.selected ? 3 : 1.35, opacity: series.opacity },
+      itemStyle: { color: series.side === "CE" ? "#2563eb" : "#eab308", opacity: series.opacity },
+      emphasis: { focus: "series", lineStyle: { width: 3, opacity: 1 } },
+      z: series.selected ? 10 : 1,
+      markLine: index === 0 ? { silent: true, symbol: "none", label: { show: false }, lineStyle: { color: "#64748b", type: "dashed", width: 1 }, data: [{ yAxis: 0 }] } : undefined,
+    })),
+  }), [normalizedPriceModel]);
   const niftyCurrentGuide = (categoryIndex: number) => spot == null || nearestSpotStrike == null || categoryIndex < 0 ? undefined : ({
     silent: true,
     symbol: "none",
@@ -365,7 +422,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button>
       <button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button>
       <button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide rail" : "Show rail"}</button>
-      <button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V1", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, rankingScope: metricLegs.length ? "OBSERVED_RETAINED_COHORT" : "NEAREST_PAIRED_OBSERVED_WINDOW", rankLevels: leaders, source: contextRows, chart: active.data, drawings: drawingStore.drawings, drawingPersistence: "local_workspace_recovery", measurement, measurementContext: measurementContext ? { interval: measurementContext.interval, symbol: measurementContext.symbol, expiry: measurementContext.expiry, ceStrike: measurementContext.ceStrike, peStrike: measurementContext.peStrike } : null }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button>
+      <button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V1", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, rankingScope: metricLegs.length ? "OBSERVED_RETAINED_COHORT" : "NEAREST_PAIRED_OBSERVED_WINDOW", rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, drawingPersistence: "local_workspace_recovery", measurement, measurementContext: measurementContext ? { interval: measurementContext.interval, symbol: measurementContext.symbol, expiry: measurementContext.expiry, ceStrike: measurementContext.ceStrike, peStrike: measurementContext.peStrike } : null }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button>
       <button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button>
     </header>
     <div className={css.statusBar}><strong>{state}</strong> · Read-only research · {errors.length} source failures · active {interval}m loaded first · background timeframe cache is opportunistic · V7 signals: entry references {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</div>
@@ -419,6 +476,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         <article className={css.analyticCard}><h3>PCR context</h3><p>Observed-scope OI PCR · snapshot, not an intraday trend</p><div className={css.stateCard}><div><strong className={css.pcrValue}>{pcr == null ? "—" : pcr.toFixed(2)}</strong><span>{tradingDay || "Current observation"} · {pcr == null ? "eligible CE/PE cohort unavailable" : "one retained snapshot"}</span></div></div></article>
         <article className={css.analyticCard}><h3>Max-pain payout distribution</h3><p>Common-unit estimate; hypothetical settlement, not a forecast · {spot == null || nearestSpotStrike == null ? "NIFTY current guide unavailable" : `dotted NIFTY current ${number(spot)} · nearest settlement strike ${nearestSpotStrike.toLocaleString("en-IN")}`}</p><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Max-pain payout distribution; dotted vertical guide shows NIFTY current value at the nearest settlement strike" axisExtentPolicy="native" option={analyticOptions[2]} activeCategoryIndex={hoveredPayoutIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : maxPain.points[index]?.settlement ?? null)} /></Suspense></article>
         <article className={`${css.analyticCard} ${css.analyticCardWide}`} data-testid="v2-cumulative-oi-time"><h3>Cumulative OI vs timestamp</h3><p>Each point sums all strikes captured in that snapshot · blue CE / yellow PE · provider-native OI · not a running total across time · {cumulativeOiPoints.length} timestamps · {cumulativeOiComplete}/{cumulativeOiPoints.length} complete · strikes per snapshot {cumulativeStrikeCounts.length ? cumulativeStrikeCounts.join("–") : "unavailable"}</p><div className={css.axisContext}><span><b>Y</b> Summed open interest · captured strike cohort</span><span><b>X</b> Snapshot timestamp · IST</span></div>{cumulativeOiPoints.length === 0 ? <div className={css.stateCard} data-testid="v2-cumulative-oi-state"><div><strong>OI history unavailable</strong><span>No retained option-chain snapshots exist for this session and expiry.</span><small>No line is manufactured from the latest value.</small></div></div> : <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.cumulativeOiChart} ariaLabel="Cumulative open interest over timestamp; blue line is summed CE open interest and yellow line is summed PE open interest across every strike captured in each snapshot" axisExtentPolicy="native" option={cumulativeOiOption} /></Suspense>}</article>
+        <article className={`${css.analyticCard} ${css.analyticCardWide}`} data-testid="v2-normalized-option-price"><h3>Normalised CE/PE price action</h3><p>Each strike uses its own first retained session price = 0, observed high = +100 and observed low = −100 · selected CE {Number(selectedCeStrike).toLocaleString("en-IN")} and PE {Number(selectedPeStrike).toLocaleString("en-IN")} are fully opaque · farther strikes fade progressively · {normalizedPriceModel.series.length} CE/PE strike lines · {normalizedPriceModel.timestamps.length} timestamps</p><div className={css.axisContext}><span><b>Y</b> −100 low · 0 opening observation · +100 high</span><span><b>X</b> Snapshot timestamp · IST</span></div>{optionPriceHistory.isLoading ? <div className={css.stateCard}><div><strong>Loading option price history</strong><span>The price charts remain usable while this independent history loads.</span></div></div> : normalizedPriceModel.series.length === 0 ? <div className={css.stateCard} data-testid="v2-normalized-option-price-state"><div><strong>Option price history unavailable</strong><span>No retained CE/PE snapshot prices exist for this session and expiry.</span><small>No normalised lines are manufactured from current quotes.</small></div></div> : <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.normalizedPriceChart} ariaLabel="Normalised call and put price action over timestamp; each contract opens at zero, reaches plus one hundred at its observed session high and minus one hundred at its observed session low; selected CE and PE strikes are fully opaque and farther strikes progressively fade" axisExtentPolicy="native" option={normalizedPriceOption} /></Suspense>}</article>
       </div>
     </section>
     <details><summary>Indicator evidence</summary><p>Underlying RSI14 and MACD are calculated from retained completed bars before the selected day is sliced for display.</p><table className={css.snapshotGrid}><thead><tr><th>End</th><th>RSI14</th><th>MACD</th><th>Signal</th></tr></thead><tbody>{indicators.filter((row) => istDay(row.time) === tradingDay).slice(-20).map((row) => <tr key={row.time}><td>{row.time}</td><td>{row.rsi?.toFixed(2) ?? "—"}</td><td>{row.macd?.toFixed(4) ?? "—"}</td><td>{row.signal?.toFixed(4) ?? "—"}</td></tr>)}</tbody></table></details>

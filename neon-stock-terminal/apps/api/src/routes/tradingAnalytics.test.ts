@@ -69,6 +69,33 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
     server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
+test("option price history returns every captured CE and PE strike without enabling orders", async () => {
+  const prisma = {
+    $queryRawUnsafe: async (sql: string) => sql.includes("FROM option_chain_snapshots s") && sql.includes("l.last_price::float8") ? [
+      { snapshot_id: "101", captured_at: "2026-09-10T03:46:00.000Z", source: "fixture", underlying_value: 23_477.8, strike: 23_450, option_type: "CE", last_price: 100 },
+      { snapshot_id: "101", captured_at: "2026-09-10T03:46:00.000Z", source: "fixture", underlying_value: 23_477.8, strike: 23_450, option_type: "PE", last_price: 80 },
+      { snapshot_id: "101", captured_at: "2026-09-10T03:46:00.000Z", source: "fixture", underlying_value: 23_477.8, strike: 23_500, option_type: "CE", last_price: null },
+    ] : [],
+  } as unknown as PrismaClient;
+  const app = express(); registerTradingAnalytics(app, prisma);
+  const server = app.listen(0, "127.0.0.1"); await new Promise<void>((resolve) => server.once("listening", resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const response = await fetch(`${base}/v1/trading-analytics/option-price-history?symbol=NIFTY&expiry=2026-09-15&asOf=2026-09-10T10:00:00Z`);
+    assert.equal(response.status, 200);
+    const body = await response.json() as { scope: string; points: Array<{ strike: number; side: string; price: number | null }>; liveOrdersEnabled: boolean; paperOrdersEnabled: boolean };
+    assert.equal(body.scope, "ALL_STRIKES_CAPTURED_PER_SNAPSHOT");
+    assert.deepEqual(body.points.map((point) => [point.strike, point.side, point.price]), [[23_450, "CE", 100], [23_450, "PE", 80], [23_500, "CE", null]]);
+    assert.equal(body.liveOrdersEnabled, false);
+    assert.equal(body.paperOrdersEnabled, false);
+    const invalid = await fetch(`${base}/v1/trading-analytics/option-price-history?symbol=NIFTY`);
+    assert.equal(invalid.status, 400);
+    const mutation = await fetch(`${base}/v1/trading-analytics/option-price-history?symbol=NIFTY&expiry=2026-09-15`, { method: "POST" });
+    assert.equal(mutation.status, 404);
+  } finally {
+    server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
 test("older cash history stays descriptive and does not fill missing selected-date matrix",async()=>{
   const calls:{sql:string;args:unknown[]}[]=[];
   const rows=[{market_date:"2026-09-03",participant_type:"DII",buy_value:10,sell_value:10,net_value:0}];

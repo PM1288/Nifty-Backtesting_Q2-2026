@@ -57,6 +57,13 @@ try {
   check("Cumulative OI chart exposes CE and PE identity", cumulativeText.includes("blue CE / yellow PE"), cumulativeText);
   check("Cumulative OI chart renders retained history", !cumulativeText.includes("OI history unavailable") && await cumulativeOi.locator("canvas").count() > 0, cumulativeText);
 
+  const normalizedPrice = page.getByTestId("v2-normalized-option-price");
+  await normalizedPrice.waitFor({ state: "visible" });
+  const normalizedText = await normalizedPrice.innerText();
+  check("Normalized option chart declares exact scale", normalizedText.includes("first retained session price = 0") && normalizedText.includes("observed high = +100") && normalizedText.includes("observed low = −100"), normalizedText);
+  check("Normalized option chart declares distance opacity", normalizedText.includes("fully opaque") && normalizedText.includes("farther strikes fade progressively"), normalizedText);
+  check("Normalized option chart renders retained CE and PE history", !normalizedText.includes("Option price history unavailable") && /\d+ CE\/PE strike lines/.test(normalizedText) && await normalizedPrice.locator("canvas").count() > 0, normalizedText);
+
   const body = page.getByTestId("v2-chart-body-underlying");
   await page.waitForTimeout(1_000);
   const geometry = await body.evaluate((element) => ({

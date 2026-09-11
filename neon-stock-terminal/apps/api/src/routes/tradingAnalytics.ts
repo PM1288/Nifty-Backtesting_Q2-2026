@@ -490,6 +490,62 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       return res.status(503).json({ error: { code: "UNDERLYING_UNIVERSE_UNAVAILABLE" } });
     }
   });
+  app.get("/v1/trading-analytics/option-price-history", async (req, res) => {
+    if (process.env.TRADING_ANALYTICS_ENABLED === "false")
+      return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
+    const parsed = z.object({
+      symbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/).default("NIFTY"),
+      expiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      asOf: z.string().datetime({ offset: true }).optional(),
+      historyDays: z.coerce.number().int().min(1).max(15).default(3),
+    }).safeParse(req.query);
+    if (!parsed.success)
+      return res.status(400).json({ error: { code: "INVALID_OPTION_PRICE_HISTORY_QUERY" } });
+    const asOf = parsed.data.asOf ?? new Date().toISOString();
+    if (Date.parse(asOf) > Date.now())
+      return res.status(400).json({ error: { code: "FUTURE_ASOF_NOT_ALLOWED" } });
+    try {
+      const rows = await prisma.$queryRawUnsafe<Facts[]>(
+        `SELECT s.id::text snapshot_id,s.captured_at,s.source,
+                s.underlying_value::float8 underlying_value,
+                l.strike::float8 strike,l.option_type,
+                l.last_price::float8 last_price
+         FROM option_chain_snapshots s
+         JOIN option_chain_legs l ON l.snapshot_id=s.id
+         WHERE s.symbol=$2 AND s.expiry_date=$3::date
+           AND s.captured_at BETWEEN $1::timestamptz-make_interval(days=>$4::int) AND $1::timestamptz
+           AND l.option_type IN ('CE','PE')
+         ORDER BY s.captured_at,l.strike,l.option_type
+         LIMIT 50000`,
+        asOf,parsed.data.symbol,parsed.data.expiry,parsed.data.historyDays,
+      );
+      return res.json({
+        version: `${VERSION}_OPTION_PRICE_HISTORY_V1`,
+        asOf,
+        symbol: parsed.data.symbol,
+        expiry: parsed.data.expiry,
+        unit: "INR",
+        scope: "ALL_STRIKES_CAPTURED_PER_SNAPSHOT",
+        points: rows.map((row) => ({
+          snapshotId: String(row.snapshot_id),
+          capturedAt: new Date(String(row.captured_at)).toISOString(),
+          source: row.source,
+          underlyingValue: numeric(row.underlying_value),
+          strike: numeric(row.strike),
+          side: row.option_type,
+          price: numeric(row.last_price),
+        })),
+        limitations: [
+          "The opening baseline is the first retained option-chain price observation in the selected session.",
+          "The captured strike window may move with the underlying and is not claimed to be the complete exchange expiry chain.",
+        ],
+        liveOrdersEnabled: false,
+        paperOrdersEnabled: false,
+      });
+    } catch {
+      return res.status(503).json({ error: { code: "OPTION_PRICE_HISTORY_UNAVAILABLE" } });
+    }
+  });
   app.get("/v1/trading-analytics/charts", async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });

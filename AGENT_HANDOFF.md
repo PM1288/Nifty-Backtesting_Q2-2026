@@ -1,5 +1,21 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Scalper V2 normalised CE/PE price action
+
+- Added a sixth full-width chart to existing `view=scalper_v2`: timestamp in
+  IST on X and contract-local normalised price from -100 to +100 on Y.
+- Every retained CE/PE strike is plotted. First retained session price is 0,
+  observed high +100 and observed low -100. Independently selected CE and PE
+  strikes are fully opaque; farther strikes progressively fade.
+- Added a read-only exact option-price-history endpoint and included its raw
+  scope/evidence in V2 JSON export. Missing timestamps remain gaps; no opening
+  price or complete-exchange-chain coverage is fabricated.
+- Web 150/150, API 197/197, focused normalisation 2/2 and authenticated
+  Chromium 18/18 pass; both production builds pass. Live-backed evidence
+  rendered 30 CE/PE strike lines across 192 timestamps. Production was not
+  changed. Full report:
+  `docs/trading-analytics/SCALPER_V2_NORMALIZED_OPTION_PRICE_20260911.md`.
+
 ## 2026-09-11 — Scalper V2 cumulative OI versus timestamp
 
 - Added a full-width fifth analytics chart to existing `view=scalper_v2`:

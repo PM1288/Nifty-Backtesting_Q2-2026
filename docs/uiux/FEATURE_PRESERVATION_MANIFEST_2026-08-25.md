@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Scalper V2 normalised option-price chart: the existing V2 analytics
+area adds a full-width timestamp view for every retained CE/PE strike. Each
+contract independently maps its first retained session price to 0, observed
+high to +100 and observed low to -100. Selected CE/PE strikes are opaque;
+farther strikes progressively fade. Exact raw prices, gaps, captured-window
+scope and limitations remain inspectable/exportable. V1, V7, A-open/B-close,
+collectors and order permissions are unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_NORMALIZED_OPTION_PRICE_20260911.md`.
+
 2026-09-11 Scalper V2 cumulative OI time chart: the existing V2 analytics area
 adds a full-width timestamp chart whose blue CE and yellow PE lines separately
 sum every strike retained in each canonical option-chain snapshot. Coverage,

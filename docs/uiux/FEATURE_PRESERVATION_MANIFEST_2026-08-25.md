@@ -6,6 +6,14 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Home progression vertical-table refinement: the two-row-per-stock
+Monthly Open progression remains above Risk & Anomaly and retains the M, W0,
+W-1, D0, 1H, 15m and 5m comparisons. Conditions now stack inside a four-column
+table with exact operands and pass/fail/missing state. The widget scrolls
+vertically and has no horizontal table overflow at desktop or mobile widths.
+All-green sorting and Stock 360 navigation remain unchanged. Evidence:
+`docs/uiux/HOME_SCALPER_PROGRESSION_20260911.md`.
+
 2026-09-11 Home scalper intraday progression: the existing Today progression
 table remains read-only and now adds contiguous current-versus-prior clock-hour,
 15-minute and 5-minute open gates after its two independent monthly routes and

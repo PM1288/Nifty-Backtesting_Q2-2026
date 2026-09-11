@@ -9,44 +9,49 @@
 .matrixTable>button[data-selected=true]{outline:1px solid var(--n50-selected);outline-offset:-1px;background:#eaf0ff}
 .summaryPage,.fullBoardPage{--n50-text-3:#52647b}.marketStrip:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:2px}
 
-.lensBody{grid-template-rows:58px minmax(180px,1fr) 204px 124px}
+.summaryPage{height:auto;min-height:calc(100dvh - var(--app-sticky-content-top) - 20px);overflow:visible}
+.lensBody{grid-template-rows:58px minmax(300px,auto) 280px auto 124px;overflow:visible}
 .progressionStrip{min-width:0;min-height:0;display:grid;grid-template-rows:30px minmax(0,1fr);overflow:hidden;border:1px solid var(--n50-border);border-radius:8px;background:var(--n50-surface);box-shadow:0 1px 2px rgba(11,31,58,.06)}
 .progressionStrip>header{min-width:0;border-bottom:1px solid var(--n50-border);padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .progressionStrip>header>div{min-width:0;display:flex;align-items:baseline;gap:9px}
 .progressionStrip>header strong{font-size:11px;letter-spacing:.03em;white-space:nowrap}
 .progressionStrip>header small,.progressionStrip>header span{font-size:9px;color:var(--n50-text-3);white-space:nowrap}
-.progressionScroller{min-width:0;min-height:0;overflow:auto;scrollbar-gutter:stable;outline:none}
+.progressionScroller{min-width:0;min-height:0;overflow-x:hidden;overflow-y:auto;scrollbar-gutter:stable;outline:none}
 .progressionScroller:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:-2px}
-.progressionTable{width:100%;min-width:1120px;border-collapse:separate;border-spacing:0;background:white;font-size:10px;font-variant-numeric:tabular-nums}
+.progressionTable{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;background:white;font-size:10px;font-variant-numeric:tabular-nums}
+.progressionStockColumn{width:18%}.progressionRouteColumn{width:13%}.progressionScoreColumn{width:8%}
 .progressionTable thead{position:sticky;top:0;z-index:3}
 .progressionTable thead th{height:26px;padding:0 6px;border-right:1px solid #e4eaf2;border-bottom:1px solid #cbd5e2;background:#eef3f9;color:var(--n50-text-2);text-align:center;font-size:10px;white-space:nowrap}
 .progressionTable thead th:first-child{text-align:left;left:0;z-index:4}
-.progressionTable tbody tr{height:29px}
+.progressionTable tbody tr{height:auto}
 .progressionTable tbody th,.progressionTable tbody td{padding:2px 5px;border-right:1px solid #edf1f6;border-bottom:1px solid #edf1f6;background:#fff;text-align:center;white-space:nowrap}
 .progressionTable tbody tr:nth-child(4n+3)>*,.progressionTable tbody tr:nth-child(4n+4)>*{background:#fafbfd}
 .progressionTable tbody tr[data-state=fail]>th[scope=row],.progressionTable tbody tr[data-state=fail]>.progressionScore{background:#fff1f3;color:var(--n50-negative)}
 .progressionTable tbody tr[data-state=pass]>*{background:#e9f8f0;border-bottom-color:#b9dec9}
-.progressionTable tbody tr[data-all-green=true]>th[scope=rowgroup],.progressionTable tbody tr[data-all-green=true]>.progressionCurrent{background:#d8f2e4;border-bottom-color:#9fd1b4;color:var(--n50-positive)}
-.progressionTable tbody th[scope=rowgroup]{position:sticky;left:0;z-index:2;min-width:150px;padding:0;background:white;text-align:left}
-.progressionTable tbody th[scope=rowgroup] button{width:100%;height:58px;border:0;background:transparent;padding:4px 7px;display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:5px;color:inherit;text-align:left}
+.progressionTable tbody tr[data-all-green=true]>th[scope=rowgroup]{background:#d8f2e4;border-bottom-color:#9fd1b4;color:var(--n50-positive)}
+.progressionTable tbody th[scope=rowgroup]{z-index:2;padding:0;background:white;text-align:left;vertical-align:top}
+.progressionTable tbody th[scope=rowgroup] button{width:100%;min-height:100%;border:0;background:transparent;padding:7px;display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:5px;color:inherit;text-align:left}
 .progressionTable tbody th[scope=rowgroup] button:hover{background:#f1f6ff}
 .progressionTable tbody th[scope=rowgroup] button:focus-visible{outline:2px solid rgba(49,90,215,.45);outline-offset:-2px}
 .progressionTable tbody th[scope=rowgroup] span{min-width:0;display:flex;flex-direction:column}
 .progressionTable tbody th[scope=rowgroup] b{font-size:11px}
 .progressionTable tbody th[scope=rowgroup] small{max-width:112px;overflow:hidden;text-overflow:ellipsis;color:var(--n50-text-3);font-size:8px}
-.progressionTable tbody th[scope=row]{width:76px;color:var(--n50-text-2);font-weight:650}
-.progressionTable tbody td[data-state]{min-width:91px;font-family:"IBM Plex Mono",monospace}
-.progressionTable tbody td[data-state] b{display:inline-block;min-width:12px;margin-right:3px;font-size:12px}
-.progressionTable tbody td[data-state] span{font-weight:650}
-.progressionTable tbody td[data-state] small{margin-left:3px;color:inherit;font-size:8px}
-.progressionTable tbody td[data-state=pass]{background:#e9f8f0;color:var(--n50-positive)}
-.progressionTable tbody td[data-state=fail]{background:#fff0f2;color:var(--n50-negative)}
-.progressionTable tbody td[data-state=missing]{background:#f5f7fa;color:#718096}
-.progressionCurrent{min-width:78px;font:700 11px "IBM Plex Mono",monospace}
-.progressionScore{min-width:58px;font:750 11px "IBM Plex Mono",monospace}
+.progressionTable tbody th[scope=rowgroup] strong{margin-top:3px;font:700 10px "IBM Plex Mono",monospace}
+.progressionTable tbody th[scope=row]{color:var(--n50-text-2);font-weight:650;vertical-align:top;padding-top:8px;white-space:normal}
+.progressionConditions{padding:4px!important;text-align:left!important;white-space:normal!important}
+.progressionConditions>span{min-height:22px;display:grid;grid-template-columns:34px minmax(0,1fr) 20px;align-items:center;gap:5px;padding:2px 5px;border-bottom:1px solid rgba(120,137,160,.16);font-family:"IBM Plex Mono",monospace}
+.progressionConditions>span:last-child{border-bottom:0}
+.progressionConditions em{font-style:normal;font-weight:750;color:var(--n50-text-2)}
+.progressionConditions span{min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:650}
+.progressionConditions i{font-style:normal;color:var(--n50-text-3)}
+.progressionConditions b{font-size:12px;text-align:center}
+.progressionConditions>span[data-state=pass]{background:#e9f8f0;color:var(--n50-positive)}
+.progressionConditions>span[data-state=fail]{background:#fff0f2;color:var(--n50-negative)}
+.progressionConditions>span[data-state=missing]{background:#f5f7fa;color:#718096}
+.progressionScore{font:750 11px "IBM Plex Mono",monospace;vertical-align:top;padding-top:8px!important}
 .progressionScore[data-state=pass]{background:#d8f2e4!important;color:var(--n50-positive)}
 .progressionScore[data-state=fail]{background:#ffe3e7!important;color:var(--n50-negative)}
 .progressionScore[data-state=missing]{color:#718096}
 
 @media(max-width:1023px){.progressionStrip{height:260px;margin-bottom:8px}.progressionStrip>header>div{display:flex;overflow:hidden}.progressionStrip>header small{overflow:hidden;text-overflow:ellipsis}}
-@media(max-width:767px){.progressionStrip{height:280px}.progressionStrip>header small{display:none}.progressionTable{min-width:1080px}}
+@media(max-width:767px){.progressionStrip{height:320px}.progressionStrip>header small{display:none}.progressionStockColumn{width:24%}.progressionRouteColumn{width:18%}.progressionScoreColumn{width:12%}.progressionTable thead th{padding-inline:3px;font-size:9px}.progressionTable tbody th[scope=rowgroup] button{grid-template-columns:1fr;padding:5px}.progressionTable tbody th[scope=rowgroup] button>svg{display:none}.progressionTable tbody th[scope=rowgroup] small{display:none}.progressionConditions>span{grid-template-columns:28px minmax(0,1fr) 16px;padding-inline:3px;font-size:8px}}

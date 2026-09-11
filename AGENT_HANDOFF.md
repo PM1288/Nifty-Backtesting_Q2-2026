@@ -1,5 +1,21 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Evening release consolidation and vertical Home progression
+
+- Consolidated the four post-release feature branches that were tested but not
+  present together on canonical master: Home intraday progression gates,
+  Scalper V2 CE/PE Delta-OI colours, Stock 360 MWD EMA Value, and the FOVOLT
+  screener/backfill/historical evaluation.
+- Replaced the Home progression branch's 1,120px-wide horizontal condition
+  grid with a width-contained vertical table. Each stock retains two monthly
+  strategy rows; all seven conditions are stacked with exact actual/reference
+  operands and pass/fail/missing state. The widget scrolls vertically only and
+  remains above Risk & Anomaly.
+- No strategy arithmetic, source values, order permissions, Scalper V1, Trade
+  Log, SHAP, monthly history or report evidence was removed by consolidation.
+- Final build, deployment and production-browser evidence are recorded after
+  the release checks below are completed.
+
 ## 2026-09-11 — Home scalper progression adds 1H, 15m and 5m gates
 
 - Branch `feat/home-scalper-intraday-progression` extends the existing Home

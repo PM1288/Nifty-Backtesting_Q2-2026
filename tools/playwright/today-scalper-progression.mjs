@@ -47,17 +47,13 @@ try {
   const firstPair = [await rows.nth(0).innerText(), await rows.nth(1).innerText()];
   check("Both alternative monthly routes are visible", firstPair.join(" ").includes("M−1 close") && firstPair.join(" ").includes("M−2 close"), firstPair.join(" | "));
   check("Each route exposes seven additive checkpoints", ["M", "W0", "W−1", "D0", "1H", "15m", "5m"].every((label) => text.includes(label)), text.slice(0, 800));
-  check("Pass and fail cells use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Expected both pass and fail cells");
+  check("Pass and fail conditions use explicit semantic states", await widget.locator('td [data-state="pass"]').count() > 0 && await widget.locator('td [data-state="fail"]').count() > 0, "Expected both pass and fail conditions");
   const allGreenCount = Number((text.match(/^(\d+)\/\d+ all green/m) ?? [])[1] ?? 0);
   check("All-green stocks sort first when present", allGreenCount === 0 || await rows.first().getAttribute("data-all-green") === "true", `allGreen=${allGreenCount}`);
-  const scroller = widget.locator('[aria-label="Horizontally scrollable stock progression table"]');
-  const geometry = await scroller.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
-  check("Desktop table fits or scrolls inside its widget", geometry.scrollWidth >= geometry.clientWidth, JSON.stringify(geometry));
-  if (geometry.scrollWidth > geometry.clientWidth) {
-    await scroller.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
-    check("Horizontal scroll reaches later columns when needed", await scroller.evaluate((element) => element.scrollLeft > 0), String(await scroller.evaluate((element) => element.scrollLeft)));
-    await scroller.evaluate((element) => { element.scrollLeft = 0; });
-  }
+  const scroller = widget.locator('[aria-label="Vertically scrollable stock progression table"]');
+  const geometry = await scroller.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
+  check("Desktop table fits without horizontal scrolling", geometry.scrollWidth <= geometry.clientWidth + 1, JSON.stringify(geometry));
+  check("Long stock table scrolls vertically", geometry.scrollHeight > geometry.clientHeight, JSON.stringify(geometry));
   check("No browser errors", errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: path.join(output, "today-scalper-progression.png"), fullPage: true });
   await context.close();
@@ -77,8 +73,9 @@ try {
   await mobilePage.goto(base, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const mobileWidget = mobilePage.getByTestId("today-scalper-progression");
   await mobileWidget.getByText(/\d+\/\d+ all green · best first/).waitFor({ state: "visible", timeout: 30_000 });
-  const mobileGeometry = await mobileWidget.locator('[aria-label="Horizontally scrollable stock progression table"]').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
-  check("Mobile keeps progression in its own horizontal scroller", mobileGeometry.scrollWidth > mobileGeometry.clientWidth, JSON.stringify(mobileGeometry));
+  const mobileGeometry = await mobileWidget.locator('[aria-label="Vertically scrollable stock progression table"]').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
+  check("Mobile table fits without horizontal scrolling", mobileGeometry.scrollWidth <= mobileGeometry.clientWidth + 1, JSON.stringify(mobileGeometry));
+  check("Mobile keeps long progression in its own vertical scroller", mobileGeometry.scrollHeight > mobileGeometry.clientHeight, JSON.stringify(mobileGeometry));
   check("Mobile page has no accidental horizontal overflow", await mobilePage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), String(await mobilePage.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)));
   await mobilePage.screenshot({ path: path.join(output, "today-scalper-progression-mobile.png"), fullPage: true });
   await mobile.close();

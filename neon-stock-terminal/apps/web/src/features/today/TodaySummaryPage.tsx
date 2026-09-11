@@ -95,6 +95,7 @@ function RiskStrip({ model, onOpenStock }: { model: LensProps["model"]; onOpenSt
 }
 
 const progressionPrice = (value: number | null) => value == null ? "—" : value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const progressionLabel = { month: "M", week: "W0", "previous-week": "W−1", today: "D0", hour: "1H", "15m": "15m", "5m": "5m" } as const;
 
 function ScalperProgressionStrip({ model, progression, profiles, onOpenStock }: LensProps) {
   const source = new Map((progression.data?.rows ?? []).map((row) => [row.symbol, row]));
@@ -115,17 +116,17 @@ function ScalperProgressionStrip({ model, progression, profiles, onOpenStock }: 
   const mature = cards.filter((card) => card.allGreen).length;
   return <section className={styles.progressionStrip} data-testid="today-scalper-progression" aria-label="Scalper progression to Monthly Open">
     <header><div><strong>SCALPER PROGRESSION · MONTHLY OPEN</strong><small>Two monthly routes · additive week, day, 1H, 15m and 5m open gates</small></div><span>{progression.isLoading ? "Loading levels…" : progression.error ? "Levels unavailable" : `${mature}/${cards.length} all green · best first`}</span></header>
-    <div className={styles.progressionScroller} tabIndex={0} aria-label="Horizontally scrollable stock progression table">
+    <div className={styles.progressionScroller} tabIndex={0} aria-label="Vertically scrollable stock progression table">
       <table className={styles.progressionTable}>
-        <thead><tr><th>Stock</th><th>Route</th><th>Current</th><th>M</th><th>W0</th><th>W−1</th><th>D0</th><th>1H</th><th>15m</th><th>5m</th><th>Progress</th></tr></thead>
+        <colgroup><col className={styles.progressionStockColumn} /><col className={styles.progressionRouteColumn} /><col /><col className={styles.progressionScoreColumn} /></colgroup>
+        <thead><tr><th>Stock / current</th><th>Route</th><th>Conditions · actual &gt; reference</th><th>Score</th></tr></thead>
         <tbody>{cards.map(({ stock, branches, allGreen }) => <Fragment key={stock.symbol}>{branches.map((branch, branchIndex) => {
           const failed = branch.checks.some((check) => check.passed === false);
           const state = branch.checks.every((check) => check.passed === true) ? "pass" : failed ? "fail" : "missing";
           return <tr key={branch.id} data-progression-symbol={stock.symbol} data-state={state} data-all-green={allGreen ? "true" : "false"}>
-            {branchIndex === 0 ? <th rowSpan={2} scope="rowgroup"><button onClick={(event) => onOpenStock(stock, event.currentTarget)}><StockLogo symbol={stock.symbol} profile={profiles.get(stock.symbol)} size={17} /><span><b>{stock.symbol}</b><small>{stock.name}</small></span></button></th> : null}
+            {branchIndex === 0 ? <th rowSpan={2} scope="rowgroup"><button onClick={(event) => onOpenStock(stock, event.currentTarget)}><StockLogo symbol={stock.symbol} profile={profiles.get(stock.symbol)} size={17} /><span><b>{stock.symbol}</b><small>{stock.name}</small><strong>₹{progressionPrice(stock.last)}</strong></span></button></th> : null}
             <th scope="row">{branch.id === "previous-month" ? "M−1 close" : "M−2 close"}</th>
-            {branchIndex === 0 ? <td rowSpan={2} className={styles.progressionCurrent}>₹{progressionPrice(stock.last)}</td> : null}
-            {branch.checks.map((check) => <td key={check.id} data-state={check.passed == null ? "missing" : check.passed ? "pass" : "fail"} title={`${check.label}: ${progressionPrice(check.left)} > ${progressionPrice(check.right)}`} aria-label={`${check.label}: ${check.passed == null ? "unavailable" : check.passed ? "passed" : "failed"}; ${progressionPrice(check.left)} greater than ${progressionPrice(check.right)}`}><b>{check.passed == null ? "—" : check.passed ? "✓" : "×"}</b><span>{progressionPrice(check.left)}</span><small>&gt; {progressionPrice(check.right)}</small></td>)}
+            <td className={styles.progressionConditions}>{branch.checks.map((check) => <span key={check.id} data-state={check.passed == null ? "missing" : check.passed ? "pass" : "fail"} title={check.label} aria-label={`${check.label}: ${check.passed == null ? "unavailable" : check.passed ? "passed" : "failed"}; ${progressionPrice(check.left)} greater than ${progressionPrice(check.right)}`}><em>{progressionLabel[check.id]}</em><span>{progressionPrice(check.left)} <i>&gt;</i> {progressionPrice(check.right)}</span><b>{check.passed == null ? "—" : check.passed ? "✓" : "×"}</b></span>)}</td>
             <td className={styles.progressionScore} data-state={state}>{branch.depth}/7</td>
           </tr>;
         })}</Fragment>)}</tbody>

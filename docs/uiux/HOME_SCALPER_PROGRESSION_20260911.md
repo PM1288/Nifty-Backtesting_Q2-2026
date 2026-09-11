@@ -8,12 +8,15 @@ Route: `/n50/` (`Today` → `Market Story` and `Sector Matrix`)
 
 ## Outcome
 
-The Nifty 50 Trader home page now has a compact, fixed-height, horizontally
+The Nifty 50 Trader home page now has a compact, fixed-height, vertically
 scrollable `Scalper progression · Monthly Open` table immediately **above**
 `Risk & Anomaly`. Every stock already present in the current home-page F&O
 universe remains available. Each stock occupies two rows, one for each monthly
 route. Stocks are ordered with any fully green route first, then by deepest
 contiguous progression, total passed checks and symbol.
+
+Conditions are stacked inside each strategy row so the table remains contained
+to the widget width at desktop and mobile sizes without horizontal scrolling.
 
 Each stock has two deliberately separate alternative routes:
 

@@ -7,11 +7,11 @@ const signedDeltaLabel = (value: DeltaOiValue) => value == null
   ? "—"
   : `${value > 0 ? "+" : ""}${formatOiAxisValue(value)}`;
 
-const deltaBar = (value: DeltaOiValue, identity: string) => value == null ? null : ({
+const deltaBar = (value: DeltaOiValue, identity: string, borderColor: string) => value == null ? null : ({
   value,
   itemStyle: {
-    color: value < 0 ? "#c6283d" : value > 0 ? "#117a40" : "#94a3b8",
-    borderColor: identity,
+    color: identity,
+    borderColor,
     borderWidth: 1,
   },
 });
@@ -21,6 +21,7 @@ export function scalperV2HorizontalDeltaOiOption(
   ceChanges: DeltaOiValue[],
   peChanges: DeltaOiValue[],
 ): EChartsOption {
+  const maximum = Math.max(1, ...[...ceChanges, ...peChanges].flatMap((value) => value == null || !Number.isFinite(value) ? [] : [Math.abs(value)]));
   return {
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["CE ΔOI", "PE ΔOI"], top: 2, left: 28 },
@@ -34,6 +35,8 @@ export function scalperV2HorizontalDeltaOiOption(
       axisTick: { show: true },
       axisLabel: { formatter: formatOiAxisValue, margin: 9 },
       splitNumber: 5,
+      min: -maximum,
+      max: maximum,
     },
     yAxis: {
       type: "category",
@@ -63,7 +66,8 @@ export function scalperV2HorizontalDeltaOiOption(
         name: "CE ΔOI",
         type: "bar",
         barMaxWidth: 14,
-        data: ceChanges.map((value) => deltaBar(value, "#2563eb")),
+        itemStyle: { color: "#2563eb", borderColor: "#1d4ed8", borderWidth: 1 },
+        data: ceChanges.map((value) => deltaBar(value, "#2563eb", "#1d4ed8")),
         markLine: {
           silent: true,
           symbol: "none",
@@ -76,7 +80,8 @@ export function scalperV2HorizontalDeltaOiOption(
         name: "PE ΔOI",
         type: "bar",
         barMaxWidth: 14,
-        data: peChanges.map((value) => deltaBar(value, "#eab308")),
+        itemStyle: { color: "#eab308", borderColor: "#8a6200", borderWidth: 1 },
+        data: peChanges.map((value) => deltaBar(value, "#eab308", "#8a6200")),
       },
     ],
   };

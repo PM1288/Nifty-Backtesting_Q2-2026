@@ -19,6 +19,8 @@ export type ScalperV2ProfileBar = ScalperV2ProfileRow & {
   y: number;
   centerY: number;
   width: number | null;
+  startX: number | null;
+  endX: number | null;
 };
 
 export type ScalperV2ProfileLayout = {
@@ -111,11 +113,13 @@ export function layoutScalperV2Profile(
   paneWidth: number,
   paneHeight: number,
   priceToCoordinate: (strike: number) => number | null,
-  maxWidth = 120,
-  maxFraction = 0.18,
+  maxWidth = 180,
+  maxFraction = 0.22,
 ): ScalperV2ProfileLayout {
   const laneWidth = Math.max(0, Math.min(maxWidth, paneWidth * maxFraction, paneWidth - 16));
-  const anchorX = Math.max(0, paneWidth - 8);
+  // Current OI grows left from the plot edge. Signed delta OI owns a true
+  // centre origin so positive and negative values cannot collapse together.
+  const anchorX = Math.max(0, paneWidth - 8 - (mode === "change" ? laneWidth / 2 : 0));
   const values = rows.map((row) => mode === "change" ? row.changeOi : row.currentOi);
   const maximum = Math.max(0, ...values.map((value) => Math.abs(value ?? 0)));
   const strikes = [...new Set(rows.map((row) => row.strike))];
@@ -125,8 +129,16 @@ export function layoutScalperV2Profile(
     if (y == null || !Number.isFinite(y) || y < 0 || y > paneHeight) return [];
     visible.add(row.strike);
     const value = mode === "change" ? row.changeOi : row.currentOi;
-    const width = value == null ? null : maximum > 0 ? Math.abs(value) / maximum * laneWidth : 0;
-    return [{ ...row, y, centerY: y + (row.side === "CE" ? -3 : 3), width }];
+    const availableWidth = mode === "change" ? laneWidth / 2 : laneWidth;
+    const width = value == null ? null : maximum > 0 ? Math.abs(value) / maximum * availableWidth : 0;
+    const endX = value == null || width == null ? null : mode === "change"
+      ? anchorX + Math.sign(value) * width
+      : anchorX - width;
+    return [{
+      ...row, y, centerY: y + (row.side === "CE" ? -3 : 3), width,
+      startX: endX == null ? null : Math.min(anchorX, endX),
+      endX: endX == null ? null : Math.max(anchorX, endX),
+    }];
   });
   return { anchorX, laneWidth, maximum, bars, visibleStrikes: visible.size, totalStrikes: strikes.length };
 }

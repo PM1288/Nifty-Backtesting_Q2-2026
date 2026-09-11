@@ -10,7 +10,7 @@ class ProfileRenderer implements IPrimitivePaneRenderer {
       if (!layout || layout.laneWidth <= 0) return;
       context.save();
       context.beginPath(); context.rect(0, 0, mediaSize.width, mediaSize.height); context.clip();
-      const laneLeft = layout.anchorX - layout.laneWidth;
+      const laneLeft = this.mode === "change" ? layout.anchorX - layout.laneWidth / 2 : layout.anchorX - layout.laneWidth;
       context.fillStyle = "rgba(71,85,105,.045)"; context.fillRect(laneLeft - 4, 0, layout.laneWidth + 8, mediaSize.height);
       context.strokeStyle = "rgba(71,85,105,.45)"; context.lineWidth = 1;
       context.beginPath(); context.moveTo(layout.anchorX, 0); context.lineTo(layout.anchorX, mediaSize.height); context.stroke();
@@ -18,7 +18,7 @@ class ProfileRenderer implements IPrimitivePaneRenderer {
         const height = 5;
         if (bar.width == null) {
           context.strokeStyle = "#64748b"; context.setLineDash([2, 2]);
-          context.strokeRect(layout.anchorX - 7, bar.centerY - height / 2, 7, height); context.setLineDash([]);
+          context.strokeRect(layout.anchorX - 3.5, bar.centerY - height / 2, 7, height); context.setLineDash([]);
           continue;
         }
         if (bar.width === 0) {
@@ -26,14 +26,14 @@ class ProfileRenderer implements IPrimitivePaneRenderer {
           context.moveTo(layout.anchorX, bar.centerY - height / 2); context.lineTo(layout.anchorX, bar.centerY + height / 2); context.stroke();
           continue;
         }
-        const value = this.mode === "change" ? bar.changeOi : bar.currentOi;
-        context.fillStyle = this.mode === "change" ? (Number(value) > 0 ? "#117a40" : "#c6283d") : (bar.side === "CE" ? "#2563eb" : "#eab308");
-        context.globalAlpha = bar.side === "CE" ? .9 : .68;
-        context.fillRect(layout.anchorX - bar.width, bar.centerY - height / 2, bar.width, height);
+        const startX = bar.startX ?? layout.anchorX;
+        context.fillStyle = bar.side === "CE" ? "#2563eb" : "#eab308";
+        context.globalAlpha = bar.side === "CE" ? .9 : .76;
+        context.fillRect(startX, bar.centerY - height / 2, bar.width, height);
         context.globalAlpha = 1;
         context.strokeStyle = bar.side === "CE" ? "#1d4ed8" : "#8a6200";
         context.lineWidth = 1; context.setLineDash(bar.side === "PE" ? [3, 2] : []);
-        context.strokeRect(layout.anchorX - bar.width, bar.centerY - height / 2, bar.width, height); context.setLineDash([]);
+        context.strokeRect(startX, bar.centerY - height / 2, bar.width, height); context.setLineDash([]);
       }
       context.restore();
     });

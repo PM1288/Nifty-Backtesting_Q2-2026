@@ -17,7 +17,7 @@ test("Scalper V2 profile keeps one declared baseline and preserves missingness",
 test("Scalper V2 profile geometry uses the full cohort maximum and native strike coordinates", () => {
   const rows = normalizeScalperV2ProfileRows([
     { option_type: "CE", strike: 100, open_interest: 200, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },
-    { option_type: "PE", strike: 105, open_interest: 150, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },
+    { option_type: "PE", strike: 105, open_interest: 50, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },
     { option_type: "CE", strike: 110, open_interest: 100, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },
     { option_type: "PE", strike: 115, open_interest: 50, baseline_open_interest: null, baseline_kind: "BASELINE_UNAVAILABLE" },
   ]).rows;
@@ -26,7 +26,8 @@ test("Scalper V2 profile geometry uses the full cohort maximum and native strike
   assert.equal(layout.maximum, 100);
   assert.equal(layout.totalStrikes, 4);
   assert.equal(layout.visibleStrikes, 3);
-  assert.deepEqual(layout.bars.map((bar) => [bar.strike, bar.y, bar.width]), [[100, 200, 120], [105, 210, 60], [110, 220, 0]]);
+  assert.equal(layout.anchorX, 732);
+  assert.deepEqual(layout.bars.map((bar) => [bar.strike, bar.y, bar.width, bar.startX, bar.endX]), [[100, 200, 60, 732, 792], [105, 210, 30, 702, 732], [110, 220, 0, 732, 732]]);
 });
 
 test("Scalper V2 profile deduplicates conflicting strike-side rows", () => {

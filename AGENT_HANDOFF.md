@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-11 — Scalper V2 signed OI profile and clear drawings
+
+- Fixed the native Delta OI overlay defect that painted both signs on the same
+  side. It now has a true centre zero, positive-right/negative-left geometry and
+  one maximum-absolute denominator across the complete declared cohort.
+- CE bars are blue and PE bars yellow in both the underlying-attached profile
+  and the separate Change in OI chart. Signed right-axis values preserve the
+  increase/decrease meaning, and the top caption exposes the symmetric scale.
+- Added `Clear all drawings` to the Objects sidebar. It clears the full
+  symbol-scoped set and is recoverable as one Undo operation.
+- Web typecheck, 147/147 tests and production build pass. Authenticated isolated
+  Chromium passes 9/9 targeted checks; screenshot and JSON evidence are under
+  `/tmp/scalper-v2-signed-oi-drawings`. Production was not changed. Full report:
+  `docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
+
 ## 2026-09-10 — Independent CE and PE selection in both Scalpers
 
 - Existing `view=scalper` and `view=scalper_v2` now expose separate exact CE and

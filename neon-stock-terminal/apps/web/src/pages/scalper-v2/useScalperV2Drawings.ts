@@ -42,6 +42,10 @@ export function useScalperV2Drawings(symbol: string) {
   }, [commit]);
   const patch = useCallback((id: string, changes: Partial<ScalperV2Drawing>) => commit((current) => current.map((row) => row.id === id ? { ...row, ...changes, updatedAt: new Date().toISOString() } : row)), [commit]);
   const remove = useCallback((id: string) => { commit((current) => current.filter((row) => row.id !== id)); setSelectedId((current) => current === id ? null : current); }, [commit]);
+  const clearAll = useCallback(() => {
+    if (drawings.length === 0) return;
+    commit([]); setSelectedId(null);
+  }, [commit, drawings.length]);
   const duplicate = useCallback((id: string) => {
     const drawing = drawings.find((row) => row.id === id); if (!drawing) return;
     const copy = duplicateScalperV2Drawing(drawing, newId()); commit((current) => [...current, copy]); setSelectedId(copy.id);
@@ -55,5 +59,5 @@ export function useScalperV2Drawings(symbol: string) {
     setPast((history) => [...history.slice(-49), drawings]); setDrawings(next); return entries.slice(1);
   }), [drawings]);
 
-  return { drawings, selectedId, setSelectedId, saveState, canUndo: past.length > 0, canRedo: future.length > 0, upsert, patch, remove, duplicate, undo, redo, newId };
+  return { drawings, selectedId, setSelectedId, saveState, canUndo: past.length > 0, canRedo: future.length > 0, upsert, patch, remove, clearAll, duplicate, undo, redo, newId };
 }

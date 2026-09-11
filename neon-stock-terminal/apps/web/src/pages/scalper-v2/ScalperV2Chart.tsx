@@ -6,6 +6,7 @@ import {
 } from "lightweight-charts";
 import { levelInObservedSession, observedSessionBounds, paddedSessionBounds } from "../../lib/scalperV2Geometry";
 import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2ProfileRow } from "../../lib/scalperV2OiProfile";
+import { formatOiAxisValue } from "../../lib/scalperV2";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
@@ -82,7 +83,7 @@ export function ScalperV2Chart({
   profileModeRef.current = profileMode;
   yLockedRef.current = yLocked;
   const [drawingHint, setDrawingHint] = useState<string | null>(null);
-  const [profileVisibility, setProfileVisibility] = useState({ visible: 0, total: 0 });
+  const [profileVisibility, setProfileVisibility] = useState({ visible: 0, total: 0, maximum: 0 });
   const profileVisibilityRef = useRef(profileVisibility);
 
   const data = useMemo(() => bars.flatMap((bar): CandlestickData<Time>[] => {
@@ -111,16 +112,18 @@ export function ScalperV2Chart({
       const layout = primitive.getLayout();
       if (!layout) return;
       body.dataset.profileLaneWidth = String(Math.round(layout.laneWidth * 100) / 100);
+      body.dataset.profileAnchorX = String(Math.round(layout.anchorX * 100) / 100);
+      body.dataset.profileMaximum = String(layout.maximum);
       body.dataset.profileRows = String(profileRowsRef.current.length);
       body.dataset.profileVisibleStrikes = String(layout.visibleStrikes);
       body.dataset.profileTotalStrikes = String(layout.totalStrikes);
-      if (profileVisibilityRef.current.visible !== layout.visibleStrikes || profileVisibilityRef.current.total !== layout.totalStrikes) {
-        profileVisibilityRef.current = { visible: layout.visibleStrikes, total: layout.totalStrikes };
+      if (profileVisibilityRef.current.visible !== layout.visibleStrikes || profileVisibilityRef.current.total !== layout.totalStrikes || profileVisibilityRef.current.maximum !== layout.maximum) {
+        profileVisibilityRef.current = { visible: layout.visibleStrikes, total: layout.totalStrikes, maximum: layout.maximum };
         setProfileVisibility(profileVisibilityRef.current);
       }
       body.dataset.profileMaxAlignmentError = String(Math.max(0, ...layout.bars.map((row) => Math.abs(row.y - (candle.priceToCoordinate(row.strike) ?? Number.POSITIVE_INFINITY)))));
       body.dataset.profileGeometry = JSON.stringify(layout.bars.map((row) => ({
-        side: row.side, strike: row.strike, coordinate: row.y, width: row.width,
+        side: row.side, strike: row.strike, coordinate: row.y, width: row.width, startX: row.startX, endX: row.endX,
         value: profileModeRef.current === "change" ? row.changeOi : row.currentOi,
         mode: profileModeRef.current, state: row.state,
       })));
@@ -417,7 +420,7 @@ export function ScalperV2Chart({
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
-      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label={`${profileMode === "change" ? profileLabel : "Current OI"} horizontal bars aligned to the underlying price axis`}><b>{profileMode === "change" ? "ΔOI by strike" : "OI by strike"}</b><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible · CE solid · PE dashed</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y to include off-screen strikes</span>}</div>}
+      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label={`${profileMode === "change" ? profileLabel : "Current OI"} horizontal bars aligned to the underlying price axis`}><b>{profileMode === "change" ? "ΔOI by strike" : "OI by strike"}</b><span className={css.profileIdentity}><i className={css.profileCall} />CE <i className={css.profilePut} />PE</span><span className={css.profileScale}>{profileMode === "change" ? `−${formatOiAxisValue(profileVisibility.maximum)} ← 0 → +${formatOiAxisValue(profileVisibility.maximum)}` : `0 → max ${formatOiAxisValue(profileVisibility.maximum)}`}</span><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible · shared maximum</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y to include off-screen strikes</span>}</div>}
     </div>
   </section>;
 }

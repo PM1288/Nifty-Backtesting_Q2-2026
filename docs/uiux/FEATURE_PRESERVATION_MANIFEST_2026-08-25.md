@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-11 Scalper V2 signed Delta OI and drawing cleanup: the existing
+underlying-attached profile and separate Change in OI chart use one symmetric
+maximum-absolute scale, positive-right/negative-left geometry, blue CE and
+yellow PE identity, signed values, and an explicit top scale. The Objects rail
+adds undoable Clear all drawings. Missing remains distinct from observed zero;
+V1, V7, A-open/B-close, exact contracts, exports, collectors and order
+permissions are unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_SIGNED_OI_AND_CLEAR_DRAWINGS_20260911.md`.
+
 2026-09-10 Scalper V2 native strike Delta OI profile: the existing underlying
 candlestick now owns a native series primitive whose horizontal Delta OI bars
 are vertically aligned to actual strike coordinates on the right price scale.

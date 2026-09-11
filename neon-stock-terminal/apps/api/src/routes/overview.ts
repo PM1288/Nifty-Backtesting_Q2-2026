@@ -1325,6 +1325,16 @@ export async function getScalperProgression(prisma: PrismaClient) {
       JOIN equity_candidates eq ON eq.symbol = f.symbol AND eq.rn = 1
       LEFT JOIN instrument_profiles ip ON ip.symbol = f.symbol
     ),
+    intraday_session AS (
+      SELECT MAX((b.ts AT TIME ZONE 'Asia/Kolkata')::date) AS trade_date
+      FROM bars_1m b
+      JOIN universe u ON u.symbol_token = b.symbol_token
+      CROSS JOIN clock c
+      WHERE b.exchange = 'NSE'
+        AND b.ts >= c.today_start - INTERVAL '7 days'
+        AND b.ts < c.tomorrow_start
+        AND b.open IS NOT NULL
+    ),
     history_sources AS (
       SELECT
         u.symbol,
@@ -1448,10 +1458,11 @@ export async function getScalperProgression(prisma: PrismaClient) {
         b.ts AT TIME ZONE 'Asia/Kolkata' AS local_ts
       FROM bars_1m b
       JOIN universe u ON u.symbol_token = b.symbol_token
-      CROSS JOIN clock c
+      CROSS JOIN intraday_session session
       WHERE b.exchange = 'NSE'
-        AND b.ts >= c.today_start
-        AND b.ts < c.tomorrow_start
+        AND session.trade_date IS NOT NULL
+        AND b.ts >= (session.trade_date::timestamp AT TIME ZONE 'Asia/Kolkata')
+        AND b.ts < ((session.trade_date + 1)::timestamp AT TIME ZONE 'Asia/Kolkata')
         AND b.open IS NOT NULL
     ),
     intraday_buckets AS (
@@ -1588,7 +1599,7 @@ export async function getScalperProgression(prisma: PrismaClient) {
     generatedAt: new Date().toISOString(),
     sessionDate: marketDayIso(),
     scope: "CURRENT_NSE_STOCK_FNO_UNIVERSE",
-    basis: "Current/as-of values, canonical daily period anchors, and contiguous latest NSE one-minute-derived clock-hour/15-minute/5-minute opens",
+    basis: "Current/as-of values, canonical daily period anchors, and contiguous clock-hour/15-minute/5-minute opens from the latest observed NSE session within seven calendar days",
     rows: data,
   };
 }

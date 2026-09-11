@@ -2,17 +2,18 @@
 
 Date: 11 September 2026
 
-Branch: `feat/home-scalper-progression`
+Branch: `feat/home-scalper-intraday-progression`
 
 Route: `/n50/` (`Today` → `Market Story` and `Sector Matrix`)
 
 ## Outcome
 
-The Nifty 50 Trader home page now has a fixed-height, horizontally scrollable
-`Scalper progression · Monthly Open` row immediately below `Risk & Anomaly`.
-Every stock already present in the current home-page F&O universe remains in
-the row. Cards are ordered by the deepest completed progression first and then
-by symbol. Selecting a card opens the existing stock Quick View.
+The Nifty 50 Trader home page now has a compact, fixed-height, horizontally
+scrollable `Scalper progression · Monthly Open` table immediately **above**
+`Risk & Anomaly`. Every stock already present in the current home-page F&O
+universe remains available. Each stock occupies two rows, one for each monthly
+route. Stocks are ordered with any fully green route first, then by deepest
+contiguous progression, total passed checks and symbol.
 
 Each stock has two deliberately separate alternative routes:
 
@@ -23,13 +24,17 @@ Each route then applies the same additive AND gates in this order:
 
 1. latest retained/live value > current-week open (`W0`);
 2. latest retained/live value > previous-week open (`W−1`);
-3. latest retained/live value > today's open (`D0`, green-day confirmation).
+3. latest retained/live value > today's open (`D0`, green-day confirmation);
+4. current clock-hour open > previous clock-hour open (`1H`);
+5. current 15-minute bucket open > previous 15-minute bucket open (`15m`);
+6. current 5-minute bucket open > previous 5-minute bucket open (`5m`).
 
-The displayed `0/4` through `4/4` value is the deepest contiguous passed stage,
+The displayed `0/7` through `7/7` value is the deepest contiguous passed stage,
 not a count of unrelated true conditions. A failed or unavailable earlier gate
 stops progression depth while later raw comparisons remain individually
 visible. `✓`, `×`, and `—` distinguish pass, fail, and unavailable; missing is
-never converted to zero.
+never converted to zero. Every cell also shows both exact operands. Fully green
+routes and their stock identity are highlighted green; any failed check is red.
 
 ## Data contract
 
@@ -40,7 +45,8 @@ The additive read-only endpoint is:
 It returns the current NSE stock F&O universe with the exact values required by
 the UI: latest value, today's open, current/previous-week opens,
 current-month open, previous-month close, two-months-ago close, and source
-observation time.
+observation time. It also returns current/prior 1-hour, 15-minute and 5-minute
+bucket opens with their exact bucket timestamps.
 
 Daily source precedence is unchanged and explicit in the adapter:
 
@@ -49,6 +55,11 @@ Daily source precedence is unchanged and explicit in the adapter:
 3. `bars_1d`.
 
 Today's valid `instrument_state` observation overrides the same daily endpoint.
+Intraday opens come from canonical NSE `bars_1m`, bucketed in IST. A comparison
+is returned only when the current and previous observed bucket starts are
+exactly adjacent at the requested cadence; gaps remain unavailable instead of
+being compared across an unknown interval. Indexed UTC day bounds keep the
+intraday query on the existing timestamp index.
 The endpoint is cached privately for 60 seconds. It does not create a collector,
 strategy signal, order, paper position, or database table.
 
@@ -57,9 +68,6 @@ strategy signal, order, paper position, or database table.
 - `neon-stock-terminal/apps/api/src/routes/overview.ts`
 - `neon-stock-terminal/apps/api/src/routes/overview.test.ts`
 - `neon-stock-terminal/apps/web/src/lib/types.ts`
-- `neon-stock-terminal/apps/web/src/lib/api.ts`
-- `neon-stock-terminal/apps/web/src/lib/hooks.ts`
-- `neon-stock-terminal/apps/web/src/features/today/useTodayData.ts`
 - `neon-stock-terminal/apps/web/src/features/today/todayModel.ts`
 - `neon-stock-terminal/apps/web/src/features/today/TodaySummaryPage.tsx`
 - `neon-stock-terminal/apps/web/src/features/today/Today.module.css`
@@ -68,21 +76,22 @@ strategy signal, order, paper position, or database table.
 
 ## Validation evidence
 
-- Real database query: 210/210 current F&O stock rows had all seven requested
-  numerical endpoints on the captured 11 September session. The optimized
-  direct endpoint completed in about 2.7 seconds on the local test stack; this
+- Real database query: 210/210 current F&O stock rows had a comparable current
+  and previous bucket for 1-hour, 15-minute and 5-minute gates on the captured
+  11 September session. The optimized direct query completed in about 2.9
+  seconds on the local test stack; this
   is a machine-specific observation, not a latency SLA.
 - Web typecheck: PASS.
-- Web tests: PASS, 153/153.
+- Web tests: PASS, 162/162.
 - Web production build: PASS.
 - API typecheck: PASS.
-- API tests: PASS, 198/198, including the new endpoint mapping regression.
+- API tests: PASS, 200/200, including endpoint/export mapping regressions.
 - API production build: PASS.
-- Authenticated Chromium candidate: PASS, 11/11 checks at 1440x1000 and
-  390x844. The stock strip overflowed only inside its own horizontal scroller;
-  the mobile page had no accidental horizontal overflow.
-- Browser evidence: `/tmp/today-scalper-progression/` (not committed).
-- Canonical preservation gate: PASS.
+- Authenticated Chromium candidate: PASS, 12/12 checks at 1440x1000 and
+  390x844. Desktop displays the complete seven-gate table; mobile scrolls only
+  inside the widget and has no accidental page-wide horizontal overflow.
+- Browser evidence: `/tmp/today-scalper-intraday-progression/` (not committed).
+- Canonical preservation gate: PASS after the implementation and report update.
 
 ## Preserved boundaries and limitations
 

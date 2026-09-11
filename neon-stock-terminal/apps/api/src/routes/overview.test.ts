@@ -40,6 +40,18 @@ test("home scalper progression preserves period references, zero and missingness
       previous_month_close: 0,
       two_months_ago_open: 90,
       two_months_ago_close: null,
+      current_hour_open: 124,
+      previous_hour_open: 123,
+      current_hour_started_at: "2026-09-11T05:30:00Z",
+      previous_hour_started_at: "2026-09-11T04:30:00Z",
+      current_15m_open: 125,
+      previous_15m_open: 124,
+      current_15m_started_at: "2026-09-11T05:45:00Z",
+      previous_15m_started_at: "2026-09-11T05:30:00Z",
+      current_5m_open: 126,
+      previous_5m_open: 125,
+      current_5m_started_at: "2026-09-11T05:50:00Z",
+      previous_5m_started_at: "2026-09-11T05:45:00Z",
       history_through: "2026-09-11",
       observed_at: "2026-09-11T03:15:00Z",
     }],
@@ -67,6 +79,18 @@ test("home scalper progression preserves period references, zero and missingness
     previousMonthClose: 0,
     twoMonthsAgoOpen: 90,
     twoMonthsAgoClose: null,
+    currentHourOpen: 124,
+    previousHourOpen: 123,
+    currentHourStartedAt: "2026-09-11T05:30:00.000Z",
+    previousHourStartedAt: "2026-09-11T04:30:00.000Z",
+    current15mOpen: 125,
+    previous15mOpen: 124,
+    current15mStartedAt: "2026-09-11T05:45:00.000Z",
+    previous15mStartedAt: "2026-09-11T05:30:00.000Z",
+    current5mOpen: 126,
+    previous5mOpen: 125,
+    current5mStartedAt: "2026-09-11T05:50:00.000Z",
+    previous5mStartedAt: "2026-09-11T05:45:00.000Z",
     historyThrough: "2026-09-11T00:00:00.000Z",
     observedAt: "2026-09-11T03:15:00.000Z",
     conditions: [
@@ -85,6 +109,8 @@ test("home scalper progression preserves period references, zero and missingness
   assert.match(workbook, /Current month close \/ as-of/);
   assert.match(workbook, /Previous month open/);
   assert.match(workbook, /Two weeks ago close/);
+  assert.match(workbook, /Latest clock-hour open/);
+  assert.match(workbook, /Previous contiguous 15-minute open/);
   assert.match(workbook, /M2 red state/);
   assert.match(workbook, />UNAVAILABLE</);
   assert.match(workbook, /ss:Type="Number">0<\/Data>/);

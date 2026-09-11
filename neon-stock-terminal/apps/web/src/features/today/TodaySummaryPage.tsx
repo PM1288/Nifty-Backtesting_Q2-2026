@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Info, RefreshCw, TriangleAlert } from "lucide-react";
 import { StockLogo } from "../../components/stocks/StockProfileControls";
@@ -61,8 +61,8 @@ function MarketStoryLens(props: LensProps) {
       <section className={styles.panel}><header><div><strong>SECTOR LEADERSHIP</strong><small>Index contribution data unavailable; displaying sector movement.</small></div></header><div className={styles.leadership}><h3>TOP LEADERS</h3>{positive.map((sector) => <button key={sector.id} onClick={() => onSelectSector(sector)}><span>{sector.name}</span><i data-state="positive" style={{ width: `${Math.min(100, Math.abs(sector.movePct ?? 0) * 22)}%` }} /><Move value={sector.movePct} /></button>)}<h3>TOP DRAGGERS</h3>{negative.length ? negative.map((sector) => <button key={sector.id} onClick={() => onSelectSector(sector)}><span>{sector.name}</span><i data-state="negative" style={{ width: `${Math.min(100, Math.abs(sector.movePct ?? 0) * 22)}%` }} /><Move value={sector.movePct} /></button>) : <div className={styles.emptyInline}>No declining sector in this snapshot.</div>}</div></section>
       <section className={styles.panel}><header><div><strong>{useSetups ? "TRADE OPPORTUNITIES" : "MARKET MOVERS"}</strong><small>{useSetups ? "Canonical OIIS score" : "Opportunity classification unavailable; showing price movers."}</small></div></header><div className={styles.opportunities}><h3>{useSetups ? "STRONGEST SETUPS" : "STRONGEST MOVERS"}</h3>{(useSetups ? model.oiisStrongest : model.strongestMovers).map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} score={useSetups ? stock.oiisScore : null} onOpen={onOpenStock} />)}<h3>{useSetups ? "WEAKEST SETUPS" : "WEAKEST MOVERS"}</h3>{(useSetups ? model.oiisWeakest : model.weakestMovers).map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} score={useSetups ? stock.oiisScore : null} onOpen={onOpenStock} />)}</div></section>
     </div>
-    <RiskStrip model={model} onOpenStock={onOpenStock} />
     <ScalperProgressionStrip {...props} />
+    <RiskStrip model={model} onOpenStock={onOpenStock} />
   </div>;
 }
 
@@ -75,8 +75,8 @@ function SectorMatrixLens(props: LensProps & { selected: TodaySector; onSelect: 
       <section className={styles.panel}><header><div><strong>SECTOR MATRIX</strong><small>{model.sectors.length} sectors · stable order</small></div></header><div className={styles.matrixTable} aria-label="Sector matrix"><div className={styles.matrixHead}><span>Rank</span><span>Δ</span><span>Sector</span><span>% Move</span><span>Breadth</span><span>Strongest</span><span>Weakest</span><span>Conviction</span></div>{model.sectors.map((sector) => <button data-selected={sector.id === selected.id ? "true" : "false"} key={sector.id} onClick={() => onSelect(sector)}><span>{sector.rank}</span><span>—</span><span><SectorIcon name={sector.name} />{sector.name}</span><Move value={sector.movePct} /><span>{sector.breadth.advancing}/{sector.breadth.total}<BreadthBar breadth={sector.breadth} /></span><StockCompact stock={sector.strongestStock} profile={sector.strongestStock ? profiles.get(sector.strongestStock.symbol) : undefined} /><StockCompact stock={sector.weakestStock} profile={sector.weakestStock ? profiles.get(sector.weakestStock.symbol) : undefined} /><span>—</span></button>)}</div></section>
       <section className={`${styles.panel} ${styles.selectedSector}`}><header><div><strong>SELECTED SECTOR: {selected.name.toUpperCase()}</strong><small>Rank #{selected.rank} · conviction unavailable</small></div><Link to={`/full-board?sector=${selected.id}`}>Open Full Board</Link></header><div className={styles.sectorStats}><Move value={selected.movePct} /><span>{selected.breadth.advancing} advancing · {selected.breadth.declining} declining</span><BreadthBar breadth={selected.breadth} /></div><div className={styles.chartEmpty}>Sector intraday series unavailable</div><h3>TOP STOCKS IN {selected.name.toUpperCase()}</h3><div className={styles.selectedStocks}>{top.map((stock) => <StockRow key={stock.symbol} stock={stock} profile={profiles.get(stock.symbol)} onOpen={onOpenStock} />)}</div></section>
     </div>
-    <RiskStrip model={model} onOpenStock={onOpenStock} />
     <ScalperProgressionStrip {...props} />
+    <RiskStrip model={model} onOpenStock={onOpenStock} />
   </div>;
 }
 
@@ -92,7 +92,6 @@ function RiskStrip({ model, onOpenStock }: { model: LensProps["model"]; onOpenSt
 }
 
 const progressionPrice = (value: number | null) => value == null ? "—" : value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const progressionShort = { month: "M", week: "W0", "previous-week": "W−1", today: "D0" } as const;
 
 function ScalperProgressionStrip({ model, progression, profiles, onOpenStock }: LensProps) {
   const source = new Map((progression.data?.rows ?? []).map((row) => [row.symbol, row]));
@@ -100,22 +99,34 @@ function ScalperProgressionStrip({ model, progression, profiles, onOpenStock }: 
     const row = source.get(stock.symbol) ?? {
       symbol: stock.symbol, currentValue: null, todayOpen: null, currentWeekOpen: null,
       previousWeekOpen: null, currentMonthOpen: null, previousMonthClose: null,
-      twoMonthsAgoClose: null, observedAt: null,
+      twoMonthsAgoClose: null, currentHourOpen: null, previousHourOpen: null,
+      current15mOpen: null, previous15mOpen: null, current5mOpen: null,
+      previous5mOpen: null, observedAt: null,
     };
     const branches = buildScalperProgressionBranches(stock, row);
-    return { stock, branches, depth: Math.max(...branches.map((branch) => branch.depth)) };
-  }).sort((left, right) => right.depth - left.depth || left.stock.symbol.localeCompare(right.stock.symbol));
-  const mature = cards.filter((card) => card.depth === 4).length;
+    const depth = Math.max(...branches.map((branch) => branch.depth));
+    const passed = Math.max(...branches.map((branch) => branch.checks.filter((check) => check.passed === true).length));
+    const allGreen = branches.some((branch) => branch.checks.every((check) => check.passed === true));
+    return { stock, branches, depth, passed, allGreen };
+  }).sort((left, right) => Number(right.allGreen) - Number(left.allGreen) || right.depth - left.depth || right.passed - left.passed || left.stock.symbol.localeCompare(right.stock.symbol));
+  const mature = cards.filter((card) => card.allGreen).length;
   return <section className={styles.progressionStrip} data-testid="today-scalper-progression" aria-label="Scalper progression to Monthly Open">
-    <header><div><strong>SCALPER PROGRESSION · MONTHLY OPEN</strong><small>Two alternative monthly routes; week and day confirmations are additive AND gates</small></div><span>{progression.isLoading ? "Loading levels…" : progression.error ? "Levels unavailable" : `${mature}/${cards.length} at stage 4`}</span></header>
-    <div className={styles.progressionScroller} tabIndex={0} aria-label="Horizontally scrollable stock progression">
-      {cards.map(({ stock, branches, depth }) => <button className={styles.progressionCard} data-progression-symbol={stock.symbol} key={stock.symbol} onClick={(event) => onOpenStock(stock, event.currentTarget)}>
-        <span className={styles.progressionStock}><StockLogo symbol={stock.symbol} profile={profiles.get(stock.symbol)} size={17} /><b>{stock.symbol}</b><em>{depth}/4</em><strong>₹{progressionPrice(stock.last)}</strong></span>
-        {branches.map((branch) => <span className={styles.progressionBranch} key={branch.id} data-active={branch.depth === depth && depth > 0 ? "true" : "false"}>
-          <span><b>{branch.id === "previous-month" ? "M−1 route" : "M−2 route"}</b><em>{branch.depth}/4 AND</em></span>
-          <span className={styles.progressionChecks}>{branch.checks.map((check) => <span key={check.id} data-state={check.passed == null ? "missing" : check.passed ? "pass" : "fail"} title={`${check.label}: ${progressionPrice(check.left)} > ${progressionPrice(check.right)}`} aria-label={`${check.label}: ${check.passed == null ? "unavailable" : check.passed ? "passed" : "failed"}; ${progressionPrice(check.left)} greater than ${progressionPrice(check.right)}`}><b>{progressionShort[check.id]}</b><i>{check.passed == null ? "—" : check.passed ? "✓" : "×"}</i></span>)}</span>
-        </span>)}
-      </button>)}
+    <header><div><strong>SCALPER PROGRESSION · MONTHLY OPEN</strong><small>Two monthly routes · additive week, day, 1H, 15m and 5m open gates</small></div><span>{progression.isLoading ? "Loading levels…" : progression.error ? "Levels unavailable" : `${mature}/${cards.length} all green · best first`}</span></header>
+    <div className={styles.progressionScroller} tabIndex={0} aria-label="Horizontally scrollable stock progression table">
+      <table className={styles.progressionTable}>
+        <thead><tr><th>Stock</th><th>Route</th><th>Current</th><th>M</th><th>W0</th><th>W−1</th><th>D0</th><th>1H</th><th>15m</th><th>5m</th><th>Progress</th></tr></thead>
+        <tbody>{cards.map(({ stock, branches, allGreen }) => <Fragment key={stock.symbol}>{branches.map((branch, branchIndex) => {
+          const failed = branch.checks.some((check) => check.passed === false);
+          const state = branch.checks.every((check) => check.passed === true) ? "pass" : failed ? "fail" : "missing";
+          return <tr key={branch.id} data-progression-symbol={stock.symbol} data-state={state} data-all-green={allGreen ? "true" : "false"}>
+            {branchIndex === 0 ? <th rowSpan={2} scope="rowgroup"><button onClick={(event) => onOpenStock(stock, event.currentTarget)}><StockLogo symbol={stock.symbol} profile={profiles.get(stock.symbol)} size={17} /><span><b>{stock.symbol}</b><small>{stock.name}</small></span></button></th> : null}
+            <th scope="row">{branch.id === "previous-month" ? "M−1 close" : "M−2 close"}</th>
+            {branchIndex === 0 ? <td rowSpan={2} className={styles.progressionCurrent}>₹{progressionPrice(stock.last)}</td> : null}
+            {branch.checks.map((check) => <td key={check.id} data-state={check.passed == null ? "missing" : check.passed ? "pass" : "fail"} title={`${check.label}: ${progressionPrice(check.left)} > ${progressionPrice(check.right)}`} aria-label={`${check.label}: ${check.passed == null ? "unavailable" : check.passed ? "passed" : "failed"}; ${progressionPrice(check.left)} greater than ${progressionPrice(check.right)}`}><b>{check.passed == null ? "—" : check.passed ? "✓" : "×"}</b><span>{progressionPrice(check.left)}</span><small>&gt; {progressionPrice(check.right)}</small></td>)}
+            <td className={styles.progressionScore} data-state={state}>{branch.depth}/7</td>
+          </tr>;
+        })}</Fragment>)}</tbody>
+      </table>
     </div>
   </section>;
 }

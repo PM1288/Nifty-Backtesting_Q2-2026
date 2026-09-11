@@ -8,7 +8,7 @@ export type QuickViewTarget = { type: "sector"; id: string } | { type: "stock"; 
 export type TodayBreadth = { advancing: number; declining: number; neutral: number; total: number };
 
 export type ScalperProgressionCheck = {
-  id: "month" | "week" | "previous-week" | "today";
+  id: "month" | "week" | "previous-week" | "today" | "hour" | "15m" | "5m";
   label: string;
   left: number | null;
   right: number | null;
@@ -94,11 +94,20 @@ export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgre
   const currentWeekOpen = progressionValue(row.currentWeekOpen);
   const previousWeekOpen = progressionValue(row.previousWeekOpen);
   const todayOpen = progressionValue(row.todayOpen) ?? progressionValue(stock.dayOpen);
+  const currentHourOpen = progressionValue(row.currentHourOpen);
+  const previousHourOpen = progressionValue(row.previousHourOpen);
+  const current15mOpen = progressionValue(row.current15mOpen);
+  const previous15mOpen = progressionValue(row.previous15mOpen);
+  const current5mOpen = progressionValue(row.current5mOpen);
+  const previous5mOpen = progressionValue(row.previous5mOpen);
   const comparison = (left: number | null, right: number | null) => left == null || right == null ? null : left > right;
   const shared: ScalperProgressionCheck[] = [
     { id: "week", label: "Latest > this-week open", left: currentValue, right: currentWeekOpen, passed: comparison(currentValue, currentWeekOpen) },
     { id: "previous-week", label: "Latest > previous-week open", left: currentValue, right: previousWeekOpen, passed: comparison(currentValue, previousWeekOpen) },
     { id: "today", label: "Latest > today open", left: currentValue, right: todayOpen, passed: comparison(currentValue, todayOpen) },
+    { id: "hour", label: "This clock-hour open > previous clock-hour open", left: currentHourOpen, right: previousHourOpen, passed: comparison(currentHourOpen, previousHourOpen) },
+    { id: "15m", label: "Current 15-minute open > previous 15-minute open", left: current15mOpen, right: previous15mOpen, passed: comparison(current15mOpen, previous15mOpen) },
+    { id: "5m", label: "Current 5-minute open > previous 5-minute open", left: current5mOpen, right: previous5mOpen, passed: comparison(current5mOpen, previous5mOpen) },
   ];
   const branch = (id: ScalperProgressionBranch["id"], label: string, right: number | null): ScalperProgressionBranch => {
     const checks: ScalperProgressionCheck[] = [

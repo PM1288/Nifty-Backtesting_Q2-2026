@@ -35,21 +35,29 @@ try {
   await widget.waitFor({ state: "visible", timeout: 30_000 }).catch(async () => {
     throw new Error(`Today progression did not mount: ${JSON.stringify({ url: page.url(), body: (await page.locator("body").innerText()).slice(0, 2_000), errors })}`);
   });
-  await widget.getByText(/\d+\/\d+ at stage 4/).waitFor({ state: "visible", timeout: 30_000 });
+  await widget.getByText(/\d+\/\d+ all green · best first/).waitFor({ state: "visible", timeout: 30_000 });
   const text = await widget.innerText();
-  check("Progression row is below the Today market sections", text.includes("SCALPER PROGRESSION · MONTHLY OPEN"), text.slice(0, 500));
-  const cards = widget.locator("[data-progression-symbol]");
-  const cardCount = await cards.count();
-  check("Current stock universe is represented", cardCount >= 1, `${cardCount} stock cards`);
-  const first = await cards.first().innerText();
-  check("Both alternative monthly routes are visible", first.includes("M−1 route") && first.includes("M−2 route"), first);
-  check("Each route exposes four additive checkpoints", (first.match(/\/4 AND/g) ?? []).length === 2 && ["M", "W0", "W−1", "D0"].every((label) => first.includes(label)), first);
-  const scroller = widget.locator('[aria-label="Horizontally scrollable stock progression"]');
+  check("Progression table is above Risk and Anomaly", await widget.evaluate((element) => {
+    const risk = [...document.querySelectorAll("strong")].find((node) => node.textContent === "RISK & ANOMALY SNAPSHOT");
+    return risk ? Boolean(element.compareDocumentPosition(risk) & Node.DOCUMENT_POSITION_FOLLOWING) : false;
+  }), text.slice(0, 500));
+  const rows = widget.locator("tbody [data-progression-symbol]");
+  const rowCount = await rows.count();
+  check("Current stock universe is represented by two strategy rows", rowCount >= 2 && rowCount % 2 === 0, `${rowCount} strategy rows`);
+  const firstPair = [await rows.nth(0).innerText(), await rows.nth(1).innerText()];
+  check("Both alternative monthly routes are visible", firstPair.join(" ").includes("M−1 close") && firstPair.join(" ").includes("M−2 close"), firstPair.join(" | "));
+  check("Each route exposes seven additive checkpoints", ["M", "W0", "W−1", "D0", "1H", "15m", "5m"].every((label) => text.includes(label)), text.slice(0, 800));
+  check("Pass and fail cells use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Expected both pass and fail cells");
+  const allGreenCount = Number((text.match(/^(\d+)\/\d+ all green/m) ?? [])[1] ?? 0);
+  check("All-green stocks sort first when present", allGreenCount === 0 || await rows.first().getAttribute("data-all-green") === "true", `allGreen=${allGreenCount}`);
+  const scroller = widget.locator('[aria-label="Horizontally scrollable stock progression table"]');
   const geometry = await scroller.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
-  check("Long fixed-width stock line scrolls horizontally", geometry.scrollWidth > geometry.clientWidth, JSON.stringify(geometry));
-  await scroller.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
-  check("Horizontal scroll reaches later stocks", await scroller.evaluate((element) => element.scrollLeft > 0), String(await scroller.evaluate((element) => element.scrollLeft)));
-  await scroller.evaluate((element) => { element.scrollLeft = 0; });
+  check("Desktop table fits or scrolls inside its widget", geometry.scrollWidth >= geometry.clientWidth, JSON.stringify(geometry));
+  if (geometry.scrollWidth > geometry.clientWidth) {
+    await scroller.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
+    check("Horizontal scroll reaches later columns when needed", await scroller.evaluate((element) => element.scrollLeft > 0), String(await scroller.evaluate((element) => element.scrollLeft)));
+    await scroller.evaluate((element) => { element.scrollLeft = 0; });
+  }
   check("No browser errors", errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: path.join(output, "today-scalper-progression.png"), fullPage: true });
   await context.close();
@@ -68,8 +76,8 @@ try {
   const mobilePage = await mobile.newPage();
   await mobilePage.goto(base, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const mobileWidget = mobilePage.getByTestId("today-scalper-progression");
-  await mobileWidget.getByText(/\d+\/\d+ at stage 4/).waitFor({ state: "visible", timeout: 30_000 });
-  const mobileGeometry = await mobileWidget.locator('[aria-label="Horizontally scrollable stock progression"]').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
+  await mobileWidget.getByText(/\d+\/\d+ all green · best first/).waitFor({ state: "visible", timeout: 30_000 });
+  const mobileGeometry = await mobileWidget.locator('[aria-label="Horizontally scrollable stock progression table"]').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
   check("Mobile keeps progression in its own horizontal scroller", mobileGeometry.scrollWidth > mobileGeometry.clientWidth, JSON.stringify(mobileGeometry));
   check("Mobile page has no accidental horizontal overflow", await mobilePage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), String(await mobilePage.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)));
   await mobilePage.screenshot({ path: path.join(output, "today-scalper-progression-mobile.png"), fullPage: true });

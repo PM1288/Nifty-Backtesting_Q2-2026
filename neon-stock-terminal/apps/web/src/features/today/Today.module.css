@@ -77,11 +77,11 @@
 .progressionMatrixScroller{width:100%;min-width:0;overflow-x:auto;overflow-y:visible;outline:none;overscroll-behavior-x:contain}
 .progressionMatrixScroller:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:-2px}
 .progressionMatrixTable{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;background:#fff;font-size:11px;font-variant-numeric:tabular-nums}
-.progressionMatrixTable th,.progressionMatrixTable td{height:34px;min-width:82px;padding:2px 5px;border-right:1px solid #e5eaf1;border-bottom:1px solid #e8edf3;text-align:center;white-space:nowrap;background:#fff}
+.progressionMatrixTable th,.progressionMatrixTable td{box-sizing:border-box;height:34px;min-width:82px;padding:1px 5px;border-right:1px solid #e5eaf1;border-bottom:1px solid #e8edf3;text-align:center;white-space:nowrap;background:#fff}
 .progressionMatrixTable thead{position:sticky;top:0;z-index:12}
 .progressionMatrixTable thead th{height:25px;background:#eaf0f7;color:#354963;font-size:10px;font-weight:700;letter-spacing:.01em}
 .progressionMatrixTable thead tr:first-child th[colspan]{background:#dce7f4;color:#183d72;border-bottom-color:#b8c9dd}
-.progressionMatrixTable tbody tr{cursor:pointer}
+.progressionMatrixTable tbody tr{height:34px;cursor:pointer}
 .progressionMatrixTable tbody tr:hover>th,.progressionMatrixTable tbody tr:hover>td{box-shadow:inset 0 1px #b7c9e5,inset 0 -1px #b7c9e5}
 .progressionMatrixTable tbody tr[data-qualified=true] .progressionStickyBest b{background:#087a55;color:#fff}
 .progressionMatrixTable tbody th{min-width:165px;text-align:left;padding:0}
@@ -96,15 +96,15 @@
 .progressionMatrixTable thead .progressionStickyStock,.progressionMatrixTable thead .progressionStickyLtp{z-index:15;background:#eaf0f7!important}
 .progressionStickyBest{position:sticky;right:0;z-index:8;min-width:68px!important;background:#fff!important;box-shadow:-1px 0 #d7e0eb}
 .progressionMatrixTable thead .progressionStickyBest{z-index:15;background:#eaf0f7!important}
-.progressionStickyBest b{display:inline-flex;min-width:35px;justify-content:center;border:1px solid #9fb5db;border-radius:4px;padding:2px 4px;color:#214d8d;background:#eef4ff}
-.progressionStickyBest small{display:block;margin-top:1px;font-size:8px;color:var(--n50-text-3)}
+.progressionStickyBest b{display:inline-flex;min-width:35px;justify-content:center;border:1px solid #9fb5db;border-radius:4px;padding:1px 4px;color:#214d8d;background:#eef4ff;line-height:1.1}
+.progressionStickyBest small{display:block;margin-top:1px;font-size:8px;line-height:1;color:var(--n50-text-3)}
 .progressionStages{display:flex;align-items:center;justify-content:center;gap:3px;min-width:82px}
 .progressionStages i{width:8px;height:8px;border-radius:50%;border:1px solid #aab4c0;background:#eef1f5}
 .progressionStages i[data-state=pass]{border-color:#087a55;background:#34a477}
 .progressionStages i[data-state=fail]{border-color:#c93346;background:#e36573}
 .progressionMatrix .progressionScore{min-width:88px!important;padding:2px 4px!important;vertical-align:middle}
-.progressionMatrix .progressionScore b{display:block;font:750 11px "IBM Plex Mono",monospace;color:#263e5d}
-.progressionMatrix .progressionScore span{display:block;font:700 8px "IBM Plex Mono",monospace;color:var(--n50-text-3)}
+.progressionMatrix .progressionScore b{display:block;font:750 11px/1.05 "IBM Plex Mono",monospace;color:#263e5d}
+.progressionMatrix .progressionScore span{display:block;font:700 8px/1.05 "IBM Plex Mono",monospace;color:var(--n50-text-3)}
 .progressionMatrix .progressionScore[data-complete=true] b{color:var(--n50-positive)}
 .progressionGate{padding:2px!important}
 .progressionGate button{width:100%;height:100%;min-width:76px;border:0;border-radius:4px;background:transparent;display:flex;align-items:center;justify-content:center;gap:4px;color:#26384f;font:650 10px "IBM Plex Mono",monospace}
@@ -112,8 +112,8 @@
 .progressionGate[data-state=pass] button{background:#e4f5ec}.progressionGate[data-state=pass] b{color:var(--n50-positive)}
 .progressionGate[data-state=fail] button{background:#fdecef}.progressionGate[data-state=fail] b{color:var(--n50-negative)}
 .progressionGate[data-state=pending] button{background:#f1f3f6;color:#718096}.progressionGate[data-state=pending] b{color:#718096}
-.progressionMatrix[data-density=comfortable] .progressionMatrixTable tbody th,.progressionMatrix[data-density=comfortable] .progressionMatrixTable tbody td{height:38px}
-.progressionMatrix[data-density=ultra] .progressionMatrixTable tbody th,.progressionMatrix[data-density=ultra] .progressionMatrixTable tbody td{height:28px}
+.progressionMatrix[data-density=comfortable] .progressionMatrixTable tbody tr,.progressionMatrix[data-density=comfortable] .progressionMatrixTable tbody th,.progressionMatrix[data-density=comfortable] .progressionMatrixTable tbody td{height:38px}
+.progressionMatrix[data-density=ultra] .progressionMatrixTable tbody tr,.progressionMatrix[data-density=ultra] .progressionMatrixTable tbody th,.progressionMatrix[data-density=ultra] .progressionMatrixTable tbody td{height:28px}
 .progressionMatrix[data-density=ultra] .progressionGate,.progressionMatrix[data-density=ultra] .progressionGate button{min-width:38px}
 .progressionEmpty{padding:18px;text-align:center;color:var(--n50-text-3)}
 .progressionDrawerBackdrop{position:fixed;inset:0;z-index:89;border:0;background:rgba(12,27,48,.24)}

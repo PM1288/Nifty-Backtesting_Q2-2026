@@ -4883,3 +4883,23 @@ or outcomes were deleted.
   evidence is outside Git at `/tmp/positioning-flow-production-20260912`.
   `/n50/`, `view=flow`, Morning View, OI & PCR and Scalper V2 routes all return
   HTTP 200 after deployment.
+
+## 2026-09-12 — Scalper progression Stock-cell qualification correction
+
+- Corrected the Home Scalper Progression matrix so the sticky Stock cell is
+  green only when at least one complete M−1 or M−2 route has every condition
+  passed. A single passing monthly starter or lower-timeframe gate no longer
+  paints the Stock cell green. Both failed starters remain red; partially
+  qualified or pending routes remain neutral.
+- Added a pure `progressionStockState` contract, unit fixtures for complete,
+  starter-pass-but-incomplete and both-starters-failed rows, plus a production
+  browser assertion that `complete` Stock styling exactly matches the existing
+  full-route qualification flag. Strategy calculations, weights and sorting did
+  not change.
+- Web typecheck, focused 7/7 tests, full 181/181 tests and production build pass.
+  Commit `a9f0e6c` was pushed to the feature branch and `master`, then deployed
+  with the scoped dashboard script. Container `4f1d72f0f6c5...` is healthy on
+  image `sha256:9db8912602300f279a96e5b1959ffbabba28e8c57fb2a451b12c4f78e4be7630`;
+  entry asset `/n50/assets/index-rnnucye0.js`. Authenticated desktop/mobile
+  production regression passes 17/17; evidence is outside Git at
+  `/tmp/today-scalper-progression-production-20260912`.

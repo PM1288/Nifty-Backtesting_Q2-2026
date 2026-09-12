@@ -75,7 +75,6 @@ try {
     await page.getByText("SYNTHPASS", { exact: false }).first().waitFor();
     if (await page.getByText("1.2048", { exact: true }).count() === 0) throw new Error("exact delta display missing");
     if (await page.getByText("All 16 physical source fields", { exact: true }).count() === 0) throw new Error("raw-field inspector missing");
-    await page.getByRole("button", { name: "Run evaluation" }).click();
     await page.getByText("410", { exact: true }).waitFor();
     await page.getByText("+0.35 pp", { exact: true }).waitFor();
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: true });

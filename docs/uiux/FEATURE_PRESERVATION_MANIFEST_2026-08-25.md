@@ -6,6 +6,18 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-12 Scalper V2 single workstation: the existing V2 route now keeps its
+three price charts and permanent numerical inspector above one compact tabbed
+Analytics Dock. A strike matrix combines OI and signed change, the native
+underlying profile has four CE/PE OI/change lanes, coincident right-axis labels
+merge by priority, one-sided change-in-OI uses an adaptive domain, option-price
+comparison defaults to stable return from open with a complete-chain heatmap,
+and snapshot totals are truthfully named Total OI vs Time. Latest chain
+evidence is never relabelled as historical cursor evidence. Original Scalper,
+V7, A-open/B-close, independent CE/PE selection, drawings, exports, collectors
+and permissions remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_SINGLE_WORKSTATION_20260912.md`.
+
 2026-09-12 Home progression dense matrix: the existing Monthly Open progression
 above Risk & Anomaly now renders exactly one compact row per stock with grouped
 M−1/M−2 route headers, unchanged seven-gate calculations, contiguous scores,

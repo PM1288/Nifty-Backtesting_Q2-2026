@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2HorizontalDeltaOiOption } from "../src/lib/scalperV2Analytics";
+import { scalperV2AdaptiveDeltaDomain, scalperV2HorizontalDeltaOiOption } from "../src/lib/scalperV2Analytics";
 
 test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", () => {
   const option = scalperV2HorizontalDeltaOiOption([23_450, 23_500], [40, null], [-20, 0]);
@@ -11,10 +11,10 @@ test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", ()
   const axisLabel = yAxis.axisLabel as { interval: number; hideOverlap: boolean; formatter: (value: string, index: number) => string };
 
   assert.equal(xAxis.type, "value");
-  assert.equal(xAxis.name, "Signed ΔOI · provider units");
+  assert.equal(xAxis.name, "Change in OI");
   assert.equal(xAxis.position, "top");
-  assert.equal(xAxis.min, -40);
-  assert.equal(xAxis.max, 40);
+  assert.equal(xAxis.min, -23.2);
+  assert.equal(xAxis.max, 43.2);
   assert.equal(yAxis.type, "category");
   assert.equal(yAxis.position, "right");
   assert.deepEqual(yAxis.data, [23_450, 23_500]);
@@ -27,6 +27,12 @@ test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", ()
   assert.equal((series[0].itemStyle as { color: string }).color, "#2563eb");
   assert.equal((series[1].itemStyle as { color: string }).color, "#eab308");
   assert.deepEqual(markLine.data, [{ xAxis: 0 }]);
+});
+
+test("Scalper V2 adaptive ΔOI domain keeps zero without wasting half the chart", () => {
+  assert.deepEqual(scalperV2AdaptiveDeltaDomain([-100, -50, 0]), [-108, 8]);
+  assert.deepEqual(scalperV2AdaptiveDeltaDomain([25, 100]), [-8, 108]);
+  assert.deepEqual(scalperV2AdaptiveDeltaDomain([-100, 20]), [-108, 28]);
 });
 
 test("Scalper V2 horizontal ΔOI uses side colours and preserves signs, observed zero, and missingness", () => {

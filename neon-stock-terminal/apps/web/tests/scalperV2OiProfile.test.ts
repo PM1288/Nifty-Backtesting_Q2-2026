@@ -30,6 +30,20 @@ test("Scalper V2 profile geometry uses the full cohort maximum and native strike
   assert.deepEqual(layout.bars.map((bar) => [bar.strike, bar.y, bar.width, bar.startX, bar.endX]), [[100, 200, 60, 732, 792], [105, 210, 30, 702, 732], [110, 220, 0, 732, 732]]);
 });
 
+test("Scalper V2 structure profile exposes four OI and signed-change lanes per strike", () => {
+  const normalized = normalizeScalperV2ProfileRows([
+    { option_type: "CE", strike: 23_450, open_interest: 140, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },
+    { option_type: "PE", strike: 23_450, open_interest: 80, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },
+    { option_type: "CE", strike: 23_500, open_interest: 200, baseline_open_interest: 150, baseline_kind: "PREVIOUS_SESSION_FINAL" },
+    { option_type: "PE", strike: 23_500, open_interest: 200, baseline_open_interest: 160, baseline_kind: "PREVIOUS_SESSION_FINAL" },
+  ]);
+  const layout = layoutScalperV2Profile(normalized.rows, "structure", 800, 400, (strike) => strike === 23_450 ? 183 : 220);
+  assert.equal(layout.bars.length, 8);
+  assert.equal(layout.bars.filter((bar) => bar.metric === "current").length, 4);
+  assert.equal(layout.bars.filter((bar) => bar.metric === "change").length, 4);
+  assert.ok(layout.bars.every((bar) => bar.y === 183 || bar.y === 220));
+});
+
 test("Scalper V2 profile deduplicates conflicting strike-side rows", () => {
   const model = normalizeScalperV2ProfileRows([
     { option_type: "CE", strike: 100, open_interest: 100, baseline_open_interest: 80, baseline_kind: "PREVIOUS_SESSION_FINAL" },

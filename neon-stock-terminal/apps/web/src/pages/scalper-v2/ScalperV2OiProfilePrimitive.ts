@@ -10,7 +10,7 @@ class ProfileRenderer implements IPrimitivePaneRenderer {
       if (!layout || layout.laneWidth <= 0) return;
       context.save();
       context.beginPath(); context.rect(0, 0, mediaSize.width, mediaSize.height); context.clip();
-      const laneLeft = this.mode === "change" ? layout.anchorX - layout.laneWidth / 2 : layout.anchorX - layout.laneWidth;
+      const laneLeft = this.mode === "change" || this.mode === "structure" ? layout.anchorX - layout.laneWidth / 2 : layout.anchorX - layout.laneWidth;
       context.fillStyle = "rgba(71,85,105,.045)"; context.fillRect(laneLeft - 4, 0, layout.laneWidth + 8, mediaSize.height);
       context.strokeStyle = "rgba(71,85,105,.45)"; context.lineWidth = 1;
       context.beginPath(); context.moveTo(layout.anchorX, 0); context.lineTo(layout.anchorX, mediaSize.height); context.stroke();
@@ -27,7 +27,7 @@ class ProfileRenderer implements IPrimitivePaneRenderer {
           continue;
         }
         const startX = bar.startX ?? layout.anchorX;
-        context.fillStyle = bar.side === "CE" ? "#2563eb" : "#eab308";
+        context.fillStyle = bar.metric === "change" ? (bar.changeOi == null || bar.changeOi === 0 ? "#64748b" : bar.changeOi > 0 ? "#117a40" : "#c6283d") : bar.side === "CE" ? "#2563eb" : "#eab308";
         context.globalAlpha = bar.side === "CE" ? .9 : .76;
         context.fillRect(startX, bar.centerY - height / 2, bar.width, height);
         context.globalAlpha = 1;

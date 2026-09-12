@@ -1,5 +1,5 @@
 export type ScalperV2ProfileSide = "CE" | "PE";
-export type ScalperV2ProfileMode = "current" | "change";
+export type ScalperV2ProfileMode = "current" | "change" | "structure";
 
 export type ScalperV2ProfileRow = {
   side: ScalperV2ProfileSide;
@@ -16,6 +16,7 @@ export type ScalperV2ProfileRow = {
 };
 
 export type ScalperV2ProfileBar = ScalperV2ProfileRow & {
+  metric: "current" | "change";
   y: number;
   centerY: number;
   width: number | null;
@@ -119,15 +120,29 @@ export function layoutScalperV2Profile(
   const laneWidth = Math.max(0, Math.min(maxWidth, paneWidth * maxFraction, paneWidth - 16));
   // Current OI grows left from the plot edge. Signed delta OI owns a true
   // centre origin so positive and negative values cannot collapse together.
-  const anchorX = Math.max(0, paneWidth - 8 - (mode === "change" ? laneWidth / 2 : 0));
+  const anchorX = Math.max(0, paneWidth - 8 - (mode === "change" || mode === "structure" ? laneWidth / 2 : 0));
   const values = rows.map((row) => mode === "change" ? row.changeOi : row.currentOi);
   const maximum = Math.max(0, ...values.map((value) => Math.abs(value ?? 0)));
+  const currentMaximum = Math.max(0, ...rows.map((row) => Math.abs(row.currentOi ?? 0)));
+  const changeMaximum = Math.max(0, ...rows.map((row) => Math.abs(row.changeOi ?? 0)));
   const strikes = [...new Set(rows.map((row) => row.strike))];
   const visible = new Set<number>();
   const bars = rows.flatMap((row): ScalperV2ProfileBar[] => {
     const y = priceToCoordinate(row.strike);
     if (y == null || !Number.isFinite(y) || y < 0 || y > paneHeight) return [];
     visible.add(row.strike);
+    if (mode === "structure") {
+      const center = paneWidth - 8 - laneWidth / 2, oiLane = laneWidth * .34, deltaLane = laneWidth * .14;
+      const currentWidth = row.currentOi == null ? null : currentMaximum > 0 ? row.currentOi / currentMaximum * oiLane : 0;
+      const deltaWidth = row.changeOi == null ? null : changeMaximum > 0 ? Math.abs(row.changeOi) / changeMaximum * deltaLane : 0;
+      const currentEnd = row.side === "CE" ? center - deltaLane : center + deltaLane + (currentWidth ?? 0);
+      const currentStart = row.side === "CE" ? currentEnd - (currentWidth ?? 0) : center + deltaLane;
+      const deltaStart = row.side === "CE" ? center - (deltaWidth ?? 0) : center;
+      return [
+        { ...row, metric: "current", y, centerY: y + (row.side === "CE" ? -5 : 5), width: currentWidth, startX: currentWidth == null ? null : currentStart, endX: currentWidth == null ? null : currentEnd },
+        { ...row, metric: "change", y, centerY: y + (row.side === "CE" ? -1.5 : 1.5), width: deltaWidth, startX: deltaWidth == null ? null : deltaStart, endX: deltaWidth == null ? null : deltaStart + deltaWidth },
+      ];
+    }
     const value = mode === "change" ? row.changeOi : row.currentOi;
     const availableWidth = mode === "change" ? laneWidth / 2 : laneWidth;
     const width = value == null ? null : maximum > 0 ? Math.abs(value) / maximum * availableWidth : 0;
@@ -135,7 +150,7 @@ export function layoutScalperV2Profile(
       ? anchorX + Math.sign(value) * width
       : anchorX - width;
     return [{
-      ...row, y, centerY: y + (row.side === "CE" ? -3 : 3), width,
+      ...row, metric: mode, y, centerY: y + (row.side === "CE" ? -3 : 3), width,
       startX: endX == null ? null : Math.min(anchorX, endX),
       endX: endX == null ? null : Math.max(anchorX, endX),
     }];

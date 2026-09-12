@@ -13,6 +13,19 @@ const CALL_BORDER = "#1d4ed8";
 const PUT = "#eab308";
 const PUT_BORDER = "#8a6200";
 
+export function scalperV2AdaptiveDeltaDomain(values: DeltaOiValue[], padding = 0.08): [number, number] {
+  const observed = values.filter((value): value is number => value != null && Number.isFinite(value));
+  if (!observed.length) return [-1, 1];
+  const minimum = Math.min(0, ...observed), maximum = Math.max(0, ...observed);
+  if (minimum < 0 && maximum > 0) {
+    const pad = Math.max(Math.abs(minimum), Math.abs(maximum)) * padding;
+    return [minimum - pad, maximum + pad];
+  }
+  if (minimum < 0) return [minimum * (1 + padding), Math.abs(minimum) * padding];
+  if (maximum > 0) return [-maximum * padding, maximum * (1 + padding)];
+  return [-1, 1];
+}
+
 /** Option identity owns the fill; sign remains encoded by left/right geometry and the signed label. */
 const deltaBar = (value: DeltaOiValue, color: string, borderColor: string) => value == null ? null : ({
   value,
@@ -36,7 +49,7 @@ export function scalperV2HorizontalDeltaOiOption(
   underlyingValue: number | null = null,
   nearestStrike: number | null = null,
 ): EChartsOption {
-  const maximum = Math.max(1, ...[...ceChanges, ...peChanges].flatMap((value) => value == null || !Number.isFinite(value) ? [] : [Math.abs(value)]));
+  const [domainMinimum, domainMaximum] = scalperV2AdaptiveDeltaDomain([...ceChanges, ...peChanges]);
   const nearestStrikeIndex = nearestStrike == null ? -1 : strikes.indexOf(nearestStrike);
   return {
     animation: false,
@@ -45,7 +58,7 @@ export function scalperV2HorizontalDeltaOiOption(
     grid: { left: 36, right: 278, top: 82, bottom: 22, containLabel: false },
     xAxis: {
       type: "value",
-      name: "Signed ΔOI · provider units",
+      name: "Change in OI",
       position: "top",
       nameLocation: "middle",
       nameGap: 42,
@@ -54,8 +67,8 @@ export function scalperV2HorizontalDeltaOiOption(
       axisLabel: { formatter: formatOiAxisValue, margin: 9 },
       splitLine: { show: true, lineStyle: { color: "rgba(100,116,139,.16)" } },
       splitNumber: 5,
-      min: -maximum,
-      max: maximum,
+      min: domainMinimum,
+      max: domainMaximum,
     },
     yAxis: {
       type: "category",

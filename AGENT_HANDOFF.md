@@ -4800,3 +4800,20 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:rollback-pre-home-progression-matrix-20260912`.
 - Full implementation record:
   `docs/uiux/HOME_SCALPER_PROGRESSION_MATRIX_20260912.md`.
+
+## 2026-09-12 — Scalper V2 single-workstation refinement
+
+- Refined only `view=scalper_v2`; the original Scalper remains unchanged.
+- Replaced the vertical analytics stack with a compact tabbed dock and default
+  Option Structure Matrix. Added a permanent pair/structure snapshot, a
+  four-lane native OI/change profile and collision-managed semantic price
+  labels.
+- Return from Open percent is now the default option-price comparison. Indexed
+  100, relative strength and legacy Range Normalised remain available, with a
+  complete-chain heatmap and a deliberately limited default line set.
+- Change-in-OI now uses an adaptive signed domain; Cumulative OI is renamed
+  Total OI vs Time; latest chain metrics remain explicitly separate from a
+  historical price cursor.
+- V7 and A-open/B-close calculations, independent CE/PE selection, drawings,
+  exports, APIs, collectors and permissions were not changed. Full record:
+  `docs/trading-analytics/SCALPER_V2_SINGLE_WORKSTATION_20260912.md`.

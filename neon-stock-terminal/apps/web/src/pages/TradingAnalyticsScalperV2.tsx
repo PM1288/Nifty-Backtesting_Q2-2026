@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import type { EChartsOption } from "echarts";
@@ -9,7 +9,8 @@ import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
 import { scalperV2HorizontalDeltaOiOption } from "../lib/scalperV2Analytics";
-import { scalperV2NormalizedPriceSeries, type ScalperV2OptionPricePoint } from "../lib/scalperV2NormalizedPrice";
+import { scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
+import { scalperV2OiTotals, scalperV2StructureRows } from "../lib/scalperV2Structure";
 import { oiComparisonState } from "../lib/scalperV2Geometry";
 import { normalizeScalperV2ProfileRows, profileBaselineLabel } from "../lib/scalperV2OiProfile";
 import {
@@ -73,6 +74,7 @@ type OptionPriceHistoryPayload = {
   limitations: string[];
 };
 type RailTab = "time" | "chain" | "profile" | "levels" | "rules" | "measure" | "objects" | "health";
+type AnalyticsTab = "overview" | "matrix" | "oi" | "strength" | "total" | "maxpain";
 
 const numeric = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
 const compact = (value: unknown) => numeric(value) == null ? "—" : new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 2 }).format(Number(value));
@@ -92,7 +94,6 @@ const chartQuery = (symbol: string, asOf: string, expiry: string, ceStrike: stri
 };
 const chartKey = (query: URLSearchParams) => ["trading-analytics-charts", query.toString()] as const;
 const signClass = (value: unknown) => numeric(value) == null || numeric(value) === 0 ? undefined : numeric(value)! > 0 ? css.positive : css.negative;
-const legChangeOi = (row: Row | undefined) => numeric((row?.oi_layers as Row | undefined)?.change ?? row?.changeOi);
 const legSpread = (row: Row | undefined) => {
   const bid = numeric(row?.bid_price), ask = numeric(row?.ask_price);
   return bid == null || ask == null ? null : ask - bid;
@@ -100,6 +101,7 @@ const legSpread = (row: Row | undefined) => {
 const istClock = (value: number) => new Intl.DateTimeFormat("en-IN", {
   timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false,
 }).format(new Date(value));
+const percent = (value: unknown) => numeric(value) == null ? "—" : `${Number(value) > 0 ? "+" : ""}${number(value)}%`;
 
 function Snapshot({ name, row }: { name: string; row: Row | undefined }) {
   const ema = numeric(row?.ema9), close = numeric(row?.close), distance = ema == null || close == null ? null : close - ema;
@@ -175,8 +177,11 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [measureMode, setMeasureMode] = useState(false), [points, setPoints] = useState<string[]>([]), [quantity, setQuantity] = useState("65");
   const [measurementContext, setMeasurementContext] = useState<{ panes: ChartPane[]; interval: number; symbol: string; expiry: string; ceStrike: string; peStrike: string } | null>(null);
   const [drawingTool, setDrawingTool] = useState<ScalperV2DrawingTool>("select");
-  const [profileMode, setProfileMode] = useState<"current" | "change">("change");
+  const [profileMode, setProfileMode] = useState<"current" | "change" | "structure">("structure");
   const [profileRangeExpanded, setProfileRangeExpanded] = useState(false);
+  const [analyticsTab, setAnalyticsTab] = useState<AnalyticsTab>("overview");
+  const [priceMode, setPriceMode] = useState<ScalperV2PriceMode>("return");
+  const [showAllPriceSeries, setShowAllPriceSeries] = useState(false);
   const drawingStore = useScalperV2Drawings(symbol);
   const drawingSelectedId = drawingStore.selectedId, removeDrawing = drawingStore.remove;
   const inspectionMode: ScalperV2InspectionMode = lockedTime != null ? "locked" : hoverCrosshair ? "hover" : "latest";
@@ -239,6 +244,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   ), [profileRows]);
   const deltaMaximum = Math.max(0, ...[...ceChanges, ...peChanges].flatMap((value) => value == null ? [] : [Math.abs(value)]));
   const profileComparable = profileRows.filter((row) => row.state === "comparable").length;
+  const structureRows = useMemo(() => scalperV2StructureRows(rankSource, profileRows, leaders), [leaders, profileRows, rankSource]);
+  const oiTotals = useMemo(() => scalperV2OiTotals(profileRows), [profileRows]);
   const cumulativeOiPoints = useMemo(
     () => (activeData?.cumulativeOiHistory?.points ?? []).filter((point) => istDay(point.capturedAt) === tradingDay),
     [activeData?.cumulativeOiHistory?.points, tradingDay],
@@ -248,7 +255,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const cumulativeOiOption = useMemo<EChartsOption>(() => ({
     animation: false,
     tooltip: { trigger: "axis" },
-    legend: { data: ["Cumulative CE OI", "Cumulative PE OI"], top: 2 },
+    legend: { data: ["CE Total OI", "PE Total OI"], top: 2 },
     grid: { left: 72, right: 24, top: 42, bottom: 52 },
     xAxis: {
       type: "time",
@@ -259,12 +266,12 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     yAxis: {
       type: "value",
       min: 0,
-      name: "Summed OI · provider units",
+      name: "Total OI",
       axisLabel: { formatter: formatOiAxisValue },
     },
     series: [
       {
-        name: "Cumulative CE OI",
+        name: "CE Total OI",
         type: "line",
         data: cumulativeOiPoints.map((point) => [Date.parse(point.capturedAt), point.ceOi]),
         connectNulls: false,
@@ -274,7 +281,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         itemStyle: { color: "#2563eb" },
       },
       {
-        name: "Cumulative PE OI",
+        name: "PE Total OI",
         type: "line",
         data: cumulativeOiPoints.map((point) => [Date.parse(point.capturedAt), point.peOi]),
         connectNulls: false,
@@ -289,7 +296,17 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     (optionPriceHistory.data?.points ?? []).filter((point) => istDay(point.capturedAt) === tradingDay),
     numeric(selectedCeStrike),
     numeric(selectedPeStrike),
-  ), [optionPriceHistory.data?.points, selectedCeStrike, selectedPeStrike, tradingDay]);
+    priceMode,
+    defaultStrike,
+    defaultStrike,
+  ), [defaultStrike, optionPriceHistory.data?.points, priceMode, selectedCeStrike, selectedPeStrike, tradingDay]);
+  const visiblePriceSeries = useMemo(() => visibleScalperV2PriceSeries(
+    normalizedPriceModel.series,
+    numeric(selectedCeStrike),
+    numeric(selectedPeStrike),
+    leaders.slice(0, 4).map((leader) => `${leader.side}:${leader.strike}`),
+    showAllPriceSeries,
+  ), [leaders, normalizedPriceModel.series, selectedCeStrike, selectedPeStrike, showAllPriceSeries]);
   const normalizedPriceOption = useMemo<EChartsOption>(() => ({
     animation: false,
     tooltip: {
@@ -305,12 +322,12 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         })].join("<br/>");
       },
     },
-    legend: { data: normalizedPriceModel.series.map((series) => series.name), top: 2 },
+    legend: { data: visiblePriceSeries.map((series) => series.name), top: 2, type: "scroll" },
     grid: { left: 64, right: 24, top: 88, bottom: 70 },
     dataZoom: [{ type: "inside", xAxisIndex: 0 }, { type: "slider", xAxisIndex: 0, bottom: 10, height: 18 }],
     xAxis: { type: "time", name: "Timestamp · IST", nameGap: 42, axisLabel: { formatter: (value: number) => istClock(value) } },
-    yAxis: { type: "value", min: -100, max: 100, interval: 50, name: "Normalised price", axisLabel: { formatter: (value: number) => `${value > 0 ? "+" : ""}${value}` } },
-    series: normalizedPriceModel.series.map((series, index) => ({
+      yAxis: { type: "value", min: priceMode === "range" ? -100 : undefined, max: priceMode === "range" ? 100 : undefined, interval: priceMode === "range" ? 50 : undefined, name: priceMode === "indexed" ? "Indexed to 100" : priceMode === "relative" ? "Relative to ATM %" : priceMode === "range" ? "Range normalised" : "Return from open %", axisLabel: { formatter: (value: number) => `${value > 0 ? "+" : ""}${value}` } },
+    series: visiblePriceSeries.map((series, index) => ({
       id: series.id,
       name: series.name,
       type: "line",
@@ -324,8 +341,29 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       z: series.selected ? 10 : 1,
       markLine: index === 0 ? { silent: true, symbol: "none", label: { show: false }, lineStyle: { color: "#64748b", type: "dashed", width: 1 }, data: [{ yAxis: 0 }] } : undefined,
     })),
-  }), [normalizedPriceModel]);
-  const niftyCurrentGuide = (categoryIndex: number) => spot == null || nearestSpotStrike == null || categoryIndex < 0 ? undefined : ({
+  }), [priceMode, visiblePriceSeries]);
+  const optionPriceHeatmap = useMemo<EChartsOption>(() => {
+    const rows = normalizedPriceModel.series;
+    const labels = rows.map((series) => `${series.side} ${series.strike.toLocaleString("en-IN")}`);
+    const timestamps = normalizedPriceModel.timestamps;
+    const timestampIndex = new Map(timestamps.map((time, index) => [time, index]));
+    const values = rows.flatMap((series, y) => series.data.flatMap((datum) => datum.returnPct == null ? [] : [{
+      value: [timestampIndex.get(datum.value[0]) ?? 0, y, datum.returnPct], rawPrice: datum.rawPrice, timestamp: datum.value[0],
+      itemStyle: series.selected ? { borderColor: series.side === "CE" ? "#2563eb" : "#8a6200", borderWidth: 2 } : undefined,
+    }]));
+    const maximum = Math.max(1, ...values.map((entry) => Math.abs(Number(entry.value[2]))));
+    return {
+      animation: false,
+      tooltip: { formatter: (raw: unknown) => { const item = raw as { data?: { value?: number[]; rawPrice?: number | null; timestamp?: number } }; const value = item.data?.value; return value ? `${labels[value[1]]}<br/>${new Date(item.data?.timestamp ?? timestamps[value[0]]).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: false })}<br/>Return ${value[2] >= 0 ? "+" : ""}${value[2].toFixed(2)}%<br/>Price ${price(item.data?.rawPrice)}` : "Unavailable"; } },
+      grid: { left: 92, right: 28, top: 18, bottom: 52 },
+      dataZoom: [{ type: "inside", xAxisIndex: 0 }, { type: "slider", xAxisIndex: 0, bottom: 8, height: 18 }],
+      xAxis: { type: "category", data: timestamps.map(String), axisLabel: { formatter: (value: string) => istClock(Number(value)) } },
+      yAxis: { type: "category", data: labels, axisLabel: { color: (value?: string | number) => String(value ?? "").startsWith("CE") ? "#1d4ed8" : "#785500", fontWeight: 650 } },
+      visualMap: { min: -maximum, max: maximum, calculable: false, orient: "horizontal", left: "center", top: 0, show: false, inRange: { color: ["#b42336", "#f7f8fa", "#15803d"] } },
+      series: [{ type: "heatmap", data: values, progressive: 5000, emphasis: { itemStyle: { borderColor: "#14243a", borderWidth: 2 } } }],
+    };
+  }, [normalizedPriceModel.series, normalizedPriceModel.timestamps]);
+  const niftyCurrentGuide = useCallback((categoryIndex: number) => spot == null || nearestSpotStrike == null || categoryIndex < 0 ? undefined : ({
     silent: true,
     symbol: "none",
     lineStyle: { color: "#0f766e", type: "dotted" as const, width: 2 },
@@ -339,14 +377,14 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     // These are categorical strike axes. Use the category index while the
     // label retains the exact current value and nearest listed strike.
     data: [{ xAxis: categoryIndex }],
-  });
+  }), [nearestSpotStrike, spot]);
   const oiNiftyCurrentGuide = useMemo(
     () => niftyCurrentGuide(nearestSpotStrike == null ? -1 : strikeRows.indexOf(nearestSpotStrike)),
-    [nearestSpotStrike, spot, strikeRows],
+    [nearestSpotStrike, niftyCurrentGuide, strikeRows],
   );
   const payoutNiftyCurrentGuide = useMemo(
     () => niftyCurrentGuide(nearestSpotStrike == null ? -1 : maxPain.points.findIndex((point) => point.settlement === nearestSpotStrike)),
-    [maxPain.points, nearestSpotStrike, spot],
+    [maxPain.points, nearestSpotStrike, niftyCurrentGuide],
   );
   const analyticOptions = useMemo<EChartsOption[]>(() => [
     { tooltip: { trigger: "axis" }, legend: { data: ["CE OI", "PE OI"], top: 2, left: 86 }, grid: { left: 72, right: 20, top: 38, bottom: 48 }, xAxis: { type: "category", data: strikeRows, name: "Strike", nameGap: 30 }, yAxis: { type: "value", min: 0, axisLine: { show: true }, axisTick: { show: true }, axisLabel: { formatter: formatOiAxisValue, margin: 9 }, splitNumber: 5 }, series: [{ name: "CE OI", type: "bar", data: ceCurrent, itemStyle: { color: "#2563eb" }, markLine: oiNiftyCurrentGuide }, { name: "PE OI", type: "bar", data: peCurrent, itemStyle: { color: "#eab308" } }] },
@@ -397,35 +435,38 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const signalCounts = useMemo(() => Object.fromEntries(["WAIT_NEXT_OPEN", "NEXT_BAR_MISSING", "NEXT_OPEN_FAILED", "RETROSPECTIVE_ENTRY_REFERENCE"].map((key) => [key, signals.filter((signal) => signal.state === key).length])), [signals]);
   const hoveredStrikeIndex = hoveredStrike == null ? null : strikeRows.indexOf(hoveredStrike);
   const hoveredPayoutIndex = hoveredStrike == null ? null : maxPain.points.findIndex((point) => point.settlement === hoveredStrike);
+  const callProfile = profileRows.find((row) => row.side === "CE" && row.strike === numeric(selectedCeStrike));
+  const putProfile = profileRows.find((row) => row.side === "PE" && row.strike === numeric(selectedPeStrike));
+  const maxPainValue = maxPain.candidates[0] ?? null;
+  const inspectedUnderlying = numeric(inspectedRows[0]?.close) ?? spot;
+  const underlyingOpen = numeric(underlying?.bars.find((row) => row.closed === true)?.open);
+  const underlyingChange = inspectedUnderlying != null && underlyingOpen != null && underlyingOpen > 0 ? 100 * (inspectedUnderlying / underlyingOpen - 1) : null;
+  const selectedDistance = (row: Row | undefined) => { const close = numeric(row?.close), ema = numeric(row?.ema9); return close == null || ema == null ? null : close - ema; };
+  const sessionOpen = (pane: ChartPane | undefined) => numeric(pane?.bars.find((row) => row.closed === true)?.open);
+  const sessionReturn = (pane: ChartPane | undefined, row: Row | undefined) => {
+    const open = sessionOpen(pane), close = numeric(row?.close);
+    return open == null || close == null || open <= 0 ? null : 100 * (close / open - 1);
+  };
+  const inspectedTimeLabel = (row: Row | undefined) => {
+    const parsed = Date.parse(String(row?.end ?? ""));
+    return Number.isFinite(parsed) ? istClock(parsed) : "time unavailable";
+  };
+  const latestSignal = signals.filter((signal) => signal.state === "RETROSPECTIVE_ENTRY_REFERENCE").at(-1) ?? signals.at(-1);
+  const structureOiMaximum = Math.max(1, ...structureRows.flatMap((row) => [row.ce.oi ?? 0, row.pe.oi ?? 0]));
+  const structureDeltaMaximum = Math.max(1, ...structureRows.flatMap((row) => [Math.abs(row.ce.changeOi ?? 0), Math.abs(row.pe.changeOi ?? 0)]));
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}</section>;
   return <section className={css.page} data-testid="scalper-v2">
     <header className={css.commandBar}>
       <strong>Scalper V2</strong>
-      <label>Session <select value={tradingDay} onChange={(event) => update("day", event.target.value)}>{days.map((day) => <option key={day}>{day}</option>)}</select></label>
-      <label>CE strike <select aria-label="Selected CE strike" value={selectedCeStrike} disabled={points.length > 0} title={points.length ? "Clear the locked measurement before changing either contract" : undefined} onChange={(event) => updateLegStrike("CE", event.target.value)}>{selectableCeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label>
-      <label>PE strike <select aria-label="Selected PE strike" value={selectedPeStrike} disabled={points.length > 0} title={points.length ? "Clear the locked measurement before changing either contract" : undefined} onChange={(event) => updateLegStrike("PE", event.target.value)}>{selectablePeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label>
-      <button disabled={points.length > 0 || defaultStrike == null} onClick={selectBothAtm}>Both ATM</button>
-      <span>{expiry || "Expiry unavailable"}</span>
-      {[1, 5, 15, 60].map((value) => <button key={value} aria-current={interval === value ? "page" : undefined} onClick={() => update("interval", String(value))}>{value === 60 ? "1h" : `${value}m`}</button>)}
-      <button aria-pressed={horizontalView === "day"} onClick={() => { setHorizontalView("day"); setFitRequest((value) => value + 1); }}>Fit day</button>
-      <button aria-pressed={horizontalView === "last30"} onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button>
-      <button aria-pressed={horizontalView === "last60"} onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button>
-      <button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button>
-      <button aria-pressed={profileRangeExpanded} disabled={profileRows.length === 0} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button>
-      <button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button>
-      <button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button>
-      <button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button>
-      <button aria-pressed={profileMode === "current"} onClick={() => setProfileMode("current")}>Profile OI</button>
-      <button aria-pressed={profileMode === "change"} onClick={() => setProfileMode("change")}>Profile ΔOI</button>
-      <button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button>
-      <button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button>
-      <button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button>
-      <button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide rail" : "Show rail"}</button>
-      <button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V1", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, rankingScope: metricLegs.length ? "OBSERVED_RETAINED_COHORT" : "NEAREST_PAIRED_OBSERVED_WINDOW", rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, drawingPersistence: "local_workspace_recovery", measurement, measurementContext: measurementContext ? { interval: measurementContext.interval, symbol: measurementContext.symbol, expiry: measurementContext.expiry, ceStrike: measurementContext.ceStrike, peStrike: measurementContext.peStrike } : null }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button>
-      <button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button>
+      <div className={css.commandGroup}><span>Time</span><label>Session <select value={tradingDay} onChange={(event) => update("day", event.target.value)}>{days.map((day) => <option key={day}>{day}</option>)}</select></label>{[1, 5, 15, 60].map((value) => <button key={value} aria-current={interval === value ? "page" : undefined} onClick={() => update("interval", String(value))}>{value === 60 ? "1h" : `${value}m`}</button>)}<button aria-pressed={horizontalView === "day"} onClick={() => { setHorizontalView("day"); setFitRequest((value) => value + 1); }}>Fit day</button></div>
+      <div className={css.commandGroup}><span>Contract</span><label>CE <select aria-label="Selected CE strike" value={selectedCeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("CE", event.target.value)}>{selectableCeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><label>PE <select aria-label="Selected PE strike" value={selectedPeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("PE", event.target.value)}>{selectablePeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><button disabled={points.length > 0 || defaultStrike == null} onClick={selectBothAtm}>Both ATM</button><small>{expiry || "Expiry unavailable"}</small></div>
+      <details className={css.commandMenu}><summary>Scale</summary><div><button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button><button aria-pressed={profileRangeExpanded} disabled={!profileRows.length} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button><button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button><button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button><button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button><button onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button><button onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button></div></details>
+      <details className={css.commandMenu}><summary>OI</summary><div><button aria-pressed={profileMode === "structure"} onClick={() => setProfileMode("structure")}>OI + ΔOI profile</button><button aria-pressed={profileMode === "current"} onClick={() => setProfileMode("current")}>Current OI</button><button aria-pressed={profileMode === "change"} onClick={() => setProfileMode("change")}>Change in OI</button><button onClick={() => { setAnalyticsTab("matrix"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>Strike matrix</button></div></details>
+      <details className={css.commandMenu}><summary>Tools</summary><div><button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button><button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button><button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button><button onClick={() => { setRailOpen(true); setRailTab("objects"); }}>Drawings</button></div></details>
+      <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide inspector" : "Show inspector"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
     </header>
-    <div className={css.statusBar}><strong>{state}</strong> · Read-only research · {errors.length} source failures · active {interval}m loaded first · background timeframe cache is opportunistic · V7 signals: entry references {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</div>
+    <div className={css.statusBar}><strong>{state}</strong><span>{interval === 60 ? "1h" : `${interval}m`} · {tradingDay}</span><span>Signals {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</span><button className={errors.length ? css.statusIssue : undefined} onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health {errors.length ? `· ${errors.length} issues` : "· current"}</button></div>
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
     <div className={css.workspace} style={!railOpen ? { gridTemplateColumns: "minmax(0,1fr)" } : undefined}>
       <div className={css.chartStage}>
@@ -441,14 +482,18 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       </div>
       {railOpen && <aside className={css.rail} aria-label="Scalper V2 option chain and inspector">
         <header className={css.railHeader}><h2>{label} · CE {Number(selectedCeStrike).toLocaleString("en-IN")} / PE {Number(selectedPeStrike).toLocaleString("en-IN")}</h2><span className={css.identity}>{expiry} · <b>Selected independently</b>{selectedCeIsAtm && selectedPeIsAtm ? " · both ATM" : defaultStrike == null ? "" : ` · ATM ${defaultStrike.toLocaleString("en-IN")}`}</span></header>
-        <div className={css.premiums}><div className={`${css.premium} ${css.call}`}><b>CE {Number(selectedCeStrike).toLocaleString("en-IN")} · exact</b><strong>{price(inspectedRows[1]?.close ?? (inspectionMode === "latest" ? callLeg?.last_price : null))}</strong><small>{inspectionMode === "latest" ? "Completed close / retained quote" : inspectionLabel}</small></div><div className={`${css.premium} ${css.put}`}><b>PE {Number(selectedPeStrike).toLocaleString("en-IN")} · exact</b><strong>{price(inspectedRows[2]?.close ?? (inspectionMode === "latest" ? putLeg?.last_price : null))}</strong><small>{inspectionMode === "latest" ? "Completed close / retained quote" : inspectionLabel}</small></div></div>
-        <table className={css.pairMetrics} aria-label="Selected contracts latest snapshot metrics"><thead><tr><th>Latest snapshot metric</th><th className={css.callText}>CE {selectedCeStrike}</th><th className={css.putText}>PE {selectedPeStrike}</th></tr></thead><tbody>
-          <tr><th>Open interest · provider units</th><td>{compact(callLeg?.open_interest)}</td><td>{compact(putLeg?.open_interest)}</td></tr>
-          <tr><th>{deltaBasisLabel}</th><td className={signClass(legChangeOi(callLeg))}>{signed(legChangeOi(callLeg))}</td><td className={signClass(legChangeOi(putLeg))}>{signed(legChangeOi(putLeg))}</td></tr>
+        <div className={css.niftyQuote}><span>NIFTY</span><strong>{number(inspectedUnderlying)}</strong><b className={signClass(underlyingChange)}>{percent(underlyingChange)}</b></div>
+        <div className={css.premiums}><div className={`${css.premium} ${css.call}`}><b>CE {Number(selectedCeStrike).toLocaleString("en-IN")}</b><strong>{price(inspectedRows[1]?.close ?? (inspectionMode === "latest" ? callLeg?.last_price : null))}</strong><small className={signClass(sessionReturn(call, inspectedRows[1]))}>Open {percent(sessionReturn(call, inspectedRows[1]))} · EMA {signed(selectedDistance(inspectedRows[1]))}</small><small>{inspectionMode === "latest" ? "Latest completed close" : inspectionMode === "locked" ? "Locked close" : "Cursor close"} · {inspectedTimeLabel(inspectedRows[1])}</small></div><div className={`${css.premium} ${css.put}`}><b>PE {Number(selectedPeStrike).toLocaleString("en-IN")}</b><strong>{price(inspectedRows[2]?.close ?? (inspectionMode === "latest" ? putLeg?.last_price : null))}</strong><small className={signClass(sessionReturn(put, inspectedRows[2]))}>Open {percent(sessionReturn(put, inspectedRows[2]))} · EMA {signed(selectedDistance(inspectedRows[2]))}</small><small>{inspectionMode === "latest" ? "Latest completed close" : inspectionMode === "locked" ? "Locked close" : "Cursor close"} · {inspectedTimeLabel(inspectedRows[2])}</small></div></div>
+        <table className={css.pairMetrics} aria-label="Selected contracts snapshot metrics"><thead><tr><th>Latest snapshot</th><th className={css.callText}>CE {selectedCeStrike}</th><th className={css.putText}>PE {selectedPeStrike}</th></tr></thead><tbody>
+          <tr><th>Open Interest</th><td>{compact(callProfile?.currentOi)}</td><td>{compact(putProfile?.currentOi)}</td></tr>
+          <tr><th>Change in OI</th><td className={signClass(callProfile?.changeOi)}>{signed(callProfile?.changeOi)}</td><td className={signClass(putProfile?.changeOi)}>{signed(putProfile?.changeOi)}</td></tr>
+          <tr><th>Change in OI %</th><td className={signClass(callProfile?.changeOi)}>{callProfile?.changeOi != null && callProfile.baselineOi ? percent(100 * callProfile.changeOi / callProfile.baselineOi) : "—"}</td><td className={signClass(putProfile?.changeOi)}>{putProfile?.changeOi != null && putProfile.baselineOi ? percent(100 * putProfile.changeOi / putProfile.baselineOi) : "—"}</td></tr>
           <tr><th>IV · %</th><td>{number(callLeg?.implied_volatility)}</td><td>{number(putLeg?.implied_volatility)}</td></tr>
           <tr><th>Bid–ask spread · ₹</th><td>{price(legSpread(callLeg))}</td><td>{price(legSpread(putLeg))}</td></tr>
         </tbody></table>
-        <div className={css.leaders}>{leaders.map((leader) => <div className={css.leader} key={`${leader.side}-${leader.rank}`}><span className={leader.side === "CE" ? css.callText : css.putText}>{leader.side}{leader.rank}</span><b>{leader.strike.toLocaleString("en-IN")}</b><small>OI {compact(leader.currentOi)}{leader.tiedOi ? " · tie" : ""}</small></div>)}</div>
+        {inspectionMode !== "latest" && <p className={css.scopeNotice}>Prices use the selected candle · OI, IV, PCR and Max Pain use the latest snapshot.</p>}
+        <section className={css.structureSummary}><h3>Structure · latest snapshot</h3><div><span>OI PCR <b>{pcr == null ? "—" : pcr.toFixed(2)}</b></span><span>Max Pain <b>{maxPainValue == null ? "—" : maxPainValue.toLocaleString("en-IN")}</b></span><span>Distance <b className={signClass(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)}>{signed(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)} pts</b></span><span>Signal <b>{latestSignal ? `${latestSignal.direction} · ${latestSignal.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "entry reference" : "setup"}` : "None"}</b></span></div></section>
+        <div className={css.leaders}>{leaders.filter((leader) => leader.rank <= 2).map((leader) => <div className={css.leader} key={`${leader.side}-${leader.rank}`}><span className={leader.side === "CE" ? css.callText : css.putText}>{leader.side}{leader.rank}</span><b>{leader.strike.toLocaleString("en-IN")}</b><small>OI {compact(leader.currentOi)} · Δ {signed(leader.changeOi)}</small></div>)}</div>
         <div className={css.inspectionModes} data-testid="v2-inspection-mode"><div><button aria-pressed={inspectionMode === "latest"} onClick={() => { setLockedTime(null); setHoverCrosshair(null); }}>Latest</button><button aria-pressed={inspectionMode === "hover"} disabled={!hoverCrosshair}>Cursor</button><button aria-pressed={inspectionMode === "locked"} disabled={!hoverCrosshair && lockedTime == null} onClick={() => setLockedTime((current) => current ?? hoverCrosshair?.time ?? null)}>Lock time</button></div><span data-testid="v2-cursor-time">{inspectionLabel}</span></div>
         <div className={css.tabs} role="tablist">{(["time", "chain", "profile", "levels", "rules", "measure", "objects", "health"] as const).map((tab) => <button key={tab} role="tab" aria-selected={railTab === tab} onClick={() => setRailTab(tab)}>{tab === "time" ? "Snapshot" : tab === "profile" ? "ΔOI profile" : tab[0].toUpperCase() + tab.slice(1)}</button>)}</div>
         <div className={css.railBody}>
@@ -469,15 +514,15 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         </div>
       </aside>}
     </div>
-    <section className={css.analytics}><header className={css.analyticsHeader}><h2>Option analytics · latest retained snapshot</h2><span>{inspectionMode !== "latest" ? "Historical chain unavailable at inspected time · " : ""}PCR {pcr == null ? "unavailable" : pcr.toFixed(2)} · Max pain {maxPain.candidates.join(", ") || "unavailable"}</span></header>
-      <div className={css.analyticsGrid}>
-        <article className={css.analyticCard}><h3>OI by strike</h3><p>Current provider-native OI; zero-based · {spot == null || nearestSpotStrike == null ? "NIFTY current guide unavailable" : `dotted NIFTY current ${number(spot)} · nearest strike ${nearestSpotStrike.toLocaleString("en-IN")}`}</p><div className={css.axisContext} data-testid="v2-oi-axis-context"><span><b>Y</b> Open interest · provider units</span><span><b>X</b> Strike</span></div><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="OI by strike; Y axis open interest in provider units; X axis strike; dotted vertical guide shows NIFTY current value at the nearest listed strike" axisExtentPolicy="native" option={analyticOptions[0]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></article>
-        <article id="scalper-v2-deltaoi" className={`${css.analyticCard} ${css.analyticCardWide}`} data-testid="v2-deltaoi-chart" data-deltaoi-orientation="horizontal" style={{ "--v2-deltaoi-height": `${Math.max(360, strikeRows.length * 34 + 120)}px` } as CSSProperties}><h3>Change in OI by strike · complete retained cohort</h3><p>CE blue · PE yellow · negative extends left · positive extends right · {deltaBasisLabel} · every retained strike is listed on the right Y-axis · {spot == null || nearestSpotStrike == null ? "NIFTY current guide unavailable" : `dotted NIFTY current ${number(spot)} · nearest strike ${nearestSpotStrike.toLocaleString("en-IN")}`}</p><div className={css.axisContext} data-testid="v2-deltaoi-axis-context"><span><b>Y · right</b> Strike · CE ΔOI · PE ΔOI</span><span><b>X · top</b> −{formatOiAxisValue(deltaMaximum)} ← 0 → +{formatOiAxisValue(deltaMaximum)}</span></div>{deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.stateCard} data-testid="v2-deltaoi-state"><div><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts · missing is not zero</span><small>Signed bars require a comparable retained OI baseline; current OI is not reused as change.</small></div></div> : <><p data-testid="v2-deltaoi-state">{deltaState.state === "partial" ? `Partial coverage · ${deltaState.comparable}/${deltaState.total} comparable` : `Comparable · ${deltaState.comparable}/${deltaState.total}`}</p><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.deltaOiChart} ariaLabel="Change in OI by strike; CE bars are blue and PE bars are yellow; negative values extend left and positive values extend right; right Y axis shows every retained strike and exact signed changes; top X axis is symmetric around zero; dotted horizontal guide shows NIFTY current value at the nearest listed strike" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></>}</article>
-        <article className={css.analyticCard}><h3>PCR context</h3><p>Observed-scope OI PCR · snapshot, not an intraday trend</p><div className={css.stateCard}><div><strong className={css.pcrValue}>{pcr == null ? "—" : pcr.toFixed(2)}</strong><span>{tradingDay || "Current observation"} · {pcr == null ? "eligible CE/PE cohort unavailable" : "one retained snapshot"}</span></div></div></article>
-        <article className={css.analyticCard}><h3>Max-pain payout distribution</h3><p>Common-unit estimate; hypothetical settlement, not a forecast · {spot == null || nearestSpotStrike == null ? "NIFTY current guide unavailable" : `dotted NIFTY current ${number(spot)} · nearest settlement strike ${nearestSpotStrike.toLocaleString("en-IN")}`}</p><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Max-pain payout distribution; dotted vertical guide shows NIFTY current value at the nearest settlement strike" axisExtentPolicy="native" option={analyticOptions[2]} activeCategoryIndex={hoveredPayoutIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : maxPain.points[index]?.settlement ?? null)} /></Suspense></article>
-        <article className={`${css.analyticCard} ${css.analyticCardWide}`} data-testid="v2-cumulative-oi-time"><h3>Cumulative OI vs timestamp</h3><p>Each point sums all strikes captured in that snapshot · blue CE / yellow PE · provider-native OI · not a running total across time · {cumulativeOiPoints.length} timestamps · {cumulativeOiComplete}/{cumulativeOiPoints.length} complete · strikes per snapshot {cumulativeStrikeCounts.length ? cumulativeStrikeCounts.join("–") : "unavailable"}</p><div className={css.axisContext}><span><b>Y</b> Summed open interest · captured strike cohort</span><span><b>X</b> Snapshot timestamp · IST</span></div>{cumulativeOiPoints.length === 0 ? <div className={css.stateCard} data-testid="v2-cumulative-oi-state"><div><strong>OI history unavailable</strong><span>No retained option-chain snapshots exist for this session and expiry.</span><small>No line is manufactured from the latest value.</small></div></div> : <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.cumulativeOiChart} ariaLabel="Cumulative open interest over timestamp; blue line is summed CE open interest and yellow line is summed PE open interest across every strike captured in each snapshot" axisExtentPolicy="native" option={cumulativeOiOption} /></Suspense>}</article>
-        <article className={`${css.analyticCard} ${css.analyticCardWide}`} data-testid="v2-normalized-option-price"><h3>Normalised CE/PE price action</h3><p>Each strike uses its own first retained session price = 0, observed high = +100 and observed low = −100 · selected CE {Number(selectedCeStrike).toLocaleString("en-IN")} and PE {Number(selectedPeStrike).toLocaleString("en-IN")} are fully opaque · farther strikes fade progressively · {normalizedPriceModel.series.length} CE/PE strike lines · {normalizedPriceModel.timestamps.length} timestamps</p><div className={css.axisContext}><span><b>Y</b> −100 low · 0 opening observation · +100 high</span><span><b>X</b> Snapshot timestamp · IST</span></div>{optionPriceHistory.isLoading ? <div className={css.stateCard}><div><strong>Loading option price history</strong><span>The price charts remain usable while this independent history loads.</span></div></div> : normalizedPriceModel.series.length === 0 ? <div className={css.stateCard} data-testid="v2-normalized-option-price-state"><div><strong>Option price history unavailable</strong><span>No retained CE/PE snapshot prices exist for this session and expiry.</span><small>No normalised lines are manufactured from current quotes.</small></div></div> : <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.normalizedPriceChart} ariaLabel="Normalised call and put price action over timestamp; each contract opens at zero, reaches plus one hundred at its observed session high and minus one hundred at its observed session low; selected CE and PE strikes are fully opaque and farther strikes progressively fade" axisExtentPolicy="native" option={normalizedPriceOption} /></Suspense>}</article>
-      </div>
+    <section id="scalper-v2-analytics" className={css.analytics} data-testid="v2-analytics-dock">
+      <div className={css.structureRibbon} aria-label="Current option structure summary"><span><b>CE OI</b>{compact(oiTotals.ceOi)}</span><span><b>PE OI</b>{compact(oiTotals.peOi)}</span><span><b>PCR</b>{oiTotals.pcr == null ? "—" : oiTotals.pcr.toFixed(2)}</span><span className={signClass(oiTotals.ceDelta)}><b>CE ΔOI</b>{signed(oiTotals.ceDelta)}</span><span className={signClass(oiTotals.peDelta)}><b>PE ΔOI</b>{signed(oiTotals.peDelta)}</span><span><b>Max Pain</b>{maxPainValue?.toLocaleString("en-IN") ?? "—"}</span><span><b>CE1</b>{leaders.find((leader) => leader.side === "CE" && leader.rank === 1)?.strike.toLocaleString("en-IN") ?? "—"}</span><span><b>PE1</b>{leaders.find((leader) => leader.side === "PE" && leader.rank === 1)?.strike.toLocaleString("en-IN") ?? "—"}</span><span><b>Signal</b>{latestSignal?.direction ?? "—"}</span></div>
+      <nav className={css.analyticsTabs} aria-label="Scalper analytics">{(["overview", "matrix", "oi", "strength", "total", "maxpain"] as const).map((tab) => <button key={tab} aria-selected={analyticsTab === tab} onClick={() => setAnalyticsTab(tab)}>{tab === "oi" ? "OI & ΔOI" : tab === "strength" ? "Price Strength" : tab === "total" ? "Total OI" : tab === "maxpain" ? "Max Pain" : tab[0].toUpperCase() + tab.slice(1)}</button>)}</nav>
+      {(analyticsTab === "overview" || analyticsTab === "matrix") && <div className={css.matrixWrap} data-testid="v2-strike-matrix"><div className={css.matrixContext}><strong>Option Structure Matrix</strong><span>{inspectionMode === "latest" ? "Latest snapshot" : "Latest snapshot · price charts at selected time"}</span></div><table className={css.structureMatrix} onMouseLeave={() => setHoveredStrike(null)}><thead><tr><th>CE Price</th><th>CE Δ%</th><th>CE OI</th><th>CE ΔOI</th><th>CE Rank</th><th>Strike</th><th>PE Rank</th><th>PE ΔOI</th><th>PE OI</th><th>PE Δ%</th><th>PE Price</th></tr></thead><tbody>{structureRows.map((row) => <tr key={row.strike} onMouseEnter={() => setHoveredStrike(row.strike)} data-ce-selected={row.strike === Number(selectedCeStrike) || undefined} data-pe-selected={row.strike === Number(selectedPeStrike) || undefined}><td className={css.callText}>{price(row.ce.price)}</td><td className={signClass(row.ce.priceChangePct)}>{percent(row.ce.priceChangePct)}</td><td className={css.barCell}><i className={css.ceBar} style={{ width: `${100 * (row.ce.oi ?? 0) / structureOiMaximum}%` }} />{compact(row.ce.oi)}</td><td className={`${css.barCell} ${signClass(row.ce.changeOi) ?? ""}`}><i className={row.ce.changeOi != null && row.ce.changeOi < 0 ? css.negativeBar : css.positiveBar} style={{ width: `${100 * Math.abs(row.ce.changeOi ?? 0) / structureDeltaMaximum}%` }} />{signed(row.ce.changeOi)}</td><td>{row.ce.rank ? <b className={css.callRank}>CE{row.ce.rank}</b> : ""}</td><th>{row.strike.toLocaleString("en-IN")}{row.strike === defaultStrike ? <em>ATM</em> : null}{maxPain.candidates.includes(row.strike) ? <em className={css.maxPainBadge}>MAX</em> : null}{row.strike === nearestSpotStrike ? <span className={css.spotMarker}>NIFTY {number(spot)}</span> : null}</th><td>{row.pe.rank ? <b className={css.putRank}>PE{row.pe.rank}</b> : ""}</td><td className={`${css.barCell} ${signClass(row.pe.changeOi) ?? ""}`}><i className={row.pe.changeOi != null && row.pe.changeOi < 0 ? css.negativeBar : css.positiveBar} style={{ width: `${100 * Math.abs(row.pe.changeOi ?? 0) / structureDeltaMaximum}%` }} />{signed(row.pe.changeOi)}</td><td className={css.barCell}><i className={css.peBar} style={{ width: `${100 * (row.pe.oi ?? 0) / structureOiMaximum}%` }} />{compact(row.pe.oi)}</td><td className={signClass(row.pe.priceChangePct)}>{percent(row.pe.priceChangePct)}</td><td className={css.putText}>{price(row.pe.price)}</td></tr>)}</tbody></table></div>}
+      {analyticsTab === "overview" && <div className={css.overviewKpis}><article><small>OI imbalance</small><b>{oiTotals.oiImbalance == null ? "—" : percent(100 * oiTotals.oiImbalance)}</b></article><article><small>ΔOI imbalance</small><b>{oiTotals.deltaImbalance == null ? "—" : percent(100 * oiTotals.deltaImbalance)}</b></article><article><small>Tracked strikes</small><b>{structureRows.length}</b></article><article><small>OI history</small><b>{cumulativeOiPoints.length} points</b></article></div>}
+      {analyticsTab === "oi" && <div className={css.analyticsGrid}><article className={css.analyticCard}><h3>OI by strike</h3><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Open interest by strike" axisExtentPolicy="native" option={analyticOptions[0]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></article><article id="scalper-v2-deltaoi" className={css.analyticCard} data-testid="v2-deltaoi-chart"><h3>Change in OI by strike</h3>{deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.stateCard} data-testid="v2-deltaoi-state"><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts</span></div> : <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.deltaOiChart} ariaLabel="Change in OI by strike with adaptive signed scale" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>}</article></div>}
+      {analyticsTab === "strength" && <article className={css.dockPanel} data-testid="v2-normalized-option-price"><header className={css.dockControls}><h3>Option price strength</h3><label>Mode <select value={priceMode} onChange={(event) => setPriceMode(event.target.value as ScalperV2PriceMode)}><option value="return">Return from Open %</option><option value="indexed">Indexed to 100</option><option value="relative">Relative to ATM</option><option value="range">Range Normalised</option></select></label><label><input type="checkbox" checked={showAllPriceSeries} onChange={(event) => setShowAllPriceSeries(event.target.checked)} /> Show all strikes</label></header>{normalizedPriceModel.series.length ? <><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.normalizedPriceChart} ariaLabel="Option price strength over time" axisExtentPolicy="native" option={normalizedPriceOption} /></Suspense><h3>All-strike return heatmap</h3><Suspense fallback={<p>Loading heatmap…</p>}><Chart className={css.heatmapChart} ariaLabel="Option return from open heatmap by time and strike" axisExtentPolicy="native" option={optionPriceHeatmap} /></Suspense></> : <div className={css.stateCard}><strong>Option price history unavailable</strong></div>}</article>}
+      {analyticsTab === "total" && <article className={css.dockPanel} data-testid="v2-cumulative-oi-time"><h3>Total OI vs Time</h3><div className={css.overviewKpis}><article><small>CE Total OI</small><b>{compact(oiTotals.ceOi)}</b></article><article><small>PE Total OI</small><b>{compact(oiTotals.peOi)}</b></article><article><small>OI PCR</small><b>{oiTotals.pcr?.toFixed(2) ?? "—"}</b></article><article><small>Snapshot coverage</small><b>{cumulativeOiComplete}/{cumulativeOiPoints.length}</b><small>{cumulativeStrikeCounts.length ? `${cumulativeStrikeCounts.join("–")} strikes` : "Unavailable"}</small></article></div>{cumulativeOiPoints.length ? <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.cumulativeOiChart} ariaLabel="Total CE and PE open interest over time" axisExtentPolicy="native" option={cumulativeOiOption} /></Suspense> : <div className={css.stateCard}><strong>OI history unavailable</strong></div>}</article>}
+      {analyticsTab === "maxpain" && <article className={css.dockPanel}><div className={css.maxPainKpi}><span>Max Pain</span><strong>{maxPainValue?.toLocaleString("en-IN") ?? "—"}</strong><b>{inspectedUnderlying != null && maxPainValue != null ? `${signed(inspectedUnderlying - maxPainValue)} pts from NIFTY` : "Distance unavailable"}</b></div><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Max pain payout distribution" axisExtentPolicy="native" option={analyticOptions[2]} activeCategoryIndex={hoveredPayoutIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : maxPain.points[index]?.settlement ?? null)} /></Suspense></article>}
     </section>
     <details><summary>Indicator evidence</summary><p>Underlying RSI14 and MACD are calculated from retained completed bars before the selected day is sliced for display.</p><table className={css.snapshotGrid}><thead><tr><th>End</th><th>RSI14</th><th>MACD</th><th>Signal</th></tr></thead><tbody>{indicators.filter((row) => istDay(row.time) === tradingDay).slice(-20).map((row) => <tr key={row.time}><td>{row.time}</td><td>{row.rsi?.toFixed(2) ?? "—"}</td><td>{row.macd?.toFixed(4) ?? "—"}</td><td>{row.signal?.toFixed(4) ?? "—"}</td></tr>)}</tbody></table></details>
   </section>;

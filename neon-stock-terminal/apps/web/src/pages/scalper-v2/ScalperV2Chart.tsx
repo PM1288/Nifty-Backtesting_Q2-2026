@@ -6,7 +6,7 @@ import {
 } from "lightweight-charts";
 import { levelInObservedSession, maxPainOverlayState, observedSessionBounds, paddedSessionBounds } from "../../lib/scalperV2Geometry";
 import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2ProfileRow } from "../../lib/scalperV2OiProfile";
-import { formatOiAxisValue } from "../../lib/scalperV2";
+import { mergeScalperV2Levels } from "../../lib/scalperV2Levels";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
@@ -71,7 +71,7 @@ export function ScalperV2Chart({
   const markerRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const drawingPrimitiveRef = useRef<ScalperV2DrawingPrimitive | null>(null);
   const profilePrimitiveRef = useRef<ScalperV2OiProfilePrimitive | null>(null);
-  const rankLinesRef = useRef<IPriceLine[]>([]), maxPainLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]), selectionLinesRef = useRef<IPriceLine[]>([]);
+  const semanticLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]);
   const profileRowsRef = useRef(oiProfile), profileModeRef = useRef(profileMode), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
   const yLockedRef = useRef(yLocked);
   const pointerFrameRef = useRef(0), profileFrameRef = useRef(0), dimensionsRef = useRef({ width: 0, height: 0 });
@@ -131,8 +131,8 @@ export function ScalperV2Chart({
       body.dataset.profileMaxAlignmentError = String(Math.max(0, ...layout.bars.map((row) => Math.abs(row.y - (candle.priceToCoordinate(row.strike) ?? Number.POSITIVE_INFINITY)))));
       body.dataset.profileGeometry = JSON.stringify(layout.bars.map((row) => ({
         side: row.side, strike: row.strike, coordinate: row.y, width: row.width, startX: row.startX, endX: row.endX,
-        value: profileModeRef.current === "change" ? row.changeOi : row.currentOi,
-        mode: profileModeRef.current, state: row.state,
+        value: row.metric === "change" ? row.changeOi : row.currentOi,
+        metric: row.metric, mode: profileModeRef.current, state: row.state,
       })));
     });
   };
@@ -152,7 +152,7 @@ export function ScalperV2Chart({
     });
     const candle = instance.addSeries(CandlestickSeries, {
       upColor: "#059669", downColor: "#dc2626", borderUpColor: "#059669", borderDownColor: "#dc2626",
-      wickUpColor: "#059669", wickDownColor: "#dc2626", priceLineVisible: false, lastValueVisible: true,
+      wickUpColor: "#059669", wickDownColor: "#dc2626", priceLineVisible: false, lastValueVisible: id !== "underlying",
     });
     const ema = instance.addSeries(LineSeries, {
       color: "#d97706", lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
@@ -344,15 +344,6 @@ export function ScalperV2Chart({
   }, [profileRangeExpanded, verticalView, yLocked]);
 
   useEffect(() => {
-    const candle = candleRef.current; if (!candle) return;
-    rankLinesRef.current.forEach((line) => candle.removePriceLine(line));
-    rankLinesRef.current = rankLevels.filter((level) => levelInObservedSession(level.strike, sessionBounds)).map((level) => candle.createPriceLine({
-      price: level.strike, color: level.side === "CE" ? "#2563eb" : "#a86600", lineWidth: level.rank === 1 ? 2 : 1,
-      lineStyle: level.rank === 1 ? 0 : 2, axisLabelVisible: false, title: `${level.side}${level.rank}`,
-    }));
-  }, [rankLevels, sessionBounds]);
-
-  useEffect(() => {
     const candle = candleRef.current; if (!candle || id !== "underlying") return;
     if (bodyRef.current) {
       bodyRef.current.dataset.selectedStrike = selectedStrike == null ? "" : String(selectedStrike);
@@ -360,25 +351,20 @@ export function ScalperV2Chart({
       bodyRef.current.dataset.selectedPeStrike = selectedPutStrike == null ? "" : String(selectedPutStrike);
       bodyRef.current.dataset.hoveredStrike = hoveredStrike == null ? "" : String(hoveredStrike);
     }
-    selectionLinesRef.current.forEach((line) => candle.removePriceLine(line));
-    selectionLinesRef.current = [
-      selectedStrike != null && levelInObservedSession(selectedStrike, sessionBounds) ? { price: selectedStrike, title: "Selected CE", color: "#2563eb", lineWidth: 2 as const, lineStyle: 2 as const } : null,
-      selectedPutStrike != null && selectedPutStrike !== selectedStrike && levelInObservedSession(selectedPutStrike, sessionBounds) ? { price: selectedPutStrike, title: "Selected PE", color: "#a86600", lineWidth: 2 as const, lineStyle: 2 as const } : null,
-      hoveredStrike != null && hoveredStrike !== selectedStrike && hoveredStrike !== selectedPutStrike && levelInObservedSession(hoveredStrike, sessionBounds) ? { price: hoveredStrike, title: "Hovered strike", color: "#0f766e", lineWidth: 1 as const, lineStyle: 3 as const } : null,
-    ].flatMap((options) => options ? [candle.createPriceLine({ ...options, axisLabelVisible: true })] : []);
-  }, [hoveredStrike, id, selectedPutStrike, selectedStrike, sessionBounds]);
-
-  useEffect(() => {
-    const candle = candleRef.current; if (!candle || id !== "underlying") return;
-    maxPainLinesRef.current.forEach((line) => candle.removePriceLine(line));
-    maxPainLinesRef.current = maxPainOverlay.visible.map((strike, index) => candle.createPriceLine({
-      price: strike,
-      title: maxPainOverlay.visible.length > 1 ? `Max pain ${index + 1}/${maxPainOverlay.visible.length}` : "Max pain",
-      color: "#7c3aed",
-      lineWidth: 2,
-      lineStyle: 3,
-      axisLabelVisible: true,
-    }));
+    semanticLinesRef.current.forEach((line) => candle.removePriceLine(line));
+    const latestClose = data.at(-1)?.close;
+    const candidates = [
+      ...(latestClose != null ? [{ price: latestClose, label: "NIFTY", priority: 100, color: "#0f766e" }] : []),
+      ...(selectedStrike != null && levelInObservedSession(selectedStrike, sessionBounds) ? [{ price: selectedStrike, label: "SELECTED CE", priority: 90, color: "#2563eb" }] : []),
+      ...(selectedPutStrike != null && levelInObservedSession(selectedPutStrike, sessionBounds) ? [{ price: selectedPutStrike, label: "SELECTED PE", priority: 90, color: "#a86600" }] : []),
+      ...maxPainOverlay.visible.map((price) => ({ price, label: "MAX PAIN", priority: 70, color: "#7c3aed" })),
+      ...rankLevels.filter((level) => level.rank <= 2 && levelInObservedSession(level.strike, sessionBounds)).map((level) => ({ price: level.strike, label: `${level.side}${level.rank}`, priority: level.rank === 1 ? 60 : 50, color: level.side === "CE" ? "#2563eb" : "#a86600" })),
+      ...(hoveredStrike != null && levelInObservedSession(hoveredStrike, sessionBounds) ? [{ price: hoveredStrike, label: "HOVER", priority: 20, color: "#0f766e" }] : []),
+    ];
+    const collisionTolerance = sessionBounds && bodyRef.current
+      ? Math.max(0.05, (sessionBounds.high - sessionBounds.low) / Math.max(1, bodyRef.current.clientHeight) * 18)
+      : 0.05;
+    semanticLinesRef.current = mergeScalperV2Levels(candidates, collisionTolerance).map((level) => candle.createPriceLine({ price: level.price, title: level.title, color: level.color, lineWidth: level.priority >= 70 ? 2 : 1, lineStyle: level.priority >= 90 ? 2 : 3, axisLabelVisible: true }));
     if (bodyRef.current) {
       bodyRef.current.dataset.maxPainStrikes = maxPainOverlay.candidates.join(",");
       bodyRef.current.dataset.maxPainVisible = maxPainOverlay.visible.join(",");
@@ -386,7 +372,7 @@ export function ScalperV2Chart({
         ? "unavailable"
         : maxPainOverlay.hidden.length === 0 ? "plotted" : "outside-active-y-range";
     }
-  }, [id, maxPainOverlay]);
+  }, [data, hoveredStrike, id, maxPainOverlay, rankLevels, selectedPutStrike, selectedStrike, sessionBounds]);
 
   useEffect(() => {
     markerRef.current?.setMarkers(signalEvents.flatMap((event) => {
@@ -447,7 +433,7 @@ export function ScalperV2Chart({
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
-      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label={`${profileMode === "change" ? profileLabel : "Current OI"} horizontal bars aligned to the underlying price axis; CE bars are blue and PE bars are yellow`}><b>{profileMode === "change" ? "ΔOI by strike" : "OI by strike"}</b><span className={css.profileIdentity}><i className={css.profileCall} />CE blue <i className={css.profilePut} />PE yellow</span>{profileMode === "change" && <span>− left · + right</span>}<span className={css.profileScale}>{profileMode === "change" ? `−${formatOiAxisValue(profileVisibility.maximum)} ← 0 → +${formatOiAxisValue(profileVisibility.maximum)}` : `0 → max ${formatOiAxisValue(profileVisibility.maximum)}`}</span><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible · shared maximum</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y to include off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "purple dotted line plotted" : profileRangeExpanded ? `${maxPainOverlay.hidden.length} outside All strikes Y` : "outside Session Y · use All strikes Y"}</span>}</div>}
+      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label="Open interest and change in open interest aligned to the underlying price axis"><b>{profileMode === "structure" ? "OI + ΔOI by strike" : profileMode === "change" ? "ΔOI by strike" : "OI by strike"}</b><span className={css.profileIdentity}><i className={css.profileCall} />CE blue <i className={css.profilePut} />PE yellow</span>{profileMode !== "current" && <><span>Change: green + · red −</span><span>{profileLabel}</span></>}<span>{profileVisibility.visible}/{profileVisibility.total} strikes visible</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y for off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "plotted" : "outside active Y range"}</span>}</div>}
     </div>
   </section>;
 }

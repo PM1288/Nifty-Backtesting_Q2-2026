@@ -9,6 +9,7 @@ import {
   buildProgressionMatrixRows,
   PROGRESSION_GATE_WEIGHTS,
   progressionRowMatches,
+  progressionStockState,
   type ProgressionFilter,
   type ProgressionMatrixRow,
   type ProgressionRouteSummary,
@@ -168,9 +169,9 @@ export function ScalperProgressionMatrix({ stocks, rows, generatedAt, isLoading,
       <table className={styles.progressionMatrixTable}>
         <thead><tr><th rowSpan={2} className={styles.progressionStickyRank}>Rank</th><th rowSpan={2} className={styles.progressionStickyStock}>Stock</th><th rowSpan={2} className={styles.progressionStickyLtp}>LTP</th><th rowSpan={2}>Progress</th>{visibleRoutes.map((routeIndex) => <th key={routeIndex} colSpan={gatesForRoute(routeIndex).length + 1}>{routeIndex === 0 ? "M−1 CLOSE" : "M−1 + M−2 SUFFICIENCY"}</th>)}<th rowSpan={2} className={styles.progressionStickyBest}>Best</th></tr>
         <tr>{visibleRoutes.flatMap((routeIndex) => [<th key={`${routeIndex}-score`}>Score / Weight</th>, ...gatesForRoute(routeIndex).map((gate) => <th key={`${routeIndex}-${gate.id}`}>{gate.label}</th>)])}</tr></thead>
-        <tbody>{visibleRows.map((row) => <tr key={row.stock.symbol} data-progression-symbol={row.stock.symbol} data-qualified={row.allGreen ? "true" : "false"} data-starter-state={row.starterState} onClick={() => setSelectedSymbol(row.stock.symbol)}>
+        <tbody>{visibleRows.map((row) => <tr key={row.stock.symbol} data-progression-symbol={row.stock.symbol} data-qualified={row.allGreen ? "true" : "false"} data-stock-state={progressionStockState(row)} data-starter-state={row.starterState} onClick={() => setSelectedSymbol(row.stock.symbol)}>
           <td className={styles.progressionStickyRank}><b>#{row.rank}</b></td>
-          <th scope="row" className={styles.progressionStickyStock}><button type="button" title={row.starterState === "pass" ? "At least one monthly starter passed" : row.starterState === "fail" ? "Both monthly starters failed" : "Monthly starter data pending"} onClick={(event) => { event.stopPropagation(); onOpenStock(row.stock, event.currentTarget); }}><StockLogo symbol={row.stock.symbol} profile={profiles.get(row.stock.symbol)} size={17} /><span><b>{row.stock.symbol}</b><small>{row.stock.symbol}-EQ · MWHD #{row.rank}</small></span></button></th>
+          <th scope="row" className={styles.progressionStickyStock}><button type="button" title={row.allGreen ? "At least one complete route: every M−1 or M−2 condition passed" : row.bothStartersFailed ? "Both monthly starters failed" : "No route is complete yet"} onClick={(event) => { event.stopPropagation(); onOpenStock(row.stock, event.currentTarget); }}><StockLogo symbol={row.stock.symbol} profile={profiles.get(row.stock.symbol)} size={17} /><span><b>{row.stock.symbol}</b><small>{row.stock.symbol}-EQ · MWHD #{row.rank}</small></span></button></th>
           <td className={styles.progressionStickyLtp}>₹{price(row.stock.last ?? row.source.currentValue)}</td>
           <td><ProgressStrip route={row.best} /></td>
           {visibleRoutes.flatMap((routeIndex) => {

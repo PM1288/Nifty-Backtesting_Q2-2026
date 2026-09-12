@@ -5,7 +5,7 @@ import {
   breadthWording, niftyMovementWording, parseBoardSort, parseQuickView, parseSummaryLens,
   serializeQuickView, slugifySector, vixWording,
 } from "../src/features/today/todayModel";
-import { buildProgressionMatrixRows, progressionRowMatches } from "../src/features/today/scalperProgressionMatrix";
+import { buildProgressionMatrixRows, progressionRowMatches, progressionStockState } from "../src/features/today/scalperProgressionMatrix";
 
 test("Today URL state canonicalizes unsupported values", () => {
   assert.equal(parseSummaryLens(null), "story");
@@ -94,6 +94,7 @@ test("progression matrix keeps one stock row, both routes, and sorts maximum qua
   assert.equal(rows[0].best.weightedScore, 29);
   assert.equal(rows[0].rank, 1);
   assert.equal(rows[0].starterState, "pass");
+  assert.equal(progressionStockState(rows[0]), "complete");
   assert.equal(progressionRowMatches(rows[0], "7"), true);
   assert.equal(progressionRowMatches(rows[1], "waiting"), false);
 });
@@ -116,6 +117,10 @@ test("M-2 route requires the visible M-1 sufficiency gate and weighted rank favo
   assert.deepEqual(month.routes[1].branch.checks.slice(0, 2).map((check) => check.id), ["month-m1", "month-m2"]);
   assert.ok(minute.best.weightedScore > month.best.weightedScore);
   assert.ok(minute.rank < month.rank);
+  assert.equal(month.starterState, "pass");
+  assert.equal(month.allGreen, false);
+  assert.equal(progressionStockState(month), "incomplete", "one passing starter or gate must not make the stock cell green");
   assert.equal(failed.bothStartersFailed, true);
   assert.equal(failed.starterState, "fail");
+  assert.equal(progressionStockState(failed), "failed");
 });

@@ -53,6 +53,11 @@ try {
   check("Observed pass and fail conditions use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Observed state cells inspected; pending semantics are covered by unit fixtures");
   const qualifiedCount = Number((text.match(/^(\d+)\/\d+ fully qualified/m) ?? [])[1] ?? 0);
   check("Fully qualified stocks sort first when present", qualifiedCount === 0 || await rows.first().getAttribute("data-qualified") === "true", `qualified=${qualifiedCount}`);
+  const stockStates = await rows.evaluateAll((nodes) => nodes.map((node) => ({
+    qualified: node.getAttribute("data-qualified"),
+    stockState: node.getAttribute("data-stock-state"),
+  })));
+  check("Stock cell turns green only for a complete M-1 or M-2 route", stockStates.every((row) => (row.stockState === "complete") === (row.qualified === "true")), JSON.stringify(stockStates.slice(0, 12)));
   const scroller = widget.locator('[aria-label="Horizontally scrollable progression matrix"]');
   const geometry = await scroller.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
   const firstRowHeight = await rows.first().evaluate((element) => element.getBoundingClientRect().height);

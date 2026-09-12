@@ -95,9 +95,9 @@
 .progressionStickyStock{position:sticky;left:48px;z-index:8;min-width:165px!important;max-width:165px;background:#fff!important;box-shadow:1px 0 #d7e0eb}
 .progressionStickyLtp{position:sticky;left:213px;z-index:8;min-width:94px!important;max-width:94px;background:#fff!important;box-shadow:1px 0 #d7e0eb;font:700 11px "IBM Plex Mono",monospace;text-align:right!important}
 .progressionMatrixTable thead .progressionStickyRank,.progressionMatrixTable thead .progressionStickyStock,.progressionMatrixTable thead .progressionStickyLtp{z-index:15;background:#eaf0f7!important}
-.progressionMatrixTable tbody tr[data-starter-state=pass] .progressionStickyStock,.progressionMatrixTable tbody tr[data-starter-state=pass] .progressionStickyStock button{background:#dff4e8!important;color:#075f43}
-.progressionMatrixTable tbody tr[data-starter-state=fail] .progressionStickyStock,.progressionMatrixTable tbody tr[data-starter-state=fail] .progressionStickyStock button{background:#fde8eb!important;color:#a61e30}
-.progressionMatrixTable tbody tr[data-starter-state=pending] .progressionStickyStock,.progressionMatrixTable tbody tr[data-starter-state=pending] .progressionStickyStock button{background:#f2f4f7!important;color:#5d6877}
+.progressionMatrixTable tbody tr[data-stock-state=complete] .progressionStickyStock,.progressionMatrixTable tbody tr[data-stock-state=complete] .progressionStickyStock button{background:#dff4e8!important;color:#075f43}
+.progressionMatrixTable tbody tr[data-stock-state=failed] .progressionStickyStock,.progressionMatrixTable tbody tr[data-stock-state=failed] .progressionStickyStock button{background:#fde8eb!important;color:#a61e30}
+.progressionMatrixTable tbody tr[data-stock-state=incomplete] .progressionStickyStock,.progressionMatrixTable tbody tr[data-stock-state=incomplete] .progressionStickyStock button{background:#f2f4f7!important;color:#5d6877}
 .progressionStickyBest{position:sticky;right:0;z-index:8;min-width:68px!important;background:#fff!important;box-shadow:-1px 0 #d7e0eb}
 .progressionMatrixTable thead .progressionStickyBest{z-index:15;background:#eaf0f7!important}
 .progressionStickyBest b{display:inline-flex;min-width:35px;justify-content:center;border:1px solid #9fb5db;border-radius:4px;padding:1px 4px;color:#214d8d;background:#eef4ff;line-height:1.1}

@@ -87,6 +87,14 @@ export function buildProgressionMatrixRows(stocks: Quote[], rows: ScalperProgres
 
 export type ProgressionFilter = "all" | "7" | "6" | "5plus" | "m1" | "m2" | "waiting" | "failure";
 
+export type ProgressionStockState = "complete" | "failed" | "incomplete";
+
+export function progressionStockState(row: ProgressionMatrixRow): ProgressionStockState {
+  if (row.allGreen) return "complete";
+  if (row.bothStartersFailed) return "failed";
+  return "incomplete";
+}
+
 export function progressionRowMatches(row: ProgressionMatrixRow, filter: ProgressionFilter): boolean {
   if (filter === "all") return true;
   if (filter === "7") return row.best.complete;

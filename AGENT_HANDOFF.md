@@ -17,9 +17,21 @@
 - Focused web tests pass 3/3, API reference tests pass 2/2, and authenticated
   candidate Chromium passes 7/7 at 1920x1080. Full web typecheck, 193/193 tests
   and production build pass; API typecheck, 212/212 tests and build pass; the
-  canonical repository gate passes. Evidence is outside Git under
-  `/tmp/scalper-v2-30d-strike-gauge-candidate`. Release evidence follows in
-  this entry after deployment.
+  canonical repository gate passes. Candidate evidence is outside Git under
+  `/tmp/scalper-v2-30d-strike-gauge-candidate`.
+- Commit `13f4ed8` is pushed on both the named feature branch and `master` and
+  was deployed through `ROUTE_PATH=/n50/ bash scripts/deploy_n50_dashboard.sh`.
+  The scoped container is healthy with image
+  `sha256:6502b0c0753a283a64e351c07439488453b79201356ec03fadc466f32273e856`
+  and restart count 0; both routed and public pages return HTTP 200.
+- Authenticated production Chromium passes the feature contract 7/7 on the
+  routed deployment and 7/7 through the public site. The broader workstation
+  passes 20/20 and the Delta-OI-only profile passes 9/9. Production evidence is
+  under `/tmp/scalper-v2-30d-strike-gauge-production-20260912`,
+  `/tmp/scalper-v2-30d-strike-gauge-public-20260912`,
+  `/tmp/scalper-v2-single-workstation-production-20260912` and
+  `/tmp/scalper-v2-delta-oi-production-20260912`. Nothing outside the dashboard
+  service was restarted or deployed.
 
 ## 2026-09-12 — Scalper V2 underlying reference tracker
 

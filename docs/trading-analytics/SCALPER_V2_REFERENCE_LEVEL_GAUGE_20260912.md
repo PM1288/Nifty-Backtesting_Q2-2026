@@ -56,7 +56,8 @@ stored outside Git under `/tmp/scalper-v2-30d-strike-gauge-candidate`.
 
 Full web typecheck, 193/193 tests and build pass; API typecheck, 212/212 tests
 and build pass; the canonical source gate passes. Authenticated production
-Chromium passes 5/5 for this feature, 9/9 for the Delta-OI-only profile and
+Chromium passes 7/7 for this feature on both the routed and public deployment,
+9/9 for the Delta-OI-only profile and
 20/20 for the broader V2 workstation. Production returned 14 real references
 for 2026-09-11 and plotted exactly the two inside the raw session range. The
 scoped N50 dashboard deployment is healthy; exact release identity and evidence

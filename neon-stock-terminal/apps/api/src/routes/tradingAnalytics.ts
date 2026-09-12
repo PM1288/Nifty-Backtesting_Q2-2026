@@ -43,6 +43,36 @@ export function resolveChartStrikeSelection(input: { strike?: number; ceStrike?:
     peStrike: input.peStrike ?? input.strike,
   };
 }
+const istSessionDate = (value: unknown) => value == null ? null : new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+}).format(new Date(String(value)));
+export function buildComparableChainLegs(currentLegs: Facts[], priorLegs: Facts[], currentAt: unknown, priorAt: unknown) {
+  return currentLegs.map((leg) => {
+    const prior = priorLegs.find((candidate) => candidate.strike === leg.strike && candidate.option_type === leg.option_type);
+    const sameSession = prior != null && istSessionDate(priorAt) === istSessionDate(currentAt);
+    const currentVolume = numeric(leg.total_traded_volume), baselineVolume = numeric(prior?.total_traded_volume);
+    const intervalVolume = !sameSession || currentVolume == null || baselineVolume == null || currentVolume < baselineVolume
+      ? null : currentVolume - baselineVolume;
+    return {
+      ...leg,
+      collected_at: currentAt ?? null,
+      baseline_last_price: prior?.last_price ?? null,
+      baseline_open_interest: prior?.open_interest ?? null,
+      baseline_total_traded_volume: prior?.total_traded_volume ?? null,
+      baseline_kind: prior ? "PREVIOUS_ARCHIVED_SNAPSHOT" : "BASELINE_UNAVAILABLE",
+      baseline_collected_at: priorAt ?? null,
+      comparison_window_state: prior ? "COMMON_SNAPSHOT_BASELINE" : "BASELINE_UNAVAILABLE",
+      interval_volume: intervalVolume,
+      volume_counter_state: !prior ? "BASELINE_UNAVAILABLE" : !sameSession ? "CROSS_SESSION_NOT_COMPARABLE" : currentVolume == null || baselineVolume == null ? "ENDPOINT_MISSING" : currentVolume < baselineVolume ? "RESET_OR_CORRECTION" : "COMPARABLE",
+      oi_unit: "UNKNOWN_SOURCE_UNIT",
+      volume_unit: "UNKNOWN_SOURCE_UNIT",
+      oi_layers: oiLayers(prior?.open_interest, leg.open_interest),
+      previous_snapshot_delta: prior && numeric(prior.open_interest) != null && numeric(leg.open_interest) != null
+        ? numeric(leg.open_interest)! - numeric(prior.open_interest)!
+        : null,
+    };
+  });
+}
 export async function loadTradingAnalytics(
   prisma: PrismaClient,
   asOf: string,
@@ -80,7 +110,7 @@ export async function loadTradingAnalytics(
   )
     throw new Error("Future report date");
   // Select one complete load revision, never stitch rows from different ingests.
-  const [rawStats, rawPeople, rawParticipantVolumes, cash, expiries, dayBars, smartapi, cashHistory, rawParticipantHistory] =
+  const [rawStats, rawPeople, rawParticipantVolumes, cash, expiries, dayBars, smartapi, cashHistory, rawParticipantHistory, positioningCoverageRows] =
     await Promise.all([
       read(
         "derivatives",
@@ -146,6 +176,15 @@ export async function loadTradingAnalytics(
          ORDER BY p.trade_date,p.client_type`,
         asOf,
         selected,
+      ),
+      read(
+        "positioning_coverage",
+        `SELECT 'participant_oi'::text family,count(*)::int rows,count(DISTINCT trade_date)::int dates,min(trade_date)::text first_date,max(trade_date)::text last_date FROM market_data.nse_fii_participant_open_interest WHERE loaded_at<=$1::timestamptz
+         UNION ALL SELECT 'participant_volume',count(*)::int,count(DISTINCT trade_date)::int,min(trade_date)::text,max(trade_date)::text FROM market_data.nse_fii_participant_volume WHERE loaded_at<=$1::timestamptz
+         UNION ALL SELECT 'fii_stats',count(*)::int,count(DISTINCT trade_date)::int,min(trade_date)::text,max(trade_date)::text FROM market_data.nse_fii_derivatives_stats WHERE loaded_at<=$1::timestamptz
+         UNION ALL SELECT 'nifty_chain_snapshots',count(*)::int,count(DISTINCT (captured_at AT TIME ZONE 'Asia/Kolkata')::date)::int,min((captured_at AT TIME ZONE 'Asia/Kolkata')::date)::text,max((captured_at AT TIME ZONE 'Asia/Kolkata')::date)::text FROM public.option_chain_snapshots WHERE symbol=$2 AND captured_at<=$1::timestamptz`,
+        asOf,
+        underlying.symbol,
       ),
     ]);
   const [priorPeopleRows, priorParticipantVolumeRows, dailyCalendar] = await Promise.all([
@@ -228,24 +267,7 @@ export async function loadTradingAnalytics(
     snapshot && numeric(snapshot.underlying_value) != null
       ? nearestPairs(rawLegs, numeric(snapshot.underlying_value)!)
       : { strikes: [], legs: [], shortfall: 10 };
-  const chainLegs = window.legs.map((l) => {
-    const p = priorLegs.find(
-      (v) => v.strike === l.strike && v.option_type === l.option_type,
-    );
-    return {
-      ...l,
-      baseline_open_interest: p?.open_interest ?? null,
-      baseline_kind: p ? "PREVIOUS_ARCHIVED_SNAPSHOT" : "BASELINE_UNAVAILABLE",
-      baseline_collected_at: previous?.captured_at ?? null,
-      oi_layers: oiLayers(p?.open_interest, l.open_interest),
-      previous_snapshot_delta:
-        p &&
-        numeric(p.open_interest) != null &&
-        numeric(l.open_interest) != null
-          ? numeric(l.open_interest)! - numeric(p.open_interest)!
-          : null,
-    };
-  });
+  const chainLegs = buildComparableChainLegs(window.legs, priorLegs, snapshot?.captured_at, previous?.captured_at);
   const daily = dayBars.reverse();
   const emas = ema9(daily.map((b) => numeric(b.close)!));
   const candles = daily.map((b, i) => ({
@@ -317,6 +339,16 @@ export async function loadTradingAnalytics(
     activity: stats,
     participants: people,
     participantVolumes,
+    positioningCoverage: {
+      generatedAt: asOf,
+      scope: "RETAINED_DATABASE_ROWS_AT_OR_BEFORE_ASOF",
+      requestedPilotSessions: 60,
+      families: positioningCoverageRows.map((row) => ({ ...row, downloaded: null, parsed: null, loaded: row.rows, validated: null })),
+      limitations: [
+        "Downloaded, parsed and validated artifact counts are not stored in this API response and remain unavailable.",
+        "EOD reports cannot reconstruct historical intraday OI, volume or price observations.",
+      ],
+    },
     participantHistory: {
       rows: participantHistoryRows,
       reportCount: participantHistoryDates.length,

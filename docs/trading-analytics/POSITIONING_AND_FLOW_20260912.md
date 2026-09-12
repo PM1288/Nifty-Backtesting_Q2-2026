@@ -14,7 +14,9 @@ The view combines, but never merges the identity of, three existing sources:
    stock futures and stock options in INR crore.
 3. Anonymous SmartAPI option observations for the selected underlying/expiry,
    including price, current OI, comparable baseline OI, signed change in OI and
-   volume by exact contract.
+  session cumulative-volume counters and comparable interval volume by exact
+  contract. Source units remain explicitly unknown where the feed contract does
+  not prove a conversion.
 
 No strike observation is attributed to a participant. No collector, broker
 session, strategy rule or order permission was added.
@@ -31,7 +33,8 @@ session, strategy rule or order permission was added.
 - The above-fold market strip shows NIFTY, complete-cohort CE/PE OI and signed
   change coverage, OI PCR, volume PCR and indicative tracked-window max pain.
 - One compact row per strike preserves exact CE/PE price, price change from day
-  open, OI, comparable signed OI change, volume, mechanical contract build-up
+  open, matched-window price change, OI, comparable signed OI change, interval
+  volume, mechanical contract build-up
   state, CE/PE rank, ATM, max-pain and selected-strike identities. Data bars do
   not replace exact values.
 
@@ -47,29 +50,33 @@ session, strategy rule or order permission was added.
   return. It discloses that historical chain, first-30-minute and first-60-minute
   inputs are not present in this response.
 
-## Likely Levels
+## Candidate Levels
 
-The additive `Likely Levels` tab ranks probable positioning zones without
+The additive `Candidate Levels` tab ranks research candidate zones without
 claiming participant ownership of a strike. Resistance uses CE evidence;
-support uses PE evidence. The transparent research weights are current OI 30%,
-positive added OI 25%, volume 15%, persistence 15%, side-correct price/OI state
-10%, and structural/round-number confluence 5%. Inputs are percentile-ranked
-within the tracked expiry. Missing inputs reduce coverage and never become
-zero. Adjacent strong strikes are merged into a zone while retaining its core
-strike and source members.
+support uses PE evidence. L0 uses current-OI percentile only. L1 is the declared
+activity model: current OI 40%, comparable interval volume 30%, and absolute OI
+adjustment 30%. Inputs are percentile-ranked within the tracked expiry using
+midranks for ties. If any mandatory L1 input is absent, the row falls back
+exactly to L0; weights are never renormalised. L2 remains unavailable until
+matched RVOL, past-only persistence and proximity inputs exist. Scores are not
+probabilities. Adjacent listed strikes are merged using actual spacing without
+bridging missing strikes, while retaining the core and source members.
 
 Participant alignment remains a separate aggregate FII/Pro context. The
 existing `market_data.nse_fii_participant_volume` current and previous reports
 are now exposed by the Trading Analytics API and shown separately from
 outstanding participant positions and anonymous option-chain observations.
 
-The retained response does not yet support three claims, which remain visibly
+The retained response does not yet support these claims, which remain visibly
 unavailable rather than estimated:
 
 - durable OI persistence requires three or more time-ordered chain snapshots;
 - delta-weighted OI requires an authorised contract delta-factor source;
 - production reach/rejection/break rates require zones persisted before each
   session and replayed without later observations.
+- a 60-session chain pilot cannot be claimed from the four retained NIFTY chain
+  dates currently loaded.
 
 The deterministic outcome contract is implemented and tested: reach is a zone
 touch, confirmed break requires two consecutive closes beyond the zone, and
@@ -104,30 +111,35 @@ direction or recommendation. A missing or non-comparable OI baseline remains
 unavailable. Complete CE/PE totals and PCR are withheld if their tracked cohort
 is incomplete.
 
+The Price/OI pattern uses the same previous archived snapshot for premium and
+OI. Session-open return remains a separate metric. Cumulative volume counters
+are differenced only for same-session comparable endpoints; a decrease is
+`RESET_OR_CORRECTION`, and cross-session or first-observation intervals remain
+unavailable. `abs(DeltaOI) / intervalVolume` is not clipped; values above one
+are retained and flagged for review.
+
 ## Evidence and exports
 
 - JSON contains source participant/activity/participant-volume rows, derived
-  strike flow, Likely Levels weights/zones/availability, scope, dates and expiry.
+  strike flow, Candidate Levels configuration/zones/availability, data coverage,
+  scope, dates and expiry.
 - CSV contains participant current/previous/change fields, FII activity rows,
-  and exact strike-side price/OI/change/volume/share/classification evidence.
+  and exact strike-side matched/session price, OI, cumulative and interval
+  volume, ratios, units, comparison quality, timestamps and model evidence.
 - Complete application evidence remains in the existing Trading Analytics JSON
   and source drawers.
 
+## Data coverage
+
+The `Data Coverage` tab reports retained database rows, distinct dates and date
+range separately for participant OI, participant volume, FII statistics and
+NIFTY chain snapshots. Downloaded, parsed and source-validated artifact counts
+are not stored in the Trading Analytics response and are shown as unavailable,
+not copied from loaded-row counts. At the 12 September audit the retained data
+contained 25 participant-OI dates, 24 participant-volume dates, 25 FII-statistic
+dates and four NIFTY-chain dates. This blocks a truthful 60-session chain pilot.
+
 ## Verification
 
-- Web typecheck, 184/184 tests and production build pass.
-- API typecheck, 209/209 tests and build pass.
-- Authenticated production browser regression passes 18/18 at 1920x1080 using
-  real retained source data. It verifies navigation, participant labels, two
-  hero charts, strike rows, dataset separation, no ownership claim, above-fold
-  matrix, JSON/CSV downloads, bubble or truthful baseline state, history,
-  evaluation, Likely Levels disclosures and absence of page errors.
-- Evidence: `/tmp/positioning-flow-likely-levels-production-20260912-final`
-  (runtime evidence, intentionally not committed).
-
-Deployment used `scripts/deploy_n50_dashboard.sh` and recreated only the
-`n50-dashboard` service. The final container is healthy; no order or strategy
-configuration changed.
-
-Deployment evidence is appended to `AGENT_HANDOFF.md` after the pushed release
-commit is deployed.
+The current acceptance run and deployment evidence is recorded in
+`POSITIONING_FLOW_ACCEPTANCE_20260912_V1.md` and appended to `AGENT_HANDOFF.md`.

@@ -50,6 +50,7 @@ type Payload = {
   activity: Row[];
   participants: Row[];
   participantVolumes?: Row[];
+  positioningCoverage?: { generatedAt: string; scope: string; requestedPilotSessions: number; families: Row[]; limitations: string[] };
   participantHistory?: {
     rows: Row[];
     reportCount: number;
@@ -651,6 +652,7 @@ export function TradingAnalyticsPage() {
                   asOf={d.asOf}
                   participants={d.participants}
                   participantVolumes={d.participantVolumes ?? []}
+                  positioningCoverage={d.positioningCoverage}
                   participantHistory={d.participantHistory}
                   activity={d.activity}
                   legs={d.smartapi.legs}

@@ -5,6 +5,8 @@ export type StructuralLevel = { code: string; value: number };
 export type LevelComponent = { value: number | null; weight: number };
 
 export type ProbableLevel = {
+  ruleVersion: "CANDIDATE_LEVEL_RESEARCH_V1_L0" | "CANDIDATE_LEVEL_RESEARCH_V1_L1";
+  variant: "L0" | "L1";
   role: LevelRole;
   strike: number;
   marketStrength: number;
@@ -24,9 +26,12 @@ export type ProbableLevel = {
   deltaWeightedOi: number | null;
   deltaWeightState: "AVAILABLE" | "UNAVAILABLE";
   inputCoverage: number;
+  warnings: string[];
 };
 
 export type ProbableZone = {
+  ruleVersion: ProbableLevel["ruleVersion"];
+  variant: ProbableLevel["variant"];
   rank: number;
   role: LevelRole;
   zoneLow: number;
@@ -57,22 +62,20 @@ export type ZoneOutcome = {
 };
 
 export const LEVEL_WEIGHTS = {
-  oi: .30,
-  addedOi: .25,
-  volume: .15,
-  persistence: .15,
-  priceOiState: .10,
-  confluence: .05,
+  L0: { currentOi: 1 },
+  L1: { currentOi: .40, intervalVolume: .30, absoluteOiChange: .30 },
+  L2: { state: "NOT_AVAILABLE", reason: "RVOL_PERSISTENCE_AND_PAST_ONLY_PROXIMITY_REQUIRED" },
 } as const;
 
 function percentiles(values: Array<number | null>): Array<number | null> {
   const observed = values.filter((value): value is number => value != null && Number.isFinite(value)).sort((a, b) => a - b);
+  const allZero = observed.length > 0 && observed.every((value) => value === 0);
   return values.map((value) => {
     if (value == null || !Number.isFinite(value) || !observed.length) return null;
-    if (observed.length === 1) return 1;
+    if (allZero) return 0;
     const below = observed.filter((candidate) => candidate < value).length;
     const equal = observed.filter((candidate) => candidate === value).length;
-    return (below + (equal - 1) / 2) / (observed.length - 1);
+    return (below + equal / 2) / observed.length;
   });
 }
 
@@ -167,36 +170,40 @@ export function evaluateZoneOutcome(
 export function buildProbableLevels(
   rows: readonly StrikeFlowRow[],
   structuralLevels: readonly StructuralLevel[],
+  spot: number | null = null,
 ): ProbableLevel[] {
   const inferredStep = rows.length > 1 ? Math.min(...rows.slice(1).map((row, index) => row.strike - rows[index].strike).filter((value) => value > 0)) : 50;
   const output: ProbableLevel[] = [];
   for (const [side, role] of [["ce", "Resistance"], ["pe", "Support"]] as const) {
     const legs = rows.map((row) => row[side]);
     const oiRanks = percentiles(legs.map((leg) => leg.oi));
-    const addRanks = percentiles(legs.map((leg) => leg.oiChange == null ? null : Math.max(leg.oiChange, 0)));
-    const volumeRanks = percentiles(legs.map((leg) => leg.volume));
+    const adjustmentRanks = percentiles(legs.map((leg) => leg.oiChange == null ? null : Math.abs(leg.oiChange)));
+    const volumeRanks = percentiles(legs.map((leg) => leg.intervalVolume));
     rows.forEach((row, index) => {
       const leg = row[side];
       const nearby = structuralLevels.filter((level) => Math.abs(level.value - row.strike) <= inferredStep / 2);
       const round = row.strike % 100 === 0;
       const confluence = nearby.length ? 1 : round ? .5 : 0;
-      const score = weightedAvailableScore({
-        oi: { value: oiRanks[index], weight: LEVEL_WEIGHTS.oi },
-        addedOi: { value: addRanks[index], weight: LEVEL_WEIGHTS.addedOi },
-        volume: { value: volumeRanks[index], weight: LEVEL_WEIGHTS.volume },
-        persistence: { value: null, weight: LEVEL_WEIGHTS.persistence },
-        priceOiState: { value: stateScore(leg), weight: LEVEL_WEIGHTS.priceOiState },
-        confluence: { value: confluence, weight: LEVEL_WEIGHTS.confluence },
-      });
+      const l1Available = oiRanks[index] != null && adjustmentRanks[index] != null && volumeRanks[index] != null;
+      const marketStrength = l1Available
+        ? 100 * (.40 * oiRanks[index]! + .30 * volumeRanks[index]! + .30 * adjustmentRanks[index]!)
+        : 100 * (oiRanks[index] ?? 0);
+      const variant = l1Available ? "L1" : "L0";
       output.push({
-        role, strike: row.strike, marketStrength: score.score,
-        components: { oi: oiRanks[index], addedOi: addRanks[index], volume: volumeRanks[index], persistence: null, priceOiState: stateScore(leg), confluence },
+        ruleVersion: `CANDIDATE_LEVEL_RESEARCH_V1_${variant}`, variant,
+        role, strike: row.strike, marketStrength,
+        components: { oi: oiRanks[index], addedOi: adjustmentRanks[index], volume: volumeRanks[index], persistence: null, priceOiState: stateScore(leg), confluence },
         oi: leg.oi, deltaOi: leg.oiChange,
         addedOi: leg.oiChange == null ? null : Math.max(leg.oiChange, 0),
         removedOi: leg.oiChange == null ? null : Math.max(-leg.oiChange, 0),
-        volume: leg.volume, persistence: null, velocityPerHour: velocity(leg),
+        volume: leg.intervalVolume, persistence: null, velocityPerHour: velocity(leg),
         buildState: wallState(leg), structuralConfluence: [...nearby.map((level) => level.code), ...(round ? ["Round number"] : [])],
-        deltaWeightedOi: null, deltaWeightState: "UNAVAILABLE", inputCoverage: score.coverage,
+        deltaWeightedOi: null, deltaWeightState: "UNAVAILABLE", inputCoverage: variant === "L1" ? 1 : oiRanks[index] == null ? 0 : .4,
+        warnings: [
+          ...(variant === "L0" ? ["L1_UNAVAILABLE_INTERVAL_VOLUME_OR_OI_CHANGE"] : []),
+          ...(leg.oiUnit === "UNKNOWN_SOURCE_UNIT" || leg.volumeUnit === "UNKNOWN_SOURCE_UNIT" ? ["SOURCE_UNITS_UNVERIFIED"] : []),
+          ...(leg.comparisonWindowState !== "COMMON_SNAPSHOT_BASELINE" ? ["PRICE_OI_WINDOW_NOT_COMPARABLE"] : []),
+        ],
       });
     });
   }
@@ -204,20 +211,28 @@ export function buildProbableLevels(
 }
 
 export function buildProbableZones(
-  rows: readonly StrikeFlowRow[], structuralLevels: readonly StructuralLevel[], participants: readonly EvidenceRow[], minimumStrength = 45,
+  rows: readonly StrikeFlowRow[], structuralLevels: readonly StructuralLevel[], participants: readonly EvidenceRow[], minimumStrength = 45, spot: number | null = null,
 ): ProbableZone[] {
-  const levels = buildProbableLevels(rows, structuralLevels);
-  const step = rows.length > 1 ? Math.min(...rows.slice(1).map((row, index) => row.strike - rows[index].strike).filter((value) => value > 0)) : 50;
+  const levels = buildProbableLevels(rows, structuralLevels, spot);
+  const boundaries = new Map(rows.map((row, index) => {
+    const previousGap = index > 0 ? row.strike - rows[index - 1].strike : rows[1]?.strike - row.strike;
+    const nextGap = index < rows.length - 1 ? rows[index + 1].strike - row.strike : row.strike - rows[index - 1]?.strike;
+    const left = row.strike - (previousGap > 0 ? previousGap : 50) / 2;
+    const right = row.strike + (nextGap > 0 ? nextGap : 50) / 2;
+    return [row.strike, { left, right, index }];
+  }));
   const alignment = participantAlignment(participants);
   const selected = (["Resistance", "Support"] as const).flatMap((role) => {
-    const side = levels.filter((level) => level.role === role);
+    const side = levels.filter((level) => level.role === role && (spot == null || (role === "Resistance" ? level.strike >= spot : level.strike <= spot)));
     const strong = side.filter((level) => level.marketStrength >= minimumStrength);
     return strong.length ? strong : side.slice(0, 2);
   }).sort((left, right) => left.role.localeCompare(right.role) || left.strike - right.strike);
   const groups: ProbableLevel[][] = [];
   for (const level of selected) {
     const prior = groups.at(-1);
-    if (prior && prior[0].role === level.role && level.strike - prior.at(-1)!.strike <= step * 1.1) prior.push(level);
+    const priorBoundary = prior ? boundaries.get(prior.at(-1)!.strike) : null;
+    const currentBoundary = boundaries.get(level.strike);
+    if (prior && prior[0].role === level.role && priorBoundary && currentBoundary && currentBoundary.index === priorBoundary.index + 1) prior.push(level);
     else groups.push([level]);
   }
   const zones = groups.map((evidence) => {
@@ -226,8 +241,8 @@ export function buildProbableZones(
     const strength = evidence.reduce((sum, level) => sum + level.marketStrength, 0) / evidence.length;
     const confidence = coverage >= .8 && strength >= 70 ? "High" : coverage >= .6 && strength >= 45 ? "Medium" : "Low";
     return {
-      rank: 0, role: core.role,
-      zoneLow: evidence[0].strike - step / 2, coreStrike: core.strike, zoneHigh: evidence.at(-1)!.strike + step / 2,
+      ruleVersion: core.ruleVersion, variant: core.variant, rank: 0, role: core.role,
+      zoneLow: boundaries.get(evidence[0].strike)?.left ?? evidence[0].strike, coreStrike: core.strike, zoneHigh: boundaries.get(evidence.at(-1)!.strike)?.right ?? evidence.at(-1)!.strike,
       marketStrength: strength, participantAlignment: alignment.label, participantAlignmentScore: alignment.score, confidence,
       oi: sumComplete(evidence.map((level) => level.oi)), deltaOi: sumComplete(evidence.map((level) => level.deltaOi)),
       volume: sumComplete(evidence.map((level) => level.volume)), persistence: null,

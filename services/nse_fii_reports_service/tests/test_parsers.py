@@ -71,6 +71,12 @@ class ParserTests(unittest.TestCase):
         frame = parse_participant_csv(b'Preamble\n" Client Type ",Future Index Long,Future Index Short\nFII,1,2\n')
         self.assertEqual(frame.iloc[0, 0], "FII")
 
+    def test_unexpected_participant_label_is_not_silently_dropped(self):
+        with self.assertRaisesRegex(ValueError, "Unexpected participant labels"):
+            parse_participant_csv(
+                b"Client Type,Future Index Long,Future Index Short\nFII,1,2\nUnknown Desk,3,4\n"
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

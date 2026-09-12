@@ -177,6 +177,14 @@ def parse_participant_csv(raw: bytes) -> pd.DataFrame:
 
     first_col = df.columns[0]
     df[first_col] = df[first_col].astype(str).str.strip()
+    labels = set(df[first_col])
+    known_footer = {label for label in labels if label.casefold().startswith(("note:", "source:"))}
+    unexpected = sorted(labels - set(PARTICIPANT_ROWS) - known_footer)
+    if unexpected:
+        raise ValueError(
+            "Unexpected participant labels; raw artifact must be inspected before loading: "
+            + ", ".join(unexpected)
+        )
     df = df[df[first_col].isin(PARTICIPANT_ROWS)].reset_index(drop=True)
     return df
 

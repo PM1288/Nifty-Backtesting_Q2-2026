@@ -67,15 +67,27 @@ export type StrikeFlowLeg = {
   baselinePrice: number | null;
   priceChange: number | null;
   priceChangePct: number | null;
+  sessionOpenPrice: number | null;
+  sessionOpenChange: number | null;
+  sessionOpenChangePct: number | null;
   oi: number | null;
   baselineOi: number | null;
   oiChange: number | null;
   oiChangePct: number | null;
   volume: number | null;
+  baselineVolume: number | null;
+  intervalVolume: number | null;
+  netOiToIntervalVolume: number | null;
+  netOiToIntervalVolumeState: "AVAILABLE" | "REVIEW_ABOVE_ONE" | "UNAVAILABLE";
   oiShare: number | null;
   deltaOiShare: number | null;
   volumeShare: number | null;
+  intervalVolumeShare: number | null;
   classification: BuildUpState;
+  comparisonWindowState: string;
+  volumeCounterState: string;
+  oiUnit: string;
+  volumeUnit: string;
   baselineKind: string;
   baselineAt: string | null;
   observedAt: string | null;
@@ -85,9 +97,13 @@ export type StrikeFlowRow = { strike: number; ce: StrikeFlowLeg; pe: StrikeFlowL
 
 const emptyLeg = (): StrikeFlowLeg => ({
   contractId: null, price: null, baselinePrice: null, priceChange: null,
-  priceChangePct: null, oi: null, baselineOi: null, oiChange: null,
-  oiChangePct: null, volume: null, oiShare: null, deltaOiShare: null,
-  volumeShare: null, classification: "Unavailable", baselineKind: "UNAVAILABLE",
+  priceChangePct: null, sessionOpenPrice: null, sessionOpenChange: null, sessionOpenChangePct: null,
+  oi: null, baselineOi: null, oiChange: null,
+  oiChangePct: null, volume: null, baselineVolume: null, intervalVolume: null, oiShare: null, deltaOiShare: null,
+  volumeShare: null, intervalVolumeShare: null, classification: "Unavailable", baselineKind: "UNAVAILABLE",
+  comparisonWindowState: "BASELINE_UNAVAILABLE", volumeCounterState: "BASELINE_UNAVAILABLE",
+  netOiToIntervalVolume: null, netOiToIntervalVolumeState: "UNAVAILABLE",
+  oiUnit: "UNKNOWN_SOURCE_UNIT", volumeUnit: "UNKNOWN_SOURCE_UNIT",
   baselineAt: null, observedAt: null,
 });
 
@@ -102,20 +118,31 @@ function rawOiChange(row: EvidenceRow): number | null {
 function legFrom(row: EvidenceRow | undefined): StrikeFlowLeg {
   if (!row) return emptyLeg();
   const price = finite(row.last_price);
-  const baselinePrice = finite(row.day_open);
+  const baselinePrice = finite(row.baseline_last_price);
   const priceChange = price == null || baselinePrice == null ? null : price - baselinePrice;
+  const sessionOpenPrice = finite(row.day_open);
+  const sessionOpenChange = price == null || sessionOpenPrice == null ? null : price - sessionOpenPrice;
   const oi = finite(row.open_interest);
   const baselineOi = finite(row.baseline_open_interest);
   const oiChange = rawOiChange(row);
+  const intervalVolume = finite(row.interval_volume);
+  const netOiToIntervalVolume = oiChange == null || intervalVolume == null || intervalVolume <= 0 ? null : Math.abs(oiChange) / intervalVolume;
   return {
     contractId: row.instrument_identifier == null ? null : String(row.instrument_identifier),
     price, baselinePrice, priceChange,
     priceChangePct: priceChange == null || baselinePrice == null || baselinePrice === 0 ? null : 100 * priceChange / baselinePrice,
+    sessionOpenPrice, sessionOpenChange,
+    sessionOpenChangePct: sessionOpenChange == null || sessionOpenPrice == null || sessionOpenPrice === 0 ? null : 100 * sessionOpenChange / sessionOpenPrice,
     oi, baselineOi, oiChange,
     oiChangePct: oiChange == null || baselineOi == null || baselineOi === 0 ? null : 100 * oiChange / baselineOi,
-    volume: finite(row.total_traded_volume),
-    oiShare: null, deltaOiShare: null, volumeShare: null,
+    volume: finite(row.total_traded_volume), baselineVolume: finite(row.baseline_total_traded_volume), intervalVolume,
+    netOiToIntervalVolume,
+    netOiToIntervalVolumeState: netOiToIntervalVolume == null ? "UNAVAILABLE" : netOiToIntervalVolume > 1 ? "REVIEW_ABOVE_ONE" : "AVAILABLE",
+    oiShare: null, deltaOiShare: null, volumeShare: null, intervalVolumeShare: null,
     classification: contractBuildUp(priceChange, oiChange),
+    comparisonWindowState: String(row.comparison_window_state ?? "BASELINE_UNAVAILABLE"),
+    volumeCounterState: String(row.volume_counter_state ?? "BASELINE_UNAVAILABLE"),
+    oiUnit: String(row.oi_unit ?? "UNKNOWN_SOURCE_UNIT"), volumeUnit: String(row.volume_unit ?? "UNKNOWN_SOURCE_UNIT"),
     baselineKind: String(row.baseline_kind ?? "BASELINE_UNAVAILABLE"),
     baselineAt: row.baseline_collected_at == null ? null : String(row.baseline_collected_at),
     observedAt: row.exchange_feed_at == null && row.collected_at == null ? null : String(row.exchange_feed_at ?? row.collected_at),
@@ -134,11 +161,13 @@ export function buildStrikeFlowRows(legs: readonly EvidenceRow[]): StrikeFlowRow
     const oiTotal = rows.reduce((sum, row) => sum + (row[side].oi ?? 0), 0);
     const deltaTotal = rows.reduce((sum, row) => sum + Math.abs(row[side].oiChange ?? 0), 0);
     const volumeTotal = rows.reduce((sum, row) => sum + (row[side].volume ?? 0), 0);
+    const intervalVolumeTotal = rows.reduce((sum, row) => sum + (row[side].intervalVolume ?? 0), 0);
     for (const row of rows) {
       const leg = row[side];
       leg.oiShare = leg.oi == null || oiTotal <= 0 ? null : leg.oi / oiTotal;
       leg.deltaOiShare = leg.oiChange == null || deltaTotal <= 0 ? null : Math.abs(leg.oiChange) / deltaTotal;
       leg.volumeShare = leg.volume == null || volumeTotal <= 0 ? null : leg.volume / volumeTotal;
+      leg.intervalVolumeShare = leg.intervalVolume == null || intervalVolumeTotal <= 0 ? null : leg.intervalVolume / intervalVolumeTotal;
     }
   }
   return rows;

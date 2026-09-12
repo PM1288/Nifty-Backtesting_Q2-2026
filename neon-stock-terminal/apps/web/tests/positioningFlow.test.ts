@@ -28,12 +28,17 @@ test("option contract build-up classification is purely mechanical and missing-s
 
 test("strike flow preserves baseline missingness and calculates side-specific shares", () => {
   const rows = buildStrikeFlowRows([
-    { strike: 100, option_type: "CE", last_price: 12, day_open: 10, open_interest: 100, baseline_open_interest: 80, total_traded_volume: 50, oi_layers: { state: "COMPARABLE", change: 20 } },
+    { strike: 100, option_type: "CE", last_price: 12, day_open: 10, baseline_last_price: 10, open_interest: 100, baseline_open_interest: 80, total_traded_volume: 50, baseline_total_traded_volume: 20, interval_volume: 30, comparison_window_state: "COMMON_SNAPSHOT_BASELINE", volume_counter_state: "COMPARABLE", oi_layers: { state: "COMPARABLE", change: 20 } },
     { strike: 100, option_type: "PE", last_price: 8, day_open: 10, open_interest: 200, baseline_open_interest: null, total_traded_volume: 100, oi_layers: { state: "CURRENT_ONLY_BASELINE_UNAVAILABLE", change: null } },
-    { strike: 110, option_type: "CE", last_price: 6, day_open: 8, open_interest: 300, baseline_open_interest: 350, total_traded_volume: 150, oi_layers: { state: "COMPARABLE", change: -50 } },
-    { strike: 110, option_type: "PE", last_price: 14, day_open: 12, open_interest: 200, baseline_open_interest: 180, total_traded_volume: 100, oi_layers: { state: "COMPARABLE", change: 20 } },
+    { strike: 110, option_type: "CE", last_price: 6, day_open: 8, baseline_last_price: 8, open_interest: 300, baseline_open_interest: 350, total_traded_volume: 150, baseline_total_traded_volume: 100, interval_volume: 50, comparison_window_state: "COMMON_SNAPSHOT_BASELINE", volume_counter_state: "COMPARABLE", oi_layers: { state: "COMPARABLE", change: -50 } },
+    { strike: 110, option_type: "PE", last_price: 14, day_open: 12, baseline_last_price: 12, open_interest: 200, baseline_open_interest: 180, total_traded_volume: 100, baseline_total_traded_volume: 80, interval_volume: 20, comparison_window_state: "COMMON_SNAPSHOT_BASELINE", volume_counter_state: "COMPARABLE", oi_layers: { state: "COMPARABLE", change: 20 } },
   ]);
   assert.equal(rows[0].ce.classification, "Long build-up");
+  assert.equal(rows[0].ce.priceChange, 2);
+  assert.equal(rows[0].ce.sessionOpenChange, 2);
+  assert.equal(rows[0].ce.intervalVolume, 30);
+  assert.equal(rows[0].ce.netOiToIntervalVolume, 2 / 3);
+  assert.equal(rows[1].ce.netOiToIntervalVolumeState, "AVAILABLE");
   assert.equal(rows[0].pe.oiChange, null);
   assert.equal(rows[0].ce.oiShare, 0.25);
   assert.equal(rows[1].ce.deltaOiShare, 50 / 70);
@@ -43,6 +48,30 @@ test("strike flow preserves baseline missingness and calculates side-specific sh
   assert.equal(summary.pe.deltaOi, null);
   assert.equal(summary.oiPcr, 1);
   assert.equal(summary.marketState, "Change baseline unavailable");
+});
+
+test("net OI to interval-volume ratio preserves undefined denominators and flags values above one", () => {
+  const rows = buildStrikeFlowRows([
+    { strike: 100, option_type: "CE", last_price: 10, baseline_last_price: 9, open_interest: 120, baseline_open_interest: 100, interval_volume: 10, oi_layers: { state: "COMPARABLE", change: 20 } },
+    { strike: 110, option_type: "CE", last_price: 10, baseline_last_price: 9, open_interest: 120, baseline_open_interest: 100, interval_volume: 0, oi_layers: { state: "COMPARABLE", change: 20 } },
+  ]);
+  assert.equal(rows[0].ce.netOiToIntervalVolume, 2);
+  assert.equal(rows[0].ce.netOiToIntervalVolumeState, "REVIEW_ABOVE_ONE");
+  assert.equal(rows[1].ce.netOiToIntervalVolume, null);
+  assert.equal(rows[1].ce.netOiToIntervalVolumeState, "UNAVAILABLE");
+});
+
+test("contract state uses the matched price and OI window, not the session-open return", () => {
+  const [row] = buildStrikeFlowRows([{
+    strike: 100, option_type: "CE", last_price: 90, day_open: 100, baseline_last_price: 80,
+    open_interest: 140, baseline_open_interest: 100, total_traded_volume: 700,
+    baseline_total_traded_volume: 500, interval_volume: 200,
+    comparison_window_state: "COMMON_SNAPSHOT_BASELINE", volume_counter_state: "COMPARABLE",
+    oi_layers: { state: "COMPARABLE", change: 40 },
+  }]);
+  assert.equal(row.ce.sessionOpenChangePct, -10);
+  assert.equal(row.ce.priceChangePct, 12.5);
+  assert.equal(row.ce.classification, "Long build-up");
 });
 
 test("FII and Pro alignment does not claim strike ownership", () => {

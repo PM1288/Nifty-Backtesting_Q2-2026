@@ -3,11 +3,27 @@ import assert from "node:assert/strict";
 import express from "express";
 import type { AddressInfo } from "node:net";
 import type { PrismaClient } from "@prisma/client";
-import { registerTradingAnalytics,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
+import { buildComparableChainLegs,registerTradingAnalytics,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
 
 test("chart selection accepts independent CE and PE strikes while preserving legacy pair links", () => {
   assert.deepEqual(resolveChartStrikeSelection({ strike: 23450 }), { ceStrike: 23450, peStrike: 23450 });
   assert.deepEqual(resolveChartStrikeSelection({ strike: 23450, ceStrike: 23500, peStrike: 23400 }), { ceStrike: 23500, peStrike: 23400 });
+});
+
+test("chain comparison uses one common snapshot window and validates cumulative volume counters", () => {
+  const current = [{ strike: 23400, option_type: "CE", last_price: 90, open_interest: 140, total_traded_volume: 10650 }];
+  const prior = [{ strike: 23400, option_type: "CE", last_price: 80, open_interest: 100, total_traded_volume: 10400 }];
+  const [leg] = buildComparableChainLegs(current, prior, "2026-09-12T05:30:00Z", "2026-09-12T05:15:00Z");
+  assert.equal(leg.baseline_last_price, 80);
+  assert.equal(leg.oi_layers.change, 40);
+  assert.equal(leg.interval_volume, 250);
+  assert.equal(leg.volume_counter_state, "COMPARABLE");
+  const [reset] = buildComparableChainLegs([{ ...current[0], total_traded_volume: 100 }], prior, "2026-09-12T05:30:00Z", "2026-09-12T05:15:00Z");
+  assert.equal(reset.interval_volume, null);
+  assert.equal(reset.volume_counter_state, "RESET_OR_CORRECTION");
+  const [crossSession] = buildComparableChainLegs(current, prior, "2026-09-12T05:30:00Z", "2026-09-11T05:15:00Z");
+  assert.equal(crossSession.interval_volume, null);
+  assert.equal(crossSession.volume_counter_state, "CROSS_SESSION_NOT_COMPARABLE");
 });
 
 test("charts endpoint resolves one exact CE and one exact PE at different strikes", async () => {

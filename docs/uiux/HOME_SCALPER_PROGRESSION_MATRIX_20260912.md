@@ -54,6 +54,13 @@ bash scripts/verify/canonical-repository-gate.sh
 Authenticated browser verification uses
 `tools/playwright/today-scalper-progression.mjs` and protected credentials.
 
+Deployed result: 16/16 browser checks pass at 1440px desktop and 390px mobile.
+The live response rendered 210 unique stocks as 210 rows; compact rows measure
+34px. Both grouped routes, contained horizontal scrolling, uncut vertical flow,
+qualification-first ordering and the row inspector were verified. Runtime
+evidence is stored outside Git at
+`/tmp/today-scalper-progression-matrix-20260912`.
+
 ## Rollback
 
 Revert the scoped UI commit and rebuild/recreate only `n50-dashboard`. No schema

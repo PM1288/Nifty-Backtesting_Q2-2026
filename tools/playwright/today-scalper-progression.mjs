@@ -48,9 +48,9 @@ try {
   const rowCount = await rows.count();
   const symbols = await rows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
   check("Exactly one visual row represents each stock", rowCount >= 20 && new Set(symbols).size === rowCount, `${rowCount} stock rows / ${new Set(symbols).size} unique`);
-  check("Both alternative monthly routes are visible in grouped headers", await widget.getByRole("columnheader", { name: "M−1 CLOSE" }).count() === 1 && await widget.getByRole("columnheader", { name: "M−2 CLOSE" }).count() === 1, "Grouped route headers missing");
+  check("Both alternative monthly routes are visible in grouped headers", await widget.getByRole("columnheader", { name: "M−1 CLOSE" }).count() === 1 && await widget.getByRole("columnheader", { name: "M−2 CLOSE" }).count() === 1, "M−1 and M−2 grouped headers inspected");
   check("Each route exposes seven additive checkpoints", ["M", "W0", "W−1", "D0", "1H", "15m", "5m"].every((label) => text.includes(label)), text.slice(0, 800));
-  check("Observed pass and fail conditions use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Expected observed pass and fail cells; pending semantics are covered by unit fixtures");
+  check("Observed pass and fail conditions use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Observed state cells inspected; pending semantics are covered by unit fixtures");
   const qualifiedCount = Number((text.match(/^(\d+)\/\d+ fully qualified/m) ?? [])[1] ?? 0);
   check("Fully qualified stocks sort first when present", qualifiedCount === 0 || await rows.first().getAttribute("data-qualified") === "true", `qualified=${qualifiedCount}`);
   const scroller = widget.locator('[aria-label="Horizontally scrollable progression matrix"]');
@@ -60,7 +60,7 @@ try {
   check("The matrix is not fixed-height or vertically clipped", geometry.scrollHeight <= geometry.clientHeight + 1 && geometry.clientHeight >= Math.min(rowCount, 20) * 32, JSON.stringify(geometry));
   check("Horizontal overflow is contained inside the matrix", geometry.scrollWidth > geometry.clientWidth && await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), JSON.stringify(geometry));
   await rows.first().click();
-  check("Row opens complete arithmetic drawer", await page.getByRole("dialog", { name: /progression evidence/ }).isVisible() && await page.getByText(/Evaluation timestamp/).count() === 1, "Progression drawer missing");
+  check("Row opens complete arithmetic drawer", await page.getByRole("dialog", { name: /progression evidence/ }).isVisible() && await page.getByText(/Evaluation timestamp/).count() === 1, "Progression evidence drawer and timestamp inspected");
   await page.keyboard.press("Escape");
   check("No browser errors", errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: path.join(output, "today-scalper-progression.png"), fullPage: true });

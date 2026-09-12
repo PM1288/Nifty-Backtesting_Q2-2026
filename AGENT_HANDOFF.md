@@ -4786,7 +4786,17 @@ or outcomes were deleted.
   pass/fail/pending counts.
 - Added qualification-first ordering, dynamic filters/search, three densities,
   route/column visibility preferences, a progress strip and raw-evidence CSV.
-- Web typecheck, 167/167 tests and production build pass. API and deployed
-  browser/preservation results are recorded below after release verification.
+- Web typecheck, 167/167 tests and production build pass; API typecheck,
+  208/208 tests and build pass; the canonical repository gate passes.
+- Authenticated deployed browser regression passes 16/16 across 1440px desktop
+  and 390px mobile. It confirms 210 unique stocks in exactly 210 visual rows,
+  both route groups, a measured 34px compact row, all rows vertically uncut,
+  matrix-only horizontal scrolling, qualification-first ordering and the
+  equation drawer. Screenshots/evidence are outside Git under
+  `/tmp/today-scalper-progression-matrix-20260912`.
+- Application commits `e86606a` and `9c77bfd` are pushed to canonical `master`.
+  Dashboard image `sha256:b16662207906bf0c03467aab5c28ff85f1fc2332555a84197e8db944a58bbe3f95c7`
+  is healthy with zero restarts. Only `n50-dashboard` was recreated. Rollback:
+  `trading-stack-n50-dashboard:rollback-pre-home-progression-matrix-20260912`.
 - Full implementation record:
   `docs/uiux/HOME_SCALPER_PROGRESSION_MATRIX_20260912.md`.

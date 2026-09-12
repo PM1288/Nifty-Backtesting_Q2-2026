@@ -5008,7 +5008,14 @@ or outcomes were deleted.
   insufficient for either highlight.
 - Extended the shared MWHD badge used by Stock 360, OIIS, Scalper V1/V2 and
   Trade Log to show both ranks.
-- Focused validation: `cd neon-stock-terminal/apps/web && node --import tsx
-  --test tests/todayRevamp.test.ts`.
-- Full build, preservation, authenticated browser and deployment evidence is
-  recorded in the completion entry/commit for this change.
+- Focused tests pass 9/9. Full web typecheck, 190/190 tests and production
+  build pass; API typecheck, 210/210 tests and build pass. The canonical source
+  gate passes.
+- Authenticated Chromium passes 16/16 at 1440x1000 and 390x844 against both the
+  isolated candidate and deployed dashboard. Production evidence is outside
+  Git at `/tmp/mwhd-bull-bear-production/`.
+- Application commit `0f63944` was pushed to the feature branch and `master`.
+  The scoped dashboard deployment is healthy at `/n50/`, container
+  `0020f7e84ca7...`, image `sha256:7969e4f174a...`, entry asset
+  `/n50/assets/index-BrMkAXIL.js`. No API, collector, database or order service
+  was recreated.

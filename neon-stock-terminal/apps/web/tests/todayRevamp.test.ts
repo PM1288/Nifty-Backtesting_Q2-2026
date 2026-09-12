@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildBearishScalperProgressionBranches,
   buildScalperProgressionBranches,
   breadthWording, niftyMovementWording, parseBoardSort, parseQuickView, parseSummaryLens,
   serializeQuickView, slugifySector, vixWording,
 } from "../src/features/today/todayModel";
-import { buildProgressionMatrixRows, progressionRowMatches, progressionStockState } from "../src/features/today/scalperProgressionMatrix";
+import { buildProgressionMatrixRows, directionalProgression, progressionRowMatches, progressionStockState, sortProgressionRows } from "../src/features/today/scalperProgressionMatrix";
 
 test("Today URL state canonicalizes unsupported values", () => {
   assert.equal(parseSummaryLens(null), "story");
@@ -123,4 +124,41 @@ test("M-2 route requires the visible M-1 sufficiency gate and weighted rank favo
   assert.equal(failed.bothStartersFailed, true);
   assert.equal(failed.starterState, "fail");
   assert.equal(progressionStockState(failed), "failed");
+});
+
+test("MWHD-BEAR is the exact comparison inverse with unchanged gates, operands, and weights", () => {
+  const stock = { symbol: "BEAR", name: "Bear", last: 80, dayOpen: 90 } as never;
+  const source = {
+    symbol: "BEAR", currentValue: 80, todayOpen: 90, currentWeekOpen: 95,
+    previousWeekOpen: 100, currentMonthOpen: 90, previousMonthClose: 100,
+    twoMonthsAgoClose: 105, currentHourOpen: 80, previousHourOpen: 85,
+    current15mOpen: 79, previous15mOpen: 82, current5mOpen: 78,
+    previous5mOpen: 79, observedAt: "2026-09-12T05:00:00.000Z",
+  };
+  const bull = buildScalperProgressionBranches(stock, source);
+  const bear = buildBearishScalperProgressionBranches(stock, source);
+  assert.deepEqual(bear.map((route) => route.checks.map((check) => check.id)), bull.map((route) => route.checks.map((check) => check.id)));
+  assert.deepEqual(bear[1].checks.slice(0, 2).map((check) => check.id), ["month-m1", "month-m2"]);
+  assert.deepEqual(bear[1].checks.map((check) => check.passed), [true, true, true, true, true, true, true, true]);
+  assert.ok(bear[1].checks.every((check, index) => check.left === bull[1].checks[index].left && check.right === bull[1].checks[index].right));
+  assert.ok(bear[1].checks.every((check, index) => check.passed !== bull[1].checks[index].passed));
+});
+
+test("every stock receives independent MWHD-BULL and MWHD-BEAR weighted ranks", () => {
+  const stocks = [
+    { symbol: "UP", name: "Up", last: 120, dayOpen: 110 },
+    { symbol: "DOWN", name: "Down", last: 80, dayOpen: 90 },
+  ] as never;
+  const rows = buildProgressionMatrixRows(stocks, [
+    { symbol: "UP", currentValue: 120, todayOpen: 110, currentWeekOpen: 108, previousWeekOpen: 106, currentMonthOpen: 105, previousMonthClose: 100, twoMonthsAgoClose: 101, currentHourOpen: 119, previousHourOpen: 118, current15mOpen: 120, previous15mOpen: 119, current5mOpen: 120, previous5mOpen: 119, observedAt: null },
+    { symbol: "DOWN", currentValue: 80, todayOpen: 90, currentWeekOpen: 92, previousWeekOpen: 94, currentMonthOpen: 95, previousMonthClose: 100, twoMonthsAgoClose: 101, currentHourOpen: 84, previousHourOpen: 86, current15mOpen: 82, previous15mOpen: 84, current5mOpen: 80, previous5mOpen: 82, observedAt: null },
+  ]);
+  const up = rows.find((row) => row.stock.symbol === "UP")!;
+  const down = rows.find((row) => row.stock.symbol === "DOWN")!;
+  assert.equal(directionalProgression(up, "bull").complete, true);
+  assert.equal(directionalProgression(down, "bear").complete, true);
+  assert.equal(up.rank, 1);
+  assert.equal(down.bearRank, 1);
+  assert.deepEqual(sortProgressionRows(rows, "bear").map((row) => row.stock.symbol), ["DOWN", "UP"]);
+  assert.equal(progressionStockState(down, "bear"), "complete");
 });

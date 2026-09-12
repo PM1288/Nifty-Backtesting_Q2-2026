@@ -38,34 +38,36 @@ try {
   await widget.waitFor({ state: "visible", timeout: 30_000 }).catch(async () => {
     throw new Error(`Today progression did not mount: ${JSON.stringify({ url: page.url(), body: (await page.locator("body").innerText()).slice(0, 2_000), errors, consoleErrors })}`);
   });
-  await widget.getByText(/\d+\/\d+ fully qualified/).waitFor({ state: "visible", timeout: 30_000 });
+  await widget.getByText(/\d+ bull · \d+ bear · \d+ stocks/).waitFor({ state: "visible", timeout: 30_000 });
   const text = await widget.innerText();
   check("Progression table is above Risk and Anomaly", await widget.evaluate((element) => {
     const risk = [...document.querySelectorAll("strong")].find((node) => node.textContent === "RISK & ANOMALY SNAPSHOT");
     return risk ? Boolean(element.compareDocumentPosition(risk) & Node.DOCUMENT_POSITION_FOLLOWING) : false;
   }), text.slice(0, 500));
-  const rows = widget.locator("tbody [data-progression-symbol]");
-  const rowCount = await rows.count();
-  const symbols = await rows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
-  check("Exactly one visual row represents each stock", rowCount >= 20 && new Set(symbols).size === rowCount, `${rowCount} stock rows / ${new Set(symbols).size} unique`);
-  check("Both alternative monthly routes are visible in grouped headers", await widget.getByRole("columnheader", { name: "M−1 CLOSE" }).count() === 1 && await widget.getByRole("columnheader", { name: "M−1 + M−2 SUFFICIENCY" }).count() === 1, "M−1 route and cumulative M−1 + M−2 sufficiency route inspected");
-  check("Each route exposes seven additive checkpoints", ["M", "W0", "W−1", "D0", "1H", "15m", "5m"].every((label) => text.includes(label)), text.slice(0, 800));
+  const bullBoard = widget.getByRole("region", { name: "MWHD-BULL RANK" });
+  const bearBoard = widget.getByRole("region", { name: "MWHD-BEAR RANK" });
+  check("Independent Bull and Bear candidate boards are visible", await bullBoard.isVisible() && await bearBoard.isVisible(), text.slice(0, 500));
+  const bullRows = bullBoard.locator("tbody [data-progression-symbol]");
+  const bearRows = bearBoard.locator("tbody [data-progression-symbol]");
+  const rowCount = await bullRows.count();
+  const bullSymbols = await bullRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
+  const bearSymbols = await bearRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
+  check("Every stock has one Bull rank and one Bear rank", rowCount >= 20 && rowCount === bearSymbols.length && new Set(bullSymbols).size === rowCount && new Set(bearSymbols).size === rowCount && bullSymbols.every((symbol) => bearSymbols.includes(symbol)), `${rowCount} Bull / ${bearSymbols.length} Bear`);
+  check("Both boards expose the complete MWHD tick sequence", ["M−1", "M−2", "W0", "W−1", "D0", "1H", "15m", "5m"].every((label) => text.includes(label)), text.slice(0, 800));
   check("Observed pass and fail conditions use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Observed state cells inspected; pending semantics are covered by unit fixtures");
-  const qualifiedCount = Number((text.match(/^(\d+)\/\d+ fully qualified/m) ?? [])[1] ?? 0);
-  check("Fully qualified stocks sort first when present", qualifiedCount === 0 || await rows.first().getAttribute("data-qualified") === "true", `qualified=${qualifiedCount}`);
-  const stockStates = await rows.evaluateAll((nodes) => nodes.map((node) => ({
-    qualified: node.getAttribute("data-qualified"),
-    stockState: node.getAttribute("data-stock-state"),
-  })));
-  check("Stock cell turns green only for a complete M-1 or M-2 route", stockStates.every((row) => (row.stockState === "complete") === (row.qualified === "true")), JSON.stringify(stockStates.slice(0, 12)));
-  const scroller = widget.locator('[aria-label="Horizontally scrollable progression matrix"]');
-  const geometry = await scroller.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
-  const firstRowHeight = await rows.first().evaluate((element) => element.getBoundingClientRect().height);
-  check("Compact stock rows stay within 32-36px", firstRowHeight >= 32 && firstRowHeight <= 36, `height=${firstRowHeight}`);
-  check("The matrix is not fixed-height or vertically clipped", geometry.scrollHeight <= geometry.clientHeight + 1 && geometry.clientHeight >= Math.min(rowCount, 20) * 32, JSON.stringify(geometry));
-  check("Horizontal overflow is contained inside the matrix", geometry.scrollWidth > geometry.clientWidth && await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), JSON.stringify(geometry));
-  await rows.first().click();
-  check("Row opens complete arithmetic drawer", await page.getByRole("dialog", { name: /progression evidence/ }).isVisible() && await page.getByText(/Evaluation timestamp/).count() === 1, "Progression evidence drawer and timestamp inspected");
+  const bullReady = Number((text.match(/^(\d+) bull/m) ?? [])[1] ?? 0);
+  const bearReady = Number((text.match(/· (\d+) bear/m) ?? [])[1] ?? 0);
+  check("Ready candidates sort first in their own direction", (bullReady === 0 || await bullRows.first().getAttribute("data-candidate") === "true") && (bearReady === 0 || await bearRows.first().getAttribute("data-candidate") === "true"), `bull=${bullReady}; bear=${bearReady}`);
+  const visibleTableText = `${await bullBoard.innerText()}\n${await bearBoard.innerText()}`;
+  check("Compact boards show ticks and scores without repeated market values", !visibleTableText.includes("₹") && /[✓×—]/.test(visibleTableText), visibleTableText.slice(0, 500));
+  const scrollers = widget.locator('[class*="progressionRankScroller"]');
+  const geometry = await scrollers.first().evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
+  const firstRowHeight = await bullRows.first().evaluate((element) => element.getBoundingClientRect().height);
+  check("Dense candidate rows are no taller than 31px", firstRowHeight > 0 && firstRowHeight <= 31, `height=${firstRowHeight}`);
+  check("Horizontal overflow stays inside each half-width board", geometry.scrollWidth >= geometry.clientWidth && await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), JSON.stringify(geometry));
+  await bullRows.first().click();
+  const drawer = page.getByRole("dialog", { name: /MWHD evidence/ });
+  check("Row drawer exposes Bull and Bear arithmetic and both ranks", await drawer.isVisible() && await drawer.getByText("MWHD-BULL arithmetic").isVisible() && await drawer.getByText("MWHD-BEAR arithmetic").isVisible() && await drawer.getByText(/Audited inverse logic/).isVisible(), "Dual-direction evidence inspected");
   await page.keyboard.press("Escape");
   check("No browser errors", errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: path.join(output, "today-scalper-progression.png"), fullPage: true });
@@ -85,8 +87,8 @@ try {
   const mobilePage = await mobile.newPage();
   await mobilePage.goto(base, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const mobileWidget = mobilePage.getByTestId("today-scalper-progression");
-  await mobileWidget.getByText(/\d+\/\d+ fully qualified/).waitFor({ state: "visible", timeout: 30_000 });
-  const mobileGeometry = await mobileWidget.locator('[aria-label="Horizontally scrollable progression matrix"]').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
+  await mobileWidget.getByText(/\d+ bull · \d+ bear · \d+ stocks/).waitFor({ state: "visible", timeout: 30_000 });
+  const mobileGeometry = await mobileWidget.locator('[class*="progressionRankScroller"]').first().evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
   check("Mobile contains wide columns in the matrix scroller", mobileGeometry.scrollWidth > mobileGeometry.clientWidth, JSON.stringify(mobileGeometry));
   check("Mobile does not vertically clip stock rows", mobileGeometry.scrollHeight <= mobileGeometry.clientHeight + 1, JSON.stringify(mobileGeometry));
   check("Mobile page has no accidental horizontal overflow", await mobilePage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), String(await mobilePage.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)));

@@ -1,5 +1,5 @@
-.badge{display:inline-flex;align-items:center;width:max-content;min-height:20px;padding:2px 6px;border:1px solid #aebac8;border-radius:999px;background:#f4f6f8;color:#526171;font:750 10px/1 "IBM Plex Mono",monospace;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:5px;width:max-content;min-height:20px;padding:2px 6px;border:1px solid #aebac8;border-radius:999px;background:#f4f6f8;color:#526171;font:750 9px/1 "IBM Plex Mono",monospace;white-space:nowrap}.badge b{color:#087a55}.badge i{font-style:normal;color:#b42336}.badge small{padding-left:4px;border-left:1px solid currentColor;font-size:8px}
 .badge[data-state=pass]{border-color:#7fc8a8;background:#e2f5ea;color:#086345}
 .badge[data-state=fail]{border-color:#e1a4ad;background:#fdebed;color:#a31f32}
 .badge[data-state=pending],.badge[data-state=missing]{border-color:#c6ced8;background:#f3f5f7;color:#667381}
-.badge[data-complete=true]{border-color:#087a55;background:#087a55;color:#fff}
+.badge[data-bull-ready=true]{border-color:#087a55;background:#e2f5ea}.badge[data-bear-ready=true]{border-color:#c93346;background:#fdebed}

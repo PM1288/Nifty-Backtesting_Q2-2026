@@ -22,6 +22,8 @@ export type ScalperProgressionBranch = {
   depth: number;
 };
 
+export type ScalperProgressionDirection = "bull" | "bear";
+
 export type TodaySector = {
   id: string;
   name: string;
@@ -88,7 +90,7 @@ export function movementState(value: number | null | undefined): "positive" | "n
 
 const progressionValue = (value: unknown) => typeof value === "number" && Number.isFinite(value) && value > 0 ? value : null;
 
-export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgressionRow): ScalperProgressionBranch[] {
+function buildDirectionalScalperProgressionBranches(stock: Quote, row: ScalperProgressionRow, direction: ScalperProgressionDirection): ScalperProgressionBranch[] {
   const currentValue = progressionValue(stock.last) ?? progressionValue(row.currentValue);
   const currentMonthOpen = progressionValue(row.currentMonthOpen);
   const currentWeekOpen = progressionValue(row.currentWeekOpen);
@@ -100,25 +102,26 @@ export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgre
   const previous15mOpen = progressionValue(row.previous15mOpen);
   const current5mOpen = progressionValue(row.current5mOpen);
   const previous5mOpen = progressionValue(row.previous5mOpen);
-  const comparison = (left: number | null, right: number | null) => left == null || right == null ? null : left > right;
+  const symbol = direction === "bull" ? ">" : "<";
+  const comparison = (left: number | null, right: number | null) => left == null || right == null ? null : direction === "bull" ? left > right : left < right;
   const shared: ScalperProgressionCheck[] = [
-    { id: "week", label: "Latest > this-week open", left: currentValue, right: currentWeekOpen, passed: comparison(currentValue, currentWeekOpen) },
-    { id: "previous-week", label: "Latest > previous-week open", left: currentValue, right: previousWeekOpen, passed: comparison(currentValue, previousWeekOpen) },
-    { id: "today", label: "Latest > today open", left: currentValue, right: todayOpen, passed: comparison(currentValue, todayOpen) },
-    { id: "hour", label: "This clock-hour open > previous clock-hour open", left: currentHourOpen, right: previousHourOpen, passed: comparison(currentHourOpen, previousHourOpen) },
-    { id: "15m", label: "Current 15-minute open > previous 15-minute open", left: current15mOpen, right: previous15mOpen, passed: comparison(current15mOpen, previous15mOpen) },
-    { id: "5m", label: "Current 5-minute open > previous 5-minute open", left: current5mOpen, right: previous5mOpen, passed: comparison(current5mOpen, previous5mOpen) },
+    { id: "week", label: `Latest ${symbol} this-week open`, left: currentValue, right: currentWeekOpen, passed: comparison(currentValue, currentWeekOpen) },
+    { id: "previous-week", label: `Latest ${symbol} previous-week open`, left: currentValue, right: previousWeekOpen, passed: comparison(currentValue, previousWeekOpen) },
+    { id: "today", label: `Latest ${symbol} today open`, left: currentValue, right: todayOpen, passed: comparison(currentValue, todayOpen) },
+    { id: "hour", label: `This clock-hour open ${symbol} previous clock-hour open`, left: currentHourOpen, right: previousHourOpen, passed: comparison(currentHourOpen, previousHourOpen) },
+    { id: "15m", label: `Current 15-minute open ${symbol} previous 15-minute open`, left: current15mOpen, right: previous15mOpen, passed: comparison(current15mOpen, previous15mOpen) },
+    { id: "5m", label: `Current 5-minute open ${symbol} previous 5-minute open`, left: current5mOpen, right: previous5mOpen, passed: comparison(current5mOpen, previous5mOpen) },
   ];
   const m1: ScalperProgressionCheck = {
     id: "month-m1",
-    label: "Month open > previous-month close",
+    label: `Month open ${symbol} previous-month close`,
     left: currentMonthOpen,
     right: progressionValue(row.previousMonthClose),
     passed: comparison(currentMonthOpen, progressionValue(row.previousMonthClose)),
   };
   const m2: ScalperProgressionCheck = {
     id: "month-m2",
-    label: "Month open > two-months-ago close",
+    label: `Month open ${symbol} two-months-ago close`,
     left: currentMonthOpen,
     right: progressionValue(row.twoMonthsAgoClose),
     passed: comparison(currentMonthOpen, progressionValue(row.twoMonthsAgoClose)),
@@ -138,6 +141,16 @@ export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgre
     // pass before the additional M-2 starter and lower-timeframe gates progress.
     branch("two-month", `${m1.label} + ${m2.label}`, [m1, m2]),
   ];
+}
+
+/** Existing bullish MWHD contract. Kept as the stable public entry point. */
+export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgressionRow): ScalperProgressionBranch[] {
+  return buildDirectionalScalperProgressionBranches(stock, row, "bull");
+}
+
+/** Exact bearish inverse: the same observations and gates, with every comparison reversed. */
+export function buildBearishScalperProgressionBranches(stock: Quote, row: ScalperProgressionRow): ScalperProgressionBranch[] {
+  return buildDirectionalScalperProgressionBranches(stock, row, "bear");
 }
 
 export function mergeOverviewQuote(quote: Quote, live: Record<string, LiveQuote>): Quote {

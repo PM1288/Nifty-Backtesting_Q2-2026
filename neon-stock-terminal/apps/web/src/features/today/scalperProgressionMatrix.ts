@@ -1,5 +1,11 @@
 import type { Quote, ScalperProgressionRow } from "../../lib/types";
-import { buildScalperProgressionBranches, type ScalperProgressionBranch, type ScalperProgressionCheck } from "./todayModel";
+import {
+  buildBearishScalperProgressionBranches,
+  buildScalperProgressionBranches,
+  type ScalperProgressionBranch,
+  type ScalperProgressionCheck,
+  type ScalperProgressionDirection,
+} from "./todayModel";
 
 export type ProgressionRouteSummary = {
   branch: ScalperProgressionBranch;
@@ -18,6 +24,22 @@ export type ProgressionMatrixRow = {
   routes: [ProgressionRouteSummary, ProgressionRouteSummary];
   best: ProgressionRouteSummary;
   allGreen: boolean;
+  starterState: "pass" | "fail" | "pending";
+  bothStartersFailed: boolean;
+  rank: number;
+  bearRoutes: [ProgressionRouteSummary, ProgressionRouteSummary];
+  bearBest: ProgressionRouteSummary;
+  bearAllRed: boolean;
+  bearStarterState: "pass" | "fail" | "pending";
+  bearBothStartersFailed: boolean;
+  bearRank: number;
+};
+
+export type DirectionalProgression = {
+  direction: ScalperProgressionDirection;
+  routes: [ProgressionRouteSummary, ProgressionRouteSummary];
+  best: ProgressionRouteSummary;
+  complete: boolean;
   starterState: "pass" | "fail" | "pending";
   bothStartersFailed: boolean;
   rank: number;
@@ -68,11 +90,21 @@ export function buildProgressionMatrixRows(stocks: Quote[], rows: ScalperProgres
       observedAt: null,
     };
     const routes = buildScalperProgressionBranches(stock, source).map(summarizeProgressionRoute) as [ProgressionRouteSummary, ProgressionRouteSummary];
+    const bearRoutes = buildBearishScalperProgressionBranches(stock, source).map(summarizeProgressionRoute) as [ProgressionRouteSummary, ProgressionRouteSummary];
     const best = [...routes].sort(compareRoutes)[0];
+    const bearBest = [...bearRoutes].sort(compareRoutes)[0];
     const m1 = routes[0].branch.checks.find((check) => check.id === "month-m1")?.passed ?? null;
     const m2 = routes[1].branch.checks.find((check) => check.id === "month-m2")?.passed ?? null;
     const starterState = m1 === true || m2 === true ? "pass" : m1 === false && m2 === false ? "fail" : "pending";
-    return { stock, source, routes, best, allGreen: routes.some((route) => route.complete), starterState, bothStartersFailed: starterState === "fail", rank: 0 } satisfies ProgressionMatrixRow;
+    const bearM1 = bearRoutes[0].branch.checks.find((check) => check.id === "month-m1")?.passed ?? null;
+    const bearM2 = bearRoutes[1].branch.checks.find((check) => check.id === "month-m2")?.passed ?? null;
+    const bearStarterState = bearM1 === true || bearM2 === true ? "pass" : bearM1 === false && bearM2 === false ? "fail" : "pending";
+    return {
+      stock, source, routes, best, allGreen: routes.some((route) => route.complete), starterState,
+      bothStartersFailed: starterState === "fail", rank: 0, bearRoutes, bearBest,
+      bearAllRed: bearRoutes.some((route) => route.complete), bearStarterState,
+      bearBothStartersFailed: bearStarterState === "fail", bearRank: 0,
+    } satisfies ProgressionMatrixRow;
   }).sort((left, right) => Number(right.allGreen) - Number(left.allGreen)
     || Number(right.starterState === "pass") - Number(left.starterState === "pass")
     || right.best.weightedPercent - left.best.weightedPercent
@@ -82,16 +114,38 @@ export function buildProgressionMatrixRows(stocks: Quote[], rows: ScalperProgres
     || left.best.fail - right.best.fail
     || (Date.parse(right.source.observedAt ?? "") || 0) - (Date.parse(left.source.observedAt ?? "") || 0)
     || left.stock.symbol.localeCompare(right.stock.symbol));
-  return ranked.map((row, index) => ({ ...row, rank: index + 1 }));
+  const withBullRanks = ranked.map((row, index) => ({ ...row, rank: index + 1 }));
+  const bearOrder = [...withBullRanks].sort((left, right) => Number(right.bearAllRed) - Number(left.bearAllRed)
+    || Number(right.bearStarterState === "pass") - Number(left.bearStarterState === "pass")
+    || right.bearBest.weightedPercent - left.bearBest.weightedPercent
+    || right.bearBest.weightedScore - left.bearBest.weightedScore
+    || right.bearBest.branch.depth - left.bearBest.branch.depth
+    || right.bearBest.pass - left.bearBest.pass
+    || left.bearBest.fail - right.bearBest.fail
+    || (Date.parse(right.source.observedAt ?? "") || 0) - (Date.parse(left.source.observedAt ?? "") || 0)
+    || left.stock.symbol.localeCompare(right.stock.symbol));
+  const bearRanks = new Map(bearOrder.map((row, index) => [row.stock.symbol, index + 1]));
+  return withBullRanks.map((row) => ({ ...row, bearRank: bearRanks.get(row.stock.symbol) ?? 0 }));
+}
+
+export function directionalProgression(row: ProgressionMatrixRow, direction: ScalperProgressionDirection): DirectionalProgression {
+  return direction === "bull"
+    ? { direction, routes: row.routes, best: row.best, complete: row.allGreen, starterState: row.starterState, bothStartersFailed: row.bothStartersFailed, rank: row.rank }
+    : { direction, routes: row.bearRoutes, best: row.bearBest, complete: row.bearAllRed, starterState: row.bearStarterState, bothStartersFailed: row.bearBothStartersFailed, rank: row.bearRank };
+}
+
+export function sortProgressionRows(rows: ProgressionMatrixRow[], direction: ScalperProgressionDirection): ProgressionMatrixRow[] {
+  return [...rows].sort((left, right) => directionalProgression(left, direction).rank - directionalProgression(right, direction).rank);
 }
 
 export type ProgressionFilter = "all" | "7" | "6" | "5plus" | "m1" | "m2" | "waiting" | "failure";
 
 export type ProgressionStockState = "complete" | "failed" | "incomplete";
 
-export function progressionStockState(row: ProgressionMatrixRow): ProgressionStockState {
-  if (row.allGreen) return "complete";
-  if (row.bothStartersFailed) return "failed";
+export function progressionStockState(row: ProgressionMatrixRow, direction: ScalperProgressionDirection = "bull"): ProgressionStockState {
+  const summary = directionalProgression(row, direction);
+  if (summary.complete) return "complete";
+  if (summary.bothStartersFailed) return "failed";
   return "incomplete";
 }
 

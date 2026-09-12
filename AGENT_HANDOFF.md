@@ -4995,3 +4995,20 @@ or outcomes were deleted.
   container `bfb7cd43ef64...`, image `sha256:9023d28edc6...` and entry asset
   `/n50/assets/index-CeEP4k9n.js`; report service container
   `7bab001a29a8...` is running and its health endpoint reports no last error.
+# 2026-09-12 — Home MWHD Bull/Bear ranking split
+
+- Reworked the existing Home Scalper Progression widget into two compact
+  half-width boards: `MWHD-BULL RANK` and `MWHD-BEAR RANK`.
+- Preserved the Bull calculation and added Bear as its exact `<` inverse using
+  the same source observations, M−1/M−2 sufficiency, gates and weights.
+- Removed repeated values from primary gate cells; tables show ticks, weighted
+  score and rank. The selected-stock drawer and CSV retain exact equations.
+- Every stock receives independent Bull and Bear ranks. Complete Bull stock
+  identities are green and complete Bear identities are red; a partial gate is
+  insufficient for either highlight.
+- Extended the shared MWHD badge used by Stock 360, OIIS, Scalper V1/V2 and
+  Trade Log to show both ranks.
+- Focused validation: `cd neon-stock-terminal/apps/web && node --import tsx
+  --test tests/todayRevamp.test.ts`.
+- Full build, preservation, authenticated browser and deployment evidence is
+  recorded in the completion entry/commit for this change.

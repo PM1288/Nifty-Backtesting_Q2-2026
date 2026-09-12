@@ -55,6 +55,8 @@ test("zones respect spot-side roles and do not bridge a missing strike interval"
   const zones = buildProbableZones(rows, [], [], 0, 115);
   assert.ok(zones.filter((zone) => zone.role === "Resistance").every((zone) => zone.memberStrikes.every((strike) => strike >= 115)));
   assert.ok(zones.filter((zone) => zone.role === "Support").every((zone) => zone.memberStrikes.every((strike) => strike <= 115)));
+  assert.ok(zones.filter((zone) => zone.role === "Resistance").every((zone) => zone.zoneLow >= 115));
+  assert.ok(zones.filter((zone) => zone.role === "Support").every((zone) => zone.zoneHigh <= 115));
   assert.ok(zones.every((zone) => !zone.memberStrikes.includes(110) || !zone.memberStrikes.includes(130)));
 });
 

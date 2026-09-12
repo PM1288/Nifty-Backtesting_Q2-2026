@@ -242,7 +242,13 @@ export function buildProbableZones(
     const confidence = coverage >= .8 && strength >= 70 ? "High" : coverage >= .6 && strength >= 45 ? "Medium" : "Low";
     return {
       ruleVersion: core.ruleVersion, variant: core.variant, rank: 0, role: core.role,
-      zoneLow: boundaries.get(evidence[0].strike)?.left ?? evidence[0].strike, coreStrike: core.strike, zoneHigh: boundaries.get(evidence.at(-1)!.strike)?.right ?? evidence.at(-1)!.strike,
+      zoneLow: core.role === "Resistance" && spot != null
+        ? Math.max(boundaries.get(evidence[0].strike)?.left ?? evidence[0].strike, spot)
+        : boundaries.get(evidence[0].strike)?.left ?? evidence[0].strike,
+      coreStrike: core.strike,
+      zoneHigh: core.role === "Support" && spot != null
+        ? Math.min(boundaries.get(evidence.at(-1)!.strike)?.right ?? evidence.at(-1)!.strike, spot)
+        : boundaries.get(evidence.at(-1)!.strike)?.right ?? evidence.at(-1)!.strike,
       marketStrength: strength, participantAlignment: alignment.label, participantAlignmentScore: alignment.score, confidence,
       oi: sumComplete(evidence.map((level) => level.oi)), deltaOi: sumComplete(evidence.map((level) => level.deltaOi)),
       volume: sumComplete(evidence.map((level) => level.volume)), persistence: null,

@@ -33,7 +33,7 @@ try {
   const matrix = page.getByTestId("positioning-flow-strike-matrix");
   check("STRIKE-MATRIX", await matrix.count() === 1 && await matrix.locator("tbody tr").count() > 0, `${await matrix.locator("tbody tr").count()} tracked strikes`);
   const text = await dashboard.innerText();
-  check("DATASET-SEPARATION", text.includes("Activity/value is not outstanding position") && text.includes("anonymous option-market flow"), "activity, position and anonymous chain are explicitly separated");
+  check("DATASET-SEPARATION", text.includes("Activity/value is not outstanding position") && text.includes("selected expiry / tracked strikes") && text.includes("all index derivatives"), "activity, position and anonymous NIFTY-expiry chain scopes are explicit");
   check("NO-OWNERSHIP-CLAIM", !/FII (?:at|owns) [\d,]+/i.test(text), "no participant-by-strike attribution");
   check("ABOVE-FOLD-SUMMARY", (await matrix.boundingBox())?.y < 1080, `matrix top=${(await matrix.boundingBox())?.y}`);
   for (const label of ["Export JSON", "Export CSV"]) {
@@ -52,8 +52,10 @@ try {
   check("CANDIDATE-LEVELS", await levels.locator("tbody tr").count() > 0 || levelText.includes("No eligible levels"), "ranked candidates or truthful insufficient-evidence state visible");
   check("LEVEL-SCOPE", levelText.includes("does not assign FII, Pro or Client ownership") && !/FII level|Pro level/i.test(levelText), "aggregate participant context remains separate from anonymous strikes");
   check("LEVEL-AVAILABILITY", levelText.includes("Persistence") && levelText.includes("requires multi-snapshot") && levelText.includes("contract delta source not connected"), "unsupported persistence and delta weighting are explicit");
-  check("PARTICIPANT-VOLUME", levelText.includes("Participant-wise trading volumes") && levelText.includes("never attributed to a strike"), "existing participant-volume report is integrated with correct scope");
-  check("MODEL-DISCLOSURE", levelText.includes("L0") && levelText.includes("L1") && levelText.includes("never probabilities"), "versioned L0/L1 fallback and non-probability wording visible");
+  check("PARTICIPANT-VOLUME", levelText.includes("Participant-wise trading volumes") && levelText.includes("never attributed to a NIFTY strike"), "existing participant-volume report is integrated with correct scope");
+  await levels.locator("details").getByText("Level score and evidence policy", { exact: true }).click();
+  const expandedLevelText = await levels.innerText();
+  check("MODEL-DISCLOSURE", expandedLevelText.includes("L0") && expandedLevelText.includes("L1") && expandedLevelText.includes("never probabilities"), "versioned L0/L1 fallback and non-probability wording visible");
   check("ACTIVITY-SHARES", levelText.includes("Buy-side share") && levelText.includes("Sell-side share") && levelText.includes("Position-flow residual"), "gross and sided participant activity remain separate from position change");
   await page.screenshot({ path: path.join(output, "positioning-flow-candidate-levels-1920x1080.png"), fullPage: true });
   await dashboard.getByRole("button", { name: "History", exact: true }).click();

@@ -36,6 +36,9 @@
   `/tmp/scalper-v2-reference-levels-production-20260912`,
   `/tmp/scalper-v2-delta-oi-only-production-reference-20260912` and
   `/tmp/scalper-v2-single-workstation-reference-production-20260912`.
+  The same focused check also passes 5/5 through the public HTTPS gateway;
+  evidence is under `/tmp/scalper-v2-reference-levels-public-20260912` and the
+  public `/n50/` route returns HTTP 200.
 
 ## 2026-09-12 — Home MWHD top-15 dual-rank boards
 

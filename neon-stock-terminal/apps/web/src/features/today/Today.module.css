@@ -10,7 +10,7 @@
 .summaryPage,.fullBoardPage{--n50-text-3:#52647b}.marketStrip:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:2px}
 
 .summaryPage{height:auto;min-height:calc(100dvh - var(--app-sticky-content-top) - 20px);overflow:visible}
-.lensBody{grid-template-rows:58px minmax(300px,auto) 280px auto 124px;overflow:visible}
+.lensBody{grid-template-rows:58px minmax(300px,auto) auto auto 124px;overflow:visible}
 .progressionStrip{min-width:0;min-height:0;display:grid;grid-template-rows:30px minmax(0,1fr);overflow:hidden;border:1px solid var(--n50-border);border-radius:8px;background:var(--n50-surface);box-shadow:0 1px 2px rgba(11,31,58,.06)}
 .progressionStrip>header{min-width:0;border-bottom:1px solid var(--n50-border);padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .progressionStrip>header>div{min-width:0;display:flex;align-items:baseline;gap:9px}
@@ -55,3 +55,78 @@
 
 @media(max-width:1023px){.progressionStrip{height:260px;margin-bottom:8px}.progressionStrip>header>div{display:flex;overflow:hidden}.progressionStrip>header small{overflow:hidden;text-overflow:ellipsis}}
 @media(max-width:767px){.progressionStrip{height:320px}.progressionStrip>header small{display:none}.progressionStockColumn{width:24%}.progressionRouteColumn{width:18%}.progressionScoreColumn{width:12%}.progressionTable thead th{padding-inline:3px;font-size:9px}.progressionTable tbody th[scope=rowgroup] button{grid-template-columns:1fr;padding:5px}.progressionTable tbody th[scope=rowgroup] button>svg{display:none}.progressionTable tbody th[scope=rowgroup] small{display:none}.progressionConditions>span{grid-template-columns:28px minmax(0,1fr) 16px;padding-inline:3px;font-size:8px}}
+
+.progressionMatrix{min-width:0;border:1px solid var(--n50-border);border-radius:8px;background:var(--n50-surface);box-shadow:0 1px 2px rgba(11,31,58,.06);overflow:visible}
+.progressionMatrix>header{min-height:34px;border-bottom:1px solid var(--n50-border);padding:5px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.progressionMatrix>header>div{min-width:0;display:flex;align-items:baseline;gap:9px}
+.progressionMatrix>header strong{font-size:11px;letter-spacing:.03em;white-space:nowrap}
+.progressionMatrix>header small,.progressionMatrix>header>span{font-size:10px;color:var(--n50-text-3)}
+.progressionToolbar{min-height:38px;padding:4px 6px;border-bottom:1px solid var(--n50-border);display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#fafbfd}
+.progressionToolbar>label{height:28px;display:flex;align-items:center;gap:4px;color:var(--n50-text-3);font-size:10px;white-space:nowrap}
+.progressionToolbar input,.progressionToolbar select,.progressionToolbar button,.progressionColumns summary{height:28px;border:1px solid var(--n50-border);border-radius:5px;background:#fff;color:var(--n50-text-2);padding:0 7px;font-size:10px}
+.progressionToolbar>label:first-child input{width:112px}
+.progressionFilters{display:flex;align-items:center;gap:3px;flex:1;overflow-x:auto;scrollbar-width:thin}
+.progressionFilters button{white-space:nowrap}
+.progressionFilters button[aria-pressed=true]{border-color:#8eabe0;background:#eaf0ff;color:var(--n50-selected);font-weight:700}
+.progressionFilters b{margin-left:2px;font-variant-numeric:tabular-nums}
+.progressionColumns{position:relative}
+.progressionColumns summary{display:flex;align-items:center;cursor:pointer;list-style:none}
+.progressionColumns>div{position:absolute;right:0;top:31px;z-index:20;min-width:110px;padding:6px;border:1px solid var(--n50-border);border-radius:6px;background:#fff;box-shadow:0 6px 18px rgba(11,31,58,.16);display:grid;gap:4px}
+.progressionColumns label{display:flex;gap:5px;align-items:center;font-size:11px}
+.progressionExport{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.progressionMatrixScroller{width:100%;min-width:0;overflow-x:auto;overflow-y:visible;outline:none;overscroll-behavior-x:contain}
+.progressionMatrixScroller:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:-2px}
+.progressionMatrixTable{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;background:#fff;font-size:11px;font-variant-numeric:tabular-nums}
+.progressionMatrixTable th,.progressionMatrixTable td{height:34px;min-width:82px;padding:2px 5px;border-right:1px solid #e5eaf1;border-bottom:1px solid #e8edf3;text-align:center;white-space:nowrap;background:#fff}
+.progressionMatrixTable thead{position:sticky;top:0;z-index:12}
+.progressionMatrixTable thead th{height:25px;background:#eaf0f7;color:#354963;font-size:10px;font-weight:700;letter-spacing:.01em}
+.progressionMatrixTable thead tr:first-child th[colspan]{background:#dce7f4;color:#183d72;border-bottom-color:#b8c9dd}
+.progressionMatrixTable tbody tr{cursor:pointer}
+.progressionMatrixTable tbody tr:hover>th,.progressionMatrixTable tbody tr:hover>td{box-shadow:inset 0 1px #b7c9e5,inset 0 -1px #b7c9e5}
+.progressionMatrixTable tbody tr[data-qualified=true] .progressionStickyBest b{background:#087a55;color:#fff}
+.progressionMatrixTable tbody th{min-width:165px;text-align:left;padding:0}
+.progressionMatrixTable tbody th>button{width:100%;height:100%;padding:2px 7px;border:0;background:transparent;color:inherit;display:grid;grid-template-columns:19px minmax(0,1fr);align-items:center;gap:5px;text-align:left}
+.progressionMatrixTable tbody th>button:hover{background:#eef4ff}
+.progressionMatrixTable tbody th>button:focus-visible,.progressionGate button:focus-visible{outline:2px solid #315ad7;outline-offset:-2px}
+.progressionMatrixTable tbody th span{min-width:0;display:flex;flex-direction:column}
+.progressionMatrixTable tbody th b{font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.progressionMatrixTable tbody th small{font-size:8px;color:var(--n50-text-3)}
+.progressionStickyStock{position:sticky;left:0;z-index:8;min-width:165px!important;max-width:165px;background:#fff!important;box-shadow:1px 0 #d7e0eb}
+.progressionStickyLtp{position:sticky;left:165px;z-index:8;min-width:94px!important;max-width:94px;background:#fff!important;box-shadow:1px 0 #d7e0eb;font:700 11px "IBM Plex Mono",monospace;text-align:right!important}
+.progressionMatrixTable thead .progressionStickyStock,.progressionMatrixTable thead .progressionStickyLtp{z-index:15;background:#eaf0f7!important}
+.progressionStickyBest{position:sticky;right:0;z-index:8;min-width:68px!important;background:#fff!important;box-shadow:-1px 0 #d7e0eb}
+.progressionMatrixTable thead .progressionStickyBest{z-index:15;background:#eaf0f7!important}
+.progressionStickyBest b{display:inline-flex;min-width:35px;justify-content:center;border:1px solid #9fb5db;border-radius:4px;padding:2px 4px;color:#214d8d;background:#eef4ff}
+.progressionStickyBest small{display:block;margin-top:1px;font-size:8px;color:var(--n50-text-3)}
+.progressionStages{display:flex;align-items:center;justify-content:center;gap:3px;min-width:82px}
+.progressionStages i{width:8px;height:8px;border-radius:50%;border:1px solid #aab4c0;background:#eef1f5}
+.progressionStages i[data-state=pass]{border-color:#087a55;background:#34a477}
+.progressionStages i[data-state=fail]{border-color:#c93346;background:#e36573}
+.progressionMatrix .progressionScore{min-width:88px!important;padding:2px 4px!important;vertical-align:middle}
+.progressionMatrix .progressionScore b{display:block;font:750 11px "IBM Plex Mono",monospace;color:#263e5d}
+.progressionMatrix .progressionScore span{display:block;font:700 8px "IBM Plex Mono",monospace;color:var(--n50-text-3)}
+.progressionMatrix .progressionScore[data-complete=true] b{color:var(--n50-positive)}
+.progressionGate{padding:2px!important}
+.progressionGate button{width:100%;height:100%;min-width:76px;border:0;border-radius:4px;background:transparent;display:flex;align-items:center;justify-content:center;gap:4px;color:#26384f;font:650 10px "IBM Plex Mono",monospace}
+.progressionGate b{font-size:13px}
+.progressionGate[data-state=pass] button{background:#e4f5ec}.progressionGate[data-state=pass] b{color:var(--n50-positive)}
+.progressionGate[data-state=fail] button{background:#fdecef}.progressionGate[data-state=fail] b{color:var(--n50-negative)}
+.progressionGate[data-state=pending] button{background:#f1f3f6;color:#718096}.progressionGate[data-state=pending] b{color:#718096}
+.progressionMatrix[data-density=comfortable] .progressionMatrixTable tbody th,.progressionMatrix[data-density=comfortable] .progressionMatrixTable tbody td{height:38px}
+.progressionMatrix[data-density=ultra] .progressionMatrixTable tbody th,.progressionMatrix[data-density=ultra] .progressionMatrixTable tbody td{height:28px}
+.progressionMatrix[data-density=ultra] .progressionGate,.progressionMatrix[data-density=ultra] .progressionGate button{min-width:38px}
+.progressionEmpty{padding:18px;text-align:center;color:var(--n50-text-3)}
+.progressionDrawerBackdrop{position:fixed;inset:0;z-index:89;border:0;background:rgba(12,27,48,.24)}
+.progressionDrawer{position:fixed;right:0;top:var(--app-sticky-content-top);bottom:0;z-index:90;width:min(440px,100vw);overflow-y:auto;border-left:1px solid #bac8da;background:#fff;box-shadow:-10px 0 30px rgba(11,31,58,.16);padding:12px}
+.progressionDrawer>header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--n50-border);padding-bottom:9px}
+.progressionDrawer>header>div{display:flex;flex-direction:column}.progressionDrawer>header strong{font-size:16px}.progressionDrawer>header small{font-size:10px;color:var(--n50-text-3)}
+.progressionDrawer>header button{width:30px;height:30px;border:1px solid var(--n50-border);border-radius:6px;background:#fff;display:grid;place-items:center}
+.progressionDrawerPrice{padding:12px 0;font:750 25px "IBM Plex Mono",monospace}
+.progressionDrawer section{margin-bottom:14px}.progressionDrawer h3{margin:0;padding:7px 0;border-bottom:1px solid #dbe3ed;display:flex;justify-content:space-between;font-size:12px}.progressionDrawer h3 b{font:700 10px "IBM Plex Mono",monospace}
+.progressionDrawerGate{display:grid;grid-template-columns:38px 58px minmax(0,1fr) auto;align-items:center;gap:5px;min-height:43px;border-bottom:1px solid #edf1f5;font-variant-numeric:tabular-nums}
+.progressionDrawerGate>strong{font-size:9px}.progressionDrawerGate>span{font:650 10px "IBM Plex Mono",monospace}.progressionDrawerGate>em{font:650 9px "IBM Plex Mono",monospace;font-style:normal;text-align:right}.progressionDrawerGate>small{grid-column:2/-1;color:var(--n50-text-3);font-size:9px}
+.progressionDrawerGate[data-state=pass]>strong,.progressionDrawerGate[data-state=pass]>em{color:var(--n50-positive)}.progressionDrawerGate[data-state=fail]>strong,.progressionDrawerGate[data-state=fail]>em{color:var(--n50-negative)}.progressionDrawerGate[data-state=pending]>strong,.progressionDrawerGate[data-state=pending]>em{color:#718096}
+.progressionDrawer dl{margin:8px 0;background:#f6f8fb;padding:8px;border-radius:6px}.progressionDrawer dl>div{margin-bottom:7px}.progressionDrawer dt{font-size:9px;color:var(--n50-text-3)}.progressionDrawer dd{margin:2px 0;font-size:10px}
+.progressionDrawer footer{display:flex;justify-content:flex-end}.progressionDrawer footer a{height:32px;display:inline-flex;align-items:center;gap:4px;border:1px solid #aac0df;border-radius:6px;padding:0 9px;text-decoration:none;color:var(--n50-selected)}
+
+@media(max-width:767px){.progressionMatrix>header{align-items:flex-start}.progressionMatrix>header>div{display:block}.progressionMatrix>header small{display:block;margin-top:2px}.progressionToolbar>label:first-child{width:100%}.progressionToolbar>label:first-child input{flex:1}.progressionFilters{order:5;flex-basis:100%}.progressionStickyStock{min-width:132px!important;max-width:132px}.progressionStickyLtp{left:132px;min-width:86px!important;max-width:86px}.progressionDrawerGate{grid-template-columns:34px 54px minmax(0,1fr)}.progressionDrawerGate>em{grid-column:3;text-align:left}.progressionDrawerGate>small{grid-column:2/-1}}

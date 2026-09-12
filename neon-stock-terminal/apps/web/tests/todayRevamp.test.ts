@@ -5,6 +5,7 @@ import {
   breadthWording, niftyMovementWording, parseBoardSort, parseQuickView, parseSummaryLens,
   serializeQuickView, slugifySector, vixWording,
 } from "../src/features/today/todayModel";
+import { buildProgressionMatrixRows, progressionRowMatches } from "../src/features/today/scalperProgressionMatrix";
 
 test("Today URL state canonicalizes unsupported values", () => {
   assert.equal(parseSummaryLens(null), "story");
@@ -63,4 +64,33 @@ test("Home scalper progression preserves missing references and stops the AND de
   );
   assert.deepEqual(branch.checks.map((check) => check.passed), [true, null, true, true, true, true, null]);
   assert.equal(branch.depth, 1);
+});
+
+test("progression matrix keeps one stock row, both routes, and sorts maximum qualification first", () => {
+  const stocks = [
+    { symbol: "WEAK", name: "Weak Limited", last: 100, dayOpen: 95 },
+    { symbol: "STRONG", name: "Strong Limited", last: 120, dayOpen: 110 },
+  ] as never;
+  const rows = buildProgressionMatrixRows(stocks, [
+    {
+      symbol: "WEAK", currentValue: 100, todayOpen: 95, currentWeekOpen: 105,
+      previousWeekOpen: 90, currentMonthOpen: 90, previousMonthClose: 80,
+      twoMonthsAgoClose: 85, currentHourOpen: null, previousHourOpen: null,
+      current15mOpen: null, previous15mOpen: null, current5mOpen: null,
+      previous5mOpen: null, observedAt: "2026-09-11T05:00:00.000Z",
+    },
+    {
+      symbol: "STRONG", currentValue: 120, todayOpen: 110, currentWeekOpen: 108,
+      previousWeekOpen: 106, currentMonthOpen: 105, previousMonthClose: 100,
+      twoMonthsAgoClose: 101, currentHourOpen: 119, previousHourOpen: 118,
+      current15mOpen: 120, previous15mOpen: 119, current5mOpen: 120,
+      previous5mOpen: 119, observedAt: "2026-09-11T05:05:00.000Z",
+    },
+  ]);
+  assert.deepEqual(rows.map((row) => row.stock.symbol), ["STRONG", "WEAK"]);
+  assert.equal(rows[0].routes.length, 2);
+  assert.equal(rows[0].best.complete, true);
+  assert.equal(rows[0].best.pass, 7);
+  assert.equal(progressionRowMatches(rows[0], "7"), true);
+  assert.equal(progressionRowMatches(rows[1], "waiting"), false);
 });

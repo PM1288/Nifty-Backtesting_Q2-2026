@@ -1,17 +1,18 @@
-import { Fragment, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Info, RefreshCw, TriangleAlert } from "lucide-react";
 import { StockLogo } from "../../components/stocks/StockProfileControls";
 import { formatWholeNumber } from "../../lib/format";
 import type { Quote } from "../../lib/types";
 import {
-  breadthRatio, breadthWording, buildMarketStory, buildScalperProgressionBranches, parseSummaryLens,
+  breadthRatio, breadthWording, buildMarketStory, parseSummaryLens,
   type TodaySector,
 } from "./todayModel";
 import { BreadthBar, MarketSummaryStrip, Move, PanelState, QuickView, type QuickViewState, SectorIcon, StockRow } from "./TodayShared";
 import { useTodayData } from "./useTodayData";
 import styles from "./Today.module.css";
 import { FuturesVolatilityPreview } from "../../components/FuturesVolatilityPreview";
+import { ScalperProgressionMatrix } from "./ScalperProgressionMatrix";
 
 export function TodaySummaryPage() {
   const { model, overview, progression, profiles, live, authReady } = useTodayData();
@@ -94,43 +95,14 @@ function RiskStrip({ model, onOpenStock }: { model: LensProps["model"]; onOpenSt
   return <section className={styles.riskStrip}><div><header><strong>RISK &amp; ANOMALY SNAPSHOT</strong></header><div className={styles.riskMetrics}>{metrics.map((item) => <Link key={item.label} to="/options/intelligence"><b>{formatWholeNumber(item.value)}</b><span>{item.label}</span></Link>)}</div></div><div><header><strong>TOP ALERTS</strong></header>{alerts.length ? alerts.map((stock) => <button key={stock.symbol} onClick={(event) => onOpenStock(stock, event.currentTarget)}><TriangleAlert size={13} /><b>{stock.symbol}</b><span>{stock.alert?.label}</span></button>) : <span className={styles.emptyInline}>No stock alert in this snapshot.</span>}</div><div><header><strong>TOP ANOMALIES</strong><Link to="/options/intelligence">Open F&amp;O Radar</Link></header>{model.derivatives.anomalies.slice(0, 4).map((alert) => <div className={styles.anomalyRow} key={alert.symbolToken}><b>{alert.tradingSymbol}</b><span>{alert.anomalyTypes.join(" · ")}</span><Move value={alert.changePct} /></div>)}</div></section>;
 }
 
-const progressionPrice = (value: number | null) => value == null ? "—" : value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const progressionLabel = { month: "M", week: "W0", "previous-week": "W−1", today: "D0", hour: "1H", "15m": "15m", "5m": "5m" } as const;
-
 function ScalperProgressionStrip({ model, progression, profiles, onOpenStock }: LensProps) {
-  const source = new Map((progression.data?.rows ?? []).map((row) => [row.symbol, row]));
-  const cards = model.allStocks.map((stock) => {
-    const row = source.get(stock.symbol) ?? {
-      symbol: stock.symbol, currentValue: null, todayOpen: null, currentWeekOpen: null,
-      previousWeekOpen: null, currentMonthOpen: null, previousMonthClose: null,
-      twoMonthsAgoClose: null, currentHourOpen: null, previousHourOpen: null,
-      current15mOpen: null, previous15mOpen: null, current5mOpen: null,
-      previous5mOpen: null, observedAt: null,
-    };
-    const branches = buildScalperProgressionBranches(stock, row);
-    const depth = Math.max(...branches.map((branch) => branch.depth));
-    const passed = Math.max(...branches.map((branch) => branch.checks.filter((check) => check.passed === true).length));
-    const allGreen = branches.some((branch) => branch.checks.every((check) => check.passed === true));
-    return { stock, branches, depth, passed, allGreen };
-  }).sort((left, right) => Number(right.allGreen) - Number(left.allGreen) || right.depth - left.depth || right.passed - left.passed || left.stock.symbol.localeCompare(right.stock.symbol));
-  const mature = cards.filter((card) => card.allGreen).length;
-  return <section className={styles.progressionStrip} data-testid="today-scalper-progression" aria-label="Scalper progression to Monthly Open">
-    <header><div><strong>SCALPER PROGRESSION · MONTHLY OPEN</strong><small>Two monthly routes · additive week, day, 1H, 15m and 5m open gates</small></div><span>{progression.isLoading ? "Loading levels…" : progression.error ? "Levels unavailable" : `${mature}/${cards.length} all green · best first`}</span></header>
-    <div className={styles.progressionScroller} tabIndex={0} aria-label="Vertically scrollable stock progression table">
-      <table className={styles.progressionTable}>
-        <colgroup><col className={styles.progressionStockColumn} /><col className={styles.progressionRouteColumn} /><col /><col className={styles.progressionScoreColumn} /></colgroup>
-        <thead><tr><th>Stock / current</th><th>Route</th><th>Conditions · actual &gt; reference</th><th>Score</th></tr></thead>
-        <tbody>{cards.map(({ stock, branches, allGreen }) => <Fragment key={stock.symbol}>{branches.map((branch, branchIndex) => {
-          const failed = branch.checks.some((check) => check.passed === false);
-          const state = branch.checks.every((check) => check.passed === true) ? "pass" : failed ? "fail" : "missing";
-          return <tr key={branch.id} data-progression-symbol={stock.symbol} data-state={state} data-all-green={allGreen ? "true" : "false"}>
-            {branchIndex === 0 ? <th rowSpan={2} scope="rowgroup"><button onClick={(event) => onOpenStock(stock, event.currentTarget)}><StockLogo symbol={stock.symbol} profile={profiles.get(stock.symbol)} size={17} /><span><b>{stock.symbol}</b><small>{stock.name}</small><strong>₹{progressionPrice(stock.last)}</strong></span></button></th> : null}
-            <th scope="row">{branch.id === "previous-month" ? "M−1 close" : "M−2 close"}</th>
-            <td className={styles.progressionConditions}>{branch.checks.map((check) => <span key={check.id} data-state={check.passed == null ? "missing" : check.passed ? "pass" : "fail"} title={check.label} aria-label={`${check.label}: ${check.passed == null ? "unavailable" : check.passed ? "passed" : "failed"}; ${progressionPrice(check.left)} greater than ${progressionPrice(check.right)}`}><em>{progressionLabel[check.id]}</em><span>{progressionPrice(check.left)} <i>&gt;</i> {progressionPrice(check.right)}</span><b>{check.passed == null ? "—" : check.passed ? "✓" : "×"}</b></span>)}</td>
-            <td className={styles.progressionScore} data-state={state}>{branch.depth}/7</td>
-          </tr>;
-        })}</Fragment>)}</tbody>
-      </table>
-    </div>
-  </section>;
+  return <ScalperProgressionMatrix
+    stocks={model.allStocks}
+    rows={progression.data?.rows ?? []}
+    generatedAt={progression.data?.generatedAt ?? null}
+    isLoading={progression.isLoading}
+    hasError={Boolean(progression.error)}
+    profiles={profiles}
+    onOpenStock={onOpenStock}
+  />;
 }

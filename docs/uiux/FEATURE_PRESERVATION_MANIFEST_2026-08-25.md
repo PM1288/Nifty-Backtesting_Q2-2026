@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-12 Home progression dense matrix: the existing Monthly Open progression
+above Risk & Anomaly now renders exactly one compact row per stock with grouped
+M−1/M−2 route headers, unchanged seven-gate calculations, contiguous scores,
+pass/fail/pending counts, a best-route strip, filters, density/column controls,
+CSV evidence and a complete equation drawer. It has no fixed widget height;
+horizontal overflow remains inside the matrix. Existing Quick View, Stock 360,
+API contracts, strategies, collectors and permissions remain unchanged.
+Evidence: `docs/uiux/HOME_SCALPER_PROGRESSION_MATRIX_20260912.md`.
+
 2026-09-11 Home progression vertical-table refinement: the two-row-per-stock
 Monthly Open progression remains above Risk & Anomaly and retains the M, W0,
 W-1, D0, 1H, 15m and 5m comparisons. Conditions now stack inside a four-column

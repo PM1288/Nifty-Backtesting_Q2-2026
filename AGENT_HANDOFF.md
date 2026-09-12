@@ -4771,3 +4771,22 @@ or outcomes were deleted.
   tests pass. Deployed synthetic browser coverage passes at 1920x1080,
   1440x900 and 390x844, and the authenticated live screenshot confirms the
   chart and table render with the same 288 observations.
+
+## 2026-09-12 — Homepage Scalper Progression dense matrix
+
+- Replaced the two-rows-per-stock homepage progression presentation with one
+  compact row per stock. Both M−1 and M−2 routes retain the unchanged M, W0,
+  W−1, D0, 1H, 15m and 5m calculation objects beneath grouped headers.
+- Removed the fixed-height progression viewport. The complete filtered stock
+  set participates in page flow; only the wide matrix scrolls horizontally.
+  Stock/LTP and Best remain frozen, and the default compact row is 34px.
+- LTP is shown once. Gate cells contain pass/fail/pending plus the reference;
+  full operands, margins, source labels and timestamps are in accessible
+  tooltips and a row-click side inspector. Scores expose contiguous depth and
+  pass/fail/pending counts.
+- Added qualification-first ordering, dynamic filters/search, three densities,
+  route/column visibility preferences, a progress strip and raw-evidence CSV.
+- Web typecheck, 167/167 tests and production build pass. API and deployed
+  browser/preservation results are recorded below after release verification.
+- Full implementation record:
+  `docs/uiux/HOME_SCALPER_PROGRESSION_MATRIX_20260912.md`.

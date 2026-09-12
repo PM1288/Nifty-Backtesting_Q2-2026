@@ -223,10 +223,11 @@ function LikelyLevels({ zones, participants, participantVolumes, spot, reportDat
   zones: ProbableZone[]; participants: EvidenceRow[]; participantVolumes: EvidenceRow[]; spot: number | null; reportDate: string;
 }) {
   const volumeRows = participantOrder.map((name) => participantVolumes.find((row) => row.client_type === name) ?? { client_type: name });
+  const reportedVolumeCount = volumeRows.filter((row) => finite(row.options_proxy) != null).length;
   return <section className={css.levels} data-testid="positioning-flow-likely-levels">
     <header className={css.levelHeader}><div><h3>Probable positioning levels</h3><p>Market strength uses anonymous option-chain evidence. Participant alignment is a separate aggregate context; it does not assign FII, Pro or Client ownership to any strike.</p></div><span>Research heuristic · {reportDate}</span></header>
     <div className={css.availability}>
-      <span><b>Participant trading volume</b>{participantVolumes.length ? `${participantVolumes.length}/4 reported` : "Unavailable"}</span>
+      <span><b>Participant trading volume</b>{reportedVolumeCount ? `${reportedVolumeCount}/4 reported` : "Unavailable"}</span>
       <span><b>Persistence</b>Unavailable · requires multi-snapshot retained history</span>
       <span><b>Delta-weighted OI</b>Unavailable · contract delta source not connected</span>
       <span><b>Historical outcomes</b>Not yet persisted before session</span>

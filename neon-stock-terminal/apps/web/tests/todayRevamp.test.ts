@@ -47,8 +47,8 @@ test("Home scalper progression keeps alternative month routes and additive confi
   );
   assert.equal(branches[0].depth, 7);
   assert.deepEqual(branches[0].checks.map((check) => check.passed), [true, true, true, true, true, true, true]);
-  assert.equal(branches[1].depth, 0);
-  assert.deepEqual(branches[1].checks.map((check) => check.passed), [false, true, true, true, true, true, true]);
+  assert.equal(branches[1].depth, 1);
+  assert.deepEqual(branches[1].checks.map((check) => check.passed), [true, false, true, true, true, true, true, true]);
 });
 
 test("Home scalper progression preserves missing references and stops the AND depth", () => {
@@ -90,7 +90,32 @@ test("progression matrix keeps one stock row, both routes, and sorts maximum qua
   assert.deepEqual(rows.map((row) => row.stock.symbol), ["STRONG", "WEAK"]);
   assert.equal(rows[0].routes.length, 2);
   assert.equal(rows[0].best.complete, true);
-  assert.equal(rows[0].best.pass, 7);
+  assert.equal(rows[0].best.pass, 8);
+  assert.equal(rows[0].best.weightedScore, 29);
+  assert.equal(rows[0].rank, 1);
+  assert.equal(rows[0].starterState, "pass");
   assert.equal(progressionRowMatches(rows[0], "7"), true);
   assert.equal(progressionRowMatches(rows[1], "waiting"), false);
+});
+
+test("M-2 route requires the visible M-1 sufficiency gate and weighted rank favours nearer confirmations", () => {
+  const stocks = [
+    { symbol: "MONTH", name: "Month", last: 120, dayOpen: 100 },
+    { symbol: "MINUTE", name: "Minute", last: 120, dayOpen: 130 },
+    { symbol: "FAILED", name: "Failed", last: 80, dayOpen: 90 },
+  ] as never;
+  const base = { currentValue: 120, todayOpen: 130, currentWeekOpen: 130, previousWeekOpen: 130, currentMonthOpen: 110, previousMonthClose: 100, twoMonthsAgoClose: 105, observedAt: null };
+  const rows = buildProgressionMatrixRows(stocks, [
+    { symbol: "MONTH", ...base, currentHourOpen: null, previousHourOpen: null, current15mOpen: null, previous15mOpen: null, current5mOpen: null, previous5mOpen: null },
+    { symbol: "MINUTE", ...base, currentHourOpen: 110, previousHourOpen: 100, current15mOpen: 110, previous15mOpen: 100, current5mOpen: 110, previous5mOpen: 100 },
+    { symbol: "FAILED", ...base, currentValue: 80, currentMonthOpen: 90, previousMonthClose: 100, twoMonthsAgoClose: 105, currentHourOpen: null, previousHourOpen: null, current15mOpen: null, previous15mOpen: null, current5mOpen: null, previous5mOpen: null },
+  ]);
+  const month = rows.find((row) => row.stock.symbol === "MONTH")!;
+  const minute = rows.find((row) => row.stock.symbol === "MINUTE")!;
+  const failed = rows.find((row) => row.stock.symbol === "FAILED")!;
+  assert.deepEqual(month.routes[1].branch.checks.slice(0, 2).map((check) => check.id), ["month-m1", "month-m2"]);
+  assert.ok(minute.best.weightedScore > month.best.weightedScore);
+  assert.ok(minute.rank < month.rank);
+  assert.equal(failed.bothStartersFailed, true);
+  assert.equal(failed.starterState, "fail");
 });

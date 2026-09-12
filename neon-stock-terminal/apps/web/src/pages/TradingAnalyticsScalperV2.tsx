@@ -4,6 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import type { EChartsOption } from "echarts";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
+import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
+import { useMwhdRankings } from "../features/mwhd/useMwhdRankings";
 import { dayRows, istDay } from "../lib/tradingAnalyticsChartView";
 import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
@@ -138,6 +140,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   legs: Row[]; metricLegs?: Row[]; state: string; errors?: Row[];
 }) {
   const [params, setParams] = useSearchParams(), client = useQueryClient();
+  const mwhd = useMwhdRankings();
   const selectedDayParam = params.get("day");
   const interval = [1, 5, 15, 60].includes(Number(params.get("interval"))) ? Number(params.get("interval")) : 5;
   const defaultStrike = nearestScalperStrike(strikes, spot);
@@ -458,7 +461,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}</section>;
   return <section className={css.page} data-testid="scalper-v2">
     <header className={css.commandBar}>
-      <strong>Scalper V2</strong>
+      <strong>Scalper V2</strong><MwhdRankBadge ranking={mwhd.rankings.get(symbol.toUpperCase())} />
       <div className={css.commandGroup}><span>Time</span><label>Session <select value={tradingDay} onChange={(event) => update("day", event.target.value)}>{days.map((day) => <option key={day}>{day}</option>)}</select></label>{[1, 5, 15, 60].map((value) => <button key={value} aria-current={interval === value ? "page" : undefined} onClick={() => update("interval", String(value))}>{value === 60 ? "1h" : `${value}m`}</button>)}<button aria-pressed={horizontalView === "day"} onClick={() => { setHorizontalView("day"); setFitRequest((value) => value + 1); }}>Fit day</button></div>
       <div className={css.commandGroup}><span>Contract</span><label>CE <select aria-label="Selected CE strike" value={selectedCeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("CE", event.target.value)}>{selectableCeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><label>PE <select aria-label="Selected PE strike" value={selectedPeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("PE", event.target.value)}>{selectablePeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><button disabled={points.length > 0 || defaultStrike == null} onClick={selectBothAtm}>Both ATM</button><small>{expiry || "Expiry unavailable"}</small></div>
       <details className={css.commandMenu}><summary>Scale</summary><div><button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button><button aria-pressed={profileRangeExpanded} disabled={!profileRows.length} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button><button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button><button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button><button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button><button onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button><button onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button></div></details>

@@ -14,6 +14,8 @@ import {
 import styles from "./OiisLivePage.module.css";
 import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
 import { StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
+import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
+import { useMwhdRankings } from "../features/mwhd/useMwhdRankings";
 
 const empty = {
   symbol: "",
@@ -176,6 +178,7 @@ export function OiisLivePage() {
   const [candidates, setCandidates] = useState<Array<Record<string, any>>>([]);
   const [profileFilters, setProfileFilters] = useState<StockProfileFilters>({ universe: "ALL", capBucket: "ALL", sector: "ALL" });
   const profiles = useProfileIndex();
+  const mwhd = useMwhdRankings(authReady);
 
   const load = useCallback(async (date?: string) => {
     try {
@@ -417,6 +420,7 @@ export function OiisLivePage() {
                     <Link className={styles.stockLink} to={`/analytics/stock/${encodeURIComponent(row.symbol)}?strategy=oiis-live&runId=${encodeURIComponent(String(latestRun.run_id ?? ""))}&source=oiis-live&selectedEntityId=${encodeURIComponent(String(row.candidate_id))}&returnTo=${encodeURIComponent("/strategy/oiis-live")}`}>
                       #{index + 1} {row.symbol}
                     </Link>
+                    <MwhdRankBadge compact ranking={mwhd.rankings.get(String(row.symbol).toUpperCase())} />
                     <small>
                       Quality sum {qualityScore(row).toFixed(2)} · {value(row, "sector")}
                     </small>
@@ -643,7 +647,7 @@ export function OiisLivePage() {
           <tbody>
             {(view === "opportunities" ? opportunityRows : executionRows).map((row, index) => (
               <tr key={row.candidate_id} data-quality-band={qualityBand(row)}>
-                <td><Link className={styles.stockLink} to={`/analytics/stock/${encodeURIComponent(row.symbol)}?strategy=oiis-live&runId=${encodeURIComponent(String(latestRun.run_id ?? ""))}&source=oiis-live&selectedEntityId=${encodeURIComponent(String(row.candidate_id))}&returnTo=${encodeURIComponent("/strategy/oiis-live")}`}>#{index + 1} {row.symbol}</Link><small>{row.universe_flags?.is_nifty50 ? "NIFTY 50 · " : ""}F&amp;O · {value(row, "sector")}</small></td>
+                <td><Link className={styles.stockLink} to={`/analytics/stock/${encodeURIComponent(row.symbol)}?strategy=oiis-live&runId=${encodeURIComponent(String(latestRun.run_id ?? ""))}&source=oiis-live&selectedEntityId=${encodeURIComponent(String(row.candidate_id))}&returnTo=${encodeURIComponent("/strategy/oiis-live")}`}>#{index + 1} {row.symbol}</Link><MwhdRankBadge compact ranking={mwhd.rankings.get(String(row.symbol).toUpperCase())} /><small>{row.universe_flags?.is_nifty50 ? "NIFTY 50 · " : ""}F&amp;O · {value(row, "sector")}</small></td>
                 <td><span className={styles.pill} data-state={row.direction}>{value(row, "direction")}</span><small>{humanise(row.direction_state)}</small></td>
                 <td><strong>{qualityScore(row).toFixed(2)}</strong><small>O + X + DQ, high to low</small></td>
                 <td><strong>{number(row, "ofactor", 2)}</strong><small>{value(row, "ofactor_level")}</small></td>

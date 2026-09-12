@@ -8,7 +8,7 @@ export type QuickViewTarget = { type: "sector"; id: string } | { type: "stock"; 
 export type TodayBreadth = { advancing: number; declining: number; neutral: number; total: number };
 
 export type ScalperProgressionCheck = {
-  id: "month" | "week" | "previous-week" | "today" | "hour" | "15m" | "5m";
+  id: "month-m1" | "month-m2" | "week" | "previous-week" | "today" | "hour" | "15m" | "5m";
   label: string;
   left: number | null;
   right: number | null;
@@ -109,11 +109,22 @@ export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgre
     { id: "15m", label: "Current 15-minute open > previous 15-minute open", left: current15mOpen, right: previous15mOpen, passed: comparison(current15mOpen, previous15mOpen) },
     { id: "5m", label: "Current 5-minute open > previous 5-minute open", left: current5mOpen, right: previous5mOpen, passed: comparison(current5mOpen, previous5mOpen) },
   ];
-  const branch = (id: ScalperProgressionBranch["id"], label: string, right: number | null): ScalperProgressionBranch => {
-    const checks: ScalperProgressionCheck[] = [
-      { id: "month", label, left: currentMonthOpen, right, passed: comparison(currentMonthOpen, right) },
-      ...shared,
-    ];
+  const m1: ScalperProgressionCheck = {
+    id: "month-m1",
+    label: "Month open > previous-month close",
+    left: currentMonthOpen,
+    right: progressionValue(row.previousMonthClose),
+    passed: comparison(currentMonthOpen, progressionValue(row.previousMonthClose)),
+  };
+  const m2: ScalperProgressionCheck = {
+    id: "month-m2",
+    label: "Month open > two-months-ago close",
+    left: currentMonthOpen,
+    right: progressionValue(row.twoMonthsAgoClose),
+    passed: comparison(currentMonthOpen, progressionValue(row.twoMonthsAgoClose)),
+  };
+  const branch = (id: ScalperProgressionBranch["id"], label: string, starters: ScalperProgressionCheck[]): ScalperProgressionBranch => {
+    const checks: ScalperProgressionCheck[] = [...starters, ...shared];
     let depth = 0;
     for (const check of checks) {
       if (check.passed !== true) break;
@@ -122,8 +133,10 @@ export function buildScalperProgressionBranches(stock: Quote, row: ScalperProgre
     return { id, label, checks, depth };
   };
   return [
-    branch("previous-month", "Month open > previous-month close", progressionValue(row.previousMonthClose)),
-    branch("two-month", "Month open > two-months-ago close", progressionValue(row.twoMonthsAgoClose)),
+    branch("previous-month", m1.label, [m1]),
+    // M-2 is a stricter route: the M-1 sufficiency gate remains visible and must
+    // pass before the additional M-2 starter and lower-timeframe gates progress.
+    branch("two-month", `${m1.label} + ${m2.label}`, [m1, m2]),
   ];
 }
 

@@ -26,6 +26,8 @@ import {
   roundNumberGuides,
 } from "../lib/tradingAnalyticsChartView";
 import styles from "./TradingAnalyticsPage.module.css";
+import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
+import { useMwhdRankings } from "../features/mwhd/useMwhdRankings";
 const Chart = lazy(async () => ({
   default: (await import("../components/visual/EChartSurface")).EChartSurface,
 }));
@@ -151,6 +153,7 @@ export function TradingAnalyticsScalper({
   maxPainStrikes?: number[];
 }) {
   const [params, setParams] = useSearchParams();
+  const mwhd = useMwhdRankings();
   const interval = chartInterval(params.get("interval"));
   const [showLevels, setShowLevels] = useState(true);
   const [showGrid, setShowGrid] = useState(symbol==='NIFTY');
@@ -486,7 +489,7 @@ export function TradingAnalyticsScalper({
     <div className={styles.scalperModule} data-renderer={renderer}>
       {exactLogPair && <p>Trade Log exact pair: {params.get('expectedCE')} / {params.get('expectedPE')}. Historical day {day}. No automatic contract substitution.</p>}
       <div className={`${styles.toolbar} ${styles.scalperCommandBar}`}>
-        <h2>SCALPER</h2>
+        <h2>SCALPER</h2><MwhdRankBadge ranking={mwhd.rankings.get(symbol.toUpperCase())} />
         <label title="Chart renderer">
           <select aria-label="Scalper renderer" value={renderer} onChange={(event) => updateView("renderer", event.target.value === "classic" ? "classic" : "")}>
             <option value="aligned">Aligned</option>

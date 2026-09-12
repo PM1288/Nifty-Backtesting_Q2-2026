@@ -27,6 +27,8 @@ import {
 import styles from "./TradingAnalyticsTradeLog.module.css";
 import { TradeObservationPnl } from './TradeObservationPnl';
 import { observationOptionPnl } from '../lib/optionPnl';
+import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
+import { useMwhdRankings } from "../features/mwhd/useMwhdRankings";
 
 type Payload = {
   rows: Observation[];
@@ -433,6 +435,7 @@ export function TradingAnalyticsTradeLog() {
 
 function ObservationLog() {
   const [params, setParams] = useSearchParams();
+  const mwhd = useMwhdRankings();
   const state = readState(params);
   const change = (key: string, v: string) => {
     setParams((previous) => {
@@ -1038,6 +1041,7 @@ function ObservationLog() {
                   >
                     {textValue(r.direction)}
                   </span>
+                  <MwhdRankBadge compact ranking={mwhd.rankings.get(String(r.underlying_symbol ?? "").toUpperCase())} />
                   <small>
                     {time(r.entry_end)} · {textValue(r.interval_minutes)}m
                   </small>

@@ -25,6 +25,8 @@ import { LearnAboutThisAnalysis, RelatedJourney, ReturnToSource } from "../compo
 import { useProfileIndex } from "../lib/stockProfiles";
 import { StockIdentity } from "../components/stocks/StockProfileControls";
 import { buildMwdEmaValueModel, type MwdEmaValueModel, type MwdLevelId } from "../lib/mwdEmaValue";
+import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
+import { useMwhdRankings } from "../features/mwhd/useMwhdRankings";
 
 function signedPct(value: unknown) {
   const parsed = num(value);
@@ -166,6 +168,7 @@ export function AnalyticsStockPage() {
   const yearHistory = useStock(symbol, "1Y", authReady);
   const oiisContext = useOiisCandidateContext(symbol, authReady);
   const strategyCompare = useBacktestingCompare(authReady);
+  const mwhd = useMwhdRankings(authReady);
   usePageLoadProfile({
     pageName: "analytics_stock",
     enabled: authReady && !!symbol,
@@ -308,7 +311,7 @@ export function AnalyticsStockPage() {
   return (
     <div className={styles.page}>
       <ReturnToSource fallback="/" />
-      <div aria-label={`${symbol} company identity`}><StockIdentity symbol={symbol} profile={profiles.bySymbol.get(symbol)} /></div>
+      <div aria-label={`${symbol} company identity`}><StockIdentity symbol={symbol} profile={profiles.bySymbol.get(symbol)} /> <MwhdRankBadge ranking={mwhd.rankings.get(symbol)} /></div>
       <AnalyticsHeader
         title={
           mode === "beginner"

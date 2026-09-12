@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getJson } from "../lib/api";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import styles from "./TradingAnalyticsPage.module.css";
+import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
+import { useMwhdRankings } from "../features/mwhd/useMwhdRankings";
 
 type Row = Record<string, unknown>;
 type Payload = { version: string; rows: Row[]; count: number; description: string; paperOrdersEnabled: false };
@@ -60,6 +62,7 @@ function OutcomeCell({ evidence }: { evidence: unknown }) {
 }
 
 export function TradingAnalyticsTradeLog() {
+  const mwhd = useMwhdRankings();
   const [date, setDate] = useState("");
   const [interval, setInterval] = useState("");
   const [direction, setDirection] = useState("");
@@ -84,7 +87,7 @@ export function TradingAnalyticsTradeLog() {
       <table><thead><tr><th>Day / Entry</th><th>Stock / Direction</th><th>Contracts</th><th>Entry values</th><th>Underlying conditions</th><th>Option confirmation</th><th>Underlying RSI / MACD</th><th>CE RSI / MACD</th><th>PE RSI / MACD</th><th>15 min max / trend</th><th>30 min max / trend</th><th>End of day max / trend</th><th>Delivery / State</th></tr></thead>
       <tbody>{rows.map((row) => { const conditions = object(row.condition_evidence), indicators = object(row.indicator_evidence), outcomes = object(row.outcome_evidence); return <tr key={String(row.signal_key)}>
         <td><span className={styles.tradeLogStack}><b>{String(row.trade_date)}</b><small>{ist(row.entry_end)} IST</small><small>{String(row.interval_minutes)} minute</small></span></td>
-        <td><span className={styles.tradeLogStack}><b>{String(row.underlying_symbol)} · {String(row.direction)}</b><small>{row.direction === "CALL" ? "BULLISH" : "BEARISH"} THESIS</small><small>Expiry {String(row.expiry)} · strike {value(row.strike)}</small><small>{String(row.rule_version)}</small></span></td>
+        <td><span className={styles.tradeLogStack}><b>{String(row.underlying_symbol)} · {String(row.direction)}</b><MwhdRankBadge compact ranking={mwhd.rankings.get(String(row.underlying_symbol ?? "").toUpperCase())} /><small>{row.direction === "CALL" ? "BULLISH" : "BEARISH"} THESIS</small><small>Expiry {String(row.expiry)} · strike {value(row.strike)}</small><small>{String(row.rule_version)}</small></span></td>
         <td><span className={styles.tradeLogStack}><b>CE {String(row.ce_symbol)}</b><small>PE {String(row.pe_symbol)}</small><small>Selected {String(row.option_symbol)}</small></span></td>
         <td><span className={styles.tradeLogStack}><b>Underlying {value(row.underlying_entry_open)}</b><small>CE {value(row.ce_entry_open)} · PE {value(row.pe_entry_open)}</small><small>Setup U {value(row.underlying_setup_close)} · option {value(row.option_setup_close)}</small></span></td>
         <td><span className={styles.tradeLogStack}><b>{precursor(conditions.underlying_precursors)}</b><small>Body {signed(num(row.underlying_body_fraction) == null ? null : num(row.underlying_body_fraction)! * 100, "%")} · required</small><small>Next open gate passed</small></span></td>

@@ -35,7 +35,7 @@ export type ScalperV2VerticalView = "session" | "visible" | "manual";
 
 export function ScalperV2Chart({
   id, title, subtitle, bars, interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
-  fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "current", profileLabel = "Current OI",
+  fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "change", profileLabel = "Change in OI",
   profileRangeExpanded = false,
   maxPainStrikes = EMPTY_MAX_PAIN,
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, selectedPutStrike = null, hoveredStrike = null,
@@ -433,7 +433,7 @@ export function ScalperV2Chart({
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
-      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label="Open interest and change in open interest aligned to the underlying price axis"><b>{profileMode === "structure" ? "OI + ΔOI by strike" : profileMode === "change" ? "ΔOI by strike" : "OI by strike"}</b><span className={css.profileIdentity}><i className={css.profileCall} />CE blue <i className={css.profilePut} />PE yellow</span>{profileMode !== "current" && <><span>Change: green + · red −</span><span>{profileLabel}</span></>}<span>{profileVisibility.visible}/{profileVisibility.total} strikes visible</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y for off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "plotted" : "outside active Y range"}</span>}</div>}
+      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label="Change in open interest by strike aligned to the underlying price axis"><b>ΔOI by strike</b><span className={css.profileIdentity}><i className={css.profileCall} />CE blue <i className={css.profilePut} />PE yellow</span><span>Negative ← 0 → Positive</span><span>Change: green + · red −</span><span>{profileLabel}</span><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y for off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "plotted" : "outside active Y range"}</span>}</div>}
     </div>
   </section>;
 }

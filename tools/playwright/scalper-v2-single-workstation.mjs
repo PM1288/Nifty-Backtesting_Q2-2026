@@ -58,12 +58,12 @@ try {
   check("CUSTOMER-LANGUAGE", forbidden.every((term) => !primaryText.includes(term)), forbidden.filter((term) => primaryText.includes(term)).join(", ") || "no internal terms in primary view");
 
   const profile = await page.getByTestId("v2-oi-profile").getAttribute("data-mode");
-  check("FOUR-LANE-PROFILE", profile === "structure", `profile mode=${profile}`);
+  check("DELTA-OI-ONLY-PROFILE", profile === "change", `profile mode=${profile}`);
   const profileState = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => ({
     geometry: JSON.parse(body.dataset.profileGeometry || "[]"),
     maximumError: Number(body.dataset.profileMaxAlignmentError),
   }));
-  check("PROFILE-ALIGNMENT", profileState.geometry.length > 0 && profileState.maximumError <= 2 && new Set(profileState.geometry.map((row) => row.metric)).size === 2, `${profileState.geometry.length} bars; max error=${profileState.maximumError}px; metrics=${[...new Set(profileState.geometry.map((row) => row.metric))].join(",")}`);
+  check("PROFILE-ALIGNMENT", profileState.geometry.length > 0 && profileState.maximumError <= 2 && profileState.geometry.every((row) => row.metric === "change"), `${profileState.geometry.length} bars; max error=${profileState.maximumError}px; metrics=${[...new Set(profileState.geometry.map((row) => row.metric))].join(",")}`);
 
   const beforeHoverRequests = hoverRequests.length;
   const beforeSetData = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="v2-chart-host-"]')].map((host) => host.dataset.setDataCount));

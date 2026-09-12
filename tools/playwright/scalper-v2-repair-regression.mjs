@@ -169,9 +169,10 @@ try {
   await page.getByRole("tab", { name: "ΔOI profile", exact: true }).click();
   check("SV2-PROFILE-ACCESSIBLE-EVIDENCE", await page.locator("section[aria-label='Accessible strike change in open interest profile'] table").count() === 1 && /Baseline OI/.test(await page.locator("section[aria-label='Accessible strike change in open interest profile']").innerText()), "Profile has a keyboard-readable exact-value alternative");
   await page.getByRole("tab", { name: "Snapshot", exact: true }).click();
-  await page.getByRole("button", { name: "Profile OI", exact: true }).click();
-  check("SV2-PROFILE-CURRENT-TOGGLE", await page.getByTestId("v2-oi-profile").getAttribute("data-mode") === "current", await page.getByTestId("v2-oi-profile").getAttribute("aria-label"));
-  await page.getByRole("button", { name: "Profile ΔOI", exact: true }).click();
+  check("SV2-PROFILE-DELTAOI-ONLY", await page.getByTestId("v2-oi-profile").getAttribute("data-mode") === "change"
+    && await page.getByRole("button", { name: "Current OI", exact: true }).count() === 0
+    && await page.getByRole("button", { name: "OI + ΔOI profile", exact: true }).count() === 0,
+  await page.getByTestId("v2-oi-profile").getAttribute("aria-label"));
 
   const dayRange = await page.getByTestId("v2-chart-host-underlying").evaluate((element) => `${element.dataset.visibleFrom}:${element.dataset.visibleTo}`);
   await page.getByRole("button", { name: "Last 30", exact: true }).click();

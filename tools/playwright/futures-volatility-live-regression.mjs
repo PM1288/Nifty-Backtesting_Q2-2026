@@ -31,7 +31,7 @@ try {
 
   const body = await page.locator("body").innerText();
   if (!body.includes("Report values are available.")) throw new Error("pending outcome explanation missing");
-  await page.getByText("410", { exact: true }).waitFor();
+  await page.getByText(String(historical.matched.observations), { exact: true }).waitFor();
   await page.getByTestId("futures-volatility-historical-detail").waitFor();
   const tableRows = await page.locator("tbody tr").count();
   if (tableRows < 9) throw new Error(`expected report values, found only ${tableRows} rows`);

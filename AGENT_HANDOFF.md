@@ -4751,3 +4751,23 @@ or outcomes were deleted.
 - Application commit `c1faf40` is pushed on canonical `master`. Dashboard image
   `sha256:45d2a4cd964438f344c71e5a5b97184604b5da247033f629b43c812efb2a98a9`
   was built and the scoped dashboard service recreated.
+
+## 2026-09-12 — FOVOLT 60-day observation table and scatter
+
+- Extended the DB-backed historical endpoint with complete matched observation
+  rows. Each row preserves report date, target session, symbol, rank, reported
+  previous/current futures volatility, delta basis points, target OHLC and the
+  three calculated next-session movement measures. Rows with incomplete or
+  invalid target OHLC remain excluded rather than becoming zero.
+- Added a visible, scroll-contained historical table plus an ECharts scatter:
+  X is reported futures daily-volatility delta in basis points; Y is the exact
+  next-session underlying open-to-close percentage. Positive moves are green,
+  negative moves red, and tooltips show symbol and both dates.
+- Default history is the latest 60 calendar days and loads without a user-run
+  action. Authenticated production evidence contains 43 reports, 35 covered
+  sessions, 288 matched plot/table observations and 7,027 benchmark rows;
+  matched absolute movement is 1.43% versus 1.11%, a descriptive +0.32 pp.
+- API typecheck/build and 208/208 tests pass; web typecheck/build and 166/166
+  tests pass. Deployed synthetic browser coverage passes at 1920x1080,
+  1440x900 and 390x844, and the authenticated live screenshot confirms the
+  chart and table render with the same 288 observations.

@@ -4959,3 +4959,39 @@ or outcomes were deleted.
   Container `44a162b330d4...` is healthy on image
   `sha256:20c1c6169b4dad977ab1e61cc1064b639bbab5ddd71520c5c752b4fa7d842743`;
   deployed entry asset `/n50/assets/index-B2xqiEqU.js`.
+
+## 2026-09-12 — Positioning & Flow acceptance v1.0 repair
+
+- Audited the complete Positioning Flow acceptance JSON, handover Markdown,
+  manifest, sources, ZIP and reference fixtures. The reference package passes
+  47/47 tests; its rules now supersede the earlier ad-hoc level weighting.
+- Price/OI patterns now use the same archived snapshot for premium and OI while
+  session-open return remains separately visible. Same-session cumulative-volume
+  counters produce interval volume; counter resets, first observations and
+  cross-session endpoints remain unavailable. Net OI/interval-volume ratios
+  preserve undefined denominators and flag values above one without clipping.
+- Candidate zones use versioned L0 current-OI or L1 40% OI, 30% interval volume,
+  30% absolute OI adjustment. Missing L1 inputs fall back exactly to L0 with no
+  reweighting. Resistance stays at/above spot, support at/below spot, actual
+  strike spacing is used, missing gaps are not bridged and scores are never
+  described as probabilities.
+- Added participant gross activity, overall/buy/sell-side shares, residual
+  caveats, complete quality-aware JSON/CSV exports and a Data Coverage tab.
+  Current retained coverage is 25 participant-OI dates, 24 participant-volume
+  dates, 25 FII-statistic dates and four NIFTY-chain dates. The 60-session chain
+  pilot, RVOL/persistence and leakage-safe historical level study remain blocked,
+  not fabricated.
+- Unknown participant labels now fail validation instead of being silently
+  dropped; the raw report remains referenced by the backfill manifest. The NSE
+  reports service passes 40/40 isolated tests.
+- Web typecheck, 188/188 tests and production build pass. API typecheck, 210/210
+  tests and build pass. The canonical repository gate passes. Authenticated
+  production browser regression passes 23/23 at 1920×1080 and 390×844; evidence
+  is outside Git at
+  `/tmp/positioning-flow-acceptance-v1-production-final2-20260912`.
+- Commits through `f0961cd` are pushed to `master` and
+  `feat/positioning-flow-acceptance-v1-20260912`. Scoped deployments recreated
+  only `n50-dashboard` and `nse-fii-reports-api`. The dashboard is healthy with
+  container `bfb7cd43ef64...`, image `sha256:9023d28edc6...` and entry asset
+  `/n50/assets/index-CeEP4k9n.js`; report service container
+  `7bab001a29a8...` is running and its health endpoint reports no last error.

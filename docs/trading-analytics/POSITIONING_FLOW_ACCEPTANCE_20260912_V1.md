@@ -33,8 +33,8 @@ data.
 
 | Status | IDs | Evidence / blocker |
 |---|---|---|
-| PASS | PF-001, PF-002, PF-005, PF-011, PF-012, PF-013, PF-015–PF-018, PF-020–PF-022, PF-025–PF-036, PF-042–PF-044, PF-050–PF-052, PF-054–PF-059, PF-062, PF-066–PF-070, PF-073–PF-077, PF-079, PF-080, PF-082 | Existing collector reused; parser rejects challenge/unknown labels; matched-window and counter fixtures; participant/market separation; L0/L1 rules; compact matrix/bubble/export implementation, full web/API gates and read-only guards. |
-| BLOCKED | PF-003, PF-004, PF-006–PF-010, PF-014, PF-019, PF-023, PF-024, PF-037–PF-041, PF-045–PF-049, PF-053, PF-060, PF-061, PF-063–PF-065, PF-071, PF-072, PF-078, PF-081 | Actual exchange-calendar backfill, immutable artifact/revision manifests, date-effective lots, fixed-cohort historical chain, availability timestamps, RVOL/persistence/delta files, frozen pre-session zones, censored outcomes and production performance/browser evidence are absent or require more retained history. |
+| PASS | PF-001, PF-002, PF-005, PF-011, PF-012, PF-013, PF-015–PF-018, PF-020–PF-022, PF-025–PF-036, PF-042–PF-044, PF-050–PF-052, PF-054–PF-059, PF-062, PF-066–PF-070, PF-073–PF-077, PF-079–PF-082 | Existing collector reused; parser rejects challenge/unknown labels; matched-window and counter fixtures; participant/market separation; L0/L1 rules; compact matrix/bubble/export implementation, full web/API gates, authenticated desktop/narrow browser checks and read-only guards. |
+| BLOCKED | PF-003, PF-004, PF-006–PF-010, PF-014, PF-019, PF-023, PF-024, PF-037–PF-041, PF-045–PF-049, PF-053, PF-060, PF-061, PF-063–PF-065, PF-071, PF-072, PF-078 | Actual exchange-calendar backfill, immutable artifact/revision manifests, date-effective lots, fixed-cohort historical chain, availability timestamps, RVOL/persistence/delta files, frozen pre-session zones, censored outcomes and production performance evidence are absent or require more retained history. |
 | NOT_RUN | None | Browser-dependent work is explicitly BLOCKED until the scoped release run rather than counted as passed by the build. |
 
 No requirement is marked PASS solely because TypeScript compiled. The original
@@ -71,5 +71,17 @@ bash scripts/verify/canonical-repository-gate.sh
 
 ## Deployment
 
-Deployment status and authenticated browser results are appended after the
-scoped release. No production deployment is claimed in this pre-release record.
+Production deployment completed through the scoped service paths:
+
+- dashboard container `bfb7cd43ef64...` is healthy on image
+  `sha256:9023d28edc6...`; final entry asset is
+  `/n50/assets/index-CeEP4k9n.js`;
+- report-service container `7bab001a29a8...` runs image
+  `sha256:641e97c5f9d...`; `/health` reports the scheduler running, latest report
+  date 11 September 2026 and no last error;
+- authenticated browser regression passes 23/23 at desktop and narrow
+  viewports. Evidence is outside Git at
+  `/tmp/positioning-flow-acceptance-v1-production-final2-20260912`.
+
+Nothing was deployed to order, strategy, notification or broker-permission
+services.

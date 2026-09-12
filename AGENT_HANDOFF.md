@@ -4873,5 +4873,13 @@ or outcomes were deleted.
 - Web typecheck, 181/181 tests and production build pass; API typecheck,
   208/208 tests and build pass. Authenticated 1920x1080 candidate browser
   regression passes 14/14 with real retained data. Evidence is outside Git at
-  `/tmp/positioning-flow-candidate-20260912`. Production release evidence follows
-  after the pushed canonical commit is deployed.
+  `/tmp/positioning-flow-candidate-20260912`.
+- Canonical feature commit `739abf4` was pushed to `master` and deployed with
+  `scripts/deploy_n50_dashboard.sh`. The scoped release recreated only
+  `n50-dashboard`; container `6704d79e40d4...` is healthy on image
+  `sha256:d4a86624260b3b8d5e41c5ef47448c2851b06a30a2cad48c97843ebaef79fa59`.
+  The deployed entry asset is `/n50/assets/index-DkAMLhvt.js`.
+- Authenticated production browser regression passes 14/14 against port 19090;
+  evidence is outside Git at `/tmp/positioning-flow-production-20260912`.
+  `/n50/`, `view=flow`, Morning View, OI & PCR and Scalper V2 routes all return
+  HTTP 200 after deployment.

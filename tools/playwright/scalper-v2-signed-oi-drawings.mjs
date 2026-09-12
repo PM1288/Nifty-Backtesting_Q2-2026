@@ -41,6 +41,7 @@ try {
   const profile = page.getByTestId("v2-oi-profile");
   const body = page.getByTestId("v2-chart-body-underlying");
   await profile.waitFor({ state: "visible" });
+  await profile.hover();
   const caption = await profile.innerText();
   check("Profile scale is visible above chart", caption.includes("Negative ← 0 → Positive") && caption.includes("ΔOI by strike"), caption);
   check("Profile identity legend declares blue CE and yellow PE", caption.includes("CE blue") && caption.includes("PE yellow") && caption.includes("green + · red −"), caption);

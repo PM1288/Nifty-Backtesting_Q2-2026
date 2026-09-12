@@ -22,6 +22,7 @@ import {
   type Facts,
 } from "../services/tradingAnalytics";
 import { oiLayers, participantComparison, sessionAlignedOi } from "../services/tradingAnalyticsOi";
+import { underlyingReferenceLevels } from "../services/tradingAnalyticsReferenceLevels";
 
 const querySchema = z.object({
   symbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/).default('NIFTY'),
@@ -542,8 +543,9 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         ),
         loadSmartApiNifty(read, asOf, parsed.data.expiry, underlying),
       ]);
+      const daily = [...dayBars].reverse();
       const resistance = resistanceViews(
-        dayBars.reverse(),
+        daily,
         asOf,
         numeric(smartapi.spot?.ltp),
         Number(process.env.TRADING_ANALYTICS_DAILY_LEVEL_LOOKBACK ?? 20),
@@ -557,6 +559,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         universe: [underlying],
         smartapi,
         resistance,
+        referenceLevels: underlyingReferenceLevels(daily, smartapi.spot, asOf),
         errors,
         state: errors.length ? "PARTIAL" : "OBSERVED",
         liveOrdersEnabled: false,

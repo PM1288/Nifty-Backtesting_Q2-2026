@@ -7,6 +7,7 @@ import {
 import { levelInObservedSession, maxPainOverlayState, observedSessionBounds, paddedSessionBounds } from "../../lib/scalperV2Geometry";
 import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2ProfileRow } from "../../lib/scalperV2OiProfile";
 import { mergeScalperV2Levels } from "../../lib/scalperV2Levels";
+import { visibleScalperV2ReferenceLevels, type ScalperV2ReferenceLevel } from "../../lib/scalperV2ReferenceLevels";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
@@ -17,6 +18,7 @@ import css from "./ScalperV2.module.css";
 type Row = Record<string, unknown>;
 const EMPTY_LEVELS: Array<{ side: "CE" | "PE"; rank: number; strike: number; currentOi: number }> = [];
 const EMPTY_PROFILE: ScalperV2ProfileRow[] = [];
+const EMPTY_REFERENCE_LEVELS: ScalperV2ReferenceLevel[] = [];
 const EMPTY_SIGNALS: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string }> = [];
 const EMPTY_MEASUREMENT: string[] = [];
 const EMPTY_MAX_PAIN: number[] = [];
@@ -39,6 +41,7 @@ export function ScalperV2Chart({
   profileRangeExpanded = false,
   maxPainStrikes = EMPTY_MAX_PAIN,
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, selectedPutStrike = null, hoveredStrike = null,
+  referenceLevels = EMPTY_REFERENCE_LEVELS,
   drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; interval: number;
@@ -58,6 +61,7 @@ export function ScalperV2Chart({
   selectedStrike?: number | null;
   selectedPutStrike?: number | null;
   hoveredStrike?: number | null;
+  referenceLevels?: ScalperV2ReferenceLevel[];
   drawingTool?: ScalperV2DrawingTool;
   drawings?: ScalperV2Drawing[];
   selectedDrawingId?: string | null;
@@ -353,12 +357,14 @@ export function ScalperV2Chart({
     }
     semanticLinesRef.current.forEach((line) => candle.removePriceLine(line));
     const latestClose = data.at(-1)?.close;
+    const visibleReferences = visibleScalperV2ReferenceLevels(referenceLevels, sessionBounds);
     const candidates = [
       ...(latestClose != null ? [{ price: latestClose, label: "NIFTY", priority: 100, color: "#0f766e" }] : []),
       ...(selectedStrike != null && levelInObservedSession(selectedStrike, sessionBounds) ? [{ price: selectedStrike, label: "SELECTED CE", priority: 90, color: "#2563eb" }] : []),
       ...(selectedPutStrike != null && levelInObservedSession(selectedPutStrike, sessionBounds) ? [{ price: selectedPutStrike, label: "SELECTED PE", priority: 90, color: "#a86600" }] : []),
       ...maxPainOverlay.visible.map((price) => ({ price, label: "MAX PAIN", priority: 70, color: "#7c3aed" })),
       ...rankLevels.filter((level) => level.rank <= 2 && levelInObservedSession(level.strike, sessionBounds)).map((level) => ({ price: level.strike, label: `${level.side}${level.rank}`, priority: level.rank === 1 ? 60 : 50, color: level.side === "CE" ? "#2563eb" : "#a86600" })),
+      ...visibleReferences.map((level) => ({ price: level.value, label: level.shortLabel, priority: level.id === "today-open" || level.id === "previous-day-close" ? 45 : 35, color: level.id.includes("month") ? "#7c3aed" : level.id.includes("week") ? "#d97706" : level.id.includes("day") ? "#64748b" : "#0891b2" })),
       ...(hoveredStrike != null && levelInObservedSession(hoveredStrike, sessionBounds) ? [{ price: hoveredStrike, label: "HOVER", priority: 20, color: "#0f766e" }] : []),
     ];
     const collisionTolerance = sessionBounds && bodyRef.current
@@ -366,13 +372,17 @@ export function ScalperV2Chart({
       : 0.05;
     semanticLinesRef.current = mergeScalperV2Levels(candidates, collisionTolerance).map((level) => candle.createPriceLine({ price: level.price, title: level.title, color: level.color, lineWidth: level.priority >= 70 ? 2 : 1, lineStyle: level.priority >= 90 ? 2 : 3, axisLabelVisible: true }));
     if (bodyRef.current) {
+      bodyRef.current.dataset.sessionLow = sessionBounds == null ? "" : String(sessionBounds.low);
+      bodyRef.current.dataset.sessionHigh = sessionBounds == null ? "" : String(sessionBounds.high);
       bodyRef.current.dataset.maxPainStrikes = maxPainOverlay.candidates.join(",");
       bodyRef.current.dataset.maxPainVisible = maxPainOverlay.visible.join(",");
+      bodyRef.current.dataset.referenceLevelsVisible = visibleReferences.map((level) => level.id).join(",");
+      bodyRef.current.dataset.referenceLevelsTotal = String(referenceLevels.length);
       bodyRef.current.dataset.maxPainStatus = maxPainOverlay.candidates.length === 0
         ? "unavailable"
         : maxPainOverlay.hidden.length === 0 ? "plotted" : "outside-active-y-range";
     }
-  }, [data, hoveredStrike, id, maxPainOverlay, rankLevels, selectedPutStrike, selectedStrike, sessionBounds]);
+  }, [data, hoveredStrike, id, maxPainOverlay, rankLevels, referenceLevels, selectedPutStrike, selectedStrike, sessionBounds]);
 
   useEffect(() => {
     markerRef.current?.setMarkers(signalEvents.flatMap((event) => {
@@ -433,7 +443,7 @@ export function ScalperV2Chart({
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
-      {id === "underlying" && <div className={css.profileCaption} data-testid="v2-oi-profile" data-mode={profileMode} aria-label="Change in open interest by strike aligned to the underlying price axis"><b>ΔOI by strike</b><span className={css.profileIdentity}><i className={css.profileCall} />CE blue <i className={css.profilePut} />PE yellow</span><span>Negative ← 0 → Positive</span><span>Change: green + · red −</span><span>{profileLabel}</span><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y for off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "plotted" : "outside active Y range"}</span>}</div>}
+      {id === "underlying" && <div className={css.profileCaption} tabIndex={0} data-testid="v2-oi-profile" data-mode={profileMode} aria-label="Change in open interest by strike aligned to the underlying price axis"><div className={css.profileCaptionSummary}><b>ΔOI</b><span className={css.profileIdentity}><i className={css.profileCall} />CE <i className={css.profilePut} />PE</span></div><div className={css.profileCaptionDetails}><span><b>ΔOI by strike</b> · CE blue · PE yellow</span><span>Negative ← 0 → Positive</span><span>Change: green + · red −</span><span>{profileLabel}</span><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y for off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "plotted" : "outside active Y range"}</span>}</div></div>}
     </div>
   </section>;
 }

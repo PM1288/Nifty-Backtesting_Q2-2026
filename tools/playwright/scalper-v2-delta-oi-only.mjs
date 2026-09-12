@@ -37,6 +37,7 @@ try {
   await profile.waitFor({ state: "visible", timeout: 30_000 });
 
   check("Underlying side profile is Delta OI only", await profile.getAttribute("data-mode") === "change", await profile.innerText());
+  await profile.hover();
   check("Profile explicitly labels the signed zero axis", /Negative ← 0 → Positive/.test(await profile.innerText()), await profile.innerText());
   check("Current and combined OI overlay controls are absent",
     await page.getByRole("button", { name: "Current OI", exact: true }).count() === 0

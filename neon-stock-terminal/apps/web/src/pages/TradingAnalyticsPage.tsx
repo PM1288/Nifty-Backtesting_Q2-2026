@@ -122,6 +122,7 @@ type Payload = {
 type ScalperContextPayload = Pick<Payload, "underlying" | "universe" | "asOf" | "smartapi" | "resistance"> & {
   state: string;
   errors: Row[];
+  referenceLevels?: import("../lib/scalperV2ReferenceLevels").ScalperV2ReferenceLevelPayload;
 };
 const tabs = {
   morning: "Morning Brief",
@@ -619,6 +620,7 @@ export function TradingAnalyticsPage() {
               metricLegs={scalperContext.smartapi.metricLegs ?? []}
               state={scalperContext.state}
               errors={scalperContext.errors}
+              referenceLevels={scalperContext.referenceLevels}
               spot={scalperContext.smartapi.spot?.ltp == null ? null : Number(scalperContext.smartapi.spot.ltp)}
             />
           </Suspense>

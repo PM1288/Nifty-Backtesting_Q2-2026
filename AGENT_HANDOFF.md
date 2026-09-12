@@ -1,5 +1,28 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-12 — Scalper V2 underlying reference tracker
+
+- Branch `fix/scalper-v2-reference-level-gauge-20260912` changes only the
+  existing `view=scalper_v2`. It adds canonical current/day/week/month and
+  complete 5/30-session reference values, a compact horizontal reference
+  tracker, and matching underlying price lines only when the raw reference is
+  inside today's observed high/low.
+- References do not participate in candlestick autoscale. Close semantic prices
+  reuse the existing label merger. Off-session references remain visible in the
+  independent tracker and JSON export without shrinking or stretching the
+  chart.
+- The signed Delta OI-by-strike overlay remains Delta OI only. Its CE-blue and
+  PE-yellow key is compact at rest and expands on pointer hover or keyboard
+  focus for sign, coverage and max-pain details.
+- Focused API 2/2 and web 2/2 reference tests pass. Full web typecheck,
+  192/192 tests and production build pass; API typecheck, 212/212 tests and
+  build pass; the canonical source gate passes. Candidate Chromium passes 5/5
+  at 1920x1080 with evidence outside Git under
+  `/tmp/scalper-v2-reference-levels-candidate`. Deployment identity and
+  production browser evidence are pending below this entry.
+- Full implementation record:
+  `docs/trading-analytics/SCALPER_V2_REFERENCE_LEVEL_GAUGE_20260912.md`.
+
 ## 2026-09-12 — Home MWHD top-15 dual-rank boards
 
 - Branch `fix/mwhd-top15-dual-tags-20260912` limits each independent

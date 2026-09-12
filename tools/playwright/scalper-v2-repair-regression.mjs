@@ -154,6 +154,7 @@ try {
     const afterAxisGesture = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => Number(body.dataset.profileMaxAlignmentError));
   check("SV2-FIX-038", afterAxisGesture <= 2, `native-axis gesture max strike alignment error ${afterAxisGesture}px`);
   } else check("SV2-FIX-038", false, "Underlying chart body geometry unavailable");
+  await page.getByTestId("v2-oi-profile").hover();
   check("SV2-PROFILE-VISIBLE-STATUS", /\d+\/\d+ strikes visible/.test(await page.getByTestId("v2-oi-profile").innerText()), await page.getByTestId("v2-oi-profile").innerText());
   await page.getByRole("button", { name: "All strikes Y", exact: true }).click();
   await page.waitForTimeout(150);

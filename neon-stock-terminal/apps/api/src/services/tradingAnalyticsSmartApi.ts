@@ -63,7 +63,7 @@ export async function loadSmartApiNifty(
   const [spotRows, expiries, calendar] = await Promise.all([
     read(
       "smartapi_spot",
-      `SELECT ltp::float8,ts,exch_feed_time FROM public.quote_snapshots WHERE exchange='NSE' AND symbol_token=$2 AND ts BETWEEN $1::timestamptz-interval '7 days' AND $1::timestamptz AND exch_feed_time<=$1::timestamptz ORDER BY ts DESC LIMIT 1`,
+      `SELECT ltp::float8,open::float8 day_open,high::float8 day_high,low::float8 day_low,close::float8 previous_close,ts,exch_feed_time FROM public.quote_snapshots WHERE exchange='NSE' AND symbol_token=$2 AND ts BETWEEN $1::timestamptz-interval '7 days' AND $1::timestamptz AND exch_feed_time<=$1::timestamptz ORDER BY ts DESC LIMIT 1`,
       asOf,
       underlying.token,
     ),

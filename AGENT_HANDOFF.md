@@ -22,6 +22,20 @@
   production browser evidence are pending below this entry.
 - Full implementation record:
   `docs/trading-analytics/SCALPER_V2_REFERENCE_LEVEL_GAUGE_20260912.md`.
+- Commit `dc727201c05d0987d8570cc63d5d7de0839cb914` was pushed to the
+  feature branch and canonical `master`, then deployed with the scoped N50
+  dashboard script. Container `5bb7b429e459...` is healthy with zero restarts
+  on image
+  `sha256:510477ad60739feea429328b11d710c2577bbb09d75560de65f96882b048f1e9`;
+  entry asset `/n50/assets/index-qjzAd7rD.js`; home and health return HTTP 200.
+- Authenticated production Chromium passes 5/5 for the new reference tracker,
+  9/9 for the Delta-OI-only profile regression and 20/20 for the broader
+  single-workstation regression. The real 2026-09-11 response exposed 14
+  reference values; exactly Today Open and Yesterday Open were inside that
+  session's raw high/low and plotted. Evidence is outside Git under
+  `/tmp/scalper-v2-reference-levels-production-20260912`,
+  `/tmp/scalper-v2-delta-oi-only-production-reference-20260912` and
+  `/tmp/scalper-v2-single-workstation-reference-production-20260912`.
 
 ## 2026-09-12 — Home MWHD top-15 dual-rank boards
 

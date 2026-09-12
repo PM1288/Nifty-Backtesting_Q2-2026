@@ -45,6 +45,11 @@ The authenticated candidate browser check covers reference rendering,
 off-session exclusion, compact legend geometry and hover expansion. Evidence is
 stored outside Git under `/tmp/scalper-v2-reference-levels-candidate`.
 
-Required full repository checks and production evidence are recorded in
-`AGENT_HANDOFF.md` after release. No strategy, signal, measurement, position,
-order, notification or Scalper V1 behavior is changed.
+Full web typecheck, 192/192 tests and build pass; API typecheck, 212/212 tests
+and build pass; the canonical source gate passes. Authenticated production
+Chromium passes 5/5 for this feature, 9/9 for the Delta-OI-only profile and
+20/20 for the broader V2 workstation. Production returned 14 real references
+for 2026-09-11 and plotted exactly the two inside the raw session range. The
+scoped N50 dashboard deployment is healthy; exact release identity and evidence
+paths are recorded in `AGENT_HANDOFF.md`. No strategy, signal, measurement,
+position, order, notification or Scalper V1 behavior is changed.

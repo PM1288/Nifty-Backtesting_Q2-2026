@@ -48,7 +48,7 @@ try {
   const rowCount = await rows.count();
   const symbols = await rows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
   check("Exactly one visual row represents each stock", rowCount >= 20 && new Set(symbols).size === rowCount, `${rowCount} stock rows / ${new Set(symbols).size} unique`);
-  check("Both alternative monthly routes are visible in grouped headers", await widget.getByRole("columnheader", { name: "M−1 CLOSE" }).count() === 1 && await widget.getByRole("columnheader", { name: "M−2 CLOSE" }).count() === 1, "M−1 and M−2 grouped headers inspected");
+  check("Both alternative monthly routes are visible in grouped headers", await widget.getByRole("columnheader", { name: "M−1 CLOSE" }).count() === 1 && await widget.getByRole("columnheader", { name: "M−1 + M−2 SUFFICIENCY" }).count() === 1, "M−1 route and cumulative M−1 + M−2 sufficiency route inspected");
   check("Each route exposes seven additive checkpoints", ["M", "W0", "W−1", "D0", "1H", "15m", "5m"].every((label) => text.includes(label)), text.slice(0, 800));
   check("Observed pass and fail conditions use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Observed state cells inspected; pending semantics are covered by unit fixtures");
   const qualifiedCount = Number((text.match(/^(\d+)\/\d+ fully qualified/m) ?? [])[1] ?? 0);

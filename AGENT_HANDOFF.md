@@ -4833,8 +4833,20 @@ or outcomes were deleted.
 - Reused that rank in OIIS, both Scalpers, current and legacy Trade Log, and
   Stock 360. The shared React Query key prevents a parallel collector or a
   separate calculation service.
-- Web typecheck, 176/176 tests and production build pass. A mocked-authenticated
-  1920x1080 browser run verified the M−1+M−2 header, default collapsed failure
-  cohort, red expansion state, M−2-only green state and rank #1 ordering.
-  Canonical repository gate passes. Runtime deployment evidence follows after
-  release of the pushed canonical master commit.
+- Web typecheck, 176/176 tests and production build pass; API typecheck,
+  208/208 tests and build pass; the canonical repository gate passes.
+  Authenticated production browser regression passes 16/16 at 1440px desktop
+  and 390px mobile, including the cumulative M−1 + M−2 sufficiency header,
+  one-row-per-stock geometry, 34px rows, contained scrolling, ordering and the
+  evidence drawer. Evidence is outside Git at `/tmp/mwhd-production-20260912`.
+- The broader deployed Scalper V2 production regression passes 20/20 at
+  1920x1080 and 1440x900, including native chart geometry, OI-profile alignment,
+  no hover hydration/network, analytics dock, heatmap and original-Scalper
+  preservation. Evidence is outside Git at
+  `/tmp/scalper-v2-production-20260912`.
+- Canonical application commit `358d7c2` is pushed on `master`. Only
+  `n50-dashboard` was recreated. Container
+  `7b1fa950dbc6f48bc9be686333988a13616379c0934b35539f8f1391159991d5`
+  is healthy on image
+  `sha256:d1bb8864c15fc2b100a98db2b1a8638ab707d260d6dfa072ab2ee4a173601f85`;
+  `/n50/`, Monthly Open, Scalper V2 and OIIS Live routes all return HTTP 200.

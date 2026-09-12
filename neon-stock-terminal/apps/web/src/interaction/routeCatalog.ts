@@ -36,7 +36,7 @@ export const ROUTE_COMMANDS: readonly RouteEntry[] = [
   { id: "options-overview", label: "Options Snapshot", to: "/options/intelligence", description: "Current chain, expiry and expected move", keywords: ["option chain"] },
   { id: "options-advanced", label: "Options Advanced Data", to: "/options/snapshot", description: "Detailed options evidence" },
   { id: "volatility-signals", label: "F&O Volatility Signals", to: "/options/volatility-signals", description: "Qualified and near-miss volatility candidates" },
-  { id: "futures-volatility", label: "Futures Volatility Screener", to: "/futures/volatility", description: "Exact NSE FOVOLT daily futures-volatility changes and next-session outcomes", keywords: ["FOVOLT", "daily volatility"] },
+  { id: "futures-volatility", group: "Strategies", label: "Futures Volatility Screener", to: "/futures/volatility", description: "Exact NSE FOVOLT daily futures-volatility changes and next-session outcomes", keywords: ["FOVOLT", "daily volatility"] },
   { id: "oiis-live", group: "Strategies", label: "OIIS Live", to: "/strategy/oiis-live", description: "Current selection, gates and near misses", keywords: ["strategy evaluation"] },
   { id: "oiss-v1-202608", group: "Strategies", label: "OISS v1.202608", to: "/strategy/oiss-v1-202608", description: "Independent explainable decision and risk framework", keywords: ["OISS", "radar", "carry", "rejected"] },
   { id: "oiis-history", group: "Strategies", label: "OIIS Run History", to: "/strategy/oiis-live/history", description: "Historical 30-minute selection runs" },

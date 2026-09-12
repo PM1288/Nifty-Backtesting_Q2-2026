@@ -9,6 +9,8 @@
 .actions button { display:flex; align-items:center; gap:6px; }
 .context { display:flex; gap:16px; flex-wrap:wrap; align-items:center; padding:11px 14px; border:1px solid #d7e0eb; border-radius:10px; background:#fff; font-size:13px; }
 .context span { color:#526175; }
+.pendingOutcome { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:11px 14px; border:1px solid #e5c96c; border-radius:10px; background:#fffbea; color:#5f4700; font-size:13px; }
+.pendingOutcome span { color:#6f5a16; }
 .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
 .metrics article,.panel,.inspector,.backtest { min-width:0; padding:15px; border:1px solid #d7e0eb; border-radius:12px; background:#fff; }
 .metrics article { display:grid; gap:5px; }

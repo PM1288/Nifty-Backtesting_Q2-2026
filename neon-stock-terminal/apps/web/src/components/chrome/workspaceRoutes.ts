@@ -24,6 +24,7 @@ export type WorkspaceRouteId =
   | "rolling-monthly"
   | "monthly-strategy"
   | "scalper-dashboard"
+  | "futures-volatility"
   | "trendlyne-summary"
   | "long-options"
   | "nifty-weekly-options"
@@ -88,6 +89,13 @@ export const STRATEGY_MENU_ROUTES = [
     description: "Current-month stock screener with daily, weekly and monthly anchors",
     path: "/strategy/scalper-dashboard",
     icon: BarChart3,
+  },
+  {
+    id: "futures-volatility",
+    label: "Futures Volatility",
+    description: "NSE FOVOLT daily futures-volatility screen and historical evaluation",
+    path: "/futures/volatility",
+    icon: Activity,
   },
   {
     id: "rolling-monthly",
@@ -158,6 +166,7 @@ const strategyHeaderOrder = [
   ["long-options", "DERIVATIVE STRATEGIES"],
   ["nifty-weekly-options", "DERIVATIVE STRATEGIES"],
   ["trading-analytics", "DERIVATIVE STRATEGIES"],
+  ["futures-volatility", "DERIVATIVE STRATEGIES"],
 ] as const;
 
 export const STRATEGY_HEADER_ROUTES: readonly HeaderNavigationItem[] = strategyHeaderOrder.map(([id, section]) => ({
@@ -344,6 +353,18 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     primaryMobile: false,
     parentId: "oiis-lab",
     match: (pathname) => pathname.startsWith("/strategy/nifty-context"),
+  },
+  {
+    id: "futures-volatility",
+    label: "Futures Volatility",
+    compactLabel: "FOVOLT",
+    description: "NSE FOVOLT screen and historical evaluation",
+    path: "/futures/volatility",
+    icon: Activity,
+    primaryDesktop: false,
+    primaryMobile: false,
+    parentId: "oiis-lab",
+    match: (pathname) => pathname.startsWith("/futures/volatility"),
   },
   {
     id: "paper-trading",

@@ -74,6 +74,7 @@ test("top Strategy workspace groups independent strategy dashboards without merg
     "OISS v1.202608",
     "Monthly Strategy",
     "Scalper Dashboard",
+    "Futures Volatility",
     "Rolling Strategy",
     "Long Options",
     "NIFTY Options",
@@ -89,6 +90,8 @@ test("top Strategy workspace groups independent strategy dashboards without merg
   assert.equal(resolveWorkspaceRoute("/strategy/trading-analytics").parentId, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/nifty-context").id, "nifty-context");
   assert.equal(resolveWorkspaceRoute("/strategy/nifty-context").parentId, "oiis-lab");
+  assert.equal(resolveWorkspaceRoute("/futures/volatility").id, "futures-volatility");
+  assert.equal(resolveWorkspaceRoute("/futures/volatility").parentId, "oiis-lab");
 });
 
 test("single-line command header keeps the Option 4 taxonomy in one central configuration", () => {
@@ -108,6 +111,7 @@ test("single-line command header keeps the Option 4 taxonomy in one central conf
     "Long Options",
     "NIFTY Options",
     "Trading Analytics",
+    "Futures Volatility",
   ]);
   assert.equal(STRATEGY_HEADER_ROUTES[0]?.section, "LIVE & CURRENT");
   assert.equal(STRATEGY_HEADER_ROUTES[2]?.section, "RESEARCH");

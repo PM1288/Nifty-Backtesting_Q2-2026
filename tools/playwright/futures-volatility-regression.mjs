@@ -60,6 +60,11 @@ try {
     const response = await page.goto(`${baseUrl}/futures/volatility`, { waitUntil: "networkidle" });
     if (!response?.ok()) throw new Error(`candidate route returned ${response?.status()}`);
     await page.getByRole("heading", { name: "Futures Volatility Screener" }).waitFor();
+    await page.getByRole("button", { name: "Strategy", exact: true }).click();
+    const strategyLink = page.getByRole("menuitem", { name: /Futures Volatility/ });
+    await strategyLink.waitFor();
+    if (await strategyLink.getAttribute("href") !== "/n50/futures/volatility") throw new Error("Futures Volatility Strategy menu link is missing or incorrect");
+    await page.keyboard.press("Escape");
     await page.getByText("SYNTHPASS", { exact: false }).first().waitFor();
     if (await page.getByText("1.2048", { exact: true }).count() === 0) throw new Error("exact delta display missing");
     if (await page.getByText("All 16 physical source fields", { exact: true }).count() === 0) throw new Error("raw-field inspector missing");

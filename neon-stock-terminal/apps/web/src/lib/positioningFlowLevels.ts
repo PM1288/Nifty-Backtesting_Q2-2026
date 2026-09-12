@@ -105,7 +105,7 @@ function wallState(leg: StrikeFlowLeg): string {
 }
 
 function velocity(leg: StrikeFlowLeg): number | null {
-  if (leg.oiChange == null || !leg.observedAt) return null;
+  if (leg.oiChange == null || !leg.observedAt || leg.volumeCounterState !== "COMPARABLE") return null;
   const baselineAt = leg.baselineAt;
   if (!baselineAt) return null;
   const hours = (Date.parse(leg.observedAt) - Date.parse(baselineAt)) / 3_600_000;

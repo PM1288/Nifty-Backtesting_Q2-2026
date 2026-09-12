@@ -42,6 +42,7 @@ test("level model falls back exactly to L0 and never renormalises missing L1 inp
   const l1 = levels.find((level) => level.strike === 110 && level.role === "Resistance")!;
   assert.equal(l0.variant, "L0");
   assert.equal(l0.marketStrength, 25);
+  assert.equal(l0.velocityPerHour, null);
   assert.ok(l0.warnings.includes("L1_UNAVAILABLE_INTERVAL_VOLUME_OR_OI_CHANGE"));
   assert.equal(l1.variant, "L1");
 });

@@ -64,7 +64,7 @@ export function ResponsiveWorkspaceNavigation({
 }) {
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [expandedMobile, setExpandedMobile] = useState<MenuId | null>("markets");
+  const [expandedMobile, setExpandedMobile] = useState<MenuId | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLElement>(null);
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
@@ -159,7 +159,7 @@ export function ResponsiveWorkspaceNavigation({
   const StrategyIcon = STRATEGY_HEADER_ROUTES[0].icon;
 
   return <div ref={rootRef} className={styles.commandHeader}>
-    <button ref={mobileTriggerRef} type="button" className={styles.mobileMenuTrigger} aria-label="Open navigation" aria-expanded={sheetOpen} aria-controls="mobile-global-navigation" onClick={() => setSheetOpen(true)}><Menu size={20} aria-hidden="true" /></button>
+    <button ref={mobileTriggerRef} type="button" className={styles.mobileMenuTrigger} aria-label="Open navigation" aria-expanded={sheetOpen} aria-controls="mobile-global-navigation" onClick={() => { setExpandedMobile(strategyActive ? "strategy" : marketsActive ? "markets" : null); setSheetOpen(true); }}><Menu size={20} aria-hidden="true" /></button>
     <div className={styles.brandSlot}>{brandSlot}</div>
     <div className={styles.searchSlot}>{searchSlot}</div>
     <nav className={styles.primaryNavigation} aria-label="Primary navigation">

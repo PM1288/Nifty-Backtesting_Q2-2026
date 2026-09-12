@@ -65,7 +65,8 @@ try {
       await desktopStrategy.click();
     } else {
       await page.getByRole("button", { name: "Open navigation" }).click();
-      await page.getByRole("button", { name: "Strategy", exact: true }).click();
+      const mobileStrategy = page.getByRole("button", { name: "Strategy", exact: true });
+      if (await mobileStrategy.getAttribute("aria-expanded") !== "true") await mobileStrategy.click();
     }
     const strategyLink = page.getByRole("menuitem", { name: /Futures Volatility/ });
     await strategyLink.waitFor();

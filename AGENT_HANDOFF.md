@@ -4732,3 +4732,22 @@ or outcomes were deleted.
 - Application commit `a78ba10` is pushed on canonical `master`. Dashboard image
   `sha256:52760011af283338b7295518b1d26c7496a293264695bb8c0175b4354a7e7b7e`
   is healthy with zero restarts.
+
+## 2026-09-12 — Stored FOVOLT historical evaluation auto-load
+
+- Removed the user-triggered `Run evaluation` requirement. The historical
+  section now loads automatically from the FOVOLT reports and canonical
+  next-session EQ prices already stored in PostgreSQL; changing either bounded
+  date input refreshes the stored-evidence evaluation automatically.
+- Expanded the initial range to six months so all currently retained FOVOLT
+  history is represented without a manual action. The deployed authenticated
+  view displays 74 reports, 43 independently covered sessions, 410 matched
+  observations and 8,593 same-report benchmark observations. It reports mean
+  absolute open-to-close movement of 1.48% versus 1.13%, a descriptive +0.35pp
+  difference, with the existing archive-timing limitation retained.
+- Web typecheck, 166/166 tests and production build pass. Deployed synthetic
+  browser checks pass at 1920x1080, 1440x900 and 390x844; authenticated live
+  browser evidence confirms the historical values appear without a click.
+- Application commit `c1faf40` is pushed on canonical `master`. Dashboard image
+  `sha256:45d2a4cd964438f344c71e5a5b97184604b5da247033f629b43c812efb2a98a9`
+  was built and the scoped dashboard service recreated.

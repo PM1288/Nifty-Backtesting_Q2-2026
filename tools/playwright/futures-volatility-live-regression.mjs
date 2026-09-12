@@ -16,9 +16,11 @@ try {
 
   const page = await context.newPage();
   const dataResponse = page.waitForResponse((response) => response.url().includes("/v1/futures-volatility/screener?") && response.ok());
+  const historicalResponse = page.waitForResponse((response) => response.url().includes("/v1/futures-volatility/backtest?") && response.ok());
   const response = await page.goto(`${baseUrl}/futures/volatility`, { waitUntil: "domcontentloaded" });
   if (!response?.ok()) throw new Error(`page HTTP ${response?.status()}`);
   const api = await (await dataResponse).json();
+  const historical = await (await historicalResponse).json();
   await page.getByRole("heading", { name: "Futures Volatility Screener" }).waitFor();
 
   await page.locator('button[aria-controls="strategy-global-menu"]').click();
@@ -52,6 +54,10 @@ try {
     firstCurrentVol: first.currentFuturesDailyVol ?? null,
     firstDeltaBp: first.deltaBasisPoints ?? null,
     firstOutcomeState: first.outcomeState ?? null,
+    storedHistoricalReports: historical?.counts?.downloadedReports ?? null,
+    storedCoveredSessions: historical?.counts?.independentCoveredSessions ?? null,
+    storedMatchedObservations: historical?.matched?.observations ?? null,
+    storedBenchmarkObservations: historical?.nonmatched?.observations ?? null,
     screenshot,
   }, null, 2));
   await context.close();

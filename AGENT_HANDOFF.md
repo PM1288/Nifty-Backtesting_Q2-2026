@@ -4927,3 +4927,35 @@ or outcomes were deleted.
   `/tmp/scalper-v2-delta-oi-only-production-20260912`. The broader legacy repair
   script did not complete because its unrelated drawing-editor click was
   intercepted by the inspector; no pass is claimed for that broader script.
+
+## 2026-09-12 — Positioning & Flow probable levels
+
+- Added the `Likely Levels` tab and an above-fold zone summary to the existing
+  Positioning & Flow view. It scores anonymous CE resistance and PE support
+  evidence separately, keeps aggregate participant alignment as a separate
+  context, and never attributes a strike to FII, Pro or Client.
+- Added the documented 30/25/15/15/10/5 research weighting, side-correct
+  price/OI states, added/removed OI, timestamp-derived velocity, structural and
+  round-number confluence, adjacent-strike zone merging, market strength and
+  confidence. No trading strategy or signal formula changed.
+- Reused the existing `market_data.nse_fii_participant_volume` source and
+  exposed its current/previous comparison through the read-only API. The UI
+  keeps participant volume, outstanding position and option-chain evidence
+  separate. The reconciliation TOTAL row is preserved in export but excluded
+  from the displayed 4/4 participant count.
+- Durable persistence, contract delta-weighted OI and historical level success
+  rates remain visibly unavailable because the current response lacks the
+  required multi-snapshot history, authorised delta-factor source and frozen
+  pre-session predictions. Reach, rejection and two-consecutive-close break
+  outcome contracts are fixture-tested, but no fixture result is presented as
+  a production probability.
+- Web typecheck, 184/184 tests and production build pass; API typecheck,
+  209/209 tests and build pass; canonical repository gate passes.
+  Authenticated production browser regression passes 18/18 with real retained
+  data at 1920x1080. Evidence is outside Git at
+  `/tmp/positioning-flow-likely-levels-production-20260912-final`.
+- Commits `4606230` and `e56cb08` are pushed to `master`. Deployment used
+  `scripts/deploy_n50_dashboard.sh` and recreated only `n50-dashboard`.
+  Container `44a162b330d4...` is healthy on image
+  `sha256:20c1c6169b4dad977ab1e61cc1064b639bbab5ddd71520c5c752b4fa7d842743`;
+  deployed entry asset `/n50/assets/index-B2xqiEqU.js`.

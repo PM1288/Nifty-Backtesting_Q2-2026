@@ -117,11 +117,17 @@ is incomplete.
 
 - Web typecheck, 184/184 tests and production build pass.
 - API typecheck, 209/209 tests and build pass.
-- Authenticated candidate browser regression must be rerun after deployment at 1920x1080 using
+- Authenticated production browser regression passes 18/18 at 1920x1080 using
   real retained source data. It verifies navigation, participant labels, two
   hero charts, strike rows, dataset separation, no ownership claim, above-fold
   matrix, JSON/CSV downloads, bubble or truthful baseline state, history,
   evaluation, Likely Levels disclosures and absence of page errors.
+- Evidence: `/tmp/positioning-flow-likely-levels-production-20260912-final`
+  (runtime evidence, intentionally not committed).
+
+Deployment used `scripts/deploy_n50_dashboard.sh` and recreated only the
+`n50-dashboard` service. The final container is healthy; no order or strategy
+configuration changed.
 
 Deployment evidence is appended to `AGENT_HANDOFF.md` after the pushed release
 commit is deployed.

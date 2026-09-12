@@ -20,16 +20,20 @@ export function visibleScalperV2ReferenceLevels(levels: ScalperV2ReferenceLevel[
   return levels.filter((level) => level.id !== "current" && levelInObservedSession(level.value, bounds));
 }
 
-export function scalperV2ReferenceGauge(levels: ScalperV2ReferenceLevel[]) {
+export function scalperV2ReferenceGauge(levels: ScalperV2ReferenceLevel[], strikes: number[] = []) {
   const valid = levels.filter((level) => Number.isFinite(level.value));
-  if (!valid.length) return { low: null, high: null, points: [] as Array<ScalperV2ReferenceLevel & { position: number }> };
-  const minimum = Math.min(...valid.map((level) => level.value));
-  const maximum = Math.max(...valid.map((level) => level.value));
-  const fallback = Math.max(Math.abs(minimum) * 0.002, 1);
-  const span = maximum - minimum || fallback * 2;
-  const low = minimum - span * 0.03, high = maximum + span * 0.03;
+  const lowLevel = valid.find((level) => level.id === "thirty-day-low");
+  const highLevel = valid.find((level) => level.id === "thirty-day-high");
+  if (!lowLevel || !highLevel || highLevel.value <= lowLevel.value) return {
+    low: null, high: null,
+    points: [] as Array<ScalperV2ReferenceLevel & { position: number }>,
+    strikes: [] as Array<{ value: number; position: number }>,
+  };
+  const low = lowLevel.value, high = highLevel.value;
+  const position = (value: number) => 100 * (value - low) / (high - low);
   return {
     low, high,
-    points: valid.map((level) => ({ ...level, position: 100 * (level.value - low) / (high - low) })).sort((a, b) => a.value - b.value),
+    points: valid.filter((level) => level.value >= low && level.value <= high).map((level) => ({ ...level, position: position(level.value) })).sort((a, b) => a.value - b.value),
+    strikes: [...new Set(strikes.filter((strike) => Number.isFinite(strike) && strike >= low && strike <= high))].sort((a, b) => a - b).map((value) => ({ value, position: position(value) })),
   };
 }

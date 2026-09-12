@@ -17,9 +17,17 @@ reference never expands or shrinks the session price scale. Close or identical
 levels use the existing semantic label merger.
 
 A separate compact horizontal reference tracker preserves every available
-reference, including off-session values. Its scale is independent from the
-candlestick price scale, and exact values, labels and source dates remain
-available through the tracker and JSON export.
+reference, including off-session values. Its fixed endpoints are the exact
+observed 30-session low and high. It includes a prominent current-underlying
+readout and marker plus one labelled tick for every available selected-expiry
+strike inside that range. Narrow screens scroll the scale internally instead
+of dropping ticks or widening the page. Exact reference values, labels and
+source dates remain available below the scale and in JSON export.
+
+The visual hierarchy adapts the read-only linear-gauge pattern shown by the
+MIT-licensed `SpinexIO/horizontal_gauge` project. No Flutter package or source
+code was added to this React application; the implementation uses the existing
+V2 React/CSS components and canonical market data.
 
 The price-aligned side overlay remains signed Delta OI only. Its legend is now
 compact at rest (`Delta OI`, CE, PE) and expands on hover or keyboard focus to
@@ -40,12 +48,13 @@ blue and yellow; positive/negative change remains green/red.
 ## Verification
 
 Focused deterministic tests cover period/window derivation, incomplete-window
-missingness, raw-session line eligibility and the independent gauge domain.
-The authenticated candidate browser check covers reference rendering,
-off-session exclusion, compact legend geometry and hover expansion. Evidence is
-stored outside Git under `/tmp/scalper-v2-reference-levels-candidate`.
+missingness, raw-session line eligibility, the exact 30-session gauge domain
+and strike filtering. The authenticated candidate browser check covers exact
+range endpoints, every rendered strike label, reference rendering, off-session
+chart exclusion, compact legend geometry and hover expansion. Evidence is
+stored outside Git under `/tmp/scalper-v2-30d-strike-gauge-candidate`.
 
-Full web typecheck, 192/192 tests and build pass; API typecheck, 212/212 tests
+Full web typecheck, 193/193 tests and build pass; API typecheck, 212/212 tests
 and build pass; the canonical source gate passes. Authenticated production
 Chromium passes 5/5 for this feature, 9/9 for the Delta-OI-only profile and
 20/20 for the broader V2 workstation. Production returned 14 real references

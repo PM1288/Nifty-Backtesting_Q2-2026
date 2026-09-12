@@ -23,10 +23,12 @@ try {
   const session = (await context.storageState()).cookies.find((cookie) => cookie.name.includes("session"));
   if (session && new URL(appOrigin).hostname === "127.0.0.1") await context.addCookies([{ ...session, domain: "127.0.0.1", path: "/", secure: false, sameSite: "Lax" }]);
   const page = await context.newPage();
-  let observedReferencePayload = null;
+  const browserErrors = [];
+  page.on("pageerror", (error) => browserErrors.push(String(error)));
+  let observedContext = null;
   page.on("response", async (response) => {
     if (!response.url().includes("/v1/trading-analytics/scalper-context")) return;
-    try { observedReferencePayload = (await response.json()).referenceLevels ?? null; } catch { /* surfaced by the visible-state checks */ }
+    try { observedContext = await response.json(); } catch { /* surfaced by the visible-state checks */ }
   });
   if (injectFixture) await page.route("**/v1/trading-analytics/scalper-context**", async (route) => {
     const response = await route.fetch();
@@ -39,19 +41,31 @@ try {
       { id: "previous-day-close", label: "Yesterday close", shortLabel: "D-1 C", value: value + 1, sourceDate: sessionDate, source: "daily_bar" },
       { id: "current-week-open", label: "Current week open", shortLabel: "W O", value: value - 500, sourceDate: sessionDate, source: "daily_bar" },
       { id: "current-month-open", label: "Current month open", shortLabel: "M O", value: value - 1_000, sourceDate: sessionDate, source: "daily_bar" },
+      { id: "thirty-day-low", label: "30-session minimum", shortLabel: "30D MIN", value: value - 1_100, sourceDate: sessionDate, source: "derived_window" },
+      { id: "thirty-day-high", label: "30-session maximum", shortLabel: "30D MAX", value: value + 1_100, sourceDate: sessionDate, source: "derived_window" },
     ] };
     await route.fulfill({ response, json: body });
   });
   await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper_v2&interval=5`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const terminal = page.getByTestId("scalper-v2");
-  await terminal.waitFor({ state: "visible", timeout: 90_000 });
+  await terminal.waitFor({ state: "visible", timeout: 90_000 }).catch(async () => {
+    throw new Error(`Scalper V2 did not mount: ${JSON.stringify({ url: page.url(), errors: browserErrors, body: (await page.locator("body").innerText()).slice(0, 2_000) })}`);
+  });
   const gauge = page.getByTestId("v2-underlying-level-gauge");
   await gauge.waitFor({ state: "visible", timeout: 30_000 });
   const gaugeText = await gauge.innerText();
   check("Gauge lists current and period references", /NOW/.test(gaugeText) && /D O/.test(gaugeText) && /D-1 C/.test(gaugeText) && /W O/.test(gaugeText) && /M O/.test(gaugeText), gaugeText);
+  const gaugeRange = await gauge.getByRole("img").evaluate((element) => ({ low: Number(element.dataset.rangeLow), high: Number(element.dataset.rangeHigh), strikeCount: Number(element.dataset.strikeCount) }));
+  const referenceLevels = observedContext?.referenceLevels?.levels ?? [];
+  const expectedLow = Number(referenceLevels.find((level) => level.id === "thirty-day-low")?.value);
+  const expectedHigh = Number(referenceLevels.find((level) => level.id === "thirty-day-high")?.value);
+  const expectedStrikes = [...new Set((observedContext?.smartapi?.strikes ?? []).map(Number).filter((strike) => Number.isFinite(strike) && strike >= expectedLow && strike <= expectedHigh))];
+  check("Gauge domain is the exact 30-session low and high", gaugeRange.low === expectedLow && gaugeRange.high === expectedHigh, JSON.stringify({ gaugeRange, expectedLow, expectedHigh }));
+  const renderedStrikes = (await page.getByTestId("v2-reference-strike-tick").allInnerTexts()).map((value) => Number(value.replaceAll(",", "")));
+  check("Gauge labels every available strike inside the 30-session range", gaugeRange.strikeCount === expectedStrikes.length && JSON.stringify(renderedStrikes) === JSON.stringify(expectedStrikes), JSON.stringify({ gaugeRange, expectedStrikes, renderedStrikes }));
   const bodyState = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => ({ low: Number(element.dataset.sessionLow), high: Number(element.dataset.sessionHigh), visible: element.dataset.referenceLevelsVisible?.split(",").filter(Boolean) ?? [], total: Number(element.dataset.referenceLevelsTotal) }));
-  const expectedVisible = (observedReferencePayload?.levels ?? []).filter((level) => level.id !== "current" && Number(level.value) >= bodyState.low && Number(level.value) <= bodyState.high).map((level) => level.id).sort();
-  check("Chart receives reference levels but plots only raw-session-eligible levels", bodyState.total === (observedReferencePayload?.levels?.length ?? -1) && JSON.stringify([...bodyState.visible].sort()) === JSON.stringify(expectedVisible), JSON.stringify({ bodyState, expectedVisible }));
+  const expectedVisible = referenceLevels.filter((level) => level.id !== "current" && Number(level.value) >= bodyState.low && Number(level.value) <= bodyState.high).map((level) => level.id).sort();
+  check("Chart receives reference levels but plots only raw-session-eligible levels", bodyState.total === referenceLevels.length && JSON.stringify([...bodyState.visible].sort()) === JSON.stringify(expectedVisible), JSON.stringify({ bodyState, expectedVisible }));
   const profile = page.getByTestId("v2-oi-profile");
   const collapsed = await profile.boundingBox();
   check("Delta OI legend starts compact", !await profile.getAttribute("open") && Number(collapsed?.height) <= 40, JSON.stringify(collapsed));

@@ -1,5 +1,26 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-12 — Scalper V2 30-session strike gauge
+
+- Branch `fix/scalper-v2-30d-strike-gauge-20260912` refines the existing
+  underlying reference tracker into a read-only horizontal gauge inspired by
+  the MIT `SpinexIO/horizontal_gauge` visual hierarchy; no Flutter dependency
+  or copied package source was introduced.
+- Gauge endpoints are now the exact observed 30-session low/high. Current NIFTY
+  is the prominent value/marker, and every available selected-expiry strike
+  inside the range receives an exact labelled tick. Dense/narrow scales scroll
+  inside the widget rather than hiding ticks or causing page overflow.
+- Daily/weekly/monthly/5-session references remain present, and underlying
+  chart lines retain the stricter raw-today-high/low eligibility rule. Missing
+  30-session coverage leaves the gauge unavailable rather than inventing an
+  envelope. Scalper V1, Delta OI, strategy and order behavior are unchanged.
+- Focused web tests pass 3/3, API reference tests pass 2/2, and authenticated
+  candidate Chromium passes 7/7 at 1920x1080. Full web typecheck, 193/193 tests
+  and production build pass; API typecheck, 212/212 tests and build pass; the
+  canonical repository gate passes. Evidence is outside Git under
+  `/tmp/scalper-v2-30d-strike-gauge-candidate`. Release evidence follows in
+  this entry after deployment.
+
 ## 2026-09-12 — Scalper V2 underlying reference tracker
 
 - Branch `fix/scalper-v2-reference-level-gauge-20260912` changes only the

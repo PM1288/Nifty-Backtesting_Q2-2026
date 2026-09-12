@@ -114,17 +114,28 @@ function Snapshot({ name, row }: { name: string; row: Row | undefined }) {
     <p className={css.snapshotMeta}>{row ? `Completed candle · ${String(row.end)}` : "No exact completed candle at this time"}</p></section>;
 }
 
-function UnderlyingLevelGauge({ payload }: { payload: ScalperV2ReferenceLevelPayload }) {
-  const gauge = scalperV2ReferenceGauge(payload.levels);
+function UnderlyingLevelGauge({ payload, strikes }: { payload: ScalperV2ReferenceLevelPayload; strikes: number[] }) {
+  const gauge = scalperV2ReferenceGauge(payload.levels, strikes);
   const current = payload.levels.find((level) => level.id === "current");
   if (gauge.low == null || gauge.high == null) return null;
+  const currentPoint = gauge.points.find((point) => point.id === "current");
+  const trackWidth = Math.max(720, gauge.strikes.length * 54);
   return <section className={css.levelGauge} data-testid="v2-underlying-level-gauge" aria-label="Underlying daily weekly monthly and rolling reference tracker">
-    <header><strong>Underlying reference tracker</strong><span>{payload.sessionDate} · current {number(current?.value)} · scale {number(gauge.low)}–{number(gauge.high)}</span></header>
-    <div className={css.levelGaugePlot} role="img" aria-label={`Underlying reference scale from ${number(gauge.low)} to ${number(gauge.high)}`}>
-      <i className={css.levelGaugeLine} />
-      {gauge.points.map((point) => <span key={point.id} className={css.levelGaugeMarker} data-current={point.id === "current" || undefined} data-period={point.id.includes("month") ? "month" : point.id.includes("week") ? "week" : point.id.includes("day") || point.id === "today-open" ? "day" : "range"} style={{ left: `${point.position}%` }} title={`${point.label}: ${number(point.value)} · ${point.sourceDate ?? "date unavailable"}`}><i /><b>{point.shortLabel}</b></span>)}
+    <header><strong>30-session underlying range</strong><span>{payload.sessionDate} · every available expiry strike is marked</span></header>
+    <div className={css.levelGaugeBody}>
+      <div className={css.levelGaugeCurrent}><small>Current</small><strong>{number(current?.value)}</strong><span>{payload.sessionDate}</span></div>
+      <div className={css.levelGaugeViewport}>
+        <div className={css.levelGaugePlot} style={{ minWidth: `${trackWidth}px` }} role="img" aria-label={`30-session underlying scale from ${number(gauge.low)} to ${number(gauge.high)} with ${gauge.strikes.length} strike ticks`} data-range-low={gauge.low} data-range-high={gauge.high} data-strike-count={gauge.strikes.length}>
+          <i className={css.levelGaugeLine} />
+          {currentPoint && <i className={css.levelGaugeProgress} style={{ width: `${currentPoint.position}%` }} />}
+          <span className={css.levelGaugeBoundary} style={{ left: 0 }}><b>30D LOW</b><strong>{number(gauge.low)}</strong></span>
+          <span className={css.levelGaugeBoundary} style={{ left: "100%" }}><b>30D HIGH</b><strong>{number(gauge.high)}</strong></span>
+          {gauge.strikes.map((strike) => <span key={strike.value} className={css.levelGaugeStrike} data-testid="v2-reference-strike-tick" style={{ left: `${strike.position}%` }} title={`Strike ${number(strike.value)}`}><i /><b>{number(strike.value)}</b></span>)}
+          {gauge.points.filter((point) => !point.id.startsWith("thirty-day")).map((point) => <span key={point.id} className={css.levelGaugeMarker} data-current={point.id === "current" || undefined} data-period={point.id.includes("month") ? "month" : point.id.includes("week") ? "week" : point.id.includes("day") || point.id === "today-open" ? "day" : "range"} style={{ left: `${point.position}%` }} title={`${point.label}: ${number(point.value)} · ${point.sourceDate ?? "date unavailable"}`}><i /><b>{point.shortLabel}</b></span>)}
+        </div>
+      </div>
     </div>
-    <div className={css.levelGaugeValues}>{gauge.points.map((point) => <span key={point.id} title={`${point.label} · ${point.sourceDate ?? "date unavailable"}`}><b>{point.shortLabel}</b><strong>{number(point.value)}</strong></span>)}</div>
+    <div className={css.levelGaugeValues}>{payload.levels.filter((point) => point.id !== "current").map((point) => <span key={point.id} title={`${point.label} · ${point.sourceDate ?? "date unavailable"}`}><b>{point.shortLabel}</b><strong>{number(point.value)}</strong></span>)}</div>
   </section>;
 }
 
@@ -488,7 +499,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide inspector" : "Show inspector"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, referenceLevels: referenceLevels ?? null, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
     </header>
     <div className={css.statusBar}><strong>{state}</strong><span>{interval === 60 ? "1h" : `${interval}m`} · {tradingDay}</span><span>Signals {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</span><button className={errors.length ? css.statusIssue : undefined} onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health {errors.length ? `· ${errors.length} issues` : "· current"}</button></div>
-    {referenceLevels?.sessionDate === tradingDay && <UnderlyingLevelGauge payload={referenceLevels} />}
+    {referenceLevels?.sessionDate === tradingDay && <UnderlyingLevelGauge payload={referenceLevels} strikes={strikes} />}
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
     <div className={css.workspace} style={!railOpen ? { gridTemplateColumns: "minmax(0,1fr)" } : undefined}>
       <div className={css.chartStage}>

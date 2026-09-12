@@ -4903,3 +4903,27 @@ or outcomes were deleted.
   entry asset `/n50/assets/index-rnnucye0.js`. Authenticated desktop/mobile
   production regression passes 17/17; evidence is outside Git at
   `/tmp/today-scalper-progression-production-20260912`.
+
+## 2026-09-12 — Scalper V2 price-axis profile restricted to ΔOI
+
+- Restricted the underlying chart's strike-aligned side profile to signed Change
+  in OI only. The previous Current OI and combined OI + ΔOI overlay choices were
+  removed, so Current OI cannot be mixed into the underlying price-axis profile.
+  Current OI remains available in the permanent pair snapshot, Option Structure
+  Matrix and expanded OI analytics; no source fields or exports were removed.
+- The overlay retains the underlying series' native strike coordinates, a true
+  zero origin, proportional absolute-ΔOI widths, green/red sign fills and
+  blue/yellow CE/PE identity outlines. Missing baselines remain unavailable.
+- Web typecheck, focused 9/9 profile/analytics tests, full 181/181 web tests and
+  production build pass. Commit `2b344fa` was pushed to the feature branch and
+  `master`, then deployed with the scoped dashboard script. Container
+  `0810a51168c3...` is healthy on image
+  `sha256:adfa97d9a9beb7ca8a3aef888ade95540fad3d549af6f6d78f9391c85a12d76c`;
+  entry asset `/n50/assets/index-CqMmX2qw.js` and the Scalper V2 route returns
+  HTTP 200.
+- Focused authenticated production browser validation passes 9/9, including
+  Delta-only geometry, absence of Current/combined overlay controls, bounded
+  lane and <=2px strike alignment. Evidence is outside Git at
+  `/tmp/scalper-v2-delta-oi-only-production-20260912`. The broader legacy repair
+  script did not complete because its unrelated drawing-editor click was
+  intercepted by the inspector; no pass is claimed for that broader script.

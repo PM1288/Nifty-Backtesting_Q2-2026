@@ -4712,3 +4712,23 @@ or outcomes were deleted.
   is healthy with zero restarts; report-service image
   `sha256:1b94983f33b9b225ae1002ce05497ba799b8d49e34c220d4eb6148dda2c7227c`
   is running with zero restarts. Only those two scoped services were recreated.
+
+## 2026-09-12 — Futures Volatility navigation and value-state follow-up
+
+- Added Futures Volatility to the shared Strategy menu taxonomy, its desktop
+  dropdown, compact/mobile sheet and command catalog. At compact widths the app
+  now switches navigation before header actions can move outside the viewport;
+  the sheet opens the current Strategy group automatically.
+- Verified the live report rather than filling unavailable outcomes: report
+  2026-09-11 contains 221 source rows and 9 displayed matches. COCHINSHIP shows
+  previous/current daily volatility `0.02564956`/`0.02644490` and delta
+  `7.95340000 bp`. Session 2026-09-14 price/outcome values remain correctly
+  unavailable with `AWAITING_SESSION`; a visible banner explains this and
+  points to Historical evaluation for completed reports.
+- Web typecheck, 166/166 tests and production build pass. Synthetic deployed
+  navigation/value regression passes at 1920x1080, 1440x900 and 390x844. A
+  separate authenticated live regression passes with HTTP 200, the exact menu
+  link, 9 report rows and zero fabricated final outcomes.
+- Application commit `a78ba10` is pushed on canonical `master`. Dashboard image
+  `sha256:52760011af283338b7295518b1d26c7496a293264695bb8c0175b4354a7e7b7e`
+  is healthy with zero restarts.

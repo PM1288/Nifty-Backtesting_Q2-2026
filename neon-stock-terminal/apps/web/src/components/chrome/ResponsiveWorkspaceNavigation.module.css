@@ -205,7 +205,10 @@
   .primaryLink { gap: 4px; padding-inline: 7px; }
 }
 
-@media (max-width: 1279px) {
+/* The complete desktop command bar cannot reliably fit once the status/search
+   controls are present below 1520px. Switch to the accessible navigation sheet
+   before primary actions can be pushed outside the viewport. */
+@media (max-width: 1519px) {
   .commandHeader { height: 51px; gap: 5px; }
   .mobileMenuTrigger { display: inline-flex; flex: 0 0 36px; }
   .primaryNavigation,

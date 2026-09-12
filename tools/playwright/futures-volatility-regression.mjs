@@ -44,7 +44,7 @@ const backtestFixture = {
 
 const browser = await chromium.launch({ headless: true });
 try {
-  for (const viewport of [{ width: 1440, height: 900, name: "desktop" }, { width: 390, height: 844, name: "mobile" }]) {
+  for (const viewport of [{ width: 1920, height: 1080, name: "desktop" }, { width: 1440, height: 900, name: "compact" }, { width: 390, height: 844, name: "mobile" }]) {
     const context = await browser.newContext({ viewport });
     const page = await context.newPage();
     const errors = [];
@@ -60,7 +60,13 @@ try {
     const response = await page.goto(`${baseUrl}/futures/volatility`, { waitUntil: "networkidle" });
     if (!response?.ok()) throw new Error(`candidate route returned ${response?.status()}`);
     await page.getByRole("heading", { name: "Futures Volatility Screener" }).waitFor();
-    await page.getByRole("button", { name: "Strategy", exact: true }).click();
+    const desktopStrategy = page.locator('button[aria-controls="strategy-global-menu"]');
+    if (await desktopStrategy.isVisible()) {
+      await desktopStrategy.click();
+    } else {
+      await page.getByRole("button", { name: "Open navigation" }).click();
+      await page.getByRole("button", { name: "Strategy", exact: true }).click();
+    }
     const strategyLink = page.getByRole("menuitem", { name: /Futures Volatility/ });
     await strategyLink.waitFor();
     if (await strategyLink.getAttribute("href") !== "/n50/futures/volatility") throw new Error("Futures Volatility Strategy menu link is missing or incorrect");
@@ -77,7 +83,7 @@ try {
     if (errors.length) throw new Error(`console errors: ${errors.join(" | ")}`);
     await context.close();
   }
-  console.log(JSON.stringify({ status: "PASS", fixture: "SYNTHETIC", viewports: ["1440x900", "390x844"], outputDir }, null, 2));
+  console.log(JSON.stringify({ status: "PASS", fixture: "SYNTHETIC", viewports: ["1920x1080", "1440x900", "390x844"], outputDir }, null, 2));
 } finally {
   await browser.close();
 }

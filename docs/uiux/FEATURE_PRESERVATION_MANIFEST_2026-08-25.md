@@ -6,6 +6,18 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-12 MWHD weighted progression ranking: the existing Home Scalper
+Progression matrix gives the M−2 route an explicit M−1 sufficiency gate plus
+its separate M pragmatic two-month gate. Stock identity is green when either
+monthly starter passes; rows where both starters fail are red and collapsed by
+default with an explicit expansion control. Ranking weights completed gates by
+proximity (monthly 1, current week 2, previous week 3, day 4, hour 5, 15m 6,
+5m 7), exposes exact weighted totals and retains pass/fail/pending evidence.
+The same MWHD rank is visible in OIIS, Scalper V1/V2, Trade Observations,
+legacy Trade Log and Stock 360 through the existing shared progression query.
+Underlying market values, strategies, collectors, signal rules, order
+permissions and missing-data semantics remain unchanged.
+
 2026-09-12 Scalper V2 single workstation: the existing V2 route now keeps its
 three price charts and permanent numerical inspector above one compact tabbed
 Analytics Dock. A strike matrix combines OI and signed change, the native

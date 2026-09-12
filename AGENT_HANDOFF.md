@@ -4817,3 +4817,24 @@ or outcomes were deleted.
 - V7 and A-open/B-close calculations, independent CE/PE selection, drawings,
   exports, APIs, collectors and permissions were not changed. Full record:
   `docs/trading-analytics/SCALPER_V2_SINGLE_WORKSTATION_20260912.md`.
+
+## 2026-09-12 — MWHD weighted progression ranking
+
+- M−2 now visibly requires the M−1 monthly-start sufficiency check and its
+  additional M−2 check before lower-timeframe progression. M−1 remains a
+  seven-gate route; M−2 is now an eight-gate route.
+- Stock identity is green if either starter passes. If both monthly starters
+  fail, the stock identity is red and the row belongs to a collapsed cohort
+  that can be expanded without losing its detailed evidence.
+- Added one MWHD rank using weights 1/1/2/3/4/5/6/7 for M−1, M−2, current
+  week, previous week, day, hour, 15-minute and 5-minute gates. Exact weighted
+  scores are shown in the grid, drawer, badges and CSV; pass/fail/pending
+  values are unchanged.
+- Reused that rank in OIIS, both Scalpers, current and legacy Trade Log, and
+  Stock 360. The shared React Query key prevents a parallel collector or a
+  separate calculation service.
+- Web typecheck, 176/176 tests and production build pass. A mocked-authenticated
+  1920x1080 browser run verified the M−1+M−2 header, default collapsed failure
+  cohort, red expansion state, M−2-only green state and rank #1 ordering.
+  Canonical repository gate passes. Runtime deployment evidence follows after
+  release of the pushed canonical master commit.

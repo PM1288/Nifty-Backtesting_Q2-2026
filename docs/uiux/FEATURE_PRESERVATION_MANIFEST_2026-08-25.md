@@ -8,9 +8,12 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 2026-09-12 MWHD Bull/Bear candidate ranks: the Home progression surface is now
 split into compact `MWHD-BULL RANK` and `MWHD-BEAR RANK` boards. Every stock has
-both independently weighted ranks. Primary cells contain ticks and weighted
+both independently weighted ranks and separately coloured `BULL #n` / `BEAR
+#n` tags. Each half exposes its top 15 rows and scrolls the remaining ranked
+stocks internally. Primary cells contain ticks and weighted
 scores only; exact values and equations remain in the selected-stock drawer and
-full CSV evidence. Bear is the exact comparison inverse over the same source
+full CSV evidence. The visible gate order is M−2 then M−1, without changing the
+M−1 sufficiency prerequisite inside the M−2 route. Bear is the exact comparison inverse over the same source
 observations, M−1/M−2 sufficiency, gate order and weights. A stock identity is
 green/red only when a complete Bull/Bear route passes. The shared badge exposes
 both ranks in Stock 360, OIIS, Scalper V1/V2 and Trade Log. Existing market data,

@@ -13,6 +13,17 @@ the existing evidence drawer, which now exposes complete Bull and Bear
 arithmetic, source values, route sufficiency, weights and timestamps. CSV export
 retains both operands and the comparison operator for every gate.
 
+Each half shows exactly the top 15 ranked stocks before its own vertical
+scrollbar. Remaining stocks stay in rank order inside that board. Every stock
+identity carries two explicit direction tags, `BULL #n` and `BEAR #n`; the
+Bear table's primary rank column is its independent Bear order and never reuses
+the Bull row number.
+
+The visible gate columns are ordered `M−2`, `M−1`, `W0`, `W−1`, `D0`, `1H`,
+`15m`, `5m`. This is presentation order only: the M−2 calculation continues to
+require the M−1 sufficiency gate before M−2 and the lower-timeframe gates can
+form a complete route.
+
 ## Calculation contract
 
 `MWHD-BULL` is unchanged:

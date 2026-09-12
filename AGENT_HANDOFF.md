@@ -1,5 +1,23 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-12 — Home MWHD top-15 dual-rank boards
+
+- Branch `fix/mwhd-top15-dual-tags-20260912` limits each independent
+  `MWHD-BULL RANK` / `MWHD-BEAR RANK` board to 15 visible body rows, with the
+  remaining stocks retained in rank order inside that board's scroll area.
+- Every stock identity shows separate green `BULL #n` and red `BEAR #n` tags.
+  Each board's primary rank column remains its own independently sorted rank;
+  no Bull rank is reused as the Bear board rank.
+- Visible condition columns are ordered `M−2`, `M−1`, `W0`, `W−1`, `D0`,
+  `1H`, `15m`, `5m`. This is presentation-only: M−2 still requires M−1
+  sufficiency, and calculations, operands, weights and missing-value behavior
+  are unchanged.
+- Focused fixtures pass 9/9; web typecheck, 190/190 tests and build pass; API
+  typecheck, 210/210 tests and build pass; canonical repository gate passes.
+  Authenticated candidate Chromium passes 19/19 at desktop/mobile, with
+  evidence under `/tmp/mwhd-top15-tags-candidate/` (not committed).
+- Deployment evidence is recorded after the scoped N50 release below.
+
 ## 2026-09-11 — Evening release consolidation and vertical Home progression
 
 - Consolidated the four post-release feature branches that were tested but not

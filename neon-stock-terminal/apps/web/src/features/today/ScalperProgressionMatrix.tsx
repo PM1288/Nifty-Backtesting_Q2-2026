@@ -17,7 +17,8 @@ import {
 import styles from "./Today.module.css";
 
 const GATES: Array<{ id: ScalperProgressionCheck["id"]; label: string }> = [
-  { id: "month-m1", label: "M−1" }, { id: "month-m2", label: "M−2" }, { id: "week", label: "W0" }, { id: "previous-week", label: "W−1" },
+  // Presentation order only: the M−2 calculation still includes the M−1 sufficiency gate.
+  { id: "month-m2", label: "M−2" }, { id: "month-m1", label: "M−1" }, { id: "week", label: "W0" }, { id: "previous-week", label: "W−1" },
   { id: "today", label: "D0" }, { id: "hour", label: "1H" }, { id: "15m", label: "15m" }, { id: "5m", label: "5m" },
 ];
 type CandidateFilter = "all" | "bull" | "bear" | "either";
@@ -81,15 +82,15 @@ function RankBoard({ direction, rows, profiles, onSelect, onOpenStock }: {
 }) {
   const label = direction === "bull" ? "MWHD-BULL RANK" : "MWHD-BEAR RANK";
   return <section className={styles.progressionRankBoard} data-direction={direction} aria-label={label}>
-    <header><strong>{label}</strong><span>{rows.filter((row) => directionalProgression(row, direction).complete).length} ready</span></header>
-    <div className={styles.progressionRankScroller}>
+    <header><strong>{label}</strong><span>{rows.filter((row) => directionalProgression(row, direction).complete).length} ready · top 15 visible</span></header>
+    <div className={styles.progressionRankScroller} data-visible-rows="15" tabIndex={0} aria-label={`${label} ranked stocks; top 15 visible, scroll for remaining stocks`}>
       <table>
         <thead><tr><th>Rank</th><th>Stock</th><th>W Score</th>{GATES.map((gate) => <th key={gate.id}>{gate.label}</th>)}</tr></thead>
         <tbody>{rows.map((row) => {
           const summary = directionalProgression(row, direction);
           return <tr key={row.stock.symbol} data-progression-symbol={row.stock.symbol} data-direction={direction} data-candidate={summary.complete ? "true" : "false"} onClick={() => onSelect(row.stock.symbol)}>
             <td><b>#{summary.rank}</b></td>
-            <th scope="row"><button type="button" title={`${row.stock.symbol}: ${label} ${summary.rank}; select the row for complete arithmetic`} onClick={(event) => { event.stopPropagation(); onOpenStock(row.stock, event.currentTarget); }}><StockLogo symbol={row.stock.symbol} profile={profiles.get(row.stock.symbol)} size={16} /><span><b>{row.stock.symbol}</b><small>B{row.rank} · S{row.bearRank}</small></span></button></th>
+            <th scope="row"><button type="button" title={`${row.stock.symbol}: MWHD-BULL rank ${row.rank}; MWHD-BEAR rank ${row.bearRank}; select the row for complete arithmetic`} onClick={(event) => { event.stopPropagation(); onOpenStock(row.stock, event.currentTarget); }}><StockLogo symbol={row.stock.symbol} profile={profiles.get(row.stock.symbol)} size={16} /><span><b>{row.stock.symbol}</b><small className={styles.progressionRankTags}><i data-direction="bull">BULL #{row.rank}</i><i data-direction="bear">BEAR #{row.bearRank}</i></small></span></button></th>
             <td className={styles.progressionCompactScore} title={`${summary.best.pass} passed, ${summary.best.fail} failed, ${summary.best.pending} pending`}><b>{summary.best.weightedScore}/{summary.best.maximumWeight}</b><small>{summary.best.pass}✓ {summary.best.fail}× {summary.best.pending}…</small></td>
             {GATES.map((gate) => {
               const check = gateFor(summary, gate.id);

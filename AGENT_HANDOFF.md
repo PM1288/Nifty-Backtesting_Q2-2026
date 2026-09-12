@@ -16,7 +16,14 @@
   typecheck, 210/210 tests and build pass; canonical repository gate passes.
   Authenticated candidate Chromium passes 19/19 at desktop/mobile, with
   evidence under `/tmp/mwhd-top15-tags-candidate/` (not committed).
-- Deployment evidence is recorded after the scoped N50 release below.
+- Pushed feature/master commit `9bc4425d97ea02d947fac2fc333a48dfe8f6c332`
+  and deployed only the N50 dashboard. Container
+  `trading-stack-novius2-n50-dashboard-1` is healthy on image
+  `sha256:91a0d080d9680d5614bf129957a558b5326fd2770919992aff682ce447fe9dca`,
+  started `2026-09-12T08:38:41.30275258Z`, with zero restarts. Routed page and
+  API health return HTTP 200; entry asset is `index-DZkFgNFa.js`.
+  Authenticated deployed Chromium passes 19/19 with screenshot/results under
+  `/tmp/mwhd-top15-tags-production/` (not committed).
 
 ## 2026-09-11 — Evening release consolidation and vertical Home progression
 

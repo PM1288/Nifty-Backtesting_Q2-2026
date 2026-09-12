@@ -20,6 +20,13 @@ type BacktestSession = {
   matchedSumRangePct: string | null; nonmatchedSumRangePct: string | null;
 };
 
+type BacktestObservation = {
+  reportDate: string; targetSession: string; symbol: string; matchRank: number | null;
+  previousFuturesDailyVol: string; currentFuturesDailyVol: string; deltaBasisPoints: string;
+  targetPreviousClose: string; targetOpen: string; targetHigh: string; targetLow: string; targetClose: string;
+  openCloseChangePct: string; previousCloseChangePct: string; lowHighRangePct: string;
+};
+
 function backtestGroup(rows: BacktestSession[], prefix: "matched" | "nonmatched") {
   const n = rows.reduce((sum, row) => sum + row[`${prefix}Covered`], 0);
   const total = (field: "SumOcPct" | "SumAbsOcPct" | "SumRangePct") =>
@@ -244,6 +251,33 @@ export function registerFuturesVolatility(app: Express, prisma: PrismaClient) {
                sum(range_pct) FILTER (WHERE qualifies IS TRUE AND complete)::text "matchedSumRangePct",
                sum(range_pct) FILTER (WHERE qualifies IS FALSE AND complete)::text "nonmatchedSumRangePct"
           FROM observations GROUP BY report_date,analysis_session,calendar_state ORDER BY report_date`, parsed.data.from, parsed.data.to);
+      const observations = await prisma.$queryRawUnsafe<BacktestObservation[]>(`
+        WITH chosen AS (
+          SELECT DISTINCT ON (report_date) run_id,report_date,analysis_session
+            FROM market_data.nse_fovolt_screen_run
+           WHERE report_date BETWEEN $1::date AND $2::date AND status='PUBLISHED'
+           ORDER BY report_date,cohort_frozen_at DESC
+        )
+        SELECT chosen.report_date::text "reportDate",chosen.analysis_session::text "targetSession",
+               row.symbol,row.match_rank "matchRank",
+               row.previous_futures_daily_vol::text "previousFuturesDailyVol",
+               row.current_futures_daily_vol::text "currentFuturesDailyVol",
+               row.delta_basis_points::text "deltaBasisPoints",
+               price.prev_close::text "targetPreviousClose",price.open_price::text "targetOpen",
+               price.high_price::text "targetHigh",price.low_price::text "targetLow",price.close_price::text "targetClose",
+               ((price.close_price-price.open_price)*100/price.open_price)::text "openCloseChangePct",
+               ((price.close_price-price.prev_close)*100/price.prev_close)::text "previousCloseChangePct",
+               ((price.high_price-price.low_price)*100/price.low_price)::text "lowHighRangePct"
+          FROM chosen
+          JOIN market_data.nse_fovolt_screen_row row ON row.run_id=chosen.run_id
+          JOIN nse.fact_eod_prices price ON price.trade_date=chosen.analysis_session
+           AND upper(price.symbol)=upper(row.symbol) AND price.series='EQ'
+         WHERE row.qualifies IS TRUE
+           AND price.open_price>0 AND price.low_price>0 AND price.prev_close>0
+           AND price.high_price>=price.low_price
+           AND price.open_price BETWEEN price.low_price AND price.high_price
+           AND price.close_price BETWEEN price.low_price AND price.high_price
+         ORDER BY chosen.report_date DESC,row.match_rank NULLS LAST,row.symbol`, parsed.data.from, parsed.data.to);
       const matched = backtestGroup(sessions, "matched");
       const nonmatched = backtestGroup(sessions, "nonmatched");
       const coveredDayDifferences = sessions.flatMap(row => {
@@ -278,7 +312,7 @@ export function registerFuturesVolatility(app: Express, prisma: PrismaClient) {
             ? coveredDayDifferences.reduce((sum, value) => sum + value, 0) / coveredDayDifferences.length
             : null,
         },
-        sessions,
+        sessions, observations,
         limitations: [
           "Archive retrieval time does not prove historical pre-open availability.",
           "This is a screen-outcome study, not an executable trading-strategy simulation.",

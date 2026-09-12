@@ -41,7 +41,12 @@ test("futures volatility route distinguishes report-not-ready from zero matches"
 test("futures volatility backtest compares covered matches with the same-report benchmark", async () => {
   const handlers = new Map<string, Function>();
   const app = { get(path: string, handler: Function) { handlers.set(path, handler); } } as any;
-  registerFuturesVolatility(app, { async $queryRawUnsafe() { return [{
+  registerFuturesVolatility(app, { async $queryRawUnsafe(sql: string) { if (sql.includes('row.symbol,row.match_rank')) return [{
+    reportDate: "2026-09-09", targetSession: "2026-09-10", symbol: "IDEA", matchRank: 1,
+    previousFuturesDailyVol: "0.01", currentFuturesDailyVol: "0.011", deltaBasisPoints: "10",
+    targetPreviousClose: "100", targetOpen: "101", targetHigh: "104", targetLow: "99", targetClose: "103",
+    openCloseChangePct: "1.980198", previousCloseChangePct: "3", lowHighRangePct: "5.050505",
+  }]; return [{
     reportDate: "2026-09-09", targetSession: "2026-09-10", calendarState: "VERIFIED",
     sourceRows: 221, sourceMatches: 4, matchedCovered: 4, nonmatchedCovered: 206,
     matchedPositive: 3, matchedNegative: 1, matchedFlat: 0,
@@ -59,4 +64,6 @@ test("futures volatility backtest compares covered matches with the same-report 
   assert.equal(payload.matched.meanAbsoluteOpenClosePct, 2);
   assert.equal(payload.counts.independentCoveredSessions, 1);
   assert.equal(payload.dayClusterSummary.matchedHigherAbsoluteMovementDays, 1);
+  assert.equal(payload.observations[0].symbol, "IDEA");
+  assert.equal(payload.observations[0].openCloseChangePct, "1.980198");
 });

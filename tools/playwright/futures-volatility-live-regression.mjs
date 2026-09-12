@@ -32,6 +32,7 @@ try {
   const body = await page.locator("body").innerText();
   if (!body.includes("Report values are available.")) throw new Error("pending outcome explanation missing");
   await page.getByText("410", { exact: true }).waitFor();
+  await page.getByTestId("futures-volatility-historical-detail").waitFor();
   const tableRows = await page.locator("tbody tr").count();
   if (tableRows < 9) throw new Error(`expected report values, found only ${tableRows} rows`);
   const screenshot = "/tmp/futures-volatility-live-menu.png";
@@ -58,6 +59,7 @@ try {
     storedCoveredSessions: historical?.counts?.independentCoveredSessions ?? null,
     storedMatchedObservations: historical?.matched?.observations ?? null,
     storedBenchmarkObservations: historical?.nonmatched?.observations ?? null,
+    storedScatterRows: historical?.observations?.length ?? null,
     screenshot,
   }, null, 2));
   await context.close();

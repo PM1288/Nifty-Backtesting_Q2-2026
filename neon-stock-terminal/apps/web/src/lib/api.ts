@@ -764,7 +764,14 @@ export type FuturesVolatilityBacktest = {
   matched: FuturesVolatilityBacktestGroup; nonmatched: FuturesVolatilityBacktestGroup;
   difference: { meanOpenClosePct: number | null; meanAbsoluteOpenClosePct: number | null; meanLowHighRangePct: number | null };
   dayClusterSummary: { daysCompared: number; matchedHigherAbsoluteMovementDays: number; matchedLowerAbsoluteMovementDays: number; meanDayLevelAbsoluteMovementDifference: number | null };
-  sessions: Array<Record<string, unknown>>; limitations: string[];
+  sessions: Array<Record<string, unknown>>;
+  observations: Array<{
+    reportDate: string; targetSession: string; symbol: string; matchRank: number | null;
+    previousFuturesDailyVol: string; currentFuturesDailyVol: string; deltaBasisPoints: string;
+    targetPreviousClose: string; targetOpen: string; targetHigh: string; targetLow: string; targetClose: string;
+    openCloseChangePct: string; previousCloseChangePct: string; lowHighRangePct: string;
+  }>;
+  limitations: string[];
 };
 
 export function fetchFuturesVolatilityBacktest(from: string, to: string): Promise<FuturesVolatilityBacktest> {

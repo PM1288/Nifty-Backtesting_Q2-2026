@@ -39,6 +39,10 @@ const backtestFixture = {
   nonmatched: { observations: 8593, positiveOpenClose: 3799, negativeOpenClose: 4724, flatOpenClose: 70, meanOpenClosePct: -0.0804, meanAbsoluteOpenClosePct: 1.1340, meanLowHighRangePct: 2.3760 },
   difference: { meanOpenClosePct: -0.0805, meanAbsoluteOpenClosePct: 0.3501, meanLowHighRangePct: 0.6367 },
   dayClusterSummary: { daysCompared: 43, matchedHigherAbsoluteMovementDays: 36, matchedLowerAbsoluteMovementDays: 7, meanDayLevelAbsoluteMovementDifference: 0.2889 },
+  observations: [{ reportDate: "2026-09-10", targetSession: "2026-09-11", symbol: "SYNTHPASS", matchRank: 1,
+    previousFuturesDailyVol: "0.02000000", currentFuturesDailyVol: "0.02012048", deltaBasisPoints: "1.20480000",
+    targetPreviousClose: "100.00", targetOpen: "101.00", targetHigh: "108.00", targetLow: "100.50", targetClose: "106.00",
+    openCloseChangePct: "4.95049505", previousCloseChangePct: "6.00000000", lowHighRangePct: "7.46268657" }],
   sessions: [], limitations: ["Synthetic browser fixture; archive timing is not verified historical pre-open timing."],
 };
 
@@ -77,6 +81,8 @@ try {
     if (await page.getByText("All 16 physical source fields", { exact: true }).count() === 0) throw new Error("raw-field inspector missing");
     await page.getByText("410", { exact: true }).waitFor();
     await page.getByText("+0.35 pp", { exact: true }).waitFor();
+    await page.getByTestId("futures-volatility-historical-detail").waitFor();
+    await page.getByText("1 observations", { exact: true }).waitFor();
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: true });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
     if (viewport.name === "mobile" && overflow) throw new Error("mobile page has accidental horizontal overflow");

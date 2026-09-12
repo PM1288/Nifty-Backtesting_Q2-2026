@@ -6,6 +6,7 @@ export const analyticsTabs = {
   "trade-log": "Trade Log",
   matrix: "1m · 5m · 15m",
   oi: "OI & PCR",
+  flow: "Positioning & Flow",
   stock: "Stock Activity",
   replay: "History",
 } as const;

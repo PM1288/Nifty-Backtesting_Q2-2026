@@ -41,7 +41,7 @@ const compactContracts = (candidate: unknown) => {
   return value.toLocaleString("en-IN", { maximumFractionDigits: 0 });
 };
 
-export function ParticipantOptionsHistoryChart({ history }: { history?: ParticipantHistory }) {
+export function ParticipantOptionsHistoryChart({ history, smallMultiples = false }: { history?: ParticipantHistory; smallMultiples?: boolean }) {
   const [metric, setMetric] = useState<ParticipantOptionMetric>("options_proxy");
   const metricDefinition = participantOptionMetrics.find((candidate) => candidate.key === metric)!;
   const model = useMemo(
@@ -55,7 +55,7 @@ export function ParticipantOptionsHistoryChart({ history }: { history?: Particip
       trigger: "axis",
       valueFormatter: (candidate: unknown) => {
         const value = Number(candidate);
-        return Number.isFinite(value) ? `${value.toLocaleString("en-IN")} contracts` : "Unavailable";
+        return Number.isFinite(value) ? `${value.toLocaleString("en-IN")}${metric === "futures_long_pct" ? "%" : " contracts"}` : "Unavailable";
       },
     },
     legend: { data: model.series.map((series) => series.label) },
@@ -74,7 +74,7 @@ export function ParticipantOptionsHistoryChart({ history }: { history?: Particip
     yAxis: {
       ...evidenceValueAxis,
       type: "value",
-      name: `${metricDefinition.label} · contracts`,
+      name: `${metricDefinition.label} · ${metric === "futures_long_pct" ? "%" : "contracts"}`,
       axisLabel: { formatter: compactContracts },
     },
     series: model.series.map((series) => ({
@@ -94,7 +94,21 @@ export function ParticipantOptionsHistoryChart({ history }: { history?: Particip
         data: [{ yAxis: 0 }],
       } : undefined,
     })),
-  }), [metricDefinition.label, metricDefinition.signed, model]);
+  }), [metric, metricDefinition.label, metricDefinition.signed, model]);
+  const smallOptions = useMemo(() => model.series.map((series): EChartsOption => ({
+    animation: false,
+    title: { text: series.label, left: 8, top: 4, textStyle: { fontSize: 12, color: "#24324a" } },
+    tooltip: { trigger: "axis" },
+    grid: { left: 18, right: 14, top: 30, bottom: 22, containLabel: true },
+    xAxis: { type: "category", boundaryGap: false, data: model.dates, axisLabel: { formatter: (date: string) => date.slice(5), showMaxLabel: true, showMinLabel: true } },
+    yAxis: { ...evidenceValueAxis, type: "value", axisLabel: { formatter: compactContracts } },
+    series: [{
+      name: series.label, type: "line", connectNulls: false, showSymbol: false,
+      lineStyle: { width: 2, color: colours[series.participant] },
+      itemStyle: { color: colours[series.participant] }, data: series.values,
+      markLine: metricDefinition.signed ? { silent: true, symbol: "none", label: { show: false }, data: [{ yAxis: 0 }] } : undefined,
+    }],
+  })), [metricDefinition.signed, model]);
 
   return (
     <div className={styles.participantHistory} data-testid="morning-participant-history">
@@ -118,12 +132,13 @@ export function ParticipantOptionsHistoryChart({ history }: { history?: Particip
         </div>
       ) : (
         <Suspense fallback={<div className={styles.participantHistoryEmpty}>Loading participant history chart…</div>}>
-          <Chart
-            className={styles.participantHistoryChart}
-            ariaLabel={`Daily ${metricDefinition.label} for FII, Pro, Client and DII by official report date in contracts`}
+          {smallMultiples ? <div className={styles.participantHistorySmallMultiples}>{smallOptions.map((smallOption, index) => <Chart
+            key={model.series[index].participant}
+            className={styles.participantHistorySmallChart}
+            ariaLabel={`Daily ${metricDefinition.label} for ${model.series[index].label} by official report date`}
             axisExtentPolicy="native"
-            option={option}
-          />
+            option={smallOption}
+          />)}</div> : <Chart className={styles.participantHistoryChart} ariaLabel={`Daily ${metricDefinition.label} for FII, Pro, Client and DII by official report date`} axisExtentPolicy="native" option={option} />}
         </Suspense>
       )}
       <p className={styles.participantHistoryNote}>

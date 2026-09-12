@@ -2,6 +2,8 @@ export const participantOptionMetrics = [
   { key: "net_calls", label: "Net calls", signed: true },
   { key: "net_puts", label: "Net puts", signed: true },
   { key: "options_proxy", label: "Options proxy", signed: true },
+  { key: "net_futures", label: "Futures net", signed: true },
+  { key: "futures_long_pct", label: "Futures long %", signed: false },
   { key: "option_index_call_long", label: "Call long", signed: false },
   { key: "option_index_call_short", label: "Call short", signed: false },
   { key: "option_index_put_long", label: "Put long", signed: false },

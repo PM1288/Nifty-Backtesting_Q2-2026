@@ -1,0 +1,83 @@
+.page { display:grid; gap:10px; min-width:0; color:#172033; font-variant-numeric:tabular-nums; }
+.command { display:flex; gap:10px; align-items:center; padding:9px 12px; border:1px solid #ccd5e2; border-radius:10px; background:#f8fafc; }
+.command div { margin-right:auto; }
+.command h2,.command p { margin:0; }
+.command p { color:#536078; font-size:12px; }
+.command label { display:flex; gap:6px; align-items:center; font-size:12px; font-weight:700; }
+.command select,.command button,.tabs button { min-height:34px; border:1px solid #b9c5d6; border-radius:7px; background:#fff; padding:6px 10px; color:inherit; font:inherit; }
+.tabs { display:flex; gap:5px; }
+.tabs button[aria-current="page"] { background:#172b4d; border-color:#172b4d; color:#fff; }
+.participantCards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.participantCard { display:grid; gap:1px; text-align:left; min-width:0; border:1px solid #cad3df; border-top:3px solid #56657b; border-radius:9px; background:#fff; padding:6px 10px; color:inherit; }
+.participantCard span { font-weight:800; font-size:13px; }
+.participantCard strong { font-size:21px; line-height:1.05; }
+.participantCard b { font-size:14px; }
+.participantCard small { color:#667085; }
+.participantCard em { font-style:normal; font-size:12px; font-weight:750; color:#344054; }
+.participantCard>i { display:flex; gap:8px; overflow:hidden; color:#556176; font-size:9px; font-style:normal; white-space:nowrap; }
+.positive { color:#087a45!important; }
+.negative { color:#c2253b!important; }
+.neutral,.missing { color:#667085!important; }
+.activityStrip { display:flex; gap:14px; align-items:center; flex-wrap:wrap; min-height:42px; padding:7px 11px; border:1px solid #d5dce7; background:#fff; border-radius:8px; font-size:12px; }
+.activityStrip span { white-space:nowrap; }
+.activityStrip i { color:#667085; font-style:normal; margin-left:auto; }
+.heroGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; min-width:0; }
+.heroGrid article,.marketGrid article { min-width:0; border:1px solid #ccd5e2; border-radius:9px; background:#fff; overflow:hidden; }
+.heroGrid article>header,.marketGrid article>header,.matrix>header { display:flex; justify-content:space-between; gap:12px; padding:7px 10px; border-bottom:1px solid #e0e5ed; }
+.heroGrid header span,.marketGrid header span,.matrix header span { color:#667085; font-size:11px; }
+.heroChart { height:170px; width:100%; }
+.alignmentGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+.alignmentGrid>div { display:flex; align-items:center; gap:8px; min-width:0; padding:5px 8px; border:1px solid #ced7e4; border-radius:8px; background:#f8fafc; font-size:10px; }
+.alignmentGrid>div>strong { margin-right:auto; white-space:nowrap; }
+.alignmentGrid span { white-space:nowrap; }
+.marketSummary { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); border:1px solid #cbd5e1; border-radius:8px; background:#172b4d; color:#fff; overflow:hidden; }
+.marketSummary span { display:grid; gap:2px; padding:7px 9px; border-right:1px solid #405374; font-size:14px; }
+.marketSummary b { font-size:10px; letter-spacing:.04em; color:#cbd5e1; }
+.marketSummary small { color:#aebbd0; font-size:9px; }
+.marketSummary i { font-style:normal; }
+.marketSummary .positive { color:#72e3a0!important; }
+.marketSummary .negative { color:#ff8a9b!important; }
+.matrix { min-width:0; border:1px solid #ccd5e2; border-radius:9px; background:#fff; overflow:hidden; }
+.matrix>div { overflow:auto; max-height:330px; }
+.matrix table,.evaluation table { width:100%; border-collapse:separate; border-spacing:0; font-size:11px; }
+.matrix th,.matrix td,.evaluation th,.evaluation td { height:29px; padding:3px 6px; border-bottom:1px solid #e5e9f0; white-space:nowrap; text-align:right; }
+.matrix thead th,.evaluation thead th { position:sticky; top:0; z-index:2; background:#eef2f7; color:#39445a; }
+.matrix tbody th { position:sticky; left:0; z-index:1; background:#f8fafc; text-align:center; }
+.matrix tbody th span { display:flex; gap:3px; justify-content:center; }
+.matrix em { border-radius:4px; padding:1px 3px; background:#475569; color:#fff; font-style:normal; font-size:8px; }
+.matrix em[data-kind="max"] { background:#7c3aed; }
+.matrix em[data-kind="ce"] { background:#2563eb; }
+.matrix em[data-kind="pe"] { background:#a16207; }
+.matrix .ce { color:#1d4ed8; font-weight:750; }
+.matrix .pe { color:#8a5700; font-weight:750; }
+.matrix tr[data-ce-selected="true"] { box-shadow:inset 4px 0 #2563eb; }
+.matrix tr[data-pe-selected="true"] { outline:1px solid #d6a800; outline-offset:-1px; }
+.dataBar { position:relative; display:block; min-width:70px; isolation:isolate; }
+.dataBar i { position:absolute; z-index:-1; inset:1px auto 1px 0; max-width:100%; border-radius:3px; background:#dce9ff; }
+.dataBar i[data-kind="pe"] { background:#fff1a8; }
+.dataBar i[data-kind="signed"][data-sign="positive"] { background:#bce9cb; }
+.dataBar i[data-kind="signed"][data-sign="negative"] { background:#ffcbd2; }
+.dataBar i[data-sign="missing"] { width:0!important; }
+.marketGrid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(360px,1fr); gap:8px; align-items:start; }
+.bubbleChart { height:430px; width:100%; }
+.marketGrid article p { padding:0 10px 8px; color:#59657a; font-size:11px; }
+.empty { padding:28px; color:#667085; text-align:center; }
+.evaluation { border:1px solid #ccd5e2; border-radius:9px; background:#fff; padding:12px; }
+.evaluation h3,.evaluation p { margin:0 0 8px; }
+.evaluation p { color:#566176; font-size:12px; max-width:1000px; }
+.evaluation th { text-align:left; }
+.evaluation td { text-align:right; }
+@media (max-width:1100px) {
+  .participantCards,.alignmentGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .heroGrid,.marketGrid { grid-template-columns:1fr; }
+  .marketSummary { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+@media (max-width:680px) {
+  .command { align-items:stretch; flex-direction:column; }
+  .command div { margin:0; }
+  .participantCards,.alignmentGrid { grid-template-columns:1fr 1fr; }
+  .participantCard strong { font-size:19px; }
+  .marketSummary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .heroChart { height:260px; }
+}
+:global([data-legibility="high"]) .page { font-family:"Atkinson Hyperlegible Next",sans-serif; }

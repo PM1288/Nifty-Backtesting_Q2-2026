@@ -4850,3 +4850,28 @@ or outcomes were deleted.
   is healthy on image
   `sha256:d1bb8864c15fc2b100a98db2b1a8638ab707d260d6dfa072ab2ee4a173601f85`;
   `/n50/`, Monthly Open, Scalper V2 and OIIS Live routes all return HTTP 200.
+
+## 2026-09-12 — Trading Analytics Positioning & Flow
+
+- Added the separate `view=flow` Trading Analytics dashboard without replacing
+  Morning View, OI & PCR or either Scalper. It keeps participant outstanding
+  positions, FII daily activity/value and anonymous exact-option strike flow
+  explicitly separate; Client remains labelled `Client (reported)`.
+- Added the four-participant current-position/change quadrant, previous/current
+  rotation, compact participant summaries, descriptive FII/Pro/Client alignment,
+  market flow KPIs, one-row-per-strike price/OI/change/volume matrix and signed
+  OI/volume bubble view. CE/PE identity and signed direction remain independent.
+- Participant history uses four small multiples. The existing API history now
+  applies the canonical previous-report comparison to each retained report date,
+  enabling descriptive current/change correlations with the next completed
+  NIFTY open-to-close session. Historical chain and 30/60-minute outcome gaps
+  remain visibly unavailable rather than fabricated.
+- Added complete scoped JSON/CSV exports and tests for quadrant states,
+  contract-level build-up classification, side shares, baseline missingness,
+  alignment and forward evaluation. No collector, broker session, strategy rule
+  or order permission changed.
+- Web typecheck, 181/181 tests and production build pass; API typecheck,
+  208/208 tests and build pass. Authenticated 1920x1080 candidate browser
+  regression passes 14/14 with real retained data. Evidence is outside Git at
+  `/tmp/positioning-flow-candidate-20260912`. Production release evidence follows
+  after the pushed canonical commit is deployed.

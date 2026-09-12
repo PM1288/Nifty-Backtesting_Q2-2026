@@ -423,3 +423,14 @@ Evidence: `docs/trading-analytics/FNO_COVERAGE_20260907.md`.
 `/strategy/trading-analytics` now groups nine historical query views into six primary workspaces. Old `activity`, `participants`, `options`, `smartapi`, `health` query links remain accepted. Data Health, Source / Formula and Condition Evidence are shared right drawers. All existing source JSON/CSV fields remain; weekly/monthly and exact OI history are additive read-only views. Existing NIFTY strategy, shared header, authentication, permissions and orders remain unchanged. Detailed mapping: `docs/trading-analytics/IO_UI_REVIEW_20260907.md`.
 
 Cash/axis addition: Morning View exposes independently dated NSE cash FII/FPI and DII buy/sell/net, complete retained CSV and history. Selected-date matrix inputs are unchanged. SmartAPI restores all option columns, keeps Greek Delta separate from prior-quote and provider-day ΔOI, and exposes source timestamps/missingness. Scoped value-axis overrides do not modify the shared chart skin or other dashboards. Report: `docs/trading-analytics/CASH_OI_AXIS_20260907.md`.
+2026-09-12 Positioning & Flow: additive Trading Analytics view
+`/strategy/trading-analytics?view=flow` keeps participant outstanding position,
+FII report activity/value and anonymous exact-option strike flow explicitly
+separate. It adds participant position/change quadrants, rotation, FII/Pro and
+Client comparisons, a compact strike OI/change/volume matrix, contract-level
+build-up states, an OI/volume bubble map, four participant-history small
+multiples, next-session descriptive evaluation and complete JSON/CSV evidence.
+Client remains `Client (reported)`; missing baselines remain null; no strike is
+attributed to a participant. Morning View, OI & PCR, Scalper V1/V2, Trade Log,
+collectors, strategy calculations, exports and order permissions remain intact.
+Evidence: `docs/trading-analytics/POSITIONING_AND_FLOW_20260912.md`.

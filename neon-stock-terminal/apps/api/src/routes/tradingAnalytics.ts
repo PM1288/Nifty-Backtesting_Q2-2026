@@ -164,12 +164,16 @@ export async function loadTradingAnalytics(
   const currentPeople = rawPeople.map((r) => participant(r.payload as Facts));
   const priorPeople = priorPeopleRows.map((r) => participant(r.payload as Facts));
   const people = participantComparison(currentPeople, priorPeople);
-  const participantHistoryRows: Facts[] = rawParticipantHistory.map((r) => participant(r.payload as Facts));
+  const participantHistoryCurrent: Facts[] = rawParticipantHistory.map((r) => participant(r.payload as Facts));
   const participantHistoryDates = [
-    ...new Set(participantHistoryRows
+    ...new Set(participantHistoryCurrent
       .map((row) => row.trade_date == null ? "" : String(row.trade_date).slice(0, 10))
       .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))),
-  ];
+  ].sort((left, right) => left.localeCompare(right));
+  const participantHistoryRows: Facts[] = participantHistoryDates.flatMap((historyDate, index) => participantComparison(
+    participantHistoryCurrent.filter((row) => String(row.trade_date).slice(0, 10) === historyDate),
+    index === 0 ? [] : participantHistoryCurrent.filter((row) => String(row.trade_date).slice(0, 10) === participantHistoryDates[index - 1]),
+  ));
   const selectedExpiry =
     expiry ?? (expiries[0]?.expiry_date as string | undefined);
   const snapshots = selectedExpiry

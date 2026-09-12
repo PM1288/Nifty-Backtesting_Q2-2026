@@ -123,6 +123,9 @@ test("participant history keeps each daily current report revision and derived i
     ["2026-09-04",30,10,20],
     ["2026-09-07",50,-10,60],
   ]);
+  assert.equal(data.participantHistory.rows[0].comparison_state,"BASELINE_MISSING");
+  assert.equal(data.participantHistory.rows[1].previous_options_proxy,20);
+  assert.equal(data.participantHistory.rows[1].delta_options_proxy,40);
 });
 test("read-only API validates input and reports partial source failure without leaking errors", async () => {
   const app = express();

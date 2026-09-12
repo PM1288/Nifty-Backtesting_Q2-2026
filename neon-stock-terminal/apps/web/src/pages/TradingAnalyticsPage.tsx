@@ -33,6 +33,9 @@ const TimeframeMatrix = lazy(async () => ({
 const ScalperV2 = lazy(async () => ({
   default: (await import("./TradingAnalyticsScalperV2")).TradingAnalyticsScalperV2,
 }));
+const PositioningFlow = lazy(async () => ({
+  default: (await import("./TradingAnalyticsPositioningFlow")).TradingAnalyticsPositioningFlow,
+}));
 type Row = Record<string, unknown>;
 const InspectContext = createContext<(row: Row) => void>(() => {});
 type Payload = {
@@ -124,6 +127,7 @@ const tabs = {
   participants: "Participant OI",
   options: "Option Snapshots",
   smartapi: "SmartAPI OI & Quotes",
+  flow: "Positioning & Flow",
   scalper: "Scalper / Exact Contracts",
   scalper_v2: "Scalper V2 / Three Charts",
   "trade-log": "Scalper Trade Log",
@@ -495,7 +499,7 @@ export function TradingAnalyticsPage() {
           ))}
           <Link to="/strategy/nifty-context?lens=trade-quality">SHAP Research</Link>
         </nav>
-        {d && (tab !== 'trade-log' || logMarketContext) && (
+        {d && tab !== "flow" && (tab !== 'trade-log' || logMarketContext) && (
           <p className={styles.context}>
             Underlying: {d.underlying.label} · Report {d.reportDate} · Analysis / as-of{" "}
             {d.asOf} · Aggregate report scope: all index derivatives ·{" "}
@@ -504,7 +508,7 @@ export function TradingAnalyticsPage() {
               : "Current retained evidence"}
           </p>
         )}
-        {d && (tab !== 'trade-log' || logMarketContext) && <section className={styles.kpis} tabIndex={0} aria-label="Selected underlying option metrics">
+        {d && tab !== "flow" && (tab !== 'trade-log' || logMarketContext) && <section className={styles.kpis} tabIndex={0} aria-label="Selected underlying option metrics">
           <span>{d.underlying.symbol} · {d.smartapi.expiry ?? 'Expiry unavailable'} · {d.smartapi.metrics.source??d.smartapi.source} · {d.smartapi.metrics.strikes?.length??0} paired strikes{d.smartapi.metrics.collectedAt?` · Captured ${d.smartapi.metrics.collectedAt}`:''}</span>
           <span>OI PCR <strong>{display(d.smartapi.metrics.oiPcr)}</strong></span>
           <span>Volume PCR <strong>{display(d.smartapi.metrics.volumePcr)}</strong></span>
@@ -544,7 +548,7 @@ export function TradingAnalyticsPage() {
             ))}
           </nav>
         )}
-        {d && !["scalper", "scalper_v2", "trade-log", "matrix", "replay", "stock"].includes(tab) && (
+        {d && !["scalper", "scalper_v2", "trade-log", "matrix", "replay", "stock", "flow"].includes(tab) && (
           <button
             onClick={() => {
               const rows =
@@ -624,7 +628,7 @@ export function TradingAnalyticsPage() {
           </p>
         ) : (
           <>
-            <section className={styles.warning}>
+            {tab !== "flow" && <section className={styles.warning}>
               <strong>{d.state}</strong> · No paper or broker orders. Report{" "}
               {d.reportDate} ({d.morning.reportLagDays} calendar days old) · NSE
               chain {d.chain.state} · {d.issues.length} reconciliation issues ·{" "}
@@ -638,7 +642,26 @@ export function TradingAnalyticsPage() {
                 {d.smartapi.legs.filter((r) => r.open_interest != null).length}{" "}
                 OI observations)
               </button>
-            </section>
+            </section>}
+            {tab === "flow" && (
+              <Suspense fallback={<p role="status">Loading Positioning &amp; Flow…</p>}>
+                <PositioningFlow
+                  reportDate={d.reportDate}
+                  asOf={d.asOf}
+                  participants={d.participants}
+                  participantHistory={d.participantHistory}
+                  activity={d.activity}
+                  legs={d.smartapi.legs}
+                  spot={d.smartapi.spot?.ltp == null ? null : Number(d.smartapi.spot.ltp)}
+                  expiry={d.smartapi.expiry}
+                  maxPainStrikes={d.smartapi.metrics.indicativeMaxPainStrikes ?? []}
+                  selectedCeStrike={params.get("ceStrike") == null ? null : Number(params.get("ceStrike"))}
+                  selectedPeStrike={params.get("peStrike") == null ? null : Number(params.get("peStrike"))}
+                  candles={d.candles}
+                  onInspect={inspect}
+                />
+              </Suspense>
+            )}
             {tab === "smartapi" && (
               <>
                 <div className={styles.toolbar}>

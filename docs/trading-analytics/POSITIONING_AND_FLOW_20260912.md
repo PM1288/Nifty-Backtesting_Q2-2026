@@ -47,6 +47,35 @@ session, strategy rule or order permission was added.
   return. It discloses that historical chain, first-30-minute and first-60-minute
   inputs are not present in this response.
 
+## Likely Levels
+
+The additive `Likely Levels` tab ranks probable positioning zones without
+claiming participant ownership of a strike. Resistance uses CE evidence;
+support uses PE evidence. The transparent research weights are current OI 30%,
+positive added OI 25%, volume 15%, persistence 15%, side-correct price/OI state
+10%, and structural/round-number confluence 5%. Inputs are percentile-ranked
+within the tracked expiry. Missing inputs reduce coverage and never become
+zero. Adjacent strong strikes are merged into a zone while retaining its core
+strike and source members.
+
+Participant alignment remains a separate aggregate FII/Pro context. The
+existing `market_data.nse_fii_participant_volume` current and previous reports
+are now exposed by the Trading Analytics API and shown separately from
+outstanding participant positions and anonymous option-chain observations.
+
+The retained response does not yet support three claims, which remain visibly
+unavailable rather than estimated:
+
+- durable OI persistence requires three or more time-ordered chain snapshots;
+- delta-weighted OI requires an authorised contract delta-factor source;
+- production reach/rejection/break rates require zones persisted before each
+  session and replayed without later observations.
+
+The deterministic outcome contract is implemented and tested: reach is a zone
+touch, confirmed break requires two consecutive closes beyond the zone, and
+rejection requires a touch without confirmed break followed by the configured
+adverse excursion. No production probability is displayed from fixture tests.
+
 ## Calculation and missingness
 
 Participant calculations reuse the canonical server functions:
@@ -77,8 +106,8 @@ is incomplete.
 
 ## Evidence and exports
 
-- JSON contains source participant/activity rows, derived strike flow, scope,
-  dates and expiry.
+- JSON contains source participant/activity/participant-volume rows, derived
+  strike flow, Likely Levels weights/zones/availability, scope, dates and expiry.
 - CSV contains participant current/previous/change fields, FII activity rows,
   and exact strike-side price/OI/change/volume/share/classification evidence.
 - Complete application evidence remains in the existing Trading Analytics JSON
@@ -86,14 +115,13 @@ is incomplete.
 
 ## Verification
 
-- Web typecheck, 181/181 tests and production build pass.
-- API typecheck, 208/208 tests and build pass.
-- Authenticated candidate browser regression passes 14/14 at 1920x1080 using
+- Web typecheck, 184/184 tests and production build pass.
+- API typecheck, 209/209 tests and build pass.
+- Authenticated candidate browser regression must be rerun after deployment at 1920x1080 using
   real retained source data. It verifies navigation, participant labels, two
   hero charts, strike rows, dataset separation, no ownership claim, above-fold
   matrix, JSON/CSV downloads, bubble or truthful baseline state, history,
-  evaluation and absence of page errors.
-- Evidence: `/tmp/positioning-flow-candidate-20260912` (not committed).
+  evaluation, Likely Levels disclosures and absence of page errors.
 
 Deployment evidence is appended to `AGENT_HANDOFF.md` after the pushed release
 commit is deployed.

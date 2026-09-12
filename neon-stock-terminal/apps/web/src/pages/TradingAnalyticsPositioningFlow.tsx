@@ -12,12 +12,13 @@ import {
   type EvidenceRow,
   type PositioningMetric,
 } from "../lib/positioningFlow";
+import { buildProbableZones, extractStructuralLevels, LEVEL_WEIGHTS, type ProbableZone } from "../lib/positioningFlowLevels";
 import css from "./TradingAnalyticsPositioningFlow.module.css";
 
 const Chart = lazy(async () => ({ default: (await import("../components/visual/EChartSurface")).EChartSurface }));
 const participantOrder = ["FII", "Pro", "Client", "DII"];
 const participantColours: Record<string, string> = { FII: "#2563eb", Pro: "#7c3aed", Client: "#c46a08", DII: "#0f766e" };
-type Tab = "overview" | "market" | "history" | "evaluation";
+type Tab = "overview" | "market" | "levels" | "history" | "evaluation";
 type ParticipantHistory = {
   rows: EvidenceRow[]; reportCount: number; oldestDate: string | null;
   latestDate: string | null; state: string; scope: string; unit: string; limit: number;
@@ -54,20 +55,22 @@ function download(name: string, body: string, type: string) {
 }
 
 export function TradingAnalyticsPositioningFlow({
-  reportDate, asOf, participants, participantHistory, activity, legs, spot,
-  expiry, maxPainStrikes, selectedCeStrike, selectedPeStrike, candles, onInspect,
+  reportDate, asOf, participants, participantVolumes, participantHistory, activity, legs, spot,
+  expiry, maxPainStrikes, selectedCeStrike, selectedPeStrike, candles, structuralLevels, onInspect,
 }: {
   reportDate: string; asOf: string; participants: EvidenceRow[];
-  participantHistory?: ParticipantHistory; activity: EvidenceRow[]; legs: EvidenceRow[];
+  participantVolumes: EvidenceRow[]; participantHistory?: ParticipantHistory; activity: EvidenceRow[]; legs: EvidenceRow[];
   spot: number | null; expiry: string | null; maxPainStrikes: number[];
   selectedCeStrike: number | null; selectedPeStrike: number | null;
-  candles: EvidenceRow[]; onInspect: (row: EvidenceRow) => void;
+  candles: EvidenceRow[]; structuralLevels: EvidenceRow[]; onInspect: (row: EvidenceRow) => void;
 }) {
   const [metric, setMetric] = useState<PositioningMetric>("options_proxy");
   const [tab, setTab] = useState<Tab>("overview");
   const definition = positioningMetrics.find((candidate) => candidate.key === metric)!;
   const participantRows = useMemo(() => participantOrder.map((name) => participants.find((row) => row.client_type === name) ?? { client_type: name }), [participants]);
   const strikeRows = useMemo(() => buildStrikeFlowRows(legs), [legs]);
+  const structure = useMemo(() => extractStructuralLevels(structuralLevels), [structuralLevels]);
+  const probableZones = useMemo(() => buildProbableZones(strikeRows, structure, participants), [strikeRows, structure, participants]);
   const market = useMemo(() => summarizeStrikeFlow(strikeRows), [strikeRows]);
   const alignment = useMemo(() => fiiProAlignment(participants, metric), [participants, metric]);
   const evaluation = useMemo(() => buildParticipantForwardEvaluation(participantHistory?.rows ?? [], candles, metric), [participantHistory?.rows, candles, metric]);
@@ -136,18 +139,34 @@ export function TradingAnalyticsPositioningFlow({
   const flowExport = {
     reportDate, asOf, expiry,
     scope: { participants: "aggregate participant outstanding positions", activity: "FII daily derivatives activity/value", chain: "anonymous tracked-strike option market" },
-    participants: participantRows, activity, strikeFlow: strikeRows,
+    participants: participantRows, participantTradingVolumes: participantVolumes, activity, strikeFlow: strikeRows,
+    likelyLevels: {
+      label: "Probable positioning zones",
+      disclaimer: "Anonymous market strike evidence with aggregate participant context; not participant-specific strike ownership.",
+      weights: LEVEL_WEIGHTS,
+      persistenceState: "UNAVAILABLE_REQUIRES_MULTI_SNAPSHOT_HISTORY",
+      deltaEquivalentState: "UNAVAILABLE_CONTRACT_DELTA_SOURCE_NOT_CONNECTED",
+      zones: probableZones,
+    },
   };
   const exportCsv = () => {
-    const header = ["Record type", "Participant", "Report date", "Previous report date", "Net calls", "Previous net calls", "Delta net calls", "Net puts", "Previous net puts", "Delta net puts", "Options proxy", "Previous options proxy", "Delta options proxy", "Futures net", "Previous futures net", "Delta futures net", "Activity segment", "Activity net INR crore", "Strike", "Side", "Price", "Price change", "Price change %", "OI", "Baseline OI", "OI change", "OI change %", "Volume", "OI share", "Absolute delta OI share", "Volume share", "Classification", "Baseline kind", "Observed at"];
+    const header = ["Record type", "Participant", "Report date", "Previous report date", "Net calls", "Previous net calls", "Delta net calls", "Net puts", "Previous net puts", "Delta net puts", "Options proxy", "Previous options proxy", "Delta options proxy", "Futures net", "Previous futures net", "Delta futures net", "Activity segment", "Activity net INR crore", "Strike", "Side", "Price", "Price change", "Price change %", "OI", "Baseline OI", "OI change", "OI change %", "Volume", "OI share", "Absolute delta OI share", "Volume share", "Classification", "Baseline kind", "Observed at", "Level rank", "Level role", "Zone low", "Core strike", "Zone high", "Market strength", "Participant alignment", "Confidence", "Persistence", "OI velocity per hour", "Structural confluence"];
     const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
     const padded = (values: unknown[]) => [...values, ...Array(Math.max(0, header.length - values.length)).fill("")];
     const participantLines = participantRows.map((row) => padded(["participant_position", participantLabel(row.client_type), reportDate, row.previous_trade_date, row.net_calls, row.previous_net_calls, row.delta_net_calls, row.net_puts, row.previous_net_puts, row.delta_net_puts, row.options_proxy, row.previous_options_proxy, row.delta_options_proxy, row.net_futures, row.previous_net_futures, row.delta_net_futures]));
+    const participantVolumeLines = participantVolumes.map((row) => padded(["participant_trading_volume", participantLabel(row.client_type), reportDate, row.previous_trade_date, row.net_calls, row.previous_net_calls, row.delta_net_calls, row.net_puts, row.previous_net_puts, row.delta_net_puts, row.options_proxy, row.previous_options_proxy, row.delta_options_proxy, row.net_futures, row.previous_net_futures, row.delta_net_futures]));
     const activityLines = activity.map((row) => padded(["fii_report_activity", "FII", reportDate, "", "", "", "", "", "", "", "", "", "", "", "", "", row.fii_derivatives, row.net_crore]));
     const strikeLines = strikeRows.flatMap((row) => (["ce", "pe"] as const).map((side) => {
       const leg = row[side]; return ["anonymous_option_chain", "", reportDate, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", row.strike, side.toUpperCase(), leg.price, leg.priceChange, leg.priceChangePct, leg.oi, leg.baselineOi, leg.oiChange, leg.oiChangePct, leg.volume, leg.oiShare, leg.deltaOiShare, leg.volumeShare, leg.classification, leg.baselineKind, leg.observedAt];
     }));
-    const lines = [header, ...participantLines, ...activityLines, ...strikeLines];
+    const levelLines = probableZones.map((zone) => {
+      const values = padded(["probable_positioning_zone", "", reportDate]);
+      values[34] = zone.rank; values[35] = zone.role; values[36] = zone.zoneLow; values[37] = zone.coreStrike; values[38] = zone.zoneHigh;
+      values[39] = zone.marketStrength; values[40] = zone.participantAlignment; values[41] = zone.confidence;
+      values[42] = zone.persistence; values[43] = zone.velocityPerHour; values[44] = zone.structuralConfluence.join(" | ");
+      return values;
+    });
+    const lines = [header, ...participantLines, ...participantVolumeLines, ...activityLines, ...strikeLines, ...levelLines];
     download(`positioning-flow-${reportDate}.csv`, lines.map((row) => row.map(quote).join(",")).join("\n"), "text/csv;charset=utf-8");
   };
 
@@ -158,7 +177,7 @@ export function TradingAnalyticsPositioningFlow({
       <button onClick={() => download(`positioning-flow-${reportDate}.json`, JSON.stringify(flowExport, null, 2), "application/json")}>Export JSON</button>
       <button onClick={exportCsv}>Export CSV</button>
     </header>
-    <nav className={css.tabs} aria-label="Positioning and Flow sections">{([['overview', 'Overview'], ['market', 'Market Flow'], ['history', 'History'], ['evaluation', 'Evaluation']] as [Tab, string][]).map(([id, label]) => <button key={id} aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)}>{label}</button>)}</nav>
+    <nav className={css.tabs} aria-label="Positioning and Flow sections">{([['overview', 'Overview'], ['market', 'Market Flow'], ['levels', 'Likely Levels'], ['history', 'History'], ['evaluation', 'Evaluation']] as [Tab, string][]).map(([id, label]) => <button key={id} aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)}>{label}</button>)}</nav>
 
     {tab === "overview" && <>
       <div className={css.participantCards}>{participantRows.map((row) => <button key={String(row.client_type)} className={css.participantCard} onClick={() => onInspect(row)}>
@@ -179,12 +198,48 @@ export function TradingAnalyticsPositioningFlow({
         <div><strong>Market option flow · tracked strikes</strong><span>CE ΔOI <b className={signedClass(market.ce.deltaOi)}>{compact(market.ce.deltaOi)}</b></span><span>PE ΔOI <b className={signedClass(market.pe.deltaOi)}>{compact(market.pe.deltaOi)}</b></span><span><b>{market.marketState}</b></span></div>
         <div><strong>Participant ↔ market</strong><span>Participant context <b>{alignment.currentDirection.includes("ALIGNED") ? alignment.currentDirection : "MIXED"}</b></span><span>Market response <b>{market.marketState}</b></span><span><b>{alignment.currentDirection.includes("DIVERGENT") || market.marketState.includes("Mixed") ? "DIVERGENT / MIXED" : "Descriptively aligned"}</b></span></div>
       </section>
+      <LikelyLevelSummary zones={probableZones} />
       <MarketSummary market={market} spot={spot} maxPainStrikes={maxPainStrikes} />
       <StrikeMatrix rows={strikeRows} atm={atm} maxPainStrikes={maxPainStrikes} ceLeaders={ceLeaders} peLeaders={peLeaders} selectedCeStrike={effectiveCeStrike} selectedPeStrike={effectivePeStrike} oiMaximum={oiMaximum} deltaMaximum={deltaMaximum} volumeMaximum={volumeMaximum} />
     </>}
     {tab === "market" && <><MarketSummary market={market} spot={spot} maxPainStrikes={maxPainStrikes} /><div className={css.marketGrid}><StrikeMatrix rows={strikeRows} atm={atm} maxPainStrikes={maxPainStrikes} ceLeaders={ceLeaders} peLeaders={peLeaders} selectedCeStrike={effectiveCeStrike} selectedPeStrike={effectivePeStrike} oiMaximum={oiMaximum} deltaMaximum={deltaMaximum} volumeMaximum={volumeMaximum} /><article><header><strong>OI / volume bubble map</strong><span>Bubble size = volume · fill = signed ΔOI · outline = CE/PE</span></header>{market.ce.deltaCoverage + market.pe.deltaCoverage ? <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.bubbleChart} ariaLabel="Strike by signed change in open interest with volume-sized bubbles" axisExtentPolicy="native" option={bubbleOption} /></Suspense> : <div className={css.empty}>Change baseline unavailable · 0/{strikeRows.length * 2} comparable contracts. Missing values are not zero.</div>}<p>Contract classifications describe the option itself and are not an automatic NIFTY recommendation.</p></article></div></>}
+    {tab === "levels" && <LikelyLevels zones={probableZones} participants={participantRows} participantVolumes={participantVolumes} spot={spot} reportDate={reportDate} />}
     {tab === "history" && <ParticipantOptionsHistoryChart history={participantHistory} smallMultiples />}
-    {tab === "evaluation" && <section className={css.evaluation}><h3>Historical evaluation · next completed NIFTY session</h3><p>Correlation is descriptive, not causal. It uses matched official participant report dates and retained daily NIFTY candles. Historical timestamp-matched chain, first-30-minute and first-60-minute inputs are unavailable in this response and are not fabricated.</p><table><thead><tr><th>Participant</th><th>Variable</th><th>Current → next open-close</th><th>N</th><th>Report change → next open-close</th><th>N</th></tr></thead><tbody>{evaluation.map((row) => <tr key={row.participant}><th>{participantLabel(row.participant)}</th><td>{definition.label}</td><td>{row.currentOpenCloseCorrelation.value?.toFixed(3) ?? "—"}</td><td>{row.currentOpenCloseCorrelation.samples}</td><td>{row.deltaOpenCloseCorrelation.value?.toFixed(3) ?? "—"}</td><td>{row.deltaOpenCloseCorrelation.samples}</td></tr>)}</tbody></table></section>}
+    {tab === "evaluation" && <section className={css.evaluation}><h3>Historical evaluation · next completed NIFTY session</h3><p>Correlation is descriptive, not causal. It uses matched official participant report dates and retained daily NIFTY candles. Historical timestamp-matched chain, first-30-minute and first-60-minute inputs are unavailable in this response and are not fabricated.</p><div className={css.evaluationNotice}><strong>Likely-level outcome history unavailable</strong><span>Reach, rejection and confirmed-break rules are implemented and fixture-tested, but no production result is claimed until zones are persisted before each session and replayed without later price/OI leakage.</span></div><table><thead><tr><th>Participant</th><th>Variable</th><th>Current → next open-close</th><th>N</th><th>Report change → next open-close</th><th>N</th></tr></thead><tbody>{evaluation.map((row) => <tr key={row.participant}><th>{participantLabel(row.participant)}</th><td>{definition.label}</td><td>{row.currentOpenCloseCorrelation.value?.toFixed(3) ?? "—"}</td><td>{row.currentOpenCloseCorrelation.samples}</td><td>{row.deltaOpenCloseCorrelation.value?.toFixed(3) ?? "—"}</td><td>{row.deltaOpenCloseCorrelation.samples}</td></tr>)}</tbody></table></section>}
+  </section>;
+}
+
+function LikelyLevelSummary({ zones }: { zones: ProbableZone[] }) {
+  const top = zones.slice(0, 4);
+  return <section className={css.levelSummary} data-testid="positioning-flow-level-summary">
+    <strong>Probable positioning zones</strong>
+    {top.map((zone) => <span key={`${zone.role}-${zone.coreStrike}`} data-role={zone.role.toLowerCase()}><b>{zone.role === "Resistance" ? "R" : "S"}{zone.rank}</b>{number(zone.zoneLow, 0)}–{number(zone.zoneHigh, 0)} <small>{zone.marketStrength.toFixed(0)} · {zone.buildState}</small></span>)}
+    {!top.length && <span>Insufficient comparable strike evidence</span>}
+    <i>Anonymous strike evidence · aggregate participant context</i>
+  </section>;
+}
+
+function LikelyLevels({ zones, participants, participantVolumes, spot, reportDate }: {
+  zones: ProbableZone[]; participants: EvidenceRow[]; participantVolumes: EvidenceRow[]; spot: number | null; reportDate: string;
+}) {
+  const volumeRows = participantOrder.map((name) => participantVolumes.find((row) => row.client_type === name) ?? { client_type: name });
+  return <section className={css.levels} data-testid="positioning-flow-likely-levels">
+    <header className={css.levelHeader}><div><h3>Probable positioning levels</h3><p>Market strength uses anonymous option-chain evidence. Participant alignment is a separate aggregate context; it does not assign FII, Pro or Client ownership to any strike.</p></div><span>Research heuristic · {reportDate}</span></header>
+    <div className={css.availability}>
+      <span><b>Participant trading volume</b>{participantVolumes.length ? `${participantVolumes.length}/4 reported` : "Unavailable"}</span>
+      <span><b>Persistence</b>Unavailable · requires multi-snapshot retained history</span>
+      <span><b>Delta-weighted OI</b>Unavailable · contract delta source not connected</span>
+      <span><b>Historical outcomes</b>Not yet persisted before session</span>
+    </div>
+    <div className={css.levelGrid}>
+      <div className={css.levelTable}><table><thead><tr><th>Rank</th><th>Zone</th><th>Core</th><th>Role</th><th>Strength</th><th>OI</th><th>ΔOI</th><th>Volume</th><th>Velocity/h</th><th>State</th><th>Participant alignment</th><th>Structure</th><th>Confidence</th></tr></thead><tbody>{zones.map((zone) => <tr key={`${zone.role}-${zone.coreStrike}`} data-role={zone.role.toLowerCase()}><td>{zone.rank}</td><td>{number(zone.zoneLow, 0)}–{number(zone.zoneHigh, 0)}</td><th>{number(zone.coreStrike, 0)}</th><td>{zone.role}</td><td><span className={css.score}><i style={{ width: `${Math.min(100, zone.marketStrength)}%` }} /><b>{zone.marketStrength.toFixed(0)}</b></span></td><td>{compactUnsigned(zone.oi)}</td><td className={signedClass(zone.deltaOi)}>{compact(zone.deltaOi)}</td><td>{compactUnsigned(zone.volume)}</td><td className={signedClass(zone.velocityPerHour)}>{compact(zone.velocityPerHour)}</td><td>{zone.buildState}</td><td>{zone.participantAlignment}</td><td>{zone.structuralConfluence.join(" · ") || "—"}</td><td>{zone.confidence}</td></tr>)}</tbody></table>{!zones.length && <div className={css.empty}>No probable zone can be ranked from the current comparable strike evidence.</div>}</div>
+      <aside className={css.levelAside}>
+        <section><h4>Participant context</h4>{participants.map((row) => <div key={String(row.client_type)}><b>{participantLabel(row.client_type)}</b><span className={signedClass(row.options_proxy)}>{compact(row.options_proxy)}</span><small>{participantPositionState(row.options_proxy, row.delta_options_proxy)}</small></div>)}</section>
+        <section><h4>Current level map</h4><div className={css.spot}>NIFTY {number(spot)}</div>{[...zones].sort((left, right) => right.coreStrike - left.coreStrike).map((zone) => <div key={`${zone.role}-${zone.coreStrike}`}><b>{number(zone.coreStrike, 0)}</b><span>{zone.role}</span><small>{zone.marketStrength.toFixed(0)}</small></div>)}</section>
+      </aside>
+    </div>
+    <section className={css.volumeTable}><header><strong>Participant-wise trading volumes</strong><span>Aggregate report activity; never attributed to a strike.</span></header><table><thead><tr><th>Participant</th><th>Options flow proxy</th><th>Change</th><th>Net calls</th><th>Net puts</th><th>Index futures</th><th>State</th></tr></thead><tbody>{volumeRows.map((row) => <tr key={String(row.client_type)}><th>{participantLabel(row.client_type)}</th><td className={signedClass(row.options_proxy)}>{compact(row.options_proxy)}</td><td className={signedClass(row.delta_options_proxy)}>{compact(row.delta_options_proxy)}</td><td className={signedClass(row.net_calls)}>{compact(row.net_calls)}</td><td className={signedClass(row.net_puts)}>{compact(row.net_puts)}</td><td className={signedClass(row.net_futures)}>{compact(row.net_futures)}</td><td>{participantPositionState(row.options_proxy, row.delta_options_proxy)}</td></tr>)}</tbody></table></section>
+    <details className={css.formula}><summary>Level score and evidence policy</summary><p>Resistance uses CE evidence; support uses PE evidence. Short build-up is wall-forming, while long build-up, covering and unwinding are not treated equivalently. Available inputs are percentile-ranked within the tracked expiry: OI 30%, added OI 25%, volume 15%, persistence 15%, price/OI state 10%, structural or round-number confluence 5%. Missing inputs reduce coverage and are never converted to zero. Adjacent strong strikes are merged into zones.</p></details>
   </section>;
 }
 

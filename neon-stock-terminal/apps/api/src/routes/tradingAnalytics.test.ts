@@ -127,6 +127,20 @@ test("participant history keeps each daily current report revision and derived i
   assert.equal(data.participantHistory.rows[1].previous_options_proxy,20);
   assert.equal(data.participantHistory.rows[1].delta_options_proxy,40);
 });
+test("participant trading volume is exposed as current versus previous aggregate context",async()=>{
+  const current={payload:{trade_date:"2026-09-07",client_type:"FII",option_index_call_long:125,option_index_call_short:75,option_index_put_long:85,option_index_put_short:95,future_index_long:40,future_index_short:30}};
+  const previous={payload:{trade_date:"2026-09-04",client_type:"FII",option_index_call_long:100,option_index_call_short:70,option_index_put_long:90,option_index_put_short:80,future_index_long:35,future_index_short:30}};
+  const prisma={$queryRawUnsafe:async(sql:string)=>{
+    if(!sql.includes("nse_fii_participant_volume")) return [];
+    return sql.includes("max(trade_date)")?[previous]:[current];
+  }} as unknown as PrismaClient;
+  const data=await loadTradingAnalytics(prisma,"2026-09-07T12:00:00Z","2026-09-07");
+  assert.equal(data.participantVolumes.length,1);
+  assert.equal(data.participantVolumes[0].options_proxy,60);
+  assert.equal(data.participantVolumes[0].previous_options_proxy,20);
+  assert.equal(data.participantVolumes[0].delta_options_proxy,40);
+  assert.equal(data.participantVolumes[0].net_futures,10);
+});
 test("read-only API validates input and reports partial source failure without leaking errors", async () => {
   const app = express();
   const prisma = {

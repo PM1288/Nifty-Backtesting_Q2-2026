@@ -80,7 +80,7 @@ export async function loadTradingAnalytics(
   )
     throw new Error("Future report date");
   // Select one complete load revision, never stitch rows from different ingests.
-  const [rawStats, rawPeople, cash, expiries, dayBars, smartapi, cashHistory, rawParticipantHistory] =
+  const [rawStats, rawPeople, rawParticipantVolumes, cash, expiries, dayBars, smartapi, cashHistory, rawParticipantHistory] =
     await Promise.all([
       read(
         "derivatives",
@@ -91,6 +91,12 @@ export async function loadTradingAnalytics(
       read(
         "participant_oi",
         `SELECT to_jsonb(p) payload FROM market_data.nse_fii_participant_open_interest p WHERE trade_date=$2::date AND run_id=(SELECT run_id FROM market_data.nse_fii_participant_open_interest WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1) ORDER BY client_type`,
+        asOf,
+        selected,
+      ),
+      read(
+        "participant_volume",
+        `SELECT to_jsonb(p) payload FROM market_data.nse_fii_participant_volume p WHERE trade_date=$2::date AND run_id=(SELECT run_id FROM market_data.nse_fii_participant_volume WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1) ORDER BY client_type`,
         asOf,
         selected,
       ),
@@ -142,12 +148,21 @@ export async function loadTradingAnalytics(
         selected,
       ),
     ]);
-  const [priorPeopleRows, dailyCalendar] = await Promise.all([
+  const [priorPeopleRows, priorParticipantVolumeRows, dailyCalendar] = await Promise.all([
     read(
       "participant_oi_previous",
       `SELECT to_jsonb(p) payload FROM market_data.nse_fii_participant_open_interest p
        WHERE trade_date=(SELECT max(trade_date) FROM market_data.nse_fii_participant_open_interest WHERE trade_date<$2::date AND loaded_at<=$1::timestamptz)
        AND run_id=(SELECT run_id FROM market_data.nse_fii_participant_open_interest WHERE trade_date=(SELECT max(trade_date) FROM market_data.nse_fii_participant_open_interest WHERE trade_date<$2::date AND loaded_at<=$1::timestamptz) AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1)
+       ORDER BY client_type`,
+      asOf,
+      selected,
+    ),
+    read(
+      "participant_volume_previous",
+      `SELECT to_jsonb(p) payload FROM market_data.nse_fii_participant_volume p
+       WHERE trade_date=(SELECT max(trade_date) FROM market_data.nse_fii_participant_volume WHERE trade_date<$2::date AND loaded_at<=$1::timestamptz)
+       AND run_id=(SELECT run_id FROM market_data.nse_fii_participant_volume WHERE trade_date=(SELECT max(trade_date) FROM market_data.nse_fii_participant_volume WHERE trade_date<$2::date AND loaded_at<=$1::timestamptz) AND loaded_at<=$1::timestamptz ORDER BY loaded_at DESC,run_id DESC LIMIT 1)
        ORDER BY client_type`,
       asOf,
       selected,
@@ -164,6 +179,10 @@ export async function loadTradingAnalytics(
   const currentPeople = rawPeople.map((r) => participant(r.payload as Facts));
   const priorPeople = priorPeopleRows.map((r) => participant(r.payload as Facts));
   const people = participantComparison(currentPeople, priorPeople);
+  const participantVolumes = participantComparison(
+    rawParticipantVolumes.map((r) => participant(r.payload as Facts)),
+    priorParticipantVolumeRows.map((r) => participant(r.payload as Facts)),
+  );
   const participantHistoryCurrent: Facts[] = rawParticipantHistory.map((r) => participant(r.payload as Facts));
   const participantHistoryDates = [
     ...new Set(participantHistoryCurrent
@@ -297,6 +316,7 @@ export async function loadTradingAnalytics(
     },
     activity: stats,
     participants: people,
+    participantVolumes,
     participantHistory: {
       rows: participantHistoryRows,
       reportCount: participantHistoryDates.length,

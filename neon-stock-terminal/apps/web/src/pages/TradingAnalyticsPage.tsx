@@ -49,6 +49,7 @@ type Payload = {
   evidenceId: string;
   activity: Row[];
   participants: Row[];
+  participantVolumes?: Row[];
   participantHistory?: {
     rows: Row[];
     reportCount: number;
@@ -649,6 +650,7 @@ export function TradingAnalyticsPage() {
                   reportDate={d.reportDate}
                   asOf={d.asOf}
                   participants={d.participants}
+                  participantVolumes={d.participantVolumes ?? []}
                   participantHistory={d.participantHistory}
                   activity={d.activity}
                   legs={d.smartapi.legs}
@@ -658,6 +660,7 @@ export function TradingAnalyticsPage() {
                   selectedCeStrike={params.get("ceStrike") == null ? null : Number(params.get("ceStrike"))}
                   selectedPeStrike={params.get("peStrike") == null ? null : Number(params.get("peStrike"))}
                   candles={d.candles}
+                  structuralLevels={d.resistance ?? []}
                   onInspect={inspect}
                 />
               </Suspense>

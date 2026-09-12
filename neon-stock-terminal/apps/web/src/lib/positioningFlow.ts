@@ -77,6 +77,7 @@ export type StrikeFlowLeg = {
   volumeShare: number | null;
   classification: BuildUpState;
   baselineKind: string;
+  baselineAt: string | null;
   observedAt: string | null;
 };
 
@@ -87,7 +88,7 @@ const emptyLeg = (): StrikeFlowLeg => ({
   priceChangePct: null, oi: null, baselineOi: null, oiChange: null,
   oiChangePct: null, volume: null, oiShare: null, deltaOiShare: null,
   volumeShare: null, classification: "Unavailable", baselineKind: "UNAVAILABLE",
-  observedAt: null,
+  baselineAt: null, observedAt: null,
 });
 
 function rawOiChange(row: EvidenceRow): number | null {
@@ -116,6 +117,7 @@ function legFrom(row: EvidenceRow | undefined): StrikeFlowLeg {
     oiShare: null, deltaOiShare: null, volumeShare: null,
     classification: contractBuildUp(priceChange, oiChange),
     baselineKind: String(row.baseline_kind ?? "BASELINE_UNAVAILABLE"),
+    baselineAt: row.baseline_collected_at == null ? null : String(row.baseline_collected_at),
     observedAt: row.exchange_feed_at == null && row.collected_at == null ? null : String(row.exchange_feed_at ?? row.collected_at),
   };
 }

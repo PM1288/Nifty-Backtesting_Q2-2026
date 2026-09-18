@@ -3,16 +3,19 @@ import path from "node:path";
 import assert from "node:assert/strict";
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright");
 const origin = process.env.REVIEW_ORIGIN ?? "http://127.0.0.1:15218";
+const deviceScaleFactor = Number(process.env.REVIEW_DPR ?? 1);
 const authOrigin = "http://127.0.0.1:19090";
 const output = path.resolve(process.env.REVIEW_OUTPUT ?? "output/playwright/market-workstation-review");
 const env = await fs.readFile(".env", "utf8");
 const password = env.split(/\r?\n/).find(line => line.startsWith("DEV_LOCAL_AUTH_PASSWORD="))?.split("=").slice(1).join("=").trim();
 assert.ok(password, "Protected browser credentials required");
 await fs.mkdir(output, { recursive: true });
-const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH });
-const evidence = { origin, geometry: [], views: [], errors: [], requests: [], mutationRequests: [] };
+// Chromium's context-only DPR emulation leaves devicePixelContentBoxSize at 1x.
+// The native renderer uses that observer: set the browser device scale as well.
+const browser = await chromium.launch({ headless: true, args: [`--force-device-scale-factor=${deviceScaleFactor}`], executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH });
+const evidence = { origin, deviceScaleFactor, geometry: [], views: [], errors: [], requests: [], mutationRequests: [] };
 try {
- const context = await browser.newContext({ viewport: { width:1920, height:1080 }, reducedMotion:"reduce" });
+ const context = await browser.newContext({ viewport: { width:1920, height:1080 }, deviceScaleFactor, reducedMotion:"reduce" });
  const login = await context.request.post(`${authOrigin}/n50/auth/session/dev-login`, { data:{ identifier:"admin",password } });
  assert.ok(login.ok(), `Login ${login.status()}`);
  const cookie=(await context.storageState()).cookies.find(item=>item.name.includes("session"));
@@ -38,6 +41,7 @@ try {
  for(let i=0;i<150;i++){await page.waitForTimeout(200);if(!pending.size && i>10)break;}
  for(const viewport of [{width:1920,height:1080},{width:1440,height:900},{width:390,height:844}]) {
   await page.setViewportSize(viewport);await page.waitForTimeout(250);
+  await page.waitForFunction(()=>[...document.querySelectorAll('[data-testid^="v2-chart-host-"]')].every(host=>{const native=host.querySelector('.tv-lightweight-charts');return native&&Math.abs(native.getBoundingClientRect().width-host.clientWidth)<=2&&Math.abs(native.getBoundingClientRect().height-host.clientHeight)<=2;}),null,{timeout:5000});
   const geometry=await page.evaluate(()=>["underlying","call","put"].map(id=>{
    const host=document.querySelector(`[data-testid="v2-chart-host-${id}"]`);
    const native=host?.querySelector(".tv-lightweight-charts");
@@ -45,6 +49,9 @@ try {
   }));
   for(const item of geometry){assert.ok(Math.abs(item.hostWidth-item.nativeWidth)<=2,JSON.stringify(item));assert.ok(item.nativeHeight<=item.hostHeight+2,JSON.stringify(item));assert.ok(item.timeAxis>0);assert.ok(item.hostWidth<=viewport.width,"Canvas clipped by narrow viewport");if(viewport.width>=1440) assert.ok(item.nativeHeight-item.timeAxis>=(item.id==="underlying"?500:240),"Unreadable plot height");}
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),"Page overflow");
+  await page.waitForFunction(()=>[...document.querySelectorAll('[data-testid^="v2-chart-host-"] canvas')].every(canvas=>{const rect=canvas.getBoundingClientRect();return !rect.width||!rect.height||(Math.abs(canvas.width-rect.width*devicePixelRatio)<=2&&Math.abs(canvas.height-rect.height*devicePixelRatio)<=2);}),null,{timeout:5000});
+  const bitmaps=await page.locator('[data-testid^="v2-chart-host-"] canvas').evaluateAll(nodes=>nodes.map(canvas=>({cssWidth:canvas.getBoundingClientRect().width,cssHeight:canvas.getBoundingClientRect().height,width:canvas.width,height:canvas.height,dpr:devicePixelRatio})).filter(item=>item.cssWidth>0&&item.cssHeight>0));
+  for(const bitmap of bitmaps){assert.ok(Math.abs(bitmap.width-bitmap.cssWidth*bitmap.dpr)<=2,`Canvas bitmap width must follow DPR once: ${JSON.stringify(bitmap)}`);assert.ok(Math.abs(bitmap.height-bitmap.cssHeight*bitmap.dpr)<=2,`Canvas bitmap height must follow DPR once: ${JSON.stringify(bitmap)}`);}
   evidence.geometry.push({viewport,geometry});
   await page.screenshot({path:path.join(output,`charts-${viewport.width}.png`),fullPage:true});
  }

@@ -24,6 +24,14 @@ function reportLabel(reportName: string) {
 }
 
 const AVAILABLE_REPORT_STATES = new Set(["LOADED", "REUSED", "SKIPPED", "ARCHIVED"]);
+// Explicit daily catch-ups are real ingestion runs too, even without a scheduler
+// claim. Otherwise freshly downloaded reports remain invisible until Monday.
+const DAILY_RUNS_SQL = `SELECT COALESCE(d.id,r.run_id) id,
+  COALESCE(d.job_date,(r.started_at AT TIME ZONE 'Asia/Kolkata')::date) job_date,
+  COALESCE(d.source_trade_date,r.backfill_end) source_trade_date,
+  r.run_id,d.scheduled_for,r.status,r.metrics,r.started_at,r.finished_at
+  FROM nse.ingest_runs r LEFT JOIN nse.daily_job_run d ON d.run_id=r.run_id
+  WHERE r.run_mode='daily'`;
 
 function elapsedMs(startedAt: unknown, finishedAt: unknown) {
   if (!startedAt || !finishedAt) return null;
@@ -34,18 +42,18 @@ function elapsedMs(startedAt: unknown, finishedAt: unknown) {
 async function buildNseIntelligence(prisma: PrismaClient) {
   const [jobs, reports, breadth, movers, events, recentJobs] = await Promise.all([
     prisma.$queryRawUnsafe<AnyRow[]>(
-      `SELECT d.id,d.job_date,d.source_trade_date,d.run_id,d.scheduled_for,d.status,
+      `WITH runs AS (${DAILY_RUNS_SQL}) SELECT d.id,d.job_date,d.source_trade_date,d.run_id,d.scheduled_for,d.status,
         d.metrics,d.started_at,d.finished_at,
         n.status AS notification_status,n.sent_at AS notification_sent_at,n.last_error AS notification_error
-       FROM nse.daily_job_run d
+       FROM runs d
        LEFT JOIN LATERAL (
          SELECT status,sent_at,last_error FROM nse.notification_outbox
          WHERE trade_date=d.source_trade_date ORDER BY created_at DESC LIMIT 1
        ) n ON true
-       ORDER BY d.job_date DESC LIMIT 1`,
+       ORDER BY d.started_at DESC,d.run_id DESC LIMIT 1`,
     ),
     prisma.$queryRawUnsafe<AnyRow[]>(
-      `WITH latest AS (SELECT run_id FROM nse.daily_job_run ORDER BY job_date DESC LIMIT 1)
+      `WITH latest AS (SELECT run_id FROM nse.ingest_runs WHERE run_mode='daily' ORDER BY started_at DESC,run_id DESC LIMIT 1)
        SELECT rr.report_name,rr.source_date,rr.file_name,rr.file_sha256,rr.bytes_downloaded,
          rr.rows_loaded,upper(rr.status) AS status,rr.started_at,rr.finished_at,rr.message,
          rr.metadata AS run_metadata,fr.load_status,fr.loaded_at,fr.metadata AS registry_metadata
@@ -85,8 +93,8 @@ async function buildNseIntelligence(prisma: PrismaClient) {
     prisma.$queryRawUnsafe<AnyRow[]>(
       `SELECT id,job_date,source_trade_date,run_id,scheduled_for,status,metrics,
          started_at,finished_at
-       FROM nse.daily_job_run
-       ORDER BY job_date DESC LIMIT 30`,
+       FROM (${DAILY_RUNS_SQL}) runs
+       ORDER BY started_at DESC,run_id DESC LIMIT 30`,
     ),
   ]);
 
@@ -121,7 +129,10 @@ async function buildNseIntelligence(prisma: PrismaClient) {
       durationMs: elapsedMs(row.started_at, row.finished_at),
       loadStatus: row.load_status ? String(row.load_status).toUpperCase() : null,
       loadedAt: row.loaded_at ?? row.finished_at,
-      message: row.message,
+      message: !AVAILABLE_REPORT_STATES.has(status) && ["loaded", "archived"].includes(String(row.load_status).toLowerCase())
+        ? `${row.message ?? "Latest download unavailable"}. Earlier ${row.load_status} copy for this source date remains retained (${row.loaded_at ?? "see source evidence"}).`
+        : row.message,
+      retainedEvidence: ["loaded", "archived"].includes(String(row.load_status).toLowerCase()),
       attemptedUrls,
     };
   });
@@ -173,6 +184,7 @@ async function buildNseIntelligence(prisma: PrismaClient) {
       downloaded: normalizedReports.filter((row) => row.bytes != null && row.bytes > 0).length,
       loaded: availableReports.filter((row) => row.status !== "ARCHIVED").length,
       archived: availableReports.filter((row) => row.status === "ARCHIVED").length,
+      retained: normalizedReports.filter((row) => row.retainedEvidence).length,
       missing: normalizedReports.filter((row) => row.status === "UNAVAILABLE").length,
       failed: normalizedReports.filter((row) => row.status === "FAILED").length,
       totalBytes: normalizedReports.reduce((total, row) => total + (row.bytes ?? 0), 0),

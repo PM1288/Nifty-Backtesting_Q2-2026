@@ -79,6 +79,33 @@ test("archive-only reports are downloaded but never counted as parsed rows", asy
     assert.equal(payload.quality.availableInputs, 0);
   }));
 
+test("a failed repeat download does not conceal a previously archived source-date copy", async () =>
+  withServer([
+    [{ id: 5, source_trade_date: "2026-09-18", status: "PARTIAL", metrics: { expected_files: 1, available_files: 0, missing_count: 1 } }],
+    [{ report_name: "fo_udiff", source_date: "2026-09-18", status: "UNAVAILABLE", load_status: "archived", message: "HTTP 404" }],
+    [], [], [], [],
+  ], async base => {
+    const payload = await (await fetch(`${base}/v1/nse-intelligence/reports`)).json() as any;
+    assert.equal(payload.reports[0].status, "UNAVAILABLE");
+    assert.equal(payload.reports[0].retainedEvidence, true);
+    assert.match(payload.reports[0].message, /Earlier archived copy/);
+    assert.equal(payload.downloadHealth.retained, 1);
+    assert.equal(payload.downloadHealth.loaded, 0);
+  }));
+
+test("report health queries include explicit daily catch-ups, not only scheduled jobs", async () => {
+  const queries: string[] = [];
+  const app = express();
+  registerNseIntelligence(app, { $queryRawUnsafe: async (query: string) => { queries.push(query); return []; } } as any);
+  const server = app.listen(0);
+  try {
+    await fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/v1/nse-intelligence/reports`);
+    for (const index of [0, 1, 5]) assert.match(queries[index], /nse\.ingest_runs/);
+    assert.match(queries[0], /r\.run_mode='daily'/);
+    assert.match(queries[1], /ORDER BY started_at DESC,run_id DESC/);
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
 test("NSE Intelligence treats a skipped already-loaded file as available evidence", async () =>
   withServer([
     [{ id: 2, job_date: "2026-08-14", source_trade_date: "2026-08-13", status: "SUCCESS", metrics: { expected_files: 1, available_files: 1, missing_count: 0, rows_total: 0 } }],

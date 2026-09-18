@@ -77,3 +77,10 @@ test("one issuer challenger and short P&L preserve independent identities", () =
   const short = trade("s"); short.side = "SELL"; short.fills.push({ position_effect: "CLOSE", filled_at: "2026-09-10T04:00Z", price: 90, quantity: 100 });
   assert.equal(replayRecordedCapital([verified(short)], 100000, asOf).realised_gross, 10000);
 });
+test("known qualification identifies only evidence recorded before entry", () => {
+  const row = trade("a");
+  const earlier = { candidate_id: "earlier", symbol: "a", evaluation_month: "2026-09-01", signal_date: "2026-09-09", created_at: "2026-09-09T12:00Z", updated_at: "2026-09-09T12:00Z", conditions: [{ pass: true }] };
+  const later = { ...earlier, candidate_id: "later", updated_at: "2026-09-18T12:00Z" };
+  assert.deepEqual(monthlyMembership(row, [earlier, later], true).candidate_ids, ["earlier"]);
+  assert.deepEqual(monthlyMembership(row, [earlier, later]).candidate_ids, ["earlier", "later"]);
+});

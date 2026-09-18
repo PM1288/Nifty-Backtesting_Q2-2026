@@ -52,8 +52,8 @@ try {
     await download.saveAs(path.join(output, download.suggestedFilename()));
   }
   await page.screenshot({ path: path.join(output, "desktop-1920.png"), fullPage: true });
-  await root.getByLabel("Cohort", { exact: true }).selectOption("MONTHLY_KNOWN");
-  await root.getByLabel("Allocation", { exact: true }).selectOption("100000");
+  await root.getByLabel(/^Cohort/).selectOption("MONTHLY_KNOWN");
+  await root.getByLabel(/^Allocation/).selectOption("100000");
   assert.equal(researchRequests, 1, "View selection must not query or replay server data");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.screenshot({ path: path.join(output, "desktop-1440.png"), fullPage: true });

@@ -81,7 +81,7 @@ export function monthlyMembership(trade: Row, candidates: Row[], knownAtEntry = 
   if (!supported.length) return { included: false, reason: "FAILED_OR_MISSING_GATE_EVIDENCE", month };
   const known = supported.filter((candidate) => ms(candidate.created_at) <= ms(trade.opened_at) && ms(candidate.updated_at) <= ms(trade.opened_at));
   if (knownAtEntry && !known.length) return { included: false, reason: "QUALIFICATION_NOT_RECORDED_BEFORE_ENTRY", month };
-  return { included: true, reason: knownAtEntry ? "RECORDED_BEFORE_ENTRY" : "RETROSPECTIVE_MONTHLY_MATCH", month, candidate_ids: supported.map((candidate) => candidate.candidate_id), direction_confirmed: trade.side === "BUY" };
+  return { included: true, reason: knownAtEntry ? "RECORDED_BEFORE_ENTRY" : "RETROSPECTIVE_MONTHLY_MATCH", month, candidate_ids: (knownAtEntry ? known : supported).map((candidate) => candidate.candidate_id), direction_confirmed: trade.side === "BUY" };
 }
 
 export function replayRecordedCapital(trades: Row[], allocation: number, asOf: string, options: { feesBps?: number; slippageBps?: number; oneIssuer?: boolean } = {}) {

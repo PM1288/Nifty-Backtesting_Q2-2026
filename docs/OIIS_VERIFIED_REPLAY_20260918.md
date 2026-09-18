@@ -106,3 +106,42 @@ empty monthly cohorts explicitly say unchanged starting capital is not a tested
 return. Initial run loaded 88 trades, 21 retrospective monthly matches and zero
 stored-before-entry matches. This is an evidence limitation, not proof that a
 monthly strategy had zero returns.
+
+## Acceptance evidence
+
+- Final API typecheck/build and **226/226** unit tests PASS; unchanged web source
+  typecheck/build and **195/195** tests PASS. Canonical gate/diff check PASS.
+- Authenticated Chromium 1208 (Playwright 1.55), 1920×1080 and 1440×900 desktop,
+  390×844 mobile: replay, evidence/Escape, canonical orders/fills drawer and actual
+  close-button click, cohort/allocation selection, seven downloads and historical
+  cutoff PASS. Mobile page overflow false. Initial uncached explicit replay
+  17,784 ms; this is source/research load, not pointer latency or a p95 claim.
+- 88 source trades; 21 retrospective monthly matches; zero recorded-before-entry
+  matches. Exclusions: 66 no monthly candidate, 21 not recorded before entry,
+  one signal after entry. Zero compatible-entry failures; 21 invalid minute rows
+  across per-trade aggregates. None fully verifies 5 or 30 sessions.
+- Historical cutoff 10 September 2026 15:30 IST: retained fills/bar-end times
+  do not exceed cutoff. Cohort/allocation changes issue no research request;
+  two requests total (explicit latest and explicit historical), zero paper writes.
+- Existing Simple view: 88 rows; Portfolio section navigation and notification
+  panel PASS, zero paper writes. Serial-refresh regression: 88 rows, two completed
+  cycles, zero writes. Broader unrelated-route and device/speech regressions NOT_RUN.
+- Generated XML parses: 12 worksheets and filters, largest cell 13,048 characters
+  (below Excel cell limit), 5,467,373 bytes. Excel desktop opening NOT_RUN; export
+  explicitly identifies SpreadsheetML `.xml`, not native `.xlsx`.
+- Screenshots, report/historical JSON, seven exports, result/preservation JSON
+  retained in ignored `output/playwright/paper-verified-replay/`. Fixture/unit
+  results do not certify historical coverage or executable target fills.
+- Test harness corrections: hidden metadata in collapsed details requires DOM
+  attachment, not visibility; implicit dropdown labels match by prefix. These are
+  separate from the genuine overlay defect, which was fixed and mouse-tested.
+- Final metadata guard: known qualification lists only timely candidate IDs,
+  not a superset containing later revisions; dedicated regression PASS. It does
+  not change current cohort counts, strategy rules or ledger records.
+- Existing dependency audit: 16 vulnerabilities (1 critical, 3 high, 11 moderate,
+  1 low) remain pending; no dependencies/lockfile changed. Six isolated Python DB
+  integration tests remain blocked by missing TEST_DATABASE_URL (prior repair).
+
+Fill/entry/mark ties are deterministic: closing fill, entry, mark, then trade-leg
+ID. Allocation is fixed per scenario, not optimised after seeing outcomes.
+Profit is research-model gross/estimated-cost P&L, not actual booked account net.

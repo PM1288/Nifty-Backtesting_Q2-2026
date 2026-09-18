@@ -16,6 +16,12 @@
 - Initial release `56d8006` healthy; browser discovered canonical close button
   obscured by shell header. Follow-up branch `fix/paper-replay-browser-20260918`
   raises only Paper overlay layers; no pointer-force workaround hides the defect.
+- Authenticated final surface PASS: 88 rows, seven downloads, desktop/mobile,
+  canonical drawer close, two explicit research reads, historical cutoff, zero
+  paper writes/no mobile page overflow. 21 monthly retrospective matches; zero
+  known-before-entry. None has complete verified 5-/30-session coverage.
+- Added timely-candidate-ID metadata regression; final API 226 tests PASS,
+  unchanged web 195 PASS. Full evidence/limits in the report; outputs ignored.
 
 ## 2026-09-12 — Scalper V2 30-session strike gauge
 

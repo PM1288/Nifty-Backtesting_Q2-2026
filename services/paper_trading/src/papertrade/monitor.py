@@ -11,6 +11,7 @@ from psycopg import sql
 
 from .domain import adverse_return, favourable_return, leg_pnl, money, target_crossed, tax_provision
 from .events import append_event
+from .market_quality import valid_ohlc
 
 
 def _bar_id(row: dict[str, Any]) -> str:
@@ -59,9 +60,10 @@ class Monitor:
         query = sql.SQL(
             "SELECT ts,exchange,symbol_token,open,high,low,close,volume,source FROM {} WHERE exchange=%s AND symbol_token=%s AND ts>%s ORDER BY ts LIMIT 1"
         ).format(self._market_table())
-        return conn.execute(
+        candidate = conn.execute(
             query, (order["exchange"], order["instrument_token"], order["accepted_at"])
         ).fetchone()
+        return candidate if candidate and valid_ohlc(candidate) else None
 
     def _capture_entry_market_evidence(
         self,
@@ -497,6 +499,10 @@ class Monitor:
         return processed
 
     def _process_bar(self, conn: Any, bar: dict[str, Any]) -> None:
+        # Invalid source lows can manufacture 100% short opportunities. Preserve
+        # the source, but exclude it from marks, extrema and target evaluation.
+        if not valid_ohlc(bar):
+            return
         bar_id = _bar_id(bar)
         inserted = conn.execute(
             f"INSERT INTO {self.schema}.processed_market_bars(exchange,instrument_token,source_bar_id,bar_ts,source_revision) VALUES (%s,%s,%s,%s,'POSITION_AWARE_V2') ON CONFLICT(exchange,instrument_token,source_bar_id) DO UPDATE SET source_revision=EXCLUDED.source_revision,processed_at=now() WHERE {self.schema}.processed_market_bars.source_revision IS DISTINCT FROM EXCLUDED.source_revision RETURNING source_bar_id",
@@ -510,6 +516,8 @@ class Monitor:
         ).fetchall()
         for leg in legs:
             entry = Decimal(leg["average_entry_price"])
+            if not entry.is_finite() or entry <= 0:
+                continue
             high, low, close = Decimal(bar["high"]), Decimal(bar["low"]), Decimal(bar["close"])
             mfe = favourable_return(leg["side"], entry, high, low)
             mae = adverse_return(leg["side"], entry, high, low)
@@ -826,7 +834,45 @@ class Monitor:
                     )
         return result
 
+    def refresh_open_marks(self) -> int:
+        """Open capital remains marked after an analytical tracker completes.
+
+        This path does not evaluate targets, create orders, change session counts
+        or rewrite historical outcomes. Only forward, valid market marks apply.
+        """
+        updated = 0
+        with self.db.connection() as conn:
+            legs = conn.execute(
+                f"SELECT l.trade_leg_id,l.trade_group_id,l.side,l.remaining_quantity,l.opened_at,p.average_entry_price,p.last_mark_at,i.exchange,i.instrument_token FROM {self.schema}.trade_legs l JOIN {self.schema}.positions p USING(trade_leg_id) JOIN {self.schema}.instrument_snapshots i USING(instrument_snapshot_id) WHERE l.remaining_quantity>0 AND l.opened_at IS NOT NULL AND i.instrument_token IS NOT NULL FOR UPDATE OF l,p"
+            ).fetchall()
+            for leg in legs:
+                entry = Decimal(leg["average_entry_price"])
+                if not entry.is_finite() or entry <= 0:
+                    continue
+                bar = conn.execute(
+                    sql.SQL("SELECT ts,exchange,symbol_token,open,high,low,close,source FROM {} WHERE exchange=%s AND symbol_token=%s AND ts>=%s AND ts<=now() AND ts>COALESCE(%s::timestamptz,'epoch'::timestamptz) AND open>0 AND high>0 AND low>0 AND close>0 AND low<=least(open,close) AND high>=greatest(open,close) ORDER BY ts DESC LIMIT 1").format(self._market_table()),
+                    (leg["exchange"], leg["instrument_token"], leg["opened_at"], leg["last_mark_at"]),
+                ).fetchone()
+                if not bar or not valid_ohlc(bar):
+                    continue
+                close = Decimal(bar["close"])
+                units = Decimal(leg["remaining_quantity"])
+                pnl = leg_pnl(leg["side"], entry, close, units)
+                changed = conn.execute(
+                    f"UPDATE {self.schema}.positions SET last_mark=%s,last_mark_at=%s,unrealised_pnl=%s,version=version+1 WHERE trade_leg_id=%s AND (last_mark_at IS NULL OR last_mark_at<%s) RETURNING trade_leg_id",
+                    (close, bar["ts"], pnl, leg["trade_leg_id"], bar["ts"]),
+                ).fetchone()
+                if not changed:
+                    continue
+                conn.execute(
+                    f"INSERT INTO {self.schema}.valuation_snapshots(trade_group_id,valued_at,quality,market_value,unrealised_pnl,source_refs) VALUES (%s,%s,'MARKET_BAR',%s,%s,%s::jsonb) ON CONFLICT(trade_group_id,valued_at) DO UPDATE SET market_value=EXCLUDED.market_value,unrealised_pnl=EXCLUDED.unrealised_pnl,source_refs=EXCLUDED.source_refs",
+                    (leg["trade_group_id"], bar["ts"], close * units, pnl, json.dumps({"source_bar_id": _bar_id(bar), "mark_policy": "OPEN_POSITION_FORWARD_V1"})),
+                )
+                updated += 1
+        return updated
+
     def once(self) -> dict[str, int]:
         result = {"fills": self.fill_orders(), "bars": self.process_bars()}
+        result["open_marks"] = self.refresh_open_marks()
         result.update(self.check_freshness())
         return result

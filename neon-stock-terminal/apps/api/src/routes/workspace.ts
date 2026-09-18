@@ -7,6 +7,7 @@ import type { RequestAuthenticator } from "../auth/guard";
 import { runWithConcurrency } from "../lib/boundedConcurrency";
 import { projectStoredTradeQuality, TRADE_QUALITY_POLICY } from "../lib/tradeQuality";
 import { paperCapitalStrategyComparisons } from "../lib/paperCapitalSimulation";
+import { paperEvidenceAudit } from "../lib/paperEvidenceAudit";
 
 type Row = Record<string, unknown>;
 
@@ -253,6 +254,7 @@ export function paperTradeProjection(row: Row) {
   const tradeQuality = projectStoredTradeQuality(projected);
   return {
     ...projected,
+    evidence_audit: paperEvidenceAudit(row),
     trade_quality: tradeQuality,
     trade_quality_review: row.review_reviewed_at ? {
       ratings: row.review_ratings ?? {},

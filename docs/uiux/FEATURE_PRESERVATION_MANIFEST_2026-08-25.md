@@ -449,3 +449,11 @@ Client remains `Client (reported)`; missing baselines remain null; no strike is
 attributed to a participant. Morning View, OI & PCR, Scalper V1/V2, Trade Log,
 collectors, strategy calculations, exports and order permissions remain intact.
 Evidence: `docs/trading-analytics/POSITIONING_AND_FLOW_20260912.md`.
+
+2026-09-18 Paper audit repair: serial authenticated refresh retains hydrated
+rows; returning to the tab revalidates. Open-position marks are independent of
+completed analytical trackers, with valid forward OHLC only. Additive
+`evidence_audit` warns about corrupt prices and unverified legacy horizons.
+Recorded fills, strategy/targets, costs, reserves, comments, exports and
+permissions remain unchanged. Historical research replay is explicitly pending.
+Evidence: `docs/OIIS_PAPER_AUDIT_REPAIR_20260918.md`.

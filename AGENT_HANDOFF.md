@@ -5117,3 +5117,26 @@ or outcomes were deleted.
   `daffb77b5b51...`, image `sha256:a6780db44b68...`, entry asset
   `/n50/assets/index-BrMkAXIL.js`. No API, collector, database or order service
   was recreated.
+
+## 2026-09-18 — OIIS PDF audit, refresh and forward marking
+
+- Canonical branch: `fix/paper-audit-refresh-20260918`; report:
+  `docs/OIIS_PAPER_AUDIT_REPAIR_20260918.md`.
+- Revised opportunity review takes precedence over original forensic
+  interpretation. No target/stop/admission strategy was changed.
+- Fixed one-shot paper UI loading through serial revalidation and focus return.
+  Summary refresh retains detail rows and reports successful refresh time.
+- Added independent forward marks for open positions after tracker completion;
+  no order/target/horizon action is part of this path. Invalid OHLC fails closed.
+- API provides additive evidence warnings. Historical outcomes are preserved
+  and completed legacy horizons are unverified pending qualified-session replay.
+- Python suite: 28 passed, 6 skipped (isolated TEST_DATABASE_URL unavailable).
+  Do not run destructive integration fixtures against production.
+- Web/API checks and deployment/browser outcomes are recorded below after
+  execution. Authenticated refresh test is read-only:
+  `tools/playwright/paper-audit-refresh.mjs`.
+- Pre-release checks: web typecheck/build and 193/193 tests passed; API
+  typecheck/build and 215/215 tests passed; canonical gate and diff check passed.
+- Before repair, 31 positions remained open; oldest persisted mark was
+  2026-09-09 22:35 UTC, newest 2026-09-18 10:38 UTC. These source timestamps
+  do not themselves certify continuous-market execution eligibility.

@@ -237,6 +237,7 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
   const [detailError, setDetailError] = useState<string | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [loadingSlow, setLoadingSlow] = useState(false);
+  const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
   const [key, setKey] = useState(0);
   useEffect(() => {
     if (!authReady || !authenticatedUserId) {
@@ -245,10 +246,13 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
       setDetailError(null);
       setDetailsLoading(false);
       setLoadingSlow(false);
+      setRefreshedAt(null);
       return;
     }
     const controller = new AbortController();
     let active = true;
+    let inFlight = false;
+    let refreshTimer: number | undefined;
     setError(null);
     setDetailError(null);
     setDetailsLoading(true);
@@ -266,12 +270,15 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
       return response.json();
     };
     const load = async () => {
+      if (!active || inFlight || document.hidden) return;
+      inFlight = true;
       let bootstrapLoaded = false;
       try {
         const bootstrap = await fetchPayload("/v1/workspace/paper-trading/bootstrap");
         if (!active) return;
         bootstrapLoaded = true;
-        setData(bootstrap);
+        // A refresh must not discard the hydrated trade rows while details load.
+        setData((previous) => previous ? { ...previous, summary: bootstrap.summary ?? previous.summary } : bootstrap);
       } catch (reason) {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         if (active) setDetailError(`Summary bootstrap delayed: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -283,6 +290,7 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
         setLoadingSlow(false);
         setDetailError(null);
         setData(payload);
+        setRefreshedAt(new Date().toISOString());
       } catch (reason) {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         window.clearTimeout(slowTimer);
@@ -291,17 +299,29 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
         if (bootstrapLoaded || data) setDetailError(message);
         else setError(message);
       } finally {
+        inFlight = false;
         if (active) setDetailsLoading(false);
+        if (active) refreshTimer = window.setTimeout(() => void load(), 30_000);
       }
     };
+    const revalidate = () => {
+      if (document.hidden || inFlight) return;
+      window.clearTimeout(refreshTimer);
+      void load();
+    };
+    document.addEventListener("visibilitychange", revalidate);
+    window.addEventListener("focus", revalidate);
     void load();
     return () => {
       active = false;
       window.clearTimeout(slowTimer);
+      window.clearTimeout(refreshTimer);
+      document.removeEventListener("visibilitychange", revalidate);
+      window.removeEventListener("focus", revalidate);
       controller.abort();
     };
   }, [authReady, authenticatedUserId, key]);
-  return { data, error, detailError, detailsLoading, loadingSlow, reload: () => setKey((value) => value + 1) };
+  return { data, error, detailError, detailsLoading, loadingSlow, refreshedAt, reload: () => setKey((value) => value + 1) };
 }
 
 export function PaperTradingCommandCenter() {
@@ -534,6 +554,15 @@ export function PaperTradingCommandCenter() {
         calm={calm}
         onCalm={() => setCalm((value) => !value)}
       />
+
+      <details className={styles.hydrationNotice} data-testid="paper-audit-methodology">
+        <summary>Evidence audit · opportunity is not execution</summary>
+        <p>Target touches are observations, not booked profits or released capital. Open positions continue to receive forward market marks after their observation window ends.</p>
+        <p>{trades.filter((trade) => trade.evidence_audit?.status === "DATA_INVALID").length} trades have invalid price evidence. {trades.filter((trade) => trade.evidence_audit?.issues?.includes("LEGACY_HORIZON_REQUIRES_SESSION_RECONCILIATION")).length} trades have stored horizons requiring exchange-session reconciliation. Raw records are preserved; these outcomes are not certified.</p>
+        <p>Research candidates: fresh-trigger qualification, one active position per issuer, matched 30/60-minute windows, alternative targets, execution-cost stress and finite-capital replay. These are unvalidated comparisons, not changes to the active strategy. Model profit reserves are not a statement of tax liability.</p>
+        <button type="button" onClick={query.reload}>Refresh paper values</button>
+        <small data-testid="paper-refresh-time">Last successful refresh: {query.refreshedAt ? time(query.refreshedAt) : "Waiting for complete ledger"}. Refreshes after each completed request plus 30 seconds, and when returning to this tab. No paper order is submitted by refresh.</small>
+      </details>
 
       {query.detailsLoading ? (
         <section className={styles.hydrationNotice} role="status">

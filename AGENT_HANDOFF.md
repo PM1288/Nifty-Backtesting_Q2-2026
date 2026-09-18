@@ -22,6 +22,14 @@
   known-before-entry. None has complete verified 5-/30-session coverage.
 - Added timely-candidate-ID metadata regression; final API 226 tests PASS,
   unchanged web 195 PASS. Full evidence/limits in the report; outputs ignored.
+- Final application `1f3d7bb` pushed/deployed from master; dashboard healthy,
+  image `sha256:b721baab05cf…`, asset `/n50/assets/index-DLvrBmQF.js`.
+  Post-release full browser rerun PASS: latest research 18,958 ms, 88/21/0 cohort
+  counts, all exports/cutoff/mobile/close checks, zero paper writes. Public 200,
+  unauthenticated research 401. 48 capital equity identities reconcile.
+- Previous image retained as `trading-stack-n50-dashboard:before-verified-replay-20260918`;
+  exact scoped rollback and protected rerun commands in the report. No other
+  service or database was recreated/migrated. Pre-existing untracked files kept.
 
 ## 2026-09-12 — Scalper V2 30-session strike gauge
 

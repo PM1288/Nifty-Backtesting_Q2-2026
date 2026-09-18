@@ -145,3 +145,50 @@ monthly strategy had zero returns.
 Fill/entry/mark ties are deterministic: closing fill, entry, mark, then trade-leg
 ID. Allocation is fixed per scenario, not optimised after seeing outcomes.
 Profit is research-model gross/estimated-cost P&L, not actual booked account net.
+
+## Final deployment
+
+Application commit **`1f3d7bb`**, pushed master; approved dashboard-only release
+healthy, image `sha256:b721baab05cfcfa67999299019bd060959b7883747154907a0d0abaf06aa5b70`,
+container `db6eb7c97bf6…`, entry `/n50/assets/index-DLvrBmQF.js`.
+Public `/n50/paper-trading?tab=verified` HTTP 200; unauthenticated research HTTP 401.
+Final authenticated rerun PASS with the same 88/21/0 cohort counts, seven exports,
+zero mutations, two intentional reads, no mobile overflow and cutoff separation.
+Final uncached replay 18,958 ms (earlier run 17,784 ms); no p95 inference.
+All 48 recorded/shadow capital scenarios reconcile equity both to starting
+capital + realised + open marks − estimated friction and to cash + locked
+notional + open marked P&L, within 0.000001 INR numerical tolerance.
+
+Only dashboard was recreated; paper monitor/collectors/database were untouched.
+Tracked source clean; pre-existing untracked report ZIPs/tools preserved, not
+staged. This documentation follow-up does not change the deployed application.
+
+Scoped rollback, **only if required**:
+
+```bash
+cd /home/novius2/trading-stack
+docker image tag trading-stack-n50-dashboard:before-verified-replay-20260918 trading-stack-n50-dashboard:latest
+docker compose -p trading-stack-novius2 --env-file .env -f docker-compose.yml up -d --no-deps --no-build n50-dashboard
+```
+
+Authenticated rerun used existing Chromium and temporary Playwright runner;
+protected credential remains in memory/environment, never output or committed:
+
+```bash
+cd /home/novius2/trading-stack
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+import {spawn} from 'node:child_process';
+const password = fs.readFileSync('.env','utf8').match(/^DEV_LOCAL_AUTH_PASSWORD=(.*)$/m)?.[1].replace(/^['"]|['"]$/g,'');
+if (!password) throw new Error('Missing protected credential');
+const child = spawn('node',['tools/playwright/paper-verified-replay.mjs'],{
+  stdio:'inherit', env:{...process.env, PLAYWRIGHT_ADMIN_PASSWORD:password,
+    PLAYWRIGHT_MODULE:'/tmp/paper-audit-browser-20260918/node_modules/playwright/index.mjs',
+    PLAYWRIGHT_EXECUTABLE_PATH:'/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome'}
+});
+child.on('exit',code=>process.exit(code??1));
+JS
+```
+
+If these test-runner paths expire, install the test runner separately and set
+the two optional paths; never copy the application or commit generated binaries.

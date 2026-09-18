@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-18 Paper verified replay: additive `tab=verified` reconstructs qualified
+5-/30-session evidence and compares ₹4 lakh recorded-fill capital across all
+OIIS and monthly cohorts. Missing history stays censored; hypothetical target
+fills remain separate. Excel/CSV/JSON/Markdown retain source details. Existing
+views, trade inspector, refresh, alerts, authentication, strategy, orders and
+authoritative ledger remain. Evidence: `docs/OIIS_VERIFIED_REPLAY_20260918.md`.
+
 2026-09-12 MWHD Bull/Bear candidate ranks: the Home progression surface is now
 split into compact `MWHD-BULL RANK` and `MWHD-BEAR RANK` boards. Every stock has
 both independently weighted ranks and separately coloured `BULL #n` / `BEAR

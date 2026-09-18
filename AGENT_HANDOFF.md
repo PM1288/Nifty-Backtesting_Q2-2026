@@ -1,5 +1,19 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-18 — Additive OIIS verified capital research
+
+- Branch `feat/paper-verified-replay-20260918`; tab `/paper-trading?tab=verified`.
+- Report `docs/OIIS_VERIFIED_REPLAY_20260918.md` describes models, limitations,
+  exports and rerun/rollback. Existing ledger/strategy/permissions unchanged.
+- All/monthly retrospective/stored-before-entry cohorts, both allocations;
+  verified session coverage, independent target challengers, friction stresses,
+  capital-lock journey and audit workbook/CSV/JSON/Markdown.
+- Pre-release checks: 225 API / 195 web tests, both typechecks/builds and gate PASS.
+- Critical source limitation: earliest retained minute session 1 September;
+  August and incomplete windows remain CENSORED, not invented full outcomes.
+- Browser and deployment outcomes appended after execution; no claim of complete
+  historical backtest, executable shadow profits or unrelated feature completion.
+
 ## 2026-09-12 — Scalper V2 30-session strike gauge
 
 - Branch `fix/scalper-v2-30d-strike-gauge-20260912` refines the existing

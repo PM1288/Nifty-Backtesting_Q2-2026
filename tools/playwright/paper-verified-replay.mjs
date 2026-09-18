@@ -1,0 +1,81 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import assert from "node:assert/strict";
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright");
+const base = (process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:19090/n50").replace(/\/$/, "");
+if (!process.env.PLAYWRIGHT_ADMIN_PASSWORD) throw new Error("Protected admin password required");
+const output = path.resolve("output/playwright/paper-verified-replay");
+await fs.mkdir(output, { recursive: true });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH });
+try {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, acceptDownloads: true });
+  const login = await context.request.post(`${base}/auth/session/dev-login`, { data: { identifier: "admin", password: process.env.PLAYWRIGHT_ADMIN_PASSWORD } });
+  assert.ok(login.ok(), `Login ${login.status()}`);
+  const page = await context.newPage();
+  let mutations = 0, researchRequests = 0;
+  page.on("request", (request) => {
+    if (request.url().includes("/paper-trading") && request.method() !== "GET") mutations++;
+    if (request.url().includes("/paper-trading/research")) researchRequests++;
+  });
+  await page.goto(`${base}/paper-trading?tab=verified`, { waitUntil: "domcontentloaded" });
+  const root = page.getByTestId("paper-verified-research");
+  await root.waitFor({ timeout: 120000 });
+  const started = Date.now();
+  const responsePromise = page.waitForResponse((response) => response.url().includes("/paper-trading/research"), { timeout: 120000 });
+  await root.getByRole("button", { name: "Run verified replay", exact: true }).click();
+  const response = await responsePromise;
+  assert.ok(response.ok(), `Research ${response.status()} ${await response.text()}`);
+  const report = await response.json();
+  await root.getByText("Verified horizons · raw outcomes preserved", { exact: true }).waitFor();
+  const elapsed = Date.now() - started;
+  assert.ok(report.source.length > 0);
+  assert.equal(report.cohorts.length, 3);
+  for (const cohort of report.cohorts) for (const model of cohort.scenarios) {
+    assert.ok(model.ending_cash >= -1e-6);
+    assert.ok([100000, 200000].includes(model.allocation));
+    assert.ok(Number.isFinite(model.ending_equity));
+  }
+  await fs.writeFile(path.join(output, "report.json"), JSON.stringify(report, null, 2));
+  const horizons = root.locator("table").filter({ hasText: "5-session state" });
+  await horizons.locator("tbody tr").first().click();
+  await root.getByRole("complementary", { name: /verified evidence/ }).waitFor();
+  await page.keyboard.press("Escape");
+  assert.equal(await root.getByRole("complementary", { name: /verified evidence/ }).count(), 0);
+  await horizons.getByRole("button", { name: "Orders & fills", exact: true }).first().click();
+  const canonical = page.getByRole("complementary", { name: /paper trade detail/ });
+  await canonical.waitFor({ timeout: 60000 });
+  await canonical.getByRole("button", { name: "Close trade detail", exact: true }).click();
+  for (const name of ["Full JSON", "Horizons CSV", "Replay CSV", "Equity CSV", "Full source CSV", "Excel workbook (.xml)", "Audit Markdown"]) {
+    const pending = page.waitForEvent("download");
+    await root.getByRole("button", { name, exact: true }).click();
+    const download = await pending;
+    await download.saveAs(path.join(output, download.suggestedFilename()));
+  }
+  await page.screenshot({ path: path.join(output, "desktop-1920.png"), fullPage: true });
+  await root.getByLabel("Cohort", { exact: true }).selectOption("MONTHLY_KNOWN");
+  await root.getByLabel("Allocation", { exact: true }).selectOption("100000");
+  assert.equal(researchRequests, 1, "View selection must not query or replay server data");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: path.join(output, "desktop-1440.png"), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: path.join(output, "mobile-390.png"), fullPage: true });
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2);
+  assert.equal(overflow, false, "Page-wide mobile overflow");
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await root.getByLabel("As of close (optional)").fill("2026-09-10");
+  const historicalResponse = page.waitForResponse((item) => item.url().includes("/paper-trading/research") && item.url().includes("asOf="), { timeout: 120000 });
+  await root.getByRole("button", { name: "Run verified replay", exact: true }).click();
+  const historical = await historicalResponse;
+  assert.ok(historical.ok(), `Historical ${historical.status()}`);
+  const past = await historical.json(), cutoff = Date.parse(past.as_of);
+  assert.equal(past.as_of, "2026-09-10T10:00:00.000Z");
+  assert.ok(past.source.every((trade) => trade.fills.every((fill) => Date.parse(fill.filled_at) <= cutoff) && trade.sessions.every((session) => Date.parse(session.last_at) + 60000 <= cutoff)));
+  await fs.writeFile(path.join(output, "historical.json"), JSON.stringify(past, null, 2));
+  await page.getByRole("navigation", { name: "Paper Trading views" }).getByRole("button", { name: "Simple view", exact: true }).click();
+  await page.getByTestId("paper-refresh-time").waitFor();
+  assert.ok(await page.locator("table tbody tr").count(), "Existing simple trades remain available");
+  assert.equal(mutations, 0);
+  const result = { status: "PASS", sourceRows: report.source.length, firstReplayMs: elapsed, mutations, researchRequests, exports: 7, cohorts: report.cohorts.map((item) => ({ id: item.id, sourceCount: item.source_count })), verified5: report.source.filter((trade) => trade.verified.horizons[0].status === "VERIFIED_COMPLETE").length, verified30: report.source.filter((trade) => trade.verified.horizons[1].status === "VERIFIED_COMPLETE").length, mobileOverflow: overflow, historicalCutoff: past.as_of };
+  await fs.writeFile(path.join(output, "result.json"), JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(result));
+} finally { await browser.close(); }

@@ -8,6 +8,7 @@ import { runWithConcurrency } from "../lib/boundedConcurrency";
 import { projectStoredTradeQuality, TRADE_QUALITY_POLICY } from "../lib/tradeQuality";
 import { paperCapitalStrategyComparisons } from "../lib/paperCapitalSimulation";
 import { paperEvidenceAudit } from "../lib/paperEvidenceAudit";
+import { registerPaperVerifiedResearch } from "./paperVerifiedResearch";
 
 type Row = Record<string, unknown>;
 
@@ -378,6 +379,7 @@ async function requirePaperCommentAdmin(req: Parameters<RequestAuthenticator["ge
 }
 
 export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth: RequestAuthenticator, paperPrisma: PrismaClient = prisma) {
+  registerPaperVerifiedResearch(app, paperPrisma, auth);
   app.get("/v1/trade-quality/policy", (_req, res) => {
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.json(TRADE_QUALITY_POLICY);

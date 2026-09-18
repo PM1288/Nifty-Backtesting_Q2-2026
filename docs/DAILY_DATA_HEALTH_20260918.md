@@ -71,3 +71,28 @@ for candidate UI checks only; never describe it as testing the deployed API.
 Commit/push feature, merge/push master after required checks, then run
 `bash scripts/deploy_n50_dashboard.sh`. Preserve previous image for scoped
 dashboard rollback. No DB migration, backfill, data deletion or collector restart.
+
+## Deployed evidence
+
+- Application commit `932b899` pushed to feature branch and master; deployed
+  through the scoped release script. Dashboard is healthy, image
+  `sha256:82a3701ff804ec603e1d263dd06d63fe660e90be26af8f6ea8a757518d92eef5`,
+  entry asset `/n50/assets/index-B9qWPtCS.js`.
+- Previous image retained as `n50-dashboard:before-data-health-20260918`.
+- Deployed authenticated Chromium PASS at 1920×1080 and 390×844, real API:
+  search, missing-search empty state, FUT filter, issues toggle, refresh and
+  JSON download; zero page errors, no page overflow. Evidence:
+  `output/playwright/data-health-production/`.
+- Public HTTPS login 200, authenticated health 200, unauthenticated health 401.
+  Sample request took 2,086 ms including transfer; this is not a p95 benchmark.
+- Public snapshot: 9,596 instruments; 9,560 observed since session open,
+  11 without observations and 25 older-session observations. Counts change
+  with collection; don't treat this report as current live health.
+- Paper notification regression: 17/17 checks passed on the new route,
+  including desktop/mobile controls. All web/API required tests/builds and
+  canonical gate passed. No claim of exhaustive testing of every chart/route.
+- Paper refresh regression PASS: 88 rows, two automatic completed refreshes,
+  audit metadata retained on all 88 rows and zero mutation requests.
+- Runtime images, credentials and screenshots remain outside Git. Existing
+  unrelated untracked reports were preserved. No WhatsApp notification was
+  sent for this task; completion is provided in the conversation.

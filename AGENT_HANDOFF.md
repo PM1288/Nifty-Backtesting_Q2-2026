@@ -11,6 +11,13 @@
   authenticated desktop/mobile filtering/refresh/export checks passed.
 - Live status is scoped: observed timestamps do not certify complete candles
   or per-field OI freshness. Archived reports are not parsed data.
+- Application `932b899` pushed and deployed; healthy dashboard image
+  `82a3701ff804...`, asset `index-B9qWPtCS.js`. Production authenticated
+  desktop/mobile tests pass with real API; public login/health 200 and anonymous
+  health 401. Paper notifier regression 17/17 passes. Release evidence and
+  rollback image are recorded in the report above.
+- Paper refresh regression also passes: 88 rows survive two refreshes with
+  complete audit metadata and no mutations. Own temporary Vite listener stopped.
 
 ## 2026-09-18 — V2-only workstation and collection coverage
 

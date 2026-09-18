@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { ChevronDown, Menu, MoreVertical, Presentation, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { trackNavClick } from "../../analytics/events";
 import {
   MARKETS_MENU_ROUTES,
@@ -183,7 +184,9 @@ export function ResponsiveWorkspaceNavigation({
       <button ref={(node) => { if (node) menuTriggers.current.more = node; }} type="button" className={styles.moreButton} data-active={moreActive || openMenu === "more" ? "true" : "false"} aria-label="More navigation" aria-haspopup="menu" aria-expanded={openMenu === "more"} aria-controls="more-global-menu" onClick={() => toggleMenu("more")} onKeyDown={(event) => enterMenu(event, "more")}><MoreVertical size={19} aria-hidden="true" /></button>
       {openMenu === "more" ? <section id="more-global-menu" data-menu-panel="more" className={`${styles.dropdown} ${styles.moreDropdown}`} role="menu" aria-label="More navigation" onKeyDown={navigateMenu}><span className={styles.dropdownEyebrow}>MORE</span><MenuItems items={moreRoutes} pathname={pathname} onNavigate={(item) => record(item, "desktop_header")} /><button type="button" className={styles.presentationAction} role="menuitem" onClick={() => { closeMenus(false); onPresentationModeChange(true); }}><Presentation size={19} aria-hidden="true" /><span><strong>Presentation mode</strong><small>Hide application chrome temporarily</small></span></button></section> : null}
     </div>
-    {sheetOpen ? <div className={styles.sheetBackdrop} role="presentation" onMouseDown={() => setSheetOpen(false)}>
+    {/* The blurred header establishes a fixed-position containing block. The
+        navigation sheet must belong to the viewport, not the 83px header. */}
+    {sheetOpen ? createPortal(<div className={styles.sheetBackdrop} role="presentation" onMouseDown={() => setSheetOpen(false)}>
       <aside ref={sheetRef} id="mobile-global-navigation" className={styles.mobileSheet} role="dialog" aria-modal="true" aria-label="Application navigation" onMouseDown={(event) => event.stopPropagation()}>
         <header><div><span>NIFTY 50 TRADER</span><strong>Navigation</strong></div><button type="button" aria-label="Close navigation" onClick={() => { setSheetOpen(false); window.requestAnimationFrame(() => mobileTriggerRef.current?.focus()); }}><X size={20} /></button></header>
         <Link className={styles.mobileDirect} data-active={todayActive ? "true" : "false"} to="/" onClick={() => record({ path: "/", label: "Today" }, "mobile_sheet")}><TodayIcon size={20} />Today</Link>
@@ -195,6 +198,6 @@ export function ResponsiveWorkspaceNavigation({
         <Link className={styles.mobileDirect} data-active={paperActive ? "true" : "false"} to="/paper-trading" onClick={() => record({ path: "/paper-trading", label: "Paper Trading" }, "mobile_sheet")}><PaperIcon size={20} />Paper Trading</Link>
         <section className={styles.mobileGroup}><button type="button" aria-expanded={expandedMobile === "more"} onClick={() => setExpandedMobile((value) => value === "more" ? null : "more")}><span>More</span><ChevronDown size={16} data-open={expandedMobile === "more"} /></button>{expandedMobile === "more" ? <MenuItems items={moreRoutes} pathname={pathname} onNavigate={(item) => record(item, "mobile_sheet")} /> : null}</section>
       </aside>
-    </div> : null}
+    </div>, document.body) : null}
   </div>;
 }

@@ -28,6 +28,7 @@ const evidence = {
   mutations: [],
   status: "NOT_RUN",
 };
+let inspectedPage;
 try {
   const context = await browser.newContext({
     viewport: { width: 1920, height: 1080 },
@@ -54,6 +55,7 @@ try {
       },
     ]);
   const page = await context.newPage();
+  inspectedPage = page;
   page.on("pageerror", (e) => evidence.errors.push(String(e)));
   page.on("request", (r) => {
     if (r.url().includes("/v1/predictor") && r.method() !== "GET")
@@ -106,6 +108,16 @@ try {
   ]) {
     await page.setViewportSize(viewport);
     await page.waitForTimeout(400);
+    if (viewport.width < 1520) {
+      await page.getByRole("button", { name: "Open navigation", exact: true }).click();
+      const menu = page.getByRole("dialog", { name: "Application navigation" });
+      const rectangle = await menu.boundingBox();
+      (evidence.navigation ??= []).push({viewport,rectangle});
+      assert.ok(rectangle && rectangle.y >= 0 && rectangle.y + rectangle.height <= viewport.height + 2, "Navigation sheet is inside viewport");
+      await menu.getByRole("link", { name: "Predictor", exact: true }).click();
+      assert.equal(await menu.count(), 0, "Navigation closes after selection");
+      await root.getByRole("button", { name: "Historical lab", exact: true }).click();
+    }
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth + 2,
@@ -189,6 +201,11 @@ try {
   assert.equal(evidence.mutations.length, 0);
   evidence.status = "PASS";
 } catch (e) {
+  if (inspectedPage) {
+    evidence.url = inspectedPage.url();
+    evidence.visibleState = (await inspectedPage.locator("body").innerText()).slice(0,1200);
+    await inspectedPage.screenshot({path:`${output}/failure.png`,fullPage:true});
+  }
   evidence.status = "FAIL";
   evidence.failure = String(e);
   process.exitCode = 1;

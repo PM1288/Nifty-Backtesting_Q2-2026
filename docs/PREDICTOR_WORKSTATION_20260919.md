@@ -192,3 +192,48 @@ on real market data, even after successful automated/synthetic checks.
 - Morning capture and EOD scorer orchestration unit-tested with labelled synthetic
   bars. Real next-session publication, missed-window handling in production and
   later EOD evaluation remain NOT YET OBSERVED.
+
+## Production release evidence
+
+- Application commit `6b58beaaa85263a28457068264af2d31d044e1d5`, pushed feature
+  branch, fast-forwarded/pushed master before deployment.
+- Only `n50-dashboard` recreated, healthy. Image:
+  `sha256:d462e8053cae6825f3780edae731cbd5a2def92c41d89eab65fe0b4b345e0a56`.
+  Production asset `/n50/assets/index-Cn1Oz0NV.js`.
+- Live URL: https://n50.nifty50today.co.in/n50/predictor
+- Public exact-Origin login 200; authenticated API 200; page 200; anonymous
+  predictor API 401. Invalid date input 400 in authenticated browser check.
+- Production browser checks PASS at 1920/1440/390; real historical study and
+  separate browser-intercepted synthetic forecast/score/inspector fixtures.
+  Zero JS errors, zero predictor mutations. Evidence: `output/predictor/production`.
+- Existing Paper notifier regression 17/17 PASS on Predictor, including mobile.
+  Evidence `output/predictor/notifier`.
+- Existing Paper automatic-refresh regression PASS: 88 hydrated/audited rows,
+  two completed refreshes, zero mutations. No canonical ledger calculation changed.
+- Compiled worker ran automatically after restart and logged
+  `predictor_completed`, `WAITING_FOR_MORNING`, zero forecasts/evaluations;
+  database heartbeat refreshed at 2026-09-18T20:04:31.853Z. Expected next session
+  2026-09-21. This validates launch/after-hours operation, not live prediction skill.
+- Previous image retained as `n50-dashboard:before-predictor-20260919`
+  (`sha256:3c8d31d07551ee2a5b0ddfab361c41f88691c9a36bfbdeaa1206be82eba18992`).
+- Build emitted an existing dependency audit warning: 16 findings (1 low,
+  11 moderate, 3 high, 1 critical). Dependency manifests/lockfiles were unchanged;
+  remediation is not claimed by this feature. No force-upgrade or broad change made.
+- Unrelated untracked user reports preserved. Runtime market data and screenshots
+  remain under ignored `output/`, not committed. No source data deleted.
+
+### Additional mobile-navigation repair
+
+An explicit link-activation check (beyond the passing page viewport tests) found
+the mobile navigation sheet outside the viewport. Measured before repair at
+390×844: sheet top −295px, bottom 83px; backdrop height only 83px. The shared
+header's `backdrop-filter: blur(12px)` created its fixed containing block.
+The sheet now renders through a React portal into `document.body`, preserving
+its existing focus trap, Escape, links and styling while using the viewport.
+The Predictor browser regression now opens/activates this link at 1440 and 390
+and checks the sheet's actual bounds. Final release evidence follows below.
+
+The expanded candidate regression passed after the fix at both widths; the first
+cold development-server run timed out before the page appeared, without a browser
+exception. The stable rerun passed. API 242/web 206 tests, typechecks, builds and
+canonical gate were rerun successfully. No forecast/model calculation changed.

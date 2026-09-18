@@ -11,6 +11,12 @@
   do not claim predictive edge. Weekend: zero forward forecasts, next session pending.
 - Method, exact checks, deployment/rollback and limitations:
   `docs/PREDICTOR_WORKSTATION_20260919.md`.
+- Application `6b58bea` pushed/merged/deployed; healthy image `d462e8053cae...`,
+  asset `index-Cn1Oz0NV.js`. Web 206/API 242 pass, builds/gate pass. Public
+  login/route/API 200, anonymous API 401; production desktop/mobile and notifier
+  17/17 pass. Compiled worker heartbeat verified; real Monday capture/EOD pending.
+- Paper automatic-refresh also passes: 88 rows, two refreshes, zero mutations.
+  Own temporary Vite listener stopped; unrelated services and reports preserved.
 
 ## 2026-09-18 — Paper Trade Analyzer
 

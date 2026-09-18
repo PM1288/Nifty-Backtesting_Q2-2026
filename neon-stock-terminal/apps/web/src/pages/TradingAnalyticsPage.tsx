@@ -3,6 +3,7 @@ import {
   lazy,
   Suspense,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -11,7 +12,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { getJson } from "../lib/api";
 import type { EChartsOption } from "echarts";
 import styles from "./TradingAnalyticsPage.module.css";
-import { TradingAnalyticsScalper } from "./TradingAnalyticsScalper";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import {
   analyticsTabs,
@@ -370,11 +370,17 @@ export function TradingAnalyticsPage() {
   const [params, setParams] = useSearchParams();
   const [logMarketContext, setLogMarketContext] = useState(false);
   const tab: Tab =
-    params.get("view") === "oi"
+    params.get("view") === "scalper" ? "scalper_v2" : params.get("view") === "oi"
       ? "smartapi"
       : Object.hasOwn(tabs, params.get("view") ?? "")
         ? (params.get("view") as Tab)
         : "morning";
+  useEffect(() => {
+    if (params.get("view") !== "scalper") return;
+    const next = new URLSearchParams(params);
+    next.set("view", "scalper_v2");
+    setParams(next, { replace: true });
+  }, [params, setParams]);
   const [replayInput, setReplayInput] = useState(params.get("asOf") ?? "");
   const main = analyticsMainView(tab);
   const query = new URLSearchParams();
@@ -401,6 +407,8 @@ export function TradingAnalyticsPage() {
     staleTime: 30000,
     retry: 1,
     enabled: tab === "scalper" || tab === "scalper_v2",
+    refetchInterval: params.has("asOf") ? false : 60000,
+    refetchIntervalInBackground: false,
   });
   const universeQuery = new URLSearchParams();
   if (params.get("asOf")) universeQuery.set("asOf", params.get("asOf")!);
@@ -583,29 +591,7 @@ export function TradingAnalyticsPage() {
             <button onClick={() => void activeQuery.refetch()}>Retry</button>
           </section>
         )}
-        {tab === "scalper" ? (!scalperContext ? (
-          <p role="status">
-            {scalperQ.isLoading ? "Loading Scalper market context…" : "No Scalper context response."}
-          </p>
-        ) : (
-          <>
-            <section className={styles.warning}>
-              <strong>{scalperContext.state}</strong> · Read-only research · {scalperContext.errors.length} source query failures.
-            </section>
-            <TradingAnalyticsScalper
-              key={scalperContext.underlying.symbol}
-              symbol={scalperContext.underlying.symbol}
-              label={scalperContext.underlying.label}
-              asOf={scalperContext.asOf}
-              expiry={String(scalperContext.smartapi.expiry ?? "")}
-              strikes={scalperContext.smartapi.strikes}
-              legs={scalperContext.smartapi.legs}
-              resistance={scalperContext.resistance ?? []}
-              maxPainStrikes={scalperContext.smartapi.metrics.indicativeMaxPainStrikes ?? []}
-              spot={scalperContext.smartapi.spot?.ltp == null ? null : Number(scalperContext.smartapi.spot.ltp)}
-            />
-          </>
-        )) : tab === "scalper_v2" ? (!scalperContext ? (
+        {tab === "scalper_v2" ? (!scalperContext ? (
           <p role="status">{scalperQ.isLoading ? "Loading Scalper V2 market context…" : "No Scalper V2 context response."}</p>
         ) : (
           <Suspense fallback={<p role="status">Loading the three-chart Scalper V2 workspace…</p>}>
@@ -1208,7 +1194,7 @@ export function TradingAnalyticsPage() {
               <button
                 onClick={() => {
                   const next = new URLSearchParams(params);
-                  next.set("view", "scalper");
+                  next.set("view", "scalper_v2");
                   next.set("strike", String(inspected.strike));
                   next.set("pin", "true");
                   const expiry =

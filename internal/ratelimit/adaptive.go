@@ -20,8 +20,12 @@ func NewAdaptiveLimiter(minRPS, maxRPS, startRPS int, stepUpAfter time.Duration)
 	if minRPS < 1 {
 		minRPS = 1
 	}
-	if maxRPS < minRPS {
-		maxRPS = minRPS
+	if maxRPS < 1 {
+		maxRPS = 1
+	}
+	if minRPS > maxRPS {
+		// A shared minimum must never raise an endpoint's safety ceiling.
+		minRPS = maxRPS
 	}
 	if startRPS <= 0 {
 		startRPS = maxRPS

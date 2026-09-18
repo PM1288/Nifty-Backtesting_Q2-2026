@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-18 explicit user-approved Scalper retirement supersedes older V1 route
+preservation entries below: only V2 is selectable; `view=scalper` redirects with
+other parameters preserved. Shared calculations/source history remain. Other
+analytics, exact contracts, drawings, measurements, exports and strategy/order
+guards remain. Responsive chart containment, bounded prefetch, source-date
+disclosure and coalesced resize have authenticated smoke coverage. Raw NSE
+archives are separate from parsed analytics. Evidence/limits:
+`docs/MARKET_WORKSTATION_COVERAGE_20260918.md`.
+
 2026-09-18 Paper verified replay: additive `tab=verified` reconstructs qualified
 5-/30-session evidence and compares ₹4 lakh recorded-fill capital across all
 OIIS and monthly cohorts. Missing history stays censored; hypothetical target

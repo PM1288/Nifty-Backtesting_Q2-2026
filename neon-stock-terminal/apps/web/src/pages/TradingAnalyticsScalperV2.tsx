@@ -172,10 +172,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const defaultStrike = nearestScalperStrike(strikes, spot);
   const { ceStrike: selectedCeStrike, peStrike: selectedPeStrike } = scalperLegSelection(params, defaultStrike);
   const query = chartQuery(symbol, asOf, expiry, selectedCeStrike, selectedPeStrike, interval);
-  const active = useQuery({ queryKey: chartKey(query), queryFn: () => getJson<ChartPayload>(`/v1/trading-analytics/charts?${query}`), staleTime: 30_000, retry: 1 });
+  const active = useQuery({ queryKey: chartKey(query), queryFn: ({ signal }) => getJson<ChartPayload>(`/v1/trading-analytics/charts?${query}`, signal), staleTime: 30_000, retry: 1 });
   const optionPriceHistory = useQuery({
     queryKey: ["trading-analytics-option-price-history", symbol, expiry, asOf],
-    queryFn: () => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, asOf, historyDays: "3" })}`),
+    queryFn: ({ signal }) => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, asOf, historyDays: "3" })}`, signal),
     enabled: Boolean(expiry),
     staleTime: 30_000,
     retry: 1,
@@ -188,11 +188,19 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   }, [active.data, expiry, params, selectedCeStrike, selectedPeStrike, setParams, spot]);
   useEffect(() => {
     if (!active.data) return;
-    for (const backgroundInterval of [1, 5, 15, 60]) {
-      if (backgroundInterval === interval) continue;
-      const background = chartQuery(symbol, asOf, expiry, selectedCeStrike, selectedPeStrike, backgroundInterval);
-      void client.prefetchQuery({ queryKey: chartKey(background), queryFn: () => getJson<ChartPayload>(`/v1/trading-analytics/charts?${background}`), staleTime: 30_000 });
-    }
+    let obsolete = false;
+    // One background interval at a time, after the active view has painted.
+    // A context change stops the remaining queue; React Query owns cancellation
+    // and de-duplicates an interval selected while its prefetch is in flight.
+    const timer = window.setTimeout(() => { void (async () => {
+      for (const backgroundInterval of [1, 5, 15, 60]) {
+        if (obsolete) break;
+        if (backgroundInterval === interval) continue;
+        const background = chartQuery(symbol, asOf, expiry, selectedCeStrike, selectedPeStrike, backgroundInterval);
+        await client.prefetchQuery({ queryKey: chartKey(background), queryFn: ({ signal }) => getJson<ChartPayload>(`/v1/trading-analytics/charts?${background}`, signal), staleTime: 30_000 });
+      }
+    })(); }, 250);
+    return () => { obsolete = true; window.clearTimeout(timer); };
   }, [active.data, asOf, client, expiry, interval, selectedCeStrike, selectedPeStrike, symbol]);
 
   const [hoverCrosshair, setHoverCrosshair] = useState<ScalperV2Crosshair>(null);
@@ -232,6 +240,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const rawPanes = useMemo(() => activeData?.panes ?? [], [activeData]);
   const days = useMemo(() => [...new Set((rawPanes[0]?.bars ?? []).map((row) => istDay(row.end)).filter(Boolean))].sort().reverse(), [rawPanes]);
   const tradingDay = selectedDayParam && days.includes(selectedDayParam) ? selectedDayParam : (days[0] ?? "");
+  const differentSnapshotDay = Boolean(tradingDay && tradingDay !== istDay(asOf));
   const activeReferenceLevels = referenceLevels?.sessionDate === tradingDay ? referenceLevels.levels : [];
   const panes = useMemo(() => rawPanes.map((pane) => ({ ...pane, bars: dayRows(pane.bars, tradingDay, "end"), oiHistory: dayRows(pane.oiHistory, tradingDay, "event_time") })), [rawPanes, tradingDay]);
   const underlying = panes.find((pane) => chartSide(pane) === "UNDERLYING"), call = panes.find((pane) => chartSide(pane) === "CE"), put = panes.find((pane) => chartSide(pane) === "PE");
@@ -498,7 +507,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <details className={css.commandMenu}><summary>Tools</summary><div><button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button><button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button><button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button><button onClick={() => { setRailOpen(true); setRailTab("objects"); }}>Drawings</button></div></details>
       <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide inspector" : "Show inspector"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, referenceLevels: referenceLevels ?? null, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
     </header>
-    <div className={css.statusBar}><strong>{state}</strong><span>{interval === 60 ? "1h" : `${interval}m`} · {tradingDay}</span><span>Signals {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</span><button className={errors.length ? css.statusIssue : undefined} onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health {errors.length ? `· ${errors.length} issues` : "· current"}</button></div>
+    <div className={css.statusBar}><strong>{state}</strong><span>{interval === 60 ? "1h" : `${interval}m`} · {tradingDay}</span><span>Signals {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</span><button className={errors.length || differentSnapshotDay ? css.statusIssue : undefined} onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health {errors.length ? `· ${errors.length} issues` : differentSnapshotDay ? "· different source dates" : "· source details"}</button></div>
+    {differentSnapshotDay && <p className={css.scopeNotice}>Charts: {tradingDay} · latest snapshot context: {istDay(asOf)}. These are different sessions; snapshot values are not historical candle values.</p>}
     {referenceLevels?.sessionDate === tradingDay && <UnderlyingLevelGauge payload={referenceLevels} strikes={strikes} />}
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
     <div className={css.workspace} style={!railOpen ? { gridTemplateColumns: "minmax(0,1fr)" } : undefined}>
@@ -524,7 +534,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <tr><th>IV · %</th><td>{number(callLeg?.implied_volatility)}</td><td>{number(putLeg?.implied_volatility)}</td></tr>
           <tr><th>Bid–ask spread · ₹</th><td>{price(legSpread(callLeg))}</td><td>{price(legSpread(putLeg))}</td></tr>
         </tbody></table>
-        {inspectionMode !== "latest" && <p className={css.scopeNotice}>Prices use the selected candle · OI, IV, PCR and Max Pain use the latest snapshot.</p>}
+        {(inspectionMode !== "latest" || differentSnapshotDay) && <p className={css.scopeNotice}>Prices use the selected candle · OI, IV, PCR and Max Pain use the latest snapshot.</p>}
         <section className={css.structureSummary}><h3>Structure · latest snapshot</h3><div><span>OI PCR <b>{pcr == null ? "—" : pcr.toFixed(2)}</b></span><span>Max Pain <b>{maxPainValue == null ? "—" : maxPainValue.toLocaleString("en-IN")}</b></span><span>Distance <b className={signClass(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)}>{signed(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)} pts</b></span><span>Signal <b>{latestSignal ? `${latestSignal.direction} · ${latestSignal.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "entry reference" : "setup"}` : "None"}</b></span></div></section>
         <div className={css.leaders}>{leaders.filter((leader) => leader.rank <= 2).map((leader) => <div className={css.leader} key={`${leader.side}-${leader.rank}`}><span className={leader.side === "CE" ? css.callText : css.putText}>{leader.side}{leader.rank}</span><b>{leader.strike.toLocaleString("en-IN")}</b><small>OI {compact(leader.currentOi)} · Δ {signed(leader.changeOi)}</small></div>)}</div>
         <div className={css.inspectionModes} data-testid="v2-inspection-mode"><div><button aria-pressed={inspectionMode === "latest"} onClick={() => { setLockedTime(null); setHoverCrosshair(null); }}>Latest</button><button aria-pressed={inspectionMode === "hover"} disabled={!hoverCrosshair}>Cursor</button><button aria-pressed={inspectionMode === "locked"} disabled={!hoverCrosshair && lockedTime == null} onClick={() => setLockedTime((current) => current ?? hoverCrosshair?.time ?? null)}>Lock time</button></div><span data-testid="v2-cursor-time">{inspectionLabel}</span></div>

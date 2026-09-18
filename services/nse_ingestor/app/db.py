@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import hashlib
+from datetime import timedelta
+from .calendar import regular_session
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -130,15 +132,16 @@ def record_unavailable_report(
     source_date,
     file_name: str,
     attempted_urls: list[str],
+    attempts: list[dict] | None = None,
 ) -> int:
     row = conn.execute(
         '''
         INSERT INTO nse.ingest_run_reports
             (run_id, report_name, source_date, file_name, status, finished_at, message, metadata)
-        VALUES (%s, %s, %s, %s, 'unavailable', now(), 'No official file was available', %s)
+        VALUES (%s, %s, %s, %s, 'unavailable', now(), 'Report unavailable; inspect HTTP/download attempts before interpreting as unpublished', %s)
         RETURNING run_report_id
         ''',
-        (run_id, report_name, source_date, file_name, Jsonb({"attempted_urls": attempted_urls})),
+        (run_id, report_name, source_date, file_name, Jsonb({"attempted_urls": attempted_urls, "attempts": attempts or []})),
     ).fetchone()
     conn.commit()
     return row[0]
@@ -165,26 +168,25 @@ def enqueue_notification(
 
 
 def resolve_previous_trading_day(conn: psycopg.Connection, job_date):
-    row = conn.execute(
-        '''
-        SELECT trade_date
-        FROM market_status.exchange_session_calendar
-        WHERE trade_date < %s AND is_trading_day
-        ORDER BY trade_date DESC
-        LIMIT 1
-        ''',
-        (job_date,),
-    ).fetchone()
-    if row is None:
-        raise RuntimeError(f"No exchange calendar session exists before {job_date}")
-    return row[0]
+    # The producer previously seeded only seven future dates at startup.
+    # Resolve every intervening day instead of silently jumping over gaps.
+    for offset in range(1, 32):
+        candidate = job_date - timedelta(days=offset)
+        if is_trading_day(conn, candidate):
+            return candidate
+    raise RuntimeError(f"No verified exchange session within 31 days before {job_date}")
 
 
 def is_trading_day(conn: psycopg.Connection, job_date) -> bool:
     row = conn.execute(
-        '''SELECT is_trading_day FROM market_status.exchange_session_calendar WHERE trade_date=%s''',
+        '''SELECT is_trading_day,special_session FROM market_status.exchange_session_calendar WHERE trade_date=%s''',
         (job_date,),
     ).fetchone()
+    if row is not None and row[1]:
+        return bool(row[0])
+    verified = regular_session(job_date)
+    if verified is not None:
+        return verified
     if row is None:
         raise RuntimeError(f"Exchange calendar is missing {job_date}")
     return bool(row[0])
@@ -344,7 +346,7 @@ def purge_old_data(conn: psycopg.Connection, retention_days: int, log_retention_
         metrics["nse.ingest_runs_deleted"] = cur.rowcount
 
         cur.execute(
-            "DELETE FROM nse.file_registry WHERE loaded_at < NOW() - (%s || ' days')::interval",
+            "DELETE FROM nse.file_registry WHERE load_status = 'loaded' AND loaded_at < NOW() - (%s || ' days')::interval",
             (log_retention_days,),
         )
         metrics["nse.file_registry_deleted"] = cur.rowcount

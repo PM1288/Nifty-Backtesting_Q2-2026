@@ -538,8 +538,25 @@ export function EChartSurface({
     });
     chart.on("globalout", () => hoverRef.current?.(null));
 
+    // Window and observer notifications often arrive in the same frame.
+    // Ignore hidden hosts and unchanged dimensions; do not redraw every chart
+    // repeatedly while the shell/sidebar is being resized.
+    let frame = 0;
+    let width = host.clientWidth;
+    let height = host.clientHeight;
+    let dpr = window.devicePixelRatio;
     const resize = () => {
-      chart.resize();
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const nextWidth = host.clientWidth;
+        const nextHeight = host.clientHeight;
+        const nextDpr = window.devicePixelRatio;
+        if (nextWidth <= 0 || nextHeight <= 0) return;
+        if (width === nextWidth && height === nextHeight && dpr === nextDpr) return;
+        width = nextWidth; height = nextHeight; dpr = nextDpr;
+        chart.resize({ width, height, silent: true });
+      });
     };
 
     let resizeObserver: ResizeObserver | null = null;
@@ -553,6 +570,7 @@ export function EChartSurface({
     return () => {
       window.removeEventListener("resize", resize);
       resizeObserver?.disconnect();
+      if (frame) cancelAnimationFrame(frame);
       chart.dispose();
       chartRef.current = null;
     };

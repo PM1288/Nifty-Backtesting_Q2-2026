@@ -1,0 +1,239 @@
+# Official current F&O report names reviewed 2026-09-18.
+# https://www.nseindia.com/all-reports-derivatives
+# Archived files are NOT declared parsed analytics. Deprecated pre-UDiFF CSV excluded.
+reports:
+  fo_span_bod:
+    enabled: true
+    parser: archive_only
+    filename: "fo_span_bod_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Span Risk Parameter File (Begin of day)"
+
+  fo_span_1:
+    enabled: true
+    parser: archive_only
+    filename: "fo_span_1_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Span Risk Parameter File (1st intra-day)"
+
+  fo_span_2:
+    enabled: true
+    parser: archive_only
+    filename: "fo_span_2_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Span Risk Parameter File (2nd intra-day)"
+
+  fo_span_3:
+    enabled: true
+    parser: archive_only
+    filename: "fo_span_3_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Span Risk Parameter File (3rd intra-day)"
+
+  fo_span_4:
+    enabled: true
+    parser: archive_only
+    filename: "fo_span_4_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Span Risk Parameter File (4th intra-day)"
+
+  fo_span_eod:
+    enabled: true
+    parser: archive_only
+    filename: "fo_span_eod_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Span Risk Parameter File (End of day)"
+
+  fo_mwpl_clients:
+    enabled: true
+    parser: archive_only
+    filename: "fo_mwpl_clients_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Clients Position % greater than equal to 3% of Stock MWPL(xls)"
+
+  fo_turnover:
+    enabled: true
+    parser: archive_only
+    filename: "fo_turnover_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Category-wise Turnover"
+
+  fo_market_activity:
+    enabled: true
+    parser: archive_only
+    filename: "fo_market_activity_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Market Activity Report"
+
+  fo_daily_volatility:
+    enabled: true
+    parser: archive_only
+    filename: "fo_daily_volatility_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Daily Volatility"
+
+  fo_settlement:
+    enabled: true
+    parser: archive_only
+    filename: "fo_settlement_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Daily Settlement Prices"
+
+  fo_combined:
+    enabled: true
+    parser: archive_only
+    filename: "fo_combined_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Combined Report"
+
+  fo_ncl_oi:
+    enabled: true
+    parser: archive_only
+    filename: "fo_ncl_oi_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - NCL Open Interest"
+
+  fo_ban:
+    enabled: true
+    parser: archive_only
+    filename: "fo_ban_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Security in ban period"
+
+  fo_combined_oi:
+    enabled: true
+    parser: archive_only
+    filename: "fo_combined_oi_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Combine Open Interest across exchanges"
+
+  fo_delta_oi:
+    enabled: true
+    parser: archive_only
+    filename: "fo_delta_oi_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Combine Delta Equivalent Open Interest across exchanges (csv)"
+
+  fo_participant_oi:
+    enabled: true
+    parser: archive_only
+    filename: "fo_participant_oi_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Participant wise Open Interest(csv)"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/nsccl/fao_participant_oi_{ddmmyyyy}_b.csv"
+      - "https://nsearchives.nseindia.com/content/nsccl/fao_participant_oi_{ddmmyyyy}.csv"
+
+  fo_participant_volume:
+    enabled: true
+    parser: archive_only
+    filename: "fo_participant_volume_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Participant wise Trading Volumes(csv)"
+    url_candidates:
+      - "https://nsearchives.nseindia.com/content/nsccl/fao_participant_vol_{ddmmyyyy}.csv"
+
+  fo_top10_volume:
+    enabled: true
+    parser: archive_only
+    filename: "fo_top10_volume_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Top 10 Clearing Member Volumes(csv)"
+
+  fo_base_prices:
+    enabled: true
+    parser: archive_only
+    filename: "fo_base_prices_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Base Prices for illliquid Contracts"
+
+  fo_client_limits:
+    enabled: true
+    parser: archive_only
+    filename: "fo_client_limits_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Clientwise Position Limits"
+
+  fo_fii_statistics:
+    enabled: true
+    parser: archive_only
+    filename: "fo_fii_statistics_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - FII Derivatives Statistics"
+
+  fo_exposure_limits:
+    enabled: true
+    parser: archive_only
+    filename: "fo_exposure_limits_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Exposure Limit file"
+
+  fo_derivatives_update:
+    enabled: true
+    parser: archive_only
+    filename: "fo_derivatives_update_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Derivatives Update"
+
+  fo_exercise:
+    enabled: true
+    parser: archive_only
+    filename: "fo_exercise_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Exercise"
+
+  fo_bhavcopy_dat:
+    enabled: true
+    parser: archive_only
+    filename: "fo_bhavcopy_dat_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Bhavcopy File (DAT)"
+
+  fo_mode:
+    enabled: true
+    parser: archive_only
+    filename: "fo_mode_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - Mode of Trading"
+
+  fo_elm:
+    enabled: true
+    parser: archive_only
+    filename: "fo_elm_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O-Contract wise ELM file"
+
+  fo_udiff:
+    enabled: true
+    parser: archive_only
+    filename: "fo_udiff_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O - UDiFF Common Bhavcopy Final (zip)"
+
+  fo_contract_nse:
+    enabled: true
+    parser: archive_only
+    filename: "fo_contract_nse_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O-MII - Contract File (.gz) (NSE Exclusive contract)"
+
+  fo_contract_combined:
+    enabled: true
+    parser: archive_only
+    filename: "fo_contract_combined_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O-MII - Contract File (.gz) (NSE and BSE Exclusive Contract)"
+
+  fo_spread_contract:
+    enabled: true
+    parser: archive_only
+    filename: "fo_spread_contract_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O-MII - Spd Contract File (.gz)"
+
+  fo_contract_delta:
+    enabled: true
+    parser: archive_only
+    filename: "fo_contract_delta_{yyyymmdd}.bin"
+    category: derivatives
+    reports_api_name: "F&O-NCL Contract Delta (csv)"

@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-18 — V2-only workstation and collection coverage
+
+- Branch `feat/market-coverage-v2-alerts-20260918`; detailed commands, evidence and
+  rollback: `docs/MARKET_WORKSTATION_COVERAGE_20260918.md`.
+- Explicit user approval retires original Scalper UI; old links redirect V2.
+- Calendar expiry caused stale chart-day selection and NSE scheduler failure;
+  rolling verified-2026 calendar refresh fills missing dates without rewriting history.
+- Current/next futures, ±10 stock-option strikes, capped streaming/REST overflow,
+  contextual data-health alerts and 63-report cash/F&O download catalog.
+- Raw archives remain distinct from parsed analytics; safe checksum-based staging
+  cleanup. No strategy/order changes or bulk database purge.
+- Web 195/API 227 tests, builds/typechecks, focused Go, 10 Python tests and canonical
+  gate pass. Authenticated chart geometry/navigation and 500-hover smoke pass.
+- Production outcome appended to the report after release; no inferred deployment.
+
 ## 2026-09-18 — Additive OIIS verified capital research
 
 - Branch `feat/paper-verified-replay-20260918`; tab `/paper-trading?tab=verified`.

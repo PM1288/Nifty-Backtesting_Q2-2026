@@ -30,6 +30,10 @@ def build_missing_files_event(job_date, source_trade_date, run_id: int, metrics:
             "available_files": metrics["available_files"],
             "missing_count": metrics["missing_count"],
             "missing_files": missing,
+            "severity": "warning" if metrics.get("errors", 0) == 0 else "error",
+            "impact": "Report-dependent analytics may be incomplete; missing reports are not zero values.",
+            "health_path": "/institutional/nse-intelligence/reports",
+            "comparison": "Expected reports for the stated exchange session, not live market quotes.",
             "action": "Review NSE report availability and rerun only the missing reports.",
         },
     }

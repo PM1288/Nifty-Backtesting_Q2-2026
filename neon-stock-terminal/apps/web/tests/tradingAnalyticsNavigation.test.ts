@@ -4,9 +4,10 @@ import {
   analyticsMainView,
   analyticsTabs,
 } from "../src/lib/tradingAnalyticsNavigation";
-test("IO navigation includes separate V1, V2 and trade-observation views", () => {
-  assert.equal(Object.keys(analyticsTabs).length, 10);
-  assert.equal(analyticsTabs.scalper, "Scalper");
+test("IO navigation exposes only V2 and preserves legacy Scalper links", () => {
+  assert.equal(Object.keys(analyticsTabs).length, 9);
+  assert.equal(Object.hasOwn(analyticsTabs, "scalper"), false);
+  assert.equal(analyticsMainView("scalper"), "scalper_v2");
   assert.equal(analyticsTabs.scalper_v2, "Scalper V2");
   assert.equal(analyticsTabs["trade-log"], "Trade Log");
   assert.equal(analyticsTabs.flow, "Positioning & Flow");

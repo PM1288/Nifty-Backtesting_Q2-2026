@@ -243,6 +243,11 @@ func buildTradingCalendar(now time.Time, tradingStart, tradingEnd string, loc *t
 	var days []store.TradingDay
 	for i := -daysBack; i <= daysAhead; i++ {
 		date := now.AddDate(0, 0, i)
+		// Verified regular NSE cash sessions only. Do not guess next year's
+		// holidays or Muhurat timings. Explicit existing calendar rows win.
+		if date.Year() != 2026 || date.Format("2006-01-02") == "2026-11-08" {
+			continue
+		}
 		open := time.Date(date.Year(), date.Month(), date.Day(), startClock.Hour(), startClock.Minute(), 0, 0, loc)
 		close := time.Date(date.Year(), date.Month(), date.Day(), endClock.Hour(), endClock.Minute(), 0, 0, loc)
 		isTrading := date.Weekday() != time.Saturday && date.Weekday() != time.Sunday
@@ -250,6 +255,11 @@ func buildTradingCalendar(now time.Time, tradingStart, tradingEnd string, loc *t
 		if !isTrading {
 			note = "weekend"
 		}
+		if strings.Contains("|01-26|03-03|03-26|03-31|04-03|04-14|05-01|05-28|06-26|09-14|10-02|10-20|11-10|11-24|12-25|", "|"+date.Format("01-02")+"|") {
+			isTrading = false
+			note = "NSE holiday"
+		}
+		note += "; verified regular schedule CMTR71775 (2026); special sessions require override"
 		days = append(days, store.TradingDay{
 			TradeDate:    date,
 			MarketOpen:   open,
@@ -259,6 +269,28 @@ func buildTradingCalendar(now time.Time, tradingStart, tradingEnd string, loc *t
 		})
 	}
 	return days, nil
+}
+
+func runTradingCalendarRefresh(ctx context.Context, st *store.Store, loc *time.Location, logger *slog.Logger) error {
+	for {
+		days, err := buildTradingCalendar(time.Now().In(loc), "09:15", "15:30", loc, 7, 31)
+		if err == nil {
+			err = st.UpsertTradingCalendar(ctx, days)
+		}
+		if err != nil {
+			logger.Warn("calendar_refresh_failed", "err", err)
+		}
+		if len(days) == 0 {
+			logger.Warn("calendar_verification_required", "reason", "no verified regular dates; update official NSE schedule")
+		}
+		timer := time.NewTimer(12 * time.Hour)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
 }
 
 func runMetricsRollup(ctx context.Context, cfg *config.Config, st *store.Store, logger *slog.Logger, loc *time.Location) error {

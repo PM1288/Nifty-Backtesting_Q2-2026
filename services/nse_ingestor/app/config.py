@@ -74,4 +74,12 @@ def get_settings() -> Settings:
 
 def load_report_catalog(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+        catalog = yaml.safe_load(f) or {}
+    # Extend the existing scheduled downloader, not a second collection service.
+    # Explicit backfill-core catalogs remain intentionally narrow.
+    for name in ("report_catalog_derivatives.yml", "report_catalog_cash_archive.yml"):
+        extra = path.with_name(name)
+        if path.name == "report_catalog.yml" and extra.exists():
+            with extra.open("r", encoding="utf-8") as f:
+                catalog.setdefault("reports", {}).update((yaml.safe_load(f) or {}).get("reports", {}))
+    return catalog

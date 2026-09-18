@@ -152,7 +152,7 @@ const strategyRouteById = new Map(STRATEGY_MENU_ROUTES.map((item) => [item.id, i
 /** Temporary direct shortcut; the canonical strategy and its menu remain intact. */
 export const MANEESH_HEADER_SHORTCUT = {
   label: "MANEESH",
-  path: `${strategyRouteById.get("trading-analytics")!.path}?view=scalper`,
+  path: `${strategyRouteById.get("trading-analytics")!.path}?view=scalper_v2`,
 } as const;
 
 const strategyHeaderOrder = [

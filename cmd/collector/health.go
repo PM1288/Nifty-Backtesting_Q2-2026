@@ -137,6 +137,35 @@ func startHealthServer(ctx context.Context, addr string, st *store.Store, ticks 
 		_, _ = w.Write([]byte("# TYPE smartapi_collector_last_tick_age_seconds gauge\n"))
 		_, _ = w.Write([]byte("smartapi_collector_last_tick_age_seconds " + formatMetricFloat(age) + "\n"))
 	})
+	mux.HandleFunc("/coverage", func(w http.ResponseWriter, r *http.Request) {
+		readCtx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+		plan, err := st.ListLatestDerivativeTokenPlan(readCtx, stockDerivativePlanName)
+		if err != nil {
+			http.Error(w, "Coverage database unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		type counts struct {
+			Planned   int `json:"planned"`
+			Streaming int `json:"streaming"`
+			Rotation  int `json:"rest_rotation"`
+		}
+		byKind := map[string]*counts{}
+		for _, row := range plan {
+			if byKind[row.ContractKind] == nil {
+				byKind[row.ContractKind] = &counts{}
+			}
+			c := byKind[row.ContractKind]
+			c.Planned++
+			if row.Active {
+				c.Streaming++
+			} else {
+				c.Rotation++
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"checked_at": time.Now().UTC(), "scope": "latest stock derivative selection plan", "contracts": byKind, "active_subscription_count": subsCount.Load(), "note": "Admission counts are not proof of fresh quotes; REST rotation is sampled, not tick-by-tick."})
+	})
 
 	srv := &http.Server{Addr: addr, Handler: mux}
 

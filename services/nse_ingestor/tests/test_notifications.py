@@ -20,6 +20,9 @@ class NotificationContractTests(unittest.TestCase):
         self.assertEqual(event["event_type"], "nse.daily.files.missing.v1")
         self.assertEqual(event["payload"]["missing_count"], 2)
         self.assertEqual(len(event["payload"]["missing_files"]), 2)
+        self.assertEqual(event["payload"]["severity"], "warning")
+        self.assertIn("not zero", event["payload"]["impact"])
+        self.assertIn("/reports", event["payload"]["health_path"])
 
 
 if __name__ == "__main__":

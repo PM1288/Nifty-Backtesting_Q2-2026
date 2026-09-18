@@ -1,0 +1,94 @@
+# Supplementary current cash report inventory; source https://www.nseindia.com/all-reports
+# Existing parsed cash families stay in report_catalog.yml. Non-daily products may be unavailable on a given date.
+reports:
+  cm_turnover:
+    enabled: true
+    parser: archive_only
+    filename: "cm_turnover_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "CM - Category-wise Turnover"
+
+  cm_delivery:
+    enabled: true
+    parser: archive_only
+    filename: "cm_delivery_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "CM - Security-wise Delivery Positions"
+
+  cm_client_funding:
+    enabled: true
+    parser: archive_only
+    filename: "cm_client_funding_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "Client Funding"
+
+  cm_var_multiplier:
+    enabled: true
+    parser: archive_only
+    filename: "cm_var_multiplier_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "VaR Multiplier files"
+
+  cm_albm:
+    enabled: true
+    parser: archive_only
+    filename: "cm_albm_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "ALBM Yield Statistics"
+
+  cm_extreme_loss_margin:
+    enabled: true
+    parser: archive_only
+    filename: "cm_extreme_loss_margin_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "Extreme Loss Margin"
+
+  cm_impact_cost:
+    enabled: true
+    parser: archive_only
+    filename: "cm_impact_cost_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "CM - Security Catergory Impact Cost (.T01)"
+
+  cm_sme_bhavcopy:
+    enabled: true
+    parser: archive_only
+    filename: "cm_sme_bhavcopy_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "SME - BHAVCOPY (.csv)"
+
+  cm_bhavcopy_dat:
+    enabled: true
+    parser: archive_only
+    filename: "cm_bhavcopy_dat_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "Bhavcopy File (DAT)"
+
+  cm_mode:
+    enabled: true
+    parser: archive_only
+    filename: "cm_mode_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "CM - Mode of Trading"
+
+  cm_close_out:
+    enabled: true
+    parser: archive_only
+    filename: "cm_close_out_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "CM - Close out prices (.csv)"
+
+  cm_pe_ratio:
+    enabled: true
+    parser: archive_only
+    filename: "cm_pe_ratio_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "PE Ratio"
+
+  cm_security_combined:
+    enabled: true
+    parser: archive_only
+    filename: "cm_security_combined_{yyyymmdd}.bin"
+    category: capital-market
+    reports_api_name: "CM - MII - Security File (.gz) (NSE Listed and BSE Exclusive securities)"
+

@@ -161,7 +161,7 @@ function resolveApiPath(path: string): string {
   return path.startsWith("/api/v1/") ? path.replace("/api/v1/", "/v1/") : path;
 }
 
-export async function getJson<T>(path: string): Promise<T> {
+export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const startedAt =
     typeof performance !== "undefined" ? performance.now() : Date.now();
   const headers: Record<string, string> = {
@@ -173,6 +173,7 @@ export async function getJson<T>(path: string): Promise<T> {
     const res = await fetch(`${API_BASE_URL}${resolvedPath}`, {
       headers,
       credentials: "include",
+      signal,
     });
     const durationMs = Math.round(
       (typeof performance !== "undefined" ? performance.now() : Date.now()) -
@@ -211,6 +212,9 @@ export async function getJson<T>(path: string): Promise<T> {
     }
     return (await res.json()) as T;
   } catch (error) {
+    // Switching instruments/views cancels obsolete reads; it is not a source
+    // outage and must not generate an error alert or telemetry write.
+    if (signal?.aborted) throw error;
     void trackAnalyticsError({
       type: "api_request_failed",
       severity: "error",

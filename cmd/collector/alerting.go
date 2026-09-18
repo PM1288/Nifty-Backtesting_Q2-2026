@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -12,8 +13,8 @@ import (
 const defaultAlertCooldown = 10 * time.Minute
 
 var (
-	collectorAlerts  *alerts.Client
-	collectorLimiter *alertLimiter
+	collectorAlerts        *alerts.Client
+	collectorLimiter       *alertLimiter
 	collectorAlertsEnabled bool
 )
 
@@ -63,5 +64,10 @@ func notifyCollector(ctx context.Context, key, title, message string) {
 	if collectorLimiter != nil && !collectorLimiter.Allow(key, defaultAlertCooldown) {
 		return
 	}
-	_ = collectorAlerts.Send(ctx, title, message)
+	loc, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		loc = time.UTC
+	}
+	contextual := fmt.Sprintf("Source: SmartAPI collector\nEvent: %s\nObserved: %s\n%s\nImpact: affected market data may be stale or incomplete; do not interpret missing values as zero.\nAction: inspect collector readiness, coverage and API request logs. This is a data-health alert, not a trade signal.", key, time.Now().In(loc).Format(time.RFC3339), message)
+	_ = collectorAlerts.Send(ctx, title, contextual)
 }

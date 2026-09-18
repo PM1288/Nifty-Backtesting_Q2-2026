@@ -257,7 +257,7 @@ export default function NiftyContextPage() {
           <h1>NIFTY Model Research</h1>
           <span>Shadow research · hourly NIFTY context and MANEESH trade quality</span>
         </div>
-        <Link to="/strategy/trading-analytics?view=scalper">
+        <Link to="/strategy/trading-analytics?view=scalper_v2">
           MANEESH charts
         </Link>
         <button

@@ -77,6 +77,7 @@ universe:
     expiry_rank_index: 0
     expiry_rank_stock: 0
     strikes_each_side: 40
+    stock_strikes_each_side: 10 # ATM plus ten actual listed strikes each side, both CE/PE
     strike_refresh_minutes: 5
     atm_shift_rebuild_steps: 2
 ws:
@@ -124,14 +125,14 @@ rest_tasks:
     - kind: "FUT"
       max_tokens: 80
     - kind: "OPTSTK_REST"
-      max_tokens: 380
+      max_tokens: 1200
     - kind: "OPTIDX"
       max_tokens: 60
     - kind: "OPTSTK"
       max_tokens: 60
   enable_option_quote_snapshots: true
   option_quote_snapshot_interval_seconds: 60
-  option_quote_snapshot_rotation_max_tokens: 500
+  option_quote_snapshot_rotation_max_tokens: 1320
   enable_option_greeks: true
   option_greeks_interval_seconds: 60
   option_greeks_underlyings: ["NIFTY50","BANKNIFTY"]

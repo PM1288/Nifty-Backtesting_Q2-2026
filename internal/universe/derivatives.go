@@ -39,7 +39,7 @@ func ResolveDerivativeSelection(insts []instruments.Instrument, equities []store
 	byUnderlying := groupByUnderlying(fno)
 
 	if cfg.Futures.EnableStockFutures || cfg.Options.EnableStockOptions {
-		stockPlan, err := BuildStockDerivativePlan(byUnderlying, equities, wsCfg, priceProvider, logger, now, cfg.Futures.EnableStockFutures, cfg.Options.EnableStockOptions)
+		stockPlan, err := buildStockDerivativePlan(byUnderlying, equities, wsCfg, priceProvider, logger, now, cfg.Futures.EnableStockFutures, cfg.Options.EnableStockOptions, cfg.Options.StockStrikesEachSide)
 		if err != nil {
 			return DerivativeSelection{}, err
 		}
@@ -51,9 +51,10 @@ func ResolveDerivativeSelection(insts []instruments.Instrument, equities []store
 		for _, idx := range indices {
 			underlying := NormalizeIndexUnderlying(idx.Underlying)
 			futs := filterInstrumentType(byUnderlying[underlying], "FUTIDX")
-			if sub := chooseFuture(futs, cfg.Futures.ExpiryRank, cfg.FNOCurrentMonthOnly, now, wsCfg.ModeFutures, "FUT", 30); sub != nil {
-				sub.Underlying = underlying
-				subs = append(subs, *sub)
+			// Current and next actual listed expiries, including the month
+			// boundary. The old current-month filter excluded next futures.
+			for _, selected := range buildFutureSelections(underlying, futs, wsCfg.ModeFutures, now) {
+				subs = append(subs, selected.Subscription)
 			}
 		}
 	}
@@ -138,7 +139,13 @@ func chooseFuture(insts []instruments.Instrument, rank int, currentMonthOnly boo
 }
 
 func BuildStockDerivativePlan(byUnderlying map[string][]instruments.Instrument, equities []store.Subscription, wsCfg config.WSConfig, priceProvider PriceProvider, logger *slog.Logger, now time.Time, enableFutures bool, enableOptions bool) (DerivativeSelection, error) {
-	const optionStrikesEachSide = 3
+	return buildStockDerivativePlan(byUnderlying, equities, wsCfg, priceProvider, logger, now, enableFutures, enableOptions, 10)
+}
+
+func buildStockDerivativePlan(byUnderlying map[string][]instruments.Instrument, equities []store.Subscription, wsCfg config.WSConfig, priceProvider PriceProvider, logger *slog.Logger, now time.Time, enableFutures bool, enableOptions bool, optionStrikesEachSide int) (DerivativeSelection, error) {
+	if optionStrikesEachSide <= 0 {
+		optionStrikesEachSide = 10
+	}
 	var result DerivativeSelection
 	seen := map[string]struct{}{}
 	for _, eq := range equities {

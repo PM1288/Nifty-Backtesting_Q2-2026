@@ -116,7 +116,7 @@ func main() {
 			logger.Error("metrics sla upsert failed", "err", err)
 			os.Exit(1)
 		}
-		calendar, err := buildTradingCalendar(time.Now().In(loc), cfg.Runtime.TradingStart, cfg.Runtime.TradingEnd, loc, 7, 7)
+		calendar, err := buildTradingCalendar(time.Now().In(loc), "09:15", "15:30", loc, 7, 31)
 		if err != nil {
 			logger.Error("trading calendar build failed", "err", err)
 			os.Exit(1)
@@ -501,6 +501,9 @@ func main() {
 		})
 	}
 	if cfg.Metrics.Enable {
+		eg.Go(func() error {
+			return runTradingCalendarRefresh(egCtx, st, loc, logger)
+		})
 		eg.Go(func() error {
 			return runInstrumentStateFlush(egCtx, cfg, st, stateCache, logger)
 		})

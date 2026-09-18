@@ -23,7 +23,7 @@ function reportLabel(reportName: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-const AVAILABLE_REPORT_STATES = new Set(["LOADED", "REUSED", "SKIPPED"]);
+const AVAILABLE_REPORT_STATES = new Set(["LOADED", "REUSED", "SKIPPED", "ARCHIVED"]);
 
 function elapsedMs(startedAt: unknown, finishedAt: unknown) {
   if (!startedAt || !finishedAt) return null;
@@ -105,6 +105,7 @@ async function buildNseIntelligence(prisma: PrismaClient) {
       requiredForCashOverview: CORE_REPORTS.has(String(row.report_name)),
       status,
       downloadState: status === "LOADED" ? "DOWNLOADED_AND_LOADED"
+        : status === "ARCHIVED" ? "DOWNLOADED_NOT_PARSED"
         : ["REUSED", "SKIPPED"].includes(status) ? "ALREADY_LOADED"
         : status === "UNAVAILABLE" ? "SOURCE_UNAVAILABLE"
         : status === "FAILED" ? "LOAD_FAILED"
@@ -170,7 +171,8 @@ async function buildNseIntelligence(prisma: PrismaClient) {
         : "HEALTHY",
       expected: Number(metrics.expected_files ?? normalizedReports.length),
       downloaded: normalizedReports.filter((row) => row.bytes != null && row.bytes > 0).length,
-      loaded: availableReports.length,
+      loaded: availableReports.filter((row) => row.status !== "ARCHIVED").length,
+      archived: availableReports.filter((row) => row.status === "ARCHIVED").length,
       missing: normalizedReports.filter((row) => row.status === "UNAVAILABLE").length,
       failed: normalizedReports.filter((row) => row.status === "FAILED").length,
       totalBytes: normalizedReports.reduce((total, row) => total + (row.bytes ?? 0), 0),

@@ -125,6 +125,7 @@ type OptionsConfig struct {
 	ExpiryRankIndex      int      `yaml:"expiry_rank_index"`
 	ExpiryRankStock      int      `yaml:"expiry_rank_stock"`
 	StrikesEachSide      int      `yaml:"strikes_each_side"`
+	StockStrikesEachSide int      `yaml:"stock_strikes_each_side"`
 	StrikeRefreshMinutes int      `yaml:"strike_refresh_minutes"`
 	ATMShiftRebuildSteps int      `yaml:"atm_shift_rebuild_steps"`
 }
@@ -747,6 +748,9 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.Universe.Options.StrikesEachSide == 0 {
 		cfg.Universe.Options.StrikesEachSide = 10
+	}
+	if cfg.Universe.Options.StockStrikesEachSide <= 0 {
+		cfg.Universe.Options.StockStrikesEachSide = 10
 	}
 	if cfg.Universe.Options.StrikeRefreshMinutes == 0 {
 		cfg.Universe.Options.StrikeRefreshMinutes = 5
@@ -2046,6 +2050,9 @@ func (c *Config) Validate() error {
 	if c.WS.MaxConnections < 1 {
 		return errors.New("ws.max_connections must be >= 1")
 	}
+	if c.WS.MaxConnections > 3 || c.WS.MaxTokensPerConnection > 1000 {
+		return errors.New("SmartAPI websocket ceiling is 3 connections and 1000 token-mode subscriptions per connection")
+	}
 	if c.WS.MaxTokensPerConnection < 1 {
 		return errors.New("ws.max_tokens_per_connection must be >= 1")
 	}
@@ -2057,6 +2064,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Limits.QuoteMaxSymbolsPerRequest < 1 {
 		return errors.New("limits.quote_max_symbols_per_request must be >= 1")
+	}
+	if c.Limits.QuoteMaxSymbolsPerRequest > 50 || c.Limits.QuoteRPS > 1 {
+		return errors.New("SmartAPI FULL quote safety ceiling is 50 symbols per request and 1 request per second")
 	}
 	if c.Limits.QuotePerMinuteCap < 1 {
 		return errors.New("limits.quote_per_minute_cap must be >= 1")

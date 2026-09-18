@@ -1456,12 +1456,7 @@ func (s *Store) UpsertTradingCalendar(ctx context.Context, days []TradingDay) er
     INSERT INTO %s.trading_calendar
       (trade_date, market_open_ts, market_close_ts, is_trading_day, note)
     VALUES ($1,$2,$3,$4,$5)
-    ON CONFLICT (trade_date) DO UPDATE
-      SET market_open_ts = EXCLUDED.market_open_ts,
-          market_close_ts = EXCLUDED.market_close_ts,
-          is_trading_day = EXCLUDED.is_trading_day,
-          note = EXCLUDED.note,
-          updated_at = now()
+    ON CONFLICT (trade_date) DO NOTHING
   `, quoteIdent(s.Schema))
 	batch := &pgx.Batch{}
 	for _, day := range days {

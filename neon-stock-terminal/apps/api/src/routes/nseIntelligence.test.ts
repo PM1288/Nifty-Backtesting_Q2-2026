@@ -65,6 +65,20 @@ test("NSE Intelligence reports NO_DATA honestly when no run or facts exist", asy
     assert.deepEqual(payload.downloadHealth.recentRuns, []);
   }));
 
+test("archive-only reports are downloaded but never counted as parsed rows", async () =>
+  withServer([
+    [{ id: 3, status: "SUCCESS", metrics: { expected_files: 1, available_files: 1, missing_count: 0 } }],
+    [{ report_name: "fo_udiff", status: "ARCHIVED", bytes_downloaded: 2048, rows_loaded: 0, load_status: "archived" }],
+    [], [], [], [],
+  ], async (baseUrl) => {
+    const payload = await (await fetch(`${baseUrl}/v1/nse-intelligence/reports`)).json() as any;
+    assert.equal(payload.downloadHealth.downloaded, 1);
+    assert.equal(payload.downloadHealth.loaded, 0);
+    assert.equal(payload.downloadHealth.archived, 1);
+    assert.equal(payload.reports[0].downloadState, "DOWNLOADED_NOT_PARSED");
+    assert.equal(payload.quality.availableInputs, 0);
+  }));
+
 test("NSE Intelligence treats a skipped already-loaded file as available evidence", async () =>
   withServer([
     [{ id: 2, job_date: "2026-08-14", source_trade_date: "2026-08-13", status: "SUCCESS", metrics: { expected_files: 1, available_files: 1, missing_count: 0, rows_total: 0 } }],

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import zipfile
+import shutil
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
@@ -52,6 +53,18 @@ class Ingestor:
         run_report_id = db.start_run_report(self.conn, run_id, report_name, source_date, path.name)
         try:
             sha = file_sha256(path)
+            bytes_count = path.stat().st_size
+            if parser_name == "archive_only":
+                # Raw revisions are immutable and deliberately separate from
+                # parsed analytics. No new trading formula/parser is inferred.
+                archive = self.settings.staging_dir / "archive" / source_date.isoformat() / sha / path.name
+                archive.parent.mkdir(parents=True, exist_ok=True)
+                if not archive.exists():
+                    shutil.copy2(path, archive)
+                metadata = {"parser": parser_name, "archive_path": str(archive), "analytics_ready": False}
+                db.register_file(self.conn, report_name=report_name, source_date=source_date, file_name=path.name, file_sha256=sha, bytes_count=bytes_count, load_status="archived", rows_loaded=0, metadata=metadata)
+                db.finish_run_report(self.conn, run_report_id, status="archived", rows_loaded=0, bytes_downloaded=bytes_count, file_sha256=sha, message="Downloaded and checksum archived; not parsed into analytics", metadata=metadata)
+                return ProcessResult(report_name, path.name, source_date, 0, sha, bytes_count)
             if db.is_file_loaded(self.conn, report_name, source_date, path.name):
                 db.finish_run_report(
                     self.conn,
@@ -95,7 +108,7 @@ class Ingestor:
                     path.unlink(missing_ok=True)
                 except Exception:
                     logger.warning("Failed to delete staged file %s", path, exc_info=True)
-            return ProcessResult(report_name, path.name, source_date, rows_loaded, sha, path.stat().st_size if path.exists() else 0)
+            return ProcessResult(report_name, path.name, source_date, rows_loaded, sha, bytes_count)
         except Exception as exc:
             logger.exception("Failed to process %s", path)
             self.conn.rollback()
@@ -152,7 +165,8 @@ class Ingestor:
             result = self.downloader.download_report(report_name, source_date, cfg)
             if result is None:
                 logger.warning("Required daily file unavailable report=%s date=%s", report_name, source_date)
-                db.record_unavailable_report(self.conn, run_id, report_name, source_date, file_name, urls)
+                attempts = self.downloader.last_attempts
+                db.record_unavailable_report(self.conn, run_id, report_name, source_date, file_name, [a["url"] for a in attempts] or urls, attempts)
                 missing_files.append({"report_id": report_name, "file_name": file_name})
                 continue
             try:
@@ -223,10 +237,15 @@ class Ingestor:
         cutoff = date.today() - timedelta(days=self.settings.staging_retention_days)
         deleted = 0
         for p in self.settings.staging_dir.rglob("*"):
-            if not p.is_file():
+            if not p.is_file() or p.is_symlink() or "archive" in p.relative_to(self.settings.staging_dir).parts:
                 continue
             mtime = date.fromtimestamp(p.stat().st_mtime)
             if mtime < cutoff:
+                # Age alone is not permission to erase failed/unparsed source
+                # evidence. Only a successfully loaded matching digest is safe.
+                loaded = self.conn.execute("SELECT 1 FROM nse.file_registry WHERE file_name=%s AND file_sha256=%s AND load_status='loaded' LIMIT 1", (p.name, file_sha256(p))).fetchone()
+                if not loaded:
+                    continue
                 try:
                     p.unlink(missing_ok=True)
                     deleted += 1

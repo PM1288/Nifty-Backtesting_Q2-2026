@@ -18,7 +18,7 @@ import {
 
 test("temporary MANEESH shortcut uses the canonical scalper without replacing the strategy", () => {
   assert.equal(MANEESH_HEADER_SHORTCUT.label, "MANEESH");
-  assert.equal(MANEESH_HEADER_SHORTCUT.path, "/strategy/trading-analytics?view=scalper");
+  assert.equal(MANEESH_HEADER_SHORTCUT.path, "/strategy/trading-analytics?view=scalper_v2");
   assert.ok(STRATEGY_HEADER_ROUTES.some((item) => item.path === "/strategy/trading-analytics"));
 });
 

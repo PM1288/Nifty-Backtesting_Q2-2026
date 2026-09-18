@@ -1,4 +1,4 @@
-.page{--v2-bg:#f4f7fb;--v2-panel:#fff;--v2-border:#d7e0eb;--v2-text:#14243a;--v2-muted:#526175;--v2-call:#2563eb;--v2-put:#eab308;--v2-positive:#117a40;--v2-negative:#c6283d;--v2-grid-height:610px;display:grid;gap:8px;color:var(--v2-text);background:var(--v2-bg);padding:8px;border:1px solid var(--v2-border);border-radius:10px;font-family:var(--app-font-family,Inter,system-ui,sans-serif);min-width:0}
+.page{--v2-bg:#f4f7fb;--v2-panel:#fff;--v2-border:#d7e0eb;--v2-text:#14243a;--v2-muted:#526175;--v2-call:#2563eb;--v2-put:#eab308;--v2-positive:#117a40;--v2-negative:#c6283d;--v2-grid-height:720px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;color:var(--v2-text);background:var(--v2-bg);padding:8px;border:1px solid var(--v2-border);border-radius:10px;font-family:var(--app-font-family,Inter,system-ui,sans-serif);min-width:0}
 .commandBar,.statusBar,.chartHeader,.railHeader,.analyticsHeader,.inspectionModes{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .commandBar{position:sticky;top:56px;z-index:5;padding:8px;background:rgba(255,255,255,.97);border:1px solid var(--v2-border);border-radius:9px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .commandBar label{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--v2-muted)}
@@ -55,3 +55,14 @@
 @media(max-width:1199px){.page{--v2-grid-height:auto}.workspace{grid-template-columns:1fr}.chartStage{height:auto}.charts{grid-template-columns:1fr 1fr;grid-template-rows:520px 280px;height:auto}.charts>.chartPanel:first-child{grid-column:1/3;grid-row:auto}.rail{position:static;height:min(620px,75vh)}.analyticsGrid{grid-template-columns:1fr 1fr}}
 @media(max-width:767px){.page{padding:6px}.commandBar{position:static}.chartStage{grid-template-columns:1fr}.drawingTools{position:sticky;top:0;z-index:4;flex-direction:row;overflow-x:auto;overflow-y:hidden}.drawingTools button{min-width:42px;min-height:44px}.drawingTools span{margin:auto 4px;white-space:nowrap}.charts{display:grid;grid-template-columns:1fr;grid-template-rows:520px 280px 280px}.charts>.chartPanel:first-child{grid-column:auto}.analyticsGrid{grid-template-columns:1fr}.analyticCardWide{grid-column:auto}.rail{padding:8px;height:min(620px,75vh)}.ohlc{justify-content:flex-start}.leaders{grid-template-columns:repeat(3,1fr)}.commandBar label{min-height:44px}.commandBar select,.commandBar button{min-height:44px}.axisContext{align-items:flex-start;flex-direction:column;gap:2px}.axisContext span{white-space:normal}}
 @media(max-width:480px){.premiums{grid-template-columns:1fr 1fr}.premium{padding:8px}.premium strong{font-size:26px}.chartHeader{align-content:center}.ohlc span:nth-of-type(2),.ohlc span:nth-of-type(3){display:none}}
+
+/* Contain each grid item, not just document overflow: wide matrix/rail content
+   previously forced a 485px price canvas into a 390px viewport. */
+.page>*{min-width:0}.rail,.analytics,.dockPanel,.analyticCard{min-width:0}
+.commandGroup{flex-wrap:wrap;min-width:0;max-width:100%}
+.rail{display:flex;flex-direction:column;overflow:auto}.rail>*{flex-shrink:0;min-width:0}.railBody{min-height:140px;overflow:visible}
+.premiums{grid-template-columns:repeat(2,minmax(0,1fr))}.premium{min-width:0;overflow-wrap:anywhere}
+.snapshotGrid{table-layout:fixed}.snapshotGrid th,.snapshotGrid td{min-width:0!important;max-width:none!important;white-space:normal;overflow-wrap:anywhere}
+.chartHeader>span:first-child{flex-wrap:wrap;overflow-wrap:anywhere}
+@media(max-width:1199px){.workspace{grid-template-columns:minmax(0,1fr)}.charts{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(620px,auto) minmax(370px,auto)}}
+@media(max-width:767px){.charts{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(620px,auto) repeat(2,minmax(370px,auto))}.levelGaugeBody{grid-template-columns:minmax(0,1fr)}.overviewKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}

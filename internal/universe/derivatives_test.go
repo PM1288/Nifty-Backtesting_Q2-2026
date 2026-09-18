@@ -175,8 +175,8 @@ func TestBuildStockDerivativePlanHandlesAdjustedInterleavedStrikeLadders(t *test
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(result.PlanRows) != 14 {
-		t.Fatalf("expected 14 option rows around the actual ATM ladder, got %d", len(result.PlanRows))
+	if len(result.PlanRows) != 22 {
+		t.Fatalf("expected all 22 available option rows in the expanded ATM ladder, got %d", len(result.PlanRows))
 	}
 	for _, row := range result.PlanRows {
 		if row.Strike == nil || row.Right == "" {

@@ -99,3 +99,31 @@ to two decimals. This view passes density as ECharts numeric strings, preserving
 the actual density geometry, and uses scientific tick/tooltip notation. A ninth
 test verifies small densities survive the adapter and still integrate to one.
 No shared renderer or other chart is changed.
+
+## Production acceptance
+
+- Final application commit `9cfec29` pushed and deployed from master after the
+  original Analyzer commit `9a76b21`. Documentation-only follow-up does not
+  require a container rebuild.
+- Healthy image `sha256:3c8d31d07551ee2a5b0ddfab361c41f88691c9a36bfbdeaa1206be82eba18992`;
+  entry asset `/n50/assets/index-CTkX7zlD.js`.
+- Previous pre-Analyzer image retained as
+  `n50-dashboard:before-paper-analyzer-20260918`. Only dashboard recreated;
+  collectors, PostgreSQL, volumes and order services untouched.
+- Final web 204/204 and API 232/232 tests, typechecks/builds and canonical gate
+  pass. One development rerun failed during a dynamic module reload; a stable
+  candidate rerun and the deployed production run passed with zero page errors.
+- Authenticated production Chromium 1920×1080 and 390×844 PASS: closed/open/EOD
+  selection, parameter/quartile comparison, density, empty filter state, CSV/JSON,
+  existing inspector and navigation back to Simple view. No paper mutation
+  requests and no page-level horizontal overflow. Visual screenshots reviewed.
+- Public HTTPS login, Analyzer route and authenticated paper bootstrap all 200.
+- Paper notifier preservation: 17/17 checks passed on Analyzer, including
+  desktop/mobile voice and event UI. Evidence is ignored under
+  `output/playwright/paper-analyzer-production/` and `paper-analyzer-notifier/`.
+- Paper refresh preservation PASS: 88 rows retained through two completed
+  automatic refreshes, all 88 retain audit metadata, zero mutation requests.
+  Own temporary candidate Vite listener was stopped after testing.
+- No claim of predictive validation, full option-trade coverage, or exhaustive
+  regression of every unrelated dashboard. Source-invalid records remain stored
+  and excluded from this analysis with visible reasons.

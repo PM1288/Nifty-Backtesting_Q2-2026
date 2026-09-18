@@ -11,6 +11,12 @@
 - Web 203/API 232 tests and builds pass. Authenticated candidate desktop/mobile
   checks pass after accessible-label repair. Full method, rerun and release
   evidence: `docs/PAPER_TRADE_ANALYZER_20260918.md`.
+- Released application `9cfec29` (including density precision correction), healthy
+  image `3c8d31d07551...`, asset `index-CTkX7zlD.js`. Final web tests 204/204,
+  API 232/232. Production Analyzer desktop/mobile interactions pass with zero
+  errors/mutations; public login/route/API 200; notifier 17/17 passes.
+- Paper automatic-refresh regression also passes: 88 rows, two refreshes,
+  audit metadata retained, zero mutations. Temporary Vite server stopped.
 
 ## 2026-09-18 — Daily Data Health dashboard
 

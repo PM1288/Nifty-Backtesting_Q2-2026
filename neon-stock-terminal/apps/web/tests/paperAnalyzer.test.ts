@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { analyzerTrade, summarizeOutcomes, correlation, histogram, analyzerGroups, finite, analyzerCsv } from '../src/lib/paperAnalyzer';
+import { analyzerTrade, summarizeOutcomes, correlation, histogram, analyzerGroups, finite, analyzerCsv, densityPlotValue } from '../src/lib/paperAnalyzer';
+import { roundChartData } from '../src/components/visual/chartPrecision';
 const raw={trade_leg_id:'leg1',trade_group_id:'group1',symbol:'ABC',side:'BUY',strategy_id:'TEST',strategy_version:'1',opened_at:'2026-09-01T04:00:00Z',closed_at:'2026-09-01T08:00:00Z',average_entry_price:'100',opened_quantity:'10',remaining_quantity:'0',realised_pnl:'50',unrealised_pnl:'999',evidence_available_at:'2026-09-01T03:59:00Z',evidence_rsi14:'40',entry_book_quote_ts:'2026-09-01T03:59:30Z',entry_book_spread_bps:'2'};
 test('closed net excludes open marks and derives exact entry-notional return',()=>{
  const row=analyzerTrade(raw,'closed');assert.equal(row.outcome,5);assert.equal(row.pnl,50);assert.equal(row.parameters.rsi,40);assert.equal(row.parameters.spread,2);assert.equal(row.day,'2026-09-01');assert.equal(row.hour,'09:00 IST');
@@ -36,6 +37,12 @@ test('Pearson and tied-rank Spearman handle signs, constant and insufficient dat
 test('histogram includes the upper edge, integrates density to one and handles flat data',()=>{
  for(const values of [[-2,0,2],[3,3,3]]){const bins=histogram(values);assert.equal(bins.reduce((s,b)=>s+b.count,0),values.length);assert.ok(Math.abs(bins.reduce((s,b)=>s+b.density*(b.high-b.low),0)-1)<1e-10);}
  assert.deepEqual(histogram([]),[]);
+});
+test('small plotted densities survive the shared display precision adapter',()=>{
+ const bins=histogram([-10000,0,10000]);
+ const drawn=bins.map(b=>Number(roundChartData(densityPlotValue(b.density))));
+ assert.ok(drawn.some(n=>n>0&&n<.005));
+ assert.ok(Math.abs(drawn.reduce((sum,n,i)=>sum+n*(bins[i].high-bins[i].low),0)-1)<1e-10);
 });
 test('chronological split keeps entry days together; exports preserve exclusion reasons',()=>{
  const rows=[1,2,3,4].map(day=>analyzerTrade({...raw,opened_at:`2026-09-0${day}T04:00:00Z`},'closed'));

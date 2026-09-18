@@ -93,3 +93,9 @@ Protected credentials are read in memory. Runtime snapshots/screenshots stay in
 ignored output/. Required checks: web/API typecheck, test, build, canonical gate.
 Deploy only dashboard via scripts/deploy_n50_dashboard.sh from pushed master;
 retain the prior dashboard image for rollback. No DB migration or data cleanup.
+
+Density rendering follow-up: the shared surface rounds number-valued plot data
+to two decimals. This view passes density as ECharts numeric strings, preserving
+the actual density geometry, and uses scientific tick/tooltip notation. A ninth
+test verifies small densities survive the adapter and still integrate to one.
+No shared renderer or other chart is changed.

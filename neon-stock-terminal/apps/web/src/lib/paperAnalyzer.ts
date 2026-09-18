@@ -83,6 +83,9 @@ export function histogram(values: number[], bins=12) {
   for(const value of values)result[Math.min(bins-1,Math.max(0,Math.floor((value-low)/width)))].count++;
   for(const bin of result)bin.density=bin.count/values.length/width;return result;
 }
+// ECharts accepts numeric strings on value axes. The shared surface rounds
+// number-valued series data to 2dp; preserve density geometry, not just labels.
+export const densityPlotValue = (density: number) => String(density);
 export function analyzerGroups(rows: AnalyzerTrade[], group: string, parameter: string) {
   const valid = rows.filter(r=>r.outcome!=null&&!r.excluded);
   const values=valid.map(r=>r.parameters[parameter]).filter((n):n is number=>n!=null).sort((a,b)=>a-b);

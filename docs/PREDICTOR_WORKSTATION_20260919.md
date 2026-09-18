@@ -237,3 +237,14 @@ The expanded candidate regression passed after the fix at both widths; the first
 cold development-server run timed out before the page appeared, without a browser
 exception. The stable rerun passed. API 242/web 206 tests, typechecks, builds and
 canonical gate were rerun successfully. No forecast/model calculation changed.
+
+Final application release `5da24e2` is pushed/merged/deployed, healthy image
+`sha256:bc5f2b262bb18a42dd58868c3969997537135d347fa3145bbee2089e8b46af8d`,
+asset `/n50/assets/index-DGcHPAJ4.js`. Expanded production regression PASS,
+zero JS errors/mutations, `output/predictor/final-production/results.json`.
+At 390×844 the sheet is now y=466, height=378, bottom=844 (was y=−295).
+At 1440×900 it is y=0, height=900. Both links activate and close the sheet.
+High-legibility persistence and native cursor checks PASS; final notifier 17/17
+PASS. Worker auto-start/heartbeat PASS after this release. Own temporary Vite
+listener stopped again. Real morning/EOD acceptance remains explicitly pending
+the next market session; this release adds no synthetic production predictions.

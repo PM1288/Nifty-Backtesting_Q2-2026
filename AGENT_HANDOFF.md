@@ -17,6 +17,10 @@
   17/17 pass. Compiled worker heartbeat verified; real Monday capture/EOD pending.
 - Paper automatic-refresh also passes: 88 rows, two refreshes, zero mutations.
   Own temporary Vite listener stopped; unrelated services and reports preserved.
+- Follow-up release `5da24e2` fixes a measured shared mobile-menu containing-block
+  defect with a body portal: 390px sheet top now 466px, not −295px. Final image
+  `bc5f2b262bb1...`, asset `index-DGcHPAJ4.js`, healthy. Expanded production link
+  activation/geometry, high-legibility/native cursor and notifier 17/17 pass.
 
 ## 2026-09-18 — Paper Trade Analyzer
 

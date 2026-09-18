@@ -36,6 +36,13 @@ bash scripts/verify/canonical-repository-gate.sh
 node tools/playwright/paper-audit-refresh.mjs
 ```
 
+If Playwright is not installed in the repository, install it in a temporary
+tools environment rather than changing the application lockfile:
+`npm install --prefix /tmp/paper-audit-browser-20260918 playwright@1.55.0 --no-audit --no-fund`.
+Set `PLAYWRIGHT_MODULE=file:///tmp/paper-audit-browser-20260918/node_modules/playwright/index.mjs`
+and `PLAYWRIGHT_EXECUTABLE_PATH` to an existing compatible Chromium executable.
+The run used `/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome`.
+
 Database integration tests require an isolated TEST_DATABASE_URL; never supply the production DSN because those fixtures reset their schema. Runtime screenshots and generated result JSON remain in ignored `output/playwright/paper-audit-refresh`, not Git.
 
 ## Release and rollback
@@ -43,3 +50,27 @@ Database integration tests require an isolated TEST_DATABASE_URL; never supply t
 Commit/push and merge the feature branch into master before release. Dashboard uses `bash scripts/deploy_n50_dashboard.sh`. Monitor uses the existing project's two Compose files and recreates only `paper-monitor-worker`, leaving unrelated workers/collectors untouched. Rollback by reverting the scoped commit, rerunning checks and rebuilding these services. Forward valuation rows are source-derived evidence, not fabricated recovery; do not delete ledger/source data during rollback.
 
 Validation results and deployment status are recorded in AGENT_HANDOFF.md after execution. This document is not a claim that all PDF research/backtests were completed.
+
+## Executed release evidence
+
+Application commit `51e7e12` was pushed to the feature branch and master before
+release. Web: 193 tests passed; API: 215 passed; both typechecks/builds passed.
+Python: 28 passed, 6 database integration tests skipped. Preservation gate passed.
+Dashboard is healthy with entry asset `/n50/assets/index-BgQfLh9_.js`.
+Only the dashboard and monitor containers were recreated. All 31 open positions
+now have the latest available canonical timestamp, 18 September 10:38 UTC;
+this mark is not evidence of a continuous-session executable fill.
+
+Production-build npm audit reported 16 dependency vulnerabilities (including
+one critical and three high). No dependencies were added/changed by this repair;
+dependency remediation remains separate pending reviewed upgrades.
+
+Browser test initially used an obsolete table selector, then an incorrect
+proxied extra API URL (401). The final test uses the current Simple view and
+the authenticated response received by the page. Neither error is hidden as a
+passed application check. Mobile and full feature-by-feature browser regression
+were not performed in this repair.
+
+Final authenticated desktop test: PASS, 88 visible rows, two successful refresh
+responses, zero paper mutations, audit metadata on all 88 rows. Screenshot was
+visually inspected. Evidence: ignored `output/playwright/paper-audit-refresh/`.

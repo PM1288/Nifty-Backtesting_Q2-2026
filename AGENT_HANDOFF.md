@@ -5140,3 +5140,20 @@ or outcomes were deleted.
 - Before repair, 31 positions remained open; oldest persisted mark was
   2026-09-09 22:35 UTC, newest 2026-09-18 10:38 UTC. These source timestamps
   do not themselves certify continuous-market execution eligibility.
+- Release: pushed application commit `51e7e12`, deployed from master via the
+  approved dashboard script and existing two-file paper Compose configuration.
+  Dashboard healthy, asset `/n50/assets/index-BgQfLh9_.js`; monitor running.
+  Only these two services were recreated. All 31 open positions now have
+  last_mark_at 2026-09-18 10:38 UTC (latest available canonical bar).
+- Authenticated Chromium desktop refresh test PASS: 88 hydrated rows, two
+  completed refreshes, zero paper mutation requests, audit metadata on 88 rows.
+  Screenshot and result JSON: ignored `output/playwright/paper-audit-refresh/`.
+  Initial test harness failures (obsolete selector; wrong extra proxied API URL
+  returning 401) were corrected, then the full read-only test rerun passed.
+- Playwright ran from temporary `/tmp/paper-audit-browser-20260918`, using
+  existing Chromium 1208 and protected `.env` auth in memory only. Set optional
+  PLAYWRIGHT_MODULE/PLAYWRIGHT_EXECUTABLE_PATH to repeat without app dependencies.
+- Unresolved: historical session/coverage and target reconciliation, challenger
+  backtests, borrow/friction realism, six isolated DB integration tests, mobile
+  and full UI regression. Build npm audit also reports pre-existing dependency
+  vulnerabilities; no lockfile or dependency was changed. See repair report.

@@ -72,7 +72,8 @@ try {
   assert.ok(past.source.every((trade) => trade.fills.every((fill) => Date.parse(fill.filled_at) <= cutoff) && trade.sessions.every((session) => Date.parse(session.last_at) + 60000 <= cutoff)));
   await fs.writeFile(path.join(output, "historical.json"), JSON.stringify(past, null, 2));
   await page.getByRole("navigation", { name: "Paper Trading views" }).getByRole("button", { name: "Simple view", exact: true }).click();
-  await page.getByTestId("paper-refresh-time").waitFor();
+  await page.getByTestId("paper-refresh-time").waitFor({ state: "attached" });
+  await page.waitForFunction(() => document.querySelectorAll("table tbody tr").length > 0, null, { timeout: 120000 });
   assert.ok(await page.locator("table tbody tr").count(), "Existing simple trades remain available");
   assert.equal(mutations, 0);
   const result = { status: "PASS", sourceRows: report.source.length, firstReplayMs: elapsed, mutations, researchRequests, exports: 7, cohorts: report.cohorts.map((item) => ({ id: item.id, sourceCount: item.source_count })), verified5: report.source.filter((trade) => trade.verified.horizons[0].status === "VERIFIED_COMPLETE").length, verified30: report.source.filter((trade) => trade.verified.horizons[1].status === "VERIFIED_COMPLETE").length, mobileOverflow: overflow, historicalCutoff: past.as_of };

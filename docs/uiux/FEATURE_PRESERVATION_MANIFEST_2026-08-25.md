@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 Predictor: additive `/predictor` top-bar/mobile entry, morning NIFTY
+and same-day selected/recommended OIIS stocks passing matching MWD gates. Three
+models, append-only publication evidence, EOD scorecards, condition slices and
+separate retrospective daily studies. Paper/strategy/order/collector sources remain
+unchanged. No automatic trading or implied validated edge. See
+`docs/PREDICTOR_WORKSTATION_20260919.md` for measured results and live-cycle limits.
+
 2026-09-18 Paper Analyzer: additive `tab=analyzer` compares entry parameters,
 return distributions/density, correlations and cohort stability using the existing
 ledger. Closed net, open gross and hypothetical EOD remain separate; invalid,

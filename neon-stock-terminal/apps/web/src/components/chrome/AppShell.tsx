@@ -94,6 +94,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   // one page-level navigation system instead of rendering duplicate rows.
   if (workspace === "nifty-weekly-options") return [];
   if (workspace === "paper-trading") return [];
+  if (workspace === "predictor") return [];
   if (workspace === "derivatives") return [
     { label: "Options Overview", to: "/options/intelligence", match: (path) => path === "/options/intelligence" },
     { label: "Structure", to: "/options/structure" },

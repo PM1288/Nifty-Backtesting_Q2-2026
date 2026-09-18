@@ -805,6 +805,7 @@ services:
       # Running every heavy market/derivatives materializer inside the shared
       # API process starved Paper and Strategy during market hours.
       DASHBOARD_SNAPSHOT_SCHEDULER_ENABLED: "0"
+      PREDICTOR_ENABLED: ${PREDICTOR_ENABLED:-true}
       TRADING_ANALYTICS_ENABLED: ${N50_TRADING_ANALYTICS_ENABLED:-true}
       NIFTY_CONTEXT_ENABLED: ${NIFTY_CONTEXT_ENABLED:-true}
       TRADING_ANALYTICS_MORNING_JOB_ENABLED: ${NSE_FII_REPORTS_AUTO_PULL_ENABLED:-true}

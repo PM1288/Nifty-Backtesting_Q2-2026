@@ -1,0 +1,279 @@
+.page {
+  min-width: 0;
+  max-width: 100%;
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--text-primary, #182c42);
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.header h1 {
+  font-size: 28px;
+  margin: 5px 0;
+}
+.header p {
+  margin: 4px 0;
+}
+.header small {
+  letter-spacing: 0.08em;
+  color: #537498;
+}
+.actions,
+.tabs,
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.page button,
+.page select,
+.actions a {
+  border: 1px solid #b4c7db;
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: inherit;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+.page button {
+  cursor: pointer;
+}
+.page button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.page button:focus-visible,
+.page select:focus-visible {
+  outline: 3px solid #428ed1;
+}
+.actions label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.notice {
+  padding: 10px 14px;
+  background: rgba(181, 134, 46, 0.09);
+  border: 1px solid #d8b36b;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.notice b {
+  margin-right: 12px;
+}
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.kpis article,
+.models article {
+  padding: 14px;
+  border: 1px solid #b7cadd;
+  border-radius: 8px;
+  background: var(--surface, #fff);
+}
+.kpis span,
+.kpis small {
+  display: block;
+}
+.kpis strong {
+  display: block;
+  font-size: 22px;
+  margin: 8px 0;
+  font-variant-numeric: tabular-nums;
+}
+.kpis small {
+  font-size: 12px;
+  color: #5d748c;
+}
+.tabs {
+  border-bottom: 1px solid #b7cadd;
+  padding: 2px 0 10px;
+}
+.tabs button[aria-pressed="true"] {
+  background: #214d81;
+  color: white;
+  border-color: #214d81;
+}
+.page section {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #bccbda;
+  border-radius: 8px;
+  background: var(--surface, #fff);
+}
+.page h2 {
+  font-size: 19px;
+  margin: 0 0 10px;
+}
+.page h3 {
+  font-size: 16px;
+}
+.caption {
+  font-size: 12px;
+  color: #61788e;
+}
+.table {
+  max-width: 100%;
+  overflow: auto;
+}
+.table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.table th,
+.table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #d4deea;
+  font-size: 13px;
+}
+.table th {
+  background: var(--surface, #f0f5fa);
+  position: sticky;
+  top: 0;
+}
+.table small {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+}
+.table td button {
+  display: block;
+  margin-top: 5px;
+}
+.good {
+  color: #157947;
+}
+.bad {
+  color: #b63841;
+}
+.neutral {
+  color: #75869a;
+}
+.empty {
+  padding: 30px;
+  max-width: 850px;
+  line-height: 1.7;
+}
+.models {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.page section > p {
+  line-height: 1.65;
+}
+.chart {
+  margin: 20px 0 0;
+}
+.chart svg {
+  width: 100%;
+  max-height: 220px;
+}
+.chart figcaption {
+  font-weight: 600;
+}
+.legend {
+  font-size: 12px;
+  color: #50657d;
+}
+.range {
+  position: relative;
+  width: 190px;
+  height: 24px;
+}
+.range div {
+  position: absolute;
+  top: 7px;
+  height: 10px;
+  background: #c2d9f0;
+  border: 1px solid #6296bf;
+}
+.range i,
+.range b,
+.range em {
+  position: absolute;
+  top: 2px;
+  height: 21px;
+  width: 2px;
+  background: #6b7787;
+}
+.range b {
+  width: 4px;
+  background: #246ec0;
+}
+.range em {
+  background: #158649;
+  width: 3px;
+}
+.drawer {
+  position: fixed;
+  right: 0;
+  top: 75px;
+  bottom: 0;
+  width: min(650px, 95vw);
+  background: var(--surface, #fff);
+  border-left: 2px solid #94b4d0;
+  padding: 20px;
+  z-index: 100;
+  overflow: auto;
+  box-shadow: -10px 0 30px #0002;
+}
+.drawer pre {
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.drawer button {
+  margin-right: 8px;
+}
+@media (max-width: 1000px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .models {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .page {
+    padding: 10px;
+  }
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+  .header h1 {
+    font-size: 24px;
+  }
+  .page section {
+    padding: 10px;
+  }
+  .empty {
+    padding: 10px;
+  }
+  .actions label {
+    flex-wrap: wrap;
+  }
+  .page select {
+    max-width: 100%;
+  }
+  .drawer {
+    top: 55px;
+  }
+  .kpis strong {
+    font-size: 20px;
+  }
+}

@@ -35,6 +35,7 @@ import { registerRollingMonthly } from "./rollingMonthly";
 import { registerRollingWindow } from "./rollingWindow";
 import { registerNseIntelligence } from "./nseIntelligence";
 import { registerDataHealth } from "./dataHealth";
+import { registerPredictor } from "./predictor";
 import { registerLongOptions } from "./longOptions";
 import { registerNiftyWeeklyOptions } from "./niftyWeeklyOptions";
 import { registerTradingAnalytics } from "./tradingAnalytics";
@@ -97,6 +98,7 @@ export function registerRoutes(
   registerNiftyContext(app, prisma);
   registerNseIntelligence(app, prisma);
   registerDataHealth(app, prisma);
+  registerPredictor(app, prisma);
   registerMobileNotifications(app, prisma);
   registerStockProfiles(app, prisma);
   registerTrendlyneSummary(app, prisma);

@@ -112,6 +112,8 @@ for step in \
 done
 
 log "34/38 node api operational bootstrap"
+log "additional: append-only market predictor research ledger"
+run_compose exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 < "${ROOT_DIR}/db/sql/059_market_predictor.sql"
 run_compose build n50-dashboard
 run_compose run --rm --entrypoint node n50-dashboard apps/api/dist/scripts/bootstrapDatabase.js
 

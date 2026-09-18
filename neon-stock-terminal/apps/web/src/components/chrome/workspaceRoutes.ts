@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 export type WorkspaceRouteId =
+  | "predictor"
   | "today"
   | "markets"
   | "stocks"
@@ -185,6 +186,7 @@ export const MORE_MENU_ROUTES: readonly HeaderNavigationItem[] = [
 ] as const;
 
 export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
+  { id:"predictor",label:"Predictor",compactLabel:"Predictor",description:"Morning forecasts and end-of-day model scorecards",path:"/predictor",icon:FlaskConical,primaryDesktop:true,primaryMobile:false,match:(pathname)=>pathname.startsWith("/predictor") },
   {
     id: "today",
     label: "Today",
@@ -416,6 +418,6 @@ export function resolveWorkspaceRoute(
 ): WorkspaceRouteDefinition {
   return (
     WORKSPACE_ROUTES.find((route) => route.match(pathname)) ??
-    WORKSPACE_ROUTES[1]
+    WORKSPACE_ROUTES.find((route) => route.id === "markets")!
   );
 }

@@ -12,6 +12,7 @@ import { registerRoutes } from "./routes";
 import { createRequestAuthenticator } from "./auth/guard";
 import { attachStreamServer } from "./ws/stream";
 import { ensureDatabasePerformanceArtifacts } from "./lib/dbPerformance";
+import { startPredictorScheduler } from "./lib/predictorScheduler";
 import { startDiscordMarketStreamScheduler, stopDiscordMarketStreamScheduler } from "./lib/discordMarketStream";
 import { recordDbQuery, runWithRequestMetrics, getRequestMetrics } from "./lib/requestMetrics";
 import { databaseUrlWithPool } from "./lib/prismaPoolUrl";
@@ -351,6 +352,7 @@ async function main() {
   }
 
   startDiscordMarketStreamScheduler(prisma);
+  startPredictorScheduler();
   startMobileNotificationDispatcher(prisma);
 
   const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {

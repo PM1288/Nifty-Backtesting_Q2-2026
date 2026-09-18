@@ -1,5 +1,17 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-19 IST — Predictor workstation
+
+- Branch `feat/predictor-workstation-20260919`; additive `/predictor` top-bar and
+  mobile route, NIFTY + same-day OIIS/MWD-qualified stocks only.
+- Ridge, 25-neighbour regression, no-change benchmark; immutable morning evidence,
+  EOD rankings/conditions and separately labelled chronological historical studies.
+- New `market_predictor` schema only. No strategy, order, collector or source edits.
+- Initial NIFTY 60-session study: neither learned model beats benchmark MAE;
+  do not claim predictive edge. Weekend: zero forward forecasts, next session pending.
+- Method, exact checks, deployment/rollback and limitations:
+  `docs/PREDICTOR_WORKSTATION_20260919.md`.
+
 ## 2026-09-18 — Paper Trade Analyzer
 
 - Branch `feat/paper-trade-analyzer-20260918`; additive Paper Trading Analyzer

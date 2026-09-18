@@ -97,3 +97,12 @@ combined dashboard web/API container changes. Keep prior image for scoped
 rollback; no database migration/rollback. Deployment/browser results follow
 after execution. Full outcome validation is BLOCKED by historical coverage and
 fillability evidence. No claim that all older project requests are complete.
+
+Initial live browser check found the canonical trade-drawer close button hidden
+behind the global header (Paper overlay z-index 100 vs shell 1000). Scoped fix
+raises only Paper modal/drawer layers to 1300, including the new evidence drawer.
+Also corrected changed-control tracking when clearing the historical date;
+empty monthly cohorts explicitly say unchanged starting capital is not a tested
+return. Initial run loaded 88 trades, 21 retrospective monthly matches and zero
+stored-before-entry matches. This is an evidence limitation, not proof that a
+monthly strategy had zero returns.

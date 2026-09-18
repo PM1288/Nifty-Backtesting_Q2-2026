@@ -13,6 +13,9 @@
   August and incomplete windows remain CENSORED, not invented full outcomes.
 - Browser and deployment outcomes appended after execution; no claim of complete
   historical backtest, executable shadow profits or unrelated feature completion.
+- Initial release `56d8006` healthy; browser discovered canonical close button
+  obscured by shell header. Follow-up branch `fix/paper-replay-browser-20260918`
+  raises only Paper overlay layers; no pointer-force workaround hides the defect.
 
 ## 2026-09-12 — Scalper V2 30-session strike gauge
 

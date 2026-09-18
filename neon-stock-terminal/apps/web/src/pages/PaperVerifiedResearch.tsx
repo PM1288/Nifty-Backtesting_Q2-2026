@@ -19,6 +19,7 @@ export function PaperVerifiedResearch({ onSelect }: { onSelect: (trade: Row) => 
   const [fees, setFees] = useState(0), [slip, setSlip] = useState(0), [oneIssuer, setOneIssuer] = useState(false);
   const [asOf, setAsOf] = useState(""), [selected, setSelected] = useState<Row | null>(null);
   const controller = useRef<AbortController>();
+  const lastRunDate = useRef("");
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
     const close = (event: KeyboardEvent) => { if (event.key === "Escape") setSelected(null); };
@@ -34,7 +35,7 @@ export function PaperVerifiedResearch({ onSelect }: { onSelect: (trade: Row) => 
       const response = await fetch(`${API_BASE_URL}/v1/workspace/paper-trading/research?${params}`, { credentials: "include", signal: request.signal });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? `HTTP ${response.status}`);
-      if (!request.signal.aborted) { setReport(payload); setSelected(null); }
+      if (!request.signal.aborted) { setReport(payload); setSelected(null); lastRunDate.current = asOf; }
     } catch (reason) { if (!request.signal.aborted) setError(reason instanceof Error ? reason.message : String(reason)); }
     finally { if (!request.signal.aborted) setLoading(false); }
   };
@@ -45,7 +46,7 @@ export function PaperVerifiedResearch({ onSelect }: { onSelect: (trade: Row) => 
   const endAt = equity.length ? Date.parse(equity.at(-1).at) : 1;
   const low = Math.min(400000, ...equity.map((item: Row) => item.equity)), high = Math.max(400001, ...equity.map((item: Row) => item.equity));
   const filename = `OIIS-verified-${report?.as_of?.slice(0, 10)}`;
-  const parametersChanged = report && (report.parameters.fees_bps !== fees || report.parameters.slippage_bps !== slip || report.parameters.one_issuer !== oneIssuer || asOf && report.as_of !== `${asOf}T10:00:00.000Z`);
+  const parametersChanged = report && (report.parameters.fees_bps !== fees || report.parameters.slippage_bps !== slip || report.parameters.one_issuer !== oneIssuer || asOf !== lastRunDate.current);
   return <section className={styles.root} data-testid="paper-verified-research">
     <header><div><h2>Verified evidence &amp; ₹4 lakh replay</h2><p>Recorded fills release capital. Target touches do not. Research only; no orders or ledger changes.</p></div>
       <button type="button" onClick={run} disabled={loading}>{loading ? "Replaying retained evidence…" : "Run verified replay"}</button></header>
@@ -70,6 +71,7 @@ export function PaperVerifiedResearch({ onSelect }: { onSelect: (trade: Row) => 
         <button onClick={() => download(researchMarkdown(report), `${filename}.md`, "text/markdown")}>Audit Markdown</button></div>
       <div className={styles.kpis}>{[["Ending equity", scenario.ending_equity], ["Free capital", scenario.ending_cash], ["Realised gross", scenario.realised_gross], ["Open marked gross", scenario.open_marked_gross], ["Estimated friction", scenario.estimated_costs], ["Sampled drawdown", scenario.max_sampled_drawdown]].map(([label, value]) => <article key={label}><span>{label}</span><strong data-sign={sign(value as number)}>{money(value)}</strong></article>)}</div>
       <p>{scenario.taken} taken · {scenario.skipped} skipped · {scenario.open_positions} still open · {scenario.unmarked_open_positions} without a usable session mark · Return {format(scenario.return_pct)}%. Unmarked capital stays at entry value. Zero-cost results are gross, not achievable net returns. Cash-short feasibility is unverified.</p>
+      {report.cohorts.find((item: Row) => item.id === cohort).source_count === 0 ? <p role="status">No eligible cohort records. ₹4 lakh is the unchanged starting balance, not a tested strategy return.</p> : null}
       <details><summary>Compare all cohorts and both allocations</summary><div className={styles.table}><table><thead><tr><th>Cohort</th><th>Allocation</th><th>Taken</th><th>Skipped</th><th>Ending equity</th><th>Return</th></tr></thead><tbody>{report.cohorts.flatMap((item: Row) => item.scenarios.map((model: Row) => <tr key={`${item.id}-${model.allocation}`}><th>{item.label}</th><td>{money(model.allocation)}</td><td>{model.taken}</td><td>{model.skipped}</td><td>{money(model.ending_equity)}</td><td data-sign={sign(model.return_pct)}>{format(model.return_pct)}%</td></tr>))}</tbody></table></div></details>
       <svg viewBox="0 0 900 150" role="img" aria-label="Recorded fill and session mark equity curve" className={styles.curve}><text x="8" y="16">{money(high)}</text><text x="8" y="124">{money(low)}</text><text x="120" y="145">{equity.length ? time(equity[0].at) : "No eligible entries"}</text><text x="885" y="145" textAnchor="end">{equity.length ? time(equity.at(-1).at) : ""}</text><polyline fill="none" stroke="#2563eb" strokeWidth="2" points={equity.map((item: Row) => `${120 + (Date.parse(item.at) - startAt) / Math.max(1, endAt - startAt) * 765},${115 - (item.equity - low) / (high - low) * 100}`).join(" ")} /></svg>
       <details><summary>Capital lock and repeated exposure · {open.length} open</summary><div className={styles.table}><table><thead><tr><th>Stock</th><th>Entry</th><th>Capital locked</th><th>Remaining units</th><th>Mark time</th><th>Short feasibility</th></tr></thead><tbody>{open.map((item: Row) => <tr key={item.trade_leg_id}><td>{item.symbol}</td><td>{time(item.entry_at)}</td><td>{money(item.remaining * item.entry_price)}</td><td>{format(item.remaining)}</td><td>{time(item.mark_at)}</td><td>{item.short_feasibility.replaceAll("_", " ")}</td></tr>)}</tbody></table></div></details>

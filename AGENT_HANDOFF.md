@@ -14,6 +14,15 @@
 - Web 195/API 227 tests, builds/typechecks, focused Go, 10 Python tests and canonical
   gate pass. Authenticated chart geometry/navigation and 500-hover smoke pass.
 - Production outcome appended to the report after release; no inferred deployment.
+- Released dashboard `f18a48d`, collector `b37e160`, NSE ingestor `173be43`;
+  health/public authenticated checks pass. Report health includes manual catch-up.
+  September 18 inventory 47/63: 14 parsed, 33 raw archived; 16 remain uncaptured.
+  Missing September 17–18 intraday chain snapshots cannot be fabricated. Next
+  market-session streaming/REST freshness and measured cursor p95 remain pending.
+  Final API 229/web 195/all Go/10 Python pass; paper alerts 17/17, paper refresh and
+  production DPR1/2 desktop/mobile geometry +500 fixed-context hover checks pass.
+  Existing retention removed 99,559 expired rows on restart; no partitions dropped,
+  recovery unverified. Full command/image/rollback evidence is in the linked report.
 
 ## 2026-09-18 — Additive OIIS verified capital research
 

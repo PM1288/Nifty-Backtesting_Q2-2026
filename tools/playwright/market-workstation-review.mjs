@@ -30,7 +30,9 @@ try {
  const finish = request => pending.delete(request);
  page.on("requestfinished",finish); page.on("requestfailed",finish);
  const started=Date.now();
- await page.goto(`${origin}/n50/strategy/trading-analytics?view=scalper&interval=5`,{waitUntil:"domcontentloaded"});
+ // Freeze the source cutoff for the pointer-path test. Otherwise the normal
+ // 60-second live refresh can be misattributed to hover on slow DPR2 runners.
+ await page.goto(`${origin}/n50/strategy/trading-analytics?view=scalper&interval=5&asOf=${encodeURIComponent(new Date().toISOString())}`,{waitUntil:"domcontentloaded"});
  const root=page.getByTestId("scalper-v2");
  await root.waitFor({timeout:120000});
  await page.waitForURL(/view=scalper_v2/);

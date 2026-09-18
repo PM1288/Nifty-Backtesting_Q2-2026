@@ -104,8 +104,8 @@ affected service with no-deps/no-build. Calendar additions need no destructive u
 - Out-of-hours deployment cannot certify next-session tick freshness.
 - Existing historical calendar entries preserved, including an incorrect September
   14 entry; historical replay correction requires separate evidenced treatment.
-- DPR2, 20-cycle heap plateau, production pointer p95 and all preservation scenarios
-  are not certified by navigation smoke tests.
+- 20-cycle heap plateau, production pointer p95 and all preservation scenarios
+  are not certified by navigation smoke tests. Final DPR2 evidence is below.
 - No broad tick/depth purge: existing approved retention gates remain authoritative.
   Disk was 60% used, approximately 677GB free at inspection.
 
@@ -151,3 +151,57 @@ Release logs: ignored `output/market-coverage-release/`. Production screenshots:
 `output/playwright/market-workstation-review/production/`. Initial paper-notifier
 test required correction for Secure cookies in loopback-only test jars and the
 current wide-toolbar breakpoint; no production auth/voice behavior was changed.
+
+### Final verified state
+
+- Dashboard application commit `f18a48d`, image
+  `sha256:da08c8b6d46da445a079bbabb82f1d5948f2ec1929a7fcc37e3f43fc6525d20e`;
+  frontend asset `/n50/assets/index-CvJmJQJ4.js`.
+- Collector code `b37e160`, image
+  `sha256:359d9aea625a7149522a161bc8d0a8b3a6b46a475a53255f0e4b633fd9eb51a5`.
+- NSE ingestor code `173be43`, image
+  `sha256:cbc00d95dabe610e076e34978c5b2b7e268c80f1ba78bd94e40cf4b93e2fdff8`.
+- Dashboard/collector healthy; NSE application healthcheck healthy and named data
+  volumes unchanged. Only these three services were recreated.
+- Public HTTPS login and authenticated paper notifications returned 200. Public
+  `/n50/v1/nse-intelligence/reports` returned 200 with September 18, not the older
+  scheduled job. Report-health queries now include explicit daily catch-ups.
+- September 18 retained inventory: **47/63** files, **14 parsed**, **33 immutable
+  raw archives**; parsed registry row counts total 153,905 (not an assertion of
+  that many unique securities). Latest retry: 43 retrieved/reused, 20 failed;
+  four failures already have earlier same-date archives. Health keeps these
+  distinctions and the failure evidence, rather than erasing either result.
+- Remaining uncaptured report IDs: cm_albm, cm_client_funding,
+  cm_extreme_loss_margin, cm_mode, cm_turnover, cm_var_multiplier, fo_base_prices,
+  fo_combined, fo_derivatives_update, fo_exercise, fo_mode, fo_span_2, fo_turnover,
+  margin_trading, reg1_ind, var_margin_2. Attempts returned unavailable responses;
+  this does not prove files were never published. Two existing NSE health outbox
+  events reached SENT. No fabricated source rows were substituted.
+- Observed post-release request audit: 542 quotes, 15 aggregate calls and one
+  candle call; zero failed/throttled, maximum 50 requested symbols. Short observed
+  window only, not a guarantee for the next trading session. Stock REST overflow
+  budget is 1200 per 60-second cycle: nominal complete rotation approximately six
+  minutes before failures/shared queue delay, not live tick coverage.
+- Final tests: web 195, API 229, all Go packages (`go test ./...`), 10 Python,
+  typechecks/builds and canonical gate passed. Paper notifier 17/17; refresh 88
+  rows/two refreshes/no mutations. Original unrelated user files remain untouched.
+- Authenticated production chart tests pass at 1920x1080, 1440x900, 390x844 with
+  DPR1 and DPR2, native time axes/host containment and renderer-owned bitmap sizes.
+  Five V2 dock views +eight Analytics routes smoke-tested. DPR2 final: 500 pointer
+  moves, no chart/context requests, no hydration, no page exceptions. Evidence:
+  `output/playwright/market-workstation-review/production-final/` and
+  `output/playwright/market-workstation-review/production-dpr2/`.
+- DPR2 harness initially failed because Chromium context-only emulation reports
+  devicePixelRatio=2 but devicePixelContentBoxSize=1x. A standalone 100px-element
+  check reproduced it; browser `--force-device-scale-factor=2` returns 200 physical
+  pixels correctly. Tests await actual renderer resize completion. Fixed-cutoff
+  pointer tests prevent a normal 60-second live refresh being misattributed to
+  hover on slow runners. No canvas CSS stretch or renderer workaround was added.
+- DPR2 initial canvas 4787ms in this headless run. This does NOT certify the
+  proposed <50ms cursor or <250ms cached-switch p95 gates; those remain NOT_RUN.
+  Screenshot/navigation checks are not a full formula/coverage audit of every
+  historical chart. Missing September 17–18 chain history stays unavailable.
+
+Final application release commands are above. Subsequent evidence/test-script-only
+commits do not require recreating production services. The temporary canonical
+Vite listener on 15218 is stopped after verification; no unrelated listener stopped.

@@ -6,6 +6,12 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-18 Paper Analyzer: additive `tab=analyzer` compares entry parameters,
+return distributions/density, correlations and cohort stability using the existing
+ledger. Closed net, open gross and hypothetical EOD remain separate; invalid,
+missing and late evidence is disclosed. Existing inspector, tabs, refresh, exports,
+alerts, rules and order controls remain. See `docs/PAPER_TRADE_ANALYZER_20260918.md`.
+
 2026-09-18 Daily Data Health: additive `/analytics/system/data-health` and menu
 entries expose daily download/parse/archive gaps, subscribed/planned instrument
 observations, symbol filtering, broker request health and JSON evidence.

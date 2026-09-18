@@ -33,6 +33,7 @@ import {
 } from "../lib/paperWorkbench";
 import styles from "./PaperTradingCommandCenter.module.css";
 import { PaperVerifiedResearch } from "./PaperVerifiedResearch";
+import { PaperTradeAnalyzer } from "./PaperTradeAnalyzer";
 import { isPaperExecutionClosed } from "../lib/paperAtlas";
 import { PAPER_EVIDENCE_DENSITIES, PAPER_EVIDENCE_PRESETS } from "../lib/paperEvidenceGeometry";
 import {
@@ -82,7 +83,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 type AnyRow = Record<string, any>;
 type DrawerTab = "Journey" | "Targets" | "Market Book" | "Evidence" | "Economics" | "Comments" | "Audit" | "Calculation Trace";
 type AtlasLens = "Intraday" | "5D" | "30D";
-type PageView = "PORTFOLIO" | "SIMPLE" | "TRACKED" | "WHAT_GOOD_LOOKS_LIKE" | "VERIFIED";
+type PageView = "PORTFOLIO" | "SIMPLE" | "TRACKED" | "WHAT_GOOD_LOOKS_LIKE" | "VERIFIED" | "ANALYZER";
 type HeatmapView = "YEAR" | "WEEK" | "INTRADAY";
 type HeatmapMetric = "EOD_PNL" | "MAX_PROFIT" | "MAX_DRAWDOWN" | "TARGET_HITS";
 type IntradayEventFilter = "ALL" | "ENTRY" | "TARGET" | "EOD";
@@ -343,7 +344,7 @@ export function PaperTradingCommandCenter() {
   const [workbenchContext, setWorkbenchContext] = useState<PaperWorkbenchContext>(() => parsePaperWorkbenchContext(routeParams));
   const [calculationTrace, setCalculationTrace] = useState<CalculationTrace | null>(null);
   const [pageView, setPageView] = useState<PageView>(
-    routeParams.get("tab") === "verified"
+    routeParams.get("tab") === "analyzer" ? "ANALYZER" : routeParams.get("tab") === "verified"
       ? "VERIFIED"
       : routeParams.get("tab") === "tracked"
       ? "TRACKED"
@@ -376,7 +377,7 @@ export function PaperTradingCommandCenter() {
   }, [routeParams]);
   useEffect(() => {
     const tab = routeParams.get("tab");
-    setPageView(tab === "verified" ? "VERIFIED" : tab === "tracked" ? "TRACKED" : tab === "quality" ? "WHAT_GOOD_LOOKS_LIKE" : tab === "simple" ? "SIMPLE" : "PORTFOLIO");
+    setPageView(tab === "analyzer" ? "ANALYZER" : tab === "verified" ? "VERIFIED" : tab === "tracked" ? "TRACKED" : tab === "quality" ? "WHAT_GOOD_LOOKS_LIKE" : tab === "simple" ? "SIMPLE" : "PORTFOLIO");
   }, [routeParams]);
   useEffect(() => {
     setFilter(workbenchContext.status);
@@ -397,6 +398,7 @@ export function PaperTradingCommandCenter() {
     setPageView(view);
     const next = new URLSearchParams(routeParams);
     if (view === "TRACKED") next.set("tab", "tracked");
+    else if (view === "ANALYZER") next.set("tab", "analyzer");
     else if (view === "VERIFIED") next.set("tab", "verified");
     else if (view === "SIMPLE") next.set("tab", "simple");
     else if (view === "WHAT_GOOD_LOOKS_LIKE") next.set("tab", "quality");
@@ -582,6 +584,9 @@ export function PaperTradingCommandCenter() {
       ) : null}
 
       <nav className={styles.pageTabs} aria-label="Paper Trading views">
+        <button type="button" data-active={pageView === "ANALYZER"} onClick={() => changePageView("ANALYZER")}>
+          Analyzer
+        </button>
         <button type="button" data-active={pageView === "VERIFIED"} onClick={() => changePageView("VERIFIED")}>
           Verified replay · ₹4 lakh
         </button>
@@ -599,7 +604,7 @@ export function PaperTradingCommandCenter() {
         </button>
       </nav>
 
-      {pageView !== "WHAT_GOOD_LOOKS_LIKE" && pageView !== "TRACKED" && pageView !== "VERIFIED" ? <>
+      {pageView !== "ANALYZER" && pageView !== "WHAT_GOOD_LOOKS_LIKE" && pageView !== "TRACKED" && pageView !== "VERIFIED" ? <>
         {pageView === "PORTFOLIO" ? <PaperWorkbenchSubnav
           active={workbenchContext.section}
           onSelect={selectWorkbenchSection}
@@ -640,7 +645,7 @@ export function PaperTradingCommandCenter() {
         />
       </> : null}
 
-      {pageView === "VERIFIED" ? <PaperVerifiedResearch onSelect={openSelectedTrade} /> : pageView === "WHAT_GOOD_LOOKS_LIKE" ? (
+      {pageView === "ANALYZER" ? <PaperTradeAnalyzer trades={trades} onSelect={openSelectedTrade} loading={query.detailsLoading} asOf={query.refreshedAt} /> : pageView === "VERIFIED" ? <PaperVerifiedResearch onSelect={openSelectedTrade} /> : pageView === "WHAT_GOOD_LOOKS_LIKE" ? (
         <TradeQualityGuide
           policy={data.tradeQualityPolicy}
           trades={trades}

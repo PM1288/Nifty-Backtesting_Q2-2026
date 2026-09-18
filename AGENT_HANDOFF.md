@@ -1,5 +1,17 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-18 — Paper Trade Analyzer
+
+- Branch `feat/paper-trade-analyzer-20260918`; additive Paper Trading Analyzer
+  tab reuses canonical ledger/refresh and trade inspector, no new backend writes.
+- Histograms/density, entry-parameter scatter/correlations, group comparisons,
+  time-split stability, coverage/exclusions and complete analysis exports.
+- Realised net, open gross and hypothetical EOD are deliberately separate.
+  No after-outcome scores used as entry predictors; no strategy changes.
+- Web 203/API 232 tests and builds pass. Authenticated candidate desktop/mobile
+  checks pass after accessible-label repair. Full method, rerun and release
+  evidence: `docs/PAPER_TRADE_ANALYZER_20260918.md`.
+
 ## 2026-09-18 — Daily Data Health dashboard
 
 - Feature branch `feat/data-health-dashboard-20260918`; report and rerun:

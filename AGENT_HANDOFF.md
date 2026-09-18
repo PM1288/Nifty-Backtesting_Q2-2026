@@ -1,5 +1,17 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-18 — Daily Data Health dashboard
+
+- Feature branch `feat/data-health-dashboard-20260918`; report and rerun:
+  `docs/DAILY_DATA_HEALTH_20260918.md`.
+- Additive read-only route/API show real download retention versus parsing,
+  symbol observations, plan/subscription coverage and broker request health.
+- No collector, database data, strategy or order-permission changes.
+- Web 195/API 232 tests, typechecks/builds and canonical gate passed; candidate
+  authenticated desktop/mobile filtering/refresh/export checks passed.
+- Live status is scoped: observed timestamps do not certify complete candles
+  or per-field OI freshness. Archived reports are not parsed data.
+
 ## 2026-09-18 — V2-only workstation and collection coverage
 
 - Branch `feat/market-coverage-v2-alerts-20260918`; detailed commands, evidence and

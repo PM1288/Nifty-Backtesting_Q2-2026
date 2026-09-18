@@ -60,6 +60,7 @@ const AnalyticsFiiReportsPage = lazy(async () => ({ default: (await preloadAnaly
 const AnalyticsFlowsPage = lazy(async () => ({ default: (await import("./pages/AnalyticsFlowsPage")).AnalyticsFlowsPage }));
 const AnalyticsSupportingMetricsPage = lazy(async () => ({ default: (await preloadAnalyticsSupportingMetricsPage()).AnalyticsSupportingMetricsPage }));
 const AnalyticsQualityPage = lazy(async () => ({ default: (await preloadAnalyticsQualityPage()).AnalyticsQualityPage }));
+const DataHealthPage = lazy(async () => ({ default: (await import("./pages/DataHealthPage")).DataHealthPage }));
 const AnalyticsSystemMapPage = lazy(async () => ({ default: (await preloadAnalyticsSystemMapPage()).AnalyticsSystemMapPage }));
 const AnalyticsRegimePage = lazy(async () => ({ default: (await preloadAnalyticsRegimePage()).AnalyticsRegimePage }));
 const AnalyticsRiskPage = lazy(async () => ({ default: (await import("./pages/AnalyticsRiskPage")).AnalyticsRiskPage }));
@@ -214,6 +215,7 @@ export default function App() {
           <Route path="/analytics/flows" element={<AnalyticsFlowsPage />} />
           <Route path="/analytics/quality" element={<Navigate to="/analytics/system/quality" replace />} />
           <Route path="/analytics/system/quality" element={<AnalyticsQualityPage />} />
+          <Route path="/analytics/system/data-health" element={<DataHealthPage />} />
           <Route path="/analytics/system/map" element={<AnalyticsSystemMapPage />} />
           <Route path="/analytics/signals/flows" element={<Navigate to="/analytics/flows" replace />} />
           <Route path="/change-heatmap" element={<Navigate to="/heatmap/change" replace />} />

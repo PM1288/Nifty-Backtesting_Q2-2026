@@ -175,6 +175,7 @@ export const STRATEGY_HEADER_ROUTES: readonly HeaderNavigationItem[] = strategyH
 }));
 
 export const MORE_MENU_ROUTES: readonly HeaderNavigationItem[] = [
+  { id: "daily-data-health", label: "Daily Data Health", description: "Daily downloads, symbol freshness and collection coverage", path: "/analytics/system/data-health", icon: Database },
   { id: "data-operations", label: "Data & Operations", description: "Data feeds, universe, data quality and system controls", path: "/analytics/system/quality", icon: Database },
   { id: "system-health", label: "System Health", description: "Sources, services, runtime status and provenance", path: "/analytics/system/map", icon: Activity },
   { id: "run-monitor", label: "Run Monitor", description: "Active, completed and failed processing runs", path: "/backtesting/runs", icon: FileClock },

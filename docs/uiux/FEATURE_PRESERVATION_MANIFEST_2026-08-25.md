@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-18 Daily Data Health: additive `/analytics/system/data-health` and menu
+entries expose daily download/parse/archive gaps, subscribed/planned instrument
+observations, symbol filtering, broker request health and JSON evidence.
+Collection freshness remains separate from complete exchange history.
+Existing routes, data, collectors, strategy/order guards and exports remain.
+Evidence: `docs/DAILY_DATA_HEALTH_20260918.md`.
+
 2026-09-18 explicit user-approved Scalper retirement supersedes older V1 route
 preservation entries below: only V2 is selectable; `view=scalper` redirects with
 other parameters preserved. Shared calculations/source history remain. Other

@@ -104,6 +104,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   ];
   if (workspace === "data-operations") {
     const links: WorkspaceLink[] = [
+      { label: "Daily Data Health", to: "/analytics/system/data-health" },
       { label: "Trust & Data Quality", to: "/analytics/system/quality" },
       { label: "Run Monitor", to: "/backtesting/runs" },
       { label: "Report Ingestion", to: "/institutional/reports" },

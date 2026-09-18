@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { chromium } from "playwright";
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright");
 
 const origin = (process.env.PLAYWRIGHT_ORIGIN ?? "http://127.0.0.1:19090").replace(/\/$/, "");
 const password = process.env.PLAYWRIGHT_ADMIN_PASSWORD;
@@ -9,7 +9,7 @@ const outputDir = path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR ?? "output/pape
 if (!password) throw new Error("PLAYWRIGHT_ADMIN_PASSWORD is required.");
 
 await fs.mkdir(outputDir, { recursive: true });
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH });
 const results = [];
 const check = (name, passed, detail = "") => {
   results.push({ name, passed, detail });
@@ -19,11 +19,19 @@ const authenticatedContext = async (viewport) => {
   const context = await browser.newContext({ viewport });
   const login = await context.request.post(`${origin}/n50/auth/session/dev-login`, { data: { identifier: "admin", password } });
   check(`login ${viewport.width}`, login.ok(), `status=${login.status()}`);
+  // APIRequestContext does not send Secure cookies over loopback HTTP. This
+  // adjustment affects only this isolated test jar, never production auth.
+  if (origin.startsWith("http://127.0.0.1:")) {
+    const cookies = (await context.storageState()).cookies;
+    await context.addCookies(cookies.map(cookie => ({ ...cookie, secure: false })));
+  }
   return context;
 };
 
 try {
-  const desktop = await authenticatedContext({ width: 1440, height: 900 });
+  // The compact desktop shell moves voice controls into More navigation.
+  // Exercise the exposed voice toolbar at its wide breakpoint, plus mobile below.
+  const desktop = await authenticatedContext({ width: 1920, height: 1080 });
   const api = await desktop.request.get(`${origin}/n50/v1/paper/notifications?limit=5`);
   check("authenticated paper alert API", api.ok(), `status=${api.status()}`);
   const payload = await api.json();
@@ -46,7 +54,7 @@ try {
   check("Escape closes", await panel.count() === 0);
   await desktop.close();
 
-  const simulated = await authenticatedContext({ width: 1366, height: 768 });
+  const simulated = await authenticatedContext({ width: 1920, height: 1080 });
   await simulated.addInitScript(() => {
     window.__n50Spoken = [];
     class TestUtterance { constructor(text) { this.text = text; } }

@@ -240,7 +240,6 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const rawPanes = useMemo(() => activeData?.panes ?? [], [activeData]);
   const days = useMemo(() => [...new Set((rawPanes[0]?.bars ?? []).map((row) => istDay(row.end)).filter(Boolean))].sort().reverse(), [rawPanes]);
   const tradingDay = selectedDayParam && days.includes(selectedDayParam) ? selectedDayParam : (days[0] ?? "");
-  const differentSnapshotDay = Boolean(tradingDay && tradingDay !== istDay(asOf));
   const activeReferenceLevels = referenceLevels?.sessionDate === tradingDay ? referenceLevels.levels : [];
   const panes = useMemo(() => rawPanes.map((pane) => ({ ...pane, bars: dayRows(pane.bars, tradingDay, "end"), oiHistory: dayRows(pane.oiHistory, tradingDay, "event_time") })), [rawPanes, tradingDay]);
   const underlying = panes.find((pane) => chartSide(pane) === "UNDERLYING"), call = panes.find((pane) => chartSide(pane) === "CE"), put = panes.find((pane) => chartSide(pane) === "PE");
@@ -273,6 +272,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const nearestSpotStrike = spot == null || strikeRows.length === 0 ? null : [...strikeRows].sort((a, b) => Math.abs(a - spot) - Math.abs(b - spot))[0];
   const profileModel = useMemo(() => normalizeScalperV2ProfileRows(rankSource, legs), [legs, rankSource]);
   const profileRows = profileModel.rows;
+  // Request time can be Saturday while the latest real observation is Friday.
+  // Never label the request cutoff as the snapshot's source date.
+  const snapshotDays = [...new Set(profileRows.map((row) => istDay(row.currentAt)).filter(Boolean))].sort();
+  const differentSnapshotDay = Boolean(tradingDay && snapshotDays.some((day) => day !== tradingDay));
   const deltaBasisLabel = `${profileBaselineLabel(profileModel.baselineKind)} ΔOI`;
   const { ceCurrent, peCurrent, ceChanges, peChanges } = useMemo(() => {
     const currentSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => profileRows.find((row) => row.side === wanted && row.strike === strike)?.currentOi ?? null);
@@ -508,7 +511,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide inspector" : "Show inspector"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, referenceLevels: referenceLevels ?? null, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
     </header>
     <div className={css.statusBar}><strong>{state}</strong><span>{interval === 60 ? "1h" : `${interval}m`} · {tradingDay}</span><span>Signals {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</span><button className={errors.length || differentSnapshotDay ? css.statusIssue : undefined} onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health {errors.length ? `· ${errors.length} issues` : differentSnapshotDay ? "· different source dates" : "· source details"}</button></div>
-    {differentSnapshotDay && <p className={css.scopeNotice}>Charts: {tradingDay} · latest snapshot context: {istDay(asOf)}. These are different sessions; snapshot values are not historical candle values.</p>}
+    {differentSnapshotDay && <p className={css.scopeNotice}>Charts: {tradingDay} · snapshot collected: {snapshotDays.join(", ")}. Snapshot values are not historical candle values; exact source times remain in Data health.</p>}
     {referenceLevels?.sessionDate === tradingDay && <UnderlyingLevelGauge payload={referenceLevels} strikes={strikes} />}
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
     <div className={css.workspace} style={!railOpen ? { gridTemplateColumns: "minmax(0,1fr)" } : undefined}>

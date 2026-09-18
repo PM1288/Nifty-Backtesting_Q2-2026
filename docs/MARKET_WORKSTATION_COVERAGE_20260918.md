@@ -116,4 +116,38 @@ Sources: [SmartAPI](https://smartapi.angelone.in/docs),
 
 ## Executed release evidence
 
-Pending at initial implementation commit; append measured deployment outcomes here.
+Initial application commit `b37e160` pushed to feature and master; dashboard,
+collector and NSE ingestor deployed from clean tracked master. Unrelated services
+and NSE named volumes preserved. Production browser geometry/navigation/500-hover
+checks passed; first native canvas 3157ms (not cached-switch or pointer latency).
+Paper refresh passed: 88 rows, two refreshes, zero mutations, 88 audit records.
+
+Live coverage: 3000 active subscriptions: 270 equities, 10 indices, 430 futures
+(420 stock +10 index), 770 index options, 1520 stock options. Stock plan contains
+8110 options, with 6590 admitted to REST rotation. Five index underlyings each
+have September 29 and October 27 futures. Calendar now extends through October 20.
+
+Option-chain watcher logs confirm calendar absence also suppressed September
+17–18 chain capture. After repair it correctly reports September 19 as non-trading.
+Missing historical snapshots are NOT recreated; affected Total OI/price-strength
+history remains unavailable. Collection resumes at the next qualified session.
+
+Initial report catch-up: September 17: 6 parsed +30 archived, 27 unavailable out of
+63. September 18 completed with 46,913 parsed rows; source failures logged. API
+fallbacks were subsequently added for the original cash catalog because several
+legacy direct paths returned 404; final retry results follow below. Request cutoff
+date is no longer mislabeled as source date: V2 disclosure uses actual collected
+timestamps, including across IST midnight/weekends.
+
+Existing authorized collector retention ran on restart, removing **99,559 expired
+rows** across its existing gated tables, including 10,000 old minute bars. No
+partitions were dropped; no manual bulk purge was run. This is irreversible through
+application undo; backup recovery was not tested and no new data backup was made
+for this existing scheduled policy. Previous images/runtime config are saved as
+`*:before-market-coverage-20260918` and ignored
+`output/market-coverage-release/config.before.yaml` (mode 600).
+
+Release logs: ignored `output/market-coverage-release/`. Production screenshots:
+`output/playwright/market-workstation-review/production/`. Initial paper-notifier
+test required correction for Secure cookies in loopback-only test jars and the
+current wide-toolbar breakpoint; no production auth/voice behavior was changed.

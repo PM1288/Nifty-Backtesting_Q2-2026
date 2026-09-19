@@ -140,6 +140,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     null;
   const niftyRsi = overview.data?.indices?.nifty50?.rsi ?? null;
   const workspaceRoute = resolveWorkspaceRoute(location.pathname);
+  const scalperPopout = location.pathname === "/strategy/trading-analytics"
+    && new URLSearchParams(location.search).get("popout") === "scalper_v2";
   const workspace = workspaceRoute.id;
   const isAdminRoute = location.pathname.startsWith("/control-plane");
   const secondaryLinks = workspaceLinks(workspace, user?.role === "admin");
@@ -223,6 +225,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         <AuthGateModal />
       </div>
     );
+  }
+
+  if (scalperPopout) {
+    return <div className={styles.popoutShell} data-ui-generation="trading-v2" data-scalper-popout="true">
+      <NavigationStateManager />
+      <main className={styles.popoutMain}>{children}</main>
+      <PaperTradeNotifier enabled={sessionEnabled} audible={paperVoiceEnabled} />
+      <AuthGateModal />
+    </div>;
   }
 
   return (

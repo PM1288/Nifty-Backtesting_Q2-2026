@@ -368,6 +368,7 @@ export function TradingAnalyticsPage() {
   >(null);
   const [inspected, setInspected] = useState<Row | null>(null);
   const [params, setParams] = useSearchParams();
+  const isScalperPopout = params.get("popout") === "scalper_v2";
   const [logMarketContext, setLogMarketContext] = useState(false);
   const tab: Tab =
     params.get("view") === "scalper" ? "scalper_v2" : params.get("view") === "oi"
@@ -446,16 +447,15 @@ export function TradingAnalyticsPage() {
     );
   return (
     <InspectContext.Provider value={inspect}>
-      <section className={styles.page} data-view={tab} aria-label="Trading Analytics workspace">
+      <section id="trading-analytics-top" className={styles.page} data-view={tab} aria-label="Trading Analytics workspace">
         <header className={styles.toolbar}>
-          <h1>Trading Analytics</h1>
+          {!isScalperPopout && <><h1>Trading Analytics</h1>
           <span>READ-ONLY · Research</span>
           <Link to="/strategy/nifty-options">NIFTY strategy</Link>
           <button onClick={() => setDrawer("health")} title="Data health">Health</button>
           <button onClick={() => setDrawer("source")} title="Source and formula">Formula</button>
-          <button onClick={() => setDrawer("condition")}>
-            Conditions
-          </button>
+          <button onClick={() => setDrawer("condition")}>Conditions</button></>}
+          {isScalperPopout && <strong>Scalper V2 · live workspace</strong>}
           <button disabled={activeQuery.isFetching} onClick={() => void activeQuery.refetch()}>
             {activeQuery.isFetching ? "Refreshing…" : "Refresh"}
           </button>
@@ -498,7 +498,7 @@ export function TradingAnalyticsPage() {
             </>
           )}
         </header>
-        <nav className={styles.tabs} aria-label="Trading analytics lenses">
+        {!isScalperPopout && <nav className={styles.tabs} aria-label="Trading analytics lenses">
           {Object.entries(analyticsTabs).map(([id, label]) => (
             <button
               key={id}
@@ -509,7 +509,7 @@ export function TradingAnalyticsPage() {
             </button>
           ))}
           <Link to="/strategy/nifty-context?lens=trade-quality">SHAP Research</Link>
-        </nav>
+        </nav>}
         {d && tab !== "flow" && (tab !== 'trade-log' || logMarketContext) && (
           <p className={styles.context}>
             Underlying: {d.underlying.label} · Report {d.reportDate} · Analysis / as-of{" "}

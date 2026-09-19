@@ -10,7 +10,7 @@ import { dayRows, istDay } from "../lib/tradingAnalyticsChartView";
 import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
-import { scalperV2HorizontalDeltaOiOption } from "../lib/scalperV2Analytics";
+import { scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
 import { scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
 import { scalperV2OiTotals, scalperV2StructureRows } from "../lib/scalperV2Structure";
 import { oiComparisonState } from "../lib/scalperV2Geometry";
@@ -166,18 +166,28 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   legs: Row[]; metricLegs?: Row[]; state: string; errors?: Row[]; referenceLevels?: ScalperV2ReferenceLevelPayload;
 }) {
   const [params, setParams] = useSearchParams(), client = useQueryClient();
+  const isPopout = params.get("popout") === "scalper_v2";
   const mwhd = useMwhdRankings();
   const selectedDayParam = params.get("day");
   const interval = [1, 5, 15, 60].includes(Number(params.get("interval"))) ? Number(params.get("interval")) : 5;
   const defaultStrike = nearestScalperStrike(strikes, spot);
   const { ceStrike: selectedCeStrike, peStrike: selectedPeStrike } = scalperLegSelection(params, defaultStrike);
   const query = chartQuery(symbol, asOf, expiry, selectedCeStrike, selectedPeStrike, interval);
-  const active = useQuery({ queryKey: chartKey(query), queryFn: ({ signal }) => getJson<ChartPayload>(`/v1/trading-analytics/charts?${query}`, signal), staleTime: 30_000, retry: 1 });
+  const active = useQuery({
+    queryKey: chartKey(query),
+    queryFn: ({ signal }) => getJson<ChartPayload>(`/v1/trading-analytics/charts?${query}`, signal),
+    staleTime: 15_000,
+    refetchInterval: params.has("asOf") ? false : 30_000,
+    refetchIntervalInBackground: false,
+    retry: 1,
+  });
   const optionPriceHistory = useQuery({
     queryKey: ["trading-analytics-option-price-history", symbol, expiry, asOf],
     queryFn: ({ signal }) => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, asOf, historyDays: "3" })}`, signal),
     enabled: Boolean(expiry),
     staleTime: 30_000,
+    refetchInterval: params.has("asOf") ? false : 60_000,
+    refetchIntervalInBackground: false,
     retry: 1,
   });
   useEffect(() => {
@@ -422,19 +432,15 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     // label retains the exact current value and nearest listed strike.
     data: [{ xAxis: categoryIndex }],
   }), [nearestSpotStrike, spot]);
-  const oiNiftyCurrentGuide = useMemo(
-    () => niftyCurrentGuide(nearestSpotStrike == null ? -1 : strikeRows.indexOf(nearestSpotStrike)),
-    [nearestSpotStrike, niftyCurrentGuide, strikeRows],
-  );
   const payoutNiftyCurrentGuide = useMemo(
     () => niftyCurrentGuide(nearestSpotStrike == null ? -1 : maxPain.points.findIndex((point) => point.settlement === nearestSpotStrike)),
     [maxPain.points, nearestSpotStrike, niftyCurrentGuide],
   );
   const analyticOptions = useMemo<EChartsOption[]>(() => [
-    { tooltip: { trigger: "axis" }, legend: { data: ["CE OI", "PE OI"], top: 2, left: 86 }, grid: { left: 72, right: 20, top: 38, bottom: 48 }, xAxis: { type: "category", data: strikeRows, name: "Strike", nameGap: 30 }, yAxis: { type: "value", min: 0, axisLine: { show: true }, axisTick: { show: true }, axisLabel: { formatter: formatOiAxisValue, margin: 9 }, splitNumber: 5 }, series: [{ name: "CE OI", type: "bar", data: ceCurrent, itemStyle: { color: "#2563eb" }, markLine: oiNiftyCurrentGuide }, { name: "PE OI", type: "bar", data: peCurrent, itemStyle: { color: "#eab308" } }] },
-    scalperV2HorizontalDeltaOiOption(strikeRows, ceChanges, peChanges, spot, nearestSpotStrike),
+    scalperV2VerticalStrikeOption(strikeRows, ceCurrent, peCurrent, "oi", spot, nearestSpotStrike),
+    scalperV2VerticalStrikeOption(strikeRows, ceChanges, peChanges, "change", spot, nearestSpotStrike),
     { tooltip: { trigger: "axis" }, legend: { data: ["Call payout", "Put payout", "Combined"] }, grid: { left: 72, right: 20, top: 42, bottom: 52 }, xAxis: { type: "category", data: maxPain.points.map((point) => point.settlement) }, yAxis: { type: "value", name: "Common-unit payout" }, series: [{ name: "Call payout", type: "line", data: maxPain.points.map((point) => point.callPayout), lineStyle: { color: "#2563eb" }, markLine: payoutNiftyCurrentGuide }, { name: "Put payout", type: "line", data: maxPain.points.map((point) => point.putPayout), lineStyle: { color: "#eab308" } }, { name: "Combined", type: "line", data: maxPain.points.map((point) => point.totalPayout), lineStyle: { color: "#14243a", width: 3 } }] },
-  ], [ceChanges, ceCurrent, maxPain.points, nearestSpotStrike, oiNiftyCurrentGuide, payoutNiftyCurrentGuide, peChanges, peCurrent, spot, strikeRows]);
+  ], [ceChanges, ceCurrent, maxPain.points, nearestSpotStrike, payoutNiftyCurrentGuide, peChanges, peCurrent, spot, strikeRows]);
 
   const selectTime = (time: string) => {
     const seconds = Math.floor(Date.parse(time) / 1000);
@@ -457,6 +463,12 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     });
   };
   const update = (key: string, value: string) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next); };
+  const openPopout = () => {
+    const next = new URLSearchParams(params);
+    next.set("view", "scalper_v2");
+    next.set("popout", "scalper_v2");
+    window.open(`${window.location.pathname}?${next.toString()}#trading-analytics-top`, "n50-scalper-v2", "popup=yes,width=1900,height=1040,resizable=yes,scrollbars=yes");
+  };
   const updateLegStrike = (wanted: "CE" | "PE", value: string) => {
     setParams(setScalperLegSelection(params, {
       ceStrike: wanted === "CE" ? value : selectedCeStrike,
@@ -500,21 +512,22 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const structureDeltaMaximum = Math.max(1, ...structureRows.flatMap((row) => [Math.abs(row.ce.changeOi ?? 0), Math.abs(row.pe.changeOi ?? 0)]));
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}</section>;
-  return <section className={css.page} data-testid="scalper-v2">
+  return <section className={css.page} data-testid="scalper-v2" data-popout={isPopout || undefined}>
     <header className={css.commandBar}>
       <strong>Scalper V2</strong><MwhdRankBadge ranking={mwhd.rankings.get(symbol.toUpperCase())} />
+      <div className={css.topQuotes} aria-label="Current selected values"><span><b>{label}</b>{number(inspectedUnderlying)}</span><span className={css.callText}><b>CE {selectedCeStrike}</b>{price(inspectedRows[1]?.close ?? callLeg?.last_price)}</span><span className={css.putText}><b>PE {selectedPeStrike}</b>{price(inspectedRows[2]?.close ?? putLeg?.last_price)}</span></div>
       <div className={css.commandGroup}><span>Time</span><label>Session <select value={tradingDay} onChange={(event) => update("day", event.target.value)}>{days.map((day) => <option key={day}>{day}</option>)}</select></label>{[1, 5, 15, 60].map((value) => <button key={value} aria-current={interval === value ? "page" : undefined} onClick={() => update("interval", String(value))}>{value === 60 ? "1h" : `${value}m`}</button>)}<button aria-pressed={horizontalView === "day"} onClick={() => { setHorizontalView("day"); setFitRequest((value) => value + 1); }}>Fit day</button></div>
       <div className={css.commandGroup}><span>Contract</span><label>CE <select aria-label="Selected CE strike" value={selectedCeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("CE", event.target.value)}>{selectableCeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><label>PE <select aria-label="Selected PE strike" value={selectedPeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("PE", event.target.value)}>{selectablePeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><button disabled={points.length > 0 || defaultStrike == null} onClick={selectBothAtm}>Both ATM</button><small>{expiry || "Expiry unavailable"}</small></div>
       <details className={css.commandMenu}><summary>Scale</summary><div><button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button><button aria-pressed={profileRangeExpanded} disabled={!profileRows.length} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button><button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button><button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button><button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button><button onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button><button onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button></div></details>
       <details className={css.commandMenu}><summary>OI</summary><div><button aria-pressed="true" disabled>ΔOI price-axis overlay</button><button onClick={() => { setAnalyticsTab("matrix"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>Strike matrix</button><button onClick={() => { setAnalyticsTab("oi"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>OI &amp; ΔOI charts</button></div></details>
       <details className={css.commandMenu}><summary>Tools</summary><div><button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button><button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button><button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button><button onClick={() => { setRailOpen(true); setRailTab("objects"); }}>Drawings</button></div></details>
-      <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide inspector" : "Show inspector"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, referenceLevels: referenceLevels ?? null, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
+      {!isPopout && <button type="button" data-testid="v2-popout" onClick={openPopout}>Pop out</button>}
+      <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide details" : "Show details"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, referenceLevels: referenceLevels ?? null, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
     </header>
     <div className={css.statusBar}><strong>{state}</strong><span>{interval === 60 ? "1h" : `${interval}m`} · {tradingDay}</span><span>Signals {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0}</span><button className={errors.length || differentSnapshotDay ? css.statusIssue : undefined} onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health {errors.length ? `· ${errors.length} issues` : differentSnapshotDay ? "· different source dates" : "· source details"}</button></div>
     {differentSnapshotDay && <p className={css.scopeNotice}>Charts: {tradingDay} · snapshot collected: {snapshotDays.join(", ")}. Snapshot values are not historical candle values; exact source times remain in Data health.</p>}
-    {referenceLevels?.sessionDate === tradingDay && <UnderlyingLevelGauge payload={referenceLevels} strikes={strikes} />}
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
-    <div className={css.workspace} style={!railOpen ? { gridTemplateColumns: "minmax(0,1fr)" } : undefined}>
+    <div className={css.workspace}>
       <div className={css.chartStage}>
         <nav className={css.drawingTools} aria-label="Chart drawing tools">
           {DRAWING_TOOLS.map((entry) => <button key={entry.tool} type="button" title={entry.label} aria-label={entry.label} aria-pressed={drawingTool === entry.tool} onClick={() => { setDrawingTool(entry.tool); setMeasureMode(false); }}>{entry.short}</button>)}
@@ -526,6 +539,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
         </div>
       </div>
+      <aside className={css.structureCharts} data-testid="v2-strike-side-charts" aria-label="Strike open interest comparison charts">
+        <article><header><strong>OI by strike</strong><span>Bars: CE / PE · line: PE − CE</span></header><Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[0]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></article>
+        <article data-testid="v2-side-deltaoi-chart"><header><strong>Change in OI by strike</strong><span>Bars: CE / PE · line: PE ΔOI − CE ΔOI</span></header>{deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.sideState}><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts</span></div> : <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>}</article>
+      </aside>
       {railOpen && <aside className={css.rail} aria-label="Scalper V2 option chain and inspector">
         <header className={css.railHeader}><h2>{label} · CE {Number(selectedCeStrike).toLocaleString("en-IN")} / PE {Number(selectedPeStrike).toLocaleString("en-IN")}</h2><span className={css.identity}>{expiry} · <b>Selected independently</b>{selectedCeIsAtm && selectedPeIsAtm ? " · both ATM" : defaultStrike == null ? "" : ` · ATM ${defaultStrike.toLocaleString("en-IN")}`}</span></header>
         <div className={css.niftyQuote}><span>NIFTY</span><strong>{number(inspectedUnderlying)}</strong><b className={signClass(underlyingChange)}>{percent(underlyingChange)}</b></div>
@@ -560,6 +577,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         </div>
       </aside>}
     </div>
+    {referenceLevels?.sessionDate === tradingDay && <UnderlyingLevelGauge payload={referenceLevels} strikes={strikes} />}
     <section id="scalper-v2-analytics" className={css.analytics} data-testid="v2-analytics-dock">
       <div className={css.structureRibbon} aria-label="Current option structure summary"><span><b>CE OI</b>{compact(oiTotals.ceOi)}</span><span><b>PE OI</b>{compact(oiTotals.peOi)}</span><span><b>PCR</b>{oiTotals.pcr == null ? "—" : oiTotals.pcr.toFixed(2)}</span><span className={signClass(oiTotals.ceDelta)}><b>CE ΔOI</b>{signed(oiTotals.ceDelta)}</span><span className={signClass(oiTotals.peDelta)}><b>PE ΔOI</b>{signed(oiTotals.peDelta)}</span><span><b>Max Pain</b>{maxPainValue?.toLocaleString("en-IN") ?? "—"}</span><span><b>CE1</b>{leaders.find((leader) => leader.side === "CE" && leader.rank === 1)?.strike.toLocaleString("en-IN") ?? "—"}</span><span><b>PE1</b>{leaders.find((leader) => leader.side === "PE" && leader.rank === 1)?.strike.toLocaleString("en-IN") ?? "—"}</span><span><b>Signal</b>{latestSignal?.direction ?? "—"}</span></div>
       <nav className={css.analyticsTabs} aria-label="Scalper analytics">{(["overview", "matrix", "oi", "strength", "total", "maxpain"] as const).map((tab) => <button key={tab} aria-selected={analyticsTab === tab} onClick={() => setAnalyticsTab(tab)}>{tab === "oi" ? "OI & ΔOI" : tab === "strength" ? "Price Strength" : tab === "total" ? "Total OI" : tab === "maxpain" ? "Max Pain" : tab[0].toUpperCase() + tab.slice(1)}</button>)}</nav>

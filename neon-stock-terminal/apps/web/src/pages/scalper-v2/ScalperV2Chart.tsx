@@ -170,7 +170,11 @@ export function ScalperV2Chart({
     instance.subscribeCrosshairMove((param) => {
       if (suppressCrosshairRef.current > 0) return;
       cancelAnimationFrame(pointerFrameRef.current);
-      pointerFrameRef.current = requestAnimationFrame(() => callbacksRef.current.onCrosshair(param.time == null ? null : { time: Number(param.time), source: id, sequence: performance.now() }));
+      pointerFrameRef.current = requestAnimationFrame(() => {
+        const next = param.time == null ? null : { time: Number(param.time), source: id, sequence: performance.now() };
+        if (hostRef.current) hostRef.current.dataset.crosshairTime = next == null ? "" : String(next.time);
+        callbacksRef.current.onCrosshair(next);
+      });
     });
     let suppressNextChartClick = false;
     instance.subscribeClick((param) => {
@@ -428,9 +432,22 @@ export function ScalperV2Chart({
     const chart = chartRef.current, candle = candleRef.current; if (!chart || !candle) return;
     suppressCrosshairRef.current += 1;
     if (!externalCrosshair || externalCrosshair.source === id) {
-      if (!externalCrosshair && inspectionMode !== "locked") chart.clearCrosshairPosition();
+      if (!externalCrosshair && inspectionMode !== "locked") {
+        chart.clearCrosshairPosition();
+        if (hostRef.current) hostRef.current.dataset.crosshairTime = "";
+      } else if (externalCrosshair && hostRef.current) {
+        hostRef.current.dataset.crosshairTime = String(externalCrosshair.time);
+      }
     } else {
-      const exact = byTime.get(externalCrosshair.time); if (exact) chart.setCrosshairPosition(exact.close, exact.time, candle); else chart.clearCrosshairPosition();
+      const exact = byTime.get(externalCrosshair.time);
+      if (exact) chart.setCrosshairPosition(exact.close, exact.time, candle);
+      else chart.clearCrosshairPosition();
+      // Keep a shared canonical-time trace even when this exact contract has no
+      // candle. The readout remains unavailable; no adjacent price is borrowed.
+      if (hostRef.current) {
+        hostRef.current.dataset.crosshairTime = String(externalCrosshair.time);
+        hostRef.current.dataset.crosshairExact = exact ? "true" : "false";
+      }
     }
     requestAnimationFrame(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
   }, [byTime, externalCrosshair, id, inspectionMode]);

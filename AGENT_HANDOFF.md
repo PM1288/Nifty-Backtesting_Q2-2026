@@ -5298,3 +5298,27 @@ or outcomes were deleted.
   backtests, borrow/friction realism, six isolated DB integration tests, mobile
   and full UI regression. Build npm audit also reports pre-existing dependency
   vulnerabilities; no lockfile or dependency was changed. See repair report.
+
+## 2026-09-19 — Scalper V2 pop-out and vertical strike comparisons
+
+- Branch: `feat/scalper-v2-popout-structure-20260919`.
+- Added a same-origin authenticated `popout=scalper_v2` window that removes
+  global chrome but retains the live Symbol, expiry, timeframe, CE/PE, chart
+  tool and evidence controls.
+- Moved the numerical inspector and 30-session gauge below the main workspace.
+  The right column now contains vertically stacked OI and signed change-in-OI
+  charts with strike on X, CE/PE bars, and independently scaled `PE − CE`
+  lines. Missing either side keeps the difference unavailable.
+- Added bounded visible-window polling (30-second active chart, 60-second option
+  history; no historical/background polling) and repaired the shared chart-time
+  trace without borrowing nearby contract prices.
+- Durable implementation and rerun notes:
+  `docs/trading-analytics/SCALPER_V2_POPOUT_AND_STRIKE_CHARTS_20260919.md`.
+- Authenticated local Playwright evidence is outside Git at
+  `/tmp/scalper-v2-popout-structure-20260919/`; the first pop-out load hit a
+  transient 90-second data timeout, and the immediate complete rerun passed all
+  10 checks.
+- Pre-release gates pass: web typecheck, 213/213 tests and production build;
+  API typecheck, 245/245 tests and build; canonical repository gate and
+  `git diff --check`. Production deployment and deployed browser results are
+  recorded here after release.

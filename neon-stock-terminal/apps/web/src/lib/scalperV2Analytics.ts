@@ -26,6 +26,104 @@ export function scalperV2AdaptiveDeltaDomain(values: DeltaOiValue[], padding = 0
   return [-1, 1];
 }
 
+/** Missing one side means the strike difference is unknown, not zero. */
+export function scalperV2PutMinusCall(
+  calls: DeltaOiValue[],
+  puts: DeltaOiValue[],
+): DeltaOiValue[] {
+  return Array.from({ length: Math.max(calls.length, puts.length) }, (_, index) => {
+    const call = calls[index] ?? null;
+    const put = puts[index] ?? null;
+    return call == null || put == null ? null : put - call;
+  });
+}
+
+export function scalperV2VerticalStrikeOption(
+  strikes: number[],
+  calls: DeltaOiValue[],
+  puts: DeltaOiValue[],
+  metric: "oi" | "change",
+  underlyingValue: number | null = null,
+  nearestStrike: number | null = null,
+): EChartsOption {
+  const difference = scalperV2PutMinusCall(calls, puts);
+  const [primaryMinimum, primaryMaximum] = metric === "change"
+    ? scalperV2AdaptiveDeltaDomain([...calls, ...puts])
+    : [0, undefined];
+  const [differenceMinimum, differenceMaximum] = scalperV2AdaptiveDeltaDomain(difference);
+  const suffix = metric === "oi" ? "OI" : "ΔOI";
+  const nearestIndex = nearestStrike == null ? -1 : strikes.indexOf(nearestStrike);
+  return {
+    animation: false,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatOiAxisValue(Number(value)),
+    },
+    legend: { data: [`CE ${suffix}`, `PE ${suffix}`, `PE − CE ${suffix}`], top: 2 },
+    grid: { left: 62, right: 58, top: 48, bottom: 52 },
+    xAxis: {
+      type: "category",
+      data: strikes,
+      name: "Strike",
+      nameGap: 30,
+      axisLabel: { rotate: strikes.length > 12 ? 45 : 0, hideOverlap: true },
+    },
+    yAxis: [
+      {
+        type: "value",
+        name: suffix,
+        min: primaryMinimum,
+        max: primaryMaximum,
+        axisLabel: { formatter: formatOiAxisValue },
+        splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
+      },
+      {
+        type: "value",
+        name: `PE − CE ${suffix}`,
+        min: differenceMinimum,
+        max: differenceMaximum,
+        axisLabel: { formatter: formatOiAxisValue },
+        splitLine: { show: false },
+      },
+    ],
+    series: [
+      {
+        name: `CE ${suffix}`,
+        type: "bar",
+        data: calls,
+        barMaxWidth: 18,
+        itemStyle: { color: CALL, borderColor: CALL_BORDER, borderWidth: 1 },
+        markLine: nearestIndex < 0 || underlyingValue == null ? undefined : {
+          silent: true,
+          symbol: "none",
+          lineStyle: { color: "#0f766e", type: "dotted", width: 2 },
+          label: { formatter: `NIFTY ${underlyingValue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, color: "#0f5f59" },
+          data: [{ xAxis: nearestIndex }],
+        },
+      },
+      {
+        name: `PE ${suffix}`,
+        type: "bar",
+        data: puts,
+        barMaxWidth: 18,
+        itemStyle: { color: PUT, borderColor: PUT_BORDER, borderWidth: 1 },
+      },
+      {
+        name: `PE − CE ${suffix}`,
+        type: "line",
+        yAxisIndex: 1,
+        data: difference,
+        connectNulls: false,
+        symbol: "circle",
+        symbolSize: 6,
+        lineStyle: { color: "#7c3aed", width: 2 },
+        itemStyle: { color: "#7c3aed" },
+      },
+    ],
+  };
+}
+
 /** Option identity owns the fill; sign remains encoded by left/right geometry and the signed label. */
 const deltaBar = (value: DeltaOiValue, color: string, borderColor: string) => value == null ? null : ({
   value,

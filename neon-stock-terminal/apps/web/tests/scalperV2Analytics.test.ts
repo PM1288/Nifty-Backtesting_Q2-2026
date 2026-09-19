@@ -1,6 +1,38 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2AdaptiveDeltaDomain, scalperV2HorizontalDeltaOiOption } from "../src/lib/scalperV2Analytics";
+import { scalperV2AdaptiveDeltaDomain, scalperV2HorizontalDeltaOiOption, scalperV2PutMinusCall, scalperV2VerticalStrikeOption } from "../src/lib/scalperV2Analytics";
+
+test("Scalper V2 strike comparison preserves put minus call meaning and missingness", () => {
+  assert.deepEqual(scalperV2PutMinusCall([100, 200, null, 50], [140, 80, 30, null]), [40, -120, null, null]);
+});
+
+test("Scalper V2 compact OI charts are vertical with an independent difference axis", () => {
+  const option = scalperV2VerticalStrikeOption([23_450, 23_500], [100, 200], [140, 80], "oi", 23_477.8, 23_500);
+  const xAxis = option.xAxis as Record<string, unknown>;
+  const yAxes = option.yAxis as Array<Record<string, unknown>>;
+  const series = option.series as Array<Record<string, unknown>>;
+  assert.equal(xAxis.type, "category");
+  assert.deepEqual(xAxis.data, [23_450, 23_500]);
+  assert.equal(yAxes.length, 2);
+  assert.equal(yAxes[0].name, "OI");
+  assert.equal(yAxes[1].name, "PE − CE OI");
+  assert.equal(series[0].type, "bar");
+  assert.equal(series[1].type, "bar");
+  assert.equal(series[2].type, "line");
+  assert.equal(series[2].yAxisIndex, 1);
+  assert.deepEqual(series[2].data, [40, -120]);
+});
+
+test("Scalper V2 compact ΔOI chart keeps signed bars and PE minus CE line", () => {
+  const option = scalperV2VerticalStrikeOption([100, 200], [40, -10], [-20, 30], "change");
+  const yAxes = option.yAxis as Array<Record<string, unknown>>;
+  const series = option.series as Array<Record<string, unknown>>;
+  assert.equal(yAxes[0].name, "ΔOI");
+  assert.equal(yAxes[1].name, "PE − CE ΔOI");
+  assert.deepEqual(series[0].data, [40, -10]);
+  assert.deepEqual(series[1].data, [-20, 30]);
+  assert.deepEqual(series[2].data, [-60, 40]);
+});
 
 test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", () => {
   const option = scalperV2HorizontalDeltaOiOption([23_450, 23_500], [40, null], [-20, 0]);

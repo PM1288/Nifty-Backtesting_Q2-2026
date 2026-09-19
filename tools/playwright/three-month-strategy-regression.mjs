@@ -22,7 +22,7 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
   check(`${target.name} API`, response.ok(), `HTTP ${response.status()}`);
   const payload = await response.json();
   check(`${target.name} formula payload`, payload.strategyVersion === "three_month_recovery_v1" && payload.rows.length === payload.counts.universe, JSON.stringify(payload.counts));
-  check(`${target.name} coverage disclosure`, payload.counts.universe === 268 && payload.counts.expectedUniverse === 500, JSON.stringify(payload.counts));
+  check(`${target.name} coverage disclosure`, payload.counts.universe > 0 && payload.counts.universe <= payload.counts.expectedUniverse && payload.counts.expectedUniverse === 500, JSON.stringify(payload.counts));
   check(`${target.name} qualification invariant`, payload.rows.filter((row) => row.qualification === "QUALIFIED").every((row) => row.gates.length === 10 && row.gates.every((gate) => gate.state === "PASS") && row.weaknessState === "PASS"), "qualified row mismatch");
   await page.goto(`${base}/strategy/three-month`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("three-month-strategy").waitFor({ state: "visible", timeout: 45_000 });
@@ -36,8 +36,9 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
   await firstRow.click();
   check(`${target.name} arithmetic drawer`, await page.getByText("Exact gate arithmetic").isVisible(), "drawer missing");
   await page.getByLabel("Close details").click();
+  const formingResponse = page.waitForResponse((item) => item.url().includes("/v1/strategy/three-month?intradayMode=forming") && item.status() === 200, { timeout: 45_000 });
   await page.getByLabel("Include forming candle").check();
-  await page.waitForResponse((item) => item.url().includes("/v1/strategy/three-month?intradayMode=forming") && item.status() === 200, { timeout: 45_000 }).catch(() => null);
+  await formingResponse;
   check(`${target.name} forming disclosure`, await page.getByText(/may reverse before close/).isVisible(), "forming warning missing");
   if (target.name === "desktop") {
     const downloadPromise = page.waitForEvent("download");

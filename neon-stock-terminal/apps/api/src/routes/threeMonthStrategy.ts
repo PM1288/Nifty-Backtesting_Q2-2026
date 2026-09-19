@@ -137,34 +137,27 @@ function selectCandles(rows: IntradayRow[], mode: ThreeMonthMode) {
 
 const DAILY_SQL = `
 WITH session AS (
-  SELECT MAX((b.ts AT TIME ZONE 'Asia/Kolkata')::date) AS trade_date
-  FROM public.bars_1m b
-  WHERE b.exchange='NSE' AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time BETWEEN TIME '09:15' AND TIME '15:30'
+  SELECT MAX(b.trade_date) AS trade_date FROM public.bars_1d b WHERE b.exchange='NSE'
+), token_map AS (
+  SELECT DISTINCT ON (base_symbol) base_symbol,symbol_token FROM (
+    SELECT UPPER(COALESCE(NULLIF(TRIM(underlying),''),REGEXP_REPLACE(TRIM(tradingsymbol),'-EQ$',''))) base_symbol,
+      symbol_token,tradingsymbol,active_from
+    FROM public.instrument_universe WHERE exchange='NSE' AND active_to IS NULL
+  ) mapped ORDER BY base_symbol,CASE WHEN tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END,active_from DESC NULLS LAST
 ), equity AS (
-  SELECT UPPER(p.symbol) symbol,p.company_name,p.sector,iu.symbol_token
-  FROM public.instrument_profiles p
-  LEFT JOIN LATERAL (
-    SELECT symbol_token FROM public.instrument_universe i
-    WHERE i.exchange='NSE' AND i.active_to IS NULL
-      AND UPPER(COALESCE(NULLIF(TRIM(i.underlying),''),REGEXP_REPLACE(TRIM(i.tradingsymbol),'-EQ$','')))=UPPER(p.symbol)
-    ORDER BY CASE WHEN i.tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END,i.active_from DESC NULLS LAST LIMIT 1
-  ) iu ON TRUE
+  SELECT UPPER(p.symbol) symbol,p.company_name,p.sector,tm.symbol_token
+  FROM public.instrument_profiles p LEFT JOIN token_map tm ON tm.base_symbol=UPPER(p.symbol)
   WHERE p.is_nifty_500
 ), history_sources AS (
-  SELECT e.symbol,r.trade_date,r.open_price::float8 open,r.close_price::float8 close,0 priority,
+  SELECT e.symbol,b.trade_date,b.open::float8,b.close::float8,0 priority,
+    (b.trade_date + TIME '15:30') AT TIME ZONE 'Asia/Kolkata' observed_at
+  FROM public.bars_1d b JOIN equity e ON e.symbol_token=b.symbol_token CROSS JOIN session s
+  WHERE b.exchange='NSE' AND b.trade_date >= date_trunc('month',s.trade_date)::date-INTERVAL '3 months'
+  UNION ALL
+  SELECT e.symbol,r.trade_date,r.open_price::float8 open,r.close_price::float8 close,1 priority,
     (r.trade_date + TIME '15:30') AT TIME ZONE 'Asia/Kolkata' observed_at
   FROM strategy_eval.stock_daily_regime r JOIN equity e ON r.yahoo_symbol=CASE WHEN e.symbol='LTM' THEN 'LTIM.NS' ELSE e.symbol||'.NS' END
   CROSS JOIN session s WHERE r.trade_date >= date_trunc('month',s.trade_date)::date-INTERVAL '3 months'
-  UNION ALL
-  SELECT e.symbol,n.trade_date,n.open_price::float8,n.close_price::float8,1,
-    (n.trade_date + TIME '15:30') AT TIME ZONE 'Asia/Kolkata'
-  FROM nse.fact_eod_prices n JOIN equity e ON n.symbol=CASE WHEN e.symbol='LTM' THEN 'LTIM' ELSE e.symbol END
-  CROSS JOIN session s WHERE n.series='EQ' AND n.trade_date >= date_trunc('month',s.trade_date)::date-INTERVAL '3 months'
-  UNION ALL
-  SELECT e.symbol,b.trade_date,b.open::float8,b.close::float8,2,
-    (b.trade_date + TIME '15:30') AT TIME ZONE 'Asia/Kolkata'
-  FROM public.bars_1d b JOIN equity e ON e.symbol_token=b.symbol_token CROSS JOIN session s
-  WHERE b.exchange='NSE' AND b.trade_date >= date_trunc('month',s.trade_date)::date-INTERVAL '3 months'
 ), live_session AS (
   SELECT e.symbol,s.trade_date,st.last_open::float8 open,COALESCE(st.last_price,st.last_close)::float8 close,-1 priority,st.last_seen_ts observed_at
   FROM equity e JOIN public.instrument_state st ON st.exchange='NSE' AND st.symbol_token=e.symbol_token CROSS JOIN session s
@@ -195,20 +188,23 @@ GROUP BY e.symbol,e.company_name,e.sector,s.trade_date ORDER BY e.symbol`;
 
 const INTRADAY_SQL = `
 WITH session AS (
-  SELECT MAX((ts AT TIME ZONE 'Asia/Kolkata')::date) trade_date FROM public.bars_1m
-  WHERE exchange='NSE' AND (ts AT TIME ZONE 'Asia/Kolkata')::time BETWEEN TIME '09:15' AND TIME '15:30'
+  SELECT $2::date trade_date
+), token_map AS (
+  SELECT DISTINCT ON (base_symbol) base_symbol,symbol_token FROM (
+    SELECT UPPER(COALESCE(NULLIF(TRIM(underlying),''),REGEXP_REPLACE(TRIM(tradingsymbol),'-EQ$',''))) base_symbol,
+      symbol_token,tradingsymbol,active_from
+    FROM public.instrument_universe WHERE exchange='NSE' AND active_to IS NULL
+  ) mapped ORDER BY base_symbol,CASE WHEN tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END,active_from DESC NULLS LAST
 ), equity AS (
-  SELECT UPPER(p.symbol) symbol,iu.symbol_token FROM public.instrument_profiles p
-  LEFT JOIN LATERAL (SELECT symbol_token FROM public.instrument_universe i WHERE i.exchange='NSE' AND i.active_to IS NULL
-    AND UPPER(COALESCE(NULLIF(TRIM(i.underlying),''),REGEXP_REPLACE(TRIM(i.tradingsymbol),'-EQ$','')))=UPPER(p.symbol)
-    ORDER BY CASE WHEN i.tradingsymbol LIKE '%-EQ' THEN 0 ELSE 1 END,i.active_from DESC NULLS LAST LIMIT 1) iu ON TRUE
+  SELECT UPPER(p.symbol) symbol,tm.symbol_token FROM public.instrument_profiles p LEFT JOIN token_map tm ON tm.base_symbol=UPPER(p.symbol)
   WHERE p.is_nifty_500 AND UPPER(p.symbol)=ANY($1::text[])
 ), source AS (
   SELECT e.symbol,b.ts,b.open::float8 open,b.close::float8 close,(b.ts AT TIME ZONE 'Asia/Kolkata') local_ts,s.trade_date,
     FLOOR(EXTRACT(EPOCH FROM ((b.ts AT TIME ZONE 'Asia/Kolkata')-(s.trade_date+TIME '09:15')))/60)::int elapsed_minute
   FROM public.bars_1m b JOIN equity e ON e.symbol_token=b.symbol_token CROSS JOIN session s
-  WHERE b.exchange='NSE' AND (b.ts AT TIME ZONE 'Asia/Kolkata')::date=s.trade_date
-    AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time BETWEEN TIME '09:15' AND TIME '15:30'
+  WHERE b.exchange='NSE'
+    AND b.ts >= (s.trade_date+TIME '09:15') AT TIME ZONE 'Asia/Kolkata'
+    AND b.ts <= (s.trade_date+TIME '15:30') AT TIME ZONE 'Asia/Kolkata'
     AND b.open IS NOT NULL AND b.close IS NOT NULL
 ), bucketed AS (
   SELECT symbol,'1H'::text timeframe,FLOOR(elapsed_minute/60)::int bucket_index,60 duration,ts,open,close,trade_date FROM source WHERE elapsed_minute>=0
@@ -221,13 +217,14 @@ SELECT symbol,timeframe,(trade_date+TIME '09:15'+bucket_index*duration*INTERVAL 
   (COUNT(DISTINCT date_trunc('minute',ts))=duration AND MAX(ts)>=(trade_date+TIME '09:15'+(bucket_index*duration+duration-1)*INTERVAL '1 minute') AT TIME ZONE 'Asia/Kolkata') complete
 FROM bucketed GROUP BY symbol,timeframe,trade_date,bucket_index,duration ORDER BY symbol,timeframe,bucket_index DESC`;
 
-let cache: { key: ThreeMonthMode; expires: number; value: Promise<unknown> } | null = null;
+const cache = new Map<ThreeMonthMode, { expires: number; value: Promise<unknown> }>();
 
 export async function getThreeMonthStrategy(prisma: Pick<PrismaClient, "$queryRawUnsafe">, mode: ThreeMonthMode = "completed") {
   const daily = await prisma.$queryRawUnsafe<DailyRow[]>(DAILY_SQL);
   const preliminary = daily.map((row) => ({ row, evaluation: buildThreeMonthEvaluation(row, {}, mode) }));
   const eligibleSymbols = preliminary.filter(({ evaluation }) => evaluation.weaknessState === "PASS" && evaluation.gates.slice(0, 6).every((item) => item.state === "PASS")).map(({ row }) => row.symbol);
-  const intradayRows = eligibleSymbols.length ? await prisma.$queryRawUnsafe<IntradayRow[]>(INTRADAY_SQL, eligibleSymbols) : [];
+  const sessionDate = isoOrNull(daily[0]?.session_date)?.slice(0, 10) ?? String(daily[0]?.session_date ?? "");
+  const intradayRows = eligibleSymbols.length && sessionDate ? await prisma.$queryRawUnsafe<IntradayRow[]>(INTRADAY_SQL, eligibleSymbols, sessionDate) : [];
   const candles = selectCandles(intradayRows, mode);
   const rows = daily.map((row) => {
     const hour = candles.get(`${row.symbol}:1H`) ?? {};
@@ -256,8 +253,13 @@ export function registerThreeMonthStrategy(app: Express, prisma: PrismaClient) {
       if (rawMode !== "completed" && rawMode !== "forming") return res.status(400).json({ error: { code: "INVALID_INTRADAY_MODE", message: "intradayMode must be completed or forming." } });
       const mode = rawMode as ThreeMonthMode;
       const now = Date.now();
-      if (!cache || cache.key !== mode || cache.expires <= now) cache = { key: mode, expires: now + 15_000, value: getThreeMonthStrategy(prisma, mode) };
-      const payload = await cache.value.catch((error) => { cache = null; throw error; });
+      let entry = cache.get(mode);
+      if (!entry || entry.expires <= now) {
+        entry = { expires: Number.POSITIVE_INFINITY, value: Promise.resolve(null) };
+        entry.value = getThreeMonthStrategy(prisma, mode).then((payload) => { entry!.expires = Date.now() + 30_000; return payload; });
+        cache.set(mode, entry);
+      }
+      const payload = await entry.value.catch((error) => { cache.delete(mode); throw error; });
       res.setHeader("Cache-Control", "private, no-cache");
       res.json(payload);
     } catch (error) { next(error); }

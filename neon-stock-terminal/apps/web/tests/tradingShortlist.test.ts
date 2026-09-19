@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import {buildTradingShortlist, parsePersonalPicks, shortlistKey} from '../src/features/today/tradingShortlist';
 import type {ProgressionMatrixRow} from '../src/features/today/scalperProgressionMatrix';
 const day = '2026-09-19';
+const source = {currentHourStartedAt:day+'T05:00:00Z',current15mStartedAt:day+'T05:15:00Z',current5mStartedAt:day+'T05:20:00Z'};
 const ranks = [
-  {stock:{symbol:'AAA'}, allGreen:true, bearAllRed:false, rank:1, bearRank:2},
-  {stock:{symbol:'BBB'}, allGreen:false, bearAllRed:true, rank:2, bearRank:1},
+  {stock:{symbol:'AAA'}, source, allGreen:true, bearAllRed:false, rank:1, bearRank:2},
+  {stock:{symbol:'BBB'}, source, allGreen:false, bearAllRed:true, rank:2, bearRank:1},
 ] as ProgressionMatrixRow[];
 test('strategy selections require current session and true selected flag, not recommendation', () => {
   const oiis = {environment:'PAPER' as const, tradeDate:day, runId:'run',count:4,candidates:[
@@ -19,6 +20,7 @@ test('strategy selections require current session and true selected flag, not re
   assert.deepEqual(result.find(r=>r.symbol==='AAA')?.sources,['MWHD-BULL · all gates','OIIS · selected','Personal']);
   assert.equal(result.find(r=>r.symbol==='BBB')?.side,'SHORT');
   assert.deepEqual(buildTradingShortlist('2026-09-20',day,ranks,oiis,[]),[]);
+  assert.deepEqual(buildTradingShortlist('2026-09-20','2026-09-20',ranks,undefined,[]),[]);
 });
 test('personal directions are separate and storage is scoped per account', () => {
   assert.notEqual(shortlistKey('one'),shortlistKey('two'));

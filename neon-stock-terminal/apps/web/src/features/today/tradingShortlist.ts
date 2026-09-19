@@ -27,6 +27,11 @@ export function buildTradingShortlist(today: string, progressionDate: string | u
     picks.set(key, row);
   };
   if (progressionDate === today) for (const row of ranks) {
+    // The API envelope is generated today but its last retained intraday bars
+    // can belong to an earlier session (weekends/outages). Never relabel them.
+    const timestamps = [row.source?.currentHourStartedAt, row.source?.current15mStartedAt, row.source?.current5mStartedAt];
+    const sameSession = timestamps.every(value => value && Number.isFinite(Date.parse(value)) && new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)) === today);
+    if (!sameSession) continue;
     if (row.allGreen) add(row.stock.symbol, 'LONG', 'MWHD-BULL · all gates');
     if (row.bearAllRed) add(row.stock.symbol, 'SHORT', 'MWHD-BEAR · all gates');
   }

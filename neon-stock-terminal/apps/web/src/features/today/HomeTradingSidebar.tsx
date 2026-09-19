@@ -64,7 +64,7 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
   // Same cohort/order as the existing Home MWHD matrix; personal additions do
   // not silently re-rank the strategy universe.
   const ranks = useMemo(() => buildProgressionMatrixRows(stocks, progression?.rows ?? []), [stocks, progression]);
-  const rankMap = useMemo(() => new Map(ranks.filter(row => progression?.rows.some(source => source.symbol === row.stock.symbol)).map(row => [row.stock.symbol,row])), [ranks, progression]);
+  const rankMap = useMemo(() => new Map(ranks.map(row => [row.stock.symbol,row])), [ranks]);
   const rows = useMemo(() => buildTradingShortlist(today, progression?.sessionDate, ranks, oiis.data, personal), [today, progression?.sessionDate, ranks, oiis.data, personal]);
   const save = (next: PersonalPick[]) => {
     try { localStorage.setItem(shortlistKey(uid), JSON.stringify(next)); setPersonal(next); setMessage('Personal list saved on this browser for your account.'); }
@@ -81,7 +81,7 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
         {oiis.isLoading && <p role="status">Loading OIIS selections…</p>}
         {oiis.isError && <p role="alert">OIIS unavailable{oiis.data ? ' · last loaded selections shown' : ''}. <button onClick={() => oiis.refetch()}>Retry</button></p>}
         {!oiis.isLoading && !oiis.isError && !oiis.data?.runId && <p>No completed OIIS selection run today.</p>}
-        <p className={styles.muted}>MWHD: {progressionError ? 'refresh unavailable' : progression ? `session ${progression.sessionDate}` : 'loading'}. {progression?.sessionDate !== today && 'Older ranks are context only, not today’s selections.'}</p>
+        <p className={styles.muted}>MWHD: {progressionError ? 'refresh unavailable' : progression ? `response for ${progression.sessionDate}` : 'loading'}. Only today’s confirmed intraday bars qualify; older ranks are context only.</p>
         {(['LONG','SHORT'] as const).map(direction => <section key={direction} aria-label={`${direction} stocks`}>
           <h3>{direction} · {rows.filter(row => row.side === direction).length}</h3>
           {!rows.some(row => row.side === direction) && <p>No selected or personal stocks in this direction.</p>}
@@ -92,8 +92,9 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
               <div className={styles.identity}><Link to={`/analytics/stock/${encodeURIComponent(row.symbol)}`}>{row.symbol}</Link><b>₹{number(quote?.last)}</b></div>
               <div>{row.sources.join(' · ')}</div>
               <div className={styles.stats}><span>BULL #{rank?.rank ?? '—'}</span><span>BEAR #{rank?.bearRank ?? '—'}</span><span>{direction === 'LONG' ? rank?.best.pass ?? '—' : rank?.bearBest.pass ?? '—'} gates passed</span></div>
+              {rank && (rank.best.pending > 0 || rank.bearBest.pending > 0) && <div className={styles.muted}>Rank has incomplete inputs; rank alone is not qualification.</div>}
               <div className={(quote?.changePct ?? 0) > 0 ? styles.positive : (quote?.changePct ?? 0) < 0 ? styles.negative : undefined}>{quoteDay === today ? 'Today' : 'Snapshot'} change: {number(quote?.changePct,'%')}</div>
-              <div className={styles.muted}>Quote: {quoteDay ?? 'time unavailable'} · Rank session: {progression?.sessionDate ?? 'unavailable'}</div>
+              <div className={styles.muted}>Quote: {quoteDay ?? 'time unavailable'} · Rank intraday bar: {rank?.source.current5mStartedAt ?? 'unavailable'}</div>
               {row.sources.includes('Personal') && <button onClick={() => save(personal.filter(pick => !(pick.symbol === row.symbol && pick.side === row.side)))}>Remove personal {direction.toLowerCase()}</button>}
             </article>;
           })}

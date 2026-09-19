@@ -54,7 +54,13 @@ passed. Personal-account isolation is unit-tested and enforced by remount/key;
 two real-account switching and cross-device persistence are not browser-tested.
 No cross-device synchronization is claimed. OIIS reads have a 30-second timeout
 and explicit Retry; no strategy selection was manufactured for screenshot tests.
-Deployed SHA/public verification will be appended after release.
+First application release: `aa0b555`. Follow-up source review found the progression
+API deliberately falls back up to seven days for intraday bars while its envelope
+uses today's date. The sidebar additionally requires all three current intraday
+bucket timestamps to be today's IST date before labelling MWHD selected today.
+Ranks retain the source intraday timestamp. A regression verifies a freshly dated
+envelope cannot turn yesterday's completed gates into today's selection.
+Final deployed SHA/public verification will be appended after release.
 
 No database migrations. Rollback removes the two sidebar mounts/component only;
 personal browser values are harmless and can remain. Existing Home data, MWHD,

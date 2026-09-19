@@ -60,13 +60,24 @@ export function scalperV2VerticalStrikeOption(
       axisPointer: { type: "shadow" },
       valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatOiAxisValue(Number(value)),
     },
-    legend: { data: [`CE ${suffix}`, `PE ${suffix}`, `PE − CE ${suffix}`], top: 2 },
-    grid: { left: 62, right: 58, top: 48, bottom: 52 },
+    legend: {
+      data: [`CE ${suffix}`, `PE ${suffix}`, `PE − CE ${suffix}`],
+      top: 0,
+      left: 2,
+      right: 2,
+      itemGap: 6,
+      itemWidth: 12,
+      itemHeight: 8,
+      textStyle: { fontSize: 9 },
+    },
+    // Axis labels are part of the grid box. The previous fixed 62/58/48/52px
+    // gutters were added on top of label space and consumed much of this narrow
+    // side pane. Keep only a small outer inset and let ECharts reserve the exact
+    // label footprint.
+    grid: { left: 2, right: 2, top: 32, bottom: 2, containLabel: true },
     xAxis: {
       type: "category",
       data: strikes,
-      name: "Strike",
-      nameGap: 30,
       axisLabel: { rotate: strikes.length > 12 ? 45 : 0, hideOverlap: true },
     },
     yAxis: [

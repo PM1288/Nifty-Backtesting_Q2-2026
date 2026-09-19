@@ -9,10 +9,15 @@ test("Scalper V2 strike comparison preserves put minus call meaning and missingn
 test("Scalper V2 compact OI charts are vertical with an independent difference axis", () => {
   const option = scalperV2VerticalStrikeOption([23_450, 23_500], [100, 200], [140, 80], "oi", 23_477.8, 23_500);
   const xAxis = option.xAxis as Record<string, unknown>;
+  const grid = option.grid as Record<string, unknown>;
   const yAxes = option.yAxis as Array<Record<string, unknown>>;
   const series = option.series as Array<Record<string, unknown>>;
   assert.equal(xAxis.type, "category");
   assert.deepEqual(xAxis.data, [23_450, 23_500]);
+  assert.equal(grid.containLabel, true);
+  assert.equal(grid.left, 2);
+  assert.equal(grid.right, 2);
+  assert.equal(grid.bottom, 2);
   assert.equal(yAxes.length, 2);
   assert.equal(yAxes[0].name, "OI");
   assert.equal(yAxes[1].name, "PE − CE OI");

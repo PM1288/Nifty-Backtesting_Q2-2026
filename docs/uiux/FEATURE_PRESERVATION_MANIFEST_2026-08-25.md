@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 Scalper V2 side-chart geometry: the existing right-side OI and
+Change-in-OI strike charts replace large fixed ECharts gutters with measured
+label containment and 2px outer plot insets. Their cards and the gap beside the
+underlying are compacted while both Y axes, strike ticks, CE/PE bars,
+PE-minus-CE lines and NIFTY guide remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_SIDE_CHART_GEOMETRY_20260919.md`.
+
 2026-09-19 Home selection consensus: the existing collapsed right-edge Trading
 list combines browser-local Manual, completed same-session MWD/MWHD, selected
 same-date OIIS and qualified same-session 3Month evidence. It ranks exact

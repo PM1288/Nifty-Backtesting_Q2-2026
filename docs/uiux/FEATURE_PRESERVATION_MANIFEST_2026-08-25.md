@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 Home selection consensus: the existing collapsed right-edge Trading
+list combines browser-local Manual, completed same-session MWD/MWHD, selected
+same-date OIIS and qualified same-session 3Month evidence. It ranks exact
+symbol/direction pairs by independent-source agreement, shows maximum-agreement
+leaders first, and exposes every source list separately. Stale strategy sessions
+are disclosed and excluded; aggregation does not change a strategy, direction,
+order, alert or permission. Evidence:
+`docs/uiux/HOME_SELECTION_CONSENSUS_20260919.md`.
+
 2026-09-19 3Month Strategy: additive read-only `/strategy/three-month` screen
 for the exact ten bullish Month/Week/Day/1H/15m gates plus an OR across bearish
 M-1/M-2/M-3 candles. Completed intraday candles are the default; forming candles

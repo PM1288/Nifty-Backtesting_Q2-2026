@@ -57,3 +57,16 @@ Local authenticated evidence is intentionally outside Git:
 The release record in `AGENT_HANDOFF.md` contains the final full-suite,
 deployment and production-browser outcome. No screenshot, credential or market
 data is committed.
+
+## Production release
+
+- Application commit: `f4552e6`
+- Public route:
+  `https://n50.nifty50today.co.in/n50/strategy/trading-analytics?view=scalper_v2`
+- Dashboard container: `ba738e4be179...` (`healthy`)
+- Entry asset: `/n50/assets/index-Bc-XlEAl.js`
+- Production browser acceptance: 10/10 passed
+- Evidence directory (not committed):
+  `/tmp/scalper-v2-popout-structure-production-20260919/`
+- Deployment scope: `n50-dashboard` only; no API, collector, database,
+  strategy, order or notification service was recreated.

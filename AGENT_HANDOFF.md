@@ -5320,5 +5320,16 @@ or outcomes were deleted.
   10 checks.
 - Pre-release gates pass: web typecheck, 213/213 tests and production build;
   API typecheck, 245/245 tests and build; canonical repository gate and
-  `git diff --check`. Production deployment and deployed browser results are
-  recorded here after release.
+  `git diff --check`.
+- Release: application commit `f4552e6` was pushed to the feature branch and
+  fast-forwarded to pushed `master`; rollback tag
+  `before-scalper-v2-popout-20260919` identifies the preceding release. The
+  approved scoped dashboard deployment recreated only `n50-dashboard`.
+  Container `ba738e4be179...` is healthy and the public entry asset is
+  `/n50/assets/index-Bc-XlEAl.js`.
+- Authenticated production Chromium passed 10/10 checks on the public route,
+  including the minimal pop-out, retained context controls, both vertical
+  strike panels and a shared canonical cursor timestamp across NIFTY/CE/PE.
+  The live 1920x1080 capture was visually inspected. Evidence is outside Git at
+  `/tmp/scalper-v2-popout-structure-production-20260919/`. No API, collector,
+  database, strategy or order service was recreated or changed.

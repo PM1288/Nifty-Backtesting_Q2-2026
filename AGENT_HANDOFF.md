@@ -1,5 +1,13 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-19 — Home trading shortlist
+
+- Branch `feat/home-trading-shortlist-20260919`; additive Home sidebar for same-day
+  OIIS selections/complete MWHD routes plus personal Long/Short additions.
+- Bull/bear ranks and quote dates remain explicit. Personal storage is scoped to
+  user/browser, not cross-device. Auto-hide respects editing/keyboard focus.
+- Evidence and release status: `docs/uiux/HOME_TRADING_SHORTLIST_20260919.md`.
+
 ## 2026-09-19 — Independent QA/UX audit containment
 
 - Input ZIP extracted/checksummed under `/home/novius2/NIFTY50/UX-v2`.

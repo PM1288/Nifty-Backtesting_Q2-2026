@@ -6,6 +6,12 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 Home trading shortlist: additive collapsed right-edge tag in both Home
+variants; same-day OIIS selected and complete MWHD Long/Short routes, independent
+bull/bear ranks, dated quotes and per-account browser-local personal additions.
+10-second inactivity close pauses for editing/keyboard focus. No strategy/order,
+ledger, notifier or navigation change. See `docs/uiux/HOME_TRADING_SHORTLIST_20260919.md`.
+
 2026-09-19 QA/UX containment: invalid futures OI percentages are unavailable, not
 directional signals; raw packets and stored observations remain intact. Regime
 session provenance, OIIS query-driven definitions/mobile reflow, bounded

@@ -565,12 +565,14 @@ export type OiisLiveCandidates = {
 export function fetchOiisLiveCandidates(
   tradeDate?: string,
   search?: string,
+  signal?: AbortSignal,
 ): Promise<OiisLiveCandidates> {
   const query = new URLSearchParams();
   if (tradeDate) query.set("tradeDate", tradeDate);
   if (search) query.set("search", search);
   return getJson<OiisLiveCandidates>(
     `/v1/oiis-live/candidates?${query.toString()}`,
+    signal,
   );
 }
 

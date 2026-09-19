@@ -5,7 +5,8 @@ import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useWorkspaceEngagement, useWorkspaceSectionViews } from "../analytics/useWorkspaceAnalytics";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
-import { useLiveQuotesWithStatus, useOverview, useSupportingMetrics } from "../lib/hooks";
+import { useLiveQuotesWithStatus, useOverview, useSupportingMetrics, useScalperProgression } from "../lib/hooks";
+import { HomeTradingSidebar } from '../features/today/HomeTradingSidebar';
 import { ErrorState, LoadingSkeleton, ModuleStatusStrip } from "../design-system/WorkspacePrimitives";
 import { buildMarketQuoteQuality } from "../design-system/quality";
 import { trackAnalyticsEvent, trackCtaClick } from "../lib/analytics";
@@ -165,6 +166,7 @@ export function LandingPage() {
   }, [mode, setMode]);
   const sessionEnabled = authReady && !!user;
   const q = useOverview(authReady);
+  const shortlistProgression = useScalperProgression(authReady && Boolean(user));
   const supportingMetricsQuery = useSupportingMetrics(authReady);
   const loading = !authReady || q.isLoading;
   const showLoading = useDeferredBusyState(loading);
@@ -481,6 +483,7 @@ export function LandingPage() {
 
   return (
     <div className={styles.layout} data-calm={calmMode ? "true" : "false"}>
+      <HomeTradingSidebar stocks={allStocks} progression={shortlistProgression.data} progressionError={Boolean(shortlistProgression.error)} />
       <DashboardInfoPopup open={helpOpen} onClose={() => setHelpOpen(false)} />
       <PerformanceDebugPanel />
 

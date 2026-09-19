@@ -13,6 +13,7 @@ import { useTodayData } from "./useTodayData";
 import styles from "./Today.module.css";
 import { FuturesVolatilityPreview } from "../../components/FuturesVolatilityPreview";
 import { ScalperProgressionMatrix } from "./ScalperProgressionMatrix";
+import { HomeTradingSidebar } from './HomeTradingSidebar';
 
 export function TodaySummaryPage() {
   const { model, overview, progression, profiles, live, authReady } = useTodayData();
@@ -31,6 +32,7 @@ export function TodaySummaryPage() {
   const selected = model.sectors.find((sector) => sector.id === selectedId) ?? [...model.sectors].sort((a, b) => a.rank - b.rank)[0] ?? null;
   const boardHref = `/full-board${selected ? `?sector=${encodeURIComponent(selected.id)}` : ""}`;
   return <div className={styles.summaryPage} data-testid="today-summary">
+    <HomeTradingSidebar stocks={model.allStocks} progression={progression.data} progressionError={Boolean(progression.error)} />
     <MarketSummaryStrip model={model} />
     <div className={styles.lensBar}>
       <div role="tablist" aria-label="Today summary lens"><button role="tab" aria-selected={lens === "story"} onClick={() => setUrl({ lens: "story" })}>Market Story</button>

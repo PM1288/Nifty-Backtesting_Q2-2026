@@ -5447,3 +5447,26 @@ or outcomes were deleted.
   asset `/n50/assets/index-BxD2Joco.js`.
 - Runtime evidence remains outside Git at `/tmp/home-mwhd-volume-candidate/`
   and `/tmp/home-mwhd-volume-production/`.
+
+## 2026-09-19 — Scalper V2 side OI chart margin repair
+
+- Branch: `fix/scalper-v2-side-chart-margins-20260919`; report:
+  `docs/trading-analytics/SCALPER_V2_SIDE_CHART_GEOMETRY_20260919.md`.
+- Root cause was fixed ECharts plot gutters of 62px left, 58px right, 48px top
+  and 52px bottom inside a 320–380px side column, compounded by card and
+  workspace gaps. The charts now use label-aware containment with 2px outer
+  grid insets, 2px card padding and a 4px adjacent-chart gap.
+- CE/PE bars, PE-minus-CE line, dual axes, exact strikes, signed Change-in-OI,
+  missing-value handling and the NIFTY guide are unchanged.
+- Gates passed: web typecheck/build and 220/220 tests; API typecheck/build and
+  252/252 tests; canonical repository gate. Authenticated production Playwright
+  passed 14/14 checks with no page errors.
+- Measured live geometry: each 380px side card provides a 374px chart host
+  (3px per side). Screenshots and results are outside Git at
+  `/home/novius2/NIFTY50/evidence/scalper-v2-side-margin-after-20260919-production01/`.
+- Release commit `a0facdf` was pushed to the feature branch and `master`;
+  rollback tag `before-scalper-v2-side-chart-geometry-20260919`. Scoped deploy
+  recreated only the dashboard. Container `49c72f97555f...` is healthy, image
+  `sha256:d5c5e3c059747768abfe268896013f06fdd93fed36357f25463025dd357fe93a`,
+  entry asset `/n50/assets/index-BRExCwJn.js`. No strategy/data/order behavior
+  changed.

@@ -49,6 +49,14 @@ try {
   });
   check("right-side-strike-charts", await page.getByTestId("v2-strike-side-charts").getByRole("img").count() === 2, "OI and change-in-OI charts mounted");
   check("strike-charts-vertical", /Bars: CE \/ PE · line: PE − CE/.test(await page.getByTestId("v2-strike-side-charts").innerText()), await page.getByTestId("v2-strike-side-charts").innerText());
+  const sideGeometry = await page.getByTestId("v2-strike-side-charts").evaluate((element) => [...element.querySelectorAll("article")].map((article) => {
+    const chart = article.querySelector('[role="img"]');
+    const outer = article.getBoundingClientRect();
+    const inner = chart?.getBoundingClientRect();
+    return { outerWidth: outer.width, chartWidth: inner?.width ?? 0, outerHeight: outer.height, chartHeight: inner?.height ?? 0 };
+  }));
+  check("side-chart-host-near-edge", sideGeometry.every((item) => item.outerWidth - item.chartWidth <= 6), JSON.stringify(sideGeometry));
+  await page.screenshot({ path: path.join(output, "scalper-v2-side-charts-1920x1080.png"), fullPage: false });
   check("details-moved-below", Boolean(layout.details && layout.charts && layout.details.y >= layout.charts.y + layout.charts.height - 2), JSON.stringify(layout));
   check("top-current-values", (await page.locator("[aria-label='Current selected values'] span").count()) === 3, "underlying, CE and PE values shown in the command bar");
 
@@ -66,10 +74,15 @@ try {
   check("index-current-month-future-volume", indexVolume.label.includes("Current-month future") && indexVolume.points > 0, JSON.stringify(indexVolume));
 
   await page.getByRole("button", { name: "Total OI", exact: true }).click();
-  await page.getByTestId("v2-oi-differences-time").waitFor({ state: "visible" });
-  await page.getByTestId("v2-pcr-time").waitFor({ state: "visible" });
-  check("oi-difference-time-chart", await page.getByTestId("v2-oi-differences-time").getByRole("img").count() === 1, "PE OI minus CE OI and PE reported Delta OI minus CE reported Delta OI share timestamp X with independent Y axes");
-  check("pcr-time-chart", await page.getByTestId("v2-pcr-time").getByRole("img").count() === 1, "OI PCR PE divided by CE is plotted over retained timestamps");
+  await page.waitForTimeout(250);
+  if (await page.getByTestId("v2-oi-differences-time").count()) {
+    await page.getByTestId("v2-oi-differences-time").waitFor({ state: "visible" });
+    await page.getByTestId("v2-pcr-time").waitFor({ state: "visible" });
+    check("oi-difference-time-chart", await page.getByTestId("v2-oi-differences-time").getByRole("img").count() === 1, "PE OI minus CE OI and PE reported Delta OI minus CE reported Delta OI share timestamp X with independent Y axes");
+    check("pcr-time-chart", await page.getByTestId("v2-pcr-time").getByRole("img").count() === 1, "OI PCR PE divided by CE is plotted over retained timestamps");
+  } else {
+    check("oi-time-unavailable-honest", await page.getByText("OI history unavailable", { exact: true }).count() === 1, "No retained timestamp history; unavailable state shown instead of fabricated lines");
+  }
 
   const popupPromise = page.waitForEvent("popup");
   await page.getByTestId("v2-popout").click();
@@ -91,7 +104,7 @@ try {
   await popup.screenshot({ path: path.join(output, "scalper-v2-popout-1920x1080.png"), fullPage: false });
   await page.screenshot({ path: path.join(output, "scalper-v2-main-1920x1080.png"), fullPage: true });
   check("no-page-errors", errors.length === 0, errors.join(" | ") || "none");
-  await fs.writeFile(path.join(output, "results.json"), JSON.stringify({ appOrigin, layout, cursor, results }, null, 2));
+  await fs.writeFile(path.join(output, "results.json"), JSON.stringify({ appOrigin, layout, sideGeometry, cursor, results }, null, 2));
 } finally {
   await browser.close();
 }

@@ -32,5 +32,30 @@ strategy, order or export behavior changes.
 The focused analytical test asserts the label-aware grid and 2px insets in
 addition to the existing exact difference, signed-value, missingness, axis and
 NIFTY-guide contracts. Full repository web/API tests, builds, preservation gate
-and authenticated production browser evidence are required before completion.
+and authenticated production browser evidence were completed:
 
+- Web typecheck, 220/220 tests and production build: PASS.
+- API typecheck, 252/252 tests and build: PASS.
+- Canonical repository preservation gate: PASS.
+- Authenticated production Playwright: 14/14 checks PASS with no page errors.
+- Each 380px side card exposes a 374px chart host: 3px inset per side and 6px
+  total non-chart width, meeting the near-edge browser assertion.
+- Both chart hosts are 332.61px high inside 358px cards; the remaining height
+  is the compact visible title/legend region rather than an unexplained plot
+  margin.
+- The side column is separated from the adjacent price-chart area by 4px.
+- Live evidence and screenshots:
+  `/home/novius2/NIFTY50/evidence/scalper-v2-side-margin-after-20260919-production01/`.
+
+## Release
+
+- Application commit: `a0facdf` (`fix: expand Scalper V2 side chart plots`).
+- Feature branch and `master` were pushed.
+- Rollback tag: `before-scalper-v2-side-chart-geometry-20260919`.
+- The approved dashboard deployment recreated only `n50-dashboard`.
+- Deployed image:
+  `sha256:d5c5e3c059747768abfe268896013f06fdd93fed36357f25463025dd357fe93a`.
+- Live container `49c72f97555f...` is healthy and the route returns HTTP 200.
+- Live entry asset: `/n50/assets/index-BRExCwJn.js`.
+- No strategy, OI calculation, API, database, collector or order behavior was
+  changed.

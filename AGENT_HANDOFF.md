@@ -1,5 +1,22 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-19 — Scalper V2 OI difference/PCR history and volume pane
+
+- Branch `feat/scalper-v2-oi-delta-pcr-volume-20260919`; existing Scalper V2
+  extended without strategy, schema, collector, paper/order or notification changes.
+- Total OI dock adds timestamp-aligned `PE OI - CE OI`, independently scaled
+  `PE reported change in OI - CE reported change in OI`, and OI PCR history.
+- Underlying native chart adds a lower histogram sourced from current-month
+  FUTIDX for indices or NSE cash volume for stocks, with exact identity/expiry.
+- Missing/incomplete inputs stay null. Fifteen-day retained input supports
+  indicator warm-up and sparse chain snapshots while display remains one session.
+- Web typecheck/build and 215 tests; API typecheck/build and 247 tests pass.
+  Isolated authenticated candidate browser validation passes 14/14. The retained
+  16 September chain fixture is used because later price sessions have no matching
+  chain snapshot and correctly render OI history unavailable.
+- Detailed evidence and rerun commands:
+  `docs/trading-analytics/SCALPER_V2_OI_TIME_AND_VOLUME_20260919.md`.
+
 ## 2026-09-19 — Home trading shortlist
 
 - Branch `feat/home-trading-shortlist-20260919`; additive Home sidebar for same-day

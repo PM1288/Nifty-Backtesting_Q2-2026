@@ -11,6 +11,7 @@ import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
 import { scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
+import { scalperV2OiDifferenceOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
 import { scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
 import { scalperV2OiTotals, scalperV2StructureRows } from "../lib/scalperV2Structure";
 import { oiComparisonState } from "../lib/scalperV2Geometry";
@@ -51,7 +52,15 @@ type CumulativeOiPoint = {
   peContractCount: number | null;
   peObservedCount: number | null;
   peOi: number | null;
+  ceChangeObservedCount: number | null;
+  ceChangeOi: number | null;
+  peChangeObservedCount: number | null;
+  peChangeOi: number | null;
+  oiDifference: number | null;
+  changeOiDifference: number | null;
+  pcr: number | null;
   state: "COMPLETE" | "PARTIAL";
+  changeState: "COMPLETE" | "PARTIAL";
 };
 type ChartPayload = {
   panes: ChartPane[];
@@ -59,6 +68,14 @@ type ChartPayload = {
   limitations: string[];
   interval: number;
   asOf: string;
+  volumeSeries?: {
+    kind: "CASH_UNDERLYING" | "CURRENT_MONTH_FUTURE";
+    unit: "provider_native_volume";
+    state: "AVAILABLE" | "UNAVAILABLE";
+    identity: { exchange: string; symbolToken: string; tradingSymbol: string; expiry: string | null } | null;
+    bars: Row[];
+    limitations: string[];
+  };
   cumulativeOiHistory?: {
     expiry: string | null;
     unit: "provider_native_oi";
@@ -92,7 +109,9 @@ const chartSide = (pane: ChartPane) => {
 const latest = (rows: Row[]) => rows.filter((row) => row.closed === true).at(-1);
 const exactAt = (rows: Row[], selectedTime: number | null) => selectedTime == null ? latest(rows) : rows.find((row) => row.closed === true && Math.floor(Date.parse(String(row.end)) / 1000) === selectedTime);
 const chartQuery = (symbol: string, asOf: string, expiry: string, ceStrike: string, peStrike: string, interval: number) => {
-  const query = new URLSearchParams({ symbol, asOf, interval: String(interval), historyDays: "3" });
+  // Retain enough canonical history for indicator warm-up and sparse OI snapshot
+  // capture. The visible chart still slices to the explicitly selected session.
+  const query = new URLSearchParams({ symbol, asOf, interval: String(interval), historyDays: "15" });
   return applyScalperLegsToChartQuery(query, expiry, { ceStrike, peStrike });
 };
 const chartKey = (query: URLSearchParams) => ["trading-analytics-charts", query.toString()] as const;
@@ -305,7 +324,9 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     [activeData?.cumulativeOiHistory?.points, tradingDay],
   );
   const cumulativeOiComplete = cumulativeOiPoints.filter((point) => point.state === "COMPLETE").length;
+  const cumulativeChangeComplete = cumulativeOiPoints.filter((point) => point.changeState === "COMPLETE").length;
   const cumulativeStrikeCounts = [...new Set(cumulativeOiPoints.map((point) => point.strikeCount).filter((value): value is number => value != null))].sort((a, b) => a - b);
+  const cumulativeLatest = cumulativeOiPoints.at(-1) ?? null;
   const cumulativeOiOption = useMemo<EChartsOption>(() => ({
     animation: false,
     tooltip: { trigger: "axis" },
@@ -346,6 +367,14 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       },
     ],
   }), [cumulativeOiPoints]);
+  const cumulativeDifferenceOption = useMemo<EChartsOption>(
+    () => scalperV2OiDifferenceOption(cumulativeOiPoints, istClock),
+    [cumulativeOiPoints],
+  );
+  const cumulativePcrOption = useMemo<EChartsOption>(
+    () => scalperV2PcrTimeOption(cumulativeOiPoints, istClock),
+    [cumulativeOiPoints],
+  );
   const normalizedPriceModel = useMemo(() => scalperV2NormalizedPriceSeries(
     (optionPriceHistory.data?.points ?? []).filter((point) => istDay(point.capturedAt) === tradingDay),
     numeric(selectedCeStrike),
@@ -510,6 +539,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const latestSignal = signals.filter((signal) => signal.state === "RETROSPECTIVE_ENTRY_REFERENCE").at(-1) ?? signals.at(-1);
   const structureOiMaximum = Math.max(1, ...structureRows.flatMap((row) => [row.ce.oi ?? 0, row.pe.oi ?? 0]));
   const structureDeltaMaximum = Math.max(1, ...structureRows.flatMap((row) => [Math.abs(row.ce.changeOi ?? 0), Math.abs(row.pe.changeOi ?? 0)]));
+  const volumeSeries = activeData?.volumeSeries;
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}</section>;
   return <section className={css.page} data-testid="scalper-v2" data-popout={isPopout || undefined}>
@@ -534,7 +564,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
         </nav>
         <div className={css.charts}>
-          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · index points" bars={underlying?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} profileMode={profileMode} profileLabel={deltaBasisLabel} profileRangeExpanded={profileRangeExpanded} maxPainStrikes={maxPain.candidates} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedCeStrike)} selectedPutStrike={numeric(selectedPeStrike)} hoveredStrike={hoveredStrike} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} rankLevels={leaders} oiProfile={profileRows} profileMode={profileMode} profileLabel={deltaBasisLabel} profileRangeExpanded={profileRangeExpanded} maxPainStrikes={maxPain.candidates} signalEvents={signals} measurementTimes={points} selectedStrike={numeric(selectedCeStrike)} selectedPutStrike={numeric(selectedPeStrike)} hoveredStrike={hoveredStrike} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="call" title={`CE ${Number(selectedCeStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
         </div>
@@ -585,7 +615,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       {analyticsTab === "overview" && <div className={css.overviewKpis}><article><small>OI imbalance</small><b>{oiTotals.oiImbalance == null ? "—" : percent(100 * oiTotals.oiImbalance)}</b></article><article><small>ΔOI imbalance</small><b>{oiTotals.deltaImbalance == null ? "—" : percent(100 * oiTotals.deltaImbalance)}</b></article><article><small>Tracked strikes</small><b>{structureRows.length}</b></article><article><small>OI history</small><b>{cumulativeOiPoints.length} points</b></article></div>}
       {analyticsTab === "oi" && <div className={css.analyticsGrid}><article className={css.analyticCard}><h3>OI by strike</h3><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Open interest by strike" axisExtentPolicy="native" option={analyticOptions[0]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></article><article id="scalper-v2-deltaoi" className={css.analyticCard} data-testid="v2-deltaoi-chart"><h3>Change in OI by strike</h3>{deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.stateCard} data-testid="v2-deltaoi-state"><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts</span></div> : <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.deltaOiChart} ariaLabel="Change in OI by strike with adaptive signed scale" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>}</article></div>}
       {analyticsTab === "strength" && <article className={css.dockPanel} data-testid="v2-normalized-option-price"><header className={css.dockControls}><h3>Option price strength</h3><label>Mode <select value={priceMode} onChange={(event) => setPriceMode(event.target.value as ScalperV2PriceMode)}><option value="return">Return from Open %</option><option value="indexed">Indexed to 100</option><option value="relative">Relative to ATM</option><option value="range">Range Normalised</option></select></label><label><input type="checkbox" checked={showAllPriceSeries} onChange={(event) => setShowAllPriceSeries(event.target.checked)} /> Show all strikes</label></header>{normalizedPriceModel.series.length ? <><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.normalizedPriceChart} ariaLabel="Option price strength over time" axisExtentPolicy="native" option={normalizedPriceOption} /></Suspense><h3>All-strike return heatmap</h3><Suspense fallback={<p>Loading heatmap…</p>}><Chart className={css.heatmapChart} ariaLabel="Option return from open heatmap by time and strike" axisExtentPolicy="native" option={optionPriceHeatmap} /></Suspense></> : <div className={css.stateCard}><strong>Option price history unavailable</strong></div>}</article>}
-      {analyticsTab === "total" && <article className={css.dockPanel} data-testid="v2-cumulative-oi-time"><h3>Total OI vs Time</h3><div className={css.overviewKpis}><article><small>CE Total OI</small><b>{compact(oiTotals.ceOi)}</b></article><article><small>PE Total OI</small><b>{compact(oiTotals.peOi)}</b></article><article><small>OI PCR</small><b>{oiTotals.pcr?.toFixed(2) ?? "—"}</b></article><article><small>Snapshot coverage</small><b>{cumulativeOiComplete}/{cumulativeOiPoints.length}</b><small>{cumulativeStrikeCounts.length ? `${cumulativeStrikeCounts.join("–")} strikes` : "Unavailable"}</small></article></div>{cumulativeOiPoints.length ? <Suspense fallback={<p>Loading chart…</p>}><Chart className={css.cumulativeOiChart} ariaLabel="Total CE and PE open interest over time" axisExtentPolicy="native" option={cumulativeOiOption} /></Suspense> : <div className={css.stateCard}><strong>OI history unavailable</strong></div>}</article>}
+      {analyticsTab === "total" && <article className={css.dockPanel} data-testid="v2-cumulative-oi-time"><h3>Total OI, differences and PCR vs Time</h3><div className={css.overviewKpis}><article><small>CE Total OI</small><b>{compact(cumulativeLatest?.ceOi)}</b></article><article><small>PE Total OI</small><b>{compact(cumulativeLatest?.peOi)}</b></article><article><small>OI PCR</small><b>{cumulativeLatest?.pcr?.toFixed(3) ?? "—"}</b></article><article><small>Snapshot coverage</small><b>{cumulativeOiComplete}/{cumulativeOiPoints.length} OI · {cumulativeChangeComplete}/{cumulativeOiPoints.length} ΔOI</b><small>{cumulativeStrikeCounts.length ? `${cumulativeStrikeCounts.join("–")} strikes` : "Unavailable"}</small></article></div>{cumulativeOiPoints.length ? <div className={css.oiTimeGrid}><section className={css.oiTimeWide}><h4>CE and PE total OI</h4><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.cumulativeOiChart} ariaLabel="Total CE and PE open interest over time" axisExtentPolicy="native" option={cumulativeOiOption} /></Suspense></section><section data-testid="v2-oi-differences-time"><h4>Put minus call OI and reported change in OI</h4><Suspense fallback={<p>Loading difference chart…</p>}><Chart className={css.oiDifferenceChart} ariaLabel="Put minus call total OI and put minus call reported change in OI over time" axisExtentPolicy="native" option={cumulativeDifferenceOption} /></Suspense></section><section data-testid="v2-pcr-time"><h4>OI PCR over time · PE OI / CE OI</h4><Suspense fallback={<p>Loading PCR chart…</p>}><Chart className={css.oiDifferenceChart} ariaLabel="Open interest PCR over time" axisExtentPolicy="native" option={cumulativePcrOption} /></Suspense></section></div> : <div className={css.stateCard}><strong>OI history unavailable</strong></div>}</article>}
       {analyticsTab === "maxpain" && <article className={css.dockPanel}><div className={css.maxPainKpi}><span>Max Pain</span><strong>{maxPainValue?.toLocaleString("en-IN") ?? "—"}</strong><b>{inspectedUnderlying != null && maxPainValue != null ? `${signed(inspectedUnderlying - maxPainValue)} pts from NIFTY` : "Distance unavailable"}</b></div><Suspense fallback={<p>Loading chart…</p>}><Chart className={css.analyticChart} ariaLabel="Max pain payout distribution" axisExtentPolicy="native" option={analyticOptions[2]} activeCategoryIndex={hoveredPayoutIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : maxPain.points[index]?.settlement ?? null)} /></Suspense></article>}
     </section>
     <details><summary>Indicator evidence</summary><p>Underlying RSI14 and MACD are calculated from retained completed bars before the selected day is sliced for display.</p><table className={css.snapshotGrid}><thead><tr><th>End</th><th>RSI14</th><th>MACD</th><th>Signal</th></tr></thead><tbody>{indicators.filter((row) => istDay(row.time) === tradingDay).slice(-20).map((row) => <tr key={row.time}><td>{row.time}</td><td>{row.rsi?.toFixed(2) ?? "—"}</td><td>{row.macd?.toFixed(4) ?? "—"}</td><td>{row.signal?.toFixed(4) ?? "—"}</td></tr>)}</tbody></table></details>

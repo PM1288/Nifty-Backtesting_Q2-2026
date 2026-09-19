@@ -5,6 +5,8 @@ import { chromium } from "playwright";
 const appOrigin = process.env.SCALPER_V2_APP_ORIGIN ?? "http://127.0.0.1:15190";
 const authOrigin = process.env.SCALPER_V2_AUTH_ORIGIN ?? "http://127.0.0.1:19090";
 const output = path.resolve(process.env.SCALPER_V2_OUTPUT ?? "/tmp/scalper-v2-popout-structure-20260919");
+const testDay = process.env.SCALPER_V2_TEST_DAY ?? "";
+const testAsOf = process.env.SCALPER_V2_TEST_AS_OF ?? "";
 const envText = await fs.readFile(process.env.PLAYWRIGHT_ENV_FILE ?? ".env", "utf8");
 const rawPassword = process.env.PLAYWRIGHT_ADMIN_PASSWORD ?? envText.split(/\r?\n/).find((line) => line.startsWith("DEV_LOCAL_AUTH_PASSWORD="))?.split("=").slice(1).join("=").trim();
 const password = rawPassword?.replace(/^"|"$/g, "");
@@ -24,7 +26,9 @@ try {
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(String(error)));
-  await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper_v2&interval=5`, { waitUntil: "domcontentloaded", timeout: 90_000 });
+  const dayQuery = testDay ? `&day=${encodeURIComponent(testDay)}` : "";
+  const asOfQuery = testAsOf ? `&asOf=${encodeURIComponent(testAsOf)}` : "";
+  await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper_v2&interval=5${dayQuery}${asOfQuery}`, { waitUntil: "domcontentloaded", timeout: 90_000 });
   await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });
   await page.waitForTimeout(2_000);
 
@@ -58,6 +62,14 @@ try {
     exact: document.querySelector(`[data-testid="v2-chart-host-${id}"]`)?.dataset.crosshairExact ?? "source",
   })));
   check("uniform-time-cursor", cursor[0].time !== "" && cursor.every((item) => item.time === cursor[0].time), JSON.stringify(cursor));
+  const indexVolume = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => ({ label: element.dataset.volumeLabel ?? "", points: Number(element.dataset.volumePoints ?? 0) }));
+  check("index-current-month-future-volume", indexVolume.label.includes("Current-month future") && indexVolume.points > 0, JSON.stringify(indexVolume));
+
+  await page.getByRole("button", { name: "Total OI", exact: true }).click();
+  await page.getByTestId("v2-oi-differences-time").waitFor({ state: "visible" });
+  await page.getByTestId("v2-pcr-time").waitFor({ state: "visible" });
+  check("oi-difference-time-chart", await page.getByTestId("v2-oi-differences-time").getByRole("img").count() === 1, "PE OI minus CE OI and PE reported Delta OI minus CE reported Delta OI share timestamp X with independent Y axes");
+  check("pcr-time-chart", await page.getByTestId("v2-pcr-time").getByRole("img").count() === 1, "OI PCR PE divided by CE is plotted over retained timestamps");
 
   const popupPromise = page.waitForEvent("popup");
   await page.getByTestId("v2-popout").click();
@@ -69,6 +81,13 @@ try {
   check("popout-route", new URL(popup.url()).searchParams.get("popout") === "scalper_v2", popup.url());
   check("popout-minimal-shell", await popup.locator("[data-scalper-popout='true']").count() === 1 && await popup.locator("header").filter({ has: popup.getByText("NIFTY 50 TRADER") }).count() === 0, "global application chrome is absent");
   check("popout-filters", await popup.getByLabel("Analytics underlying").count() === 1 && await popup.getByLabel("Selected CE strike").count() === 1 && await popup.getByLabel("Selected PE strike").count() === 1, "underlying and exact contract filters remain available");
+
+  const stockPage = await context.newPage();
+  await stockPage.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper_v2&interval=5&symbol=RELIANCE`, { waitUntil: "domcontentloaded", timeout: 90_000 });
+  await stockPage.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });
+  const stockVolume = await stockPage.getByTestId("v2-chart-body-underlying").evaluate((element) => ({ label: element.dataset.volumeLabel ?? "", points: Number(element.dataset.volumePoints ?? 0) }));
+  check("stock-cash-volume", stockVolume.label.includes("Cash stock") && stockVolume.points > 0, JSON.stringify(stockVolume));
+  await stockPage.close();
   await popup.screenshot({ path: path.join(output, "scalper-v2-popout-1920x1080.png"), fullPage: false });
   await page.screenshot({ path: path.join(output, "scalper-v2-main-1920x1080.png"), fullPage: true });
   check("no-page-errors", errors.length === 0, errors.join(" | ") || "none");

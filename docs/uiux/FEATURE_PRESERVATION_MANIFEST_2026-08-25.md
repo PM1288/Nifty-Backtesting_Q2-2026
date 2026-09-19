@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 Scalper V2 OI time and volume: the existing Total OI dock retains
+CE/PE totals and adds timestamp-aligned PE-minus-CE total OI, PE-minus-CE
+provider-reported change in OI on an independent axis, and OI PCR history.
+Underlying charts add exact-source volume: current-month FUTIDX for indices and
+NSE cash volume for stocks. Incomplete snapshots/intervals remain unavailable,
+and unmatched old chain evidence is never relabelled current. V2 selection,
+pop-out, cursor, drawings, exports, signals, strategy/order guards and all other
+analytics remain. Evidence:
+`docs/trading-analytics/SCALPER_V2_OI_TIME_AND_VOLUME_20260919.md`.
+
 2026-09-19 Home trading shortlist: additive collapsed right-edge tag in both Home
 variants; same-day OIIS selected and complete MWHD Long/Short routes, independent
 bull/bear ranks, dated quotes and per-account browser-local personal additions.

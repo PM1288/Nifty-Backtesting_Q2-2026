@@ -44,6 +44,37 @@ export function resolveChartStrikeSelection(input: { strike?: number; ceStrike?:
     peStrike: input.peStrike ?? input.strike,
   };
 }
+
+export function buildCumulativeOiHistory(rows: Facts[]) {
+  return rows.map((row) => {
+    const ceOi = numeric(row.ce_oi), peOi = numeric(row.pe_oi);
+    const ceChangeOi = numeric(row.ce_change_oi), peChangeOi = numeric(row.pe_change_oi);
+    const oiComplete = ceOi != null && peOi != null;
+    const changeComplete = ceChangeOi != null && peChangeOi != null;
+    return {
+      snapshotId: String(row.snapshot_id),
+      capturedAt: new Date(String(row.captured_at)).toISOString(),
+      source: row.source,
+      strikesAround: numeric(row.strikes_around),
+      strikeCount: numeric(row.strike_count),
+      ceContractCount: numeric(row.ce_contract_count),
+      ceObservedCount: numeric(row.ce_observed_count),
+      ceOi,
+      peContractCount: numeric(row.pe_contract_count),
+      peObservedCount: numeric(row.pe_observed_count),
+      peOi,
+      ceChangeObservedCount: numeric(row.ce_change_observed_count),
+      ceChangeOi,
+      peChangeObservedCount: numeric(row.pe_change_observed_count),
+      peChangeOi,
+      oiDifference: oiComplete ? peOi - ceOi : null,
+      changeOiDifference: changeComplete ? peChangeOi - ceChangeOi : null,
+      pcr: oiComplete && ceOi > 0 ? peOi / ceOi : null,
+      state: oiComplete ? "COMPLETE" : "PARTIAL",
+      changeState: changeComplete ? "COMPLETE" : "PARTIAL",
+    };
+  });
+}
 const istSessionDate = (value: unknown) => value == null ? null : new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
 }).format(new Date(String(value)));
@@ -727,7 +758,26 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         },
         ...contracts,
       ];
-      const [panes, cumulativeOiRows] = await Promise.all([
+      const volumeInstrument = underlying.kind === "INDEX"
+        ? (await prisma.$queryRawUnsafe<Facts[]>(
+            `SELECT exchange,symbol_token,tradingsymbol,expiry::text,instrumenttype,updated_at
+             FROM instruments i
+             WHERE i.name=$2 AND i.exchange='NFO' AND i.instrumenttype='FUTIDX'
+               AND i.expiry>=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
+               AND i.updated_at<=$1::timestamptz
+               AND EXISTS (
+                 SELECT 1 FROM bars_1m b
+                 WHERE b.exchange=i.exchange AND b.symbol_token=i.symbol_token
+                   AND b.ts>=$1::timestamptz-make_interval(days=>$3::int)
+                   AND b.ts+interval '1 minute'<=$1::timestamptz
+                   AND b.created_at<=$1::timestamptz
+               )
+             ORDER BY i.expiry,i.updated_at DESC,i.symbol_token
+             LIMIT 1`,
+            asOf, underlying.symbol, q.data.historyDays,
+          ))[0] ?? null
+        : { exchange: "NSE", symbol_token: underlying.token, tradingsymbol: underlying.label, expiry: null, instrumenttype: "EQUITY" };
+      const [panes, cumulativeOiRows, volumeMinutes] = await Promise.all([
         Promise.all(identities.map(async (identity) => {
           const minutes = await prisma.$queryRawUnsafe<Facts[]>(
             `SELECT DISTINCT ON (ts) ts,created_at,open::float8,high::float8,low::float8,close::float8,volume::text,oi::text,source
@@ -773,7 +823,15 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
                       count(l.open_interest) FILTER (WHERE l.option_type='PE')::int pe_observed_count,
                       CASE WHEN count(*) FILTER (WHERE l.option_type='PE') > 0
                                   AND count(l.open_interest) FILTER (WHERE l.option_type='PE') = count(*) FILTER (WHERE l.option_type='PE')
-                           THEN (sum(l.open_interest) FILTER (WHERE l.option_type='PE'))::text ELSE NULL END pe_oi
+                           THEN (sum(l.open_interest) FILTER (WHERE l.option_type='PE'))::text ELSE NULL END pe_oi,
+                      count(l.change_in_oi) FILTER (WHERE l.option_type='CE')::int ce_change_observed_count,
+                      CASE WHEN count(*) FILTER (WHERE l.option_type='CE') > 0
+                                  AND count(l.change_in_oi) FILTER (WHERE l.option_type='CE') = count(*) FILTER (WHERE l.option_type='CE')
+                           THEN (sum(l.change_in_oi) FILTER (WHERE l.option_type='CE'))::text ELSE NULL END ce_change_oi,
+                      count(l.change_in_oi) FILTER (WHERE l.option_type='PE')::int pe_change_observed_count,
+                      CASE WHEN count(*) FILTER (WHERE l.option_type='PE') > 0
+                                  AND count(l.change_in_oi) FILTER (WHERE l.option_type='PE') = count(*) FILTER (WHERE l.option_type='PE')
+                           THEN (sum(l.change_in_oi) FILTER (WHERE l.option_type='PE'))::text ELSE NULL END pe_change_oi
                FROM option_chain_snapshots s
                JOIN option_chain_legs l ON l.snapshot_id=s.id
                WHERE s.symbol=$3 AND s.expiry_date=$2::date
@@ -784,21 +842,21 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
               asOf,q.data.expiry,underlying.symbol,q.data.historyDays,
             )
           : Promise.resolve([] as Facts[]),
+        volumeInstrument
+          ? prisma.$queryRawUnsafe<Facts[]>(
+              `SELECT DISTINCT ON (ts) ts,created_at,open::float8,high::float8,low::float8,close::float8,volume::text,oi::text,source
+               FROM bars_1m WHERE exchange=$2 AND symbol_token=$3
+               AND ts>=$1::timestamptz-make_interval(days=>$4::int)
+               AND ts+interval '1 minute'<=$1::timestamptz AND created_at<=$1::timestamptz
+               ORDER BY ts,created_at DESC LIMIT 25000`,
+              asOf, volumeInstrument.exchange, volumeInstrument.symbol_token, q.data.historyDays,
+            )
+          : Promise.resolve([] as Facts[]),
       ]);
-      const cumulativeOiHistory = cumulativeOiRows.map((row) => ({
-        snapshotId: String(row.snapshot_id),
-        capturedAt: new Date(String(row.captured_at)).toISOString(),
-        source: row.source,
-        strikesAround: numeric(row.strikes_around),
-        strikeCount: numeric(row.strike_count),
-        ceContractCount: numeric(row.ce_contract_count),
-        ceObservedCount: numeric(row.ce_observed_count),
-        ceOi: numeric(row.ce_oi),
-        peContractCount: numeric(row.pe_contract_count),
-        peObservedCount: numeric(row.pe_observed_count),
-        peOi: numeric(row.pe_oi),
-        state: numeric(row.ce_oi) == null || numeric(row.pe_oi) == null ? "PARTIAL" : "COMPLETE",
-      }));
+      const cumulativeOiHistory = buildCumulativeOiHistory(cumulativeOiRows);
+      const volumeBars = volumeInstrument
+        ? sessionBars(volumeMinutes, sessions, q.data.interval, asOf)
+        : [];
       return res.json({
         version: VERSION,
         asOf,
@@ -812,6 +870,21 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         underlying,
         availableContracts,
         panes,
+        volumeSeries: {
+          kind: underlying.kind === "INDEX" ? "CURRENT_MONTH_FUTURE" : "CASH_UNDERLYING",
+          unit: "provider_native_volume",
+          state: volumeInstrument && volumeBars.some((bar) => bar.closed && numeric(bar.volume) != null) ? "AVAILABLE" : "UNAVAILABLE",
+          identity: volumeInstrument ? {
+            exchange: volumeInstrument.exchange,
+            symbolToken: volumeInstrument.symbol_token,
+            tradingSymbol: volumeInstrument.tradingsymbol,
+            expiry: volumeInstrument.expiry ?? null,
+          } : null,
+          bars: volumeBars,
+          limitations: underlying.kind === "INDEX"
+            ? ["Index activity uses the nearest active FUTIDX contract with retained one-minute bars; it is not cash-index volume."]
+            : ["Stock activity uses retained NSE cash-market one-minute volume for the selected underlying."],
+        },
         cumulativeOiHistory: {
           expiry: q.data.expiry ?? null,
           unit: "provider_native_oi",

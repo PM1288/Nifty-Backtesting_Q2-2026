@@ -290,3 +290,12 @@ test("missing or duplicate minute does not confirm a complete candle", () => {
     false,
   );
 });
+test("session bars sum observed source-candle volume without inventing a partial value", () => {
+  const session = { market_open_ts: "2026-09-07T03:45:00Z", market_close_ts: "2026-09-07T03:47:00Z" };
+  const rows = [0, 1].map((offset) => ({
+    ts: `2026-09-07T03:${45 + offset}:00Z`, created_at: `2026-09-07T03:${46 + offset}:00Z`,
+    open: 100, high: 101, low: 99, close: 100 + offset, volume: offset === 0 ? 40 : 60,
+  }));
+  assert.equal(sessionBars(rows, [session], 2, "2026-09-07T03:47:00Z")[0].volume, 100);
+  assert.equal(sessionBars([{ ...rows[0], volume: null }, rows[1]], [session], 2, "2026-09-07T03:47:00Z")[0].volume, null);
+});

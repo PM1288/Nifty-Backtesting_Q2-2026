@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import express from "express";
 import type { AddressInfo } from "node:net";
 import type { PrismaClient } from "@prisma/client";
-import { buildComparableChainLegs,registerTradingAnalytics,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
+import { buildComparableChainLegs, buildCumulativeOiHistory, registerTradingAnalytics,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
 
 test("chart selection accepts independent CE and PE strikes while preserving legacy pair links", () => {
   assert.deepEqual(resolveChartStrikeSelection({ strike: 23450 }), { ceStrike: 23450, peStrike: 23450 });
@@ -24,6 +24,33 @@ test("chain comparison uses one common snapshot window and validates cumulative 
   const [crossSession] = buildComparableChainLegs(current, prior, "2026-09-12T05:30:00Z", "2026-09-11T05:15:00Z");
   assert.equal(crossSession.interval_volume, null);
   assert.equal(crossSession.volume_counter_state, "CROSS_SESSION_NOT_COMPARABLE");
+});
+
+test("cumulative OI history preserves complete side differences, reported change differences and PCR", () => {
+  const [complete, partial] = buildCumulativeOiHistory([
+    {
+      snapshot_id: "91", captured_at: "2026-09-10T09:55:00.000Z", source: "fixture", strikes_around: 6,
+      strike_count: 13, ce_contract_count: 13, ce_observed_count: 13, ce_oi: "1300",
+      pe_contract_count: 13, pe_observed_count: 13, pe_oi: "1170",
+      ce_change_observed_count: 13, ce_change_oi: "-80", pe_change_observed_count: 13, pe_change_oi: "40",
+    },
+    {
+      snapshot_id: "92", captured_at: "2026-09-10T10:00:00.000Z", source: "fixture", strikes_around: 6,
+      strike_count: 13, ce_contract_count: 13, ce_observed_count: 12, ce_oi: null,
+      pe_contract_count: 13, pe_observed_count: 13, pe_oi: "1200",
+      ce_change_observed_count: 12, ce_change_oi: null, pe_change_observed_count: 13, pe_change_oi: "50",
+    },
+  ]);
+  assert.equal(complete.oiDifference, -130);
+  assert.equal(complete.changeOiDifference, 120);
+  assert.equal(complete.pcr, 0.9);
+  assert.equal(complete.state, "COMPLETE");
+  assert.equal(complete.changeState, "COMPLETE");
+  assert.equal(partial.oiDifference, null);
+  assert.equal(partial.changeOiDifference, null);
+  assert.equal(partial.pcr, null);
+  assert.equal(partial.state, "PARTIAL");
+  assert.equal(partial.changeState, "PARTIAL");
 });
 
 test("charts endpoint resolves one exact CE and one exact PE at different strikes", async () => {
@@ -51,6 +78,7 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
           snapshot_id: "91", captured_at: "2026-09-10T09:55:00.000Z", source: "fixture", strikes_around: 6,
           strike_count: 13, ce_contract_count: 13, ce_observed_count: 13, ce_oi: "1300",
           pe_contract_count: 13, pe_observed_count: 13, pe_oi: "1170",
+          ce_change_observed_count: 13, ce_change_oi: "-80", pe_change_observed_count: 13, pe_change_oi: "40",
         }];
       }
       return [];
@@ -65,7 +93,8 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
     const body = await response.json() as {
       panes: Array<{ identity: { tradingsymbol: string; strike?: number } }>;
       availableContracts: Array<{ strike: number; ce_contracts: number; pe_contracts: number }>;
-      cumulativeOiHistory: { scope: string; unit: string; points: Array<{ capturedAt: string; strikeCount: number; ceOi: number; peOi: number; state: string }> };
+      cumulativeOiHistory: { scope: string; unit: string; points: Array<{ capturedAt: string; strikeCount: number; ceOi: number; peOi: number; ceChangeOi: number; peChangeOi: number; oiDifference: number; changeOiDifference: number; pcr: number; state: string; changeState: string }> };
+      volumeSeries: { kind: string; state: string; identity: unknown; bars: unknown[] };
     };
     assert.deepEqual(body.panes.slice(1).map((pane) => [pane.identity.tradingsymbol, pane.identity.strike]), [
       ["NIFTY15SEP2623500CE", 23500],
@@ -77,8 +106,14 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
     assert.deepEqual(body.cumulativeOiHistory.points[0], {
       snapshotId: "91", capturedAt: "2026-09-10T09:55:00.000Z", source: "fixture", strikesAround: 6,
       strikeCount: 13, ceContractCount: 13, ceObservedCount: 13, ceOi: 1300,
-      peContractCount: 13, peObservedCount: 13, peOi: 1170, state: "COMPLETE",
+      peContractCount: 13, peObservedCount: 13, peOi: 1170,
+      ceChangeObservedCount: 13, ceChangeOi: -80, peChangeObservedCount: 13, peChangeOi: 40,
+      oiDifference: -130, changeOiDifference: 120, pcr: 0.9, state: "COMPLETE", changeState: "COMPLETE",
     });
+    assert.equal(body.volumeSeries.kind, "CURRENT_MONTH_FUTURE");
+    assert.equal(body.volumeSeries.state, "UNAVAILABLE");
+    assert.equal(body.volumeSeries.identity, null);
+    assert.deepEqual(body.volumeSeries.bars, []);
     const contractRead = calls.find((call) => call.sql.includes("strike=$3::numeric") && call.sql.includes("strike=$4::numeric"));
     assert.deepEqual(contractRead?.args.slice(2, 4), [23500, 23400]);
   } finally {

@@ -202,6 +202,7 @@ export type Bar = {
   high: number;
   low: number;
   close: number;
+  volume?: number | null;
   closed: boolean;
 };
 export function eligibleBars(bars: Bar[], asOf: string) {
@@ -461,6 +462,12 @@ export function sessionBars(
         high: Math.max(...input.map((m) => numeric(m.high)!)),
         low: Math.min(...input.map((m) => numeric(m.low)!)),
         close: numeric(input.at(-1)!.close)!,
+        // bars_1m volume is the observed volume for each source candle. Keep
+        // an interval unavailable if any constituent is unavailable rather
+        // than presenting a partial interval as complete market activity.
+        volume: input.every((m) => numeric(m.volume) != null)
+          ? input.reduce((total, m) => total + numeric(m.volume)!, 0)
+          : null,
         closed: complete,
         coverage: input.length,
         expectedMinutes: expected,

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import type { EChartsOption } from "echarts";
 import { getJson } from "../lib/api";
@@ -36,6 +36,8 @@ import {
 import { createScalperV2Drawing, DRAWING_TOOLS, type ScalperV2Drawing, type ScalperV2DrawingAnchor, type ScalperV2DrawingTool, type ScalperV2PaneRole } from "./scalper-v2/scalperV2Drawings";
 import { useScalperV2Drawings } from "./scalper-v2/useScalperV2Drawings";
 import css from "./scalper-v2/ScalperV2.module.css";
+import { ScalperV2Freshness } from "./scalper-v2/ScalperV2Freshness";
+import type { ScalperSession } from "../lib/scalperV2Freshness";
 
 const Chart = lazy(async () => ({ default: (await import("../components/visual/EChartSurface")).EChartSurface }));
 type Row = Record<string, unknown>;
@@ -63,6 +65,7 @@ type CumulativeOiPoint = {
   changeState: "COMPLETE" | "PARTIAL";
 };
 type ChartPayload = {
+  calendar?: { sessions: ScalperSession[] };
   panes: ChartPane[];
   availableContracts: AvailableScalperContract[];
   limitations: string[];
@@ -111,7 +114,8 @@ const exactAt = (rows: Row[], selectedTime: number | null) => selectedTime == nu
 const chartQuery = (symbol: string, asOf: string, expiry: string, ceStrike: string, peStrike: string, interval: number) => {
   // Retain enough canonical history for indicator warm-up and sparse OI snapshot
   // capture. The visible chart still slices to the explicitly selected session.
-  const query = new URLSearchParams({ symbol, asOf, interval: String(interval), historyDays: "15" });
+  const query = new URLSearchParams({ symbol, interval: String(interval), historyDays: "15" });
+  if (asOf) query.set("asOf", asOf);
   return applyScalperLegsToChartQuery(query, expiry, { ceStrike, peStrike });
 };
 const chartKey = (query: URLSearchParams) => ["trading-analytics-charts", query.toString()] as const;
@@ -184,27 +188,33 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   symbol: string; label: string; asOf: string; expiry: string; strikes: number[]; spot: number | null;
   legs: Row[]; metricLegs?: Row[]; state: string; errors?: Row[]; referenceLevels?: ScalperV2ReferenceLevelPayload;
 }) {
-  const [params, setParams] = useSearchParams(), client = useQueryClient();
+  const [params, setParams] = useSearchParams();
   const isPopout = params.get("popout") === "scalper_v2";
   const mwhd = useMwhdRankings();
   const selectedDayParam = params.get("day");
   const interval = [1, 5, 15, 60].includes(Number(params.get("interval"))) ? Number(params.get("interval")) : 5;
   const defaultStrike = nearestScalperStrike(strikes, spot);
   const { ceStrike: selectedCeStrike, peStrike: selectedPeStrike } = scalperLegSelection(params, defaultStrike);
-  const query = chartQuery(symbol, asOf, expiry, selectedCeStrike, selectedPeStrike, interval);
+  // Live requests let the server resolve now. A changing response timestamp must
+  // never create a new cache entry and unmount the three native charts.
+  const replayAsOf = params.get("asOf") ?? "";
+  const [analyticsTab, setAnalyticsTab] = useState<AnalyticsTab>("overview");
+  const query = chartQuery(symbol, replayAsOf, expiry, selectedCeStrike, selectedPeStrike, interval);
   const active = useQuery({
     queryKey: chartKey(query),
     queryFn: ({ signal }) => getJson<ChartPayload>(`/v1/trading-analytics/charts?${query}`, signal),
-    staleTime: 15_000,
-    refetchInterval: params.has("asOf") ? false : 30_000,
+    staleTime: 60_000,
+    refetchInterval: replayAsOf ? false : 60_000,
+    refetchOnWindowFocus: false,
     refetchIntervalInBackground: false,
     retry: 1,
   });
   const optionPriceHistory = useQuery({
-    queryKey: ["trading-analytics-option-price-history", symbol, expiry, asOf],
-    queryFn: ({ signal }) => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, asOf, historyDays: "3" })}`, signal),
-    enabled: Boolean(expiry),
-    staleTime: 30_000,
+    queryKey: ["trading-analytics-option-price-history", symbol, expiry, replayAsOf],
+    queryFn: ({ signal }) => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, ...(replayAsOf ? { asOf: replayAsOf } : {}), historyDays: "3" })}`, signal),
+    enabled: Boolean(expiry) && analyticsTab === "strength",
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
     refetchInterval: params.has("asOf") ? false : 60_000,
     refetchIntervalInBackground: false,
     retry: 1,
@@ -215,22 +225,6 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     const peStrike = selectedPeStrike || String(nearestScalperStrike(availableScalperStrikes(active.data.availableContracts, expiry, "PE"), spot) ?? "");
     if (ceStrike && peStrike) setParams(setScalperLegSelection(params, { ceStrike, peStrike }), { replace: true });
   }, [active.data, expiry, params, selectedCeStrike, selectedPeStrike, setParams, spot]);
-  useEffect(() => {
-    if (!active.data) return;
-    let obsolete = false;
-    // One background interval at a time, after the active view has painted.
-    // A context change stops the remaining queue; React Query owns cancellation
-    // and de-duplicates an interval selected while its prefetch is in flight.
-    const timer = window.setTimeout(() => { void (async () => {
-      for (const backgroundInterval of [1, 5, 15, 60]) {
-        if (obsolete) break;
-        if (backgroundInterval === interval) continue;
-        const background = chartQuery(symbol, asOf, expiry, selectedCeStrike, selectedPeStrike, backgroundInterval);
-        await client.prefetchQuery({ queryKey: chartKey(background), queryFn: ({ signal }) => getJson<ChartPayload>(`/v1/trading-analytics/charts?${background}`, signal), staleTime: 30_000 });
-      }
-    })(); }, 250);
-    return () => { obsolete = true; window.clearTimeout(timer); };
-  }, [active.data, asOf, client, expiry, interval, selectedCeStrike, selectedPeStrike, symbol]);
 
   const [hoverCrosshair, setHoverCrosshair] = useState<ScalperV2Crosshair>(null);
   const [lockedTime, setLockedTime] = useState<number | null>(null);
@@ -247,7 +241,6 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   // Current OI remains available in the snapshot, strike matrix and OI analytics.
   const profileMode = "change" as const;
   const [profileRangeExpanded, setProfileRangeExpanded] = useState(false);
-  const [analyticsTab, setAnalyticsTab] = useState<AnalyticsTab>("overview");
   const [priceMode, setPriceMode] = useState<ScalperV2PriceMode>("return");
   const [showAllPriceSeries, setShowAllPriceSeries] = useState(false);
   const drawingStore = useScalperV2Drawings(symbol);
@@ -541,8 +534,9 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const structureDeltaMaximum = Math.max(1, ...structureRows.flatMap((row) => [Math.abs(row.ce.changeOi ?? 0), Math.abs(row.pe.changeOi ?? 0)]));
   const volumeSeries = activeData?.volumeSeries;
 
-  if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}</section>;
+  if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
   return <section className={css.page} data-testid="scalper-v2" data-popout={isPopout || undefined}>
+    <ScalperV2Freshness sessions={active.data.calendar?.sessions ?? []} observations={['UNDERLYING', 'CE', 'PE'].map(name => ({ name, end: String(latest(rawPanes.find(pane => chartSide(pane) === name)?.bars ?? [])?.end ?? '') }))} interval={interval} historical={Boolean(replayAsOf || (selectedDayParam && selectedDayParam < (active.data.calendar?.sessions.at(-1)?.trade_date ?? '')))} symbol={symbol} failed={active.isError} />
     <header className={css.commandBar}>
       <strong>Scalper V2</strong><MwhdRankBadge ranking={mwhd.rankings.get(symbol.toUpperCase())} />
       <div className={css.topQuotes} aria-label="Current selected values"><span><b>{label}</b>{number(inspectedUnderlying)}</span><span className={css.callText}><b>CE {selectedCeStrike}</b>{price(inspectedRows[1]?.close ?? callLeg?.last_price)}</span><span className={css.putText}><b>PE {selectedPeStrike}</b>{price(inspectedRows[2]?.close ?? putLeg?.last_price)}</span></div>

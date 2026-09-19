@@ -6,6 +6,14 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 Scalper V2 minute refresh: live cache keys no longer include moving
+response timestamps; three chart instances survive polling, inactive intervals
+are not prefetched repeatedly, and deployment reloads are explicit in V2.
+Exchange-calendar candle freshness alerts are visible and optionally delivered
+as browser notifications. Replay, exact contracts, indicators, drawings,
+measurements and order controls remain. Evidence:
+`docs/trading-analytics/SCALPER_V2_STABLE_REFRESH_20260919.md`.
+
 2026-09-19 3Month light compact presentation: `/strategy/three-month` uses a
 white/light workspace and 30px data rows. The sticky identity column shows only
 the symbol; company, sector, result and score remain available on hover/focus,

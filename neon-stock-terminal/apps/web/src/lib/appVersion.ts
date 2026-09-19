@@ -71,6 +71,20 @@ export function startAppVersionGuard(options: { pollMs?: number } = {}): () => v
 
   const reloadInto = (version: string) => {
     if (reloadQueued || !shouldReloadForVersion(current, version, sessionStorage.getItem(RELOAD_TARGET_KEY))) return;
+    // Keep the active chart and unsaved inspection state intact across releases.
+    const route = new URL(window.location.href);
+    if (route.pathname.endsWith('/strategy/trading-analytics') && ['scalper', 'scalper_v2'].includes(route.searchParams.get('view') ?? '')) {
+      if (!document.getElementById('n50-ui-version-update')) {
+        showUpdatingNotice();
+        const notice = document.getElementById('n50-ui-version-update')!;
+        notice.textContent = 'An app update is available. Your charts will continue updating. ';
+        const button = document.createElement('button');
+        button.textContent = 'Apply update';
+        button.onclick = () => window.location.reload();
+        notice.appendChild(button);
+      }
+      return;
+    }
     reloadQueued = true;
     sessionStorage.setItem(RELOAD_TARGET_KEY, `${version}@${Date.now()}`);
     showUpdatingNotice();

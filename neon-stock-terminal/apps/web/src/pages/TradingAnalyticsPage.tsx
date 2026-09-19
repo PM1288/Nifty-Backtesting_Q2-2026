@@ -405,7 +405,8 @@ export function TradingAnalyticsPage() {
   const scalperQ = useQuery({
     queryKey: ["trading-analytics-scalper-context", scalperQuery.toString()],
     queryFn: () => getJson<ScalperContextPayload>(`/v1/trading-analytics/scalper-context?${scalperQuery}`),
-    staleTime: 30000,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
     retry: 1,
     enabled: tab === "scalper" || tab === "scalper_v2",
     refetchInterval: params.has("asOf") ? false : 60000,

@@ -151,8 +151,8 @@ export function useScalperProgression(enabled = true) {
     queryKey: ["scalper-progression", tokenVersion],
     queryFn: fetchScalperProgression,
     enabled,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 }
 

@@ -518,3 +518,12 @@ completed analytical trackers, with valid forward OHLC only. Additive
 Recorded fills, strategy/targets, costs, reserves, comments, exports and
 permissions remain unchanged. Historical research replay is explicitly pending.
 Evidence: `docs/OIIS_PAPER_AUDIT_REPAIR_20260918.md`.
+
+2026-09-19 Home MWHD staged funnel: the existing Bull/Bear strategy comparisons,
+weights and full evidence export remain unchanged. Home initially renders ten
+ranks per direction, with all remaining rows available explicitly. The Trading
+shortlist adds separate staged counts and passed-candidate lists for MWD, H, 15m
+and 5m. Failed prerequisites leave deeper stages unavailable; they are not
+relabelled as failures or zeros. Existing OIIS qualification, personal picks,
+Stock 360 links, orders, V1/V2 analytics and notification controls are preserved.
+Evidence: `docs/uiux/HOME_MWHD_STAGED_FUNNEL_20260919.md`.

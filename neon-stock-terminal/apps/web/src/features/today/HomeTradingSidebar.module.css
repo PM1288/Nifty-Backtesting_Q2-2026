@@ -16,4 +16,19 @@
 .form label { display:grid; gap:4px; }
 .panel button { cursor:pointer; }
 .row button { margin-top:6px; }
+.funnel { margin:10px 0 14px; padding:9px; border:1px solid #bdcadd; border-radius:8px; background:#f8fafc; }
+.funnel h3 { margin:0 0 5px; font-size:13px; }
+.funnelLane { display:grid; grid-template-columns:44px repeat(5,minmax(0,1fr)); align-items:center; gap:3px; margin-top:5px; }
+.funnelLane>b { font-size:10px; color:#087a55; }
+.funnelLane[data-direction=bear]>b { color:#b42336; }
+.funnelLane span { min-width:0; padding:4px 2px; border-radius:5px; background:#e8eef5; text-align:center; }
+.funnelLane strong,.funnelLane small { display:block; }
+.funnelLane strong { font:750 12px "IBM Plex Mono",monospace; }
+.funnelLane small { margin-top:1px; color:#526277; font-size:8px; }
+.funnelCandidates { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+.funnelCandidates>div { display:grid; align-content:start; gap:3px; min-width:0; }
+.funnelCandidates>div>strong { font-size:10px; }
+.funnelCandidates a { display:flex; justify-content:space-between; gap:5px; padding:3px 5px; border:1px solid #d8e0ea; border-radius:4px; background:#fff; text-decoration:none; font-size:9px; }
+.funnelCandidates a b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.funnelCandidates a span { color:#526277; white-space:nowrap; }
 @media(max-width:600px) { .panel { top:100px; bottom:110px; } }

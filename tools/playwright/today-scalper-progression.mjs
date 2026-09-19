@@ -52,7 +52,7 @@ try {
   const rowCount = await bullRows.count();
   const bullSymbols = await bullRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
   const bearSymbols = await bearRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
-  check("Every stock has one Bull rank and one Bear rank", rowCount >= 20 && rowCount === bearSymbols.length && new Set(bullSymbols).size === rowCount && new Set(bearSymbols).size === rowCount && bullSymbols.every((symbol) => bearSymbols.includes(symbol)), `${rowCount} Bull / ${bearSymbols.length} Bear`);
+  check("Only the top 10 Bull and Bear ranks load initially", rowCount === 10 && bearSymbols.length === 10 && new Set(bullSymbols).size === 10 && new Set(bearSymbols).size === 10, `${rowCount} Bull / ${bearSymbols.length} Bear`);
   const expectedGateOrder = ["M−2", "M−1", "W0", "W−1", "D0", "1H", "15m", "5m"];
   const bullHeaders = await bullBoard.locator("thead th").allInnerTexts();
   const bearHeaders = await bearBoard.locator("thead th").allInnerTexts();
@@ -68,10 +68,17 @@ try {
   const firstRowHeight = await bullRows.first().evaluate((element) => element.getBoundingClientRect().height);
   check("Dense candidate rows are no taller than 31px", firstRowHeight > 0 && firstRowHeight <= 31, `height=${firstRowHeight}`);
   const visibleBodyRows = (geometry.clientHeight - 23) / firstRowHeight;
-  check("Only the top 15 ranks are visible before internal scrolling", visibleBodyRows >= 14.8 && visibleBodyRows <= 15.2 && geometry.scrollHeight > geometry.clientHeight, JSON.stringify({ ...geometry, firstRowHeight, visibleBodyRows }));
+  check("The default board contains ten dense rows without hidden rendered rows", visibleBodyRows >= 9.8 && visibleBodyRows <= 10.2 && geometry.scrollHeight <= geometry.clientHeight + 1, JSON.stringify({ ...geometry, firstRowHeight, visibleBodyRows }));
   check("Every stock identity has separate Bull and Bear rank tags", await bullRows.first().getByText(/BULL #\d+/).isVisible() && await bullRows.first().getByText(/BEAR #\d+/).isVisible() && await bearRows.first().getByText(/BULL #\d+/).isVisible() && await bearRows.first().getByText(/BEAR #\d+/).isVisible(), "Explicit direction tags inspected in both rankings");
   check("Bear rank column uses its own independently sorted rank", await bearRows.first().locator("td").first().innerText() === "#1", await bearRows.first().innerText());
   check("Horizontal overflow stays inside each half-width board", geometry.scrollWidth >= geometry.clientWidth && await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), JSON.stringify(geometry));
+  await bullBoard.getByRole("button", { name: /Load remaining/ }).click();
+  await bearBoard.getByRole("button", { name: /Load remaining/ }).click();
+  const expandedBullSymbols = await bullRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
+  const expandedBearSymbols = await bearRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
+  check("Remaining ranks are loaded only on explicit request", expandedBullSymbols.length >= 20 && expandedBullSymbols.length === expandedBearSymbols.length && new Set(expandedBullSymbols).size === expandedBullSymbols.length && new Set(expandedBearSymbols).size === expandedBearSymbols.length && expandedBullSymbols.every((symbol) => expandedBearSymbols.includes(symbol)), `${expandedBullSymbols.length} Bull / ${expandedBearSymbols.length} Bear`);
+  await bullBoard.getByRole("button", { name: "Show top 10 only" }).click();
+  await bearBoard.getByRole("button", { name: "Show top 10 only" }).click();
   await bullRows.first().click();
   const drawer = page.getByRole("dialog", { name: /MWHD evidence/ });
   check("Row drawer exposes Bull and Bear arithmetic and both ranks", await drawer.isVisible() && await drawer.getByText("MWHD-BULL arithmetic").isVisible() && await drawer.getByText("MWHD-BEAR arithmetic").isVisible() && await drawer.getByText(/Audited inverse logic/).isVisible(), "Dual-direction evidence inspected");
@@ -97,7 +104,9 @@ try {
   await mobileWidget.getByText(/\d+ bull · \d+ bear · \d+ stocks/).waitFor({ state: "visible", timeout: 30_000 });
   const mobileGeometry = await mobileWidget.locator('[class*="progressionRankScroller"]').first().evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }));
   check("Mobile contains wide columns in the matrix scroller", mobileGeometry.scrollWidth > mobileGeometry.clientWidth, JSON.stringify(mobileGeometry));
-  check("Mobile retains the 15-row internal vertical scroller", mobileGeometry.scrollHeight > mobileGeometry.clientHeight && mobileGeometry.clientHeight <= 459, JSON.stringify(mobileGeometry));
+  const mobileBullRows = mobileWidget.getByRole("region", { name: "MWHD-BULL RANK" }).locator("tbody [data-progression-symbol]");
+  const mobileBearRows = mobileWidget.getByRole("region", { name: "MWHD-BEAR RANK" }).locator("tbody [data-progression-symbol]");
+  check("Mobile initially renders only the ten ranked rows per direction", await mobileBullRows.count() === 10 && await mobileBearRows.count() === 10, JSON.stringify(mobileGeometry));
   check("Mobile page has no accidental horizontal overflow", await mobilePage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), String(await mobilePage.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)));
   await mobilePage.screenshot({ path: path.join(output, "today-scalper-progression-mobile.png"), fullPage: true });
   await mobile.close();

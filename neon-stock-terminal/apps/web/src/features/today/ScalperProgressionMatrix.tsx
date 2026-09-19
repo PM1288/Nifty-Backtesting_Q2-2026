@@ -80,13 +80,15 @@ function RankBoard({ direction, rows, profiles, onSelect, onOpenStock }: {
   direction: ScalperProgressionDirection; rows: ProgressionMatrixRow[]; profiles: Map<string, StockProfile>;
   onSelect: (symbol: string) => void; onOpenStock: (stock: Quote, target: HTMLElement) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const label = direction === "bull" ? "MWHD-BULL RANK" : "MWHD-BEAR RANK";
+  const visibleRows = expanded ? rows : rows.slice(0, 10);
   return <section className={styles.progressionRankBoard} data-direction={direction} aria-label={label}>
-    <header><strong>{label}</strong><span>{rows.filter((row) => directionalProgression(row, direction).complete).length} ready · top 15 visible</span></header>
-    <div className={styles.progressionRankScroller} data-visible-rows="15" tabIndex={0} aria-label={`${label} ranked stocks; top 15 visible, scroll for remaining stocks`}>
+    <header><strong>{label}</strong><span>{rows.filter((row) => directionalProgression(row, direction).complete).length} ready · top 10 loaded</span></header>
+    <div className={styles.progressionRankScroller} data-visible-rows="10" tabIndex={0} aria-label={`${label} ranked stocks; top 10 loaded`}>
       <table>
         <thead><tr><th>Rank</th><th>Stock</th><th>W Score</th>{GATES.map((gate) => <th key={gate.id}>{gate.label}</th>)}</tr></thead>
-        <tbody>{rows.map((row) => {
+        <tbody>{visibleRows.map((row) => {
           const summary = directionalProgression(row, direction);
           return <tr key={row.stock.symbol} data-progression-symbol={row.stock.symbol} data-direction={direction} data-candidate={summary.complete ? "true" : "false"} onClick={() => onSelect(row.stock.symbol)}>
             <td><b>#{summary.rank}</b></td>
@@ -100,6 +102,7 @@ function RankBoard({ direction, rows, profiles, onSelect, onOpenStock }: {
         })}</tbody>
       </table>
     </div>
+    {rows.length > 10 && <button type="button" className={styles.progressionLoadMore} aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? "Show top 10 only" : `Load remaining ${rows.length - 10}`}</button>}
   </section>;
 }
 

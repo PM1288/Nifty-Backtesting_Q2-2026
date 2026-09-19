@@ -25,11 +25,17 @@ try {
   const panel=page.getByTestId('home-trading-sidebar');
   assert.equal(await panel.count(),0); results.push('Collapsed by default');
   await toggle.click(); await panel.waitFor();
+  await panel.getByText(/MWHD: response for/).waitFor({timeout:60000});
+  const funnel=page.getByTestId('home-mwhd-funnel'); await funnel.waitFor();
+  const laneCounts=await funnel.locator('[class*="funnelLane"]').evaluateAll(lanes=>lanes.map(lane=>[...lane.querySelectorAll('span strong')].map(node=>Number(node.textContent))));
+  assert(laneCounts.length===2 && laneCounts.every(counts=>counts.length===5 && counts.every((value,index)=>index===0 || value<=counts[index-1]))); results.push('MWHD Bull/Bear funnel is monotonic');
+  assert(await funnel.locator('a[data-stage]').count()<=20); results.push('Sidebar exposes at most ten passed candidates per direction');
   await page.getByLabel('Stock symbol',{exact:true}).fill('RELIANCE');
   await page.getByRole('button',{name:'Add to my list',exact:true}).click();
   await page.getByRole('button',{name:'Remove personal long',exact:true}).first().waitFor();
   results.push('Validated personal addition');
   await page.reload(); await toggle.waitFor(); await toggle.click();
+  await panel.getByText(/MWHD: response for/).waitFor({timeout:60000});
   await page.getByRole('button',{name:'Remove personal long',exact:true}).first().waitFor(); results.push('Personal list survives reload');
   await page.screenshot({path:output+'/desktop-home-shortlist.png',fullPage:false});
   await page.setViewportSize({width:390,height:844});

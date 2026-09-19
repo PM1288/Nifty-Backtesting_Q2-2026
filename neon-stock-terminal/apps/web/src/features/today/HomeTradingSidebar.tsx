@@ -4,12 +4,13 @@ import { Link } from 'react-router-dom';
 import { useAuthGate } from '../../auth/AuthGateProvider';
 import { fetchOiisLiveCandidates } from '../../lib/api';
 import type { Quote, ScalperProgressionResponse } from '../../lib/types';
-import { buildProgressionMatrixRows } from './scalperProgressionMatrix';
+import { buildProgressionMatrixRows, directionalProgression, highestProgressionStage, progressionFunnel, sortProgressionRows, type ProgressionFunnelStage } from './scalperProgressionMatrix';
 import { buildTradingShortlist, parsePersonalPicks, shortlistKey, type PersonalPick, type TradeSide } from './tradingShortlist';
 import styles from './HomeTradingSidebar.module.css';
 
 const istDay = () => new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const number = (value: number | null | undefined, suffix = '') => value != null && Number.isFinite(value) ? `${value.toLocaleString('en-IN', {maximumFractionDigits:2})}${suffix}` : '—';
+const stageLabel: Record<ProgressionFunnelStage, string> = {mwd:'MWD',hour:'MWDH','15m':'MWDH 15','5m':'MWDH 5'};
 type Props = { stocks: Quote[]; progression?: ScalperProgressionResponse; progressionError: boolean };
 export function HomeTradingSidebar(props: Props) {
   const {user} = useAuthGate();
@@ -25,10 +26,12 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
   const panel = useRef<HTMLElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
+  const readyToIdleClose = useRef(false);
   const close = () => { setOpen(false); trigger.current?.focus(); };
   const resetTimer = () => {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
+      if (!readyToIdleClose.current) { resetTimer(); return; }
       const active = document.activeElement;
       if (active && panel.current?.contains(active) && (active.matches('input,select,textarea') || active.matches(':focus-visible'))) { resetTimer(); return; }
       setOpen(false);
@@ -56,6 +59,7 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
     try { return await fetchOiisLiveCandidates(today, undefined, controller.signal); }
     finally { clearTimeout(timeout); signal.removeEventListener('abort', abort); }
   }, enabled:open, staleTime:30_000, refetchInterval:open ? 60_000 : false, retry:false});
+  useEffect(() => { readyToIdleClose.current = Boolean(progression) && !oiis.isLoading; }, [progression, oiis.isLoading]);
   const universe = useMemo(() => {
     const map = new Map(stocks.map(stock => [stock.symbol, stock]));
     for (const row of progression?.rows ?? []) if (!map.has(row.symbol)) map.set(row.symbol, {symbol:row.symbol, name:row.companyName ?? row.symbol, last:row.currentValue, dayOpen:row.todayOpen, timestamp:row.observedAt} as Quote);
@@ -65,6 +69,15 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
   // not silently re-rank the strategy universe.
   const ranks = useMemo(() => buildProgressionMatrixRows(stocks, progression?.rows ?? []), [stocks, progression]);
   const rankMap = useMemo(() => new Map(ranks.map(row => [row.stock.symbol,row])), [ranks]);
+  const bullFunnel = useMemo(() => progressionFunnel(ranks, 'bull'), [ranks]);
+  const bearFunnel = useMemo(() => progressionFunnel(ranks, 'bear'), [ranks]);
+  const stageCandidates = useMemo(() => (['bull','bear'] as const).map(direction => ({
+    direction,
+    rows: sortProgressionRows(ranks, direction).flatMap(row => {
+      const stage = highestProgressionStage(directionalProgression(row, direction));
+      return stage ? [{row, stage}] : [];
+    }).slice(0, 10),
+  })), [ranks]);
   const rows = useMemo(() => buildTradingShortlist(today, progression?.sessionDate, ranks, oiis.data, personal), [today, progression?.sessionDate, ranks, oiis.data, personal]);
   const save = (next: PersonalPick[]) => {
     try { localStorage.setItem(shortlistKey(uid), JSON.stringify(next)); setPersonal(next); setMessage('Personal list saved on this browser for your account.'); }
@@ -82,6 +95,18 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
         {oiis.isError && <p role="alert">OIIS unavailable{oiis.data ? ' · last loaded selections shown' : ''}. <button onClick={() => oiis.refetch()}>Retry</button></p>}
         {!oiis.isLoading && !oiis.isError && !oiis.data?.runId && <p>No completed OIIS selection run today.</p>}
         <p className={styles.muted}>MWHD: {progressionError ? 'refresh unavailable' : progression ? `response for ${progression.sessionDate}` : 'loading'}. Only today’s confirmed intraday bars qualify; older ranks are context only.</p>
+        <section className={styles.funnel} aria-label="MWHD staged funnel" data-testid="home-mwhd-funnel">
+          <h3>MWHD live funnel</h3>
+          <p className={styles.muted}>Daily MWD qualification → hourly H → 15m → 5m. A failed stage is not evaluated deeper.</p>
+          {([['BULL', bullFunnel], ['BEAR', bearFunnel]] as const).map(([label, funnel]) => <div className={styles.funnelLane} data-direction={label.toLowerCase()} key={label}>
+            <b>{label}</b>{([['tracked','Tracked'],['mwd','MWD'],['hour','H'],['15m','15'],['5m','5']] as const).map(([key, text]) => <span key={key}><strong>{funnel[key]}</strong><small>{text}</small></span>)}
+          </div>)}
+          <div className={styles.funnelCandidates}>{stageCandidates.map(group => <div key={group.direction}>
+            <strong>{group.direction === 'bull' ? 'Bull' : 'Bear'} passed · top 10</strong>
+            {!group.rows.length && <small>No stock has passed MWD.</small>}
+            {group.rows.map(({row,stage}) => <Link key={row.stock.symbol} data-stage={stage} data-direction={group.direction} to={`/analytics/stock/${encodeURIComponent(row.stock.symbol)}`}><b>#{directionalProgression(row, group.direction).rank} {row.stock.symbol}</b><span>{stageLabel[stage]}</span></Link>)}
+          </div>)}</div>
+        </section>
         {(['LONG','SHORT'] as const).map(direction => <section key={direction} aria-label={`${direction} stocks`}>
           <h3>{direction} · {rows.filter(row => row.side === direction).length}</h3>
           {!rows.some(row => row.side === direction) && <p>No selected or personal stocks in this direction.</p>}

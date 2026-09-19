@@ -6,7 +6,7 @@ import {
   breadthWording, niftyMovementWording, parseBoardSort, parseQuickView, parseSummaryLens,
   serializeQuickView, slugifySector, vixWording,
 } from "../src/features/today/todayModel";
-import { buildProgressionMatrixRows, directionalProgression, progressionRowMatches, progressionStockState, sortProgressionRows } from "../src/features/today/scalperProgressionMatrix";
+import { buildProgressionMatrixRows, directionalProgression, highestProgressionStage, progressionFunnel, progressionRowMatches, progressionStockState, sortProgressionRows } from "../src/features/today/scalperProgressionMatrix";
 
 test("Today URL state canonicalizes unsupported values", () => {
   assert.equal(parseSummaryLens(null), "story");
@@ -49,7 +49,7 @@ test("Home scalper progression keeps alternative month routes and additive confi
   assert.equal(branches[0].depth, 7);
   assert.deepEqual(branches[0].checks.map((check) => check.passed), [true, true, true, true, true, true, true]);
   assert.equal(branches[1].depth, 1);
-  assert.deepEqual(branches[1].checks.map((check) => check.passed), [true, false, true, true, true, true, true, true]);
+  assert.deepEqual(branches[1].checks.map((check) => check.passed), [true, false, true, true, true, null, null, null]);
 });
 
 test("Home scalper progression preserves missing references and stops the AND depth", () => {
@@ -63,7 +63,7 @@ test("Home scalper progression preserves missing references and stops the AND de
       previous5mOpen: 123, observedAt: null,
     },
   );
-  assert.deepEqual(branch.checks.map((check) => check.passed), [true, null, true, true, true, true, null]);
+  assert.deepEqual(branch.checks.map((check) => check.passed), [true, null, true, true, null, null, null]);
   assert.equal(branch.depth, 1);
 });
 
@@ -106,7 +106,7 @@ test("M-2 route requires the visible M-1 sufficiency gate and weighted rank favo
     { symbol: "MINUTE", name: "Minute", last: 120, dayOpen: 130 },
     { symbol: "FAILED", name: "Failed", last: 80, dayOpen: 90 },
   ] as never;
-  const base = { currentValue: 120, todayOpen: 130, currentWeekOpen: 130, previousWeekOpen: 130, currentMonthOpen: 110, previousMonthClose: 100, twoMonthsAgoClose: 105, observedAt: null };
+  const base = { currentValue: 120, todayOpen: 100, currentWeekOpen: 100, previousWeekOpen: 100, currentMonthOpen: 110, previousMonthClose: 100, twoMonthsAgoClose: 105, observedAt: null };
   const rows = buildProgressionMatrixRows(stocks, [
     { symbol: "MONTH", ...base, currentHourOpen: null, previousHourOpen: null, current15mOpen: null, previous15mOpen: null, current5mOpen: null, previous5mOpen: null },
     { symbol: "MINUTE", ...base, currentHourOpen: 110, previousHourOpen: 100, current15mOpen: 110, previous15mOpen: 100, current5mOpen: 110, previous5mOpen: 100 },
@@ -140,8 +140,8 @@ test("MWHD-BEAR is the exact comparison inverse with unchanged gates, operands, 
   assert.deepEqual(bear.map((route) => route.checks.map((check) => check.id)), bull.map((route) => route.checks.map((check) => check.id)));
   assert.deepEqual(bear[1].checks.slice(0, 2).map((check) => check.id), ["month-m1", "month-m2"]);
   assert.deepEqual(bear[1].checks.map((check) => check.passed), [true, true, true, true, true, true, true, true]);
-  assert.ok(bear[1].checks.every((check, index) => check.left === bull[1].checks[index].left && check.right === bull[1].checks[index].right));
-  assert.ok(bear[1].checks.every((check, index) => check.passed !== bull[1].checks[index].passed));
+  assert.deepEqual(bull[1].checks.map((check) => check.passed), [false, false, false, false, false, null, null, null]);
+  assert.ok(bear[1].checks.slice(0, 5).every((check, index) => check.left === bull[1].checks[index].left && check.right === bull[1].checks[index].right));
 });
 
 test("every stock receives independent MWHD-BULL and MWHD-BEAR weighted ranks", () => {
@@ -161,4 +161,16 @@ test("every stock receives independent MWHD-BULL and MWHD-BEAR weighted ranks", 
   assert.equal(down.bearRank, 1);
   assert.deepEqual(sortProgressionRows(rows, "bear").map((row) => row.stock.symbol), ["DOWN", "UP"]);
   assert.equal(progressionStockState(down, "bear"), "complete");
+  assert.deepEqual(progressionFunnel(rows, "bull"), { tracked: 2, mwd: 1, hour: 1, "15m": 1, "5m": 1 });
+  assert.deepEqual(progressionFunnel(rows, "bear"), { tracked: 2, mwd: 1, hour: 1, "15m": 1, "5m": 1 });
+  assert.equal(highestProgressionStage(directionalProgression(up, "bull")), "5m");
+  assert.equal(highestProgressionStage(directionalProgression(down, "bull")), null);
+});
+
+test("MWHD staging stops 15-minute and 5-minute evaluation after a failed hour", () => {
+  const [route] = buildScalperProgressionBranches(
+    { symbol: "STAGED", last: 120, dayOpen: 110 } as never,
+    { symbol: "STAGED", currentValue: 120, todayOpen: 110, currentWeekOpen: 108, previousWeekOpen: 106, currentMonthOpen: 105, previousMonthClose: 100, twoMonthsAgoClose: 101, currentHourOpen: 117, previousHourOpen: 118, current15mOpen: 120, previous15mOpen: 119, current5mOpen: 121, previous5mOpen: 120, observedAt: null },
+  );
+  assert.deepEqual(route.checks.map((check) => check.passed), [true, true, true, true, false, null, null]);
 });

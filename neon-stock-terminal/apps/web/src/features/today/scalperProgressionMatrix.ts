@@ -45,6 +45,39 @@ export type DirectionalProgression = {
   rank: number;
 };
 
+export type ProgressionFunnelStage = "mwd" | "hour" | "15m" | "5m";
+export type ProgressionFunnel = Record<"tracked" | ProgressionFunnelStage, number>;
+
+const FUNNEL_END_GATE: Record<ProgressionFunnelStage, ScalperProgressionCheck["id"]> = {
+  mwd: "today",
+  hour: "hour",
+  "15m": "15m",
+  "5m": "5m",
+};
+
+export function progressionPassedStage(summary: DirectionalProgression, stage: ProgressionFunnelStage): boolean {
+  return summary.routes.some((route) => {
+    const end = route.branch.checks.findIndex((check) => check.id === FUNNEL_END_GATE[stage]);
+    return end >= 0 && route.branch.checks.slice(0, end + 1).every((check) => check.passed === true);
+  });
+}
+
+export function highestProgressionStage(summary: DirectionalProgression): ProgressionFunnelStage | null {
+  const stages: ProgressionFunnelStage[] = ["mwd", "hour", "15m", "5m"];
+  return [...stages].reverse().find((stage) => progressionPassedStage(summary, stage)) ?? null;
+}
+
+export function progressionFunnel(rows: ProgressionMatrixRow[], direction: ScalperProgressionDirection): ProgressionFunnel {
+  const summaries = rows.map((row) => directionalProgression(row, direction));
+  return {
+    tracked: summaries.length,
+    mwd: summaries.filter((summary) => progressionPassedStage(summary, "mwd")).length,
+    hour: summaries.filter((summary) => progressionPassedStage(summary, "hour")).length,
+    "15m": summaries.filter((summary) => progressionPassedStage(summary, "15m")).length,
+    "5m": summaries.filter((summary) => progressionPassedStage(summary, "5m")).length,
+  };
+}
+
 export const PROGRESSION_GATE_WEIGHTS: Record<ScalperProgressionCheck["id"], number> = {
   "month-m1": 1,
   "month-m2": 1,

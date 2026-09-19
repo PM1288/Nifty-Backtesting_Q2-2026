@@ -1326,14 +1326,21 @@ export async function getScalperProgression(prisma: PrismaClient) {
       LEFT JOIN instrument_profiles ip ON ip.symbol = f.symbol
     ),
     intraday_session AS (
-      SELECT MAX((b.ts AT TIME ZONE 'Asia/Kolkata')::date) AS trade_date
-      FROM bars_1m b
-      JOIN universe u ON u.symbol_token = b.symbol_token
-      CROSS JOIN clock c
-      WHERE b.exchange = 'NSE'
-        AND b.ts >= c.today_start - INTERVAL '7 days'
-        AND b.ts < c.tomorrow_start
-        AND b.open IS NOT NULL
+      SELECT candidate_day::date AS trade_date
+      FROM clock c
+      CROSS JOIN LATERAL generate_series(c.today, c.today - 7, INTERVAL '-1 day') candidate_day
+      WHERE EXTRACT(ISODOW FROM candidate_day) BETWEEN 1 AND 5
+        AND EXISTS (
+          SELECT 1
+          FROM bars_1m b
+          WHERE b.exchange = 'NSE'
+            AND b.ts >= (candidate_day::date + TIME '09:15') AT TIME ZONE 'Asia/Kolkata'
+            AND b.ts < (candidate_day::date + TIME '15:31') AT TIME ZONE 'Asia/Kolkata'
+            AND b.open IS NOT NULL
+          LIMIT 1
+        )
+      ORDER BY candidate_day DESC
+      LIMIT 1
     ),
     history_sources AS (
       SELECT
@@ -1450,64 +1457,145 @@ export async function getScalperProgression(prisma: PrismaClient) {
       CROSS JOIN clock c
       GROUP BY d.symbol
     ),
-    intraday_source AS (
+    stage_candidates AS (
       SELECT
         u.symbol,
+        u.symbol_token,
+        (
+          refs.current_month_open > refs.previous_month_close
+          AND COALESCE(st.last_price, st.last_close) > refs.current_week_open
+          AND COALESCE(st.last_price, st.last_close) > refs.previous_week_open
+          AND COALESCE(st.last_price, st.last_close) > COALESCE(st.last_open, refs.today_open)
+        ) AS bull_mwd,
+        (
+          refs.current_month_open < refs.previous_month_close
+          AND COALESCE(st.last_price, st.last_close) < refs.current_week_open
+          AND COALESCE(st.last_price, st.last_close) < refs.previous_week_open
+          AND COALESCE(st.last_price, st.last_close) < COALESCE(st.last_open, refs.today_open)
+        ) AS bear_mwd
+      FROM universe u
+      LEFT JOIN reference_values refs ON refs.symbol = u.symbol
+      LEFT JOIN instrument_state st ON st.exchange = 'NSE' AND st.symbol_token = u.symbol_token
+      WHERE (
+          refs.current_month_open > refs.previous_month_close
+          AND COALESCE(st.last_price, st.last_close) > refs.current_week_open
+          AND COALESCE(st.last_price, st.last_close) > refs.previous_week_open
+          AND COALESCE(st.last_price, st.last_close) > COALESCE(st.last_open, refs.today_open)
+        ) OR (
+          refs.current_month_open < refs.previous_month_close
+          AND COALESCE(st.last_price, st.last_close) < refs.current_week_open
+          AND COALESCE(st.last_price, st.last_close) < refs.previous_week_open
+          AND COALESCE(st.last_price, st.last_close) < COALESCE(st.last_open, refs.today_open)
+        )
+    ),
+    intraday_source AS MATERIALIZED (
+      SELECT
+        candidate.symbol,
         b.ts,
         b.open::double precision AS open,
         b.ts AT TIME ZONE 'Asia/Kolkata' AS local_ts
       FROM bars_1m b
-      JOIN universe u ON u.symbol_token = b.symbol_token
+      JOIN stage_candidates candidate ON candidate.symbol_token = b.symbol_token
       CROSS JOIN intraday_session session
       WHERE b.exchange = 'NSE'
         AND session.trade_date IS NOT NULL
         AND b.ts >= (session.trade_date::timestamp AT TIME ZONE 'Asia/Kolkata')
         AND b.ts < ((session.trade_date + 1)::timestamp AT TIME ZONE 'Asia/Kolkata')
         AND b.open IS NOT NULL
+        AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time BETWEEN TIME '09:15' AND TIME '15:30'
     ),
-    intraday_buckets AS (
-      SELECT symbol, '60m' AS frame,
+    hour_buckets AS (
+      SELECT symbol,
         date_trunc('hour', local_ts) AS bucket_start,
         (ARRAY_AGG(open ORDER BY ts))[1] AS bucket_open
       FROM intraday_source GROUP BY symbol, date_trunc('hour', local_ts)
-      UNION ALL
-      SELECT symbol, '15m' AS frame,
-        date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 15) * INTERVAL '15 minutes' AS bucket_start,
-        (ARRAY_AGG(open ORDER BY ts))[1] AS bucket_open
-      FROM intraday_source
-      GROUP BY symbol, date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 15) * INTERVAL '15 minutes'
-      UNION ALL
-      SELECT symbol, '5m' AS frame,
-        date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 5) * INTERVAL '5 minutes' AS bucket_start,
-        (ARRAY_AGG(open ORDER BY ts))[1] AS bucket_open
-      FROM intraday_source
-      GROUP BY symbol, date_trunc('hour', local_ts) + FLOOR(EXTRACT(minute FROM local_ts) / 5) * INTERVAL '5 minutes'
     ),
-    intraday_ranked AS (
+    hour_ranked AS (
       SELECT *,
-        ROW_NUMBER() OVER (PARTITION BY symbol, frame ORDER BY bucket_start DESC) AS recency,
-        LEAD(bucket_open) OVER (PARTITION BY symbol, frame ORDER BY bucket_start DESC) AS previous_bucket_open,
-        LEAD(bucket_start) OVER (PARTITION BY symbol, frame ORDER BY bucket_start DESC) AS previous_bucket_start
-      FROM intraday_buckets
+        ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS recency,
+        LEAD(bucket_open) OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS previous_bucket_open,
+        LEAD(bucket_start) OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS previous_bucket_start
+      FROM hour_buckets
     ),
-    intraday_values AS (
+    hour_values AS (
       SELECT
         symbol,
-        MAX(bucket_open) FILTER (WHERE frame = '60m' AND recency = 1) AS current_hour_open,
-        MAX(CASE WHEN frame = '60m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '1 hour' THEN previous_bucket_open END) AS previous_hour_open,
-        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE frame = '60m' AND recency = 1) AS current_hour_started_at,
-        MAX(CASE WHEN frame = '60m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '1 hour' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_hour_started_at,
-        MAX(bucket_open) FILTER (WHERE frame = '15m' AND recency = 1) AS current_15m_open,
-        MAX(CASE WHEN frame = '15m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_open END) AS previous_15m_open,
-        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE frame = '15m' AND recency = 1) AS current_15m_started_at,
-        MAX(CASE WHEN frame = '15m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_15m_started_at,
-        MAX(bucket_open) FILTER (WHERE frame = '5m' AND recency = 1) AS current_5m_open,
-        MAX(CASE WHEN frame = '5m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '5 minutes' THEN previous_bucket_open END) AS previous_5m_open,
-        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE frame = '5m' AND recency = 1) AS current_5m_started_at,
-        MAX(CASE WHEN frame = '5m' AND recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '5 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_5m_started_at
-      FROM intraday_ranked
+        MAX(bucket_open) FILTER (WHERE recency = 1) AS current_hour_open,
+        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '1 hour' THEN previous_bucket_open END) AS previous_hour_open,
+        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE recency = 1) AS current_hour_started_at,
+        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '1 hour' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_hour_started_at
+      FROM hour_ranked
       WHERE recency = 1
       GROUP BY symbol
+    ),
+    hour_candidates AS (
+      SELECT candidate.*
+      FROM stage_candidates candidate
+      JOIN hour_values value ON value.symbol = candidate.symbol
+      WHERE (candidate.bull_mwd AND value.current_hour_open > value.previous_hour_open)
+         OR (candidate.bear_mwd AND value.current_hour_open < value.previous_hour_open)
+    ),
+    fifteen_buckets AS (
+      SELECT source.symbol,
+        date_trunc('hour', source.local_ts) + FLOOR(EXTRACT(minute FROM source.local_ts) / 15) * INTERVAL '15 minutes' AS bucket_start,
+        (ARRAY_AGG(source.open ORDER BY source.ts))[1] AS bucket_open
+      FROM intraday_source source
+      JOIN hour_candidates candidate ON candidate.symbol = source.symbol
+      GROUP BY source.symbol, date_trunc('hour', source.local_ts) + FLOOR(EXTRACT(minute FROM source.local_ts) / 15) * INTERVAL '15 minutes'
+    ),
+    fifteen_ranked AS (
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS recency,
+        LEAD(bucket_open) OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS previous_bucket_open,
+        LEAD(bucket_start) OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS previous_bucket_start
+      FROM fifteen_buckets
+    ),
+    fifteen_values AS (
+      SELECT symbol,
+        MAX(bucket_open) FILTER (WHERE recency = 1) AS current_15m_open,
+        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_open END) AS previous_15m_open,
+        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE recency = 1) AS current_15m_started_at,
+        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_15m_started_at
+      FROM fifteen_ranked WHERE recency = 1 GROUP BY symbol
+    ),
+    fifteen_candidates AS (
+      SELECT candidate.*
+      FROM hour_candidates candidate
+      JOIN hour_values hour ON hour.symbol = candidate.symbol
+      JOIN fifteen_values value ON value.symbol = candidate.symbol
+      WHERE (candidate.bull_mwd AND hour.current_hour_open > hour.previous_hour_open AND value.current_15m_open > value.previous_15m_open)
+         OR (candidate.bear_mwd AND hour.current_hour_open < hour.previous_hour_open AND value.current_15m_open < value.previous_15m_open)
+    ),
+    five_buckets AS (
+      SELECT source.symbol,
+        date_trunc('hour', source.local_ts) + FLOOR(EXTRACT(minute FROM source.local_ts) / 5) * INTERVAL '5 minutes' AS bucket_start,
+        (ARRAY_AGG(source.open ORDER BY source.ts))[1] AS bucket_open
+      FROM intraday_source source
+      JOIN fifteen_candidates candidate ON candidate.symbol = source.symbol
+      GROUP BY source.symbol, date_trunc('hour', source.local_ts) + FLOOR(EXTRACT(minute FROM source.local_ts) / 5) * INTERVAL '5 minutes'
+    ),
+    five_ranked AS (
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS recency,
+        LEAD(bucket_open) OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS previous_bucket_open,
+        LEAD(bucket_start) OVER (PARTITION BY symbol ORDER BY bucket_start DESC) AS previous_bucket_start
+      FROM five_buckets
+    ),
+    five_values AS (
+      SELECT symbol,
+        MAX(bucket_open) FILTER (WHERE recency = 1) AS current_5m_open,
+        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '5 minutes' THEN previous_bucket_open END) AS previous_5m_open,
+        MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE recency = 1) AS current_5m_started_at,
+        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '5 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_5m_started_at
+      FROM five_ranked WHERE recency = 1 GROUP BY symbol
+    ),
+    intraday_values AS (
+      SELECT candidate.symbol,
+        hour.current_hour_open, hour.previous_hour_open, hour.current_hour_started_at, hour.previous_hour_started_at,
+        fifteen.current_15m_open, fifteen.previous_15m_open, fifteen.current_15m_started_at, fifteen.previous_15m_started_at,
+        five.current_5m_open, five.previous_5m_open, five.current_5m_started_at, five.previous_5m_started_at
+      FROM stage_candidates candidate
+      LEFT JOIN hour_values hour ON hour.symbol = candidate.symbol
+      LEFT JOIN fifteen_values fifteen ON fifteen.symbol = candidate.symbol
+      LEFT JOIN five_values five ON five.symbol = candidate.symbol
     )
     SELECT
       u.symbol,
@@ -1602,6 +1690,40 @@ export async function getScalperProgression(prisma: PrismaClient) {
     basis: "Current/as-of values, canonical daily period anchors, and contiguous clock-hour/15-minute/5-minute opens from the latest observed NSE session within seven calendar days",
     rows: data,
   };
+}
+
+type ScalperProgressionPayload = Awaited<ReturnType<typeof getScalperProgression>>;
+type ScalperProgressionCache = {
+  payload: ScalperProgressionPayload | null;
+  expiresAt: number;
+  pending: Promise<ScalperProgressionPayload> | null;
+};
+const scalperProgressionCaches = new WeakMap<PrismaClient, ScalperProgressionCache>();
+const scalperProgressionWarmers = new WeakSet<PrismaClient>();
+const SCALPER_PROGRESSION_CACHE_MS = 30_000;
+
+function getCachedScalperProgression(prisma: PrismaClient): Promise<ScalperProgressionPayload> {
+  let cache = scalperProgressionCaches.get(prisma);
+  if (!cache) {
+    cache = { payload: null, expiresAt: 0, pending: null };
+    scalperProgressionCaches.set(prisma, cache);
+  }
+  const refresh = () => {
+    if (cache!.pending) return cache!.pending;
+    cache!.pending = getScalperProgression(prisma)
+      .then((payload) => {
+        cache!.payload = payload;
+        cache!.expiresAt = Date.now() + SCALPER_PROGRESSION_CACHE_MS;
+        return payload;
+      })
+      .finally(() => { cache!.pending = null; });
+    return cache!.pending;
+  };
+  if (cache.payload) {
+    if (cache.expiresAt <= Date.now()) void refresh().catch(() => undefined);
+    return Promise.resolve(cache.payload);
+  }
+  return refresh();
 }
 
 const SCALPER_SCREENER_EXPORT_COLUMNS = [
@@ -1709,6 +1831,14 @@ export async function getLeaderboard(prisma: PrismaClient, limit: number) {
 }
 
 export function registerOverview(app: Express, prisma: PrismaClient) {
+  if (process.env.NODE_ENV === "production" && !scalperProgressionWarmers.has(prisma)) {
+    scalperProgressionWarmers.add(prisma);
+    const warm = () => { void getCachedScalperProgression(prisma).catch(() => undefined); };
+    const initialWarm = setTimeout(warm, 1_000);
+    const refreshTimer = setInterval(warm, SCALPER_PROGRESSION_CACHE_MS);
+    initialWarm.unref();
+    refreshTimer.unref();
+  }
   app.get("/v1/overview/header", async (_req, res, next) => {
     try {
       const payload = await getHeaderMarketSummary(prisma);
@@ -1723,8 +1853,8 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
 
   app.get("/v1/overview/scalper-progression", async (_req, res, next) => {
     try {
-      const payload = await getScalperProgression(prisma);
-      res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
+      const payload = await getCachedScalperProgression(prisma);
+      res.setHeader("Cache-Control", "private, max-age=15, stale-while-revalidate=30");
       return res.json(payload);
     } catch (error) {
       return next(error);

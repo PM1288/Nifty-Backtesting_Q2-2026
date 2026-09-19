@@ -104,10 +104,12 @@ function buildDirectionalScalperProgressionBranches(stock: Quote, row: ScalperPr
   const previous5mOpen = progressionValue(row.previous5mOpen);
   const symbol = direction === "bull" ? ">" : "<";
   const comparison = (left: number | null, right: number | null) => left == null || right == null ? null : direction === "bull" ? left > right : left < right;
-  const shared: ScalperProgressionCheck[] = [
+  const mwd: ScalperProgressionCheck[] = [
     { id: "week", label: `Latest ${symbol} this-week open`, left: currentValue, right: currentWeekOpen, passed: comparison(currentValue, currentWeekOpen) },
     { id: "previous-week", label: `Latest ${symbol} previous-week open`, left: currentValue, right: previousWeekOpen, passed: comparison(currentValue, previousWeekOpen) },
     { id: "today", label: `Latest ${symbol} today open`, left: currentValue, right: todayOpen, passed: comparison(currentValue, todayOpen) },
+  ];
+  const intraday: ScalperProgressionCheck[] = [
     { id: "hour", label: `This clock-hour open ${symbol} previous clock-hour open`, left: currentHourOpen, right: previousHourOpen, passed: comparison(currentHourOpen, previousHourOpen) },
     { id: "15m", label: `Current 15-minute open ${symbol} previous 15-minute open`, left: current15mOpen, right: previous15mOpen, passed: comparison(current15mOpen, previous15mOpen) },
     { id: "5m", label: `Current 5-minute open ${symbol} previous 5-minute open`, left: current5mOpen, right: previous5mOpen, passed: comparison(current5mOpen, previous5mOpen) },
@@ -127,7 +129,14 @@ function buildDirectionalScalperProgressionBranches(stock: Quote, row: ScalperPr
     passed: comparison(currentMonthOpen, progressionValue(row.twoMonthsAgoClose)),
   };
   const branch = (id: ScalperProgressionBranch["id"], label: string, starters: ScalperProgressionCheck[]): ScalperProgressionBranch => {
-    const checks: ScalperProgressionCheck[] = [...starters, ...shared];
+    const prerequisites = [...starters, ...mwd];
+    let eligible = prerequisites.every((check) => check.passed === true);
+    const stagedIntraday = intraday.map((check) => {
+      const staged = eligible ? check : { ...check, left: null, right: null, passed: null };
+      eligible = eligible && staged.passed === true;
+      return staged;
+    });
+    const checks: ScalperProgressionCheck[] = [...prerequisites, ...stagedIntraday];
     let depth = 0;
     for (const check of checks) {
       if (check.passed !== true) break;

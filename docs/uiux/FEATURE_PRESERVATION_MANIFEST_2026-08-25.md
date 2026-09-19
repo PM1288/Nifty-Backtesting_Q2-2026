@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 3Month light compact presentation: `/strategy/three-month` uses a
+white/light workspace and 30px data rows. The sticky identity column shows only
+the symbol; company, sector, result and score remain available on hover/focus,
+and exact arithmetic remains in the existing gate tooltips and click-open
+drawer. Formula, data, qualification, filters, CSV and missingness semantics are
+unchanged. Evidence: `docs/strategy/THREE_MONTH_STRATEGY_20260919.md`.
+
 2026-09-19 Scalper V2 side-chart geometry: the existing right-side OI and
 Change-in-OI strike charts replace large fixed ECharts gutters with measured
 label containment and 2px outer plot insets. Their cards and the gap beside the

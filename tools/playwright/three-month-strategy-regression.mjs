@@ -33,6 +33,20 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
   check(`${target.name} completed default`, await page.getByLabel("Completed candles").isChecked(), "forming unexpectedly default");
   const firstRow = page.locator("tbody tr").first();
   check(`${target.name} rows`, await firstRow.isVisible(), `count=${await page.locator("tbody tr").count()}`);
+  const presentation = await page.getByTestId("three-month-strategy").evaluate((root) => {
+    const row = root.querySelector("tbody tr");
+    const symbol = row?.querySelector("td:first-child a");
+    return {
+      pageBackground: getComputedStyle(root).backgroundColor,
+      rowHeight: row?.getBoundingClientRect().height ?? 0,
+      companyLines: row?.querySelectorAll("td:first-child small").length ?? -1,
+      symbolTitle: symbol?.getAttribute("title") ?? "",
+      rowTitle: row?.getAttribute("title") ?? "",
+    };
+  });
+  check(`${target.name} light theme`, presentation.pageBackground === "rgb(245, 247, 251)", JSON.stringify(presentation));
+  check(`${target.name} compact symbol rows`, presentation.rowHeight <= 32 && presentation.companyLines === 0, JSON.stringify(presentation));
+  check(`${target.name} hover details`, presentation.symbolTitle.length > 0 && presentation.rowTitle.includes("bullish gates"), JSON.stringify(presentation));
   await firstRow.click();
   check(`${target.name} arithmetic drawer`, await page.getByText("Exact gate arithmetic").isVisible(), "drawer missing");
   await page.getByLabel("Close details").click();

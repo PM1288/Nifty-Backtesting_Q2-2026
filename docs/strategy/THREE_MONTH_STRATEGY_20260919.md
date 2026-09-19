@@ -100,3 +100,21 @@ Release commits `735320b`, `a142d92` and `c05d0ef` are on `master` and
 recreated only `n50-dashboard`; container `62ff9d61d74c...` is healthy with entry
 asset `/n50/assets/index-CUjDGsLd.js`. No database migration or data mutation was
 performed.
+
+## Light compact presentation repair — 19 September 2026
+
+The existing route now follows the application's light workspace treatment.
+The hero, summary, controls, table and arithmetic drawer use white/light
+surfaces with dark readable text; strategy calculations, API data and state
+colours are unchanged.
+
+The primary table displays only the exchange symbol in the sticky stock column.
+Company name, sector, qualification and score remain available in the row hover
+description and accessible label, while exact gate arithmetic remains in each
+gate tooltip and the click-open drawer. Body rows are capped at 30px in the
+normal desktop presentation so the screener exposes substantially more stocks
+without hiding evidence.
+
+Browser acceptance additionally verifies the computed light background, row
+height, absence of the redundant company-name line, hover metadata and the
+existing arithmetic drawer at desktop and mobile sizes.

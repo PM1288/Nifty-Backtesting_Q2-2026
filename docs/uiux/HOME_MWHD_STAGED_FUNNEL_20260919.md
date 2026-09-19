@@ -92,3 +92,17 @@ migration or data rewrite is involved. The funnel reports the latest retained
 valid NSE session on non-trading days; it does not claim that Saturday is a live
 market session. A production browser check is required after deployment and is
 recorded in the handoff rather than inferred from the candidate checks.
+
+## Production release
+
+Application commit `72df09d` was pushed to the feature branch and `master`.
+Rollback tag `before-home-mwhd-funnel-20260919` identifies the prior release.
+The approved scoped deployment recreated only `n50-dashboard`; container
+`771b23bdffc3...` is healthy on image `sha256:c5d9138e59e...`, with entry asset
+`/n50/assets/index-DgIc_QJi.js`. Authenticated public Chromium passed all 20
+progression checks and all 10 shortlist interaction groups. The desktop capture
+was visually inspected and showed Bull `210 → 16 → 11 → 8 → 8` and Bear
+`210 → 27 → 5 → 4 → 4` for the retained 18 September 2026 session. Evidence is
+outside Git at `/tmp/mwhd-progression-production/` and
+`/tmp/mwhd-sidebar-production/`. No database, collector, strategy or order
+service was recreated or modified.

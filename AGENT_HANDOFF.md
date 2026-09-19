@@ -5355,3 +5355,34 @@ or outcomes were deleted.
   The live 1920x1080 capture was visually inspected. Evidence is outside Git at
   `/tmp/scalper-v2-popout-structure-production-20260919/`. No API, collector,
   database, strategy or order service was recreated or changed.
+
+## 2026-09-19 — Home MWHD staged funnel and top-ten boards
+
+- Branch: `feat/home-mwhd-funnel-staged-20260919`; implementation report:
+  `docs/uiux/HOME_MWHD_STAGED_FUNNEL_20260919.md`.
+- Home loads only the top ten Bull and Bear ranks initially; all 210 retained
+  rows remain accessible through explicit load controls and the evidence export.
+- The Trading shortlist now shows separate Bull/Bear
+  `Tracked → MWD → H → 15m → 5m` funnels and up to ten highest-stage stocks per
+  direction. Intermediate stages are context, not selected/executed trades.
+- Calculation is sequential in UI and SQL: failed MWD skips H/15m/5m, failed H
+  skips 15m/5m and failed 15m skips 5m. Skips remain unavailable rather than
+  false/zero. Existing comparisons, weights and OIIS selection are unchanged.
+- Session resolution uses indexed weekday 09:15–15:30 IST evidence, preventing
+  weekend/off-session rows from displacing the latest valid NSE session. The
+  inspected payload contained 43 paired hourly, 16 eligible 15m and 12 eligible
+  5m observations.
+- Production prewarming, request coalescing and stale-while-refresh reduced an
+  observed ~12.2–12.6s endpoint wait to 0.012s for the prewarmed request (direct
+  cached read 0.006s). Cold recomputation remains database-load dependent at
+  roughly 4–8s but is no longer repeated by concurrent consumers.
+- Gates passed: web typecheck/build and 216/216 tests; API typecheck/build and
+  247/247 tests; canonical repository gate and diff check. Candidate Playwright
+  passed 20/20 progression checks and 10/10 shortlist interaction groups.
+- Release commit `72df09d` pushed to the feature branch and `master`; rollback
+  tag `before-home-mwhd-funnel-20260919`. Scoped deploy recreated only the
+  dashboard. Container `771b23bdffc3...` is healthy, image
+  `sha256:c5d9138e59e...`, entry asset `/n50/assets/index-DgIc_QJi.js`.
+- Authenticated production Playwright passed the same 20 and 10 checks; the live
+  screenshot was inspected. Production evidence is outside Git at
+  `/tmp/mwhd-progression-production/` and `/tmp/mwhd-sidebar-production/`.

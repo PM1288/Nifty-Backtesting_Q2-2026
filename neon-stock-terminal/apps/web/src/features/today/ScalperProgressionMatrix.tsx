@@ -10,6 +10,7 @@ import {
   directionalProgression,
   PROGRESSION_GATE_WEIGHTS,
   sortProgressionRows,
+  volumeConfirmation,
   type DirectionalProgression,
   type ProgressionMatrixRow,
   type ProgressionRouteSummary,
@@ -23,6 +24,10 @@ const GATES: Array<{ id: ScalperProgressionCheck["id"]; label: string }> = [
 ];
 type CandidateFilter = "all" | "bull" | "bear" | "either";
 const price = (value: number | null) => value == null ? "—" : value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const quantity = (value: number | string | null | undefined) => {
+  const parsed = typeof value === "number" ? value : typeof value === "string" && value.trim() ? Number(value) : Number.NaN;
+  return Number.isFinite(parsed) ? Math.round(parsed).toLocaleString("en-IN") : "—";
+};
 const stateOf = (check: ScalperProgressionCheck | undefined) => !check || check.passed == null ? "pending" : check.passed ? "pass" : "fail";
 const stateSymbol = (check: ScalperProgressionCheck | undefined) => !check || check.passed == null ? "—" : check.passed ? "✓" : "×";
 const routeName = (route: ProgressionRouteSummary) => route.branch.id === "previous-month" ? "M−1" : "M−1 + M−2";
@@ -55,11 +60,14 @@ function ProgressionDrawer({ row, generatedAt, onClose }: { row: ProgressionMatr
   }, [onClose]);
   const bull = directionalProgression(row, "bull");
   const bear = directionalProgression(row, "bear");
+  const volume = volumeConfirmation(row.stock);
+  const projectedVolume = volume.multiple != null && row.stock.averageVolume20 != null ? volume.multiple * row.stock.averageVolume20 : null;
   return <>
     <button type="button" className={styles.progressionDrawerBackdrop} aria-label="Close progression details" onClick={onClose} />
     <aside className={styles.progressionDrawer} role="dialog" aria-modal="true" aria-label={`${row.stock.symbol} MWHD evidence`}>
       <header><div><strong>{row.stock.symbol}</strong><small>{row.stock.name} · ₹{price(row.stock.last ?? row.source.currentValue)}</small></div><button ref={closeRef} type="button" onClick={onClose} aria-label="Close"><X size={17} /></button></header>
       <div className={styles.progressionDualRank}><span data-direction="bull">MWHD-BULL <b>#{bull.rank}</b> · W {bull.best.weightedScore}/{bull.best.maximumWeight}</span><span data-direction="bear">MWHD-BEAR <b>#{bear.rank}</b> · W {bear.best.weightedScore}/{bear.best.maximumWeight}</span></div>
+      <div className={styles.progressionVolumeEvidence} data-band={volume.band}><b>{volume.symbol} {volume.multiple == null ? "Volume unavailable" : `${volume.multiple.toFixed(2)}× projected volume`}</b><span>Current {quantity(row.stock.volume)} · projected full day {quantity(projectedVolume)} · prior 20-session daily SMA {quantity(row.stock.averageVolume20)}</span><small>Optional confirmation only; ≥2× is green and does not change either MWHD rank or qualification.</small></div>
       <div className={styles.progressionLogic}><b>Audited inverse logic</b><span>BULL uses actual &gt; reference. BEAR uses the same source observations, gate order and weights with actual &lt; reference. M−2 requires M−1 and M−2 monthly sufficiency before lower-timeframe confirmation.</span></div>
       <h2 className={styles.progressionDirectionTitle} data-direction="bull">MWHD-BULL arithmetic</h2>
       {bull.routes.map((route) => <DetailRoute key={`bull-${route.branch.id}`} route={route} direction="bull" />)}
@@ -76,8 +84,9 @@ function gateFor(summary: DirectionalProgression, gateId: ScalperProgressionChec
   return route.branch.checks.find((check) => check.id === gateId);
 }
 
-function RankBoard({ direction, rows, profiles, onSelect, onOpenStock }: {
+function RankBoard({ direction, rows, profiles, showVolume, onSelect, onOpenStock }: {
   direction: ScalperProgressionDirection; rows: ProgressionMatrixRow[]; profiles: Map<string, StockProfile>;
+  showVolume: boolean;
   onSelect: (symbol: string) => void; onOpenStock: (stock: Quote, target: HTMLElement) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -87,13 +96,14 @@ function RankBoard({ direction, rows, profiles, onSelect, onOpenStock }: {
     <header><strong>{label}</strong><span>{rows.filter((row) => directionalProgression(row, direction).complete).length} ready · top 10 loaded</span></header>
     <div className={styles.progressionRankScroller} data-visible-rows="10" tabIndex={0} aria-label={`${label} ranked stocks; top 10 loaded`}>
       <table>
-        <thead><tr><th>Rank</th><th>Stock</th><th>W Score</th>{GATES.map((gate) => <th key={gate.id}>{gate.label}</th>)}</tr></thead>
+        <thead><tr><th>Rank</th><th>Stock</th><th>W Score</th>{showVolume && <th title="Projected full-session volume divided by prior 20-session daily-volume SMA; optional, not ranked">V20 opt.</th>}{GATES.map((gate) => <th key={gate.id}>{gate.label}</th>)}</tr></thead>
         <tbody>{visibleRows.map((row) => {
           const summary = directionalProgression(row, direction);
           return <tr key={row.stock.symbol} data-progression-symbol={row.stock.symbol} data-direction={direction} data-candidate={summary.complete ? "true" : "false"} onClick={() => onSelect(row.stock.symbol)}>
             <td><b>#{summary.rank}</b></td>
             <th scope="row"><button type="button" title={`${row.stock.symbol}: MWHD-BULL rank ${row.rank}; MWHD-BEAR rank ${row.bearRank}; select the row for complete arithmetic`} onClick={(event) => { event.stopPropagation(); onOpenStock(row.stock, event.currentTarget); }}><StockLogo symbol={row.stock.symbol} profile={profiles.get(row.stock.symbol)} size={16} /><span><b>{row.stock.symbol}</b><small className={styles.progressionRankTags}><i data-direction="bull">BULL #{row.rank}</i><i data-direction="bear">BEAR #{row.bearRank}</i></small></span></button></th>
             <td className={styles.progressionCompactScore} title={`${summary.best.pass} passed, ${summary.best.fail} failed, ${summary.best.pending} pending`}><b>{summary.best.weightedScore}/{summary.best.maximumWeight}</b><small>{summary.best.pass}✓ {summary.best.fail}× {summary.best.pending}…</small></td>
+            {showVolume && (() => { const volume = volumeConfirmation(row.stock); return <td className={styles.progressionVolumeTick} data-band={volume.band} data-state={volume.state} title={volume.multiple == null ? "Volume or prior 20-session SMA unavailable" : `Projected full-day volume ${volume.multiple.toFixed(2)}× the prior 20-session daily SMA. Optional confirmation; not part of MWHD score.`}><button type="button" aria-label={`Optional volume confirmation: ${volume.multiple == null ? "unavailable" : `${volume.multiple.toFixed(2)} times 20-day SMA`}`} onClick={() => onSelect(row.stock.symbol)}>{volume.symbol} {volume.multiple == null ? "—" : `${volume.multiple.toFixed(1)}×`}</button></td>; })()}
             {GATES.map((gate) => {
               const check = gateFor(summary, gate.id);
               return <td className={styles.progressionTick} data-state={stateOf(check)} key={gate.id} title={check?.label ?? `${gate.label} is not part of the selected best route`}><button type="button" aria-label={`${gate.label}: ${stateOf(check)}. Select for arithmetic.`} onClick={() => onSelect(row.stock.symbol)}>{stateSymbol(check)}</button></td>;
@@ -113,6 +123,7 @@ export function ScalperProgressionMatrix({ stocks, rows, generatedAt, isLoading,
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<CandidateFilter>("all");
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [showVolume, setShowVolume] = useState(true);
   const allRows = useMemo(() => buildProgressionMatrixRows(stocks, rows), [stocks, rows]);
   const filtered = useMemo(() => allRows.filter((row) => {
     if (search.trim() && !`${row.stock.symbol} ${row.stock.name}`.toLowerCase().includes(search.trim().toLowerCase())) return false;
@@ -129,10 +140,10 @@ export function ScalperProgressionMatrix({ stocks, rows, generatedAt, isLoading,
   const exportCsv = () => {
     const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
     const directions = ["bull", "bear"] as const;
-    const columns = ["Stock", "LTP", "MWHD-BULL rank", "BULL route", "BULL weighted", "MWHD-BEAR rank", "BEAR route", "BEAR weighted", ...directions.flatMap((direction) => GATES.map((gate) => `${direction.toUpperCase()} ${gate.label} evidence`)), "Observed at"];
+    const columns = ["Stock", "LTP", "Current volume", "Prior 20-session volume SMA", "Projected full-day volume / SMA20", "MWHD-BULL rank", "BULL route", "BULL weighted", "MWHD-BEAR rank", "BEAR route", "BEAR weighted", ...directions.flatMap((direction) => GATES.map((gate) => `${direction.toUpperCase()} ${gate.label} evidence`)), "Observed at"];
     const lines = [columns.map(quote).join(","), ...allRows.map((row) => {
       const bull = directionalProgression(row, "bull"), bear = directionalProgression(row, "bear");
-      const values = [row.stock.symbol, row.stock.last, bull.rank, routeName(bull.best), `${bull.best.weightedScore}/${bull.best.maximumWeight}`, bear.rank, routeName(bear.best), `${bear.best.weightedScore}/${bear.best.maximumWeight}`, ...([bull, bear] as const).flatMap((summary) => GATES.map((gate) => {
+      const values = [row.stock.symbol, row.stock.last, row.stock.volume ?? "", row.stock.averageVolume20 ?? "", volumeConfirmation(row.stock).multiple ?? "", bull.rank, routeName(bull.best), `${bull.best.weightedScore}/${bull.best.maximumWeight}`, bear.rank, routeName(bear.best), `${bear.best.weightedScore}/${bear.best.maximumWeight}`, ...([bull, bear] as const).flatMap((summary) => GATES.map((gate) => {
         const check = gateFor(summary, gate.id);
         return `${stateOf(check).toUpperCase()} | actual=${check?.left ?? ""} | operator=${comparisonSymbol(summary.direction)} | reference=${check?.right ?? ""}`;
       })), row.source.observedAt ?? ""];
@@ -150,12 +161,13 @@ export function ScalperProgressionMatrix({ stocks, rows, generatedAt, isLoading,
     <div className={styles.progressionToolbar}>
       <label>Stock <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search" aria-label="Search progression stocks" /></label>
       <div className={styles.progressionFilters} aria-label="Candidate filters">{([['all', 'All'], ['bull', 'Bull ready'], ['bear', 'Bear ready'], ['either', 'Either ready']] as Array<[CandidateFilter, string]>).map(([id, label]) => <button type="button" key={id} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
+      <button type="button" className={styles.progressionVolumeToggle} aria-pressed={showVolume} onClick={() => setShowVolume((value) => !value)}>V20 optional</button>
       <span className={styles.progressionFormula}><b>BULL</b> actual &gt; reference <i>·</i> <b>BEAR</b> actual &lt; reference <i>·</i> same M−1/M−2 sufficiency and MWHD weights</span>
       <button type="button" className={styles.progressionExport} onClick={exportCsv}><Download size={13} /> Full evidence CSV</button>
     </div>
     <div className={styles.progressionRankBoards}>
-      <RankBoard direction="bull" rows={bullRows} profiles={profiles} onSelect={setSelectedSymbol} onOpenStock={onOpenStock} />
-      <RankBoard direction="bear" rows={bearRows} profiles={profiles} onSelect={setSelectedSymbol} onOpenStock={onOpenStock} />
+      <RankBoard direction="bull" rows={bullRows} profiles={profiles} showVolume={showVolume} onSelect={setSelectedSymbol} onOpenStock={onOpenStock} />
+      <RankBoard direction="bear" rows={bearRows} profiles={profiles} showVolume={showVolume} onSelect={setSelectedSymbol} onOpenStock={onOpenStock} />
     </div>
     {!filtered.length && <div className={styles.progressionEmpty}>No stocks match this filter.</div>}
     {selected && <ProgressionDrawer row={selected} generatedAt={generatedAt} onClose={closeDrawer} />}

@@ -6,7 +6,14 @@ import {
   breadthWording, niftyMovementWording, parseBoardSort, parseQuickView, parseSummaryLens,
   serializeQuickView, slugifySector, vixWording,
 } from "../src/features/today/todayModel";
-import { buildProgressionMatrixRows, directionalProgression, highestProgressionStage, progressionFunnel, progressionRowMatches, progressionStockState, sortProgressionRows } from "../src/features/today/scalperProgressionMatrix";
+import { buildProgressionMatrixRows, directionalProgression, highestProgressionStage, progressionFunnel, progressionRowMatches, progressionStockState, sortProgressionRows, volumeConfirmation } from "../src/features/today/scalperProgressionMatrix";
+
+test("optional projected volume confirmation preserves exact multiples and independent colour bands", () => {
+  assert.deepEqual(volumeConfirmation({ symbol: "HIGH", relativeVolume: 2 } as never), { multiple: 2, state: "high", band: "green", symbol: "✓" });
+  assert.deepEqual(volumeConfirmation({ symbol: "NEAR", relativeVolume: 1.5 } as never), { multiple: 1.5, state: "near", band: "yellow-strong", symbol: "~" });
+  assert.deepEqual(volumeConfirmation({ symbol: "LOW", relativeVolume: 0.4 } as never), { multiple: 0.4, state: "low", band: "red-strong", symbol: "×" });
+  assert.equal(volumeConfirmation({ symbol: "MISSING", relativeVolume: null } as never).state, "unavailable");
+});
 
 test("Today URL state canonicalizes unsupported values", () => {
   assert.equal(parseSummaryLens(null), "story");

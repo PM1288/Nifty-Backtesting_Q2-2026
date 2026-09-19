@@ -56,7 +56,17 @@ try {
   const expectedGateOrder = ["M−2", "M−1", "W0", "W−1", "D0", "1H", "15m", "5m"];
   const bullHeaders = await bullBoard.locator("thead th").allInnerTexts();
   const bearHeaders = await bearBoard.locator("thead th").allInnerTexts();
-  check("Both boards expose the complete MWHD tick sequence with M−2 before M−1", expectedGateOrder.every((label, index) => bullHeaders[index + 3] === label && bearHeaders[index + 3] === label), JSON.stringify({ bullHeaders, bearHeaders }));
+  check("Both boards expose optional V20 and the complete MWHD tick sequence with M−2 before M−1", bullHeaders[3] === "V20 opt." && bearHeaders[3] === "V20 opt." && expectedGateOrder.every((label, index) => bullHeaders[index + 4] === label && bearHeaders[index + 4] === label), JSON.stringify({ bullHeaders, bearHeaders }));
+  const volumeCells = widget.locator('td[class*="progressionVolumeTick"]');
+  check("Optional volume indicator shows an exact multiple and never changes MWHD scoring", await volumeCells.count() === 20 && /[✓~×—]\s(?:\d+\.\d×|—)/.test(await bullBoard.innerText()), "20 V20 cells inspected across the initial Bull and Bear boards");
+  const firstBullScore = await bullRows.first().locator('td[class*="progressionCompactScore"]').innerText();
+  const volumeToggle = widget.getByRole("button", { name: "V20 optional" });
+  await volumeToggle.click();
+  await bullBoard.getByRole("columnheader", { name: "V20 opt." }).waitFor({ state: "detached" });
+  const hiddenRank = (await bullRows.first().locator("td").first().innerText()).trim();
+  const hiddenScore = (await bullRows.first().locator('td[class*="progressionCompactScore"]').innerText()).trim();
+  check("Optional volume column can be hidden without changing the Bull rank or score", await volumeCells.count() === 0 && hiddenRank === "#1" && hiddenScore === firstBullScore.trim(), JSON.stringify({ hiddenRank, hiddenScore }));
+  await volumeToggle.click();
   check("Observed pass and fail conditions use explicit semantic states", await widget.locator('td[data-state="pass"]').count() > 0 && await widget.locator('td[data-state="fail"]').count() > 0, "Observed state cells inspected; pending semantics are covered by unit fixtures");
   const bullReady = Number((text.match(/^(\d+) bull/m) ?? [])[1] ?? 0);
   const bearReady = Number((text.match(/· (\d+) bear/m) ?? [])[1] ?? 0);
@@ -82,6 +92,7 @@ try {
   await bullRows.first().click();
   const drawer = page.getByRole("dialog", { name: /MWHD evidence/ });
   check("Row drawer exposes Bull and Bear arithmetic and both ranks", await drawer.isVisible() && await drawer.getByText("MWHD-BULL arithmetic").isVisible() && await drawer.getByText("MWHD-BEAR arithmetic").isVisible() && await drawer.getByText(/Audited inverse logic/).isVisible(), "Dual-direction evidence inspected");
+  check("Row drawer explains projected full-day volume and the prior 20-session SMA", await drawer.getByText(/projected full day/i).isVisible() && await drawer.getByText(/prior 20-session daily SMA/i).isVisible() && await drawer.getByText(/does not change either MWHD rank/i).isVisible(), "Volume formula evidence inspected");
   await page.keyboard.press("Escape");
   check("No browser errors", errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: path.join(output, "today-scalper-progression.png"), fullPage: true });

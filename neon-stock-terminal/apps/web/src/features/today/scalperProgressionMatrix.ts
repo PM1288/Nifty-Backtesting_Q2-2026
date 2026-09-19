@@ -47,6 +47,25 @@ export type DirectionalProgression = {
 
 export type ProgressionFunnelStage = "mwd" | "hour" | "15m" | "5m";
 export type ProgressionFunnel = Record<"tracked" | ProgressionFunnelStage, number>;
+export type VolumeConfirmation = {
+  multiple: number | null;
+  state: "high" | "near" | "low" | "unavailable";
+  band: "green-strong" | "green" | "yellow-strong" | "yellow" | "red" | "red-strong" | "unavailable";
+  symbol: "✓" | "~" | "×" | "—";
+};
+
+export function volumeConfirmation(stock: Quote): VolumeConfirmation {
+  const multiple = typeof stock.relativeVolume === "number" && Number.isFinite(stock.relativeVolume) && stock.relativeVolume >= 0
+    ? stock.relativeVolume
+    : null;
+  if (multiple == null) return { multiple: null, state: "unavailable", band: "unavailable", symbol: "—" };
+  if (multiple >= 3) return { multiple, state: "high", band: "green-strong", symbol: "✓" };
+  if (multiple >= 2) return { multiple, state: "high", band: "green", symbol: "✓" };
+  if (multiple >= 1.5) return { multiple, state: "near", band: "yellow-strong", symbol: "~" };
+  if (multiple >= 1) return { multiple, state: "near", band: "yellow", symbol: "~" };
+  if (multiple >= 0.5) return { multiple, state: "low", band: "red", symbol: "×" };
+  return { multiple, state: "low", band: "red-strong", symbol: "×" };
+}
 
 const FUNNEL_END_GATE: Record<ProgressionFunnelStage, ScalperProgressionCheck["id"]> = {
   mwd: "today",

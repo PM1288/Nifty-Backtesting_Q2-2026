@@ -299,16 +299,45 @@ function nullableNumber(value: number | string | null | undefined): number | nul
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function marketSessionProgressIst(now = new Date()): number {
+function istParts(value: Date) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false
-  }).formatToParts(now);
-  const minuteOfDay = Number(parts.find((part) => part.type === "hour")?.value ?? 0) * 60
-    + Number(parts.find((part) => part.type === "minute")?.value ?? 0);
-  return Math.max(0, Math.min(1, (minuteOfDay - (9 * 60 + 15)) / 385));
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((entry) => entry.type === type)?.value ?? "";
+  return {
+    dayKey: `${part("year")}-${part("month")}-${part("day")}`,
+    weekday: part("weekday"),
+    minuteOfDay: Number(part("hour")) * 60 + Number(part("minute")),
+  };
+}
+
+export function projectedFullDayVolumeMultiple(
+  currentVolume: number | string | null | undefined,
+  averageVolume20: number | string | null | undefined,
+  observedAt: Date | string | null | undefined,
+  now = new Date(),
+): number | null {
+  const volume = nullableNumber(currentVolume);
+  const average = nullableNumber(averageVolume20);
+  if (volume == null || volume < 0 || average == null || average <= 0 || !observedAt) return null;
+  const observed = observedAt instanceof Date ? observedAt : new Date(observedAt);
+  if (Number.isNaN(observed.getTime())) return null;
+  const observation = istParts(observed);
+  const current = istParts(now);
+  if (observation.dayKey !== current.dayKey || !["Mon", "Tue", "Wed", "Thu", "Fri"].includes(observation.weekday)) {
+    return volume / average;
+  }
+  const elapsedMinutes = observation.minuteOfDay - (9 * 60 + 15);
+  if (elapsedMinutes < 0) return null;
+  const sessionProgress = Math.min(1, Math.max(1 / 375, elapsedMinutes / 375));
+  return volume / (average * sessionProgress);
 }
 
 function quoteAlert(row: StackQuoteRow): Quote["alert"] {
@@ -383,8 +412,6 @@ function asQuote(row: StackQuoteRow): Quote {
   const last = nullableNumber(row.last) ?? 0;
   const averageVolume = nullableNumber(row.average_volume_20);
   const volume = nullableNumber(row.volume);
-  const progress = Math.max(0.05, marketSessionProgressIst());
-  const expectedVolume = averageVolume != null && averageVolume > 0 ? averageVolume * progress : null;
   const bid = nullableNumber(row.last_bid);
   const ask = nullableNumber(row.last_ask);
   const midpoint = bid != null && ask != null && bid > 0 && ask >= bid ? (bid + ask) / 2 : null;
@@ -411,7 +438,7 @@ function asQuote(row: StackQuoteRow): Quote {
     rsi: row.rsi_14 == null ? null : toNumber(row.rsi_14),
     willr: row.willr_14 == null ? null : toNumber(row.willr_14),
     change5d: nullableNumber(row.change_5d),
-    relativeVolume: expectedVolume ? volume! / expectedVolume : null,
+    relativeVolume: projectedFullDayVolumeMultiple(volume, averageVolume, row.timestamp),
     averageVolume20: averageVolume,
     bid,
     ask,
@@ -880,7 +907,7 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
         COALESCE(st.last_price, st.last_close, 0)::double precision AS last,
         COALESCE(st.net_change, 0)::double precision AS change,
         COALESCE(st.percent_change, 0)::double precision AS change_pct,
-        COALESCE(st.last_volume, 0)::double precision AS volume,
+        st.last_volume::double precision AS volume,
         st.last_seen_ts AS timestamp,
         rc.rsi_14,
         wc.willr_14,

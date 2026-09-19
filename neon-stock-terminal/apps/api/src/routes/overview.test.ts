@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression } from "./overview.js";
+import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression, projectedFullDayVolumeMultiple } from "./overview.js";
+
+test("projected volume compares an as-of session pace with the prior 20-day daily SMA", () => {
+  const now = new Date("2026-09-18T06:45:00.000Z"); // 12:15 IST, 180/375 minutes
+  assert.equal(projectedFullDayVolumeMultiple(960_000, 1_000_000, now, now), 2);
+  assert.equal(projectedFullDayVolumeMultiple(480_000, 1_000_000, now, now), 1);
+  assert.equal(projectedFullDayVolumeMultiple(2_200_000, 1_000_000, new Date("2026-09-17T10:00:00.000Z"), now), 2.2);
+  assert.equal(projectedFullDayVolumeMultiple(null, 1_000_000, now, now), null);
+  assert.equal(projectedFullDayVolumeMultiple(100, 0, now, now), null);
+});
 
 test("header ticker contains stock quotes and never repeats index context", () => {
   const ticker = buildHeaderStockTickerTape([

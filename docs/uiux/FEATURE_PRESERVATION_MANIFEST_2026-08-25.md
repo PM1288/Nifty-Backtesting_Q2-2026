@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 Home MWHD optional volume confirmation: both Bull and Bear top-ten
+rank boards add a hideable `V20 opt.` cell showing projected full-session NSE
+stock volume divided by the prior 20 completed daily-session volume SMA. The
+quote observation time and 375-minute NSE session drive extrapolation; retained
+completed sessions use actual volume and missing inputs stay unavailable. The
+exact multiple and raw evidence remain in the drawer/CSV. This confirmation is
+not an MWHD gate and does not alter either direction's strategy, weighted score,
+qualification or rank. Evidence:
+`docs/uiux/HOME_MWHD_VOLUME_CONFIRMATION_20260919.md`.
+
 2026-09-19 Scalper V2 OI time and volume: the existing Total OI dock retains
 CE/PE totals and adds timestamp-aligned PE-minus-CE total OI, PE-minus-CE
 provider-reported change in OI on an independent axis, and OI PCR history.

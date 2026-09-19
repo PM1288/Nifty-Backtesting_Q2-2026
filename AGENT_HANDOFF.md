@@ -1,5 +1,29 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-19 — Scalper V2 stable minute refresh
+
+- Release `bc3e42b`; branch `fix/scalper-v2-stable-refresh-20260919` merged and
+  pushed to master. Report: `docs/trading-analytics/SCALPER_V2_STABLE_REFRESH_20260919.md`.
+- Removed moving response timestamps from live query keys, which previously
+  emptied the cache and unmounted charts every context refresh. Selected chart
+  and context poll once per minute. Inactive intervals no longer prefetch;
+  price-strength history loads only when viewed. Explicit replay stays scoped.
+- V2 deployment updates now require the visible Apply update button. No forced
+  page reload interrupts the workstation. Exchange-calendar freshness shows
+  missing/delayed exact-contract candles and optionally sends browser alerts.
+- Required web/API typechecks, builds, 221 web tests, 252 API tests and repository
+  gate passed. Live 70-second browser test retained all three native charts,
+  produced zero reloads and no repeated candle hydration. One chart request took
+  2.518s during the refresh while existing data stayed visible. Synthetic missing
+  candles triggered one mocked notification; actual OS delivery needs granted
+  browser permission. Pop-out/cursor/volume preservation passed 14/14 checks.
+- Evidence: `/home/novius2/NIFTY50/evidence/scalper-refresh-20260919/` and
+  `/home/novius2/NIFTY50/evidence/scalper-refresh-preservation-20260919/`.
+- Scoped dashboard deploy is healthy; container `a13b6f8342dc...`, image
+  `sha256:7ccc697bf967e09de75f9d25b6b8887d6f564f9fc49fc5847f447b0711b30d8b`,
+  asset `/n50/assets/index-DAEIAePK.js`. Rollback source tag:
+  `before-scalper-v2-stable-refresh-20260919`. No collector/database/order changes.
+
 ## 2026-09-19 — Home stock-selection consensus
 
 - Extended the existing collapsed Home Trading list with direction-specific

@@ -14,13 +14,15 @@ try {
   const context = await browser.newContext({viewport: {width:1920,height:1080}});
   assert((await context.request.post(`${base}/auth/session/dev-login`, {headers:{Origin:new URL(base).origin},data:{identifier:'admin',password}})).ok());
   const page = await context.newPage();
-  const errors = [], requests = [];
+  const errors = [], requests = [], responseTimings = [];
+  const started = new Map();
   let documents = 0;
   page.on('pageerror', e => errors.push(String(e)));
   page.on('request', r => {
     if (r.isNavigationRequest() && r.frame() === page.mainFrame()) documents++;
-    if (/trading-analytics\/(charts|option-price-history|scalper-context)/.test(r.url())) requests.push({url:r.url(),at:Date.now()});
+    if (/trading-analytics\/(charts|option-price-history|scalper-context)/.test(r.url())) { requests.push({url:r.url(),at:Date.now()}); started.set(r,Date.now()); }
   });
+  page.on('requestfinished', r => { if (started.has(r)) responseTimings.push({url:r.url(),elapsedMs:Date.now()-started.get(r)}); });
   await page.goto(`${base}/strategy/trading-analytics?view=scalper_v2&interval=5`);
   await page.getByTestId('v2-chart-host-put').waitFor({timeout:120000});
   await page.waitForTimeout(2000);
@@ -53,6 +55,28 @@ try {
   assert.equal(errors.length,0,JSON.stringify(errors));
   const freshness = await page.getByTestId('v2-data-freshness').innerText();
   await page.screenshot({path:path.join(output,'stable-minute-refresh.png'),fullPage:false});
-  await fs.writeFile(path.join(output,'results.json'),JSON.stringify({stable,documents,freshness,pollRequests,errors,observedMs:Date.now()-start},null,2));
+  const alertPage = await context.newPage();
+  await alertPage.addInitScript(() => {
+    window.__notifications = [];
+    window.Notification = class {
+      static permission = 'granted';
+      constructor(title, options) { window.__notifications.push({title,...options}); }
+    };
+  });
+  // Synthetic missing-candle fixture, never persisted to the data source.
+  await alertPage.route('**/v1/trading-analytics/charts?*', async route => {
+    const response = await route.fetch();
+    const data = await response.json();
+    data.panes = data.panes.map(p => ({...p,bars:[]}));
+    await route.fulfill({response,json:data});
+  });
+  await alertPage.goto(`${base}/strategy/trading-analytics?view=scalper_v2&interval=5`);
+  await alertPage.getByTestId('v2-data-freshness').waitFor({timeout:120000});
+  assert.equal(await alertPage.getByTestId('v2-data-freshness').getAttribute('data-state'),'stale');
+  await alertPage.waitForFunction(() => window.__notifications.length > 0);
+  const notifications = await alertPage.evaluate(() => window.__notifications);
+  assert.equal(notifications.length,1,'One notification per missing-data episode');
+  await alertPage.screenshot({path:path.join(output,'synthetic-missing-data-alert.png'),fullPage:false});
+  await fs.writeFile(path.join(output,'results.json'),JSON.stringify({stable,documents,freshness,pollRequests,responseTimings,syntheticAlert:notifications,errors,observedMs:Date.now()-start},null,2));
   console.log(JSON.stringify({stable,documents,freshness,pollRequests:pollRequests.length,output}));
 } finally { await browser.close(); }

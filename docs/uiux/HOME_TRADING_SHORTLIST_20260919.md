@@ -60,7 +60,21 @@ uses today's date. The sidebar additionally requires all three current intraday
 bucket timestamps to be today's IST date before labelling MWHD selected today.
 Ranks retain the source intraday timestamp. A regression verifies a freshly dated
 envelope cannot turn yesterday's completed gates into today's selection.
-Final deployed SHA/public verification will be appended after release.
+Final application release `b16cd88` pushed to master and deployed through
+`scripts/deploy_n50_dashboard.sh`; only n50-dashboard recreated, healthy.
+Image: `sha256:20ce5c5752519b55c322ee74a24fda5858447aa8c74428ecc403b06a106b59ff`.
+After the final edits: web typecheck, 210 tests and build passed; unchanged API
+typecheck, 245 tests and build passed earlier in this task. Canonical gate passed.
+Public authenticated browser production02 passed all eight interactions; mobile
+screenshot visually inspected, including independent BULL/BEAR ranks and explicit
+incomplete-input warning. Source loading states are honest; this test is not proof
+of a completed current-day strategy run or full data freshness.
+
+Evidence: `/home/novius2/NIFTY50/UX-v2/home-shortlist-20260919-production02`.
+Release log: `/tmp/home-shortlist-final-deploy.log`.
+Rollback image retained: `trading-stack-n50-dashboard:before-home-shortlist-20260919`.
+Repository-generated artifacts/screenshots are not committed. Unrelated untracked
+user reports remain untouched.
 
 No database migrations. Rollback removes the two sidebar mounts/component only;
 personal browser values are harmless and can remain. Existing Home data, MWHD,

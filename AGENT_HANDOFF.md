@@ -7,6 +7,9 @@
 - Bull/bear ranks and quote dates remain explicit. Personal storage is scoped to
   user/browser, not cross-device. Auto-hide respects editing/keyboard focus.
 - Evidence and release status: `docs/uiux/HOME_TRADING_SHORTLIST_20260919.md`.
+- Final application `b16cd88` deployed, dashboard healthy. Web 210/API 245 tests,
+  typechecks/builds and canonical gate passed; 8 public browser interactions
+  passed. Follow-up guards against prior-session MWHD bars in today's envelope.
 
 ## 2026-09-19 — Independent QA/UX audit containment
 

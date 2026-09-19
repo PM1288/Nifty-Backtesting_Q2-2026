@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-19 — Home stock-selection consensus
+
+- Extended the existing collapsed Home Trading list with direction-specific
+  agreement across Manual, completed same-session MWD/MWHD, selected same-date
+  OIIS and qualified same-session 3Month evidence.
+- Maximum-agreement stocks are displayed first; each source remains separately
+  inspectable and stale sessions are disclosed/excluded rather than relabelled.
+- Strategy calculations, orders, alerts, permissions and APIs are unchanged.
+- Web 220 tests, API 252 tests, both builds/typechecks and canonical gate passed.
+- Authenticated production browser regression passed 11/11 desktop/mobile checks.
+- Release commit `1dda433`; rollback tag
+  `before-home-selection-consensus-20260919`; evidence:
+  `/home/novius2/NIFTY50/evidence/home-selection-consensus-20260919-production03`.
+- Full contract: `docs/uiux/HOME_SELECTION_CONSENSUS_20260919.md`.
+
 ## 2026-09-19 — 3Month Strategy
 
 - New additive read-only `/strategy/three-month` screen for current NIFTY 500

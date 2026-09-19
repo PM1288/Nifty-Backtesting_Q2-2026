@@ -57,3 +57,18 @@ deduplication, recommendation rejection, stale date rejection and qualified-only
 the consensus block, manual persistence/removal, mobile containment, idle-close
 and keyboard behavior.
 
+Release validation: web 220/220 tests, API 252/252 tests, both typechecks and
+production builds, and the canonical repository gate passed. Authenticated
+production Playwright passed all 11 interaction checks at desktop and mobile
+sizes. The 19 September run correctly showed no same-day OIIS run and excluded
+the latest 18 September MWHD/3Month sessions while retaining the test user's
+manual RELIANCE selection; this is evidence of date handling, not a claim that
+no strategy will select stocks during the next live session. Screenshots and
+result JSON are stored outside Git at
+`/home/novius2/NIFTY50/evidence/home-selection-consensus-20260919-production03`.
+
+Application commit `1dda433` was pushed to master and deployed through
+`scripts/deploy_n50_dashboard.sh`. The dashboard container was healthy with
+image `sha256:e456e1f3f1b737736140e38e8ae0b5f0955acb8b6918ba0162b638c3ee2036fb`.
+Rollback tag: `before-home-selection-consensus-20260919`. No database migration
+or deployment of unrelated services occurred.

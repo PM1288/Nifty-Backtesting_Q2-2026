@@ -26,6 +26,10 @@ try {
   assert.equal(await panel.count(),0); results.push('Collapsed by default');
   await toggle.click(); await panel.waitFor();
   await panel.getByText(/MWHD: response for/).waitFor({timeout:60000});
+  await Promise.all([
+    panel.getByText('Loading OIIS selections…').waitFor({state:'hidden',timeout:60000}),
+    panel.getByText('Loading 3Month selections…').waitFor({state:'hidden',timeout:60000}),
+  ]);
   await page.getByTestId('home-selection-consensus').waitFor();
   assert.equal(await page.getByTestId('home-selection-sources').locator('details').count(),4); results.push('Manual, MWD/MWHD, OIIS and 3Month source groups are visible');
   const funnel=page.getByTestId('home-mwhd-funnel'); await funnel.waitFor();
@@ -38,6 +42,10 @@ try {
   results.push('Validated manual addition');
   await page.reload(); await toggle.waitFor(); await toggle.click();
   await panel.getByText(/MWHD: response for/).waitFor({timeout:60000});
+  await Promise.all([
+    panel.getByText('Loading OIIS selections…').waitFor({state:'hidden',timeout:60000}),
+    panel.getByText('Loading 3Month selections…').waitFor({state:'hidden',timeout:60000}),
+  ]);
   await page.getByRole('button',{name:'Remove manual long',exact:true}).first().waitFor(); results.push('Manual list survives reload');
   await page.screenshot({path:output+'/desktop-home-shortlist.png',fullPage:false});
   await page.setViewportSize({width:390,height:844});

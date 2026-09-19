@@ -1,5 +1,26 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-19 — 3Month Strategy
+
+- New additive read-only `/strategy/three-month` screen for current NIFTY 500
+  profile members. Exact ten Month/Week/Day/1H/15m bullish gates plus an OR
+  across bearish M-1/M-2/M-3; no invented entry, exit, stop, target or size.
+- Completed, gap-free 09:15 IST intraday candles are default; forming mode is
+  explicit. Missing/skipped values remain distinct. Dense matrix, exact
+  arithmetic drawer, Stock 360 links, status/search filters and CSV are live.
+- Current source limitation is visible: instrument profiles contain 268/500
+  expected constituents (source 2026-08-23). Session 2026-09-18 has 6 completed
+  qualifiers; no claim of complete 500-stock coverage.
+- API 252 tests/build/typecheck; web 217 tests/build/typecheck; canonical gate;
+  authenticated public desktop/mobile browser suite 23/23. Final live read path
+  measured 2.38s daily + 1.49s intraday, down from about 24s cold.
+- Evidence and reruns: `docs/strategy/THREE_MONTH_STRATEGY_20260919.md` and
+  `/home/novius2/NIFTY50/evidence/three-month-strategy-20260919`.
+- Release `c05d0ef` pushed to master/feature; rollback tag
+  `before-three-month-strategy-20260919`; dashboard container
+  `62ff9d61d74c...` healthy, asset `/n50/assets/index-CUjDGsLd.js`. No schema,
+  strategy/order, paper, alert, MWHD or OIIS mutation.
+
 ## 2026-09-19 — Scalper V2 OI difference/PCR history and volume pane
 
 - Branch `feat/scalper-v2-oi-delta-pcr-volume-20260919`; existing Scalper V2

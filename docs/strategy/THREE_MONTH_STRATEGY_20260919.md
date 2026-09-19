@@ -71,7 +71,7 @@ Month/Week/Day/1H/15m gates, three separate weakness cells, search/status
 filters, exact arithmetic in a side inspector, Stock 360 links and CSV export.
 PASS, FAIL, unavailable and skipped are visually and semantically distinct.
 
-## Validation before release
+## Release validation
 
 - API typecheck, complete API test suite and API build.
 - Web typecheck, complete web test suite and web build.
@@ -80,5 +80,23 @@ PASS, FAIL, unavailable and skipped are visually and semantically distinct.
 - Authenticated browser route, navigation, mode, arithmetic drawer, CSV and
   responsive layout checks after deployment.
 
-Deployment and final browser evidence are recorded in `AGENT_HANDOFF.md` after
-release. No database migration or data mutation is part of this feature.
+All repository checks passed: API typecheck, 252 API tests and build; web
+typecheck, 217 web tests and build; canonical repository gate. Live session
+2026-09-18 produced 268 available members, 20 intraday-evaluated rows and 6
+completed-candle qualifiers. Every qualified row was browser-checked to contain
+exactly ten PASS gates plus a PASS historical-weakness OR.
+
+The initial cold read measured about 24 seconds. The final set-based token map,
+index-friendly exact-session query and post-computation per-mode cache measured
+2.38 seconds daily plus 1.49 seconds intraday in the same live database check.
+The final authenticated public desktop/mobile suite completed 23/23 checks in
+7.75 seconds, covering the API, grouped gates, completed default, forming mode,
+arithmetic drawer, CSV and responsive table. Screenshots and machine results:
+`/home/novius2/NIFTY50/evidence/three-month-strategy-20260919`.
+
+Release commits `735320b`, `a142d92` and `c05d0ef` are on `master` and
+`feat/three-month-strategy-20260919`; rollback tag
+`before-three-month-strategy-20260919` is pushed. The scoped dashboard deployment
+recreated only `n50-dashboard`; container `62ff9d61d74c...` is healthy with entry
+asset `/n50/assets/index-CUjDGsLd.js`. No database migration or data mutation was
+performed.

@@ -64,6 +64,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Monthly anchors", to: "/strategy/monthly" }
   ];
   if (workspace === "monthly-strategy") return [
+    { label: "3Month Strategy", to: "/strategy/three-month" },
     { label: "Scalper Dashboard", to: "/strategy/scalper-dashboard" },
     { label: "All entry methods", to: "/strategy/monthly" },
     { label: "Close vs Open", to: "/strategy/monthly?compare=close-open" },
@@ -72,6 +73,12 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Monthly Open", to: "/strategy/monthly?entryMethod=MONTHLY_OPEN" },
     { label: "First session", to: "/strategy/monthly?entryMethod=FIRST_SESSION" },
     { label: "Rolling 5/30/60", to: "/strategy/rolling-monthly" }
+  ];
+  if (workspace === "three-month-strategy") return [
+    { label: "3Month Strategy", to: "/strategy/three-month" },
+    { label: "Monthly Strategy", to: "/strategy/monthly" },
+    { label: "Scalper Dashboard", to: "/strategy/scalper-dashboard" },
+    { label: "Stock 360", to: "/analytics/stock/RELIANCE" }
   ];
   if (workspace === "scalper-dashboard") return [
     { label: "Current-month screener", to: "/strategy/scalper-dashboard" },

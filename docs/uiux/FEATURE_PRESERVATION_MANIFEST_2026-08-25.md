@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 3Month Strategy: additive read-only `/strategy/three-month` screen
+for the exact ten bullish Month/Week/Day/1H/15m gates plus an OR across bearish
+M-1/M-2/M-3 candles. Completed intraday candles are the default; forming candles
+are explicit and marked. Missing/skipped evidence is never zero or failure. The
+screen does not define trades or alter MWHD, OIIS, Monthly Strategy, paper/order
+controls or source history. Current instrument-profile coverage is disclosed as
+268/500 rather than claimed complete. Evidence:
+`docs/strategy/THREE_MONTH_STRATEGY_20260919.md`.
+
 2026-09-19 Home MWHD optional volume confirmation: both Bull and Bear top-ten
 rank boards add a hideable `V20 opt.` cell showing projected full-session NSE
 stock volume divided by the prior 20 completed daily-session volume SMA. The

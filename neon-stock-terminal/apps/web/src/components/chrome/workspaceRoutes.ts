@@ -25,6 +25,7 @@ export type WorkspaceRouteId =
   | "rolling-monthly"
   | "monthly-strategy"
   | "scalper-dashboard"
+  | "three-month-strategy"
   | "futures-volatility"
   | "trendlyne-summary"
   | "long-options"
@@ -83,6 +84,13 @@ export const STRATEGY_MENU_ROUTES = [
     description: "Monthly Close, Monthly Open, expiry and first-session entries",
     path: "/strategy/monthly",
     icon: CalendarRange,
+  },
+  {
+    id: "three-month-strategy",
+    label: "3Month Strategy",
+    description: "NIFTY 500 recent-weakness and multi-timeframe bullish confirmation",
+    path: "/strategy/three-month",
+    icon: TrendingUp,
   },
   {
     id: "scalper-dashboard",
@@ -161,6 +169,7 @@ const strategyHeaderOrder = [
   ["oiss-v1-202608", "LIVE & CURRENT"],
   ["trendlyne-summary", "RESEARCH"],
   ["monthly-strategy", "RESEARCH"],
+  ["three-month-strategy", "RESEARCH"],
   ["scalper-dashboard", "RESEARCH"],
   ["rolling-monthly", "RESEARCH"],
   ["nifty-context", "RESEARCH"],
@@ -248,6 +257,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
       (pathname.startsWith("/strategy/") &&
         !pathname.startsWith("/strategy/monthly") &&
         !pathname.startsWith("/strategy/scalper-dashboard") &&
+        !pathname.startsWith("/strategy/three-month") &&
         !pathname.startsWith("/strategy/rolling-monthly") &&
         !pathname.startsWith("/strategy/trendlyne-summary") &&
         !pathname.startsWith("/strategy/long-options") &&
@@ -284,6 +294,18 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
     primaryMobile: false,
     parentId: "oiis-lab",
     match: (pathname) => pathname.startsWith("/strategy/monthly"),
+  },
+  {
+    id: "three-month-strategy",
+    label: "3Month Strategy",
+    compactLabel: "3Month",
+    description: "NIFTY 500 bullish recovery confirmation across five timeframes",
+    path: "/strategy/three-month",
+    icon: TrendingUp,
+    primaryDesktop: false,
+    primaryMobile: false,
+    parentId: "oiis-lab",
+    match: (pathname) => pathname.startsWith("/strategy/three-month"),
   },
   {
     id: "scalper-dashboard",

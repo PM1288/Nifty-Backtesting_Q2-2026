@@ -2833,6 +2833,43 @@ export type SessionState = {
   csrfToken: string | null;
 };
 
+export type ThreeMonthIntradayMode = "completed" | "forming";
+export type ThreeMonthGateState = "PASS" | "FAIL" | "UNAVAILABLE" | "SKIPPED";
+export type ThreeMonthGate = {
+  id: string;
+  label: string;
+  left: number | null;
+  operator: ">" | "<";
+  right: number | null;
+  state: ThreeMonthGateState;
+  timeframe: "MONTH" | "WEEK" | "DAY" | "1H" | "15M" | "HISTORY";
+  forming: boolean;
+};
+export type ThreeMonthStrategyRow = {
+  symbol: string;
+  companyName: string | null;
+  sector: string | null;
+  sessionDate: string;
+  observedAt: string | null;
+  qualification: "QUALIFIED" | "REJECTED" | "INCOMPLETE";
+  passedGateCount: number;
+  availableGateCount: number;
+  gates: ThreeMonthGate[];
+  weaknessMonths: ThreeMonthGate[];
+  weaknessState: ThreeMonthGateState;
+  intraday: Record<string, { open: number | null; close: number | null; startedAt: string | null; complete: boolean; index: number } | null>;
+};
+export type ThreeMonthStrategyResponse = {
+  generatedAt: string;
+  strategyVersion: string;
+  scope: "CURRENT_NIFTY_500";
+  intradayMode: ThreeMonthIntradayMode;
+  sessionDate: string | null;
+  basis: string;
+  counts: { universe: number; expectedUniverse: number; membershipCoveragePct: number; qualified: number; rejected: number; incomplete: number; intradayEvaluated: number };
+  rows: ThreeMonthStrategyRow[];
+};
+
 export function directionFromChangePct(changePct: number): Direction {
   if (changePct > 0) return "up";
   if (changePct < 0) return "down";

@@ -89,6 +89,7 @@ const OissV1Page = lazy(async () => ({ default: (await import("./pages/OissV1Pag
 const RollingMonthlyPage = lazy(async () => ({ default: (await preloadRollingMonthlyPage()).RollingMonthlyPage }));
 const MonthlyStrategyPage = lazy(async () => ({ default: (await preloadMonthlyStrategiesPage()).MonthlyStrategyPage }));
 const ScalperDashboardPage = lazy(async () => ({ default: (await import("./pages/ScalperDashboardPage")).ScalperDashboardPage }));
+const ThreeMonthStrategyPage = lazy(async () => ({ default: (await import("./pages/ThreeMonthStrategyPage")).ThreeMonthStrategyPage }));
 const RollingMonthlyLegacyRouter = lazy(async () => ({ default: (await preloadMonthlyStrategiesPage()).RollingMonthlyLegacyRouter }));
 const TrendlyneSummaryPage = lazy(async () => ({ default: (await import("./pages/TrendlyneSummaryPage")).TrendlyneSummaryPage }));
 const LongOptionsPage = lazy(async () => ({ default: (await preloadLongOptionsPage()).LongOptionsPage }));
@@ -199,6 +200,7 @@ export default function App() {
           <Route path="/strategy/oiss-v1-202608/:lens" element={<OissV1Page />} />
           <Route path="/strategy/monthly" element={<MonthlyStrategyPage />} />
           <Route path="/strategy/scalper-dashboard" element={<ScalperDashboardPage />} />
+          <Route path="/strategy/three-month" element={<ThreeMonthStrategyPage />} />
           <Route path="/strategy/rolling-monthly" element={<RollingMonthlyLegacyRouter />} />
           <Route path="/strategy/rolling-monthly/legacy" element={<RollingMonthlyPage />} />
           <Route path="/strategy/trendlyne-summary" element={<TrendlyneSummaryPage />} />

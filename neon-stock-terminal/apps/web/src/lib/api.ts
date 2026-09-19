@@ -41,6 +41,8 @@ import type {
   RsiSurfaceResponse,
   ScalperProgressionResponse,
   StockDetailResponse,
+  ThreeMonthIntradayMode,
+  ThreeMonthStrategyResponse,
   WillSurfaceResponse,
   WatchlistHistoryPayload,
   WatchlistPayload,
@@ -476,6 +478,10 @@ export function fetchHeaderMarketSummary(): Promise<HeaderMarketSummaryResponse>
 
 export function fetchScalperProgression(): Promise<ScalperProgressionResponse> {
   return getJson<ScalperProgressionResponse>("/v1/overview/scalper-progression");
+}
+
+export function fetchThreeMonthStrategy(mode: ThreeMonthIntradayMode): Promise<ThreeMonthStrategyResponse> {
+  return getJson<ThreeMonthStrategyResponse>(`/v1/strategy/three-month?intradayMode=${encodeURIComponent(mode)}`);
 }
 
 export function getScalperProgressionExcelUrl(): string {

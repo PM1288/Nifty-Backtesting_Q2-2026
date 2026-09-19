@@ -46,6 +46,7 @@ import { registerTrendlyneSummary } from "./trendlyneSummary";
 import { registerOissV1 } from "./oissV1";
 import { registerAiTrackedStockRoutes } from "./aiTrackedStocks";
 import { registerFuturesVolatility } from "./futuresVolatility";
+import { registerThreeMonthStrategy } from "./threeMonthStrategy";
 
 export function registerRoutes(
   app: Express,
@@ -90,6 +91,7 @@ export function registerRoutes(
   registerOiisLive(app, prisma);
   registerFnoVolatility(app, prisma);
   registerFuturesVolatility(app, prisma);
+  registerThreeMonthStrategy(app, prisma);
   registerRollingMonthly(app, prisma);
   registerRollingWindow(app, prisma);
   registerLongOptions(app, prisma);

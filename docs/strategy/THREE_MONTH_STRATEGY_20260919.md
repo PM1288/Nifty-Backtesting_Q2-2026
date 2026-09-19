@@ -1,0 +1,84 @@
+# 3Month Strategy — implementation and evidence
+
+Date: 19 September 2026  
+Route: `/strategy/three-month`  
+API: `GET /v1/strategy/three-month?intradayMode=completed|forming`  
+Version: `three_month_recovery_v1`
+
+## Scope
+
+This is a new, read-only NIFTY 500 profile screener. It does not replace or
+modify Monthly Strategy, MWHD, OIIS, paper trades, order permissions, alerts or
+any entry/exit rule. It produces a candidate only; it does not invent an entry,
+stop, target, position size, volume gate, exit or re-entry rule.
+
+## Exact formula
+
+All ten bullish gates must pass:
+
+1. current month close/as-of value > current month open;
+2. current month close/as-of value > previous month open;
+3. current week close/as-of value > current week open;
+4. current week close/as-of value > previous week open;
+5. current day close/as-of value > previous day open;
+6. current day close/as-of value > current day open;
+7. selected current 1-hour close > its open;
+8. selected current 1-hour close > the immediately previous 1-hour open;
+9. selected current 15-minute close > its open;
+10. selected current 15-minute close > the immediately previous 15-minute open.
+
+In addition, at least one of M-1, M-2 or M-3 must have close < open. The three
+historical checks use OR; missing history never becomes a pass or a zero.
+
+`QUALIFIED` means all ten gates plus the historical OR passed. `REJECTED` means
+at least one known gate failed. `INCOMPLETE` means evidence was unavailable or a
+lower stage was intentionally not evaluated.
+
+## Candle policy
+
+The default is `completed`. Intraday buckets are anchored to the NSE cash
+session at 09:15 IST. A bucket is complete only when every expected one-minute
+observation is present through its final minute. The previous candle is the
+immediately adjacent bucket; a gap is not replaced with a nearby candle.
+
+`forming` is an explicit alternate inspection mode. It may use the latest
+incomplete 1-hour and 15-minute buckets. Such gates carry a forming marker and
+can reverse before candle close. The current month, week and day values are
+as-of/current-period values rather than audited final-period closes.
+
+Intraday data is queried only for rows whose six higher-timeframe gates and
+historical weakness gate pass. Every available membership row remains in the
+response; non-eligible lower gates are `SKIPPED`, not false or zero.
+
+## Sources and current limitation
+
+Daily source precedence is: same-session `instrument_state`,
+`strategy_eval.stock_daily_regime`, NSE EOD prices, then retained daily bars.
+Intraday uses retained NSE one-minute bars.
+
+The database currently contains 268 `instrument_profiles` rows and all 268 are
+flagged `is_nifty_500`, source date 23 August 2026. It does not currently contain
+all 500 benchmark constituents. The UI therefore shows `Profile coverage
+268/500` rather than claiming complete NIFTY 500 coverage. This source-universe
+gap is visible evidence and is not repaired by inventing symbols or silently
+mixing another universe.
+
+## UI and export
+
+The Strategy menu, workspace navigation and command palette expose the route.
+The screen provides a dense row per available member, grouped two-column
+Month/Week/Day/1H/15m gates, three separate weakness cells, search/status
+filters, exact arithmetic in a side inspector, Stock 360 links and CSV export.
+PASS, FAIL, unavailable and skipped are visually and semantically distinct.
+
+## Validation before release
+
+- API typecheck, complete API test suite and API build.
+- Web typecheck, complete web test suite and web build.
+- Live read-only SQL execution for both intraday policies.
+- Canonical repository preservation gate.
+- Authenticated browser route, navigation, mode, arithmetic drawer, CSV and
+  responsive layout checks after deployment.
+
+Deployment and final browser evidence are recorded in `AGENT_HANDOFF.md` after
+release. No database migration or data mutation is part of this feature.

@@ -41,6 +41,7 @@ import {
   fetchRsiSurface,
   fetchScalperProgression,
   fetchStock,
+  fetchThreeMonthStrategy,
   fetchWillSurface,
   fetchWatchlist,
   fetchWatchlistHistory,
@@ -48,7 +49,7 @@ import {
   getWsBaseUrl,
   type AnalyticsSimulatorQuery
 } from "./api";
-import type { LiveQuote } from "./types";
+import type { LiveQuote, ThreeMonthIntradayMode } from "./types";
 import { recordQueryTiming, trackQueryLoadProfile } from "../analytics/performance";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -153,6 +154,18 @@ export function useScalperProgression(enabled = true) {
     enabled,
     refetchInterval: 30_000,
     staleTime: 15_000,
+  });
+}
+
+export function useThreeMonthStrategy(mode: ThreeMonthIntradayMode, enabled = true) {
+  const tokenVersion = useSessionVersion();
+  return useProfiledQuery(`three-month-strategy:${mode}`, {
+    queryKey: ["three-month-strategy", mode, tokenVersion],
+    queryFn: () => fetchThreeMonthStrategy(mode),
+    enabled,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+    placeholderData: keepPreviousData,
   });
 }
 

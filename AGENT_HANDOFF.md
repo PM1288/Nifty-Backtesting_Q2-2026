@@ -5386,3 +5386,28 @@ or outcomes were deleted.
 - Authenticated production Playwright passed the same 20 and 10 checks; the live
   screenshot was inspected. Production evidence is outside Git at
   `/tmp/mwhd-progression-production/` and `/tmp/mwhd-sidebar-production/`.
+
+## 2026-09-19 — Home MWHD optional projected-volume confirmation
+
+- Branch: `feat/home-mwhd-volume-confirmation-20260919`; report:
+  `docs/uiux/HOME_MWHD_VOLUME_CONFIRMATION_20260919.md`.
+- Both MWHD-BULL and MWHD-BEAR boards add a hideable `V20 opt.` cell with the
+  exact projected full-session volume multiple versus the prior 20 completed
+  daily-session volume SMA. Green starts at 2×; intermediate bands are yellow
+  and below-normal pace is red. Missing evidence remains unavailable.
+- Projection uses the retained quote observation time and the 09:15–15:30 IST
+  375-minute session. Completed retained sessions use actual volume, avoiding a
+  wall-clock extrapolation of older evidence.
+- The volume signal is optional and non-gating: it does not change Bull/Bear
+  comparisons, qualification, weights, scores or independent ranks. Raw/current,
+  projected and SMA values remain visible in the drawer and CSV.
+- Gates passed: web typecheck/build and 217/217 tests; API typecheck/build and
+  248/248 tests; canonical repository gate and diff check. Candidate and
+  authenticated production Playwright each passed 23/23 checks; desktop/mobile
+  screenshots were inspected.
+- Release commit `f23e20c` pushed to feature and `master`; rollback tag
+  `before-home-mwhd-volume-20260919`. Scoped deploy recreated only the dashboard.
+  Container `5fe5cf35b19a...` is healthy, image `sha256:bf0ff3f314d...`, entry
+  asset `/n50/assets/index-BxD2Joco.js`.
+- Runtime evidence remains outside Git at `/tmp/home-mwhd-volume-candidate/`
+  and `/tmp/home-mwhd-volume-production/`.

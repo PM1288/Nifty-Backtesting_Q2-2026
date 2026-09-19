@@ -71,7 +71,15 @@ adds the same raw inputs and computed multiple.
 - Authenticated candidate Playwright covers both boards, exact multipliers,
   optional hide/show behavior, unchanged ranks/scores, drawer evidence, ten-row
   desktop density and contained mobile horizontal scrolling.
+- Full repository result: web typecheck/build and 217/217 tests; API
+  typecheck/build and 248/248 tests; canonical repository gate passed.
+- Authenticated candidate and production Playwright each passed 23/23 checks.
+- Release commit `f23e20c`; rollback tag
+  `before-home-mwhd-volume-20260919`.
+- Scoped production deployment recreated only `n50-dashboard`. Container
+  `5fe5cf35b19a...` is healthy on image `sha256:bf0ff3f314d...`; public entry
+  asset `/n50/assets/index-BxD2Joco.js` was verified.
 
 Screenshots and browser evidence are retained outside Git under
-`/tmp/home-mwhd-volume-candidate/` during this release run.
-
+`/tmp/home-mwhd-volume-candidate/` and
+`/tmp/home-mwhd-volume-production/` during this release run.

@@ -5470,3 +5470,28 @@ or outcomes were deleted.
   `sha256:d5c5e3c059747768abfe268896013f06fdd93fed36357f25463025dd357fe93a`,
   entry asset `/n50/assets/index-BRExCwJn.js`. No strategy/data/order behavior
   changed.
+
+## 2026-09-19 — 3Month Strategy light compact presentation
+
+- Branch: `fix/three-month-light-compact-20260919`; strategy evidence:
+  `docs/strategy/THREE_MONTH_STRATEGY_20260919.md`.
+- The route `/strategy/three-month` now uses light/white surfaces across the
+  page, controls, table and arithmetic drawer. The existing strategy, filters,
+  CSV, source data and missingness behavior are unchanged.
+- The sticky identity cell displays only the exchange symbol. Company, sector,
+  qualification and score are exposed through native hover/focus descriptions;
+  exact gate arithmetic remains in the existing cell tooltip and click-open
+  drawer. The normal table body row is exactly 30px tall.
+- Gates passed before release: web typecheck/build and 218/218 tests; API
+  typecheck/build and 252/252 tests; canonical repository gate.
+- Authenticated public Chromium passed 29/29 desktop/mobile checks, including
+  the computed white page background, 30px row height, absent company line,
+  hover details, drawer, policy toggle and CSV. Evidence is outside Git at
+  `/home/novius2/NIFTY50/evidence/three-month-light-compact-production-20260919/`.
+- Release commit `06b0cea` was pushed to the feature branch and `master`.
+  Rollback tag `before-three-month-light-compact-20260919` identifies
+  `e40bbcc`, the preceding dashboard release. Scoped deployment recreated only
+  `n50-dashboard`; container `4a86bd8c6e78...` is healthy, deployed image
+  `sha256:17d726433225be96b5662a958d3aff2b3b6465b357cdc0697e5e160e5398aa90`,
+  entry asset `/n50/assets/index-D0n6N1Cp.js`. No API, collector, database,
+  strategy or order behavior changed.

@@ -54,6 +54,15 @@ collector behavior was changed.
   current-month future volume, RELIANCE cash volume, pop-out and linked cursor.
 - Candidate screenshot and result JSON:
   `/tmp/scalper-v2-oi-time-candidate-20260919/` (not committed).
+- Release commit `3c8ad52` was pushed to the feature branch and `master`.
+  Rollback tag: `before-scalper-v2-oi-time-volume-20260919`.
+- The approved scoped deployment recreated only `n50-dashboard`. Container
+  `38a1b856d37e...` is healthy, image
+  `sha256:db363e00918c4eed13a5080a20c180488b9a5d482036193560a4dc642d5be4fe`,
+  and the public entry asset is `/n50/assets/index-CDRAOttn.js`.
+- Authenticated public Chromium validation: 14/14 PASS. Production evidence:
+  `/tmp/scalper-v2-oi-time-production-20260919/` (not committed). The production
+  1920x1080 capture was visually inspected.
 
 ## Retained-data evidence and limitation
 

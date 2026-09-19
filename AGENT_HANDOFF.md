@@ -16,6 +16,11 @@
   chain snapshot and correctly render OI history unavailable.
 - Detailed evidence and rerun commands:
   `docs/trading-analytics/SCALPER_V2_OI_TIME_AND_VOLUME_20260919.md`.
+- Release commit `3c8ad52` is pushed to the feature branch and `master`; rollback
+  tag `before-scalper-v2-oi-time-volume-20260919` is pushed. The scoped dashboard
+  deployment recreated only `n50-dashboard`; container `38a1b856d37e...` is
+  healthy with entry asset `/n50/assets/index-CDRAOttn.js`. Authenticated public
+  Chromium passed all 14 checks and its 1920x1080 capture was inspected.
 
 ## 2026-09-19 — Home trading shortlist
 

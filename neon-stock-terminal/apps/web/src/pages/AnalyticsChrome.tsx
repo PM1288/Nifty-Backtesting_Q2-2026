@@ -350,10 +350,16 @@ type AnalyticsHeaderProps = {
 };
 
 export function AnalyticsHeader({
-  action
+  title, subtitle, meta, action, learningPrompt, learningPoints, learningDefaultOpen
 }: AnalyticsHeaderProps) {
-  if (!action) return null;
-  return <header className={styles.compactPageActions}>{action}</header>;
+  return <header className={styles.pageIdentity}>
+    <div><h1>{title}</h1><p>{subtitle}</p>{meta && <p data-testid="analytics-snapshot-context">{meta}</p>}</div>
+    {action && <div className={styles.compactPageActions}>{action}</div>}
+    {learningPoints?.length ? <details open={learningDefaultOpen}>
+      <summary>{learningPrompt ?? 'Method and limitations'}</summary>
+      <ul>{learningPoints.map((point, index) => <li key={index}>{point}</li>)}</ul>
+    </details> : null}
+  </header>;
 }
 
 type ExplainThisProps = {

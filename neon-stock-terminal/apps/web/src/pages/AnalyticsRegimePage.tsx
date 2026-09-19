@@ -18,6 +18,7 @@ import {
   useAnalyticsExperienceMode
 } from "./AnalyticsChrome";
 import styles from "./AnalyticsPage.module.css";
+import { regimeHistoryThrough } from '../lib/regimeSession';
 
 function signedPct(value: unknown) {
   const parsed = num(value);
@@ -95,8 +96,10 @@ export function AnalyticsRegimePage() {
   }
 
   const metrics = regime.data.summary_metrics;
-  const gainers = asArray(summary.data.top_gainers).slice(0, 5) as Array<Record<string, unknown>>;
-  const losers = asArray(summary.data.top_losers).slice(0, 5) as Array<Record<string, unknown>>;
+  const selectedSession = regime.data.trade_date;
+  const matchingLeadership = summary.data.trade_date === selectedSession;
+  const gainers = matchingLeadership ? asArray(summary.data.top_gainers).slice(0, 5) as Array<Record<string, unknown>> : [];
+  const losers = matchingLeadership ? asArray(summary.data.top_losers).slice(0, 5) as Array<Record<string, unknown>> : [];
   const rows = regime.data.rows.slice(0, 12) as Array<Record<string, unknown>>;
   const regimeLabel = humanizeRegimeLabel(metrics["market_regime"]);
   const headlineNarrative = regimeNarrative(
@@ -105,7 +108,7 @@ export function AnalyticsRegimePage() {
     num(metrics["breakdown_count"]),
     tr,
   );
-  const regimeTimeline = analyticsDashboard.data?.regimeHistory?.slice(-10) ?? [];
+  const regimeTimeline = regimeHistoryThrough(analyticsDashboard.data?.regimeHistory ?? [], selectedSession);
   const latestRegimeWindow = regimeTimeline.map((point) => humanizeRegimeLabel(point.marketRegime));
   const regimeTransitions = latestRegimeWindow.reduce((count, label, index, list) => {
     if (index === 0) return count;
@@ -131,7 +134,7 @@ export function AnalyticsRegimePage() {
     <div className={styles.page}>
       <AnalyticsHeader
         title={mode === "beginner" ? tr("Market Story") : tr("Regime & Breadth")}
-        meta={`${tr("Trade date")} ${summary.data.trade_date} • ${tr("Refreshed")} ${summary.data.generated_at ? formatDateTime(summary.data.generated_at, { includeTime: true }) : "—"}`}
+        meta={`${tr("Selected session")} ${selectedSession} • ${tr("Snapshot generated")} ${regime.data.generated_at ? formatDateTime(regime.data.generated_at, { includeTime: true }) : "—"} • Header ticker is separate latest context`}
         subtitle={
           mode === "beginner"
             ? tr("Understand whether the market is healthy, narrow, or unstable before you pick a stock.")
@@ -187,7 +190,7 @@ export function AnalyticsRegimePage() {
               const label = humanizeRegimeLabel(point.marketRegime);
               const balance = point.breakoutCount - point.breakdownCount;
               return (
-                <div key={point.tradeDate} className={styles.historyPill} data-tone={regimeTone(label)}>
+                <div key={point.tradeDate} className={styles.historyPill} data-tone={regimeTone(label)} aria-current={point.tradeDate === selectedSession ? 'date' : undefined}>
                   <div className={styles.historyPillDate}>{point.tradeDate.slice(5)}</div>
                   <div className={styles.historyPillLabel}>{tr(label)}</div>
                   <div className={styles.historyPillMeta}>
@@ -224,6 +227,7 @@ export function AnalyticsRegimePage() {
 
         <div className={styles.tablePanel}>
           <h2 className={styles.panelTitle}>{tr("Leadership Snapshot")}</h2>
+          {!matchingLeadership && <p>Leadership unavailable for selected session {selectedSession}. Latest leadership ({summary.data.trade_date}) is not substituted.</p>}
           <div className={styles.dualList}>
             <div className={styles.miniPanel}>
               <div className={styles.miniTitle}>{tr("Top Gainers")}</div>

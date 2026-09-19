@@ -34,12 +34,34 @@ function horizonOutcomePnl(horizon: Row | undefined, entryNotional: number) {
 }
 
 export function futuresWorkspacePayload(contracts: Row[], participantRows: Row[]) {
-  const jsonSafeContracts = contracts.map((row) => ({
+  const observedNumber = (value: unknown) => {
+    if (value == null || typeof value === 'boolean' || String(value).trim() === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const jsonSafeContracts = contracts.map((row) => {
+    const change = observedNumber(row.oi_change_pct);
+    const priceChange = observedNumber(row.price_change_pct);
+    const missing = row.oi_change_pct == null || String(row.oi_change_pct).trim() === '';
+    const valid = change != null && change >= -100;
+    // Provider percentage, not a reconstructed baseline. Keep invalid raw
+    // observations in the authoritative store, never in a derived signal.
+    const buildup = !valid || priceChange == null ? 'UNAVAILABLE'
+      : priceChange === 0 || change === 0 ? 'NEUTRAL'
+      : change > 0 ? (priceChange > 0 ? 'LONG_BUILDUP' : 'SHORT_BUILDUP')
+      : priceChange > 0 ? 'SHORT_COVERING' : 'LONG_UNWINDING';
+    return {
     ...row,
+    oi_change_pct: valid ? row.oi_change_pct : null,
+    oi_change_quality: valid ? 'PROVIDER_REPORTED' : missing ? 'MISSING' : 'INVALID',
+    oi_change_reason: valid ? 'Provider percentage; baseline not independently reconciled'
+      : missing ? 'OI percentage or baseline unavailable' : 'Invalid OI percentage: non-finite or below -100%',
+    buildup,
     // PostgreSQL window functions are bigint by default. Keep the public
     // contract numeric while preventing Express JSON serialization failures.
     expiry_rank: row.expiry_rank == null ? null : finiteNumber(row.expiry_rank)
-  }));
+    };
+  });
   return { contracts: jsonSafeContracts, participantRows, rows: participantRows };
 }
 

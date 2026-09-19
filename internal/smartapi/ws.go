@@ -435,7 +435,12 @@ func parseBinaryTick(data []byte) (Tick, bool) {
 	}
 	if len(data) >= 147 {
 		change := float64(readInt64(data[139:147]))
-		tick.OIChangePct = &change
+		// A percentage change in non-negative OI cannot be below -100.
+		// Preserve the raw packet for diagnosis; do not guess another wire
+		// encoding or turn an invalid observation into zero.
+		if change >= -100 {
+			tick.OIChangePct = &change
+		}
 	}
 	if len(data) >= 347 {
 		tick.DepthBuy, tick.DepthSell = parseDepthLevels(data[147:347])

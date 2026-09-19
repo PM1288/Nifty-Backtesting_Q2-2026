@@ -24,6 +24,9 @@
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 22px;
+  --radius-panel: var(--radius-md);
+  --control-h-standard: var(--control-height-md);
+  --page-pad-desktop: var(--page-padding);
 
   /* Shared motion contract. */
   --motion-value: 150ms;

@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { DateTime } from 'luxon';
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { toNumber } from "../lib/num";
 import { getLatestStoredSnapshot, getStoredSnapshot, serveSnapshotRoute } from "../lib/dashboardSnapshots";
@@ -12,6 +13,8 @@ import { getAnalyticsOptionsStructure, getAnalyticsOptionsStructureForSymbol } f
 import { getAnalyticsStrategyEvaluation } from "./analyticsStrategyEvaluation";
 import { getOverview } from "./overview";
 import { getSupportingMetricsSnapshot } from "./supportingMetrics";
+
+export const ANALYTICS_BOARD_BRIEF_SNAPSHOT_KEY = 'analytics-board-brief-evidence-v2';
 
 type DashboardSummaryRow = {
   trade_date: Date | string | null;
@@ -2060,7 +2063,17 @@ export function buildAnalyticsBoardBriefPayload(
 
   const stateLabel = compactText(marketState.verdict?.dominantState || marketState.session?.primaryState || "balanced / indecisive");
   const leadershipBias = compactText(leadership.summary?.continuationBias || leadership.summary?.marketSupportNote || "");
-  const optionsBias = compactText(optionsStructure.summary?.optionsVsSpot || "");
+  const optionsEvidenceAvailable = quality.safeModules?.includes('Options Structure') === true
+    && optionsStructure.latestSnapshot?.capturedAt != null
+    && marketDayIso(DateTime.fromISO(optionsStructure.latestSnapshot.capturedAt).setZone('Asia/Kolkata')) === tradeDate
+    && optionsStructure.pcrByExpiry?.[0]?.expiry === optionsStructure.latestSnapshot.expiryDate
+    && optionsStructure.maxPainDrift?.[0]?.expiry === optionsStructure.latestSnapshot.expiryDate
+    && [optionsStructure.pcrByExpiry?.[0]?.pcr,
+      optionsStructure.maxPainDrift?.[0]?.maxPainStrike,
+      optionsStructure.summary?.nearestStructure?.callWall,
+      optionsStructure.summary?.nearestStructure?.putWall]
+      .every(value => value != null && Number.isFinite(Number(value)));
+  const optionsBias = optionsEvidenceAvailable ? compactText(optionsStructure.summary?.optionsVsSpot || '') : '';
   const flowBackdrop = compactText(fiiFlow.summary?.backdrop || fiiFlow.backdrop || "");
   const strategyBias = compactText(strategyEvaluation.summary?.modelBias || strategyEvaluation.summary?.takeaway || "");
   const qualityVerdict = compactText(quality.summary.verdict);
@@ -2079,9 +2092,13 @@ export function buildAnalyticsBoardBriefPayload(
   if (qualityVerdict === "fragile") biasScore -= 1;
   if (qualityVerdict === "mixed") biasScore -= 0.5;
 
-  const overallBias = biasScore >= 2 ? "bullish" : biasScore <= -2 ? "bearish" : "mixed";
+  const combinedEvidenceAvailable = optionsEvidenceAvailable
+    && quality.summary.hiddenModuleCount === 0 && quality.summary.downgradedModuleCount === 0;
+  const overallBias = !combinedEvidenceAvailable ? 'unavailable' : biasScore >= 2 ? "bullish" : biasScore <= -2 ? "bearish" : "mixed";
   const marketBias =
-    overallBias === "bullish"
+    overallBias === 'unavailable'
+      ? 'Combined direction unavailable: required evidence is missing, downgraded or not reconciled. Independent observations remain available below; data quality is not a forecast probability.'
+      : overallBias === "bullish"
       ? "Constructive with selective continuation, but only while breadth and participation stay aligned."
       : overallBias === "bearish"
         ? "Defensive and fade-aware, with failed moves more trustworthy than clean continuation."
@@ -2089,8 +2106,8 @@ export function buildAnalyticsBoardBriefPayload(
 
   const positiveRatio = dashboard.marketSummary.positiveRatio;
   const niftyReturnPct = dashboard.marketSummary.niftyReturn != null ? dashboard.marketSummary.niftyReturn * 100 : null;
-  const constructiveCount = dailySetups.summary?.constructiveCount ?? 0;
-  const deceptiveCount = dailySetups.summary?.deceptiveCount ?? 0;
+  const constructiveCount = dailySetups.summary?.constructiveCount ?? null;
+  const deceptiveCount = dailySetups.summary?.deceptiveCount ?? null;
   const marketStatus = overview.market?.label ?? (mode === "live" ? "OPEN" : "CLOSED");
   const session = marketState.session;
   const niftyQuote = overview.indices?.nifty50 ?? null;
@@ -2250,21 +2267,25 @@ export function buildAnalyticsBoardBriefPayload(
 
   const decoratedHeader = [
     "╔════════════════════════════  NIFTY MARKET DOSSIER  ════════════════════════════╗",
-    `║ Mode: ${mode.toUpperCase()} | As Of: ${timestamp} | Market: ${marketStatus} | Bias: ${overallBias.toUpperCase()} | Confidence: ${confidenceScore} | Freshness: ${freshness}`,
+    `║ Mode: ${mode.toUpperCase()} | As Of: ${timestamp} | Market: ${marketStatus} | Bias: ${overallBias.toUpperCase()} | Data quality score: ${confidenceScore} (not probability) | Freshness: ${freshness}`,
     `║ Session: ${sessionLabel} ${tradeDate ?? "NA"} | Expected trade date: ${quality.expectedTradeDate ?? "NA"}`,
     "╚══════════════════════════════════════════════════════════════════════════════════╝"
   ];
 
   const keyConclusions = [
     compactText(
-      `Index tone is ${titleCaseLabel(stateLabel)} because NIFTY 50 closed ${formatPct(
+      !quality.safeModules?.includes('Market State') || marketState.tradeDate !== tradeDate
+        ? 'Index conclusion unavailable: current-session market-state evidence is not validated.'
+        : `Index tone is ${titleCaseLabel(stateLabel)} because NIFTY 50 closed ${formatPct(
         niftyQuote?.changePct ?? niftyReturnPct,
         2,
         true
       )} while breadth finished ${formatRatioPct(positiveRatio, 1)} and weighted participation printed ${formatPct(session?.weightedParticipationPct, 1)}.`
     ),
     compactText(
-      `Leadership is selective rather than index-wide because true leaders are ${formatInteger(
+      !quality.safeModules?.includes('Stock Leadership') || leadership.tradeDate !== tradeDate
+        ? 'Leadership conclusion unavailable: current-session leadership evidence is not validated.'
+        : `Leadership is selective rather than index-wide because true leaders are ${formatInteger(
         leadership.summary?.trueLeaderCount ?? null
       )} while avoid names are ${formatInteger(leadership.summary?.avoidCount ?? null)} and top-10 concentration sits at ${formatPct(
         session?.top10ConcentrationPct,
@@ -2272,7 +2293,9 @@ export function buildAnalyticsBoardBriefPayload(
       )}.`
     ),
     compactText(
-      `Daily setups are usable but not indiscriminate because constructive setups are ${formatInteger(
+      !quality.safeModules?.includes('Daily Setups') || dailySetups.tradeDate !== tradeDate || constructiveCount == null || deceptiveCount == null
+        ? 'Setup conclusion unavailable: the current-session evaluation is incomplete or unvalidated.'
+        : `Daily setups are usable but not indiscriminate because constructive setups are ${formatInteger(
         constructiveCount
       )} versus deceptive setups ${formatInteger(deceptiveCount)}, and strategy average historical edge is ${formatPct(
         strategyEvaluation.summary?.avgHistoricalEdge != null ? strategyEvaluation.summary.avgHistoricalEdge * 100 : null,
@@ -2281,7 +2304,7 @@ export function buildAnalyticsBoardBriefPayload(
       )}.`
     ),
     compactText(
-      `Options are ${optionsBias ? optionsBias.toLowerCase() : "mixed"} because weekly max pain is ${formatPrice(
+      !optionsEvidenceAvailable ? 'Options conclusion unavailable: PCR, max pain and both walls require valid, same-scope evidence approved by data quality.' : `Options are ${optionsBias ? optionsBias.toLowerCase() : "mixed"} because weekly max pain is ${formatPrice(
         niftyWeeklyMaxPain
       )}, weekly PCR is ${formatPrice(latestPcrRow?.pcr ?? null, 2)}, and nearest walls are call ${formatPrice(
         optionsStructure.summary?.nearestStructure.callWall ?? null
@@ -2335,7 +2358,7 @@ export function buildAnalyticsBoardBriefPayload(
     if (quality.summary.verdict !== "healthy") pushUnique(contradictingModules, "System Quality");
     if (optionsBias.includes("contradict") || optionsBias.includes("noisy")) pushUnique(contradictingModules, "Options Structure");
   } else {
-    if (quality.summary.verdict !== "healthy") pushUnique(confirmingModules, "System Quality");
+    // Poor data quality is a limitation, never confirmation of a bearish market.
     if (stateLabel.includes("failed") || stateLabel.includes("chop") || stateLabel.includes("indecisive")) pushUnique(confirmingModules, "Market State");
     if (flowBackdrop.includes("contrarian") || flowBackdrop.includes("stretched")) pushUnique(confirmingModules, "FII / Participant Flow");
     if ((leadership.summary?.trueLeaderCount ?? 0) > (leadership.summary?.avoidCount ?? 0)) pushUnique(contradictingModules, "Stock Leadership");
@@ -2375,7 +2398,7 @@ export function buildAnalyticsBoardBriefPayload(
   const optionsSnapshot = [
     `NIFTY spot=${formatPrice(niftySpot)} weekly_expiry=${niftyWeeklyExpiry ?? "NA"} monthly_expiry=${niftyMonthlyExpiry ?? "NA"} weekly_max_pain=${formatPrice(niftyWeeklyMaxPain)} monthly_max_pain=${formatPrice(niftyMonthlyMaxPain)} weekly_pcr=${formatPrice(latestPcrRow?.pcr ?? null, 2)} monthly_pcr=${formatPrice(latestMonthlyPcrRow?.pcr ?? null, 2)} atm_iv=${formatPrice(niftyAtmIv, 2)} call_wall=${niftyCallWallLabel} put_wall=${niftyPutWallLabel}`,
     `BANKNIFTY spot=${formatPrice(bankSpot)} weekly_expiry=${bankWeeklyExpiry ?? "NA"} monthly_expiry=${bankMonthlyExpiry ?? "NA"} weekly_max_pain=${formatPrice(bankWeeklyMaxPain)} monthly_max_pain=${formatPrice(bankMonthlyMaxPain)} weekly_pcr=${formatPrice(bankLatestPcrRow?.pcr ?? null, 2)} monthly_pcr=${formatPrice(bankMonthlyPcrRow?.pcr ?? null, 2)} atm_iv=${formatPrice(bankAtmIv, 2)} call_wall=${bankCallWallLabel} put_wall=${bankPutWallLabel}`,
-    `Options takeaway: NIFTY options ${optionsBias || "are mixed"} with weekly max pain ${formatPrice(niftyWeeklyMaxPain)}, weekly PCR ${formatPrice(latestPcrRow?.pcr ?? null, 2)}, latest call-wall OI ${formatInteger(latestNiftyWall?.callWallOi ?? null)}, latest put-wall OI ${formatInteger(latestNiftyWall?.putWallOi ?? null)}, and quality note: ${compactText(optionsQualityNote)}`
+    optionsEvidenceAvailable ? `Options takeaway: NIFTY options ${optionsBias || "are mixed"} with weekly max pain ${formatPrice(niftyWeeklyMaxPain)}, weekly PCR ${formatPrice(latestPcrRow?.pcr ?? null, 2)}, latest call-wall OI ${formatInteger(latestNiftyWall?.callWallOi ?? null)}, latest put-wall OI ${formatInteger(latestNiftyWall?.putWallOi ?? null)}, and quality note: ${compactText(optionsQualityNote)}` : 'Options takeaway unavailable: required positioning evidence is not validated.'
   ];
 
   const fiiSnapshot = [
@@ -2471,7 +2494,7 @@ export function buildAnalyticsBoardBriefPayload(
   }
 
   const llm_brief = compactText(
-    `${sessionLabel} ${tradeDate ?? "unknown"} as of ${timestamp}; market ${marketStatus}; confidence ${confidenceScore}; freshness ${freshness}. NIFTY 50 ${formatPrice(
+    `${sessionLabel} ${tradeDate ?? "unknown"} as of ${timestamp}; market ${marketStatus}; data quality score ${confidenceScore} (not a forecast probability); freshness ${freshness}. NIFTY 50 ${formatPrice(
       niftyQuote?.last ?? session?.lastPrice ?? null
     )} ${formatPct(niftyQuote?.changePct ?? niftyReturnPct, 2, true)} with breadth ${formatInteger(
       dashboard.marketSummary.advancers
@@ -2542,6 +2565,8 @@ export function buildAnalyticsBoardBriefPayload(
       mode,
       marketStatus,
       confidenceScore,
+      scoreMeaning: 'DATA_QUALITY_NOT_FORECAST_PROBABILITY',
+      evidenceState: combinedEvidenceAvailable ? 'AVAILABLE' : 'INCOMPLETE',
       overallBias
     },
     decoratedHeader,
@@ -2604,7 +2629,7 @@ export function buildAnalyticsBoardBriefPayload(
     dataQuality,
     llm_brief,
     machineFacts,
-    rootRouteTakeaway: compactText(
+    rootRouteTakeaway: !combinedEvidenceAvailable ? marketBias : compactText(
       `Root-route takeaway: ${titleCaseLabel(stateLabel)} with NIFTY 50 ${formatPct(
         niftyQuote?.changePct ?? niftyReturnPct,
         2,
@@ -2855,7 +2880,7 @@ export function registerAnalytics(app: Express, prisma: PrismaClient) {
 
   app.get("/v1/analytics/board-brief", async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
-      key: "analytics-board-brief",
+      key: ANALYTICS_BOARD_BRIEF_SNAPSHOT_KEY,
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getAnalyticsBoardBrief
@@ -2872,13 +2897,13 @@ export function registerAnalytics(app: Express, prisma: PrismaClient) {
       const snapshotDate = marketDayIso();
       const { record: currentSnapshot } = await getStoredSnapshot<Awaited<ReturnType<typeof getAnalyticsBoardBrief>>>(
         prisma,
-        "analytics-board-brief",
+        ANALYTICS_BOARD_BRIEF_SNAPSHOT_KEY,
         snapshotDate,
         300
       );
       const { record } = currentSnapshot
         ? { record: currentSnapshot }
-        : await getLatestStoredSnapshot<Awaited<ReturnType<typeof getAnalyticsBoardBrief>>>(prisma, "analytics-board-brief", 300);
+        : await getLatestStoredSnapshot<Awaited<ReturnType<typeof getAnalyticsBoardBrief>>>(prisma, ANALYTICS_BOARD_BRIEF_SNAPSHOT_KEY, 300);
 
       if (!record) {
         return res

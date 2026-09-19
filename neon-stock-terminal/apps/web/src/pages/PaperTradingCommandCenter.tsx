@@ -34,6 +34,7 @@ import {
 import styles from "./PaperTradingCommandCenter.module.css";
 import { PaperVerifiedResearch } from "./PaperVerifiedResearch";
 import { PaperTradeAnalyzer } from "./PaperTradeAnalyzer";
+import { retainCompletePaperSnapshot } from '../lib/paperSnapshot';
 import { isPaperExecutionClosed } from "../lib/paperAtlas";
 import { PAPER_EVIDENCE_DENSITIES, PAPER_EVIDENCE_PRESETS } from "../lib/paperEvidenceGeometry";
 import {
@@ -263,13 +264,26 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
       if (active) setLoadingSlow(true);
     }, 3_000);
     const fetchPayload = async (pathname: string) => {
+      const readController = new AbortController();
+      const cancel = () => readController.abort();
+      controller.signal.addEventListener('abort', cancel, { once: true });
+      let timedOut = false;
+      const timeout = window.setTimeout(() => { timedOut = true; readController.abort(); }, 60_000);
+      try {
       const response = await fetch(`${API_BASE_URL}${pathname}`, {
         credentials: "include",
-        signal: controller.signal,
+        signal: readController.signal,
         headers: { Accept: "application/json" },
       });
       if (!response.ok) throw new Error(`API ${response.status}: ${await response.text()}`);
-      return response.json();
+      return await response.json();
+      } catch (error) {
+        if (timedOut) throw new Error('Ledger read timed out after 60 seconds. Last complete snapshot is retained; retry performs no paper action.');
+        throw error;
+      } finally {
+        window.clearTimeout(timeout);
+        controller.signal.removeEventListener('abort', cancel);
+      }
     };
     const load = async () => {
       if (!active || inFlight || document.hidden) return;
@@ -280,7 +294,8 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
         if (!active) return;
         bootstrapLoaded = true;
         // A refresh must not discard the hydrated trade rows while details load.
-        setData((previous) => previous ? { ...previous, summary: bootstrap.summary ?? previous.summary } : bootstrap);
+        // D09: never put a newer summary above older hydrated trade rows.
+        setData((previous) => retainCompletePaperSnapshot(previous, bootstrap));
       } catch (reason) {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         if (active) setDetailError(`Summary bootstrap delayed: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -573,7 +588,7 @@ export function PaperTradingCommandCenter() {
       {query.detailsLoading ? (
         <section className={styles.hydrationNotice} role="status">
           <strong>Portfolio summary ready</strong>
-          <span>Loading complete trade paths, targets, quality evidence and simulations in the background. This request will continue beyond 60 seconds if necessary.</span>
+          <span>Loading complete trade paths, targets, quality evidence and simulations. Each read is bounded to 60 seconds; the last complete snapshot remains visible during refresh.</span>
         </section>
       ) : query.detailError || query.error ? (
         <section className={styles.hydrationNotice} data-error="true" role="alert">

@@ -130,3 +130,13 @@ test("analytics options structure route returns an empty payload when no snapsho
     assert.deepEqual(payload.strikeLadder, []);
     assert.equal(payload.summary, null);
   }));
+
+test('D03: a snapshot without walls or PCR cannot imply mixed direction or stable positioning', async () =>
+  withServer([[{ id: 1, captured_at: '2026-09-18T10:00:00Z', symbol: 'NIFTY', expiry_date: '2026-09-22', underlying_value: 23400, atm_strike: 23400 }], [], [], [], [], [], [], [], []], async base => {
+    const response = await fetch(`${base}/v1/analytics/options-structure`);
+    assert.equal(response.status, 200);
+    const payload = await response.json() as { summary: { optionsVsSpot: string; pcrContext: string; maxPainContext: string } };
+    assert.match(payload.summary.optionsVsSpot, /unavailable/i);
+    assert.match(payload.summary.pcrContext, /unavailable/i);
+    assert.match(payload.summary.maxPainContext, /unavailable/i);
+  }));

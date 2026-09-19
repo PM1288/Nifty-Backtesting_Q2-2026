@@ -6,6 +6,14 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-19 QA/UX containment: invalid futures OI percentages are unavailable, not
+directional signals; raw packets and stored observations remain intact. Regime
+session provenance, OIIS query-driven definitions/mobile reflow, bounded
+operational reads and previously hidden assumptions are restored. No strategy,
+order permission, ledger or chart capability was removed. This is a partial
+audit repair, not a 51-finding completion claim. Evidence and open finding ledger:
+`docs/uiux/QA_UX_AUDIT_IMPLEMENTATION_20260919.md`.
+
 2026-09-19 Predictor: additive `/predictor` top-bar/mobile entry, morning NIFTY
 and same-day selected/recommended OIIS stocks passing matching MWD gates. Three
 models, append-only publication evidence, EOD scorecards, condition slices and

@@ -1,5 +1,6 @@
 .page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   gap: 20px;
   min-height: 100vh;
@@ -37,9 +38,11 @@
 .workspaceHeader h1 { margin-top: 5px; font-size: clamp(1.9rem, 3vw, 2.75rem); }
 .workspaceHeader p { max-width: 720px; margin: 8px 0 0; color: #5c6b7d; line-height: 1.55; }
 .eyebrow,.kicker { color: #2463a6; font-size: .7rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+.eyebrow { display: block; }
 
 .tabs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
-.viewTabs { display: flex; gap: 8px; border-bottom: 1px solid #dce4ee; }
+.viewTabs { display: flex; min-width: 0; overflow-x: auto; gap: 8px; border-bottom: 1px solid #dce4ee; }
+.viewTabs > * { flex-shrink: 0; }
 .viewTab,.viewTabActive { border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; background: transparent; color: #627287; font-size: .76rem; font-weight: 850; cursor: pointer; }
 .viewTabActive { border-bottom-color: #2463a6; color: #174f83; }
 .tab,.tabActive { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #d5dee9; border-radius: 9px; padding: 8px 10px; background: #fff; color: #485970; font-size: .76rem; font-weight: 750; text-decoration: none; transition: .15s ease; }
@@ -293,7 +296,8 @@
 .error { border: 1px solid #efc1c7; border-left: 5px solid #be3547; border-radius: 10px; padding: 12px; background: #fff6f7; color: #922a38; }
 
 @media (max-width: 1180px) {
-  .workspaceHeader,.decisionHero { grid-template-columns: 1fr; align-items: flex-start; }
+  .workspaceHeader,.decisionHero,
+  :global([data-ui-compact-v5="true"]) .decisionHero { grid-template-columns: minmax(0,1fr); align-items: flex-start; }
   .workspaceHeader { display: grid; }
   .tabs { justify-content: flex-start; }
   .funnel { grid-template-columns: repeat(3,minmax(0,1fr)); }
@@ -308,7 +312,13 @@
   .workspaceHeader h1 { font-size: 1.75rem; }
   .tabs { flex-wrap: nowrap; width: 100%; overflow-x: auto; padding-bottom: 5px; }
   .tab,.tabActive { white-space: nowrap; }
-  .decisionHero { padding: 17px; }
+  .decisionHero,
+  :global([data-ui-compact-v5="true"]) .decisionHero { padding: 17px; grid-template-columns: minmax(0,1fr); min-width: 0; }
+  .decisionHero > * { min-width: 0; overflow-wrap: anywhere; }
+  .decisionMeta,
+  :global([data-ui-compact-v5="true"]) .decisionMeta { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; justify-content: stretch; }
+  .decisionMeta span,
+  :global([data-ui-compact-v5="true"]) .decisionMeta span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
   .decisionMeta,.funnel,.historyMetrics,.freshnessGrid { grid-template-columns: 1fr 1fr; }
   .funnelCard:nth-child(3)::after { display: block; }
   .funnelCard:nth-child(even)::after,.funnelCard:last-child::after { display: none; }
@@ -319,6 +329,7 @@
 }
 
 @media (max-width: 440px) {
+  :global([data-ui-compact-v5="true"]) .decisionMeta { grid-template-columns: minmax(0,1fr); }
   .decisionMeta,.funnel,.historyMetrics,.freshnessGrid,.editor { grid-template-columns: 1fr; }
   .funnelCard::after { display: none!important; }
   .sectionHeading { align-items: flex-start; flex-direction: column; }

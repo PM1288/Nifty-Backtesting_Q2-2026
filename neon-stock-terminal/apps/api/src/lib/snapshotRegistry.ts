@@ -8,6 +8,7 @@ import { buildWillSurfacePayload } from "../routes/willSurface";
 import {
   getAnalyticsDashboard,
   getAnalyticsBoardBrief,
+  ANALYTICS_BOARD_BRIEF_SNAPSHOT_KEY,
   getAnalyticsFlows,
   getAnalyticsQuality,
   getAnalyticsSimulatorDefaultSnapshot,
@@ -78,7 +79,7 @@ export const SNAPSHOT_DEFINITIONS: SnapshotDefinition<unknown>[] = [
     build: getAnalyticsQuality
   },
   {
-    key: "analytics-board-brief",
+    key: ANALYTICS_BOARD_BRIEF_SNAPSHOT_KEY,
     cacheControl: "private, max-age=300, stale-while-revalidate=300",
     freshnessMs: 5 * 60_000,
     snapshotDate: marketDayIso,

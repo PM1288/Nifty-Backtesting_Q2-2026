@@ -28,3 +28,25 @@ func TestParseBinaryTickPreservesModeSequenceAndRaw(t *testing.T) {
 		t.Fatal("raw packet must be copied, not aliased")
 	}
 }
+
+func TestParseBinaryTickQuarantinesImpossibleOIChange(t *testing.T) {
+	for _, value := range []int64{-4607714335521942500, -101, -100, 0, 1000000} {
+		packet := make([]byte, 147)
+		packet[0], packet[1] = 3, 2
+		copy(packet[2:27], []byte("12345"))
+		binary.LittleEndian.PutUint64(packet[139:147], uint64(value))
+		tick, ok := parseBinaryTick(packet)
+		if !ok {
+			t.Fatal("OI error must not discard an otherwise valid quote")
+		}
+		if value < -100 && tick.OIChangePct != nil {
+			t.Fatalf("invalid OI percentage escaped: %v", *tick.OIChangePct)
+		}
+		if value >= -100 && (tick.OIChangePct == nil || *tick.OIChangePct != float64(value)) {
+			t.Fatalf("valid OI percentage lost: %d", value)
+		}
+		if binary.LittleEndian.Uint64(tick.Raw[139:147]) != uint64(value) {
+			t.Fatal("raw evidence changed")
+		}
+	}
+}

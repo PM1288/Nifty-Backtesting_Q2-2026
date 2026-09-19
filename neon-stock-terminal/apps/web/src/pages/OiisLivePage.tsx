@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import {
   fetchOiisLiveCandidates,
@@ -171,27 +171,37 @@ export function OiisLivePage() {
   const [tradeDate, setTradeDate] = useState("");
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<string | null>(null);
-  const [view, setView] = useState<
-    "overview" | "opportunities" | "execution" | "diagnostics" | "details"
-  >("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedView = searchParams.get('tab') ?? 'overview';
+  const view = ['overview', 'opportunities', 'execution', 'diagnostics', 'details', 'strategy-definition'].includes(requestedView) ? requestedView : 'overview';
+  const setView = (next: string) => setSearchParams((current) => {
+    const params = new URLSearchParams(current);
+    params.set('tab', next);
+    return params;
+  });
   const [candidateSearch, setCandidateSearch] = useState("");
   const [candidates, setCandidates] = useState<Array<Record<string, any>>>([]);
   const [profileFilters, setProfileFilters] = useState<StockProfileFilters>({ universe: "ALL", capBucket: "ALL", sector: "ALL" });
   const profiles = useProfileIndex();
   const mwhd = useMwhdRankings(authReady);
+  const requestRevision = useRef(0);
 
   const load = useCallback(async (date?: string) => {
+    const revision = ++requestRevision.current;
     try {
       setError("");
       const next = await fetchOiisLiveDashboard(date);
+      if (revision !== requestRevision.current) return;
       setData(next);
+      setCandidates([]);
       const details = await fetchOiisLiveCandidates(
         date || next.tradeDate || undefined,
       );
+      if (revision !== requestRevision.current) return;
       setCandidates(details.candidates);
       if (next.tradeDate) setTradeDate(next.tradeDate);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
+      if (revision === requestRevision.current) setError(caught instanceof Error ? caught.message : String(caught));
     }
   }, []);
 
@@ -201,7 +211,7 @@ export function OiisLivePage() {
       () => void load(tradeDate || undefined),
       30_000,
     );
-    return () => window.clearInterval(timer);
+    return () => { window.clearInterval(timer); requestRevision.current += 1; };
   }, [load, tradeDate]);
 
   const requireOperator = () => {
@@ -733,9 +743,21 @@ export function OiisLivePage() {
           All F&amp;O evidence ({candidates.length})
         </button>
         <Link role="tab" aria-selected="false" className={styles.viewTab} to="/strategy/oiis-live/history">Run history</Link>
+        <button role="tab" aria-selected={view === 'strategy-definition'} className={view === 'strategy-definition' ? styles.viewTabActive : styles.viewTab} onClick={() => setView('strategy-definition')}>Strategy definition</button>
       </div>
 
-      {view === "details" ? (
+      {view === 'strategy-definition' ? (
+        <section className={styles.panel} data-testid="oiis-strategy-definition">
+          <h2>OIIS strategy definition</h2>
+          <p>OFactor measures opportunity, XFactor execution quality, and DQ data completeness. These definitions do not authorise an entry. Run formula version: {value(latestRun, 'formula_version')}.</p>
+          <div className={styles.tableWrap} role="region" tabIndex={0} aria-label="Strategy rules and sources">
+            <table className={styles.table}><thead><tr><th>Gate</th><th>Meaning</th><th>Rule</th><th>Source</th></tr></thead>
+              <tbody>{GATE_GUIDE.map(gate => <tr key={gate.code}><th>{humanise(gate.code)}</th><td>{gate.meaning}</td><td>{gate.rule}</td><td>{gate.source}</td></tr>)}</tbody>
+            </table>
+          </div>
+          <p>Failure counts can overlap. Missing or stale inputs are not zero. Persisted run evidence and server-side permissions remain authoritative.</p>
+        </section>
+      ) : view === "details" ? (
         detailsView
       ) : view === "opportunities" || view === "execution" ? (
         queueView
@@ -762,7 +784,7 @@ export function OiisLivePage() {
                   ? `${opportunities.length} opportunities ranked; no entry authorised`
                   : selected > 0
                     ? `${selected} stock${selected === 1 ? "" : "s"} selected for ${tradeDate}`
-                    : "Selection evidence is loading"}
+                    : data ? "No completed evaluation available" : "Selection evidence is loading"}
               </h2>
               <p>
                 {noTrade
@@ -812,7 +834,7 @@ export function OiisLivePage() {
                   }
                 >
                   <span className={styles.step}>0{index + 1}</span>
-                  <strong>{count}</strong>
+                  <strong>{evaluated > 0 ? count : '—'}</strong>
                   <h3>{label}</h3>
                   <p>{note}</p>
                 </article>
@@ -1009,11 +1031,11 @@ export function OiisLivePage() {
               <div className={styles.emptyState}>
                 <span>0</span>
                 <div>
-                  <strong>No governed candidates today</strong>
+                  <strong>{evaluated > 0 ? 'No governed candidates in the available evaluation' : 'Selection evidence unavailable'}</strong>
                   <p>
-                    This is not missing data: {evaluated} daily evaluations are
-                    visible above. Review the near misses, but do not convert
-                    them into automatic trades.
+                    {evaluated > 0
+                      ? `${evaluated} daily evaluations are visible above. Check run coverage and rejection reasons; near misses are not authorised trades.`
+                      : 'No evaluated population is available yet. This is not a completed scan with zero qualifying stocks. Check data health and retry the read.'}
                   </p>
                 </div>
               </div>

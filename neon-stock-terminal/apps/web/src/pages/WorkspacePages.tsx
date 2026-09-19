@@ -13,6 +13,8 @@ function useWorkspaceData(path: string) {
   const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
+    let timedOut = false;
+    const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 30_000);
     setError(null);
     fetch(`${API_BASE_URL}${path}`, { credentials: "include", signal: controller.signal, headers: { Accept: "application/json" } })
       .then(async (response) => {
@@ -20,14 +22,16 @@ function useWorkspaceData(path: string) {
         return response.json();
       })
       .then(setData)
-      .catch((reason) => { if (reason?.name !== "AbortError") setError(String(reason?.message ?? reason)); });
-    return () => controller.abort();
+      .catch((reason) => { if (timedOut) setError('Read timed out after 30 seconds. Reload to retry; no action is repeated.'); else if (reason?.name !== "AbortError") setError(String(reason?.message ?? reason)); })
+      .finally(() => window.clearTimeout(timeout));
+    return () => { window.clearTimeout(timeout); controller.abort(); };
   }, [path, reloadKey]);
   return { data, error, reload: () => setReloadKey((value) => value + 1) };
 }
 
-function Page({ eyebrow, data, error, children }: { eyebrow: string; title: string; description: string; data: Payload | null; error: string | null; children: ReactNode }) {
+function Page({ eyebrow, title, description, data, error, children }: { eyebrow: string; title: string; description: string; data: Payload | null; error: string | null; children: ReactNode }) {
   return <section className={styles.page} data-clarity-region={`workspace_${eyebrow.toLowerCase().replaceAll(" ", "_")}`}>
+    <header><h1>{title}</h1><p>{description}</p></header>
     {error ? <div className={styles.error}>{error}</div> : data ? children : <div className={styles.empty}>Loading verified workspace data…</div>}
   </section>;
 }
@@ -185,7 +189,7 @@ export function FuturesPage() {
   return <Page eyebrow="Futures" title="Futures basis, OI and roll" description="Current and next contracts are read from the live contract master. Participant records remain available as advanced context rather than dominating the decision view." {...query}>
     <OperationalBar environment="DERIVATIVES" asOf={query.data?.asOf} state={quoted.length ? "AVAILABLE" : "INCOMPLETE"} detail={`${n(quoted.length)} / ${n(near.length)} near contracts have spot and futures quotes`} />
     <div className={styles.metrics}><Metric label="Near contracts" value={n(near.length)} note={`${n(contracts.length-near.length)} next-expiry contracts archived`} /><Metric label="Average basis" value={averageBasis == null ? "—" : `${n(averageBasis)}%`} note="Unweighted, current near contracts" /><Metric label="Short build-up" value={n(shortBuildup)} note="Price down and OI up" /><Metric label="Participant report" value={rows[0]?.market_date ? String(rows[0].market_date).slice(0,10) : "—"} note="Dated context, not live positioning" /></div>
-    <Panel title="Current and next futures contracts"><Table rows={contracts.slice(0,80)} columns={["underlying","tradingsymbol","expiry","futures_price","spot_price","basis","annualised_basis_pct","open_interest","oi_change_pct","volume","buildup","last_seen_ts"]} /></Panel>
+    <Panel title="Current and next futures contracts"><p>OI percentages are provider-reported; invalid or missing values cannot produce a build-up classification. Baselines are not independently reconciled. Showing {Math.min(80, contracts.length)} of {contracts.length} contracts.</p><Table rows={contracts.slice(0,80)} columns={["underlying","tradingsymbol","expiry","futures_price","spot_price","basis","annualised_basis_pct","open_interest","oi_change_pct","oi_change_quality","oi_change_reason","volume","buildup","last_seen_ts"]} /></Panel>
     <Panel title="Advanced participant positioning"><Table rows={rows} columns={["market_date","client_type","instrument_type","buy_contracts","sell_contracts","open_interest_long","open_interest_short"]} /></Panel>
   </Page>;
 }
@@ -225,6 +229,8 @@ function formatCell(column: string, value: unknown) {
   if (value == null) return "—";
   if (column.endsWith("_at") || column === "market_date" || column === "trade_date") return at(value);
   if (column.includes("pnl")) return money(value);
+  if (['oi_change_pct', 'basis_pct', 'annualised_basis_pct'].includes(column)) return `${n(value)}%`;
+  if (['futures_price', 'spot_price', 'basis', 'open_interest', 'volume'].includes(column)) return n(value);
   if (["positive_ratio", "nifty_return"].includes(column)) return `${n(Number(value) * (Math.abs(Number(value)) <= 1 ? 100 : 1))}%`;
   return String(value);
 }

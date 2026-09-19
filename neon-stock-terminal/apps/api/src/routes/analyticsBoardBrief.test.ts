@@ -281,6 +281,9 @@ test("analytics board brief composes a learner-safe root summary", () => {
   );
 
   assert.equal(payload.sessionReference.label, "Latest completed session");
+  assert.equal(payload.sessionReference.overallBias, 'unavailable');
+  assert.ok(payload.keyConclusions.some(line => line.startsWith('Options conclusion unavailable')));
+  assert.ok(payload.decoratedHeader.some(line => line.includes('not probability')));
   assert.equal(payload.keyConclusions.length, 5);
   assert.equal(payload.riskFlags.length, 5);
   assert.equal(payload.nextAlerts.length, 5);

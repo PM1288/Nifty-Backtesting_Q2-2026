@@ -413,6 +413,7 @@ export async function getAnalyticsOptionsStructureForSymbol(prisma: PrismaClient
     }));
 
   const callWalls = strikeLadder
+    .filter(row => row.callOi != null && row.callOi > 0)
     .filter((row) => spot == null || row.strike >= spot - 50)
     .sort((left, right) => {
       const distanceDiff = Math.abs((left.distanceFromSpot ?? 0)) - Math.abs((right.distanceFromSpot ?? 0));
@@ -429,6 +430,7 @@ export async function getAnalyticsOptionsStructureForSymbol(prisma: PrismaClient
     }));
 
   const putWalls = strikeLadder
+    .filter(row => row.putOi != null && row.putOi > 0)
     .filter((row) => spot == null || row.strike <= spot + 50)
     .sort((left, right) => {
       const distanceDiff = Math.abs((left.distanceFromSpot ?? 0)) - Math.abs((right.distanceFromSpot ?? 0));
@@ -458,7 +460,8 @@ export async function getAnalyticsOptionsStructureForSymbol(prisma: PrismaClient
     ? round(currentAtmRow.putIv - currentAtmRow.callIv, 2)
     : null;
 
-  let spotState = "fighting structure";
+  const wallsAvailable = spot != null && primaryCallWall?.strike != null && primaryPutWall?.strike != null;
+  let spotState = wallsAvailable ? "fighting structure" : 'unavailable: spot or wall evidence missing';
   if (
     spot != null &&
     primaryCallWall?.strike != null &&
@@ -475,7 +478,8 @@ export async function getAnalyticsOptionsStructureForSymbol(prisma: PrismaClient
   }
 
   const optionsVsSpot =
-    spotState === "breaking above call structure"
+    !wallsAvailable ? 'Options direction unavailable: spot and both walls are required.'
+      : spotState === "breaking above call structure"
       ? "options structure supports upside continuation only if the next higher call wall starts migrating upward"
       : spotState === "breaking below put structure"
         ? "options structure supports downside continuation only if put support keeps stepping lower"
@@ -590,12 +594,16 @@ export async function getAnalyticsOptionsStructureForSymbol(prisma: PrismaClient
   ].filter(Boolean);
 
   const pcrContext =
-    pcrNoiseRange != null && pcrNoiseRange >= 1
+    !pcrByExpiry.some(row => row.pcr != null && Number.isFinite(row.pcr))
+      ? 'PCR unavailable for the selected expiry; no positioning conclusion is made.'
+      : pcrNoiseRange == null ? 'PCR history is insufficient to assess stability.'
+      : pcrNoiseRange >= 1
       ? `PCR is noisy for the front expiry, with a recent range of ${round(pcrNoiseRange, 2)}. Treat it as background context only.`
       : "PCR is stable enough to describe positioning, but it still should not be used as a standalone signal.";
 
   const maxPainContext =
-    maxPainStalenessDays != null && maxPainStalenessDays > 7
+    maxPainStalenessDays == null ? 'Max pain timing unavailable; proximity and freshness are not established.'
+      : maxPainStalenessDays > 7
       ? `Max pain is stale by ${maxPainStalenessDays} days, so it is useful only as a reference anchor and not as a live trading signal.`
       : "Max pain is close enough to current structure to serve as a reference anchor, not a prediction.";
 

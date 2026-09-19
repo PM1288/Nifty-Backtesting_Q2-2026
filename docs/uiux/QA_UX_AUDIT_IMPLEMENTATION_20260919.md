@@ -137,7 +137,8 @@ passed. `OPEN` means no closure claimed. No screenshot-only production PASS.
 - `go test ./internal/smartapi`: passed.
 - `go test ./...`: passed.
 - Canonical repository gate: passed.
-- Deployment: pending final checks and committed/pushed master release.
+- Deployment: application commit `d58180f` merged/pushed to master and deployed
+  through the canonical Compose procedure. Only dashboard and collector recreated.
 
 Extended candidate capture attempt05 records 16 additional desktop/mobile views
 as NOT_VALIDATED, not functional passes. Some were still loading after five
@@ -163,3 +164,33 @@ this scoped branch to master after checks and push before deploying. Recreate
 only affected services. Never roll back data/volumes. A cosmetic rollback must
 retain the invalid-data containment guards. Record actual deployed SHA and public
 checks here after release; do not infer deployment from a successful local build.
+
+### Actual release evidence
+
+Released application SHA: `d58180f` (19 September 2026, approximately 04:37 UTC).
+Dashboard image: `sha256:f7e8d1350aa9736ae0d9c7cd9cbe3f7050dbf6c9b7961c0ad971afe4d83faa53`.
+Collector image: `sha256:e15fdfa93e7f9eed6f51f64c128db32f3492e9c145c1daaa85eac8c1bd7b0cd8`.
+Both containers healthy. Collector initial instrument refresh delayed health;
+it became healthy without intervention. No unrelated containers removed.
+
+Authenticated public browser: `https://n50.nifty50today.co.in/n50`.
+Protected environment login succeeded with canonical Origin and unchanged secure
+cookies. `verification-20260919-production01` contains 14 passing targeted checks:
+live futures boundary, direct/reload/history definition navigation, and ten
+viewport/density geometry cases. API returned 430 contracts; 321 invalid supplied
+percentages were quarantined, not corrected or silently replaced by zero.
+Production desktop definition screenshot was visually inspected.
+These counts are captured observations, not hard-coded acceptance expectations.
+Production does not independently establish the correct provider baseline.
+
+Evidence folder:
+`/home/novius2/NIFTY50/UX-v2/verification-20260919-production01`.
+Release/build logs: `/tmp/qa-ux-dashboard-release-20260919.log` and
+`/tmp/qa-ux-collector-build-20260919.log` (temporary operational logs).
+Rollback tags: `trading-stack-n50-dashboard:before-qa-ux-20260919` and
+`trading-stack-collector:before-qa-ux-20260919`. Do not restore unsafe derived
+values as a cosmetic rollback; retain containment fixes.
+
+Remaining audit findings above are still OPEN/PARTIAL. Full role, paper-accounting,
+all-route, chart interaction, accessibility and performance acceptance is not
+claimed by this limited controlled release.

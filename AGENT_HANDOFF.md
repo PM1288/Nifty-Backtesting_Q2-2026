@@ -9,7 +9,12 @@
 - Application tests and authenticated candidate screenshots recorded in
   `docs/uiux/QA_UX_AUDIT_IMPLEMENTATION_20260919.md`, with all unclosed findings.
 - Do not claim the complete audit passed. No database history or trading rules
-  changed. Release evidence will be appended after actual deployment.
+  changed. Application `d58180f` pushed to master and deployed to dashboard and
+  collector; both healthy. API 245 tests, web 208 tests, Go suite, typechecks,
+  builds and canonical gate passed. Public authenticated 14 targeted checks
+  passed; 321/430 futures rows had invalid percentages quarantined. Full audit
+  remains OPEN/PARTIAL. Production screenshots under
+  `/home/novius2/NIFTY50/UX-v2/verification-20260919-production01`.
 
 ## 2026-09-19 IST — Predictor workstation
 

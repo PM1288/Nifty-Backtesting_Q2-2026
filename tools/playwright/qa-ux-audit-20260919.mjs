@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 const base = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:15199/n50';
+const loopback = ['127.0.0.1', 'localhost'].includes(new URL(base).hostname);
+const loginOrigin = loopback ? 'http://127.0.0.1:19090' : new URL(base).origin;
 const output = process.env.PLAYWRIGHT_OUTPUT_DIR;
 if (!output) throw new Error('Set a new attempt-specific PLAYWRIGHT_OUTPUT_DIR');
 await fs.mkdir(output, { recursive: false });
@@ -12,12 +14,22 @@ const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_C
 const results = [];
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
-  const login = await context.request.post('http://127.0.0.1:19090/n50/auth/session/dev-login', { data: { identifier: 'admin', password }, headers: { Origin: 'http://127.0.0.1:19090' } });
+  const login = await context.request.post(`${loginOrigin}/n50/auth/session/dev-login`, { data: { identifier: 'admin', password }, headers: { Origin: loginOrigin } });
   if (!login.ok()) throw new Error(`Login HTTP ${login.status()}`);
   const cookies = await context.cookies();
   // Isolated loopback Vite serves proxied APIs outside /n50. This changes only
   // the test browser cookie path, not production authentication configuration.
-  await context.addCookies(cookies.map(c => ({ ...c, path: '/', secure: false })));
+  if (loopback) await context.addCookies(cookies.map(c => ({ ...c, path: '/', secure: false })));
+  if (process.env.PLAYWRIGHT_RELEASE_API === '1') {
+    const response = await context.request.get(`${base}/v1/workspace/futures`, { timeout: 60000 });
+    const payload = response.ok() ? await response.json() : null;
+    const contracts = payload?.contracts;
+    results.push({ check: 'D01 deployed futures boundary', status: response.status(), count: contracts?.length,
+      pass: response.ok() && Array.isArray(contracts) && contracts.length > 0 && contracts.every(row =>
+        ['INVALID', 'MISSING', 'PROVIDER_REPORTED'].includes(row.oi_change_quality) &&
+        (row.oi_change_pct == null ? row.buildup === 'UNAVAILABLE' : Number.isFinite(Number(row.oi_change_pct)) && Number(row.oi_change_pct) >= -100)),
+      quarantined: contracts?.filter(row => row.oi_change_quality === 'INVALID').length });
+  }
   const page = await context.newPage();
   const failures = [];
   // Record path/status only: no headers, query strings, response bodies or secrets.

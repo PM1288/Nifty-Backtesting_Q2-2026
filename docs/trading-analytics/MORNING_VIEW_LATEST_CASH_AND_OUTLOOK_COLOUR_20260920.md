@@ -34,3 +34,26 @@ stored.
 - Canonical unchanged result: `Sideways (Bullish)`.
 
 This is source-date reconciliation, not a strategy or order-rule change.
+
+## Validation and release
+
+- API focused tests: 13/13 passed.
+- API full tests: 261/261 passed; typecheck/build passed.
+- Web full tests: 235/235 passed; typecheck/build passed.
+- Canonical repository gate and `git diff --check`: passed.
+- Authenticated live Playwright: passed. It read the deployed summary rather
+  than intercepting it and verified `Sell / Buy / Buy`, `Sideways (Bullish)`,
+  both source dates, `data-tone=positive`, and the computed green background
+  `rgb(220, 252, 231)`.
+- Browser evidence:
+  `output/playwright/morning-view-latest-cash-outlook/results.json` and
+  `output/playwright/morning-view-latest-cash-outlook/desktop-morning-latest-cash-outlook.png`.
+- Released commit: `fef0397` on `master`.
+- Deployed image:
+  `sha256:fd4048a59e29bdf61e01107196bdaac5a1563438462fadb9843d3f4b8ff9ef53`.
+- Live asset: `/n50/assets/index-BpKb3D1W.js`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-morning-cash-outlook-20260920`.
+
+The cash table lacks a publication/collection timestamp, so its point-in-time
+knowledge state remains explicitly `CASH_PUBLICATION_TIME_UNVERIFIED`.

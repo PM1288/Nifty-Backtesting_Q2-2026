@@ -12,6 +12,14 @@
   red for bearish and amber for neutral/unavailable results.
 - The original six-row matrix, raw signs, strategy logic, orders, collectors
   and stored data are unchanged.
+- Release `fef0397` is pushed to `master` and deployed. The scoped dashboard
+  container is healthy on image
+  `sha256:fd4048a59e29bdf61e01107196bdaac5a1563438462fadb9843d3f4b8ff9ef53`;
+  entry asset `/n50/assets/index-BpKb3D1W.js`. Rollback image tag:
+  `trading-stack-n50-dashboard:before-morning-cash-outlook-20260920`.
+- Authenticated live browser evidence passed using
+  `tools/playwright/morning-view-latest-cash-outlook.mjs`; screenshot and JSON
+  are under `output/playwright/morning-view-latest-cash-outlook/`.
 
 ## 2026-09-20 — Scalper V2 shared cursor repair
 

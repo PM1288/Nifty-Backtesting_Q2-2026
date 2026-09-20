@@ -16,12 +16,13 @@ OIIS, signal, paper-order or live-order rules.
 - Selected CE/PE strike, ranked OI, max-pain and hover lines are removed from
   that pane. User drawings and explicit A/B measurement remain independent.
 - The former price-aligned OI primitive is no longer supplied by the page. The
-  compact side strike charts remain the OI/Change-in-OI surface.
+  compact side strike charts were an intermediate placement and are superseded
+  by `SCALPER_V2_OI_HISTORY_LAYOUT_REPAIR_20260920.md`.
 - OI identity is CE yellow and PE blue. Green/red continues to represent signed
   change and candle direction, so identity and direction are not conflated.
-- A native lower pane plots `sum(PE OI) - sum(CE OI)` for each retained chain
-  timestamp. It shares the underlying time scale, uses its own value scale and
-  incremental series updates, and does not substitute missing snapshots.
+- The same-day native lower-pane placement is superseded by two separate
+  timestamp charts below the three-chart price workspace; see the later repair
+  document for the final layout.
 
 ### Morning View and Home
 

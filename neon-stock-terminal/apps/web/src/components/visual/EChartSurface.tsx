@@ -480,6 +480,8 @@ export function EChartSurface({
   onCategoryClick,
   onCategoryHover,
   activeCategoryIndex,
+  onTimeHover,
+  activeTimeMs,
   axisExtentPolicy = "normalized",
   appearance = "light"
 }: {
@@ -490,6 +492,8 @@ export function EChartSurface({
   onCategoryClick?: (index: number, gridIndex: number) => void;
   onCategoryHover?: (index: number | null) => void;
   activeCategoryIndex?: number | null;
+  onTimeHover?: (timeMs: number | null) => void;
+  activeTimeMs?: number | null;
   axisExtentPolicy?: "normalized" | "native";
   appearance?: ChartAppearance;
 }) {
@@ -502,6 +506,9 @@ export function EChartSurface({
   clickRef.current = onCategoryClick;
   const hoverRef = useRef(onCategoryHover);
   hoverRef.current = onCategoryHover;
+  const timeHoverRef = useRef(onTimeHover);
+  timeHoverRef.current = onTimeHover;
+  const suppressTimeHoverRef = useRef(false);
   const fontFamily = useMemo(
     () =>
       fontMode === "high-legibility" && language === "en" && digits === "latn"
@@ -522,6 +529,8 @@ export function EChartSurface({
 
     const chart = echarts.init(host, undefined, { renderer: "canvas" });
     chartRef.current = chart;
+    let timeHoverFrame = 0;
+    let pendingTime: number | null = null;
     chart.getZr().on("click", (event) => {
       if (!clickRef.current) return;
       const grids = asArray(chart.getOption().grid);
@@ -533,10 +542,29 @@ export function EChartSurface({
         break;
       }
     });
+    chart.getZr().on("mousemove", (event) => {
+      if (!timeHoverRef.current || suppressTimeHoverRef.current) return;
+      const grids = asArray(chart.getOption().grid);
+      for (let i = 0; i < grids.length; i++) {
+        const point = [event.offsetX, event.offsetY];
+        if (!chart.containPixel({ gridIndex: i }, point)) continue;
+        const value = chart.convertFromPixel({ gridIndex: i }, point);
+        if (!Array.isArray(value) || !Number.isFinite(Number(value[0]))) break;
+        pendingTime = Number(value[0]);
+        if (!timeHoverFrame) timeHoverFrame = requestAnimationFrame(() => {
+          timeHoverFrame = 0;
+          if (pendingTime != null) timeHoverRef.current?.(pendingTime);
+        });
+        break;
+      }
+    });
     chart.on("mouseover", (params) => {
       if (hoverRef.current && typeof params.dataIndex === "number") hoverRef.current(params.dataIndex);
     });
-    chart.on("globalout", () => hoverRef.current?.(null));
+    chart.on("globalout", () => {
+      hoverRef.current?.(null);
+      if (!suppressTimeHoverRef.current) timeHoverRef.current?.(null);
+    });
 
     // Window and observer notifications often arrive in the same frame.
     // Ignore hidden hosts and unchanged dimensions; do not redraw every chart
@@ -571,6 +599,7 @@ export function EChartSurface({
       window.removeEventListener("resize", resize);
       resizeObserver?.disconnect();
       if (frame) cancelAnimationFrame(frame);
+      if (timeHoverFrame) cancelAnimationFrame(timeHoverFrame);
       chart.dispose();
       chartRef.current = null;
     };
@@ -595,6 +624,19 @@ export function EChartSurface({
     chart.dispatchAction({ type: "highlight", dataIndex: activeCategoryIndex });
     chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: activeCategoryIndex });
   }, [activeCategoryIndex]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    suppressTimeHoverRef.current = true;
+    if (activeTimeMs == null || !Number.isFinite(activeTimeMs)) {
+      chart.dispatchAction({ type: "hideTip" });
+    } else {
+      chart.dispatchAction({ type: "updateAxisPointer", xAxisIndex: 0, value: activeTimeMs });
+      chart.dispatchAction({ type: "showTip", xAxisIndex: 0, value: activeTimeMs });
+    }
+    requestAnimationFrame(() => { suppressTimeHoverRef.current = false; });
+  }, [activeTimeMs]);
 
   return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" />;
 }

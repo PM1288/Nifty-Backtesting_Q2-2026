@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Scalper V2 OI history layout repair
+
+- Restored the V2 top workspace to the underlying plus exact selected CE and PE
+  only; removed the obsolete strike-chart grid child and its reserved column.
+- Removed the PE-minus-CE OI line pane from the underlying native chart, keeping
+  source volume and the three automatic reference lines: Today open, Yesterday
+  close and Yesterday high.
+- Added separate half-width tracked-chain history charts below for `sum(PE OI)
+  - sum(CE OI)` and `sum(PE change OI) - sum(CE change OI)`.
+- Added optional time-axis pointer coordination to the shared ECharts surface so
+  either history chart drives the existing underlying/CE/PE inspector without
+  copying a numerical price between instruments.
+- Evidence and exact rerun commands are in
+  `docs/trading-analytics/SCALPER_V2_OI_HISTORY_LAYOUT_REPAIR_20260920.md`.
+
 ## 2026-09-19 — Scalper V2 stable minute refresh
 
 - Release `bc3e42b`; branch `fix/scalper-v2-stable-refresh-20260919` merged and

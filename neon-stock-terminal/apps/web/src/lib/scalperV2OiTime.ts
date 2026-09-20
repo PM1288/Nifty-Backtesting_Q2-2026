@@ -15,6 +15,60 @@ export type ScalperV2OiTimePoint = {
 const timestamp = (point: ScalperV2OiTimePoint) => Date.parse(point.capturedAt);
 const validTime = (point: ScalperV2OiTimePoint) => Number.isFinite(timestamp(point));
 
+export type ScalperV2OiDifferenceMetric = "oi" | "change";
+
+export function scalperV2OiMetricOption(
+  points: ScalperV2OiTimePoint[],
+  metric: ScalperV2OiDifferenceMetric,
+  timeLabel: (value: number) => string,
+): EChartsOption {
+  const rows = points.filter(validTime);
+  const change = metric === "change";
+  const name = change ? "PE ΔOI − CE ΔOI" : "PE OI − CE OI";
+  const color = change ? "#0f766e" : "#7c3aed";
+  return {
+    animation: false,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "line", snap: true },
+      valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatOiAxisValue(Number(value)),
+    },
+    grid: { left: 8, right: 8, top: 16, bottom: 38, containLabel: true },
+    dataZoom: [{ type: "inside", xAxisIndex: 0 }],
+    xAxis: {
+      type: "time",
+      axisPointer: { show: true, snap: true, lineStyle: { color: "#334155", type: "dashed" } },
+      axisLabel: { formatter: timeLabel },
+    },
+    yAxis: {
+      type: "value",
+      name,
+      nameLocation: "end",
+      scale: true,
+      axisLabel: { formatter: formatOiAxisValue },
+      splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
+    },
+    series: [{
+      name,
+      type: "line",
+      data: rows.map((point) => [timestamp(point), change ? point.changeOiDifference : point.oiDifference]),
+      connectNulls: false,
+      showSymbol: rows.length <= 1,
+      symbolSize: 7,
+      lineStyle: { color, width: 2 },
+      itemStyle: { color },
+      areaStyle: { color: change ? "rgba(15,118,110,.10)" : "rgba(124,58,237,.10)" },
+      markLine: {
+        silent: true,
+        symbol: "none",
+        label: { show: false },
+        lineStyle: { color: "#64748b", type: "dashed" },
+        data: [{ yAxis: 0 }],
+      },
+    }],
+  };
+}
+
 export function scalperV2OiDifferenceOption(
   points: ScalperV2OiTimePoint[],
   timeLabel: (value: number) => string,

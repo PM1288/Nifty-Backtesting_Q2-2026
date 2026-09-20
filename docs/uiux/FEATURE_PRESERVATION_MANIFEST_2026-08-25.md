@@ -6,12 +6,23 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 Scalper V2 tracked-chain history layout repair supersedes the
+same-day side-chart/lower-pane placement below: the primary workspace contains
+only the underlying plus independently selected CE and PE price charts. No
+removed OI side-column width remains. The underlying native chart retains its
+source-volume pane but no OI-difference pane; its ordinary semantic reference
+lines remain restricted to Today open, Yesterday close and Yesterday high.
+Two equal-width charts directly below show tracked-chain `sum(PE OI) - sum(CE
+OI)` and `sum(PE change OI) - sum(CE change OI)` on separate timestamp axes,
+and their hover time drives the same underlying/CE/PE inspection coordinator.
+Missing snapshots and baselines remain unavailable. Evidence:
+`docs/trading-analytics/SCALPER_V2_OI_HISTORY_LAYOUT_REPAIR_20260920.md`.
+
 2026-09-20 market workstation flow repair: Scalper V2 removes selected-contract,
 rank, hover, max-pain and strike-profile lines from the underlying price pane;
 only today open, previous close and previous high remain as semantic horizontal
-references. The former underlying OI primitive is no longer supplied, while a
-timestamp-aligned PE-total-OI minus CE-total-OI lower pane shares the native
-time scale. OI bars use CE yellow and PE blue without changing candle direction
+references. The former underlying OI primitive is no longer supplied. OI bars
+use CE yellow and PE blue without changing candle direction
 or signed-change colours. Morning View applies inverse directional heat for net
 put values while preserving the signed values. Home adds a staged 15-minute
 volume/SMA15 confirmation and a compact Morning View status headline. Stock 360

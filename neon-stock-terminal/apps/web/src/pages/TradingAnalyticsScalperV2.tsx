@@ -11,7 +11,7 @@ import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
 import { scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
-import { scalperV2OiDifferenceOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
+import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
 import { scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
 import { scalperV2OiTotals, scalperV2StructureRows } from "../lib/scalperV2Structure";
 import { oiComparisonState } from "../lib/scalperV2Geometry";
@@ -365,6 +365,14 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     () => scalperV2OiDifferenceOption(cumulativeOiPoints, istClock),
     [cumulativeOiPoints],
   );
+  const cumulativeOiDifferenceOnlyOption = useMemo<EChartsOption>(
+    () => scalperV2OiMetricOption(cumulativeOiPoints, "oi", istClock),
+    [cumulativeOiPoints],
+  );
+  const cumulativeChangeDifferenceOnlyOption = useMemo<EChartsOption>(
+    () => scalperV2OiMetricOption(cumulativeOiPoints, "change", istClock),
+    [cumulativeOiPoints],
+  );
   const cumulativePcrOption = useMemo<EChartsOption>(
     () => scalperV2PcrTimeOption(cumulativeOiPoints, istClock),
     [cumulativeOiPoints],
@@ -507,6 +515,22 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     setParams(next);
   };
   const handleCrosshair = (value: ScalperV2Crosshair) => { if (lockedTime == null) setHoverCrosshair(value); };
+  const underlyingChartTimes = useMemo(
+    () => (underlying?.bars ?? []).flatMap((bar) => {
+      const value = intervalBarChartTime(bar);
+      return value == null ? [] : [Number(value)];
+    }).sort((left, right) => left - right),
+    [underlying?.bars],
+  );
+  const handleOiTimeHover = useCallback((timeMs: number | null, source: string) => {
+    if (lockedTime != null) return;
+    if (timeMs == null || !Number.isFinite(timeMs)) { setHoverCrosshair(null); return; }
+    const target = timeMs / 1000;
+    const nearest = underlyingChartTimes.reduce<number | null>((best, value) => (
+      best == null || Math.abs(value - target) < Math.abs(best - target) ? value : best
+    ), null);
+    setHoverCrosshair(nearest == null ? null : { time: nearest, source, sequence: performance.now() });
+  }, [lockedTime, underlyingChartTimes]);
   const instrumentId = (paneRole: ScalperV2PaneRole) => String((paneRole === "underlying" ? underlying : paneRole === "call" ? call : put)?.identity.tradingsymbol ?? `${symbol}:${paneRole}`);
   const createDrawing = (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: ScalperV2PaneRole, anchors: ScalperV2DrawingAnchor[]) => {
     const drawing = createScalperV2Drawing({ id: drawingStore.newId(), tool, paneRole, instrumentId: instrumentId(paneRole), anchors });
@@ -562,15 +586,15 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
         </nav>
         <div className={css.charts}>
-          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price · PE OI − CE OI below" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} oiDifferenceBars={cumulativeOiPoints.map((point) => ({ capturedAt: point.capturedAt, oiDifference: point.oiDifference }))} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={signals} measurementTimes={points} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price and volume" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={signals} measurementTimes={points} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="call" title={`CE ${Number(selectedCeStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
         </div>
       </div>
-      <aside className={css.structureCharts} data-testid="v2-strike-side-charts" aria-label="Strike open interest comparison charts">
-        <article><header><strong>OI by strike</strong><span>Bars: CE / PE · line: PE − CE</span></header><Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[0]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></article>
-        <article data-testid="v2-side-deltaoi-chart"><header><strong>Change in OI by strike</strong><span>Bars: CE / PE · line: PE ΔOI − CE ΔOI</span></header>{deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.sideState}><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts</span></div> : <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={hoveredStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>}</article>
-      </aside>
+      <section className={css.oiHistoryRow} data-testid="v2-oi-history-row" aria-label="Tracked option-chain open-interest differences over time">
+        <article data-testid="v2-oi-difference-time"><header><strong>Cumulative PE OI − cumulative CE OI</strong><span>All tracked strikes · timestamp aligned</span></header>{cumulativeOiPoints.some((point) => point.oiDifference != null) ? <Suspense fallback={<p>Loading OI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put open interest minus cumulative call open interest over time" axisExtentPolicy="native" option={cumulativeOiDifferenceOnlyOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>OI history unavailable</strong><span>No comparable CE/PE tracked-chain snapshots for this session.</span></div>}</article>
+        <article data-testid="v2-change-oi-difference-time"><header><strong>Cumulative PE ΔOI − cumulative CE ΔOI</strong><span>All tracked strikes · reported baseline</span></header>{cumulativeOiPoints.some((point) => point.changeOiDifference != null) ? <Suspense fallback={<p>Loading ΔOI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put change in open interest minus cumulative call change in open interest over time" axisExtentPolicy="native" option={cumulativeChangeDifferenceOnlyOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "change-oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>Change-in-OI history unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}</article>
+      </section>
       {railOpen && <aside className={css.rail} aria-label="Scalper V2 option chain and inspector">
         <header className={css.railHeader}><h2>{label} · CE {Number(selectedCeStrike).toLocaleString("en-IN")} / PE {Number(selectedPeStrike).toLocaleString("en-IN")}</h2><span className={css.identity}>{expiry} · <b>Selected independently</b>{selectedCeIsAtm && selectedPeIsAtm ? " · both ATM" : defaultStrike == null ? "" : ` · ATM ${defaultStrike.toLocaleString("en-IN")}`}</span></header>
         <div className={css.niftyQuote}><span>NIFTY</span><strong>{number(inspectedUnderlying)}</strong><b className={signClass(underlyingChange)}>{percent(underlyingChange)}</b></div>

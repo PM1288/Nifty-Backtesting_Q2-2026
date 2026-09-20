@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2OiDifferenceOption, scalperV2PcrTimeOption, type ScalperV2OiTimePoint } from "../src/lib/scalperV2OiTime";
+import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption, type ScalperV2OiTimePoint } from "../src/lib/scalperV2OiTime";
 
 const points: ScalperV2OiTimePoint[] = [{
   capturedAt: "2026-09-19T04:00:00.000Z",
@@ -27,4 +27,19 @@ test("PCR history plots the retained PE divided by CE ratio", () => {
   const series = option.series as Array<{ data: Array<[number, number | null]> }>;
   assert.equal((option.yAxis as { name: string }).name, "OI PCR · PE / CE");
   assert.equal(series[0].data[0][1], 1.4);
+});
+
+test("separate OI history panels retain the requested tracked-chain arithmetic", () => {
+  const oi = scalperV2OiMetricOption(points, "oi", String);
+  const change = scalperV2OiMetricOption(points, "change", String);
+  const oiSeries = oi.series as Array<{ name: string; data: Array<[number, number | null]> }>;
+  const changeSeries = change.series as Array<{ name: string; data: Array<[number, number | null]> }>;
+  assert.equal((oi.xAxis as { type: string }).type, "time");
+  assert.equal((change.xAxis as { type: string }).type, "time");
+  assert.equal(oiSeries.length, 1);
+  assert.equal(changeSeries.length, 1);
+  assert.equal(oiSeries[0].name, "PE OI − CE OI");
+  assert.equal(changeSeries[0].name, "PE ΔOI − CE ΔOI");
+  assert.equal(oiSeries[0].data[0][1], 40);
+  assert.equal(changeSeries[0].data[0][1], -50);
 });

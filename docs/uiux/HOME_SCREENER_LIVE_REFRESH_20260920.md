@@ -59,6 +59,15 @@ Candidate validation completed against an isolated production image:
 - authenticated background-failure browser regression: 11/11 PASS;
 - evidence: `/tmp/home-screener-live-refresh-candidate/` (not committed).
 
+Production release:
+
+- merged and pushed master: `4ae6be859aea2ac6f3f540220da7a8cedd642a86`;
+- deployed image: `sha256:2b255b6d2f4d4eebb2a1f81c9ea3e1e1d8373689e709d39c9d09fc95a744ddc2`;
+- public asset: `/n50/assets/index-DZ_39ee6.js`;
+- public health: ready, PostgreSQL connected, Redis session/rate-limit stores ready;
+- authenticated production failure-injection regression: 11/11 PASS;
+- production evidence: `/tmp/home-screener-live-refresh-production/` (not committed).
+
 ## Rollback
 
 Recreate only `n50-dashboard` from the pre-release image tag. No database,

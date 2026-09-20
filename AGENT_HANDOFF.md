@@ -16,6 +16,10 @@
   and build passed; the canonical gate passed. An isolated production-image
   browser run passed 11/11, including real 10-second and 60-second polling,
   retained DOM nodes/rows, visible failure alerts and in-place recovery.
+- Merged/pushed master `4ae6be8` and deployed only `n50-dashboard` on image
+  `sha256:2b255b6d2f4d4eebb2a1f81c9ea3e1e1d8373689e709d39c9d09fc95a744ddc2`;
+  public asset `/n50/assets/index-DZ_39ee6.js`. Public health is ready and the
+  authenticated production failure-injection regression passed 11/11.
 - Report: `docs/uiux/HOME_SCREENER_LIVE_REFRESH_20260920.md`.
 
 ## 2026-09-20 — Scalper V2 parent-header reduction

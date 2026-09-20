@@ -1,5 +1,14 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Scalper V2 timeframe tabs
+
+- Restored direct `1m`, `5m`, `15m` and `1h` buttons in the Time command group.
+  They reuse the existing interval URL/API contract and active-state styling.
+- Authenticated local browser validation passed 39/39, including an actual
+  5m to 15m to 5m switch. No strategy, order, contract-selection, cursor,
+  drawing, measurement or refresh rule changed.
+- Report: `docs/trading-analytics/SCALPER_V2_TIMEFRAME_TABS_20260920.md`.
+
 ## 2026-09-20 — Scalper V2 option premium and spread repair
 
 - Replaced the permanently unavailable ΔIV strike panel with exact retained

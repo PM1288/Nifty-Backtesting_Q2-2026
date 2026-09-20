@@ -6,6 +6,13 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 Scalper V2 timeframe-tab restoration supersedes the earlier compact
+layout decision that hid the lower intervals. The Time group directly exposes
+`1m`, `5m`, `15m` and `1h`, with the active interval visibly selected and the
+existing URL/chart query contract unchanged. Session, Fit Day, CE/PE selection,
+cursor linkage, refresh, drawings and measurement behavior remain preserved.
+Evidence: `docs/trading-analytics/SCALPER_V2_TIMEFRAME_TABS_20260920.md`.
+
 2026-09-20 Scalper V2 premium/spread repair supersedes the unavailable ΔIV and
 rejected volume panels in the default workspace. The active retained NIFTY
 cohort has 0/20 exact IV/Greek observations but 20/20 exact LTP, bid and ask

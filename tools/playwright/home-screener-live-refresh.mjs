@@ -51,8 +51,8 @@ try {
   await home.waitForTimeout(20_000);
   const homeAlert = home.getByTestId("live-refresh-health").filter({ hasText: "Refresh issue" });
   check("Home reports background refresh failure", await homeAlert.isVisible(), (await home.getByTestId("live-refresh-health").allTextContents()).join(" | "));
-  check("Home keeps last good market canvas", await homeSurface.isVisible(), "Home market surface disappeared");
-  check("Home canvas was not remounted", await home.evaluate(() => window.__n50HomeRefreshAnchor?.isConnected === true && (window.__n50HomeRefreshAnchor === document.querySelector('[data-testid="today-summary"]') || window.__n50HomeRefreshAnchor === document.querySelector('[data-analytics-section="home_sector_heatmap"]'))), "home root changed");
+  check("Home keeps last good market canvas", await homeSurface.isVisible(), "last-good Home surface remains visible");
+  check("Home canvas was not remounted", await home.evaluate(() => window.__n50HomeRefreshAnchor?.isConnected === true && (window.__n50HomeRefreshAnchor === document.querySelector('[data-testid="today-summary"]') || window.__n50HomeRefreshAnchor === document.querySelector('[data-analytics-section="home_sector_heatmap"]'))), "same connected Home root retained");
   check("Home did not navigate or reload", homeNavigations === initialHomeNavigations, `before=${initialHomeNavigations} after=${homeNavigations}`);
   await home.screenshot({ path: path.join(output, "home-refresh-failure-retained.png"), fullPage: false });
   await home.unroute("**/*");
@@ -77,7 +77,7 @@ try {
   const screenerAlert = screener.getByTestId("live-refresh-health").filter({ hasText: "Refresh issue" });
   check("Screener reports background refresh failure", await screenerAlert.isVisible(), (await screener.getByTestId("live-refresh-health").allTextContents()).join(" | "));
   check("Screener retains all last-good rows", await screener.getByTestId("scalper-table").locator("tbody tr").count() === initialRows && initialRows > 0, `before=${initialRows} after=${await screener.getByTestId("scalper-table").locator("tbody tr").count()}`);
-  check("Screener table was not remounted", await screener.evaluate(() => window.__n50ScreenerRefreshAnchor?.isConnected === true && window.__n50ScreenerRefreshAnchor === document.querySelector('[data-testid="scalper-table"]')), "table root changed");
+  check("Screener table was not remounted", await screener.evaluate(() => window.__n50ScreenerRefreshAnchor?.isConnected === true && window.__n50ScreenerRefreshAnchor === document.querySelector('[data-testid="scalper-table"]')), "same connected table root retained");
   check("Screener did not navigate or reload", screenerNavigations === initialScreenerNavigations, `before=${initialScreenerNavigations} after=${screenerNavigations}`);
   await screener.screenshot({ path: path.join(output, "screener-refresh-failure-retained.png"), fullPage: false });
   await screener.unroute("**/*");

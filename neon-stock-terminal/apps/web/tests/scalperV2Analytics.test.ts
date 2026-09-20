@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2AdaptiveDeltaDomain, scalperV2HorizontalDeltaOiOption, scalperV2PutMinusCall, scalperV2VerticalIvChangeOption, scalperV2VerticalStrikeOption } from "../src/lib/scalperV2Analytics";
+import { scalperV2AdaptiveDeltaDomain, scalperV2CompactSideOption, scalperV2HorizontalDeltaOiOption, scalperV2PutMinusCall, scalperV2VerticalIvChangeOption, scalperV2VerticalStrikeOption } from "../src/lib/scalperV2Analytics";
 
 test("Scalper V2 strike comparison preserves put minus call meaning and missingness", () => {
   assert.deepEqual(scalperV2PutMinusCall([100, 200, null, 50], [140, 80, 30, null]), [40, -120, null, null]);
@@ -26,6 +26,16 @@ test("Scalper V2 compact OI charts are vertical with an independent difference a
   assert.equal(series[2].type, "line");
   assert.equal(series[2].yAxisIndex, 1);
   assert.deepEqual(series[2].data, [40, -120]);
+});
+
+test("Scalper V2 compact side charts suppress obstructive hover cards without changing expanded options", () => {
+  const expanded = scalperV2VerticalStrikeOption([23_450], [100], [140], "oi");
+  const compact = scalperV2CompactSideOption(expanded);
+  assert.notEqual(compact, expanded);
+  assert.equal((compact.tooltip as Record<string, unknown>).show, false);
+  assert.equal((compact.tooltip as Record<string, unknown>).triggerOn, "none");
+  assert.notEqual((expanded.tooltip as Record<string, unknown>).show, false);
+  assert.deepEqual(compact.series, expanded.series);
 });
 
 test("Scalper V2 compact ΔOI chart keeps signed bars and PE minus CE line", () => {

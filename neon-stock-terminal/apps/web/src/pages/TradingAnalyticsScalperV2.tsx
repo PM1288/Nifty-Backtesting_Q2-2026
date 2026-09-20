@@ -10,7 +10,7 @@ import { dayRows, istDay } from "../lib/tradingAnalyticsChartView";
 import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
-import { scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
+import { scalperV2CompactSideOption, scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
 import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
 import { scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
 import { scalperV2PositioningHeatmapOption, scalperV2PositioningModel, scalperV2StrikeStructureOption } from "../lib/scalperV2Positioning";
@@ -517,6 +517,9 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   }, [latestPositioning, profileRows, rankSource, strikeRows]);
   const strikeStructureOption = useMemo(() => scalperV2StrikeStructureOption(strikeRows, structureInput.calls, structureInput.puts, spot, nearestSpotStrike), [nearestSpotStrike, spot, strikeRows, structureInput]);
   const positioningHeatmapOption = useMemo(() => scalperV2PositioningHeatmapOption(positioningModel, istClock), [positioningModel]);
+  const compactOiOption = useMemo(() => scalperV2CompactSideOption(analyticOptions[0]), [analyticOptions]);
+  const compactStrikeStructureOption = useMemo(() => scalperV2CompactSideOption(strikeStructureOption), [strikeStructureOption]);
+  const compactPositioningHeatmapOption = useMemo(() => scalperV2CompactSideOption(positioningHeatmapOption), [positioningHeatmapOption]);
   const spreadComparable = [...ceSpreads, ...peSpreads].filter((value) => value != null).length;
   const spreadOption = useMemo(() => scalperV2VerticalStrikeOption(strikeRows, ceSpreads, peSpreads, "spread", spot, nearestSpotStrike), [ceSpreads, nearestSpotStrike, peSpreads, spot, strikeRows]);
 
@@ -649,15 +652,15 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <aside className={css.structureCharts} data-testid="v2-strike-side-charts" aria-label="Strike open interest comparison charts">
         <article>
           <header><strong>OI by strike</strong><span>CE / PE · PE − CE</span></header>
-          <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[0]} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>
+          <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={compactOiOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>
         </article>
         <article data-testid="v2-side-strike-structure-chart">
           <header><strong>Strike structure</strong><span>OI bars · ΔOI lines · premium markers · CE1–5 / PE1–5</span></header>
-          {strikeRows.length ? <Suspense fallback={<p>Loading strike structure…</p>}><Chart className={css.structureChart} ariaLabel="Strike wise open interest change in open interest premium return and buildup regime" axisExtentPolicy="native" option={strikeStructureOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense> : <div className={css.sideState}><strong>Strike structure unavailable</strong><span>No exact tracked strikes exist for this snapshot.</span></div>}
+          {strikeRows.length ? <Suspense fallback={<p>Loading strike structure…</p>}><Chart className={css.structureChart} ariaLabel="Strike wise open interest change in open interest premium return and buildup regime" axisExtentPolicy="native" option={compactStrikeStructureOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense> : <div className={css.sideState}><strong>Strike structure unavailable</strong><span>No exact tracked strikes exist for this snapshot.</span></div>}
         </article>
         <article data-testid="v2-side-positioning-heatmap">
           <header><strong>Strike × time positioning</strong><span>{interval === 15 ? "15m" : "5m"} · ΔOI share + premium + volume + depth</span></header>
-          {positioningModel.cells.some((cell) => cell.pressure != null) ? <Suspense fallback={<p>Loading positioning heatmap…</p>}><Chart className={css.structureChart} ariaLabel="Strike by time option positioning pressure heatmap" axisExtentPolicy="native" option={positioningHeatmapOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "positioning-heatmap")} /></Suspense> : <div className={css.sideState}><strong>Positioning history unavailable</strong><span>No retained session observations have enough OI, premium, volume or depth evidence. Missing inputs are not zero.</span></div>}
+          {positioningModel.cells.some((cell) => cell.pressure != null) ? <Suspense fallback={<p>Loading positioning heatmap…</p>}><Chart className={css.structureChart} ariaLabel="Strike by time option positioning pressure heatmap" axisExtentPolicy="native" option={compactPositioningHeatmapOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "positioning-heatmap")} /></Suspense> : <div className={css.sideState}><strong>Positioning history unavailable</strong><span>No retained session observations have enough OI, premium, volume or depth evidence. Missing inputs are not zero.</span></div>}
         </article>
       </aside>
       <section className={css.oiHistoryRow} data-testid="v2-oi-history-row" aria-label="Tracked option-chain open-interest differences over time">

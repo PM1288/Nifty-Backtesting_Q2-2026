@@ -1,5 +1,12 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Compact Scalper V2 OI hover repair
+
+- Suppressed only the large floating tooltip cards in the three narrow
+  strike-side charts so they no longer cover the plotted OI/structure view.
+- Preserved strike/time hover propagation, selected-strike highlighting and
+  full tooltips in the expanded Analytics dock.
+
 ## 2026-09-20 — Screener D−1 Close and Scalper V2 volume EMA
 
 - Branch `fix/screener-d1-volume-ema-options-20260920` adds a compact, explicitly

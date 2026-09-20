@@ -1,5 +1,10 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-20 compact Scalper V2 OI hover repair: the three narrow strike-side
+charts no longer display floating hover-value cards over their plotting area.
+Strike/time hover linkage and highlighting remain active, while the expanded
+analytics OI charts retain full tooltips and numerical inspection.
+
 2026-09-20 D−1 Close and volume-EMA addition: Home MWHD Bull/Bear boards add a
 compact previous-trading-day close comparison, with exact evidence in the
 drawer/CSV, without changing any gate, score, qualification or rank. Scalper V2

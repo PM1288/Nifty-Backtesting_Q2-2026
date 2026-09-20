@@ -14,6 +14,16 @@ const CALL_BORDER = "#8a6200";
 const PUT = "#2563eb";
 const PUT_BORDER = "#1d4ed8";
 
+/** Compact side charts keep hover linkage but suppress the large floating
+ * value card that obscures their narrow plotting area. Expanded analytics
+ * continue to receive the original option with full tooltips. */
+export function scalperV2CompactSideOption(option: EChartsOption): EChartsOption {
+  return {
+    ...option,
+    tooltip: { show: false, triggerOn: "none", alwaysShowContent: false },
+  };
+}
+
 export function scalperV2AdaptiveDeltaDomain(values: DeltaOiValue[], padding = 0.08): [number, number] {
   const observed = values.filter((value): value is number => value != null && Number.isFinite(value));
   if (!observed.length) return [-1, 1];

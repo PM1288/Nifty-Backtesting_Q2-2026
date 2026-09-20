@@ -101,10 +101,12 @@ try {
   if (await ivPanel.count() === 0) console.log(JSON.stringify({ debugTestIds: await page.locator("[data-testid]").evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")).filter(Boolean)), pageErrors: errors, debugText: (await page.locator("body").innerText()).slice(0, 2_500) }));
   await ivPanel.waitFor({ state: "visible", timeout: 90_000 });
   const ivPanelText = await ivPanel.innerText();
-  check("iv-change-truthful-state", (/Change in IV by strike/.test(ivPanelText) || /Tracked volume by strike/.test(ivPanelText)) && (/IV change unavailable/.test(ivPanelText) || /IV comparison unavailable/.test(ivPanelText) || await ivPanel.getByRole("img").count() === 1), ivPanelText);
+  check("iv-change-truthful-state", /Change in IV by strike/.test(ivPanelText) && (/IV change unavailable/.test(ivPanelText) || await ivPanel.getByRole("img").count() === 1), ivPanelText);
+  const volumePanel = page.getByTestId("v2-volume-strike-chart");
+  check("volume-uses-empty-corner", await volumePanel.count() === 1 && /Tracked volume by strike/.test(await volumePanel.innerText()), await volumePanel.innerText());
   check("three-price-chart-grid", await page.locator("[data-testid^='v2-chart-panel-']").count() === 3, "Underlying plus exact CE and PE only");
   check("bounded-price-grid-height", Boolean(layout.priceGrid && layout.priceGrid.height >= 620 && layout.priceGrid.height <= 645), JSON.stringify(layout.priceGrid));
-  const historyGeometry = await page.getByTestId("v2-oi-history-row").evaluate((element) => [...element.querySelectorAll("article")].map((article) => {
+  const historyGeometry = await page.getByTestId("v2-oi-history-row").evaluate((element) => [...element.querySelectorAll(":scope > div > article")].map((article) => {
     const chart = article.querySelector('[role="img"]');
     const outer = article.getBoundingClientRect();
     const inner = chart?.getBoundingClientRect();
@@ -112,6 +114,8 @@ try {
   }));
   check("oi-history-matches-price-columns", historyGeometry.length === 2 && layout.stage && layout.callPanel && Math.abs(historyGeometry[0].outerWidth - layout.stage.width) <= 3 && Math.abs(historyGeometry[1].outerWidth - layout.callPanel.width) <= 3, JSON.stringify({ historyGeometry, underlying: layout.stage, call: layout.callPanel }));
   check("aligned-auxiliary-chart-height", historyGeometry.every((item) => item.outerHeight >= 205 && item.outerHeight <= 215), JSON.stringify(historyGeometry));
+  const volumeGeometry = await volumePanel.evaluate((element) => { const box = element.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width, height: box.height }; });
+  check("volume-corner-aligned", Boolean(layout.sideOi && volumeGeometry.width >= layout.sideOi.width - 2 && volumeGeometry.height >= 205 && volumeGeometry.height <= 215), JSON.stringify({ sideOi: layout.sideOi, volumeGeometry }));
   check("oi-history-directly-below-price-grid", Boolean(layout.oiHistory && layout.priceGrid && Math.abs(layout.oiHistory.y - (layout.priceGrid.y + layout.priceGrid.height + 3)) <= 2), JSON.stringify(layout));
   const historyText = await page.getByTestId("v2-oi-history-row").innerText();
   check("separate-oi-difference-semantics", historyText.includes("Cumulative PE OI − cumulative CE OI") && historyText.includes("Cumulative PE ΔOI − cumulative CE ΔOI"), historyText);
@@ -151,7 +155,7 @@ try {
   const references = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => (element.dataset.referenceLevelsVisible ?? "").split(",").filter(Boolean));
   check("underlying-reference-lines-only", references.every((id) => ["today-open", "previous-day-close", "previous-day-high"].includes(id)), JSON.stringify(references));
 
-  const oiHistoryImages = page.getByTestId("v2-oi-history-row").getByRole("img");
+  const oiHistoryImages = page.locator("[data-testid='v2-oi-difference-time'] [role='img'], [data-testid='v2-change-oi-difference-time'] [role='img']");
   if (await oiHistoryImages.count()) {
     await oiHistoryImages.first().scrollIntoViewIfNeeded();
     const historyBox = await oiHistoryImages.first().boundingBox();

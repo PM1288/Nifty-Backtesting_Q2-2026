@@ -175,14 +175,10 @@ async function getTradingStackStock(prisma: PrismaClient, symbolRaw: string, ran
         f.turnover_lacs,
         f.deliverable_pct
       FROM bars_1d b
-      LEFT JOIN LATERAL (
-        SELECT feature.turnover_lacs, feature.deliverable_pct
-        FROM nse_app.security_daily_features feature
-        WHERE UPPER(TRIM(feature.symbol)) = ${symbolRow.symbol}
-          AND feature.trade_date = b.trade_date::date
-        ORDER BY CASE WHEN UPPER(feature.series) = 'EQ' THEN 0 ELSE 1 END
-        LIMIT 1
-      ) f ON TRUE
+      LEFT JOIN nse_app.security_daily_features f
+        ON f.symbol = ${symbolRow.symbol}
+       AND f.series = 'EQ'
+       AND f.trade_date = b.trade_date::date
       WHERE b.exchange = 'NSE' AND b.symbol_token = ${symbolRow.symbol_token}
       ORDER BY b.trade_date DESC
       LIMIT ${dailyLimit}

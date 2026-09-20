@@ -45,7 +45,8 @@ try {
   await intraday.waitFor({ state: "visible", timeout: 30_000 });
   const chartFirstMs = Math.round(performance.now() - navigationStart);
   check("Chart-first workstation rendered", await intraday.locator("canvas").count() >= 1, `chartFirstMs=${chartFirstMs}`);
-  check("Two primary charts render", await page.locator('canvas[data-zr-dom-id], [data-testid="stock-360"] canvas').count() >= 2, `canvases=${await page.locator('[data-testid="stock-360"] canvas').count()}`);
+  await page.getByRole("img", { name: /daily price volume traded value and delivery percentage/i }).waitFor({ state: "visible", timeout: 30_000 });
+  check("Two primary charts render", await page.locator('[data-testid="stock-360"] canvas').count() >= 2, `canvases=${await page.locator('[data-testid="stock-360"] canvas').count()}`);
   const labels = await intraday.locator('button[role="listitem"] span').allTextContents();
   check("Compact reference labels", ["15m", "1H", "Day", "Week", "Month", "3M", "Year", "PDC"].every((label) => labels.includes(label)), labels.join(" | "));
   check("Only PDC retains close terminology", !(await intraday.locator('button[role="listitem"]').allTextContents()).some((label) => /open/i.test(label)), labels.join(" | "));

@@ -32,7 +32,9 @@ once and placed the large OIIS evidence block before the price chart.
   displayed traded-value series falls back to `close × volume / 1 crore`.
   Missing delivery remains null and is never rendered as zero.
 - Added `turnover_lacs` and `deliverable_pct` to non-1D stock bar responses using
-  the existing indexed NSE daily-feature table. No collector or strategy changed.
+  the existing indexed NSE daily-feature table. The join uses the exact
+  `(symbol, series, trade_date)` key so chart enrichment does not defeat the
+  existing index. No collector or strategy changed.
 - No authorised TradingView recommendation source exists in the inspected app.
   The signal row says `Not connected`; no external recommendation is fabricated.
 

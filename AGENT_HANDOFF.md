@@ -5699,7 +5699,8 @@ or outcomes were deleted.
   audit confirmed the separate NIFTY Greek feed is incomplete for the active
   displayed cohort, so unmatched IV/Greeks remain unavailable rather than
   being copied from another strike or side. When ΔIV cannot be compared, the
-  third strike chart explicitly falls back to tracked volume.
+  dedicated IV chart remains visible with an unavailable state; volume never
+  substitutes for IV.
 - The selected CE/PE table additively exposes retained IV change, volume,
   bid/ask quantities and delta/gamma/theta/vega. Page/card/header margins were
   tightened and strike/cumulative auxiliary charts use matched heights.
@@ -5714,3 +5715,7 @@ or outcomes were deleted.
   `sha256:59b94444f25895dbe830cc9eef8e1a85134a434f601e27f7824c17d5d1031c6b`.
   Authenticated production browser validation passed 33/33. Rollback tag:
   `before-scalper-v2-option-metrics-20260920`.
+- Follow-up branch `fix/scalper-v2-iv-volume-corner-20260920` keeps ΔIV and
+  tracked volume as separate charts. The volume-by-strike chart fills the
+  formerly empty lower-right corner and aligns with both 210px cumulative
+  panels. Local browser validation passed 35/35 before the follow-up release.

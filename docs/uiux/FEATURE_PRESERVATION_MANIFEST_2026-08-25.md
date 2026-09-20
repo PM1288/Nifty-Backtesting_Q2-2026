@@ -11,8 +11,9 @@ underlying symbol leads the command row; 1m/5m/15m buttons are removed while
 the existing 1h/session/fit contracts remain. Tight chart insets and matched
 auxiliary-panel heights increase the painted plot area. Exact-contract IV
 change is derived for both archived NSE and SmartAPI fallback cohorts, while
-unavailable comparison remains missing and uses a clearly labelled tracked-
-volume fallback chart. Selected-pair evidence additionally exposes the already
+unavailable comparison remains missing in the dedicated IV panel. Tracked
+volume occupies a separate lower-right strike chart aligned with the two
+cumulative panels. Selected-pair evidence additionally exposes the already
 retained volume, depth and delta/gamma/theta/vega fields. Strategies, orders,
 drawings, measurements, cursor linkage, independent CE/PE selection and raw
 source history remain unchanged. Evidence:

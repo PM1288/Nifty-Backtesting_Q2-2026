@@ -3,7 +3,40 @@ import assert from "node:assert/strict";
 import express from "express";
 import type { AddressInfo } from "node:net";
 import type { PrismaClient } from "@prisma/client";
-import { buildComparableChainLegs, buildCumulativeOiHistory, registerTradingAnalytics,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
+import { buildComparableChainLegs, buildCumulativeOiHistory, registerTradingAnalytics,loadMorningSummary,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
+
+test("morning summary exposes exact cash and index-derivative values with the canonical matrix", async () => {
+  const responses = [
+    [{ date: "2026-09-19" }],
+    [
+      { fii_derivatives: "INDEX FUTURES", buy_contracts: "10", sell_contracts: "5", buy_value_in_cr: "500.00", sell_value_in_cr: "235.53" },
+      { fii_derivatives: "INDEX OPTIONS", buy_contracts: "20", sell_contracts: "6", buy_value_in_cr: "5000.00", sell_value_in_cr: "595.23" },
+    ],
+    [{ participant_type: "FII/FPI", net_value: "125.50" }],
+  ];
+  const prisma = {
+    $queryRawUnsafe: async () => responses.shift() ?? [],
+  } as unknown as PrismaClient;
+  const summary = await loadMorningSummary(prisma, "2026-09-20T04:00:00Z");
+  assert.equal(summary.equity, "Buy");
+  assert.equal(summary.equityNet, 125.5);
+  assert.equal(summary.futures, "Buy");
+  assert.equal(summary.futuresNet, "264.47");
+  assert.equal(summary.options, "Buy");
+  assert.equal(summary.optionsNet, "4404.77");
+  assert.equal(summary.matrix, "Super Bullish");
+});
+
+test("morning summary preserves unavailable values instead of turning them into zero", async () => {
+  const prisma = {
+    $queryRawUnsafe: async () => [],
+  } as unknown as PrismaClient;
+  const summary = await loadMorningSummary(prisma, "2026-09-20T04:00:00Z");
+  assert.equal(summary.equityNet, null);
+  assert.equal(summary.futuresNet, null);
+  assert.equal(summary.optionsNet, null);
+  assert.equal(summary.matrix, "INSUFFICIENT_DATA");
+});
 
 test("chart selection accepts independent CE and PE strikes while preserving legacy pair links", () => {
   assert.deepEqual(resolveChartStrikeSelection({ strike: 23450 }), { ceStrike: 23450, peStrike: 23450 });

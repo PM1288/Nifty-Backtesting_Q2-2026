@@ -188,7 +188,7 @@ export function ResponsiveWorkspaceNavigation({
         navigation sheet must belong to the viewport, not the 83px header. */}
     {sheetOpen ? createPortal(<div className={styles.sheetBackdrop} role="presentation" onMouseDown={() => setSheetOpen(false)}>
       <aside ref={sheetRef} id="mobile-global-navigation" className={styles.mobileSheet} role="dialog" aria-modal="true" aria-label="Application navigation" onMouseDown={(event) => event.stopPropagation()}>
-        <header><div><span>NIFTY 50 TRADER</span><strong>Navigation</strong></div><button type="button" aria-label="Close navigation" onClick={() => { setSheetOpen(false); window.requestAnimationFrame(() => mobileTriggerRef.current?.focus()); }}><X size={20} /></button></header>
+        <header><div><span>N50</span><strong>Navigation</strong></div><button type="button" aria-label="Close navigation" onClick={() => { setSheetOpen(false); window.requestAnimationFrame(() => mobileTriggerRef.current?.focus()); }}><X size={20} /></button></header>
         <Link className={styles.mobileDirect} data-active={todayActive ? "true" : "false"} to="/" onClick={() => record({ path: "/", label: "Today" }, "mobile_sheet")}><TodayIcon size={20} />Today</Link>
         <Link className={styles.mobileDirect} data-active={pathname.startsWith("/predictor") ? "true" : "false"} to="/predictor" onClick={() => record({path:"/predictor",label:"Predictor"},"mobile_sheet")}>Predictor</Link>
         {(["markets", "strategy"] as MenuId[]).map((id) => {

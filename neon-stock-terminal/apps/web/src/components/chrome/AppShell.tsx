@@ -7,7 +7,7 @@ import { DataAge, EnvironmentBadge } from "../../design-system/TradingPrimitives
 import { DataQualityBadge } from "../../design-system/WorkspacePrimitives";
 import { buildMarketQuoteQuality } from "../../design-system/quality";
 import { useI18n } from "../../i18n/LocaleProvider";
-import { useHeaderMarketSummary, useLiveQuotesWithStatus } from "../../lib/hooks";
+import { useHeaderMarketSummary, useLiveQuotesWithStatus, useMorningSummary } from "../../lib/hooks";
 import { useDashboardPrefetch } from "../../lib/useDashboardPrefetch";
 import { arrow, fmtPct, fmtPrice } from "../../lib/format";
 import { useAnalyticsExperienceMode } from "../../pages/AnalyticsChrome";
@@ -24,6 +24,7 @@ import { MarketRsiParticles } from "../visual/MarketRsiParticles";
 import { pctClass } from "../utils/pctClass";
 import { PaperTradeNotifier } from "./PaperTradeNotifier";
 import { paperVoiceEnabledByDefault } from "./paperTradeNotifications";
+import { buildHeaderTodayOutlook } from "./headerTodayOutlook";
 import styles from "./AppShell.module.css";
 
 type WorkspaceLink = { label: string; to: string; match?: (pathname: string) => boolean };
@@ -135,6 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
   const sessionEnabled = authReady && Boolean(user);
   const overview = useHeaderMarketSummary(sessionEnabled);
+  const morningSummary = useMorningSummary(sessionEnabled);
   const liveFeed = useLiveQuotesWithStatus(["NIFTY50", "BANKNIFTY", "INDIAVIX"], sessionEnabled);
   const live = liveFeed.quotes;
   const niftyChangePct =
@@ -157,6 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const prefetchDashboardRoute = useDashboardPrefetch(authReady);
   const compactV5 = import.meta.env.VITE_UI_COMPACT_V5 === "true";
   const commandItems = useMemo<CommandPaletteItem[]>(() => routeCommandItems(user?.role === "admin"), [user?.role]);
+  const todayOutlook = useMemo(() => buildHeaderTodayOutlook(morningSummary.data), [morningSummary.data]);
 
   const loadCommandEntities = useCallback(async (): Promise<CommandPaletteItem[]> => {
     const [paperResponse, runResponse, profileResponse] = await Promise.allSettled([
@@ -267,13 +270,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             onPrefetch={prefetchDashboardRoute}
             brandSlot={
               <Link to="/" className={styles.brandLink} onMouseEnter={() => prefetchDashboardRoute("/")} onFocus={() => prefetchDashboardRoute("/")}>
-                <span className={styles.brandMark}>{isAdminRoute ? "NIFTY 50 ADMIN" : "NIFTY 50 TRADER"}</span>
+                <span className={styles.brandMark} aria-label={isAdminRoute ? "N50 administration home" : "N50 home"}>N50</span>
               </Link>
             }
             searchSlot={<CommandPalette items={commandItems} loadItems={loadCommandEntities} />}
             statusSlot={
               <div className={styles.headerContext}>
-                <EnvironmentBadge value={isAdminRoute ? "ADMIN" : "PAPER"} />
+                {isAdminRoute ? <EnvironmentBadge value="ADMIN" /> : null}
                 <div
                   className={styles.niftyHeaderQuote}
                   data-testid="nifty-header-quote"
@@ -286,18 +289,31 @@ export function AppShell({ children }: { children: ReactNode }) {
                     {niftyChangePct == null ? "Pending" : `${arrow(niftyChangePct)} ${fmtPct(niftyChangePct)}`}
                   </em>
                 </div>
-                <span className={styles.marketSession}>{overview.data?.market?.label === "OPEN" ? "Market open" : "Market closed"}</span>
+                <Link
+                  to="/strategy/trading-analytics?view=morning"
+                  className={styles.todayOutlook}
+                  data-testid="header-today-outlook"
+                  data-tone={todayOutlook.tone}
+                  title={todayOutlook.title}
+                  aria-label={todayOutlook.title.replaceAll("\n", ". ")}
+                >
+                  <span>Today outlook</span>
+                  <small><b>E</b> {todayOutlook.equity} <i>₹{todayOutlook.equityValue}Cr</i></small>
+                  <small><b>F</b> {todayOutlook.futures} <i>₹{todayOutlook.futuresValue}Cr</i></small>
+                  <small><b>O</b> {todayOutlook.options} <i>₹{todayOutlook.optionsValue}Cr</i></small>
+                  <strong>{todayOutlook.result}</strong>
+                </Link>
                 {overview.data?.asOf ? (
-                  <DataAge>Data {new Date(overview.data.asOf).toLocaleString("en-IN", {
-                    timeZone: "Asia/Kolkata",
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false
-                  })}</DataAge>
+                  <span className={styles.headerAge}><DataAge>Data {new Date(overview.data.asOf).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata",
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false
+                    })}</DataAge></span>
                 ) : null}
-                <DataQualityBadge quality={feedQuality} compact operationalLabel />
+                <span className={styles.headerQuality}><DataQualityBadge quality={feedQuality} compact operationalLabel iconOnly /></span>
               </div>
             }
             voiceSlot={
@@ -317,7 +333,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 })}
               >
                 {paperVoiceEnabled ? <AudioLines size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
-                <span>{paperVoiceEnabled ? "Speak" : "Muted"}</span>
               </button>
             }
             userSlot={<div className={styles.sessionStatus}><AuthStatus /></div>}

@@ -104,8 +104,8 @@
 .brandMark {
   display: block;
   overflow: hidden;
-  max-width: 165px;
-  font-size: 14px;
+  max-width: 48px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-overflow: ellipsis;
@@ -165,18 +165,38 @@
 .niftyHeaderQuote[data-tone="negative"],
 .mobileNiftyQuote[data-tone="negative"] { border-color: rgba(194, 54, 79, 0.25); }
 
+.todayOutlook {
+  min-height: 30px;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--text-2);
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.todayOutlook:hover { border-color: #9dbce5; background: #f3f7fd; }
+.todayOutlook:focus-visible { outline: 3px solid rgba(23, 94, 200, .2); outline-offset: 2px; }
+.todayOutlook > span { color: var(--text-3); font-family: var(--font-sans); font-size: 10.5px; font-weight: 750; text-transform: uppercase; letter-spacing: .03em; }
+.todayOutlook small { font-size: 10.5px; font-weight: 700; }
+.todayOutlook small b { color: var(--text-3); }
+.todayOutlook small i { color: var(--text-3); font-style: normal; font-weight: 600; }
+.todayOutlook strong { padding-left: 6px; border-left: 1px solid var(--border-subtle); font-family: var(--font-sans); font-size: 11px; }
+.todayOutlook[data-tone="positive"] { border-color: rgba(8, 122, 80, .3); background: #f1faf5; }
+.todayOutlook[data-tone="positive"] strong { color: #087a50; }
+.todayOutlook[data-tone="negative"] { border-color: rgba(194, 54, 79, .3); background: #fff5f6; }
+.todayOutlook[data-tone="negative"] strong { color: #b4233d; }
+.headerAge,
+.headerQuality { display: inline-flex; }
+
 .mobileNiftyQuote {
   display: none;
-}
-
-.marketSession {
-  max-width: 110px;
-  overflow: hidden;
-  color: var(--text-1);
-  font-size: 12px;
-  font-weight: 720;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .sessionStatus {
@@ -190,8 +210,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 9px;
+  width: 34px;
+  gap: 0;
+  padding: 0;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   background: #fff;
@@ -286,7 +307,8 @@
 }
 
 @media (max-width: 1599px) {
-  .headerContext > :nth-child(4) { display: none; }
+  .headerAge { display: none; }
+  .todayOutlook small i { display: none; }
 }
 
 @media (max-width: 1279px) {
@@ -294,10 +316,14 @@
     --app-header-height: 52px;
     --app-sticky-content-top: var(--app-header-height);
   }
-  .headerContext > :not(.niftyHeaderQuote):not(:last-child) { display: none; }
+  .headerQuality { display: none; }
   .niftyHeaderQuote { min-height: 28px; gap: 4px; padding-inline: 5px; }
   .niftyHeaderQuote strong,
   .niftyHeaderQuote em { font-size: 10.5px; }
+  .todayOutlook { min-height: 28px; gap: 4px; padding-inline: 5px; }
+  .todayOutlook > span { display: none; }
+  .todayOutlook small { font-size: 10px; }
+  .todayOutlook strong { font-size: 10.5px; }
   .body { padding: 0 10px 20px; }
 
   .workspaceTabs {
@@ -315,13 +341,15 @@
   .shell[data-ui-compact-v5="true"] {
     --app-header-height: 84px;
   }
-  .brandMark { max-width: 150px; font-size: 12px; }
+  .brandMark { max-width: 48px; font-size: 12px; }
   .headerContext { width: max-content; justify-content: flex-start; }
-  .headerContext > :not(.niftyHeaderQuote):not(:first-child):not(:last-child) { display: none; }
-  .headerContext > :first-child:first-child { display: inline-flex; }
+  .niftyHeaderQuote span,
+  .niftyHeaderQuote em,
+  .todayOutlook small { display: none; }
+  .todayOutlook strong { padding-left: 0; border-left: 0; }
   .body { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 
 @media (max-width: 390px) {
-  .brandMark { max-width: 128px; font-size: 11.5px; }
+  .brandMark { max-width: 44px; font-size: 11.5px; }
 }

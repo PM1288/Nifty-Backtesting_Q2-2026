@@ -116,6 +116,9 @@ export type MorningSummaryResponse = {
   equity: string | null;
   futures: string | null;
   options: string | null;
+  equityNet: number | string | null;
+  futuresNet: number | string | null;
+  optionsNet: number | string | null;
   matrix: string;
   knowledgeState: string;
 };

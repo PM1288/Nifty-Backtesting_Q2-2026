@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 compact Today outlook header: the shared command header keeps the
+permanent NIFTY level/change and adds the existing Morning View six-row market
+matrix beside it. Equity cash, all-index futures and all-index options retain
+their exact Buy/Sell/Neutral/unavailable state and ₹ crore value; the final
+outlook is the canonical server result, not a second UI calculation. Redundant
+visible `PAPER`, market-session, readiness and voice-mode words were removed
+from the header while paper-only enforcement, feed-quality semantics and the
+voice toggle remain functional and accessible by label/tooltip. Evidence:
+`docs/uiux/HEADER_TODAY_OUTLOOK_20260920.md`.
+
 2026-09-20 Scalper V2 shared cursor repair: physical pointer ownership remains
 with the active NIFTY, CE or PE chart, while only programmatic receivers use
 feedback suppression. This prevents continuous movement from sticking on a
@@ -524,8 +534,8 @@ NIFTY context, speech and paper notifier. No strategy/API/data changes.
 | Paper alert launcher | `PaperTradeNotifier.tsx` mounted once by `AppShell.tsx` | Visible on authenticated desktop and mobile routes |
 | Latest five paper events | `GET /v1/paper/notifications?limit=5` | Authenticated response, durable `paper_trading.trade_events` source, entry/target events only |
 | Automatic event popup | notifier polling and durable event-ID deduplication | A newly intercepted browser response opens the panel; initial history stays silent |
-| Native voice mode | header `Muted`/`Speak` switch and browser `speechSynthesis` | Defaults on unless explicitly muted, persists locally, speaks only governed entry/target phrases, mute cancels queued speech |
-| Single-line market context | `AppShell.tsx`, `ResponsiveWorkspaceNavigation.tsx`, and `GET /v1/overview/header` | Dedicated PAPER mode, NIFTY mark, market state, data time and readiness stay visible in the single command header; the retired ticker rail stays absent |
+| Native voice mode | icon-only header switch and browser `speechSynthesis` | Defaults on unless explicitly muted, persists locally, speaks only governed entry/target phrases, mute cancels queued speech; accessible name and tooltip expose the state without consuming header width |
+| Single-line market context | `AppShell.tsx`, `ResponsiveWorkspaceNavigation.tsx`, `GET /v1/overview/header`, and `GET /v1/trading-analytics/morning-summary` | NIFTY mark plus canonical Equity/Futures/Options values, states and original market-matrix outlook stay visible in the command header; paper enforcement and feed quality remain active without redundant text badges; the retired ticker rail stays absent |
 | Global and Strategy destinations | `workspaceRoutes.ts`, route catalogue and responsive navigation | Today, Markets, Strategy and Paper remain primary; Stocks/Derivatives remain under Markets; Data & Operations remains under More; all seven Strategy workspaces remain reachable |
 | NSE FOVOLT futures-volatility screener | `/futures/volatility`, `futuresVolatility.ts`, `nse_fii_reports_service` FOVOLT family | Exact reported current-minus-previous daily futures-volatility rule, all 16 source fields, immutable revisions, bounded archive backfill, verified-calendar next-session outcomes, same-report matched/nonmatched historical evaluation and JSON/CSV evidence remain read-only; existing Volatility Signals and original three-report bundle remain separate |
 | Paper evidence workbench | `/paper-trading` route and `PaperTradingCommandCenter.tsx` | Existing evidence, filters and detail inspector remain present; dedicated Market Book tab exposes the immutable entry quote and top-three bid/ask ladder |

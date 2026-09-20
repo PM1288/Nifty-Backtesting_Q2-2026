@@ -57,22 +57,9 @@ try {
     check(viewport, "no page horizontal overflow", await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
     check(viewport, "no ticker rail", await page.locator('[aria-label="Market ticker tape"], [data-clarity-region="top_ticker"]').count() === 0);
     check(viewport, "NIFTY context retained", await page.getByTestId("nifty-header-quote").isVisible());
-    if (viewport.width < 768) check(viewport, "mobile PAPER context retained", await appHeader.getByText("PAPER", { exact: true }).isVisible());
-    const operationalStates = await appHeader.locator('[data-tone]').evaluateAll((nodes) => nodes.map((node) => ({
-      tone: node.getAttribute("data-tone"),
-      text: (node.textContent ?? "").replace(/[^A-Z]/g, "")
-    })));
-    const operationalState = operationalStates.find(({ text }) => ["READY", "CAUTION", "DEGRADED", "UNKNOWN"].includes(text));
-    const operationalTone = operationalState?.tone ?? null;
-    const operationalText = operationalState?.text ?? "";
-    const expectedOperationalLabel = operationalTone === "positive"
-      ? "READY"
-      : operationalTone === "warning"
-        ? "CAUTION"
-        : operationalTone === "negative"
-          ? "DEGRADED"
-          : "UNKNOWN";
-    check(viewport, "operational status label matches semantic tone", operationalText === expectedOperationalLabel, `${operationalTone}:${operationalText}`);
+    check(viewport, "Today outlook retained", await page.getByTestId("header-today-outlook").isVisible());
+    check(viewport, "redundant PAPER badge absent", await appHeader.getByText("PAPER", { exact: true }).count() === 0);
+    check(viewport, "quality remains accessible without a visible word", await appHeader.locator('[aria-label^="READY:"], [aria-label^="CAUTION:"], [aria-label^="DEGRADED:"], [aria-label^="UNKNOWN:"]').count() === (viewport.width < 1280 ? 0 : 1));
     check(viewport, "one global navigation implementation", await page.locator('nav[aria-label="Primary navigation"]').count() === 1);
 
     if (viewport.width >= 1280) {

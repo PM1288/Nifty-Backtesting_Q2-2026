@@ -119,6 +119,7 @@ export async function loadMorningSummary(prisma: PrismaClient, asOf: string) {
   const reportDate = dates[0]?.date == null ? null : String(dates[0].date);
   if (!reportDate) return {
     asOf, reportDate: null, equity: null, futures: null, options: null,
+    equityNet: null, futuresNet: null, optionsNet: null,
     matrix: "INSUFFICIENT_DATA", knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
   };
   const [rawStats, cash] = await Promise.all([
@@ -145,10 +146,14 @@ export async function loadMorningSummary(prisma: PrismaClient, asOf: string) {
   const stats = rawStats.map(activity);
   const cashNet = cash.length === 1 ? numeric(cash[0]?.net_value) : null;
   const equity = cashNet == null ? null : cashNet === 0 ? "Neutral" : cashNet < 0 ? "Sell" : "Buy";
-  const productSign = (name: string) => stats.find((row) => row.fii_derivatives === name)?.canonical_sign ?? null;
+  const product = (name: string) => stats.find((row) => row.fii_derivatives === name);
+  const productSign = (name: string) => product(name)?.canonical_sign ?? null;
   const futures = productSign("INDEX FUTURES"), options = productSign("INDEX OPTIONS");
   return {
     asOf, reportDate, equity, futures, options,
+    equityNet: cashNet,
+    futuresNet: product("INDEX FUTURES")?.net_crore ?? null,
+    optionsNet: product("INDEX OPTIONS")?.net_crore ?? null,
     matrix: matrix(equity, futures, options),
     knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
   };

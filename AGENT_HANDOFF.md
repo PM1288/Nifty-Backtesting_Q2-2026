@@ -5671,3 +5671,18 @@ or outcomes were deleted.
   and asset `/n50/assets/index-BxmOs6_s.js`. Authenticated deployed-container
   Chromium passed 30/30 targeted checks. Evidence is outside Git at
   `/home/novius2/NIFTY50/evidence/scalper-v2-axis-iv-header-20260920-production/`.
+## 2026-09-20 — Compact canonical Today outlook in the global header
+
+- Branch: `feature/header-today-outlook-20260920`; implementation report:
+  `docs/uiux/HEADER_TODAY_OUTLOOK_20260920.md`.
+- The permanent NIFTY quote now sits beside the existing Morning View original
+  six-row matrix result. Equity cash, all-index futures and all-index options
+  show their exact ₹ crore values plus Buy/Sell/Neutral/unavailable state.
+- The server remains the only matrix owner. Missing reports remain unavailable;
+  the UI does not infer or zero-fill them. Scope disclosures clarify that index
+  derivatives are not NIFTY-only and option reported value is not premium cash
+  flow.
+- The header brand is compact `N50`; redundant PAPER, market-session, readiness
+  words and Speak/Muted words were removed. Paper-only controls, quality state,
+  native speech, notifications, authentication and permissions are unchanged
+  and remain accessible.

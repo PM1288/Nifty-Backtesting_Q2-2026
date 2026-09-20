@@ -21,7 +21,8 @@ try {
   check("canonical browser-origin login", login.ok(), `status=${login.status()}`);
   const page = await context.newPage();
   await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded", timeout: 90_000 });
-  await page.getByText("NIFTY 50 TRADER", { exact: true }).waitFor();
+  await page.locator("header").first().getByText("N50", { exact: true }).waitFor();
+  check("Today outlook retained", await page.getByTestId("header-today-outlook").isVisible());
   check("native cursor remains visible", await page.evaluate(() => getComputedStyle(document.documentElement).cursor !== "none"));
   check("target overlay remains mounted", await page.locator('[aria-hidden="true"][data-market-tone]').count() > 0);
   await page.getByRole("button", { name: /Connected/ }).click();

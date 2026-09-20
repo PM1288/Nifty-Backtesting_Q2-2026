@@ -13,6 +13,7 @@ import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "..
 import { scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
 import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
 import { scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
+import { scalperV2PositioningHeatmapOption, scalperV2PositioningModel, scalperV2StrikeStructureOption } from "../lib/scalperV2Positioning";
 import { scalperV2OiTotals, scalperV2StructureRows } from "../lib/scalperV2Structure";
 import { oiComparisonState } from "../lib/scalperV2Geometry";
 import { normalizeScalperV2ProfileRows, profileBaselineLabel } from "../lib/scalperV2OiProfile";
@@ -213,9 +214,9 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     retry: 1,
   });
   const optionPriceHistory = useQuery({
-    queryKey: ["trading-analytics-option-price-history", symbol, expiry, replayAsOf],
-    queryFn: ({ signal }) => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, ...(replayAsOf ? { asOf: replayAsOf } : {}), historyDays: "3" })}`, signal),
-    enabled: Boolean(expiry) && analyticsTab === "strength",
+    queryKey: ["trading-analytics-option-price-history", symbol, expiry, replayAsOf, interval === 15 ? 15 : 5],
+    queryFn: ({ signal }) => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, ...(replayAsOf ? { asOf: replayAsOf } : {}), historyDays: "3", interval: String(interval === 15 ? 15 : 5) })}`, signal),
+    enabled: Boolean(expiry),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
     refetchInterval: params.has("asOf") ? false : 60_000,
@@ -300,12 +301,11 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const snapshotDays = [...new Set(profileRows.map((row) => istDay(row.currentAt)).filter(Boolean))].sort();
   const differentSnapshotDay = Boolean(tradingDay && snapshotDays.some((day) => day !== tradingDay));
   const deltaBasisLabel = `${profileBaselineLabel(profileModel.baselineKind)} ΔOI`;
-  const { ceCurrent, peCurrent, ceChanges, peChanges, cePremiums, pePremiums, ceSpreads, peSpreads } = useMemo(() => {
+  const { ceCurrent, peCurrent, ceChanges, peChanges, ceSpreads, peSpreads } = useMemo(() => {
     const currentSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => profileRows.find((row) => row.side === wanted && row.strike === strike)?.currentOi ?? null);
     const changeSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => profileRows.find((row) => row.side === wanted && row.strike === strike)?.changeOi ?? null);
-    const premiumSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => numeric(rankSource.find((row) => side(row) === wanted && numeric(row.strike) === strike)?.last_price));
     const spreadSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => legSpread(rankSource.find((row) => side(row) === wanted && numeric(row.strike) === strike)));
-    return { ceCurrent: currentSeries("CE"), peCurrent: currentSeries("PE"), ceChanges: changeSeries("CE"), peChanges: changeSeries("PE"), cePremiums: premiumSeries("CE"), pePremiums: premiumSeries("PE"), ceSpreads: spreadSeries("CE"), peSpreads: spreadSeries("PE") };
+    return { ceCurrent: currentSeries("CE"), peCurrent: currentSeries("PE"), ceChanges: changeSeries("CE"), peChanges: changeSeries("PE"), ceSpreads: spreadSeries("CE"), peSpreads: spreadSeries("PE") };
   }, [profileRows, rankSource, strikeRows]);
   const deltaState = useMemo(() => oiComparisonState(
     profileRows.map((row) => row.currentOi),
@@ -313,6 +313,16 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   ), [profileRows]);
   const deltaMaximum = Math.max(0, ...[...ceChanges, ...peChanges].flatMap((value) => value == null ? [] : [Math.abs(value)]));
   const profileComparable = profileRows.filter((row) => row.state === "comparable").length;
+  const positioningPoints = useMemo(
+    () => (optionPriceHistory.data?.points ?? []).filter((point) => istDay(point.capturedAt) === tradingDay),
+    [optionPriceHistory.data?.points, tradingDay],
+  );
+  const positioningModel = useMemo(() => scalperV2PositioningModel(positioningPoints), [positioningPoints]);
+  const latestPositioning = useMemo(() => {
+    const byContract = new Map<string, (typeof positioningModel.cells)[number]>();
+    positioningModel.cells.forEach((cell) => byContract.set(`${cell.side}:${cell.strike}`, cell));
+    return byContract;
+  }, [positioningModel.cells]);
   const structureRows = useMemo(() => scalperV2StructureRows(rankSource, profileRows, leaders), [leaders, profileRows, rankSource]);
   const oiTotals = useMemo(() => scalperV2OiTotals(profileRows), [profileRows]);
   const cumulativeOiPoints = useMemo(
@@ -492,8 +502,21 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     scalperV2VerticalStrikeOption(strikeRows, ceChanges, peChanges, "change", spot, nearestSpotStrike),
     { tooltip: { trigger: "axis" }, legend: { data: ["Call payout", "Put payout", "Combined"] }, grid: { left: 72, right: 20, top: 42, bottom: 52 }, xAxis: { type: "category", data: maxPain.points.map((point) => point.settlement) }, yAxis: { type: "value", name: "Common-unit payout" }, series: [{ name: "Call payout", type: "line", data: maxPain.points.map((point) => point.callPayout), lineStyle: { color: "#2563eb" }, markLine: payoutNiftyCurrentGuide }, { name: "Put payout", type: "line", data: maxPain.points.map((point) => point.putPayout), lineStyle: { color: "#eab308" } }, { name: "Combined", type: "line", data: maxPain.points.map((point) => point.totalPayout), lineStyle: { color: "#14243a", width: 3 } }] },
   ], [ceChanges, ceCurrent, maxPain.points, nearestSpotStrike, payoutNiftyCurrentGuide, peChanges, peCurrent, spot, strikeRows]);
-  const premiumComparable = [...cePremiums, ...pePremiums].filter((value) => value != null).length;
-  const premiumOption = useMemo(() => scalperV2VerticalStrikeOption(strikeRows, cePremiums, pePremiums, "premium", spot, nearestSpotStrike), [cePremiums, nearestSpotStrike, pePremiums, spot, strikeRows]);
+  const structureInput = useMemo(() => {
+    const rows = (wanted: "CE" | "PE") => strikeRows.map((strike) => {
+      const history = latestPositioning.get(`${wanted}:${strike}`);
+      const snapshot = rankSource.find((row) => side(row) === wanted && numeric(row.strike) === strike);
+      const lastPrice = numeric(snapshot?.last_price), dayOpen = numeric(snapshot?.day_open);
+      return {
+        oi: history?.oi ?? profileRows.find((row) => row.side === wanted && row.strike === strike)?.currentOi ?? null,
+        changeOi: history?.changeOi ?? profileRows.find((row) => row.side === wanted && row.strike === strike)?.changeOi ?? null,
+        premiumReturnPct: history?.premiumReturnPct ?? (lastPrice != null && dayOpen != null && dayOpen > 0 ? 100 * (lastPrice / dayOpen - 1) : null),
+      };
+    });
+    return { calls: rows("CE"), puts: rows("PE") };
+  }, [latestPositioning, profileRows, rankSource, strikeRows]);
+  const strikeStructureOption = useMemo(() => scalperV2StrikeStructureOption(strikeRows, structureInput.calls, structureInput.puts, spot, nearestSpotStrike), [nearestSpotStrike, spot, strikeRows, structureInput]);
+  const positioningHeatmapOption = useMemo(() => scalperV2PositioningHeatmapOption(positioningModel, istClock), [positioningModel]);
   const spreadComparable = [...ceSpreads, ...peSpreads].filter((value) => value != null).length;
   const spreadOption = useMemo(() => scalperV2VerticalStrikeOption(strikeRows, ceSpreads, peSpreads, "spread", spot, nearestSpotStrike), [ceSpreads, nearestSpotStrike, peSpreads, spot, strikeRows]);
 
@@ -628,13 +651,13 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <header><strong>OI by strike</strong><span>CE / PE · PE − CE</span></header>
           <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[0]} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>
         </article>
-        <article data-testid="v2-side-deltaoi-chart">
-          <header><strong>Change in OI by strike</strong><span>CE / PE · PE ΔOI − CE ΔOI</span></header>
-          {deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.sideState}><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts</span></div> : <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>}
+        <article data-testid="v2-side-strike-structure-chart">
+          <header><strong>Strike structure</strong><span>OI bars · ΔOI lines · premium markers · CE1–5 / PE1–5</span></header>
+          {strikeRows.length ? <Suspense fallback={<p>Loading strike structure…</p>}><Chart className={css.structureChart} ariaLabel="Strike wise open interest change in open interest premium return and buildup regime" axisExtentPolicy="native" option={strikeStructureOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense> : <div className={css.sideState}><strong>Strike structure unavailable</strong><span>No exact tracked strikes exist for this snapshot.</span></div>}
         </article>
-        <article data-testid="v2-side-premium-chart">
-          <header><strong>Option premium by strike</strong><span>Exact retained LTP · CE / PE · PE − CE</span></header>
-          {premiumComparable > 0 ? <Suspense fallback={<p>Loading premium chart…</p>}><Chart className={css.structureChart} ariaLabel="Call and put option premium by strike" axisExtentPolicy="native" option={premiumOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense> : <div className={css.sideState}><strong>Option premium unavailable</strong><span>No exact retained LTP exists for this snapshot; missing is not zero.</span></div>}
+        <article data-testid="v2-side-positioning-heatmap">
+          <header><strong>Strike × time positioning</strong><span>{interval === 15 ? "15m" : "5m"} · ΔOI share + premium + volume + depth</span></header>
+          {positioningModel.cells.some((cell) => cell.pressure != null) ? <Suspense fallback={<p>Loading positioning heatmap…</p>}><Chart className={css.structureChart} ariaLabel="Strike by time option positioning pressure heatmap" axisExtentPolicy="native" option={positioningHeatmapOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "positioning-heatmap")} /></Suspense> : <div className={css.sideState}><strong>Positioning history unavailable</strong><span>No retained session observations have enough OI, premium, volume or depth evidence. Missing inputs are not zero.</span></div>}
         </article>
       </aside>
       <section className={css.oiHistoryRow} data-testid="v2-oi-history-row" aria-label="Tracked option-chain open-interest differences over time">

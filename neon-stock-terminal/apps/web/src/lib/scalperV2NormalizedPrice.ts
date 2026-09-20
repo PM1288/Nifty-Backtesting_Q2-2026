@@ -1,4 +1,8 @@
-export type ScalperV2OptionPricePoint = { capturedAt: string; strike: number | null; side: unknown; price: number | null };
+export type ScalperV2OptionPricePoint = {
+  capturedAt: string; strike: number | null; side: unknown; price: number | null;
+  oi?: number | null; reportedChangeOi?: number | null; volume?: number | null;
+  bidQty?: number | null; askQty?: number | null; totalBuyQty?: number | null; totalSellQty?: number | null;
+};
 export type ScalperV2PriceMode = "return" | "indexed" | "relative" | "range";
 export type ScalperV2NormalizedPriceDatum = { value: [number, number | null]; rawPrice: number | null; returnPct: number | null };
 export type ScalperV2NormalizedPriceSeries = {

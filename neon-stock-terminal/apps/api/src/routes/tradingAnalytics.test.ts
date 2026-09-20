@@ -210,6 +210,29 @@ test("option price history returns every captured CE and PE strike without enabl
     server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
+test("option positioning history falls back to retained bucketed SmartAPI evidence", async () => {
+  const prisma = {
+    $queryRawUnsafe: async (sql: string) => {
+      if (sql.includes("FROM option_chain_snapshots s")) return [];
+      if (sql.includes("SELECT DISTINCT ON (s.name)")) return [{ symbol: "NIFTY", label: "Nifty 50", token: "99926000", kind: "INDEX", optionType: "OPTIDX" }];
+      if (sql.includes("WITH spot AS")) return [{ snapshot_id: "quote:1", captured_at: "2026-09-18T03:50:00.000Z", source: "smartapi_quote_snapshots", underlying_value: null, strike: 23_400, option_type: "CE", last_price: 100, open_interest: 1_000, change_in_oi: null, total_traded_volume: 500, bid_qty: 10, ask_qty: 20, total_buy_qty: 600, total_sell_qty: 400, bid_price: 99, ask_price: 101 }];
+      return [];
+    },
+  } as unknown as PrismaClient;
+  const app = express(); registerTradingAnalytics(app, prisma);
+  const server = app.listen(0, "127.0.0.1"); await new Promise<void>((resolve) => server.once("listening", resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const response = await fetch(`${base}/v1/trading-analytics/option-price-history?symbol=NIFTY&expiry=2026-09-24&asOf=2026-09-18T10:00:00Z&interval=5`);
+    assert.equal(response.status, 200);
+    const body = await response.json() as { version: string; points: Array<Record<string, unknown>>; limitations: string[] };
+    assert.match(body.version, /OPTION_POSITIONING_HISTORY_V2/);
+    assert.deepEqual(body.points[0], { snapshotId: "quote:1", capturedAt: "2026-09-18T03:50:00.000Z", source: "smartapi_quote_snapshots", underlyingValue: null, strike: 23_400, side: "CE", price: 100, oi: 1_000, reportedChangeOi: null, volume: 500, bidQty: 10, askQty: 20, totalBuyQty: 600, totalSellQty: 400, bid: 99, ask: 101 });
+    assert.ok(body.limitations.some((value) => value.includes("SmartAPI FULL quotes")));
+  } finally {
+    server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
 test("latest retained cash report on or before the selected trading day feeds the matrix",async()=>{
   const calls:{sql:string;args:unknown[]}[]=[];
   const rows=[{market_date:"2026-09-03",participant_type:"FII/FPI",buy_value:10,sell_value:110,net_value:-100}];

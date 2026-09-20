@@ -691,6 +691,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       expiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       asOf: z.string().datetime({ offset: true }).optional(),
       historyDays: z.coerce.number().int().min(1).max(15).default(3),
+      interval: z.coerce.number().int().refine((value) => value === 5 || value === 15).default(5),
     }).safeParse(req.query);
     if (!parsed.success)
       return res.status(400).json({ error: { code: "INVALID_OPTION_PRICE_HISTORY_QUERY" } });
@@ -698,11 +699,15 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
     if (Date.parse(asOf) > Date.now())
       return res.status(400).json({ error: { code: "FUTURE_ASOF_NOT_ALLOWED" } });
     try {
-      const rows = await prisma.$queryRawUnsafe<Facts[]>(
+      let rows = await prisma.$queryRawUnsafe<Facts[]>(
         `SELECT s.id::text snapshot_id,s.captured_at,s.source,
                 s.underlying_value::float8 underlying_value,
                 l.strike::float8 strike,l.option_type,
-                l.last_price::float8 last_price
+                l.last_price::float8 last_price,l.open_interest::float8 open_interest,
+                l.change_in_oi::float8 change_in_oi,l.total_traded_volume::float8 total_traded_volume,
+                l.bid_qty::float8 bid_qty,l.ask_qty::float8 ask_qty,
+                NULL::float8 total_buy_qty,NULL::float8 total_sell_qty,
+                l.bid_price::float8 bid_price,l.ask_price::float8 ask_price
          FROM option_chain_snapshots s
          JOIN option_chain_legs l ON l.snapshot_id=s.id
          WHERE s.symbol=$2 AND s.expiry_date=$3::date
@@ -712,8 +717,56 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
          LIMIT 50000`,
         asOf,parsed.data.symbol,parsed.data.expiry,parsed.data.historyDays,
       );
+      if (rows.length === 0) {
+        const underlying = await analyticsUnderlying(
+          async (_source, sql, ...args) => prisma.$queryRawUnsafe<Facts[]>(sql, ...args),
+          asOf,
+          parsed.data.symbol,
+        );
+        rows = await prisma.$queryRawUnsafe<Facts[]>(
+          `WITH spot AS (
+             SELECT q.ltp::numeric value
+             FROM quote_snapshots q
+             WHERE q.exchange='NSE' AND q.symbol_token=$5 AND q.ts<=$1::timestamptz AND q.ltp IS NOT NULL
+             ORDER BY q.ts DESC LIMIT 1
+           ), strikes AS (
+             SELECT i.strike
+             FROM instruments i,spot
+             WHERE i.exchange='NFO' AND i.name=$2 AND i.instrumenttype=$6 AND i.expiry=$3::date
+               AND i.updated_at<=$1::timestamptz
+             GROUP BY i.strike,spot.value
+             HAVING count(*) FILTER (WHERE i.tradingsymbol LIKE '%CE')>0
+                AND count(*) FILTER (WHERE i.tradingsymbol LIKE '%PE')>0
+             ORDER BY abs(i.strike-spot.value),i.strike LIMIT 10
+           ), ranked AS (
+             SELECT q.symbol_token,i.strike::float8 strike,
+                    CASE WHEN i.tradingsymbol LIKE '%CE' THEN 'CE' ELSE 'PE' END option_type,
+                    to_timestamp(floor(extract(epoch FROM q.exch_feed_time)/($7::int*60))*($7::int*60)) captured_at,
+                    q.exch_feed_time,q.ts,q.ltp::float8 last_price,q.oi::float8 open_interest,
+                    q.volume::float8 total_traded_volume,q.bid_qty::float8 bid_qty,q.ask_qty::float8 ask_qty,
+                    q.total_buy_qty::float8 total_buy_qty,q.total_sell_qty::float8 total_sell_qty,
+                    q.bid::float8 bid_price,q.ask::float8 ask_price,
+                    row_number() OVER (PARTITION BY q.symbol_token,to_timestamp(floor(extract(epoch FROM q.exch_feed_time)/($7::int*60))*($7::int*60)) ORDER BY q.exch_feed_time DESC,q.ts DESC) ordinal
+             FROM quote_snapshots q
+             JOIN instruments i ON i.exchange=q.exchange AND i.symbol_token=q.symbol_token
+             JOIN strikes s ON s.strike=i.strike
+             WHERE q.exchange='NFO' AND i.name=$2 AND i.instrumenttype=$6 AND i.expiry=$3::date
+               AND (i.tradingsymbol LIKE '%CE' OR i.tradingsymbol LIKE '%PE')
+               AND q.ts BETWEEN $1::timestamptz-make_interval(days=>$4::int) AND $1::timestamptz
+               AND q.exch_feed_time<=$1::timestamptz
+               AND (q.exch_feed_time AT TIME ZONE 'Asia/Kolkata')::time BETWEEN time '09:15' AND time '15:30'
+           )
+           SELECT concat('quote:',symbol_token,':',extract(epoch FROM captured_at)::bigint)::text snapshot_id,
+                  captured_at,'smartapi_quote_snapshots'::text source,NULL::float8 underlying_value,
+                  strike,option_type,last_price,open_interest,NULL::float8 change_in_oi,total_traded_volume,
+                  bid_qty,ask_qty,total_buy_qty,total_sell_qty,bid_price,ask_price
+           FROM ranked WHERE ordinal=1 ORDER BY captured_at,strike,option_type LIMIT 50000`,
+          asOf, parsed.data.symbol, parsed.data.expiry, parsed.data.historyDays,
+          underlying.token, underlying.optionType, parsed.data.interval,
+        );
+      }
       return res.json({
-        version: `${VERSION}_OPTION_PRICE_HISTORY_V1`,
+        version: `${VERSION}_OPTION_POSITIONING_HISTORY_V2`,
         asOf,
         symbol: parsed.data.symbol,
         expiry: parsed.data.expiry,
@@ -727,10 +780,21 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
           strike: numeric(row.strike),
           side: row.option_type,
           price: numeric(row.last_price),
+          oi: numeric(row.open_interest),
+          reportedChangeOi: numeric(row.change_in_oi),
+          volume: numeric(row.total_traded_volume),
+          bidQty: numeric(row.bid_qty),
+          askQty: numeric(row.ask_qty),
+          totalBuyQty: numeric(row.total_buy_qty),
+          totalSellQty: numeric(row.total_sell_qty),
+          bid: numeric(row.bid_price),
+          ask: numeric(row.ask_price),
         })),
         limitations: [
           "The opening baseline is the first retained option-chain price observation in the selected session.",
           "The captured strike window may move with the underlying and is not claimed to be the complete exchange expiry chain.",
+          "When the native option-chain archive is absent, retained SmartAPI FULL quotes are bucketed to the requested 5- or 15-minute interval and change in OI uses the first retained session observation.",
+          "Composite positioning pressure reports its available component count; unavailable depth, volume, price, or OI inputs are not replaced with zero.",
         ],
         liveOrdersEnabled: false,
         paperOrdersEnabled: false,

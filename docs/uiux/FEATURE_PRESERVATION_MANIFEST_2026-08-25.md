@@ -1,5 +1,15 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-20 Scalper V2 strike-positioning refinement: the compact right column
+keeps its existing OI-by-strike panel and replaces only the two lower snapshot
+panels with (1) a combined strike structure chart containing CE/PE OI, signed
+Delta OI, premium return, CE1-CE5/PE1-PE5 ranks and mechanical price/OI regime
+labels, and (2) a 5/15-minute strike-by-time pressure heatmap. The heatmap uses
+retained native chain evidence or retained SmartAPI FULL quotes, discloses the
+available component count, and never converts missing OI, premium, volume or
+depth evidence to zero. The expanded Delta OI, premium-strength, spread, Total
+OI, cursor, drawings, V1, exports and order restrictions remain unchanged.
+
 ## Purpose
 
 This manifest prevents additive dashboard work from silently removing shared shell capabilities. The integration tree is the deployed source of truth for this snapshot. Any shell, authentication, navigation or API refactor must run the listed regression checks before cutover.

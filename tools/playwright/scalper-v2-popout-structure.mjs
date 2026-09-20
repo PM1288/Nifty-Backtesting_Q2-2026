@@ -124,8 +124,15 @@ try {
   check("details-moved-below-price-grid", Boolean(layout.details && layout.priceGrid && layout.details.y >= layout.priceGrid.y + layout.priceGrid.height - 2), JSON.stringify(layout));
   check("top-current-values", (await page.locator("[aria-label='Current selected values'] span").count()) === 3, "underlying, CE and PE values shown in the command bar");
   check("symbol-first", (await page.locator("[data-testid='scalper-v2'] > header").innerText()).trim().startsWith("NIFTY"), await page.locator("[data-testid='scalper-v2'] > header").innerText());
-  check("lower-timeframe-controls-removed", await page.getByRole("button", { name: /^(1m|5m|15m)$/ }).count() === 0, "1m, 5m and 15m controls are not rendered in Scalper V2");
-  check("hour-control-preserved", await page.getByRole("button", { name: "1h", exact: true }).count() === 1, "The retained 1h timeframe control remains available");
+  for (const label of ["1m", "5m", "15m", "1h"]) {
+    check(`timeframe-${label}-available`, await page.getByRole("button", { name: label, exact: true }).count() === 1, `${label} timeframe control is available once`);
+  }
+  check("active-timeframe-visible", await page.getByRole("button", { name: "5m", exact: true }).getAttribute("aria-current") === "page", "The URL-selected 5m timeframe is visibly active");
+  await page.getByRole("button", { name: "15m", exact: true }).click();
+  await page.waitForURL((url) => url.searchParams.get("interval") === "15", { timeout: 10_000 });
+  check("timeframe-switch-updates-url", await page.getByRole("button", { name: "15m", exact: true }).getAttribute("aria-current") === "page", page.url());
+  await page.getByRole("button", { name: "5m", exact: true }).click();
+  await page.waitForURL((url) => url.searchParams.get("interval") === "5", { timeout: 10_000 });
   const analyticsHeader = page.locator("section[aria-label='Trading Analytics workspace'] > header").first();
   const analyticsHeaderText = await analyticsHeader.innerText();
   check("compact-parent-header", /Trading Analytics · Scalper V2/.test(analyticsHeaderText) && await page.getByText("READ-ONLY · Research", { exact: true }).count() === 0, analyticsHeaderText);

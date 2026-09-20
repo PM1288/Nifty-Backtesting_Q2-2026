@@ -5536,7 +5536,9 @@ or outcomes were deleted.
 - Home MWHD adds a staged current/projected 15-minute volume versus prior
   15-bucket SMA confirmation only for the MWD-qualified cohort. It remains
   optional/non-gating. Home also exposes the Morning View cash/futures/options
-  and matrix summary in the top lens bar without page reloads.
+  and matrix summary in the top lens bar without page reloads. The summary uses
+  a narrow report/cash projection and does not invoke the full chain/history
+  analytics loader.
 - Stock 360 explicitly fits the price axis to visible OHLC with symmetric 5%
   padding; remote M/W/D reference levels remain evidence but cannot flatten the
   candles.

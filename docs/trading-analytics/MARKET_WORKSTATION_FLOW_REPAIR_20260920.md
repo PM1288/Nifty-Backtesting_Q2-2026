@@ -30,7 +30,9 @@ OIIS, signal, paper-order or live-order rules.
   signed number and magnitude are preserved; only the visual interpretation is
   inverted.
 - Home displays the existing Morning View cash, index-futures, index-options and
-  final matrix state in the top lens bar through a read-only summary endpoint.
+  final matrix state in the top lens bar through a read-only, narrowly projected
+  summary endpoint. It does not load chain, candle, participant-history or
+  resistance payloads merely to paint the headline.
 - MWHD adds `Intraday volume`, calculated only for the MWD-qualified staged
   cohort. It compares the forming 15-minute bucket, time-normalised to a full
   bucket, with the mean of the previous 15 completed 15-minute buckets. It is

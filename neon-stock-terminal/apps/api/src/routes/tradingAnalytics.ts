@@ -105,6 +105,54 @@ export function buildComparableChainLegs(currentLegs: Facts[], priorLegs: Facts[
     };
   });
 }
+
+export async function loadMorningSummary(prisma: PrismaClient, asOf: string) {
+  const dates = await prisma.$queryRawUnsafe<Facts[]>(
+    `SELECT trade_date::text date
+     FROM market_data.nse_fii_derivatives_stats
+     WHERE loaded_at<=$1::timestamptz
+       AND trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
+     GROUP BY trade_date ORDER BY trade_date DESC LIMIT 1`,
+    asOf,
+  );
+  const reportDate = dates[0]?.date == null ? null : String(dates[0].date);
+  if (!reportDate) return {
+    asOf, reportDate: null, equity: null, futures: null, options: null,
+    matrix: "INSUFFICIENT_DATA", knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
+  };
+  const [rawStats, cash] = await Promise.all([
+    prisma.$queryRawUnsafe<Facts[]>(
+      `SELECT fii_derivatives,buy_contracts::text,buy_value_in_cr::text,
+              sell_contracts::text,sell_value_in_cr::text
+       FROM market_data.nse_fii_derivatives_stats
+       WHERE trade_date=$2::date
+         AND fii_derivatives IN ('INDEX FUTURES','INDEX OPTIONS')
+         AND run_id=(SELECT run_id FROM market_data.nse_fii_derivatives_stats
+                     WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz
+                     ORDER BY loaded_at DESC,run_id DESC LIMIT 1)`,
+      asOf,
+      reportDate,
+    ),
+    prisma.$queryRawUnsafe<Facts[]>(
+      `SELECT participant_type,net_value
+       FROM institutional_flow.normalized_nse_fii_dii
+       WHERE market_date=$1::date AND source_dataset='nse_fii_dii_nse_only'
+         AND (participant_type ILIKE '%FII%' OR participant_type ILIKE '%FPI%')`,
+      reportDate,
+    ),
+  ]);
+  const stats = rawStats.map(activity);
+  const cashNet = cash.length === 1 ? numeric(cash[0]?.net_value) : null;
+  const equity = cashNet == null ? null : cashNet === 0 ? "Neutral" : cashNet < 0 ? "Sell" : "Buy";
+  const productSign = (name: string) => stats.find((row) => row.fii_derivatives === name)?.canonical_sign ?? null;
+  const futures = productSign("INDEX FUTURES"), options = productSign("INDEX OPTIONS");
+  return {
+    asOf, reportDate, equity, futures, options,
+    matrix: matrix(equity, futures, options),
+    knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
+  };
+}
+
 export async function loadTradingAnalytics(
   prisma: PrismaClient,
   asOf: string,
@@ -913,18 +961,9 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false") return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const asOf = new Date().toISOString();
     try {
-      const payload = await loadTradingAnalytics(prisma, asOf);
-      const productSign = (name: string) => payload.activity.find((row: Facts) => row.fii_derivatives === name)?.canonical_sign ?? null;
+      const payload = await loadMorningSummary(prisma, asOf);
       res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=240");
-      return res.json({
-        asOf: payload.asOf,
-        reportDate: payload.reportDate,
-        equity: payload.morning.cashSign,
-        futures: productSign("INDEX FUTURES"),
-        options: productSign("INDEX OPTIONS"),
-        matrix: payload.morning.matrix,
-        knowledgeState: payload.morning.knowledgeState,
-      });
+      return res.json(payload);
     } catch {
       return res.status(503).json({ error: { code: "MORNING_SUMMARY_UNAVAILABLE" } });
     }

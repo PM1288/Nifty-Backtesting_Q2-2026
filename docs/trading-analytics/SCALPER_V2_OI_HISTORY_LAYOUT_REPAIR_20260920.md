@@ -4,14 +4,18 @@ Date: 20 September 2026
 
 ## Outcome
 
-The Scalper V2 price workspace is again a three-chart layout only:
+The Scalper V2 price workspace retains the three price charts and its dedicated
+strike-OI side pane:
 
 - the underlying occupies the left side;
 - the exact selected CE and PE remain stacked on the right;
-- the removed strike OI/Change-in-OI side column no longer reserves width;
+- the compact side pane continues to show OI by strike and Change in OI by
+  strike, including their PE-minus-CE difference line;
 - the top price-grid height is bounded at 640 CSS px on desktop.
 
-The underlying native chart no longer creates an OI-difference pane. It keeps
+Only the obsolete overlay/subplot inside the underlying chart was removed. The
+separate side charts were restored after the scope was clarified. The
+underlying native chart keeps
 the exact-source volume pane. Its normal semantic horizontal references are
 limited to Today open, Yesterday close and Yesterday high when those values are
 inside the raw observed-session range. Drawings and explicit A/B measurement

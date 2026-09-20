@@ -81,11 +81,14 @@ try {
         return { x: box.x, y: box.y, width: box.width, height: box.height };
       })(),
       oiHistory: rect("[data-testid='v2-oi-history-row']"),
+      sideOi: rect("[data-testid='v2-strike-side-charts']"),
       details: rect("aside[aria-label='Scalper V2 option chain and inspector']"),
       gauge: rect("[data-testid='v2-underlying-level-gauge']"),
     };
   });
-  check("no-reserved-side-oi-column", await page.getByTestId("v2-strike-side-charts").count() === 0, "Removed strike-chart column is absent");
+  check("side-oi-column-restored", await page.getByTestId("v2-strike-side-charts").count() === 1, JSON.stringify(layout.sideOi));
+  check("side-oi-column-bounded", Boolean(layout.sideOi && layout.priceGrid && layout.sideOi.width >= 298 && layout.sideOi.width <= 362 && Math.abs(layout.sideOi.height - layout.priceGrid.height) <= 2), JSON.stringify({ priceGrid: layout.priceGrid, sideOi: layout.sideOi }));
+  check("side-oi-two-panels", await page.getByTestId("v2-strike-side-charts").locator(":scope > article").count() === 2, "OI and Change in OI remain separate side charts");
   check("three-price-chart-grid", await page.locator("[data-testid^='v2-chart-panel-']").count() === 3, "Underlying plus exact CE and PE only");
   check("bounded-price-grid-height", Boolean(layout.priceGrid && layout.priceGrid.height >= 620 && layout.priceGrid.height <= 645), JSON.stringify(layout.priceGrid));
   const historyGeometry = await page.getByTestId("v2-oi-history-row").evaluate((element) => [...element.querySelectorAll("article")].map((article) => {

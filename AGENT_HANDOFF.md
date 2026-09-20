@@ -5601,11 +5601,12 @@ or outcomes were deleted.
 
 - Branch: `feature/scalper-v2-oi-history-layout-20260920`; durable report:
   `docs/trading-analytics/SCALPER_V2_OI_HISTORY_LAYOUT_REPAIR_20260920.md`.
-- Removed the leftover strike OI side column and the PE-OI-minus-CE-OI native
-  subplot from the underlying chart. The top workspace is again only the
-  underlying plus the independently selected CE and PE, bounded to 640px on
-  desktop. Automatic underlying reference lines are restricted to Today open,
-  Yesterday close and Yesterday high when eligible in the raw session range.
+- Removed only the obsolete PE-OI-minus-CE-OI native subplot from the
+  underlying chart. The dedicated compact side pane remains and contains both
+  OI by strike and Change in OI by strike. The three price charts are bounded
+  to 640px on desktop. Automatic underlying reference lines are restricted to
+  Today open, Yesterday close and Yesterday high when eligible in the raw
+  session range.
 - Added two distinct equal-width charts directly below the price grid for
   tracked-cohort `sum(PE OI)-sum(CE OI)` and
   `sum(PE change OI)-sum(CE change OI)` over snapshot time. Their hover time is

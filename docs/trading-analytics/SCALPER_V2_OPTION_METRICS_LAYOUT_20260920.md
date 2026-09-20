@@ -72,3 +72,21 @@ Browser evidence is written under
   `trading-stack-n50-dashboard:before-scalper-v2-option-metrics-20260920`.
 - No database migration, data rewrite, collector restart or order change was
   part of this release.
+
+### Separate IV and volume follow-up
+
+- Follow-up implementation `a8c1f0a` was merged and pushed to `master` as
+  `820b984`.
+- The IV panel no longer changes identity when comparison data is unavailable.
+  A fourth, independent volume-by-strike chart fills the lower-right corner.
+- Web typecheck, 235/235 tests, build, repository gate and authenticated local
+  browser validation passed. The deployed production container passed 35/35
+  through its local gateway at 1920x1080.
+- Production container `936d2d65dd4c...` is healthy on image
+  `sha256:2a29abfff98cffdd82ba64d67f5543d1ca964b39e8fe26a07dbfe02bc3469702`;
+  routed entry asset `/n50/assets/index-C48gZN1P.js` passed the deployment gate.
+- A separate public-domain rerun reached the page but its pop-out navigation
+  encountered a transient external network error. This was not counted as a
+  pass; the same deployed image passed through `127.0.0.1:19090`.
+- Follow-up rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-separate-iv-volume-20260920`.

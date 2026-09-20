@@ -5718,4 +5718,10 @@ or outcomes were deleted.
 - Follow-up branch `fix/scalper-v2-iv-volume-corner-20260920` keeps ΔIV and
   tracked volume as separate charts. The volume-by-strike chart fills the
   formerly empty lower-right corner and aligns with both 210px cumulative
-  panels. Local browser validation passed 35/35 before the follow-up release.
+  panels. Release `820b984` is pushed on `master`; container
+  `936d2d65dd4c...` is healthy on image
+  `sha256:2a29abfff98cffdd82ba64d67f5543d1ca964b39e8fe26a07dbfe02bc3469702`.
+  Web typecheck/build, 235/235 tests, canonical gate and the deployed-container
+  browser suite passed 35/35. The public-domain pop-out rerun hit an external
+  network error and is recorded separately rather than represented as passing.
+  Rollback tag: `before-scalper-v2-separate-iv-volume-20260920`.

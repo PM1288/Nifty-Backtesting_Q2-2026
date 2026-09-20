@@ -1,5 +1,14 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-20 Home/screener live-refresh repair: hydrated Home and current-month
+screener data remain mounted when a background request fails. A compact,
+accessible status reports the 10-second Home and 60-second MWHD cadences,
+detects a stalled server-generated progression snapshot, retains last-good
+values, and offers in-place Retry without navigation or whole-page reload.
+MWHD/Monthly/OIIS/3Month calculations, ranks, exports, collectors, strategy
+alerts and order controls are unchanged. Evidence:
+`docs/uiux/HOME_SCREENER_LIVE_REFRESH_20260920.md`.
+
 2026-09-20 Scalper V2 strike-positioning refinement: the compact right column
 keeps its existing OI-by-strike panel and replaces only the two lower snapshot
 panels with (1) a combined strike structure chart containing CE/PE OI, signed

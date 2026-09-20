@@ -161,7 +161,7 @@ export function ScalperProgressionMatrix({ stocks, rows, generatedAt, isLoading,
   const bullReady = allRows.filter((row) => row.allGreen).length;
   const bearReady = allRows.filter((row) => row.bearAllRed).length;
   return <section className={styles.progressionMatrix} data-testid="today-scalper-progression" aria-label="MWHD Bull and Bear progression rankings">
-    <header><div><strong>SCALPER PROGRESSION · MWHD RANK</strong><small>Tick-only candidate board · intraday confirmations carry more weight · select a stock for exact arithmetic</small></div><span>{isLoading ? "Loading levels…" : hasError ? "Levels unavailable" : `${bullReady} bull · ${bearReady} bear · ${allRows.length} stocks`}</span></header>
+    <header><div><strong>SCALPER PROGRESSION · MWHD RANK</strong><small>Tick-only candidate board · intraday confirmations carry more weight · select a stock for exact arithmetic</small></div><span>{isLoading && !allRows.length ? "Loading levels…" : hasError && !allRows.length ? "Levels unavailable" : hasError ? `${bullReady} bull · ${bearReady} bear · cached ranks` : `${bullReady} bull · ${bearReady} bear · ${allRows.length} stocks`}</span></header>
     <div className={styles.progressionToolbar}>
       <label>Stock <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search" aria-label="Search progression stocks" /></label>
       <div className={styles.progressionFilters} aria-label="Candidate filters">{([['all', 'All'], ['bull', 'Bull ready'], ['bear', 'Bear ready'], ['either', 'Either ready']] as Array<[CandidateFilter, string]>).map(([id, label]) => <button type="button" key={id} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>

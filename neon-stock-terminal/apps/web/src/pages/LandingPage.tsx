@@ -24,6 +24,7 @@ import type { AnalyticsParams } from "../analytics/types";
 import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "../lib/stockProfiles";
 import { StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 import { FuturesVolatilityPreview } from "../components/FuturesVolatilityPreview";
+import { LiveRefreshStatus } from "../components/LiveRefreshStatus";
 
 function mergeQuote<T extends Quote>(
   quote: T,
@@ -435,7 +436,7 @@ export function LandingPage() {
     return <LoadingSkeleton label={tr("Loading market canvas")} rows={5} />;
   }
 
-  if (q.error || !q.data || !mergedIndices) {
+  if (!q.data || !mergedIndices) {
     return <ErrorState title={tr("The market canvas is unavailable")} detail={tr("The canonical overview snapshot could not be loaded. Existing values are not presented as current; retry after the data service recovers.")} />;
   }
 
@@ -483,13 +484,20 @@ export function LandingPage() {
 
   return (
     <div className={styles.layout} data-calm={calmMode ? "true" : "false"}>
-      <HomeTradingSidebar stocks={allStocks} progression={shortlistProgression.data} progressionError={Boolean(shortlistProgression.error)} />
+      <HomeTradingSidebar stocks={allStocks} progression={shortlistProgression.data} progressionError={Boolean(shortlistProgression.error)} progressionRefreshing={shortlistProgression.isFetching} onProgressionRetry={() => { void shortlistProgression.refetch(); }} />
       <DashboardInfoPopup open={helpOpen} onClose={() => setHelpOpen(false)} />
       <PerformanceDebugPanel />
 
       <ModuleStatusStrip
         quality={canvasQuality}
         context={`${allStocks.length} F&O stocks · ${mergedSectors.length} sectors · ${lensLabel(lens)}`}
+      />
+      <LiveRefreshStatus
+        sources={[
+          { id: "home", label: "Home", hasData: Boolean(q.data), isError: q.isError, isFetching: q.isFetching, dataUpdatedAt: q.dataUpdatedAt, intervalMs: 10_000 },
+          { id: "mwhd", label: "MWHD screener", hasData: Boolean(shortlistProgression.data), isError: shortlistProgression.isError, isFetching: shortlistProgression.isFetching, generatedAt: shortlistProgression.data?.generatedAt, dataUpdatedAt: shortlistProgression.dataUpdatedAt, intervalMs: 60_000 },
+        ]}
+        onRetry={() => { void Promise.all([q.refetch(), shortlistProgression.refetch()]); }}
       />
 
       <section ref={stripRef} data-analytics-section="home_index_strip" className={styles.strip}>

@@ -13,6 +13,7 @@ import {
   type ScalperConditionState,
 } from "../lib/scalperDashboard";
 import styles from "./ScalperDashboardPage.module.css";
+import { LiveRefreshStatus } from "../components/LiveRefreshStatus";
 
 type StateFilter = "ALL" | ScalperConditionState;
 const EMPTY_ROWS: ScalperProgressionRow[] = [];
@@ -103,6 +104,14 @@ export function ScalperDashboardPage() {
       <div className={styles.metric}><span className={styles.metricLabel}>Incomplete condition data</span><span className={styles.metricValue}>{counts.incomplete}</span></div>
     </section>
 
+    <LiveRefreshStatus
+      sources={[{
+        id: "scalper-screener", label: "Current-month screener", hasData: Boolean(query.data), isError: query.isError,
+        isFetching: query.isFetching, generatedAt: query.data?.generatedAt, dataUpdatedAt: query.dataUpdatedAt, intervalMs: 60_000,
+      }]}
+      onRetry={() => { void query.refetch(); }}
+    />
+
     <section className={styles.filters} aria-label="Scalper filters">
       <label>Find stock<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Symbol, company or sector" data-testid="scalper-search" /></label>
       <label>Sector<select value={sector} onChange={(event) => setSector(event.target.value)}><option value="ALL">All sectors</option>{sectors.map((item) => <option key={item}>{item}</option>)}</select></label>
@@ -120,9 +129,9 @@ export function ScalperDashboardPage() {
         <span><strong>Generated:</strong> {formatDateIST(query.data?.generatedAt, { includeTime: true })}</span>
         <span><strong>Basis:</strong> {query.data?.basis ?? "—"}</span>
       </div>
-      {query.isLoading ? <div className={styles.state}>Loading current-month anchors…</div> : null}
-      {query.isError ? <div className={`${styles.state} ${styles.error}`}>Unable to load the screener. Source values were not replaced with defaults.</div> : null}
-      {!query.isLoading && !query.isError ? <div className={styles.tableViewport} data-testid="scalper-table-scroll">
+      {query.isLoading && !query.data ? <div className={styles.state}>Loading current-month anchors…</div> : null}
+      {query.isError && !query.data ? <div className={`${styles.state} ${styles.error}`} role="alert">Unable to load the screener. Source values were not replaced with defaults. <button type="button" onClick={() => { void query.refetch(); }}>Retry</button></div> : null}
+      {query.data ? <div className={styles.tableViewport} data-testid="scalper-table-scroll">
         <table className={styles.table} data-testid="scalper-table">
           <thead>
             <tr><th className={styles.identity} rowSpan={2}>Stock</th><th colSpan={2}>Current</th>{PERIODS.map((period) => <th className={styles.periodHead} colSpan={2} key={period.label}>{period.label}</th>)}<th colSpan={6}>Monthly Open v3 screening conditions</th><th colSpan={2}>Evidence times</th></tr>

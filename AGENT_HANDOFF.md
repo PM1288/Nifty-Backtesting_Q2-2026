@@ -5573,3 +5573,11 @@ or outcomes were deleted.
 - The former tall signal cards are one dense signal row. TradingView remains
   explicitly not connected because no authorised recommendation source was found.
   No strategy, collector, stored data, authentication or order behavior changed.
+- Web typecheck, 225/225 tests and production build pass. API typecheck,
+  254/254 tests and production build pass. The canonical gate passes.
+  Authenticated production Chromium passed 13/13 desktop/mobile checks. Final
+  PNB chart-first paint was 1,402ms; 1D history was 786ms and enriched 1Y daily
+  history was 72ms. Screenshots/traces are outside Git at
+  `/home/novius2/NIFTY50/evidence/stock-360-audit-20260920/after-indexed/`.
+  Production is healthy on image
+  `sha256:d53344f4bed21cf8c5b5ba4b3dfa7f560a2d05abd79338cbefa22c892a96b234`.

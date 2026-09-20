@@ -61,6 +61,20 @@ Baseline production timings recorded there include:
   canvas count, daily delivery/traded-value presence, no page-level failure, and
   request timing captured again.
 
+## Completion evidence
+
+- Web: typecheck PASS; 225/225 tests PASS; production build PASS.
+- API: typecheck PASS; 254/254 tests PASS; production build PASS.
+- Canonical repository gate: PASS.
+- Authenticated production Chromium: 13/13 checks PASS at 1440px and 390px.
+- PNB chart-first paint: 1,402 ms in the final run (baseline page block was tied
+  to a 12,959 ms explainer response).
+- Final PNB API timings: 1D OHLCV 786 ms; enriched 1Y daily history 72 ms.
+- Production container: healthy; image
+  `sha256:d53344f4bed21cf8c5b5ba4b3dfa7f560a2d05abd79338cbefa22c892a96b234`.
+- Final screenshots and request trace:
+  `/home/novius2/NIFTY50/evidence/stock-360-audit-20260920/after-indexed/`.
+
 The page remains analytical and read-only. Paper/live order controls,
 authentication, strategy formulas, collectors and stored market data are not
 modified.

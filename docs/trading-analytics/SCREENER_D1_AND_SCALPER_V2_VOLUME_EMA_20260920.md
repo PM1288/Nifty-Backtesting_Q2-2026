@@ -44,5 +44,15 @@ cd /home/novius2/trading-stack
 bash scripts/verify/canonical-repository-gate.sh
 ```
 
-Deployment and browser evidence are recorded in `AGENT_HANDOFF.md` after the
-production commit is validated.
+## Result
+
+- Web: typecheck, 246/246 unit tests and production build passed.
+- API: typecheck, 262/262 unit tests and build passed.
+- Canonical repository gate passed.
+- Authenticated production browser checks passed 24/24 for Home and 44/44 for
+  Scalper V2. The live browser verified exact CE/PE volume and EMA20 at 5m,
+  switched to 15m, and verified EMA5 on all three price charts.
+- Deployment image:
+  `sha256:b6ad9aa1d2c56a9e10aaab07c82c38a60fc02bfe267e17e6dd71998dedad3eaa`.
+  Public asset: `/n50/assets/index-YfWlvBgq.js`.
+- Rollback tag: `trading-stack-n50-dashboard:before-d1-volume-ema-20260920`.

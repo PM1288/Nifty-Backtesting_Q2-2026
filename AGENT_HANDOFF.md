@@ -12,6 +12,14 @@
 - No new feed, broker request, strategy calculation or order capability was
   introduced. See
   `docs/trading-analytics/SCREENER_D1_AND_SCALPER_V2_VOLUME_EMA_20260920.md`.
+- Web typecheck, 246/246 tests and production build passed; API typecheck,
+  262/262 tests and build passed; canonical gate passed. Authenticated
+  production browser checks passed 24/24 for the Home board and 44/44 for
+  Scalper V2, including exact CE/PE volume plus EMA20 at 5m and EMA5 at 15m.
+- Dashboard deployment is healthy with zero restarts on image
+  `sha256:b6ad9aa1d2c56a9e10aaab07c82c38a60fc02bfe267e17e6dd71998dedad3eaa`;
+  public asset `/n50/assets/index-YfWlvBgq.js`. Rollback tag:
+  `trading-stack-n50-dashboard:before-d1-volume-ema-20260920`.
 
 ## 2026-09-20 — Home and screener live-refresh repair
 

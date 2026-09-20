@@ -134,6 +134,8 @@ try {
   await page.getByRole("button", { name: "15m", exact: true }).click();
   await page.waitForURL((url) => url.searchParams.get("interval") === "15", { timeout: 10_000 });
   check("timeframe-switch-updates-url", await page.getByRole("button", { name: "15m", exact: true }).getAttribute("aria-current") === "page", page.url());
+  await page.waitForFunction(() => [...document.querySelectorAll("[data-testid^='v2-chart-body-']")].every((element) => element.dataset.volumeEmaPeriod === "5" && Number(element.dataset.volumeEmaPoints ?? 0) > 0), undefined, { timeout: 30_000 });
+  check("fifteen-minute-volume-ema5", await page.locator("[data-testid^='v2-chart-body-']").evaluateAll((elements) => elements.length === 3 && elements.every((element) => element.dataset.volumeEmaPeriod === "5" && Number(element.dataset.volumeEmaPoints ?? 0) > 0)), "Underlying, CE and PE use volume EMA5 at 15m");
   await page.getByRole("button", { name: "5m", exact: true }).click();
   await page.waitForURL((url) => url.searchParams.get("interval") === "5", { timeout: 10_000 });
   const analyticsHeader = page.locator("section[aria-label='Trading Analytics workspace'] > header").first();

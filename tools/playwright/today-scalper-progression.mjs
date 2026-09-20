@@ -58,7 +58,7 @@ try {
   const bearHeaders = await bearBoard.locator("thead th").allInnerTexts();
   check("Both boards expose optional V20, contextual D-1 Close and the complete MWHD tick sequence", bullHeaders[3] === "V20 opt." && bearHeaders[3] === "V20 opt." && expectedColumnOrder.every((label, index) => bullHeaders[index + 4] === label && bearHeaders[index + 4] === label), JSON.stringify({ bullHeaders, bearHeaders }));
   const volumeCells = widget.locator('td[class*="progressionVolumeTick"]');
-  check("Optional volume indicator shows an exact multiple and never changes MWHD scoring", await volumeCells.count() === 20 && /[✓~×—]\s(?:\d+\.\d×|—)/.test(await bullBoard.innerText()), "20 V20 cells inspected across the initial Bull and Bear boards");
+  check("Optional volume indicators show exact multiples and never change MWHD scoring", await volumeCells.count() === 40 && /[✓~×—]\s(?:\d+\.\d×|—)/.test(await bullBoard.innerText()), "20 V20 plus 20 gated intraday-volume cells inspected across the initial Bull and Bear boards");
   const firstBullScore = await bullRows.first().locator('td[class*="progressionCompactScore"]').innerText();
   const volumeToggle = widget.getByRole("button", { name: "V20 optional" });
   await volumeToggle.click();

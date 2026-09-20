@@ -32,6 +32,7 @@ measurements and minute refresh behavior are unchanged.
   entry asset `/n50/assets/index-De0qqYnF.js`.
 - Rollback tag:
   `trading-stack-n50-dashboard:before-scalper-v2-timeframe-tabs-20260920`.
-- The feature was merged locally to `master` at `bdf4ef3`. GitHub push remains
-  blocked by an outbound `github.com:443` connection failure from this host;
-  the production deployment itself completed successfully.
+- Feature branch `fix/scalper-v2-timeframe-tabs-20260920` is pushed. The change
+  is merged locally to `master`; the master push remains pending after an
+  intermittent outbound `github.com:443` failure. Production deployment itself
+  completed successfully.

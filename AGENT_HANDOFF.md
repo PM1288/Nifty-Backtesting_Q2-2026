@@ -14,8 +14,9 @@
   `sha256:f80d2fef4430a3e3c704d6b59e46c5bc49c14236948d389566f8dffbadbbbe93`;
   asset `/n50/assets/index-De0qqYnF.js`; rollback tag
   `trading-stack-n50-dashboard:before-scalper-v2-timeframe-tabs-20260920`.
-- Feature is locally merged to `master` at `bdf4ef3`. Remote push is pending
-  because this host could not connect to `github.com:443` during release.
+- Feature branch `fix/scalper-v2-timeframe-tabs-20260920` is pushed and merged
+  locally to `master`. The master push is pending after an intermittent
+  outbound `github.com:443` failure during release.
 - Report: `docs/trading-analytics/SCALPER_V2_TIMEFRAME_TABS_20260920.md`.
 
 ## 2026-09-20 — Scalper V2 option premium and spread repair

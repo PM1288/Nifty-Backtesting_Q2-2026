@@ -33,6 +33,7 @@ test("cumulative OI history preserves complete side differences, reported change
       strike_count: 13, ce_contract_count: 13, ce_observed_count: 13, ce_oi: "1300",
       pe_contract_count: 13, pe_observed_count: 13, pe_oi: "1170",
       ce_change_observed_count: 13, ce_change_oi: "-80", pe_change_observed_count: 13, pe_change_oi: "40",
+      baseline_kind: "PRE_SESSION_LAST_CAPTURE",
     },
     {
       snapshot_id: "92", captured_at: "2026-09-10T10:00:00.000Z", source: "fixture", strikes_around: 6,
@@ -46,6 +47,7 @@ test("cumulative OI history preserves complete side differences, reported change
   assert.equal(complete.pcr, 0.9);
   assert.equal(complete.state, "COMPLETE");
   assert.equal(complete.changeState, "COMPLETE");
+  assert.equal(complete.baselineKind, "PRE_SESSION_LAST_CAPTURE");
   assert.equal(partial.oiDifference, null);
   assert.equal(partial.changeOiDifference, null);
   assert.equal(partial.pcr, null);
@@ -79,6 +81,7 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
           strike_count: 13, ce_contract_count: 13, ce_observed_count: 13, ce_oi: "1300",
           pe_contract_count: 13, pe_observed_count: 13, pe_oi: "1170",
           ce_change_observed_count: 13, ce_change_oi: "-80", pe_change_observed_count: 13, pe_change_oi: "40",
+          baseline_kind: "PROVIDER_REPORTED_CHANGE",
         }];
       }
       return [];
@@ -102,13 +105,13 @@ test("charts endpoint resolves one exact CE and one exact PE at different strike
     ]);
     assert.equal(body.availableContracts.length, 2);
     assert.equal(body.cumulativeOiHistory.scope, "ALL_STRIKES_CAPTURED_PER_SNAPSHOT");
-    assert.equal(body.cumulativeOiHistory.unit, "provider_native_oi");
+    assert.equal(body.cumulativeOiHistory.unit, "contracts");
     assert.deepEqual(body.cumulativeOiHistory.points[0], {
       snapshotId: "91", capturedAt: "2026-09-10T09:55:00.000Z", source: "fixture", strikesAround: 6,
       strikeCount: 13, ceContractCount: 13, ceObservedCount: 13, ceOi: 1300,
       peContractCount: 13, peObservedCount: 13, peOi: 1170,
       ceChangeObservedCount: 13, ceChangeOi: -80, peChangeObservedCount: 13, peChangeOi: 40,
-      oiDifference: -130, changeOiDifference: 120, pcr: 0.9, state: "COMPLETE", changeState: "COMPLETE",
+      baselineKind: "PROVIDER_REPORTED_CHANGE", oiDifference: -130, changeOiDifference: 120, pcr: 0.9, state: "COMPLETE", changeState: "COMPLETE",
     });
     assert.equal(body.volumeSeries.kind, "CURRENT_MONTH_FUTURE");
     assert.equal(body.volumeSeries.state, "UNAVAILABLE");

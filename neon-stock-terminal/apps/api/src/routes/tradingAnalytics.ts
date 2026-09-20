@@ -67,6 +67,7 @@ export function buildCumulativeOiHistory(rows: Facts[]) {
       ceChangeOi,
       peChangeObservedCount: numeric(row.pe_change_observed_count),
       peChangeOi,
+      baselineKind: row.baseline_kind == null ? null : String(row.baseline_kind),
       oiDifference: oiComplete ? peOi - ceOi : null,
       changeOiDifference: changeComplete ? peChangeOi - ceChangeOi : null,
       pcr: oiComplete && ceOi > 0 ? peOi / ceOi : null,
@@ -825,7 +826,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
             asOf, underlying.symbol, q.data.historyDays,
           ))[0] ?? null
         : { exchange: "NSE", symbol_token: underlying.token, tradingsymbol: underlying.label, expiry: null, instrumenttype: "EQUITY" };
-      const [panes, cumulativeOiRows, volumeMinutes] = await Promise.all([
+      const [panes, cumulativeOiRows, derivedCumulativeOiRows, volumeMinutes] = await Promise.all([
         Promise.all(identities.map(async (identity) => {
           const minutes = await prisma.$queryRawUnsafe<Facts[]>(
             `SELECT DISTINCT ON (ts) ts,created_at,open::float8,high::float8,low::float8,close::float8,volume::text,oi::text,source
@@ -861,6 +862,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
                       s.captured_at,
                       s.source,
                       s.strikes_around,
+                      'PROVIDER_REPORTED_CHANGE'::text baseline_kind,
                       count(DISTINCT l.strike)::int strike_count,
                       count(*) FILTER (WHERE l.option_type='CE')::int ce_contract_count,
                       count(l.open_interest) FILTER (WHERE l.option_type='CE')::int ce_observed_count,
@@ -890,6 +892,25 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
               asOf,q.data.expiry,underlying.symbol,q.data.historyDays,
             )
           : Promise.resolve([] as Facts[]),
+        q.data.expiry
+          ? prisma.$queryRawUnsafe<Facts[]>(
+              `SELECT concat('derived:',id)::text snapshot_id,captured_at,source,strikes_around,strike_count,
+                      ce_contract_count,ce_observed_count,ce_oi::text,
+                      pe_contract_count,pe_observed_count,pe_oi::text,
+                      ce_change_observed_count,ce_change_oi::text,
+                      pe_change_observed_count,pe_change_oi::text,baseline_kind
+               FROM public.scalper_oi_history h
+               WHERE h.symbol=$3 AND h.expiry_date=$2::date
+                 AND h.captured_at BETWEEN $1::timestamptz-make_interval(days=>$4::int) AND $1::timestamptz
+                 AND NOT EXISTS (
+                   SELECT 1 FROM public.option_chain_snapshots native
+                   WHERE native.symbol=h.symbol AND native.expiry_date=h.expiry_date
+                     AND (native.captured_at AT TIME ZONE 'Asia/Kolkata')::date=h.trade_date
+                 )
+               ORDER BY captured_at LIMIT 5000`,
+              asOf,q.data.expiry,underlying.symbol,q.data.historyDays,
+            )
+          : Promise.resolve([] as Facts[]),
         volumeInstrument
           ? prisma.$queryRawUnsafe<Facts[]>(
               `SELECT DISTINCT ON (ts) ts,created_at,open::float8,high::float8,low::float8,close::float8,volume::text,oi::text,source
@@ -901,7 +922,10 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
             )
           : Promise.resolve([] as Facts[]),
       ]);
-      const cumulativeOiHistory = buildCumulativeOiHistory(cumulativeOiRows);
+      const cumulativeOiHistory = buildCumulativeOiHistory(
+        [...cumulativeOiRows,...derivedCumulativeOiRows]
+          .sort((left,right)=>Date.parse(String(left.captured_at))-Date.parse(String(right.captured_at))),
+      );
       const volumeBars = volumeInstrument
         ? sessionBars(volumeMinutes, sessions, q.data.interval, asOf)
         : [];
@@ -935,12 +959,13 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         },
         cumulativeOiHistory: {
           expiry: q.data.expiry ?? null,
-          unit: "provider_native_oi",
+          unit: "contracts",
           scope: "ALL_STRIKES_CAPTURED_PER_SNAPSHOT",
           points: cumulativeOiHistory,
           limitations: [
             "Each timestamp sums every strike retained in that captured option-chain snapshot; it is not a temporal running total.",
             "The captured strike window may change with the underlying and is not claimed to be the complete exchange expiry chain.",
+            "When a native NSE option-chain session is absent, a materialised SmartAPI ATM-nearest cohort may be used. SmartAPI underlying units are divided by the exact contract lot size; derived change in OI uses each exact contract's last captured pre-session OI.",
           ],
         },
         state: "PREVIEW_UNAPPROVED",

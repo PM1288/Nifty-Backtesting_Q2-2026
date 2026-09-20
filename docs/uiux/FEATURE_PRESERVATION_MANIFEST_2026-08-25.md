@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 Scalper V2 OI history source repair: native NSE option-chain history
+remains preferred and provider-reported change OI remains unchanged. Sessions
+missed because calendar rows arrived after market close may use an additive,
+materialised SmartAPI recovery path: exact-token OI is divided by exact lot size
+into contracts, change OI uses the last captured pre-session exact-token
+baseline, and incomplete cohorts remain unavailable. Raw history is not
+rewritten and no second broker collector is added. Evidence:
+`docs/trading-analytics/SCALPER_V2_OI_HISTORY_SOURCE_REPAIR_20260920.md`.
+
 2026-09-20 Scalper V2 tracked-chain history layout repair supersedes the
 same-day side-chart/lower-pane placement below: the primary workspace contains
 only the underlying plus independently selected CE and PE price charts. No

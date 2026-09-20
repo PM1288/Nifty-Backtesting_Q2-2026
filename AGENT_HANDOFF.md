@@ -1,5 +1,20 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Scalper V2 OI history source repair
+
+- Confirmed the live option-chain watcher is healthy and stores native OI plus
+  provider change OI. The 17–18 September NIFTY gap was caused by calendar rows
+  arriving only after those sessions; the collector now preloads future dates.
+- Added additive `public.scalper_oi_history` and an idempotent materialiser for
+  genuinely missing native sessions. SmartAPI underlying-unit OI is divided by
+  exact lot size; derived delta uses each token's last pre-session capture.
+- Backfilled 75 complete five-minute points on each of 17 and 18 September for
+  the 22 September expiry. Native session data always wins; missing legs remain
+  null. The API reads the small indexed table instead of rebuilding raw history
+  on each request.
+- Exact evidence, commands and source semantics:
+  `docs/trading-analytics/SCALPER_V2_OI_HISTORY_SOURCE_REPAIR_20260920.md`.
+
 ## 2026-09-20 — Scalper V2 OI history layout repair
 
 - Restored the V2 top workspace to the underlying plus exact selected CE and PE

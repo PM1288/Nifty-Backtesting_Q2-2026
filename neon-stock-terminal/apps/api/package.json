@@ -10,6 +10,7 @@
     "test": "tsx --test src/**/*.test.ts",
     "db:bootstrap": "tsx src/scripts/bootstrapDatabase.ts",
     "snapshots:refresh": "node dist/scripts/materializeSnapshots.js",
+    "scalper-oi-history:materialize": "tsx src/scripts/materializeScalperOiHistory.ts",
     "trade-quality:backfill": "tsx src/scripts/backfillTradeQuality.ts",
     "notification:test": "tsx src/scripts/sendTestNotification.ts",
     "lint": "eslint .",

@@ -43,7 +43,7 @@ export function scalperV2VerticalStrikeOption(
   strikes: number[],
   calls: DeltaOiValue[],
   puts: DeltaOiValue[],
-  metric: "oi" | "change" | "volume",
+  metric: "oi" | "change" | "volume" | "premium" | "spread",
   underlyingValue: number | null = null,
   nearestStrike: number | null = null,
 ): EChartsOption {
@@ -52,14 +52,22 @@ export function scalperV2VerticalStrikeOption(
     ? scalperV2AdaptiveDeltaDomain([...calls, ...puts])
     : [0, undefined];
   const [differenceMinimum, differenceMaximum] = scalperV2AdaptiveDeltaDomain(difference);
-  const suffix = metric === "oi" ? "OI" : metric === "change" ? "ΔOI" : "Volume";
+  const suffix = metric === "oi" ? "OI"
+    : metric === "change" ? "ΔOI"
+      : metric === "volume" ? "Volume"
+        : metric === "premium" ? "Premium · ₹"
+          : "Bid–ask spread · ₹";
+  const priceMetric = metric === "premium" || metric === "spread";
+  const formatValue = (value: number) => priceMetric
+    ? `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+    : formatOiAxisValue(value);
   const nearestIndex = nearestStrike == null ? -1 : strikes.indexOf(nearestStrike);
   return {
     animation: false,
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
-      valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatOiAxisValue(Number(value)),
+      valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatValue(Number(value)),
     },
     legend: {
       data: [`CE ${suffix}`, `PE ${suffix}`, `PE − CE ${suffix}`],
@@ -87,7 +95,7 @@ export function scalperV2VerticalStrikeOption(
         name: suffix,
         min: primaryMinimum,
         max: primaryMaximum,
-        axisLabel: { formatter: formatOiAxisValue },
+        axisLabel: { formatter: formatValue },
         splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
       },
       {
@@ -95,7 +103,7 @@ export function scalperV2VerticalStrikeOption(
         name: `PE − CE ${suffix}`,
         min: differenceMinimum,
         max: differenceMaximum,
-        axisLabel: { formatter: formatOiAxisValue },
+        axisLabel: { formatter: formatValue },
         splitLine: { show: false },
       },
     ],

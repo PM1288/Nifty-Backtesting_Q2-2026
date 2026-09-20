@@ -23,8 +23,9 @@ try {
   const login = await context.request.post(`${authOrigin}/n50/auth/session/dev-login`, { data: { identifier: "admin", password }, headers: { Origin: authRequestOrigin } });
   check("authenticated", login.ok(), `HTTP ${login.status()}`);
   const session = (await context.storageState()).cookies.find((cookie) => cookie.name.includes("session"));
-  if (session && new URL(appOrigin).hostname !== new URL(authOrigin).hostname) {
+  if (session) {
     const target = new URL(appOrigin);
+    await context.clearCookies();
     await context.addCookies([{ ...session, domain: target.hostname, path: "/", secure: target.protocol === "https:", sameSite: "Lax" }]);
   }
 
@@ -96,14 +97,14 @@ try {
   });
   check("side-oi-column-restored", await page.getByTestId("v2-strike-side-charts").count() === 1, JSON.stringify(layout.sideOi));
   check("side-oi-column-bounded", Boolean(layout.sideOi && layout.priceGrid && layout.sideOi.width >= 298 && layout.sideOi.width <= 362 && Math.abs(layout.sideOi.height - layout.priceGrid.height) <= 2), JSON.stringify({ priceGrid: layout.priceGrid, sideOi: layout.sideOi }));
-  check("side-oi-three-panels", await page.getByTestId("v2-strike-side-charts").locator(":scope > article").count() === 3, "OI, Change in OI and Change in IV remain separate side charts");
-  const ivPanel = page.getByTestId("v2-side-iv-change-chart");
-  if (await ivPanel.count() === 0) console.log(JSON.stringify({ debugTestIds: await page.locator("[data-testid]").evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")).filter(Boolean)), pageErrors: errors, debugText: (await page.locator("body").innerText()).slice(0, 2_500) }));
-  await ivPanel.waitFor({ state: "visible", timeout: 90_000 });
-  const ivPanelText = await ivPanel.innerText();
-  check("iv-change-truthful-state", /Change in IV by strike/.test(ivPanelText) && (/IV change unavailable/.test(ivPanelText) || await ivPanel.getByRole("img").count() === 1), ivPanelText);
-  const volumePanel = page.getByTestId("v2-volume-strike-chart");
-  check("volume-uses-empty-corner", await volumePanel.count() === 1 && /Tracked volume by strike/.test(await volumePanel.innerText()), await volumePanel.innerText());
+  check("side-oi-three-panels", await page.getByTestId("v2-strike-side-charts").locator(":scope > article").count() === 3, "OI, Change in OI and option premium remain separate side charts");
+  const premiumPanel = page.getByTestId("v2-side-premium-chart");
+  if (await premiumPanel.count() === 0) console.log(JSON.stringify({ debugTestIds: await page.locator("[data-testid]").evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")).filter(Boolean)), pageErrors: errors, debugText: (await page.locator("body").innerText()).slice(0, 2_500) }));
+  await premiumPanel.waitFor({ state: "visible", timeout: 90_000 });
+  const premiumPanelText = await premiumPanel.innerText();
+  check("premium-uses-retained-ltp", /Option premium by strike/.test(premiumPanelText) && (/Option premium unavailable/.test(premiumPanelText) || await premiumPanel.getByRole("img").count() === 1), premiumPanelText);
+  const spreadPanel = page.getByTestId("v2-spread-strike-chart");
+  check("spread-uses-empty-corner", await spreadPanel.count() === 1 && /Bid–ask spread by strike/.test(await spreadPanel.innerText()), await spreadPanel.innerText());
   check("three-price-chart-grid", await page.locator("[data-testid^='v2-chart-panel-']").count() === 3, "Underlying plus exact CE and PE only");
   check("bounded-price-grid-height", Boolean(layout.priceGrid && layout.priceGrid.height >= 620 && layout.priceGrid.height <= 645), JSON.stringify(layout.priceGrid));
   const historyGeometry = await page.getByTestId("v2-oi-history-row").evaluate((element) => [...element.querySelectorAll(":scope > div > article")].map((article) => {
@@ -114,8 +115,8 @@ try {
   }));
   check("oi-history-matches-price-columns", historyGeometry.length === 2 && layout.stage && layout.callPanel && Math.abs(historyGeometry[0].outerWidth - layout.stage.width) <= 3 && Math.abs(historyGeometry[1].outerWidth - layout.callPanel.width) <= 3, JSON.stringify({ historyGeometry, underlying: layout.stage, call: layout.callPanel }));
   check("aligned-auxiliary-chart-height", historyGeometry.every((item) => item.outerHeight >= 205 && item.outerHeight <= 215), JSON.stringify(historyGeometry));
-  const volumeGeometry = await volumePanel.evaluate((element) => { const box = element.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width, height: box.height }; });
-  check("volume-corner-aligned", Boolean(layout.sideOi && volumeGeometry.width >= layout.sideOi.width - 2 && volumeGeometry.height >= 205 && volumeGeometry.height <= 215), JSON.stringify({ sideOi: layout.sideOi, volumeGeometry }));
+  const spreadGeometry = await spreadPanel.evaluate((element) => { const box = element.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width, height: box.height }; });
+  check("spread-corner-aligned", Boolean(layout.sideOi && spreadGeometry.width >= layout.sideOi.width - 2 && spreadGeometry.height >= 205 && spreadGeometry.height <= 215), JSON.stringify({ sideOi: layout.sideOi, spreadGeometry }));
   check("oi-history-directly-below-price-grid", Boolean(layout.oiHistory && layout.priceGrid && Math.abs(layout.oiHistory.y - (layout.priceGrid.y + layout.priceGrid.height + 3)) <= 2), JSON.stringify(layout));
   const historyText = await page.getByTestId("v2-oi-history-row").innerText();
   check("separate-oi-difference-semantics", historyText.includes("Cumulative PE OI − cumulative CE OI") && historyText.includes("Cumulative PE ΔOI − cumulative CE ΔOI"), historyText);

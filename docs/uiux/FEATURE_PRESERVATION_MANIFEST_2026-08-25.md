@@ -6,6 +6,16 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 Scalper V2 premium/spread repair supersedes the unavailable ΔIV and
+rejected volume panels in the default workspace. The active retained NIFTY
+cohort has 0/20 exact IV/Greek observations but 20/20 exact LTP, bid and ask
+observations. The three-panel strike column now uses exact option premium by
+strike, while the lower-right slot uses exact bid-ask spread by strike. CE/PE
+identity, strike hover, independent PE-minus-CE axes, missingness, IV/Greek
+evidence fields, exports, cursors, drawings, measurements, OI calculations,
+strategies and order guards remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_PREMIUM_SPREAD_REPAIR_20260920.md`.
+
 2026-09-20 Morning View cash-date repair: Morning View and the shared top
 Outlook use the latest retained NSE-only cash report on or before the selected
 or current IST date instead of requiring it to equal the derivatives-report

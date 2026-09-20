@@ -39,13 +39,22 @@ test("Scalper V2 compact ΔOI chart keeps signed bars and PE minus CE line", () 
   assert.deepEqual(series[2].data, [-60, 40]);
 });
 
-test("Scalper V2 tracked volume fallback keeps observed side values and difference", () => {
-  const option = scalperV2VerticalStrikeOption([100, 200], [1_000, null], [1_400, 800], "volume");
+test("Scalper V2 option premium keeps exact side values and rupee difference", () => {
+  const option = scalperV2VerticalStrikeOption([100, 200], [120.5, null], [88.25, 42], "premium");
   const yAxes = option.yAxis as Array<Record<string, unknown>>;
   const series = option.series as Array<Record<string, unknown>>;
-  assert.equal(yAxes[0].name, "Volume");
-  assert.equal(yAxes[1].name, "PE − CE Volume");
-  assert.deepEqual(series[2].data, [400, null]);
+  assert.equal(yAxes[0].name, "Premium · ₹");
+  assert.equal(yAxes[1].name, "PE − CE Premium · ₹");
+  assert.deepEqual(series[2].data, [-32.25, null]);
+});
+
+test("Scalper V2 bid ask spread is a separate rupee metric", () => {
+  const option = scalperV2VerticalStrikeOption([100, 200], [0.5, 1.25], [0.75, null], "spread");
+  const yAxes = option.yAxis as Array<Record<string, unknown>>;
+  const series = option.series as Array<Record<string, unknown>>;
+  assert.equal(yAxes[0].name, "Bid–ask spread · ₹");
+  assert.equal(yAxes[1].name, "PE − CE Bid–ask spread · ₹");
+  assert.deepEqual(series[2].data, [0.25, null]);
 });
 
 test("Scalper V2 ΔIV chart preserves sign, side identity, observed zero and missing baseline", () => {

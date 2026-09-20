@@ -1164,7 +1164,7 @@
   height: calc(100dvh - 78px);
   box-sizing: border-box;
   min-height: 0;
-  grid-template-rows: 34px 30px 32px 34px 24px minmax(0, 1fr);
+  grid-template-rows: 34px minmax(0, 1fr);
   overflow: hidden;
 }
 .page[data-view="scalper"] > .context,
@@ -1180,6 +1180,7 @@
 .page[data-view="scalper"] > header.toolbar select { max-width: 170px; }
 .page[data-view="scalper"] > header.toolbar button,
 .page[data-view="scalper"] > header.toolbar a { white-space: nowrap; }
+.toolbarMetric{display:inline-flex;align-items:baseline;gap:4px;padding:2px 6px;border-radius:5px;background:#f1f5f9;white-space:nowrap;font-variant-numeric:tabular-nums}.toolbarMetric strong{font-size:14px}
 .page[data-view="scalper"] > .tabs { min-height: 30px; padding: 0; flex-wrap: nowrap; overflow-x: auto; }
 .page[data-view="scalper"] > .tabs button { min-height: 27px; padding-block: 1px; white-space: nowrap; }
 .page[data-view="scalper"] > .context { height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 0; line-height: 20px; }

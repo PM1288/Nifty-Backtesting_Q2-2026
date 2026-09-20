@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2AdaptiveDeltaDomain, scalperV2HorizontalDeltaOiOption, scalperV2PutMinusCall, scalperV2VerticalStrikeOption } from "../src/lib/scalperV2Analytics";
+import { scalperV2AdaptiveDeltaDomain, scalperV2HorizontalDeltaOiOption, scalperV2PutMinusCall, scalperV2VerticalIvChangeOption, scalperV2VerticalStrikeOption } from "../src/lib/scalperV2Analytics";
 
 test("Scalper V2 strike comparison preserves put minus call meaning and missingness", () => {
   assert.deepEqual(scalperV2PutMinusCall([100, 200, null, 50], [140, 80, 30, null]), [40, -120, null, null]);
@@ -37,6 +37,22 @@ test("Scalper V2 compact ΔOI chart keeps signed bars and PE minus CE line", () 
   assert.deepEqual(series[0].data, [40, -10]);
   assert.deepEqual(series[1].data, [-20, 30]);
   assert.deepEqual(series[2].data, [-60, 40]);
+});
+
+test("Scalper V2 ΔIV chart preserves sign, side identity, observed zero and missing baseline", () => {
+  const option = scalperV2VerticalIvChangeOption([100, 200], [0.75, null], [-1.25, 0]);
+  const yAxis = option.yAxis as { name: string; min: number; max: number };
+  const series = option.series as Array<{ data: Array<null | { value: number; itemStyle: { color: string; borderColor: string } }> }>;
+  assert.equal(yAxis.name, "ΔIV · pp");
+  assert.equal(yAxis.min, -1.35);
+  assert.equal(yAxis.max, 0.85);
+  assert.equal(series[0].data[0]?.value, 0.75);
+  assert.equal(series[0].data[0]?.itemStyle.color, "#15803d");
+  assert.equal(series[0].data[0]?.itemStyle.borderColor, "#8a6200");
+  assert.equal(series[0].data[1], null);
+  assert.equal(series[1].data[0]?.itemStyle.color, "#b42336");
+  assert.equal(series[1].data[0]?.itemStyle.borderColor, "#1d4ed8");
+  assert.equal(series[1].data[1]?.itemStyle.color, "#64748b");
 });
 
 test("Scalper V2 ΔOI uses horizontal bars with strikes on the right Y axis", () => {

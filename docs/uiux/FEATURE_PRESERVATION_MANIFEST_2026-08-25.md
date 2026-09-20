@@ -632,3 +632,13 @@ and 5m. Failed prerequisites leave deeper stages unavailable; they are not
 relabelled as failures or zeros. Existing OIIS qualification, personal picks,
 Stock 360 links, orders, V1/V2 analytics and notification controls are preserved.
 Evidence: `docs/uiux/HOME_MWHD_STAGED_FUNNEL_20260919.md`.
+
+2026-09-20 Scalper V2 time-axis and IV extension: the existing underlying, CE,
+PE, OI and ΔOI views remain intact. Timestamp analytics use the same explicit
+session/linked X domain and shared cursor; the lower OI-difference pair aligns
+to the price-grid columns and marks Day open on X. A third compact strike chart
+adds exact-contract ΔIV only when a prior retained IV observation exists.
+Missing IV remains unavailable. Health, Formula, Conditions, freshness alerts,
+exports, drawings, A-B measurement, independent CE/PE selection and pop-out
+remain accessible in two compact header rows. No strategy or order behavior is
+changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_20260920.md`.

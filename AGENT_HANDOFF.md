@@ -5649,3 +5649,20 @@ or outcomes were deleted.
   with asset `/n50/assets/index-hwv5hmyf.js`. Authenticated production Chromium
   passed 22/22; evidence is outside Git at
   `/home/novius2/NIFTY50/evidence/scalper-v2-side-oi-restored-20260920-production/`.
+
+## 2026-09-20 — Scalper V2 aligned time axes, ΔIV and compact header
+
+- Branch: `feature/scalper-v2-axis-iv-header-20260920`; durable report:
+  `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_20260920.md`.
+- All timestamp-based OI analytics now use the native price workspace's
+  selected session/linked range. The lower OI-difference pair follows the
+  56/44 price-grid columns, shares inspected time with native charts and marks
+  Day open as a timestamp.
+- The strike side pane retains OI and ΔOI and adds truthful exact-contract ΔIV
+  versus the prior retained observation. Missing baselines remain unavailable.
+- Duplicate status/subtitle rows are removed. Parent navigation, Health,
+  Formula, Conditions, OI PCR and Volume PCR share the first header; compact V2
+  controls/freshness and the red rightmost Pop out occupy the second.
+- Web typecheck, 231/231 tests and build pass. API typecheck, 256/256 tests and
+  build pass. Canonical repository gate passes. Production deployment/browser
+  evidence must be appended after cutover; no deployment claim is made here.

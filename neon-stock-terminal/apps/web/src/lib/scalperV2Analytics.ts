@@ -136,6 +136,46 @@ export function scalperV2VerticalStrikeOption(
   };
 }
 
+/** Signed IV change in percentage points. Missing baseline remains unavailable. */
+export function scalperV2VerticalIvChangeOption(
+  strikes: number[],
+  calls: DeltaOiValue[],
+  puts: DeltaOiValue[],
+): EChartsOption {
+  const [minimum, maximum] = scalperV2AdaptiveDeltaDomain([...calls, ...puts]);
+  const bar = (value: DeltaOiValue, borderColor: string) => value == null ? null : ({
+    value,
+    itemStyle: {
+      color: value > 0 ? "#15803d" : value < 0 ? "#b42336" : NEUTRAL,
+      borderColor,
+      borderWidth: 2,
+    },
+  });
+  return {
+    animation: false,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      valueFormatter: (value: unknown) => value == null ? "Unavailable" : `${Number(value) > 0 ? "+" : ""}${Number(value).toFixed(2)} pp`,
+    },
+    legend: { data: ["CE ΔIV", "PE ΔIV"], top: 0, itemGap: 6, itemWidth: 12, itemHeight: 8, textStyle: { fontSize: 9 } },
+    grid: { left: 2, right: 2, top: 32, bottom: 2, containLabel: true },
+    xAxis: { type: "category", data: strikes, axisLabel: { rotate: strikes.length > 12 ? 45 : 0, hideOverlap: true } },
+    yAxis: {
+      type: "value", name: "ΔIV · pp", min: minimum, max: maximum,
+      axisLabel: { formatter: (value: number) => `${value > 0 ? "+" : ""}${value}` },
+      splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
+    },
+    series: [
+      {
+        name: "CE ΔIV", type: "bar", barMaxWidth: 18, data: calls.map((value) => bar(value, CALL_BORDER)),
+        markLine: { silent: true, symbol: "none", label: { show: false }, lineStyle: { color: "#64748b" }, data: [{ yAxis: 0 }] },
+      },
+      { name: "PE ΔIV", type: "bar", barMaxWidth: 18, data: puts.map((value) => bar(value, PUT_BORDER)) },
+    ],
+  };
+}
+
 /** Option identity owns the fill; sign remains encoded by left/right geometry and the signed label. */
 const deltaBar = (value: DeltaOiValue, color: string, borderColor: string) => value == null ? null : ({
   value,

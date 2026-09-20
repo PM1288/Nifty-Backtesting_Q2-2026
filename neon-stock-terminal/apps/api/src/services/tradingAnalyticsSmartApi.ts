@@ -114,7 +114,24 @@ export async function loadSmartApiNifty(
       : [];
   const greeks = expiry ? await read(
     "smartapi_greeks",
-    `SELECT DISTINCT ON (strike,"right") strike::float8 strike,"right" option_type,ts greeks_collected_at,underlying greeks_underlying,tradingsymbol greeks_source_symbol,iv::float8 implied_volatility,delta::float8,gamma::float8,theta::float8,vega::float8 FROM public.option_greeks WHERE underlying=ANY($3::text[]) AND expiry=$2::date AND ts BETWEEN $1::timestamptz-interval '1 day' AND $1::timestamptz ORDER BY strike,"right",ts DESC`,
+    `WITH ranked AS (
+       SELECT strike,"right",ts,underlying,tradingsymbol,iv,delta,gamma,theta,vega,
+              row_number() OVER (PARTITION BY strike,"right" ORDER BY ts DESC) observation_rank
+       FROM public.option_greeks
+       WHERE underlying=ANY($3::text[]) AND expiry=$2::date
+         AND ts BETWEEN $1::timestamptz-interval '7 days' AND $1::timestamptz
+     )
+     SELECT current.strike::float8 strike,current."right" option_type,
+            current.ts greeks_collected_at,current.underlying greeks_underlying,
+            current.tradingsymbol greeks_source_symbol,current.iv::float8 implied_volatility,
+            previous.iv::float8 previous_implied_volatility,
+            previous.ts previous_greeks_collected_at,
+            current.delta::float8,current.gamma::float8,current.theta::float8,current.vega::float8
+     FROM ranked current
+     LEFT JOIN ranked previous ON previous.strike=current.strike
+       AND previous."right"=current."right" AND previous.observation_rank=2
+     WHERE current.observation_rank=1
+     ORDER BY current.strike,current."right"`,
     asOf, expiry, underlying.symbol==='NIFTY'?['NIFTY','NIFTY50']:[underlying.symbol],
   ) : [];
   const rows = contracts.map((r) => ({
@@ -128,8 +145,11 @@ export async function loadSmartApiNifty(
       const g = greeks.find(g => numeric(g.strike) === numeric(r.strike) && g.option_type === r.option_type);
       return {
         implied_volatility: g?.implied_volatility ?? null,
+        previous_implied_volatility: g?.previous_implied_volatility ?? null,
+        change_in_iv: observedOiChange(g?.implied_volatility, g?.previous_implied_volatility),
         delta: g?.delta ?? null, gamma: g?.gamma ?? null, theta: g?.theta ?? null, vega: g?.vega ?? null,
         greeks_collected_at: g?.greeks_collected_at ?? null,
+        previous_greeks_collected_at: g?.previous_greeks_collected_at ?? null,
         greeks_source_symbol: g?.greeks_source_symbol ?? null,
         greeks_state: g ? "RETAINED_OBSERVATION_EXCHANGE_TIME_UNVERIFIED" : "NO_MATCHING_RETAINED_GREEKS",
       };

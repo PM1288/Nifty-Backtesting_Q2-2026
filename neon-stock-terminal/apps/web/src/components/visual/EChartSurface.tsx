@@ -638,5 +638,5 @@ export function EChartSurface({
     requestAnimationFrame(() => { suppressTimeHoverRef.current = false; });
   }, [activeTimeMs]);
 
-  return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" />;
+  return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" data-active-time-ms={activeTimeMs ?? ""} data-active-category-index={activeCategoryIndex ?? ""} />;
 }

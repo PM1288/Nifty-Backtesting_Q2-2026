@@ -9,6 +9,11 @@
 - Web checks passed (typecheck, 236/236 tests, build); API checks passed
   (typecheck, 261/261 tests, build). Authenticated local browser regression
   passed 39/39.
+- Release is pushed and deployed. The dashboard is healthy on image
+  `sha256:1e540e0fca96e106020c149e53accb1b1d3f0a369bcfca25bcfffec3bede81b4`;
+  asset `/n50/assets/index-BqkN37tE.js`. Authenticated production Playwright
+  passed 39/39. Rollback tag:
+  `trading-stack-n50-dashboard:before-scalper-v2-parent-header-20260920`.
 - Report:
   `docs/trading-analytics/SCALPER_V2_PARENT_HEADER_REDUCTION_20260920.md`.
 

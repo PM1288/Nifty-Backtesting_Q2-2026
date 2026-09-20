@@ -73,6 +73,15 @@ The live Tailscale health endpoint must list Claude, Qwen and DeepSeek. A real
 final-only probe must return HTTP 200, `text/plain; charset=utf-8` and
 `Cache-Control: no-store`. A health response alone does not certify generation.
 
+Recorded result: focused pytest `21 passed`; Ruff and Python compilation passed;
+Compose config and canonical repository gate passed. The real final-only probe
+returned HTTP 200, `text/plain; charset=utf-8` and `Cache-Control: no-store`.
+The production service is healthy with zero restarts on image
+`sha256:324442335f044d33a340d521c89cf36b54c74420162ac2c177ae38cc55d28e15`.
+Its idle heartbeat showed zero new discoveries/deliveries and only the
+`CONSOLIDATED` work key. Historical delivery counts remained 683 delivered and
+22 dead; nothing was replayed during deployment.
+
 ## Rollback
 
 Retain the pre-release image before recreation. Recreate only

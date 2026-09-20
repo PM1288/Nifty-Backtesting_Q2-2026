@@ -1,5 +1,33 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — OIIS/OISS consolidated stock-research webhook
+
+- Replaced the three direct Claude/Qwen/DeepSeek research calls and three
+  provider-specific WhatsApp messages with one final-only request to
+  `http://100.120.233.3:8012/query/final` and one durable WhatsApp brief per new
+  `(trade_date, symbol)` evaluation.
+- The request fixes `include_chatgpt=false`, Claude consolidation and high
+  effort. HTTP 200 plain text is required; JSON/error bodies cannot become
+  alerts. The 600-second timeout and single default research attempt follow the
+  endpoint's browser-backed/no-idempotency contract. WhatsApp delivery retains
+  its independent outbox retries.
+- The additive schema admits `CONSOLIDATED`; new evaluations create only that
+  row. Historical Claude/Qwen/DeepSeek evidence and 683 delivered/22 dead
+  delivery records were preserved without replay. Strategy selection, paper
+  trading, orders, OIIS/OISS and collectors were unchanged.
+- Focused pytest passed 21/21; Ruff, Python compile, Compose config and canonical
+  repository gate passed. A real Tailscale final request returned HTTP 200,
+  `text/plain; charset=utf-8` and `Cache-Control: no-store`. Production
+  heartbeat is `OK` with `provider_work.CONSOLIDATED=false` when idle, zero new
+  sources/evaluations and zero deliveries.
+- Pushed master `23570f2`; deployed only `ai-stock-research`, healthy with zero
+  restarts on image
+  `sha256:324442335f044d33a340d521c89cf36b54c74420162ac2c177ae38cc55d28e15`.
+  Rollback tag:
+  `trading-stack-ai-stock-research:before-consolidated-webhook-20260920`.
+- Evidence:
+  `docs/oiis-live/AI_STOCK_RESEARCH_CONSOLIDATED_WEBHOOK_20260920.md`.
+
 ## 2026-09-20 — Compact Scalper V2 OI hover repair
 
 - Suppressed only the large floating tooltip cards in the three narrow

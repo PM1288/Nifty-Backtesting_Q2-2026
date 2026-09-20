@@ -6,6 +6,13 @@
   strike-side charts so they no longer cover the plotted OI/structure view.
 - Preserved strike/time hover propagation, selected-strike highlighting and
   full tooltips in the expanded Analytics dock.
+- Web typecheck, 247/247 tests and production build passed; API typecheck,
+  262/262 tests and build passed; the canonical repository gate passed.
+  Authenticated production Scalper V2 regression passed 44/44.
+- Deployed dashboard image
+  `sha256:b232ade2b5a7826fd3361784ccd47ce6e2fb6047e15a7c20f1922140980fb7ac`;
+  public asset `/n50/assets/index-BxXB5rMD.js`. Rollback tag:
+  `trading-stack-n50-dashboard:before-scalper-v2-compact-oi-hover-20260920`.
 
 ## 2026-09-20 — Screener D−1 Close and Scalper V2 volume EMA
 

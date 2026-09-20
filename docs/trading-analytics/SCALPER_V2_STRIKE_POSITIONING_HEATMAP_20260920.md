@@ -46,5 +46,15 @@ anonymous strike position to a participant category.
 Focused tests cover all four regimes, missing-component preservation,
 session-first baselines, pressure construction and the CE1-CE5/PE1-PE5 chart
 contract. The API test covers native history and retained SmartAPI fallback.
-Full web/API checks, the canonical preservation gate and production browser
-evidence are recorded in the delivery report for this change.
+
+- Web typecheck/build and 239/239 tests passed.
+- API typecheck/build and 262/262 tests passed.
+- The canonical repository gate passed.
+- Authenticated production Chromium passed 41/41 checks, including both new
+  panels, strike cursor linkage, time cursor linkage, pop-out, exact CE/PE,
+  responsive geometry and no page errors. Evidence is outside Git at
+  `/home/novius2/NIFTY50/evidence/scalper-v2-positioning-heatmap-production-20260920-rerun/`.
+- Production is healthy with zero restarts on image
+  `sha256:d3a7aa00bdb5d20978ef59acea9a1f292d1bb5c481dfa20742cd2ce8e2338891`
+  and routed asset `/n50/assets/index-wLpf4BmO.js`.
+- Rollback image: `trading-stack-n50-dashboard:before-scalper-v2-positioning-heatmap-20260920`.

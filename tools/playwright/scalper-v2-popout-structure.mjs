@@ -159,8 +159,10 @@ try {
     exact: document.querySelector(`[data-testid="v2-chart-host-${id}"]`)?.dataset.crosshairExact ?? "source",
   })));
   check("uniform-time-cursor", cursor[0].time !== "" && cursor.every((item) => item.time === cursor[0].time), JSON.stringify(cursor));
-  const activeStrikeIndexes = await page.getByTestId("v2-strike-side-charts").getByRole("img").evaluateAll((elements) => elements.map((element) => element.dataset.activeCategoryIndex));
-  check("time-cursor-to-strike-charts", activeStrikeIndexes.length >= 2 && activeStrikeIndexes.every((value) => value !== ""), JSON.stringify(activeStrikeIndexes));
+  const activeStrikeIndexes = await page.locator("[data-testid='v2-strike-side-charts'] > article:nth-child(-n+2) [role='img']").evaluateAll((elements) => elements.map((element) => element.dataset.activeCategoryIndex));
+  check("time-cursor-to-strike-charts", activeStrikeIndexes.length === 2 && activeStrikeIndexes.every((value) => value !== ""), JSON.stringify(activeStrikeIndexes));
+  const heatmapActiveTime = await page.getByTestId("v2-side-positioning-heatmap").getByRole("img").getAttribute("data-active-time-ms");
+  check("time-cursor-to-positioning-heatmap", Boolean(heatmapActiveTime), String(heatmapActiveTime ?? ""));
   const indexVolume = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => ({ label: element.dataset.volumeLabel ?? "", points: Number(element.dataset.volumePoints ?? 0) }));
   check("index-current-month-future-volume", indexVolume.label.includes("Current-month future") && indexVolume.points > 0, JSON.stringify(indexVolume));
   const references = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => (element.dataset.referenceLevelsVisible ?? "").split(",").filter(Boolean));

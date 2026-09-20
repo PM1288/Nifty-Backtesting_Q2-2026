@@ -5800,3 +5800,27 @@ or outcomes were deleted.
   browser suite passed 35/35. The public-domain pop-out rerun hit an external
   network error and is recorded separately rather than represented as passing.
   Rollback tag: `before-scalper-v2-separate-iv-volume-20260920`.
+## 2026-09-20 — Scalper V2 strike structure and positioning heatmap
+
+- Branch: `feat/scalper-v2-strike-structure-heatmap-20260920`; implementation
+  commit `b0944a7` is pushed to the feature branch and `master`.
+- The existing OI-by-strike panel remains. Only the lower two right-column
+  panels were replaced by a combined strike structure chart and a strike x time
+  positioning heatmap. The structure chart exposes CE/PE OI, signed Delta OI,
+  premium return, CE1-CE5/PE1-PE5 and contract-local buildup/covering/unwinding
+  regimes. The heatmap uses available Delta OI share, premium return, volume
+  share and depth imbalance without zero-filling missing evidence.
+- The existing option history endpoint additively returns OI/volume/depth. When
+  the native chain archive has no matching session it reads already-retained
+  SmartAPI FULL quote snapshots at 5/15-minute buckets; no collector, broker
+  request, migration or write path was added.
+- Web typecheck/build and 239/239 tests passed; API typecheck/build and 262/262
+  tests passed; the canonical repository gate passed. Authenticated production
+  Chromium passed 41/41 with no page errors. Evidence:
+  `/home/novius2/NIFTY50/evidence/scalper-v2-positioning-heatmap-production-20260920-rerun/`.
+- Only `n50-dashboard` was recreated. It is healthy with zero restarts on image
+  `sha256:d3a7aa00bdb5d20978ef59acea9a1f292d1bb5c481dfa20742cd2ce8e2338891`;
+  routed asset `/n50/assets/index-wLpf4BmO.js`. Rollback:
+  `trading-stack-n50-dashboard:before-scalper-v2-positioning-heatmap-20260920`.
+- V1, signals, drawings, measurement, selected CE/PE, strategy formulas,
+  database contents, collectors and paper/live order permissions are unchanged.

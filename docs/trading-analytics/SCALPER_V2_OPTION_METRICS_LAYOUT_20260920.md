@@ -56,3 +56,17 @@ collector tables and historical rows are unchanged.
 
 Browser evidence is written under
 `output/playwright/scalper-v2-option-metrics-layout-*` and is not committed.
+
+## Production release
+
+- Implementation commit `70155ab` was merged to pushed `master` as `71e1116`.
+- The scoped production procedure rebuilt and recreated only `n50-dashboard`.
+- Container `414f0e3be8b...` is healthy on image
+  `sha256:59b94444f25895dbe830cc9eef8e1a85134a434f601e27f7824c17d5d1031c6b`.
+- The routed entry asset is `/n50/assets/index-DcWQZeSp.js`.
+- Authenticated production Playwright passed 33/33. Evidence:
+  `output/playwright/scalper-v2-option-metrics-layout-production/`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-option-metrics-20260920`.
+- No database migration, data rewrite, collector restart or order change was
+  part of this release.

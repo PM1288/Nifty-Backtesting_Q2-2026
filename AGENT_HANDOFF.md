@@ -5709,3 +5709,8 @@ or outcomes were deleted.
 - Pre-release validation: API typecheck/build and 260/260 tests; web
   typecheck/build and 235/235 tests; canonical repository gate; authenticated
   local browser geometry/data-state suite 33/33 at 1920x1080.
+- Release `71e1116` is pushed on `master`. Only `n50-dashboard` was recreated;
+  container `414f0e3be8b...` is healthy on image
+  `sha256:59b94444f25895dbe830cc9eef8e1a85134a434f601e27f7824c17d5d1031c6b`.
+  Authenticated production browser validation passed 33/33. Rollback tag:
+  `before-scalper-v2-option-metrics-20260920`.

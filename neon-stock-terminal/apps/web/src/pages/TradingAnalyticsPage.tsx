@@ -97,6 +97,8 @@ type Payload = {
     cash: Row[];
     cashNet: number | null;
     cashSign: string | null;
+    derivativesReportDate?: string | null;
+    cashReportDate?: string | null;
     knowledgeState: string;
     reportLagDays: number;
   };

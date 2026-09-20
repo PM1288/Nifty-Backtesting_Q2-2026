@@ -7,7 +7,7 @@ import { buildComparableChainLegs, buildCumulativeOiHistory, registerTradingAnal
 
 test("morning summary exposes exact cash and index-derivative values with the canonical matrix", async () => {
   const responses = [
-    [{ date: "2026-09-19" }],
+    [{ derivatives_date: "2026-09-19", cash_date: "2026-09-18" }],
     [
       { fii_derivatives: "INDEX FUTURES", buy_contracts: "10", sell_contracts: "5", buy_value_in_cr: "500.00", sell_value_in_cr: "235.53" },
       { fii_derivatives: "INDEX OPTIONS", buy_contracts: "20", sell_contracts: "6", buy_value_in_cr: "5000.00", sell_value_in_cr: "595.23" },
@@ -25,6 +25,31 @@ test("morning summary exposes exact cash and index-derivative values with the ca
   assert.equal(summary.options, "Buy");
   assert.equal(summary.optionsNet, "4404.77");
   assert.equal(summary.matrix, "Super Bullish");
+  assert.equal(summary.derivativesReportDate, "2026-09-19");
+  assert.equal(summary.cashReportDate, "2026-09-18");
+});
+
+test("morning summary independently selects the latest retained cash trading day", async () => {
+  const calls: { sql: string; args: unknown[] }[] = [];
+  const prisma = {
+    $queryRawUnsafe: async (sql: string, ...args: unknown[]) => {
+      calls.push({ sql, args });
+      if (sql.includes("derivatives_date")) return [{ derivatives_date: "2026-09-18", cash_date: "2026-09-17" }];
+      if (sql.includes("nse_fii_derivatives_stats") && sql.includes("fii_derivatives IN")) return [
+        { fii_derivatives: "INDEX FUTURES", buy_value_in_cr: "500", sell_value_in_cr: "400" },
+        { fii_derivatives: "INDEX OPTIONS", buy_value_in_cr: "100", sell_value_in_cr: "200" },
+      ];
+      if (sql.includes("normalized_nse_fii_dii")) return [{ participant_type: "FII/FPI", net_value: "-3208.76" }];
+      return [];
+    },
+  } as unknown as PrismaClient;
+  const summary = await loadMorningSummary(prisma, "2026-09-20T04:00:00Z");
+  assert.equal(summary.reportDate, "2026-09-18");
+  assert.equal(summary.cashReportDate, "2026-09-17");
+  assert.equal(summary.equity, "Sell");
+  assert.equal(summary.equityNet, -3208.76);
+  assert.equal(calls[1]?.args[1], "2026-09-18");
+  assert.equal(calls[2]?.args[0], "2026-09-17");
 });
 
 test("morning summary preserves unavailable values instead of turning them into zero", async () => {
@@ -185,15 +210,17 @@ test("option price history returns every captured CE and PE strike without enabl
     server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
-test("older cash history stays descriptive and does not fill missing selected-date matrix",async()=>{
+test("latest retained cash report on or before the selected trading day feeds the matrix",async()=>{
   const calls:{sql:string;args:unknown[]}[]=[];
-  const rows=[{market_date:"2026-09-03",participant_type:"DII",buy_value:10,sell_value:10,net_value:0}];
+  const rows=[{market_date:"2026-09-03",participant_type:"FII/FPI",buy_value:10,sell_value:110,net_value:-100}];
   const prisma={$queryRawUnsafe:async(sql:string,...args:unknown[])=>{calls.push({sql,args});return sql.includes("normalized_nse_fii_dii")&&sql.includes("market_date<=")?rows:[];}} as unknown as PrismaClient;
   const d=await loadTradingAnalytics(prisma,"2026-09-07T12:00:00Z","2026-09-07");
   assert.equal(d.cashHistory.latestDate,"2026-09-03");
   assert.equal(d.cashHistory.state,"OLDER_REPORT");
-  assert.equal(d.cashHistory.rows[0].net_value,0);
-  assert.equal(d.morning.cashNet,null);
+  assert.equal(d.cashHistory.rows[0].net_value,-100);
+  assert.equal(d.morning.cashNet,-100);
+  assert.equal(d.morning.cashSign,"Sell");
+  assert.equal(d.morning.cashReportDate,"2026-09-03");
   assert.equal(d.morning.matrix,"INSUFFICIENT_DATA");
   assert.ok(calls.some(c=>c.sql.includes("market_date<=")&&c.args[0]==="2026-09-07"));
 });

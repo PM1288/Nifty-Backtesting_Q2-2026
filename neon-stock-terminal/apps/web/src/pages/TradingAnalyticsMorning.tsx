@@ -68,6 +68,8 @@ export function TradingAnalyticsMorning({
     cash: Row[];
     cashNet: number | null;
     cashSign: string | null;
+    derivativesReportDate?: string | null;
+    cashReportDate?: string | null;
     knowledgeState: string;
   };
   smartapi: {
@@ -162,7 +164,7 @@ export function TradingAnalyticsMorning({
         </p>
       </section>
       <section>
-        <h2>Daily activity · FII</h2>
+        <h2>Daily activity · FII · Cash {morning.cashReportDate ?? "unavailable"} · Derivatives {morning.derivativesReportDate ?? "unavailable"}</h2>
         <table>
           <thead>
             <tr>

@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 Morning View cash-date repair: Morning View and the shared top
+Outlook use the latest retained NSE-only cash report on or before the selected
+or current IST date instead of requiring it to equal the derivatives-report
+date. Cash and derivatives dates remain separately disclosed; unavailable is
+never zero. The original six-row matrix is unchanged. Bullish, bearish and
+neutral/unavailable Outlook states have green, red and amber treatments.
+Evidence:
+`docs/trading-analytics/MORNING_VIEW_LATEST_CASH_AND_OUTLOOK_COLOUR_20260920.md`.
+
 2026-09-20 Scalper V2 option-metric and compact-layout repair: the selected
 underlying symbol leads the command row; 1m/5m/15m buttons are removed while
 the existing 1h/session/fit contracts remain. Tight chart insets and matched

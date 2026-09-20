@@ -113,19 +113,19 @@ export function buildComparableChainLegs(currentLegs: Facts[], priorLegs: Facts[
 
 export async function loadMorningSummary(prisma: PrismaClient, asOf: string) {
   const dates = await prisma.$queryRawUnsafe<Facts[]>(
-    `SELECT trade_date::text date
-     FROM market_data.nse_fii_derivatives_stats
-     WHERE loaded_at<=$1::timestamptz
-       AND trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date
-     GROUP BY trade_date ORDER BY trade_date DESC LIMIT 1`,
+    `SELECT
+       (SELECT max(trade_date)::text
+        FROM market_data.nse_fii_derivatives_stats
+        WHERE loaded_at<=$1::timestamptz
+          AND trade_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date) derivatives_date,
+       (SELECT max(market_date)::text
+        FROM institutional_flow.normalized_nse_fii_dii
+        WHERE source_dataset='nse_fii_dii_nse_only'
+          AND market_date<=($1::timestamptz AT TIME ZONE 'Asia/Kolkata')::date) cash_date`,
     asOf,
   );
-  const reportDate = dates[0]?.date == null ? null : String(dates[0].date);
-  if (!reportDate) return {
-    asOf, reportDate: null, equity: null, futures: null, options: null,
-    equityNet: null, futuresNet: null, optionsNet: null,
-    matrix: "INSUFFICIENT_DATA", knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
-  };
+  const derivativesReportDate = dates[0]?.derivatives_date == null ? null : String(dates[0].derivatives_date);
+  const cashReportDate = dates[0]?.cash_date == null ? null : String(dates[0].cash_date);
   const [rawStats, cash] = await Promise.all([
     prisma.$queryRawUnsafe<Facts[]>(
       `SELECT fii_derivatives,buy_contracts::text,buy_value_in_cr::text,
@@ -137,14 +137,14 @@ export async function loadMorningSummary(prisma: PrismaClient, asOf: string) {
                      WHERE trade_date=$2::date AND loaded_at<=$1::timestamptz
                      ORDER BY loaded_at DESC,run_id DESC LIMIT 1)`,
       asOf,
-      reportDate,
+      derivativesReportDate,
     ),
     prisma.$queryRawUnsafe<Facts[]>(
       `SELECT participant_type,net_value
        FROM institutional_flow.normalized_nse_fii_dii
        WHERE market_date=$1::date AND source_dataset='nse_fii_dii_nse_only'
          AND (participant_type ILIKE '%FII%' OR participant_type ILIKE '%FPI%')`,
-      reportDate,
+      cashReportDate,
     ),
   ]);
   const stats = rawStats.map(activity);
@@ -154,7 +154,7 @@ export async function loadMorningSummary(prisma: PrismaClient, asOf: string) {
   const productSign = (name: string) => product(name)?.canonical_sign ?? null;
   const futures = productSign("INDEX FUTURES"), options = productSign("INDEX OPTIONS");
   return {
-    asOf, reportDate, equity, futures, options,
+    asOf, reportDate: derivativesReportDate, derivativesReportDate, cashReportDate, equity, futures, options,
     equityNet: cashNet,
     futuresNet: product("INDEX FUTURES")?.net_crore ?? null,
     optionsNet: product("INDEX OPTIONS")?.net_crore ?? null,
@@ -223,7 +223,11 @@ export async function loadTradingAnalytics(
       // Legacy cash has no observation timestamp. It is descriptive only, never PIT-qualified.
       read(
         "cash",
-        `SELECT participant_type,buy_value,sell_value,net_value,market_date::text,exchange_scope,source_dataset FROM institutional_flow.normalized_nse_fii_dii WHERE market_date=$1::date AND source_dataset='nse_fii_dii_nse_only'`,
+        `SELECT participant_type,buy_value,sell_value,net_value,market_date::text,exchange_scope,source_dataset
+         FROM institutional_flow.normalized_nse_fii_dii
+         WHERE market_date=(SELECT max(market_date) FROM institutional_flow.normalized_nse_fii_dii
+                            WHERE market_date<=$1::date AND source_dataset='nse_fii_dii_nse_only')
+           AND source_dataset='nse_fii_dii_nse_only'`,
         selected,
       ),
       read(
@@ -411,6 +415,8 @@ export async function loadTradingAnalytics(
       cash,
       cashNet,
       cashSign: sign,
+      derivativesReportDate: selected,
+      cashReportDate: cash[0]?.market_date ?? null,
       knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
       reportLagDays: Math.floor(
         (Date.parse(asOf) - Date.parse(selected)) / 86400000,
@@ -424,7 +430,7 @@ export async function loadTradingAnalytics(
       unit: "INR_CRORE",
       state: cashHistory.length === 0 ? "DATA_INSUFFICIENT" : cashHistory[0]?.market_date === selected ? "OBSERVED_REPORT" : "OLDER_REPORT",
       knowledgeState: "CASH_PUBLICATION_TIME_UNVERIFIED",
-      note: "Descriptive retained reports, not point-in-time qualified. Older cash reports do not replace the selected-date cash input in the market matrix. NSE-only and combined-exchange totals are not mixed.",
+      note: "Descriptive retained reports, not point-in-time qualified. The market matrix uses the latest retained NSE-only cash report on or before the selected derivatives date and discloses both source dates. NSE-only and combined-exchange totals are not mixed.",
     },
     activity: stats,
     participants: people,

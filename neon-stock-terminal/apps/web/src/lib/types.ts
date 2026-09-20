@@ -113,6 +113,8 @@ export type HeaderMarketSummaryResponse = Pick<OverviewResponse, "asOf" | "marke
 export type MorningSummaryResponse = {
   asOf: string;
   reportDate: string | null;
+  derivativesReportDate?: string | null;
+  cashReportDate?: string | null;
   equity: string | null;
   futures: string | null;
   options: string | null;

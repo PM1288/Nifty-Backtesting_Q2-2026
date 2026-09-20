@@ -6,6 +6,8 @@ test("header outlook shows the three exact FII values and canonical result", () 
   const view = buildHeaderTodayOutlook({
     asOf: "2026-09-20T04:00:00Z",
     reportDate: "2026-09-19",
+    derivativesReportDate: "2026-09-19",
+    cashReportDate: "2026-09-18",
     equity: "Sell",
     futures: "Buy",
     options: "Buy",
@@ -20,6 +22,8 @@ test("header outlook shows the three exact FII values and canonical result", () 
   assert.equal(view.optionsValue, "+4,404.77");
   assert.equal(view.result, "Sideways (Bullish)");
   assert.equal(view.tone, "positive");
+  assert.equal(view.cashReport, "2026-09-18");
+  assert.match(view.title, /derivatives 2026-09-19 · cash 2026-09-18/i);
   assert.match(view.title, /all indices, not NIFTY only/i);
   assert.match(view.title, /not premium cash flow/i);
 });

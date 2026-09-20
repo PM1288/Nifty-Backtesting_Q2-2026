@@ -188,10 +188,11 @@
 .todayOutlook small b { color: var(--text-3); }
 .todayOutlook small i { color: var(--text-3); font-style: normal; font-weight: 600; }
 .todayOutlook strong { padding-left: 6px; border-left: 1px solid var(--border-subtle); font-family: var(--font-sans); font-size: 11px; }
-.todayOutlook[data-tone="positive"] { border-color: rgba(8, 122, 80, .3); background: #f1faf5; }
-.todayOutlook[data-tone="positive"] strong { color: #087a50; }
-.todayOutlook[data-tone="negative"] { border-color: rgba(194, 54, 79, .3); background: #fff5f6; }
-.todayOutlook[data-tone="negative"] strong { color: #b4233d; }
+.todayOutlook[data-tone="positive"] { border-color: rgba(8, 122, 80, .48); background:#dcfce7;color:#075b3e;box-shadow:inset 3px 0 0 #16a34a; }
+.todayOutlook[data-tone="positive"] small b,.todayOutlook[data-tone="positive"] small i,.todayOutlook[data-tone="positive"] strong { color:#087a50; }
+.todayOutlook[data-tone="negative"] { border-color:rgba(194,54,79,.48);background:#ffe4e6;color:#8f1830;box-shadow:inset 3px 0 0 #dc2648; }
+.todayOutlook[data-tone="negative"] small b,.todayOutlook[data-tone="negative"] small i,.todayOutlook[data-tone="negative"] strong { color:#b4233d; }
+.todayOutlook[data-tone="neutral"] { border-color:#d6a535;background:#fff7d6;color:#6f5000;box-shadow:inset 3px 0 0 #d6a535; }
 .headerQuality { display: inline-flex; }
 
 .mobileNiftyQuote {

@@ -217,6 +217,18 @@ V1/V2, monthly strategies, Trade Log, SHAP, Paper Trading, collectors,
 authentication and permissions are unchanged. Evidence:
 `docs/analytics/STOCK_360_MWD_EMA_VALUE_20260911.md`.
 
+2026-09-20 Stock 360 chart-first repair: `/analytics/stock/:symbol` now paints
+from canonical 1D OHLCV without waiting for the slower stock explainer. Its
+primary order is compact KPIs, intraday price/EMA plus volume and traded value,
+then a daily price/volume/traded-value/delivery chart and a one-line signal
+table. Level labels are compact while exact bases remain accessible. OIIS, F&O
+and backtesting evidence remains available through an explicit deferred evidence
+control. Daily bars add exchange turnover and delivery percentage; missing
+delivery remains missing. No unauthorised TradingView recommendation is
+fabricated. All Stock 360 links, MWHD ranks, strategies, collectors, order
+guards and unrelated routes remain unchanged. Evidence:
+`docs/analytics/STOCK_360_CHART_FIRST_AUDIT_20260920.md`.
+
 2026-09-11 NSE India report download health: the existing authenticated
 `/institutional/nse-intelligence/reports` view now exposes per-file downloader
 and loader status, source date, exact file, bytes, SHA-256, rows, timings,

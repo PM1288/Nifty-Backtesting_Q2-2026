@@ -5554,3 +5554,22 @@ or outcomes were deleted.
   weekend data had zero timestamped OI-total points, so a painted PE-minus-CE
   line remains unverified until such retained history is present. No strategy,
   collector, database or order mutation is part of this repair.
+
+## 2026-09-20 — Stock 360 chart-first daily evidence repair
+
+- Branch: `feat/stock-360-fast-chart-first-20260920`; durable report:
+  `docs/analytics/STOCK_360_CHART_FIRST_AUDIT_20260920.md`.
+- The Stock 360 route no longer blocks its entire first render on the slow stock
+  explainer (12.96 seconds in the PNB production baseline). Canonical 1D OHLCV
+  paints first; explainer/market context is deferred, and OIIS/F&O/backtesting
+  evidence is loaded only when explicitly expanded.
+- The page now leads with compact KPIs and the intraday chart. Its lower pane
+  shows volume and traded value. Compact level labels remove redundant `open`
+  text while PDC remains explicit.
+- A daily candlestick chart adds daily volume, traded value and exchange delivery
+  percentage. The existing stock endpoint additively returns `tradedValueCr` and
+  `deliveryPct` for daily bars from `nse_app.security_daily_features`; missing
+  delivery remains null.
+- The former tall signal cards are one dense signal row. TradingView remains
+  explicitly not connected because no authorised recommendation source was found.
+  No strategy, collector, stored data, authentication or order behavior changed.

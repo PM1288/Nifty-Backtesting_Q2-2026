@@ -100,9 +100,183 @@
 .mwdLevelTable button[data-bias="down"] em { color: #c6283d; }
 .mwdLevelTable button[data-bias="unavailable"] em { color: #64748b; }
 
+.stock360Page {
+  --section-gap: 12px;
+  gap: 12px;
+}
+
+.stock360Header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.stock360Identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.stock360AsOf {
+  color: #64748b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock360KpiStrip {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(92px, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #d7e0eb;
+  border-radius: 10px;
+  background: #d7e0eb;
+}
+
+.stock360KpiStrip > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.stock360KpiStrip span,
+.stock360SignalTable span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.stock360KpiStrip strong {
+  overflow: hidden;
+  color: #132238;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock360KpiStrip [data-tone="green"] strong,
+.stock360SignalTable [data-tone="green"] { color: #117a40; }
+.stock360KpiStrip [data-tone="red"] strong,
+.stock360SignalTable [data-tone="red"] { color: #c6283d; }
+
+.stock360Page .stockTechnicalChart {
+  min-height: 570px;
+}
+
+.stock360Page .mwdLevelTable button {
+  min-height: 34px;
+  padding-block: 4px;
+}
+
+.stockDailyChart {
+  width: 100%;
+  min-height: 520px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.stock360DailyStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin-top: -6px;
+  padding: 8px 12px;
+  border: 1px solid #d7e0eb;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #526175;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock360DailyStrip b { color: #132238; }
+
+.stock360SignalPanel {
+  overflow: hidden;
+  border: 1px solid #d7e0eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.stock360SectionTitle {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5eaf1;
+  color: #132238;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.stock360SignalTable {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(100px, 1fr));
+}
+
+.stock360SignalTable > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-right: 1px solid #e5eaf1;
+}
+
+.stock360SignalTable b {
+  color: #132238;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock360Conclusion {
+  margin: 0;
+  padding: 8px 12px;
+  border-top: 1px solid #e5eaf1;
+  background: #f8fafc;
+  color: #334155 !important;
+  font-size: 12px;
+}
+
+.stock360EvidenceToggle {
+  display: flex;
+  justify-content: center;
+}
+
+.stock360EvidenceToggle button {
+  padding: 8px 14px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #fff;
+  color: #1e3a5f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.stock360Evidence {
+  display: grid;
+  gap: 12px;
+}
+
 @media (max-width: 980px) {
   .mwdWorkspace { grid-template-columns: minmax(0, 1fr); }
   .mwdLevelTable { max-height: 330px; }
+  .stock360KpiStrip { grid-template-columns: repeat(4, minmax(100px, 1fr)); }
+  .stock360SignalTable { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .stock360Header { align-items: flex-start; }
+  .stock360KpiStrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stock360SignalTable { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stock360Page .stockTechnicalChart,
+  .stockDailyChart { min-height: 480px; }
 }
 
 .analyticsHeader {

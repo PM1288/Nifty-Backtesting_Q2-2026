@@ -185,6 +185,10 @@ export type IntradayBar = {
   l: number;
   c: number;
   v?: number;
+  /** Exchange-reported daily turnover, in INR crore when available. */
+  tradedValueCr?: number | null;
+  /** Exchange-reported deliverable quantity percentage for completed daily bars. */
+  deliveryPct?: number | null;
 };
 
 export type StockDetailResponse = {

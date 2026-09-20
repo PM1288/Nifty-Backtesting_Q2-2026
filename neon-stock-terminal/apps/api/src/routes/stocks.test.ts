@@ -17,8 +17,8 @@ test("1D stock response keeps the visible session separate from retained indicat
         last_seen_ts: "2026-09-11T04:00:00.000Z",
       }];
       if (call === 3) return [
-        { trade_date: "2026-09-11", open: 108, high: 111, low: 107, close: 110, volume: 1_000 },
-        { trade_date: "2026-09-10", open: 105, high: 109, low: 104, close: 108, volume: 900 },
+        { trade_date: "2026-09-11", open: 108, high: 111, low: 107, close: 110, volume: 1_000, turnover_lacs: 250, deliverable_pct: 41.5 },
+        { trade_date: "2026-09-10", open: 105, high: 109, low: 104, close: 108, volume: 900, turnover_lacs: 180, deliverable_pct: 38.2 },
       ];
       if (call === 4) return [
         { ts: "2026-09-11T03:45:00.000Z", open: 108, high: 109, low: 107, close: 108.5, volume: 500 },
@@ -47,6 +47,38 @@ test("1D stock response keeps the visible session separate from retained indicat
     assert.deepEqual(body.intraday.map((row) => row.c), [108.5, 109.5]);
     assert.deepEqual(body.indicatorWarmup.map((row) => row.c), [106.5, 107.5]);
     assert.ok(body.indicatorWarmup.every((row) => Date.parse(row.t) < Date.parse(body.intraday[0]!.t)));
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
+
+test("1Y stock response exposes exchange turnover and delivery without inventing missing values", async () => {
+  let call = 0;
+  const prisma = {
+    $queryRaw: async () => {
+      call += 1;
+      if (call === 1) return [{ symbol_token: "101", tradingsymbol: "TEST-EQ", symbol: "TEST", sector: "TEST" }];
+      if (call === 2) return [];
+      if (call === 3) return [
+        { trade_date: "2026-09-11", open: 108, high: 111, low: 107, close: 110, volume: 1_000, turnover_lacs: 250, deliverable_pct: 41.5 },
+        { trade_date: "2026-09-10", open: 105, high: 109, low: 104, close: 108, volume: 900, turnover_lacs: null, deliverable_pct: null },
+      ];
+      return [];
+    },
+  } as unknown as PrismaClient;
+
+  const app = express();
+  registerStocks(app, prisma);
+  const server = app.listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const response = await fetch(`${base}/v1/stocks/TEST?range=1Y`);
+    assert.equal(response.status, 200);
+    const body = await response.json() as { intraday: Array<{ tradedValueCr: number | null; deliveryPct: number | null }> };
+    assert.deepEqual(body.intraday.map((row) => row.tradedValueCr), [null, 2.5]);
+    assert.deepEqual(body.intraday.map((row) => row.deliveryPct), [null, 41.5]);
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));

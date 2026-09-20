@@ -44,6 +44,8 @@ type StackBar1DRow = {
   low: number | null;
   close: number | null;
   volume: number | string | null;
+  turnover_lacs?: number | string | null;
+  deliverable_pct?: number | string | null;
 };
 
 type StackBar1MRow = {
@@ -163,10 +165,26 @@ async function getTradingStackStock(prisma: PrismaClient, symbolRaw: string, ran
       LIMIT 1
     `),
     prisma.$queryRaw<StackBar1DRow[]>(Prisma.sql`
-      SELECT trade_date, open, high, low, close, volume
-      FROM bars_1d
-      WHERE exchange = 'NSE' AND symbol_token = ${symbolRow.symbol_token}
-      ORDER BY trade_date DESC
+      SELECT
+        b.trade_date,
+        b.open,
+        b.high,
+        b.low,
+        b.close,
+        b.volume,
+        f.turnover_lacs,
+        f.deliverable_pct
+      FROM bars_1d b
+      LEFT JOIN LATERAL (
+        SELECT feature.turnover_lacs, feature.deliverable_pct
+        FROM nse_app.security_daily_features feature
+        WHERE UPPER(TRIM(feature.symbol)) = ${symbolRow.symbol}
+          AND feature.trade_date = b.trade_date::date
+        ORDER BY CASE WHEN UPPER(feature.series) = 'EQ' THEN 0 ELSE 1 END
+        LIMIT 1
+      ) f ON TRUE
+      WHERE b.exchange = 'NSE' AND b.symbol_token = ${symbolRow.symbol_token}
+      ORDER BY b.trade_date DESC
       LIMIT ${dailyLimit}
     `)
   ]);
@@ -278,7 +296,9 @@ async function getTradingStackStock(prisma: PrismaClient, symbolRaw: string, ran
         h: toNumber(d.high),
         l: toNumber(d.low),
         c: toNumber(d.close),
-        v: toSafeVolume(d.volume)
+        v: toSafeVolume(d.volume),
+        tradedValueCr: d.turnover_lacs == null ? null : toNumber(d.turnover_lacs) / 100,
+        deliveryPct: d.deliverable_pct == null ? null : toNumber(d.deliverable_pct)
       }));
   }
 

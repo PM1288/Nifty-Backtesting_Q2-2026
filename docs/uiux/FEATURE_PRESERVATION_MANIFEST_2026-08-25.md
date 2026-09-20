@@ -691,3 +691,12 @@ Missing IV remains unavailable. Health, Formula, Conditions, freshness alerts,
 exports, drawings, A-B measurement, independent CE/PE selection and pop-out
 remain accessible in two compact header rows. No strategy or order behavior is
 changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_20260920.md`.
+# Superseding note — 20 September 2026 — Scalper V2 parent header
+
+- On `view=scalper_v2` only, hide the redundant parent title, NIFTY strategy
+  link, Health, Formula and Conditions controls to recover vertical space.
+- Preserve the remaining compact parent controls and all evidence in the
+  Scalper V2 workspace/export. Other Trading Analytics views retain the shared
+  title and evidence controls.
+- Implementation record:
+  `docs/trading-analytics/SCALPER_V2_PARENT_HEADER_REDUCTION_20260920.md`.

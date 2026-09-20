@@ -135,7 +135,7 @@ try {
   await page.waitForURL((url) => url.searchParams.get("interval") === "5", { timeout: 10_000 });
   const analyticsHeader = page.locator("section[aria-label='Trading Analytics workspace'] > header").first();
   const analyticsHeaderText = await analyticsHeader.innerText();
-  check("compact-parent-header", /Trading Analytics · Scalper V2/.test(analyticsHeaderText) && await page.getByText("READ-ONLY · Research", { exact: true }).count() === 0, analyticsHeaderText);
+  check("scalper-parent-labels-hidden", !/Trading Analytics · Scalper V2|NIFTY strategy|Health|Formula|Conditions/.test(analyticsHeaderText), analyticsHeaderText);
   const headerGeometry = await page.evaluate(() => {
     const parent = document.querySelector("section[aria-label='Trading Analytics workspace'] > header")?.getBoundingClientRect();
     const command = document.querySelector("[data-testid='scalper-v2'] > header")?.getBoundingClientRect();

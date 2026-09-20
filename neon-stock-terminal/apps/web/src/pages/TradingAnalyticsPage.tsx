@@ -458,12 +458,12 @@ export function TradingAnalyticsPage() {
         aria-label="Trading Analytics workspace"
       >
         <header className={styles.toolbar}>
-          {!isScalperPopout && <><h1>{isScalperView ? "Trading Analytics · Scalper V2" : "Trading Analytics"}</h1>
-          {!isScalperView && <span>READ-ONLY · Research</span>}
+          {!isScalperPopout && <>{!isScalperView && <><h1>Trading Analytics</h1>
+          <span>READ-ONLY · Research</span>
           <Link to="/strategy/nifty-options">NIFTY strategy</Link>
           <button onClick={() => setDrawer("health")} title="Data health">Health</button>
           <button onClick={() => setDrawer("source")} title="Source and formula">Formula</button>
-          <button onClick={() => setDrawer("condition")}>Conditions</button>
+          <button onClick={() => setDrawer("condition")}>Conditions</button></>}
           {isScalperView && Object.entries(analyticsTabs).map(([id, label]) => <button key={id} aria-current={main === id ? "page" : undefined} onClick={() => change("view", id === "oi" ? "smartapi" : id)}>{label}</button>)}
           {isScalperView && pageContext && <><span className={styles.toolbarMetric}>OI PCR <strong>{display(pageContext.smartapi.metrics.oiPcr)}</strong></span><span className={styles.toolbarMetric}>Volume PCR <strong>{display(pageContext.smartapi.metrics.volumePcr)}</strong></span></>}</>}
           {isScalperPopout && <strong>Scalper V2 · live workspace</strong>}

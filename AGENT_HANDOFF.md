@@ -5663,6 +5663,11 @@ or outcomes were deleted.
 - Duplicate status/subtitle rows are removed. Parent navigation, Health,
   Formula, Conditions, OI PCR and Volume PCR share the first header; compact V2
   controls/freshness and the red rightmost Pop out occupy the second.
-- Web typecheck, 231/231 tests and build pass. API typecheck, 256/256 tests and
-  build pass. Canonical repository gate passes. Production deployment/browser
-  evidence must be appended after cutover; no deployment claim is made here.
+- Final web typecheck, 231/231 tests and build pass. Final API typecheck,
+  256/256 tests and build pass. Canonical repository gate passes. The scoped
+  pixel-alignment suite also passed 11/11.
+- Production is healthy with zero restarts on image
+  `sha256:162b84ec2c53a48eead729bf9798d81f90195f36046e59913c58fb3e9f43a288`
+  and asset `/n50/assets/index-BxmOs6_s.js`. Authenticated deployed-container
+  Chromium passed 30/30 targeted checks. Evidence is outside Git at
+  `/home/novius2/NIFTY50/evidence/scalper-v2-axis-iv-header-20260920-production/`.

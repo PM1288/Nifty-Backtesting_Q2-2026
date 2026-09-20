@@ -4,6 +4,7 @@ import { chromium } from "playwright";
 
 const appOrigin = process.env.SCALPER_V2_APP_ORIGIN ?? "http://127.0.0.1:15190";
 const authOrigin = process.env.SCALPER_V2_AUTH_ORIGIN ?? "http://127.0.0.1:19090";
+const authRequestOrigin = process.env.SCALPER_V2_AUTH_REQUEST_ORIGIN ?? authOrigin;
 const output = path.resolve(process.env.SCALPER_V2_OUTPUT ?? "/tmp/scalper-v2-popout-structure-20260919");
 const testDay = process.env.SCALPER_V2_TEST_DAY ?? "";
 const testAsOf = process.env.SCALPER_V2_TEST_AS_OF ?? "";
@@ -19,14 +20,17 @@ const check = (name, pass, detail) => results.push({ name, status: pass ? "PASS"
 const browser = await chromium.launch({ headless: true });
 try {
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, reducedMotion: "reduce" });
-  const login = await context.request.post(`${authOrigin}/n50/auth/session/dev-login`, { data: { identifier: "admin", password }, headers: { Origin: authOrigin } });
+  const login = await context.request.post(`${authOrigin}/n50/auth/session/dev-login`, { data: { identifier: "admin", password }, headers: { Origin: authRequestOrigin } });
   check("authenticated", login.ok(), `HTTP ${login.status()}`);
   const session = (await context.storageState()).cookies.find((cookie) => cookie.name.includes("session"));
-  if (session && new URL(appOrigin).hostname === "127.0.0.1") await context.addCookies([{ ...session, domain: "127.0.0.1", path: "/", secure: false, sameSite: "Lax" }]);
+  if (session && new URL(appOrigin).hostname !== new URL(authOrigin).hostname) {
+    const target = new URL(appOrigin);
+    await context.addCookies([{ ...session, domain: target.hostname, path: "/", secure: target.protocol === "https:", sameSite: "Lax" }]);
+  }
 
   const page = await context.newPage();
   const errors = [];
-  page.on("pageerror", (error) => errors.push(String(error)));
+  page.on("pageerror", (error) => errors.push(error.stack ?? String(error)));
   if (injectOiHistory) await page.route("**/v1/trading-analytics/charts?**", async (route) => {
     const response = await route.fetch();
     const payload = await response.json();
@@ -62,7 +66,10 @@ try {
   const dayQuery = testDay ? `&day=${encodeURIComponent(testDay)}` : "";
   const asOfQuery = testAsOf ? `&asOf=${encodeURIComponent(testAsOf)}` : "";
   await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper_v2&interval=5${dayQuery}${asOfQuery}`, { waitUntil: "domcontentloaded", timeout: 90_000 });
-  await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });
+  await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 }).catch(async (error) => {
+    console.log(JSON.stringify({ loginStatus: login.status(), cookieNames: (await context.cookies()).map((cookie) => cookie.name), url: page.url(), errors, body: (await page.locator("body").innerText()).slice(0, 2_500) }));
+    throw error;
+  });
   await page.waitForTimeout(2_000);
 
   const layout = await page.evaluate(() => {
@@ -74,6 +81,7 @@ try {
     };
     return {
       stage: rect("[data-testid='v2-chart-panel-underlying']")?.x == null ? null : rect("[data-testid='v2-chart-panel-underlying']"),
+      callPanel: rect("[data-testid='v2-chart-panel-call']"),
       priceGrid: (() => {
         const element = document.querySelector("[data-testid='v2-chart-panel-underlying']")?.parentElement;
         if (!element) return null;
@@ -88,7 +96,12 @@ try {
   });
   check("side-oi-column-restored", await page.getByTestId("v2-strike-side-charts").count() === 1, JSON.stringify(layout.sideOi));
   check("side-oi-column-bounded", Boolean(layout.sideOi && layout.priceGrid && layout.sideOi.width >= 298 && layout.sideOi.width <= 362 && Math.abs(layout.sideOi.height - layout.priceGrid.height) <= 2), JSON.stringify({ priceGrid: layout.priceGrid, sideOi: layout.sideOi }));
-  check("side-oi-two-panels", await page.getByTestId("v2-strike-side-charts").locator(":scope > article").count() === 2, "OI and Change in OI remain separate side charts");
+  check("side-oi-three-panels", await page.getByTestId("v2-strike-side-charts").locator(":scope > article").count() === 3, "OI, Change in OI and Change in IV remain separate side charts");
+  const ivPanel = page.getByTestId("v2-side-iv-change-chart");
+  if (await ivPanel.count() === 0) console.log(JSON.stringify({ debugTestIds: await page.locator("[data-testid]").evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")).filter(Boolean)), pageErrors: errors, debugText: (await page.locator("body").innerText()).slice(0, 2_500) }));
+  await ivPanel.waitFor({ state: "visible", timeout: 90_000 });
+  const ivPanelText = await ivPanel.innerText();
+  check("iv-change-truthful-state", /Change in IV by strike/.test(ivPanelText) && (/IV change unavailable/.test(ivPanelText) || await ivPanel.getByRole("img").count() === 1), ivPanelText);
   check("three-price-chart-grid", await page.locator("[data-testid^='v2-chart-panel-']").count() === 3, "Underlying plus exact CE and PE only");
   check("bounded-price-grid-height", Boolean(layout.priceGrid && layout.priceGrid.height >= 620 && layout.priceGrid.height <= 645), JSON.stringify(layout.priceGrid));
   const historyGeometry = await page.getByTestId("v2-oi-history-row").evaluate((element) => [...element.querySelectorAll("article")].map((article) => {
@@ -97,7 +110,7 @@ try {
     const inner = chart?.getBoundingClientRect();
     return { outerWidth: outer.width, chartWidth: inner?.width ?? 0, outerHeight: outer.height, chartHeight: inner?.height ?? 0 };
   }));
-  check("two-half-width-oi-history-panels", historyGeometry.length === 2 && Math.abs(historyGeometry[0].outerWidth - historyGeometry[1].outerWidth) <= 2, JSON.stringify(historyGeometry));
+  check("oi-history-matches-price-columns", historyGeometry.length === 2 && layout.stage && layout.callPanel && Math.abs(historyGeometry[0].outerWidth - layout.stage.width) <= 3 && Math.abs(historyGeometry[1].outerWidth - layout.callPanel.width) <= 3, JSON.stringify({ historyGeometry, underlying: layout.stage, call: layout.callPanel }));
   check("compact-oi-history-height", historyGeometry.every((item) => item.outerHeight <= 252), JSON.stringify(historyGeometry));
   check("oi-history-directly-below-price-grid", Boolean(layout.oiHistory && layout.priceGrid && Math.abs(layout.oiHistory.y - (layout.priceGrid.y + layout.priceGrid.height + 6)) <= 2), JSON.stringify(layout));
   const historyText = await page.getByTestId("v2-oi-history-row").innerText();
@@ -105,6 +118,18 @@ try {
   await page.screenshot({ path: path.join(output, "scalper-v2-price-and-oi-history-1920x1080.png"), fullPage: false });
   check("details-moved-below-price-grid", Boolean(layout.details && layout.priceGrid && layout.details.y >= layout.priceGrid.y + layout.priceGrid.height - 2), JSON.stringify(layout));
   check("top-current-values", (await page.locator("[aria-label='Current selected values'] span").count()) === 3, "underlying, CE and PE values shown in the command bar");
+  const analyticsHeader = page.locator("section[aria-label='Trading Analytics workspace'] > header").first();
+  const analyticsHeaderText = await analyticsHeader.innerText();
+  check("compact-parent-header", /Trading Analytics · Scalper V2/.test(analyticsHeaderText) && await page.getByText("READ-ONLY · Research", { exact: true }).count() === 0, analyticsHeaderText);
+  const headerGeometry = await page.evaluate(() => {
+    const parent = document.querySelector("section[aria-label='Trading Analytics workspace'] > header")?.getBoundingClientRect();
+    const command = document.querySelector("[data-testid='scalper-v2'] > header")?.getBoundingClientRect();
+    return { parentHeight: parent?.height ?? 0, commandHeight: command?.height ?? 0 };
+  });
+  check("two-compact-header-rows", headerGeometry.parentHeight <= 36 && headerGeometry.commandHeight <= 36, JSON.stringify(headerGeometry));
+  check("header-pcr-values", await page.getByText("OI PCR", { exact: false }).count() >= 1 && await page.getByText("Volume PCR", { exact: false }).count() >= 1, "OI PCR and Volume PCR are retained in the top header");
+  const popoutStyle = await page.getByTestId("v2-popout").evaluate((element) => ({ color: getComputedStyle(element).color, background: getComputedStyle(element).backgroundColor, right: element.getBoundingClientRect().right, barRight: element.parentElement?.getBoundingClientRect().right }));
+  check("popout-red-rightmost", popoutStyle.background === "rgb(198, 40, 61)" && popoutStyle.barRight != null && Math.abs(popoutStyle.barRight - popoutStyle.right) <= 6, JSON.stringify(popoutStyle));
 
   const underlying = page.getByTestId("v2-chart-host-underlying");
   const box = await underlying.boundingBox();
@@ -116,6 +141,8 @@ try {
     exact: document.querySelector(`[data-testid="v2-chart-host-${id}"]`)?.dataset.crosshairExact ?? "source",
   })));
   check("uniform-time-cursor", cursor[0].time !== "" && cursor.every((item) => item.time === cursor[0].time), JSON.stringify(cursor));
+  const activeStrikeIndexes = await page.getByTestId("v2-strike-side-charts").getByRole("img").evaluateAll((elements) => elements.map((element) => element.dataset.activeCategoryIndex));
+  check("time-cursor-to-strike-charts", activeStrikeIndexes.length >= 2 && activeStrikeIndexes.every((value) => value !== ""), JSON.stringify(activeStrikeIndexes));
   const indexVolume = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => ({ label: element.dataset.volumeLabel ?? "", points: Number(element.dataset.volumePoints ?? 0) }));
   check("index-current-month-future-volume", indexVolume.label.includes("Current-month future") && indexVolume.points > 0, JSON.stringify(indexVolume));
   const references = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => (element.dataset.referenceLevelsVisible ?? "").split(",").filter(Boolean));
@@ -129,6 +156,8 @@ try {
     await page.waitForTimeout(180);
     const historyCursor = await page.evaluate(() => ["underlying", "call", "put"].map((id) => document.querySelector(`[data-testid="v2-chart-host-${id}"]`)?.dataset.crosshairTime ?? ""));
     check("oi-history-hover-sync", historyCursor[0] !== "" && historyCursor.every((value) => value === historyCursor[0]), JSON.stringify(historyCursor));
+    const activeTime = await oiHistoryImages.evaluateAll((elements) => elements.map((element) => element.dataset.activeTimeMs));
+    check("oi-history-shared-active-time", activeTime.length === 2 && activeTime[0] !== "" && activeTime[0] === activeTime[1], JSON.stringify(activeTime));
   } else {
     check("oi-history-unavailable-honest", historyText.includes("history unavailable"), historyText);
   }

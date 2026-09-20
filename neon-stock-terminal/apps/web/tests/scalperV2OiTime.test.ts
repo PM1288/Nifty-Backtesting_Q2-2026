@@ -40,6 +40,8 @@ test("separate OI history panels retain the requested tracked-chain arithmetic",
   assert.equal((oi.xAxis as { min: number }).min, domain.from);
   assert.equal((oi.xAxis as { max: number }).max, domain.to);
   assert.equal(oi.dataZoom, undefined);
+  assert.deepEqual(oi.grid, { left: 0, right: 72, top: 16, bottom: 38, containLabel: false });
+  assert.equal((oi.yAxis as { position: string }).position, "right");
   assert.equal(oiSeries.length, 1);
   assert.equal(changeSeries.length, 1);
   assert.equal(oiSeries[0].name, "PE OI − CE OI");

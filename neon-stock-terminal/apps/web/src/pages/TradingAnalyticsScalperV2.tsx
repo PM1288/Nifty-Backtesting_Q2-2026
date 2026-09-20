@@ -574,7 +574,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const putProfile = profileRows.find((row) => row.side === "PE" && row.strike === numeric(selectedPeStrike));
   const maxPainValue = maxPain.candidates[0] ?? null;
   const inspectedUnderlying = numeric(inspectedRows[0]?.close) ?? spot;
-  const cursorStrikeIndex = inspectedUnderlying == null || !strikeRows.length ? null : strikeRows.reduce((best, strike, index) => (
+  const cursorStrikeIndex = inspectionTime == null || inspectedUnderlying == null || !strikeRows.length ? null : strikeRows.reduce((best, strike, index) => (
     Math.abs(strike - inspectedUnderlying) < Math.abs(strikeRows[best] - inspectedUnderlying) ? index : best
   ), 0);
   const activeStrikeIndex = hoveredStrikeIndex ?? cursorStrikeIndex;

@@ -14,6 +14,7 @@ export type ScalperV2OiTimePoint = {
 
 const timestamp = (point: ScalperV2OiTimePoint) => Date.parse(point.capturedAt);
 const validTime = (point: ScalperV2OiTimePoint) => Number.isFinite(timestamp(point));
+const nativePriceScaleGutter = 72;
 
 export type ScalperV2OiDifferenceMetric = "oi" | "change";
 export type ScalperV2TimeDomain = { from: number; to: number };
@@ -50,11 +51,14 @@ export function scalperV2OiMetricOption(
       axisPointer: { type: "line", snap: true },
       valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatOiAxisValue(Number(value)),
     },
-    grid: { left: 8, right: 8, top: 16, bottom: 38, containLabel: true },
+    // Match the native price panes: time starts at the plot's left edge and
+    // the numeric scale occupies the right-side price-scale gutter.
+    grid: { left: 0, right: nativePriceScaleGutter, top: 16, bottom: 38, containLabel: false },
     xAxis: timeAxis(timeLabel, domain),
     yAxis: {
       type: "value",
       name,
+      position: "right",
       nameLocation: "end",
       scale: true,
       axisLabel: { formatter: formatOiAxisValue },

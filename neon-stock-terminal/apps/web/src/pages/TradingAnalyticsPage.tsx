@@ -448,7 +448,13 @@ export function TradingAnalyticsPage() {
     );
   return (
     <InspectContext.Provider value={inspect}>
-      <section id="trading-analytics-top" className={styles.page} data-view={tab} aria-label="Trading Analytics workspace">
+      <section
+        id="trading-analytics-top"
+        className={styles.page}
+        data-view={isScalperView ? "scalper" : tab}
+        data-route-view={tab}
+        aria-label="Trading Analytics workspace"
+      >
         <header className={styles.toolbar}>
           {!isScalperPopout && <><h1>{isScalperView ? "Trading Analytics · Scalper V2" : "Trading Analytics"}</h1>
           {!isScalperView && <span>READ-ONLY · Research</span>}

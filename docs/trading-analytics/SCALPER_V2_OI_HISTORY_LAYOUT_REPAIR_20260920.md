@@ -65,3 +65,12 @@ remains available separately.
 - Browser screenshots and JSON evidence are outside Git at
   `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-final/`
   and `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-synthetic-pass/`.
+- Release commit `485e3f0` was pushed to the feature branch and `master`. The
+  approved dashboard-only deployment is healthy on image
+  `sha256:8270f7ca898b9c05147b9857c57675de2e2a0f82607ac2de28a81162df23a17c`
+  with entry asset `/n50/assets/index-BaR6LvwV.js`.
+- Authenticated production Chromium passed 20/20 checks with no page errors.
+  Production screenshots and results are outside Git at
+  `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-production/`.
+  The production session also truthfully showed unavailable OI-history states;
+  it did not fabricate lines from current-only OI.

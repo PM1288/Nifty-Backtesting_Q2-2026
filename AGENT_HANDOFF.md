@@ -5596,3 +5596,27 @@ or outcomes were deleted.
   `/home/novius2/NIFTY50/evidence/stock-360-audit-20260920/after-indexed/`.
   Production is healthy on image
   `sha256:d53344f4bed21cf8c5b5ba4b3dfa7f560a2d05abd79338cbefa22c892a96b234`.
+
+## 2026-09-20 — Scalper V2 price grid and OI-history split repair
+
+- Branch: `feature/scalper-v2-oi-history-layout-20260920`; durable report:
+  `docs/trading-analytics/SCALPER_V2_OI_HISTORY_LAYOUT_REPAIR_20260920.md`.
+- Removed the leftover strike OI side column and the PE-OI-minus-CE-OI native
+  subplot from the underlying chart. The top workspace is again only the
+  underlying plus the independently selected CE and PE, bounded to 640px on
+  desktop. Automatic underlying reference lines are restricted to Today open,
+  Yesterday close and Yesterday high when eligible in the raw session range.
+- Added two distinct equal-width charts directly below the price grid for
+  tracked-cohort `sum(PE OI)-sum(CE OI)` and
+  `sum(PE change OI)-sum(CE change OI)` over snapshot time. Their hover time is
+  linked to the underlying/CE/PE inspector; missing history remains explicitly
+  unavailable rather than zero-filled.
+- Web typecheck, 226/226 tests and production build passed; API typecheck,
+  254/254 tests and build passed; canonical gate passed. Local real-data
+  Chromium passed 20/20 and deterministic fixture Chromium passed 21/21.
+- Commit `485e3f0` is pushed to the feature branch and `master`. The scoped
+  dashboard deployment is healthy on image
+  `sha256:8270f7ca898b9c05147b9857c57675de2e2a0f82607ac2de28a81162df23a17c`
+  with asset `/n50/assets/index-BaR6LvwV.js`. Authenticated production Chromium
+  passed 20/20; evidence is outside Git at
+  `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-production/`.

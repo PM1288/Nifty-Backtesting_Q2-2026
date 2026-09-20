@@ -145,8 +145,8 @@ def test_output_validation_truncates_for_low_noise_delivery() -> None:
 
 def test_whatsapp_message_is_concise_consistent_and_contains_no_operational_footer() -> None:
     result = validate_output(valid_output(), "SBIN", date(2026, 8, 29))
-    message = render_whatsapp_message("CLAUDE", "OIIS", evaluation(), result)
-    assert "CLAUDE RESEARCH · OIIS" in message
+    message = render_whatsapp_message("CONSOLIDATED", "OIIS", evaluation(), result)
+    assert "CONSOLIDATED RESEARCH · OIIS" in message
     assert "SBIN · State Bank of India" in message
     assert "WAIT_FOR_XFACTOR" in message
     assert "O 78.34" in message and "X 74.13" in message
@@ -171,4 +171,4 @@ def test_missing_numeric_values_remain_explicitly_unavailable() -> None:
     row = evaluation()
     row["input_snapshot"]["strategy_snapshot"]["xfactor"] = None
     result = validate_output(valid_output(), "SBIN", date(2026, 8, 29))
-    assert "X —" in render_whatsapp_message("QWEN", "OISS", row, result)
+    assert "X —" in render_whatsapp_message("CONSOLIDATED", "OISS", row, result)

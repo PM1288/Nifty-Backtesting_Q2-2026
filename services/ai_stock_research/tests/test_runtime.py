@@ -12,7 +12,7 @@ class FailedProviderRepository:
         return {
             "provider_evaluation_id": "provider-1",
             "evaluation_id": "evaluation-1",
-            "endpoint": "http://100.120.233.3:8009/query",
+            "endpoint": "http://100.120.233.3:8012/query/final",
             "input_snapshot": {},
             "source_strategy": "OIIS",
             "symbol": "SBIN",
@@ -34,10 +34,10 @@ def test_provider_failure_never_creates_a_delivery(monkeypatch) -> None:
     runtime.worker_id = "test-worker"
     runtime.prompt = "Return JSON only"
     runtime.settings = SimpleNamespace(
-        claude_model="Sonnet 5",
-        qwen_model="Qwen3.7-Plus",
+        consolidation_provider="claude",
+        consolidation_effort="high",
         request_timeout_seconds=1,
-        provider_max_attempts=5,
+        research_max_attempts=1,
         delivery_enabled=True,
         whatsapp_chat_id="group@g.us",
     )
@@ -46,6 +46,6 @@ def test_provider_failure_never_creates_a_delivery(monkeypatch) -> None:
         raise RuntimeError("provider unavailable")
 
     monkeypatch.setattr("ai_stock_research.runtime.call_provider", fail_call)
-    assert runtime.process_provider("CLAUDE") is True
+    assert runtime.process_research() is True
     assert repository.failed is True
     assert repository.succeeded is False

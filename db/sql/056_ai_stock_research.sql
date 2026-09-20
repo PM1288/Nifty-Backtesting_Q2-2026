@@ -91,6 +91,15 @@ CREATE TABLE IF NOT EXISTS ai_stock_research.provider_evaluation (
   UNIQUE (evaluation_id,provider)
 );
 
+-- New stock research uses the final-only fleet endpoint and therefore owns one
+-- durable consolidated evaluation/outbox row per stock. Historical provider
+-- rows remain immutable evidence and are not rewritten or redelivered.
+ALTER TABLE ai_stock_research.provider_evaluation
+  DROP CONSTRAINT IF EXISTS provider_evaluation_provider_check;
+ALTER TABLE ai_stock_research.provider_evaluation
+  ADD CONSTRAINT provider_evaluation_provider_check
+  CHECK (provider IN ('CLAUDE','QWEN','DEEPSEEK','CONSOLIDATED'));
+
 CREATE INDEX IF NOT EXISTS ai_stock_research_provider_queue_idx
   ON ai_stock_research.provider_evaluation(provider,status,available_at,created_at);
 

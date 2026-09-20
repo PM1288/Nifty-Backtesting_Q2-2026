@@ -14,16 +14,18 @@ from .runtime import Runtime
 def provider_health(settings: Settings) -> dict[str, object]:
     results: dict[str, object] = {}
     with httpx.Client(timeout=httpx.Timeout(10, connect=5)) as client:
-        for provider, query_url in settings.provider_endpoints.items():
-            health_url = query_url.rsplit("/", 1)[0] + "/health"
-            try:
-                response = client.get(health_url)
-                results[provider] = {
-                    "status": "HEALTHY" if response.status_code == 200 else "UNHEALTHY",
-                    "http_status": response.status_code,
-                }
-            except httpx.HTTPError as exc:
-                results[provider] = {"status": "UNREACHABLE", "error_class": type(exc).__name__}
+        health_url = settings.consolidated_endpoint.split("/query/", 1)[0] + "/health"
+        try:
+            response = client.get(health_url)
+            results["CONSOLIDATED"] = {
+                "status": "HEALTHY" if response.status_code == 200 else "UNHEALTHY",
+                "http_status": response.status_code,
+            }
+        except httpx.HTTPError as exc:
+            results["CONSOLIDATED"] = {
+                "status": "UNREACHABLE",
+                "error_class": type(exc).__name__,
+            }
     return results
 
 

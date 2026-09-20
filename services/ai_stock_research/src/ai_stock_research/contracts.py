@@ -31,7 +31,12 @@ WEB_SENTIMENTS = {
     "BEARISH",
     "UNVERIFIED",
 }
-PROVIDER_ICONS = {"CLAUDE": "🟠", "QWEN": "🟣", "DEEPSEEK": "🔵"}
+PROVIDER_ICONS = {
+    "CLAUDE": "🟠",
+    "QWEN": "🟣",
+    "DEEPSEEK": "🔵",
+    "CONSOLIDATED": "🔎",
+}
 
 
 class OutputValidationError(ValueError):
@@ -232,8 +237,9 @@ def render_whatsapp_message(
     stock = snapshot["stock"]
     history = snapshot.get("price_history_1y") or {}
     sessions = len(history.get("rows") or snapshot.get("history_30d") or [])
+    research_label = "CONSOLIDATED" if provider == "CONSOLIDATED" else provider
     lines = [
-        f"{PROVIDER_ICONS[provider]} *{provider} RESEARCH · {source_strategy}*",
+        f"{PROVIDER_ICONS[provider]} *{research_label} RESEARCH · {source_strategy}*",
         f"*{stock['symbol']} · {stock.get('company_name') or stock['symbol']}*",
         (
             f"{strategy.get('direction') or '—'} · {strategy.get('status') or '—'} · "

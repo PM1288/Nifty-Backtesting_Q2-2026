@@ -3,13 +3,12 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from .config import Settings
 from .contracts import render_whatsapp_message
 from .providers import call_provider
-from .repository import PROVIDERS, Repository
+from .repository import Repository
 from .whatsapp import send_message
 
 LOG = logging.getLogger("ai-stock-research")
@@ -29,17 +28,9 @@ class Runtime:
     @property
     def models(self) -> dict[str, dict[str, str]]:
         return {
-            "CLAUDE": {
-                "model": self.settings.claude_model,
-                "endpoint": self.settings.provider_endpoints["CLAUDE"],
-            },
-            "QWEN": {
-                "model": self.settings.qwen_model,
-                "endpoint": self.settings.provider_endpoints["QWEN"],
-            },
-            "DEEPSEEK": {
-                "model": "DeepSeek Web Search",
-                "endpoint": self.settings.provider_endpoints["DEEPSEEK"],
+            "CONSOLIDATED": {
+                "model": f"fleet-consolidated/{self.settings.consolidation_provider}",
+                "endpoint": self.settings.consolidated_endpoint,
             },
         }
 
@@ -49,21 +40,20 @@ class Runtime:
             LOG.info("candidate_discovery_completed", extra={"count": result["new_evaluations"]})
         return result
 
-    def process_provider(self, provider: str) -> bool:
-        row = self.repository.claim_provider(provider, f"{self.worker_id}-{provider.lower()}")
+    def process_research(self) -> bool:
+        provider = "CONSOLIDATED"
+        row = self.repository.claim_provider(provider, f"{self.worker_id}-consolidated")
         if not row:
             return False
         started = time.monotonic()
         try:
             result = call_provider(
-                provider,
                 row["endpoint"],
                 self.prompt,
                 row["input_snapshot"],
-                self.settings.claude_model,
-                self.settings.qwen_model,
                 self.settings.request_timeout_seconds,
-                qwen_recovery_wait_seconds=self.settings.qwen_recovery_wait_seconds,
+                consolidation_provider=self.settings.consolidation_provider,
+                consolidation_effort=self.settings.consolidation_effort,
             )
             message = render_whatsapp_message(
                 provider, row["source_strategy"], row, result.parsed_output
@@ -93,7 +83,7 @@ class Runtime:
             )
         except Exception as exc:
             state = self.repository.provider_failed(
-                row, exc, self.settings.provider_max_attempts
+                row, exc, self.settings.research_max_attempts
             )
             log_method = LOG.warning if state == "DEAD" else LOG.debug
             log_method(
@@ -147,10 +137,7 @@ class Runtime:
 
     def run_once(self) -> dict[str, Any]:
         discovered = self.discover()
-        with ThreadPoolExecutor(max_workers=3, thread_name_prefix="provider") as executor:
-            provider_work = dict(
-                zip(PROVIDERS, executor.map(self.process_provider, PROVIDERS), strict=True)
-            )
+        provider_work = {"CONSOLIDATED": self.process_research()}
         delivered = 0
         while delivered < 10 and self.deliver_one():
             delivered += 1

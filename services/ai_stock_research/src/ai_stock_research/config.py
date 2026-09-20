@@ -7,11 +7,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-APPROVED_PROVIDER_ENDPOINTS = {
-    "CLAUDE": "http://100.120.233.3:8009/query",
-    "QWEN": "http://100.120.233.3:8010/query",
-    "DEEPSEEK": "http://100.120.233.3:8011/query",
-}
+APPROVED_CONSOLIDATED_ENDPOINT = "http://100.120.233.3:8012/query/final"
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -37,16 +33,15 @@ class Settings:
     delivery_enabled: bool
     poll_seconds: int
     request_timeout_seconds: int
-    provider_max_attempts: int
+    research_max_attempts: int
     delivery_max_attempts: int
     log_level: str
     whatsapp_url: str
     whatsapp_token_file: Path
     whatsapp_chat_id: str
-    provider_endpoints: dict[str, str]
-    claude_model: str
-    qwen_model: str
-    qwen_recovery_wait_seconds: int
+    consolidated_endpoint: str
+    consolidation_provider: str
+    consolidation_effort: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -57,8 +52,10 @@ class Settings:
             enabled=_bool("AI_STOCK_RESEARCH_ENABLED", True),
             delivery_enabled=_bool("AI_STOCK_RESEARCH_DELIVERY_ENABLED", True),
             poll_seconds=max(5, int(os.getenv("AI_RESEARCH_POLL_SECONDS", "15"))),
-            request_timeout_seconds=max(30, int(os.getenv("AI_RESEARCH_REQUEST_TIMEOUT_SECONDS", "240"))),
-            provider_max_attempts=max(1, int(os.getenv("AI_RESEARCH_PROVIDER_MAX_ATTEMPTS", "5"))),
+            request_timeout_seconds=max(600, int(os.getenv("AI_RESEARCH_REQUEST_TIMEOUT_SECONDS", "600"))),
+            research_max_attempts=max(
+                1, int(os.getenv("AI_RESEARCH_CONSOLIDATED_MAX_ATTEMPTS", "1"))
+            ),
             delivery_max_attempts=max(1, int(os.getenv("AI_RESEARCH_DELIVERY_MAX_ATTEMPTS", "8"))),
             log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
             whatsapp_url=os.getenv(
@@ -70,15 +67,15 @@ class Settings:
             whatsapp_chat_id=os.getenv(
                 "WA_MYSELF_CHAT_ID", "120363428118961288@g.us"
             ).strip(),
-            provider_endpoints={
-                provider: os.getenv(f"AI_RESEARCH_{provider}_URL", endpoint).strip()
-                for provider, endpoint in APPROVED_PROVIDER_ENDPOINTS.items()
-            },
-            claude_model=os.getenv("AI_RESEARCH_CLAUDE_MODEL", "Sonnet 5").strip(),
-            qwen_model=os.getenv("AI_RESEARCH_QWEN_MODEL", "Qwen3.7-Plus").strip(),
-            qwen_recovery_wait_seconds=max(
-                30, int(os.getenv("AI_RESEARCH_QWEN_RECOVERY_WAIT_SECONDS", "90"))
-            ),
+            consolidated_endpoint=os.getenv(
+                "AI_RESEARCH_CONSOLIDATED_URL", APPROVED_CONSOLIDATED_ENDPOINT
+            ).strip(),
+            consolidation_provider=os.getenv(
+                "AI_RESEARCH_CONSOLIDATION_PROVIDER", "claude"
+            ).strip().lower(),
+            consolidation_effort=os.getenv(
+                "AI_RESEARCH_CONSOLIDATION_EFFORT", "high"
+            ).strip().lower(),
         )
         settings.validate()
         return settings
@@ -86,10 +83,15 @@ class Settings:
     def validate(self) -> None:
         if not self.prompt_path.is_file():
             raise ValueError(f"AI research prompt does not exist: {self.prompt_path}")
-        for provider, expected in APPROVED_PROVIDER_ENDPOINTS.items():
-            actual = self.provider_endpoints.get(provider)
-            if actual != expected:
-                raise ValueError(f"{provider} endpoint must be the approved Tailscale URL {expected}")
+        if self.consolidated_endpoint != APPROVED_CONSOLIDATED_ENDPOINT:
+            raise ValueError(
+                "consolidated endpoint must be the approved Tailscale URL "
+                f"{APPROVED_CONSOLIDATED_ENDPOINT}"
+            )
+        if self.consolidation_provider not in {"claude", "chatgpt"}:
+            raise ValueError("AI_RESEARCH_CONSOLIDATION_PROVIDER must be claude or chatgpt")
+        if self.consolidation_effort not in {"standard", "high"}:
+            raise ValueError("AI_RESEARCH_CONSOLIDATION_EFFORT must be standard or high")
         parsed = urlparse(self.whatsapp_url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("WA_GATEWAY_URL must be an absolute HTTP(S) URL")

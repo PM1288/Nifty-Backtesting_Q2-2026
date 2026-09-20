@@ -11,7 +11,7 @@ from psycopg_pool import ConnectionPool
 
 from . import PROMPT_VERSION
 
-PROVIDERS = ("CLAUDE", "QWEN", "DEEPSEEK")
+PROVIDERS = ("CONSOLIDATED",)
 OFFICIAL_OIIS_SLOTS = (
     "OPEN_0930",
     "INTRADAY_1000",
@@ -252,7 +252,7 @@ class Repository:
                   WHERE p.provider=%s AND p.status IN ('PENDING','RETRY') AND p.available_at<=now()
                   ORDER BY e.trade_date,p.created_at FOR UPDATE OF p SKIP LOCKED LIMIT 1)
                 UPDATE ai_stock_research.provider_evaluation p SET status='PROCESSING',attempt_count=attempt_count+1,
-                  lease_owner=%s,lease_expires_at=now()+interval '6 minutes',started_at=coalesce(started_at,now()),
+                  lease_owner=%s,lease_expires_at=now()+interval '12 minutes',started_at=coalesce(started_at,now()),
                   updated_at=now() FROM candidate c WHERE p.provider_evaluation_id=c.provider_evaluation_id
                   RETURNING p.*,c.input_snapshot,c.trade_date,c.symbol,c.source_strategy""",
                 (provider, worker_id),

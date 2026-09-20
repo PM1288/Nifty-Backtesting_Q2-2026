@@ -241,9 +241,6 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [measureMode, setMeasureMode] = useState(false), [points, setPoints] = useState<string[]>([]), [quantity, setQuantity] = useState("65");
   const [measurementContext, setMeasurementContext] = useState<{ panes: ChartPane[]; interval: number; symbol: string; expiry: string; ceStrike: string; peStrike: string } | null>(null);
   const [drawingTool, setDrawingTool] = useState<ScalperV2DrawingTool>("select");
-  // The price-aligned overlay has one unambiguous unit: signed change in OI.
-  // Current OI remains available in the snapshot, strike matrix and OI analytics.
-  const profileMode = "change" as const;
   const [profileRangeExpanded, setProfileRangeExpanded] = useState(false);
   const [priceMode, setPriceMode] = useState<ScalperV2PriceMode>("return");
   const [showAllPriceSeries, setShowAllPriceSeries] = useState(false);
@@ -303,11 +300,12 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const snapshotDays = [...new Set(profileRows.map((row) => istDay(row.currentAt)).filter(Boolean))].sort();
   const differentSnapshotDay = Boolean(tradingDay && snapshotDays.some((day) => day !== tradingDay));
   const deltaBasisLabel = `${profileBaselineLabel(profileModel.baselineKind)} ΔOI`;
-  const { ceCurrent, peCurrent, ceChanges, peChanges, ceIvChanges, peIvChanges } = useMemo(() => {
+  const { ceCurrent, peCurrent, ceChanges, peChanges, ceIvChanges, peIvChanges, ceVolumes, peVolumes } = useMemo(() => {
     const currentSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => profileRows.find((row) => row.side === wanted && row.strike === strike)?.currentOi ?? null);
     const changeSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => profileRows.find((row) => row.side === wanted && row.strike === strike)?.changeOi ?? null);
     const ivChangeSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => numeric(rankSource.find((row) => side(row) === wanted && numeric(row.strike) === strike)?.change_in_iv));
-    return { ceCurrent: currentSeries("CE"), peCurrent: currentSeries("PE"), ceChanges: changeSeries("CE"), peChanges: changeSeries("PE"), ceIvChanges: ivChangeSeries("CE"), peIvChanges: ivChangeSeries("PE") };
+    const volumeSeries = (wanted: "CE" | "PE") => strikeRows.map((strike) => numeric(rankSource.find((row) => side(row) === wanted && numeric(row.strike) === strike)?.total_traded_volume));
+    return { ceCurrent: currentSeries("CE"), peCurrent: currentSeries("PE"), ceChanges: changeSeries("CE"), peChanges: changeSeries("PE"), ceIvChanges: ivChangeSeries("CE"), peIvChanges: ivChangeSeries("PE"), ceVolumes: volumeSeries("CE"), peVolumes: volumeSeries("PE") };
   }, [profileRows, rankSource, strikeRows]);
   const deltaState = useMemo(() => oiComparisonState(
     profileRows.map((row) => row.currentOi),
@@ -496,6 +494,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   ], [ceChanges, ceCurrent, maxPain.points, nearestSpotStrike, payoutNiftyCurrentGuide, peChanges, peCurrent, spot, strikeRows]);
   const ivChangeOption = useMemo(() => scalperV2VerticalIvChangeOption(strikeRows, ceIvChanges, peIvChanges), [ceIvChanges, peIvChanges, strikeRows]);
   const ivComparable = [...ceIvChanges, ...peIvChanges].filter((value) => value != null).length;
+  const volumeComparable = [...ceVolumes, ...peVolumes].filter((value) => value != null).length;
+  const volumeOption = useMemo(() => scalperV2VerticalStrikeOption(strikeRows, ceVolumes, peVolumes, "volume", spot, nearestSpotStrike), [ceVolumes, nearestSpotStrike, peVolumes, spot, strikeRows]);
 
   const selectTime = (time: string) => {
     const seconds = Math.floor(Date.parse(time) / 1000);
@@ -598,9 +598,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
   return <section className={css.page} data-testid="scalper-v2" data-popout={isPopout || undefined}>
     <header className={css.commandBar}>
-      <MwhdRankBadge ranking={mwhd.rankings.get(symbol.toUpperCase())} />
+      <strong className={css.commandSymbol}>{symbol}</strong>
       <div className={css.topQuotes} aria-label="Current selected values"><span><b>{label}</b>{number(inspectedUnderlying)}</span><span className={css.callText}><b>CE {selectedCeStrike}</b>{price(inspectedRows[1]?.close ?? callLeg?.last_price)}</span><span className={css.putText}><b>PE {selectedPeStrike}</b>{price(inspectedRows[2]?.close ?? putLeg?.last_price)}</span></div>
-      <div className={css.commandGroup}><span>Time</span><label>Session <select value={tradingDay} onChange={(event) => update("day", event.target.value)}>{days.map((day) => <option key={day}>{day}</option>)}</select></label>{[1, 5, 15, 60].map((value) => <button key={value} aria-current={interval === value ? "page" : undefined} onClick={() => update("interval", String(value))}>{value === 60 ? "1h" : `${value}m`}</button>)}<button aria-pressed={horizontalView === "day"} onClick={() => { setHorizontalView("day"); setFitRequest((value) => value + 1); }}>Fit day</button></div>
+      <MwhdRankBadge ranking={mwhd.rankings.get(symbol.toUpperCase())} />
+      <div className={css.commandGroup}><span>Time</span><label>Session <select value={tradingDay} onChange={(event) => update("day", event.target.value)}>{days.map((day) => <option key={day}>{day}</option>)}</select></label><button aria-current={interval === 60 ? "page" : undefined} onClick={() => update("interval", "60")}>1h</button><button aria-pressed={horizontalView === "day"} onClick={() => { setHorizontalView("day"); setFitRequest((value) => value + 1); }}>Fit day</button></div>
       <div className={css.commandGroup}><span>Contract</span><label>CE <select aria-label="Selected CE strike" value={selectedCeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("CE", event.target.value)}>{selectableCeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><label>PE <select aria-label="Selected PE strike" value={selectedPeStrike} disabled={points.length > 0} onChange={(event) => updateLegStrike("PE", event.target.value)}>{selectablePeStrikes.map((strike) => <option key={strike} value={strike}>{strike.toLocaleString("en-IN")}</option>)}</select></label><button disabled={points.length > 0 || defaultStrike == null} onClick={selectBothAtm}>Both ATM</button><small>{expiry || "Expiry unavailable"}</small></div>
       <details className={css.commandMenu}><summary>Scale</summary><div><button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button><button aria-pressed={profileRangeExpanded} disabled={!profileRows.length} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button><button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button><button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button><button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button><button onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button><button onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button></div></details>
       <details className={css.commandMenu}><summary>OI</summary><div><button onClick={() => { setAnalyticsTab("matrix"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>Strike matrix</button><button onClick={() => { setAnalyticsTab("oi"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>OI &amp; ΔOI charts</button></div></details>
@@ -632,8 +633,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           {deltaState.state === "baseline_unavailable" || deltaState.state === "current_unavailable" ? <div className={css.sideState}><strong>{deltaState.state === "baseline_unavailable" ? "Baseline unavailable" : "Current OI unavailable"}</strong><span>{deltaState.comparable}/{deltaState.total} comparable contracts</span></div> : <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put minus call difference" axisExtentPolicy="native" option={analyticOptions[1]} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>}
         </article>
         <article data-testid="v2-side-iv-change-chart">
-          <header><strong>Change in IV by strike</strong><span>Previous retained observation · percentage points</span></header>
-          {ivComparable === 0 ? <div className={css.sideState}><strong>IV change unavailable</strong><span>Comparable exact-contract IV observations are required; missing is not zero.</span></div> : <Suspense fallback={<p>Loading ΔIV chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in implied volatility by strike" axisExtentPolicy="native" option={ivChangeOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>}
+          <header><strong>{ivComparable > 0 ? "Change in IV by strike" : "Tracked volume by strike"}</strong><span>{ivComparable > 0 ? "Previous retained observation · percentage points" : "IV comparison unavailable · source volume"}</span></header>
+          {ivComparable > 0 ? <Suspense fallback={<p>Loading ΔIV chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in implied volatility by strike" axisExtentPolicy="native" option={ivChangeOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense> : volumeComparable > 0 ? <><span className={css.metricFallback}>IV comparison unavailable · showing tracked volume</span><Suspense fallback={<p>Loading volume chart…</p>}><Chart className={css.structureChart} ariaLabel="Tracked option volume by strike because IV comparison is unavailable" axisExtentPolicy="native" option={volumeOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense></> : <div className={css.sideState}><strong>IV change unavailable</strong><span>Comparable exact-contract IV observations are required; missing is not zero.</span></div>}
         </article>
       </aside>
       <section className={css.oiHistoryRow} data-testid="v2-oi-history-row" aria-label="Tracked option-chain open-interest differences over time">
@@ -649,6 +650,13 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <tr><th>Change in OI</th><td className={signClass(callProfile?.changeOi)}>{signed(callProfile?.changeOi)}</td><td className={signClass(putProfile?.changeOi)}>{signed(putProfile?.changeOi)}</td></tr>
           <tr><th>Change in OI %</th><td className={signClass(callProfile?.changeOi)}>{callProfile?.changeOi != null && callProfile.baselineOi ? percent(100 * callProfile.changeOi / callProfile.baselineOi) : "—"}</td><td className={signClass(putProfile?.changeOi)}>{putProfile?.changeOi != null && putProfile.baselineOi ? percent(100 * putProfile.changeOi / putProfile.baselineOi) : "—"}</td></tr>
           <tr><th>IV · %</th><td>{number(callLeg?.implied_volatility)}</td><td>{number(putLeg?.implied_volatility)}</td></tr>
+          <tr><th>IV change · pp</th><td className={signClass(callLeg?.change_in_iv)}>{signed(callLeg?.change_in_iv)}</td><td className={signClass(putLeg?.change_in_iv)}>{signed(putLeg?.change_in_iv)}</td></tr>
+          <tr><th>Volume</th><td>{compact(callLeg?.total_traded_volume)}</td><td>{compact(putLeg?.total_traded_volume)}</td></tr>
+          <tr><th>Bid / ask qty</th><td>{compact(callLeg?.bid_qty)} / {compact(callLeg?.ask_qty)}</td><td>{compact(putLeg?.bid_qty)} / {compact(putLeg?.ask_qty)}</td></tr>
+          <tr><th>Delta</th><td>{number(callLeg?.delta)}</td><td>{number(putLeg?.delta)}</td></tr>
+          <tr><th>Gamma</th><td>{number(callLeg?.gamma)}</td><td>{number(putLeg?.gamma)}</td></tr>
+          <tr><th>Theta</th><td>{number(callLeg?.theta)}</td><td>{number(putLeg?.theta)}</td></tr>
+          <tr><th>Vega</th><td>{number(callLeg?.vega)}</td><td>{number(putLeg?.vega)}</td></tr>
           <tr><th>Bid–ask spread · ₹</th><td>{price(legSpread(callLeg))}</td><td>{price(legSpread(putLeg))}</td></tr>
         </tbody></table>
         {(inspectionMode !== "latest" || differentSnapshotDay) && <p className={css.scopeNotice}>Prices use the selected candle · OI, IV, PCR and Max Pain use the latest snapshot.</p>}

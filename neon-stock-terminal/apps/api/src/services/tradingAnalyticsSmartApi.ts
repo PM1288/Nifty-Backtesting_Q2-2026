@@ -134,26 +134,32 @@ export async function loadSmartApiNifty(
      ORDER BY current.strike,current."right"`,
     asOf, expiry, underlying.symbol==='NIFTY'?['NIFTY','NIFTY50']:[underlying.symbol],
   ) : [];
+  const withGreeks = (row: Facts): Facts => {
+    const greek = greeks.find((candidate) => numeric(candidate.strike) === numeric(row.strike) && candidate.option_type === row.option_type);
+    const currentIv = numeric(greek?.implied_volatility) ?? numeric(row.implied_volatility);
+    const previousIv = numeric(greek?.previous_implied_volatility) ?? numeric(row.previous_implied_volatility);
+    return {
+      ...row,
+      implied_volatility: currentIv,
+      previous_implied_volatility: previousIv,
+      change_in_iv: observedOiChange(currentIv, previousIv),
+      delta: numeric(greek?.delta) ?? numeric(row.delta),
+      gamma: numeric(greek?.gamma) ?? numeric(row.gamma),
+      theta: numeric(greek?.theta) ?? numeric(row.theta),
+      vega: numeric(greek?.vega) ?? numeric(row.vega),
+      greeks_collected_at: greek?.greeks_collected_at ?? row.greeks_collected_at ?? null,
+      previous_greeks_collected_at: greek?.previous_greeks_collected_at ?? null,
+      greeks_source_symbol: greek?.greeks_source_symbol ?? row.greeks_source_symbol ?? null,
+      greeks_state: greek ? "RETAINED_OBSERVATION_EXCHANGE_TIME_UNVERIFIED" : "NO_MATCHING_RETAINED_GREEKS",
+    };
+  };
   const rows = contracts.map((r) => ({
-    ...r,
+    ...withGreeks(r),
     quote_state: smartApiQuoteState(r, asOf, calendar[0]?.market_close_ts),
     source: "smartapi",
     oi_unit: "PROVIDER_NATIVE_UNVERIFIED",
     change_in_oi: null,
     previous_snapshot_delta: observedOiChange(r.open_interest,r.previous_open_interest),
-    ...(() => {
-      const g = greeks.find(g => numeric(g.strike) === numeric(r.strike) && g.option_type === r.option_type);
-      return {
-        implied_volatility: g?.implied_volatility ?? null,
-        previous_implied_volatility: g?.previous_implied_volatility ?? null,
-        change_in_iv: observedOiChange(g?.implied_volatility, g?.previous_implied_volatility),
-        delta: g?.delta ?? null, gamma: g?.gamma ?? null, theta: g?.theta ?? null, vega: g?.vega ?? null,
-        greeks_collected_at: g?.greeks_collected_at ?? null,
-        previous_greeks_collected_at: g?.previous_greeks_collected_at ?? null,
-        greeks_source_symbol: g?.greeks_source_symbol ?? null,
-        greeks_state: g ? "RETAINED_OBSERVATION_EXCHANGE_TIME_UNVERIFIED" : "NO_MATCHING_RETAINED_GREEKS",
-      };
-    })(),
   }));
   const paired =
     spot == null
@@ -163,23 +169,30 @@ export async function loadSmartApiNifty(
   // stitch its rows into individually timed FULL quotes or invent a last price
   // from bid/ask midpoint. Use one whole cohort only when FULL OI is absent.
   const fallback = expiry && (!paired.legs.length || paired.legs.some(l=>numeric(l.open_interest)==null))
-    ? await read('smartapi_stock_chain', `SELECT ts collected_at,source_quote_ts exchange_feed_at,
-      underlying,expiry::text,symbol_token,tradingsymbol instrument_identifier,strike::float8 strike,"right" option_type,lotsize,
-      spot_price::float8,oi::text open_interest,volume::text total_traded_volume,
-      bid::float8 bid_price,ask::float8 ask_price,midpoint::float8 indicative_midpoint,
-      broker_iv::float8 implied_volatility,broker_delta::float8 delta,broker_gamma::float8 gamma,
-      broker_theta::float8 theta,broker_vega::float8 vega,quote_age_seconds,data_quality_status,
+    ? await read('smartapi_stock_chain', `SELECT c.ts collected_at,c.source_quote_ts exchange_feed_at,
+      c.underlying,c.expiry::text,c.symbol_token,c.tradingsymbol instrument_identifier,c.strike::float8 strike,c."right" option_type,c.lotsize,
+      c.spot_price::float8,c.oi::text open_interest,c.volume::text total_traded_volume,
+      c.bid::float8 bid_price,c.ask::float8 ask_price,c.midpoint::float8 indicative_midpoint,
+      c.broker_iv::float8 implied_volatility,prior.broker_iv::float8 previous_implied_volatility,prior.ts previous_greeks_collected_at,
+      c.broker_delta::float8 delta,c.broker_gamma::float8 gamma,
+      c.broker_theta::float8 theta,c.broker_vega::float8 vega,c.quote_age_seconds,c.data_quality_status,
       NULL::float8 last_price,NULL::float8 previous_snapshot_delta,
       'smartapi_option_chain_snapshots'::text source
-      FROM public.smartapi_option_chain_snapshots
-      WHERE underlying=$2 AND expiry=$3::date AND ts=(SELECT max(ts) FROM public.smartapi_option_chain_snapshots
+      FROM public.smartapi_option_chain_snapshots c
+      LEFT JOIN LATERAL (
+        SELECT p.broker_iv,p.ts FROM public.smartapi_option_chain_snapshots p
+        WHERE p.underlying=c.underlying AND p.expiry=c.expiry AND p.symbol_token=c.symbol_token
+          AND p.ts<c.ts AND p.ts BETWEEN $1::timestamptz-interval '7 days' AND $1::timestamptz
+        ORDER BY p.ts DESC LIMIT 1
+      ) prior ON true
+      WHERE c.underlying=$2 AND c.expiry=$3::date AND c.ts=(SELECT max(ts) FROM public.smartapi_option_chain_snapshots
         WHERE underlying=$2 AND expiry=$3::date AND ts BETWEEN $1::timestamptz-interval '7 days' AND $1::timestamptz)
-      AND (source_quote_ts IS NULL OR source_quote_ts<=$1::timestamptz) ORDER BY strike,"right"`,asOf,underlying.symbol,expiry)
+      AND (c.source_quote_ts IS NULL OR c.source_quote_ts<=$1::timestamptz) ORDER BY c.strike,c."right"`,asOf,underlying.symbol,expiry)
     : [];
   // Some real stock cohorts have complete OI but no embedded spot. The already
   // observed, as-of-filtered underlying quote is a valid strike-window reference.
   const fallbackSpot=spot??numeric(fallback[0]?.spot_price);
-  const cohort=fallback.length && fallbackSpot!=null ? nearestPairs(fallback.map(r=>({...r,
+  const cohort=fallback.length && fallbackSpot!=null ? nearestPairs(fallback.map(r=>({...withGreeks(r),
     quote_state:smartApiQuoteState(r,asOf,calendar[0]?.market_close_ts),oi_unit:'PROVIDER_NATIVE_UNVERIFIED'})),fallbackSpot):paired;
   const hasCohort=fallback.length>0 && fallbackSpot!=null;
   const useCohortQuotes=hasCohort && !paired.legs.some(l=>numeric(l.open_interest)!=null);
@@ -220,7 +233,7 @@ export async function loadSmartApiNifty(
       source:hasCohort?'smartapi_option_chain_snapshots':selectedSource,
       strikes:metricWindow.strikes,
       collectedAt:hasCohort?fallback[0].collected_at:null},
-    metricLegs:metricWindow.legs,
+    metricLegs:metricWindow.legs.map(withGreeks),
     oiAnalytics:{
       baselinePreference:["PREVIOUS_SESSION_FINAL","FIRST_SESSION_OBSERVATION"],
       fixedCohort,

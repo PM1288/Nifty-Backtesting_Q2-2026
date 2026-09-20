@@ -43,7 +43,7 @@ export function scalperV2VerticalStrikeOption(
   strikes: number[],
   calls: DeltaOiValue[],
   puts: DeltaOiValue[],
-  metric: "oi" | "change",
+  metric: "oi" | "change" | "volume",
   underlyingValue: number | null = null,
   nearestStrike: number | null = null,
 ): EChartsOption {
@@ -52,7 +52,7 @@ export function scalperV2VerticalStrikeOption(
     ? scalperV2AdaptiveDeltaDomain([...calls, ...puts])
     : [0, undefined];
   const [differenceMinimum, differenceMaximum] = scalperV2AdaptiveDeltaDomain(difference);
-  const suffix = metric === "oi" ? "OI" : "ΔOI";
+  const suffix = metric === "oi" ? "OI" : metric === "change" ? "ΔOI" : "Volume";
   const nearestIndex = nearestStrike == null ? -1 : strikes.indexOf(nearestStrike);
   return {
     animation: false,

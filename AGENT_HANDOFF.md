@@ -5686,3 +5686,26 @@ or outcomes were deleted.
   words and Speak/Muted words were removed. Paper-only controls, quality state,
   native speech, notifications, authentication and permissions are unchanged
   and remain accessible.
+
+## 2026-09-20 — Scalper V2 option metrics and compact chart alignment
+
+- Branch: `fix/scalper-v2-option-metrics-layout-20260920`; durable report:
+  `docs/trading-analytics/SCALPER_V2_OPTION_METRICS_LAYOUT_20260920.md`.
+- The selected underlying symbol now starts the V2 command row. The 1m, 5m
+  and 15m buttons were removed, while the retained 1h/session/Fit day controls
+  continue to use the established chart query contract.
+- The API now calculates ΔIV from a prior exact-contract observation for both
+  archived NSE chain snapshots and SmartAPI fallback cohorts. A read-only data
+  audit confirmed the separate NIFTY Greek feed is incomplete for the active
+  displayed cohort, so unmatched IV/Greeks remain unavailable rather than
+  being copied from another strike or side. When ΔIV cannot be compared, the
+  third strike chart explicitly falls back to tracked volume.
+- The selected CE/PE table additively exposes retained IV change, volume,
+  bid/ask quantities and delta/gamma/theta/vega. Page/card/header margins were
+  tightened and strike/cumulative auxiliary charts use matched heights.
+- Strategies, signals, independent contract selection, drawings,
+  measurements, cursor linkage, exports, order permissions and raw data were
+  not changed.
+- Pre-release validation: API typecheck/build and 260/260 tests; web
+  typecheck/build and 235/235 tests; canonical repository gate; authenticated
+  local browser geometry/data-state suite 33/33 at 1920x1080.

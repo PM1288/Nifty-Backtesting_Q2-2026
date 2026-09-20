@@ -1,5 +1,16 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Scalper V2 ΔOI panel restored and reordered
+
+- Removed the dedicated bid–ask-spread chart from the Scalper V2 workstation.
+- The right strike column now renders, in order: OI, signed ΔOI with
+  `PE ΔOI − CE ΔOI`, Strike Structure, and Strike × Time Positioning.
+- Preserved the cumulative timestamp charts' X-width alignment with the price
+  panes, all missing-value/sign semantics, hover linkage and expanded evidence.
+- Web typecheck, 247/247 tests and build passed. Authenticated local browser
+  regression passed 46/46. Evidence and rollback guidance:
+  `docs/trading-analytics/SCALPER_V2_DELTA_PANEL_ORDER_20260920.md`.
+
 ## 2026-09-20 — OIIS/OISS consolidated stock-research webhook
 
 - Replaced the three direct Claude/Qwen/DeepSeek research calls and three

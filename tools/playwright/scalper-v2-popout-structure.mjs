@@ -97,7 +97,12 @@ try {
   });
   check("side-oi-column-restored", await page.getByTestId("v2-strike-side-charts").count() === 1, JSON.stringify(layout.sideOi));
   check("side-oi-column-bounded", Boolean(layout.sideOi && layout.priceGrid && layout.sideOi.width >= 298 && layout.sideOi.width <= 362 && Math.abs(layout.sideOi.height - layout.priceGrid.height) <= 2), JSON.stringify({ priceGrid: layout.priceGrid, sideOi: layout.sideOi }));
-  check("side-oi-three-panels", await page.getByTestId("v2-strike-side-charts").locator(":scope > article").count() === 3, "OI, strike structure and positioning heatmap remain separate side charts");
+  const sidePanels = page.getByTestId("v2-strike-side-charts").locator(":scope > article");
+  check("side-oi-four-panels", await sidePanels.count() === 4, "OI, Delta OI, strike structure and positioning heatmap remain separate side charts");
+  check("side-panel-order", JSON.stringify(await sidePanels.locator("header strong").allTextContents()) === JSON.stringify(["OI by strike", "ΔOI by strike", "Strike structure", "Strike × time positioning"]), (await sidePanels.locator("header strong").allTextContents()).join(" | "));
+  const deltaOiPanel = page.getByTestId("v2-side-delta-oi-chart");
+  const deltaOiText = await deltaOiPanel.innerText();
+  check("delta-oi-second-panel", /ΔOI by strike/.test(deltaOiText) && /PE ΔOI − CE ΔOI/.test(deltaOiText) && (/unavailable/i.test(deltaOiText) || await deltaOiPanel.getByRole("img").count() === 1), deltaOiText);
   const structurePanel = page.getByTestId("v2-side-strike-structure-chart");
   if (await structurePanel.count() === 0) console.log(JSON.stringify({ debugTestIds: await page.locator("[data-testid]").evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")).filter(Boolean)), pageErrors: errors, debugText: (await page.locator("body").innerText()).slice(0, 2_500) }));
   await structurePanel.waitFor({ state: "visible", timeout: 90_000 });
@@ -106,8 +111,7 @@ try {
   const heatmapPanel = page.getByTestId("v2-side-positioning-heatmap");
   const heatmapPanelText = await heatmapPanel.innerText();
   check("positioning-heatmap", /Strike × time positioning/.test(heatmapPanelText) && (/unavailable/i.test(heatmapPanelText) || await heatmapPanel.getByRole("img").count() === 1), heatmapPanelText);
-  const spreadPanel = page.getByTestId("v2-spread-strike-chart");
-  check("spread-uses-empty-corner", await spreadPanel.count() === 1 && /Bid–ask spread by strike/.test(await spreadPanel.innerText()), await spreadPanel.innerText());
+  check("spread-chart-removed", await page.getByTestId("v2-spread-strike-chart").count() === 0 && await page.getByText("Bid–ask spread by strike", { exact: true }).count() === 0, "No bid-ask spread chart remains");
   check("three-price-chart-grid", await page.locator("[data-testid^='v2-chart-panel-']").count() === 3, "Underlying plus exact CE and PE only");
   check("bounded-price-grid-height", Boolean(layout.priceGrid && layout.priceGrid.height >= 620 && layout.priceGrid.height <= 645), JSON.stringify(layout.priceGrid));
   const historyGeometry = await page.getByTestId("v2-oi-history-row").evaluate((element) => [...element.querySelectorAll(":scope > div > article")].map((article) => {
@@ -118,8 +122,8 @@ try {
   }));
   check("oi-history-matches-price-columns", historyGeometry.length === 2 && layout.stage && layout.callPanel && Math.abs(historyGeometry[0].outerWidth - layout.stage.width) <= 3 && Math.abs(historyGeometry[1].outerWidth - layout.callPanel.width) <= 3, JSON.stringify({ historyGeometry, underlying: layout.stage, call: layout.callPanel }));
   check("aligned-auxiliary-chart-height", historyGeometry.every((item) => item.outerHeight >= 205 && item.outerHeight <= 215), JSON.stringify(historyGeometry));
-  const spreadGeometry = await spreadPanel.evaluate((element) => { const box = element.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width, height: box.height }; });
-  check("spread-corner-aligned", Boolean(layout.sideOi && spreadGeometry.width >= layout.sideOi.width - 2 && spreadGeometry.height >= 205 && spreadGeometry.height <= 215), JSON.stringify({ sideOi: layout.sideOi, spreadGeometry }));
+  const historySpacer = await page.getByTestId("v2-oi-history-side-spacer").evaluate((element) => { const box = element.getBoundingClientRect(); return { width: box.width, height: box.height }; });
+  check("removed-spread-keeps-axis-alignment", Boolean(layout.sideOi && historySpacer.width >= layout.sideOi.width - 2), JSON.stringify({ sideOi: layout.sideOi, historySpacer }));
   check("oi-history-directly-below-price-grid", Boolean(layout.oiHistory && layout.priceGrid && Math.abs(layout.oiHistory.y - (layout.priceGrid.y + layout.priceGrid.height + 3)) <= 2), JSON.stringify(layout));
   const historyText = await page.getByTestId("v2-oi-history-row").innerText();
   check("separate-oi-difference-semantics", historyText.includes("Cumulative PE OI − cumulative CE OI") && historyText.includes("Cumulative PE ΔOI − cumulative CE ΔOI"), historyText);

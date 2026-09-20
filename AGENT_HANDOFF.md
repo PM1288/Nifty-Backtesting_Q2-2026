@@ -5544,6 +5544,13 @@ or outcomes were deleted.
   candles.
 - Web typecheck, 222/222 tests and production build pass. API typecheck,
   253/253 tests and build pass. The canonical repository gate and diff check
-  pass. Deployment and authenticated public-browser evidence are recorded in
-  the report after release; no strategy, collector, database or order mutation
-  is part of this repair.
+  pass. Application commits `3c4aa93` and `dd1db31` are pushed to feature and
+  master. The scoped dashboard-only deployment is healthy on image
+  `sha256:2dd1d451425ac5385cbd63eb0558e4e40214832adaa7711f8a8391d06402cf81`
+  with asset `/n50/assets/index-g19vrKD3.js`. Authenticated production Chromium
+  passed 46/46 targeted checks and the 76.6-second no-reload regression; the
+  narrow Morning summary returned in 40ms. Evidence is outside Git at
+  `/home/novius2/NIFTY50/evidence/market-workstation-flow-20260920/`. Current
+  weekend data had zero timestamped OI-total points, so a painted PE-minus-CE
+  line remains unverified until such retained history is present. No strategy,
+  collector, database or order mutation is part of this repair.

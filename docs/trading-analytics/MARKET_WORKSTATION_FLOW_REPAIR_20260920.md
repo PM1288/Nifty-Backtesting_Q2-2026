@@ -74,6 +74,25 @@ lines remain inspectable but cannot stretch the default price domain.
 
 ## Release evidence
 
-To be completed after the pushed master commit, scoped dashboard deployment and
-authenticated public browser verification. Until then the change is built and
-tested, not deployed.
+Application commits `3c4aa93` and `dd1db31` are pushed to both `master` and the
+feature branch. Rollback tag `before-market-workstation-flow-20260920` identifies
+the preceding application release. The approved scoped deployment recreated
+only `n50-dashboard`; it is healthy with zero restarts, image
+`sha256:2dd1d451425ac5385cbd63eb0558e4e40214832adaa7711f8a8391d06402cf81`
+and public entry asset `/n50/assets/index-g19vrKD3.js`.
+
+Authenticated production Chromium passed 46/46 targeted checks across Scalper
+V2, Morning View heat semantics, both Home rank boards, the Home headline and
+Stock 360. The current weekend context contained zero timestamped chain-total
+points, so the PE-minus-CE pane remained truthfully empty; adapter attachment,
+label and missingness were verified, but this run is not evidence of a painted
+live-market line.
+
+A separate 76.6-second production regression recorded one document navigation,
+the same three native chart roots, one initial candle `setData` per chart, no
+rehydration and the expected two minute-poll requests. The targeted Morning View
+summary endpoint returned HTTP 200 in 40ms after the narrow-query repair. No
+post-deployment analysis-queue warning was observed in the checked log window.
+
+Screenshots and machine-readable results are outside Git at
+`/home/novius2/NIFTY50/evidence/market-workstation-flow-20260920/`.

@@ -1,5 +1,19 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Scalper V2 option premium and spread repair
+
+- Replaced the permanently unavailable ΔIV strike panel with exact retained
+  option premium by strike. Active NIFTY evidence is 0/20 for IV/Greeks but
+  20/20 for LTP, bid and ask; no IV is inferred or borrowed.
+- Replaced the rejected lower-right volume chart with bid-ask spread by strike
+  (`ask - bid`). Both charts retain CE yellow, PE blue, PE-minus-CE comparison,
+  NIFTY strike guide and linked strike hover.
+- IV, Greeks, volume and depth remain available in the selected-pair evidence
+  and exports when supplied. No collector, strategy, order, OI or chart-cursor
+  contract changed.
+- Report:
+  `docs/trading-analytics/SCALPER_V2_PREMIUM_SPREAD_REPAIR_20260920.md`.
+
 ## 2026-09-20 — Morning View latest cash and Outlook colour
 
 - Branch `fix/morning-view-cash-outlook-colors-20260920`; report:

@@ -9,6 +9,7 @@ import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2Profil
 import { mergeScalperV2Levels } from "../../lib/scalperV2Levels";
 import { visibleScalperV2ReferenceLevels, type ScalperV2ReferenceLevel } from "../../lib/scalperV2ReferenceLevels";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
+import { scalperV2VolumeEma, scalperV2VolumeEmaPeriod } from "../../lib/scalperV2Volume";
 import { ScalperV2CursorCoordinator, scalperV2CrosshairSyncAction } from "../../lib/scalperV2Cursor";
 import { intervalBarChartTime, istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
@@ -76,7 +77,7 @@ export function ScalperV2Chart({
   const bodyRef = useRef<HTMLDivElement>(null), hostRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null), emaRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null), volumeEmaRef = useRef<ISeriesApi<"Line"> | null>(null);
   const markerRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const drawingPrimitiveRef = useRef<ScalperV2DrawingPrimitive | null>(null);
   const profilePrimitiveRef = useRef<ScalperV2OiProfilePrimitive | null>(null);
@@ -86,7 +87,7 @@ export function ScalperV2Chart({
   const inspectionModeRef = useRef(inspectionMode);
   const pointerFrameRef = useRef(0), profileFrameRef = useRef(0), dimensionsRef = useRef({ width: 0, height: 0 });
   const appliedFitRef = useRef<number | null>(null), setDataCountRef = useRef(0);
-  const candleDataRef = useRef<CandlestickData<Time>[]>([]), emaDataRef = useRef<Array<{ time: Time; value: number }>>([]), volumeDataRef = useRef<Array<{ time: Time; value: number; color: string }>>([]), updateCountRef = useRef(0);
+  const candleDataRef = useRef<CandlestickData<Time>[]>([]), emaDataRef = useRef<Array<{ time: Time; value: number }>>([]), volumeDataRef = useRef<Array<{ time: Time; value: number; color: string }>>([]), volumeEmaDataRef = useRef<Array<{ time: Time; value: number }>>([]), updateCountRef = useRef(0);
   const cancelDrawingGestureRef = useRef<(() => void) | null>(null);
   const drawingsRef = useRef(drawings);
   const startToEndRef = useRef<Map<number, number>>(new Map());
@@ -130,6 +131,11 @@ export function ScalperV2Chart({
       ? [{ time: time as Time, value, color: open != null && close != null && close < open ? "rgba(220,38,38,.58)" : "rgba(5,150,105,.58)" }]
       : [];
   }), [volumeBars]);
+  const volumeEmaPeriod = scalperV2VolumeEmaPeriod(interval);
+  const volumeEmaData = useMemo(() => scalperV2VolumeEma(volumeBars.flatMap((bar) => {
+    const time = intervalBarChartTime(bar);
+    return bar.closed === true && time != null ? [{ time: Number(time), value: numeric(bar.volume) }] : [];
+  }), volumeEmaPeriod).map((row) => ({ time: row.time as Time, value: row.value })), [volumeBars, volumeEmaPeriod]);
   const sessionBounds = useMemo(() => observedSessionBounds(bars), [bars]);
   const renderBounds = useMemo(() => paddedSessionBounds(sessionBounds, 0.05), [sessionBounds]);
   const profileBounds = useMemo(() => allProfileStrikeBounds(sessionBounds, oiProfile), [sessionBounds, oiProfile]);
@@ -171,7 +177,7 @@ export function ScalperV2Chart({
   useEffect(() => {
     const host = hostRef.current, body = bodyRef.current;
     if (!host || !body) return;
-    candleDataRef.current = []; emaDataRef.current = []; volumeDataRef.current = [];
+    candleDataRef.current = []; emaDataRef.current = []; volumeDataRef.current = []; volumeEmaDataRef.current = [];
     const instance = createChart(host, {
       autoSize: false, width: Math.max(1, host.clientWidth), height: Math.max(1, host.clientHeight),
       layout: { background: { type: ColorType.Solid, color: "#ffffff" }, textColor: "#526175", fontSize: 12 },
@@ -189,15 +195,17 @@ export function ScalperV2Chart({
       color: "#d97706", lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
       crosshairMarkerVisible: false, autoscaleInfoProvider: () => null,
     });
-    const volume = id === "underlying" ? instance.addSeries(HistogramSeries, {
+    const volume = instance.addSeries(HistogramSeries, {
       title: "Volume", priceFormat: { type: "volume" }, priceLineVisible: false, lastValueVisible: true,
       base: 0, color: "rgba(15,118,110,.5)",
-    }, 1) : null;
-    if (volume) {
-      const panes = instance.panes();
-      panes[0]?.setStretchFactor(6);
-      panes[1]?.setStretchFactor(1);
-    }
+    }, 1);
+    const volumeEma = instance.addSeries(LineSeries, {
+      title: `Volume EMA${volumeEmaPeriod}`, color: "#7c3aed", lineWidth: 2,
+      priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: true,
+    }, 1);
+    const panes = instance.panes();
+    panes[0]?.setStretchFactor(6);
+    panes[1]?.setStretchFactor(1);
     const marker = createSeriesMarkers(candle, []);
     const drawingPrimitive = new ScalperV2DrawingPrimitive();
     const profilePrimitive = new ScalperV2OiProfilePrimitive();
@@ -234,7 +242,7 @@ export function ScalperV2Chart({
       callbacksRef.current.onRangeChange({ from: Number(range.from), to: Number(range.to), source: id, sequence: performance.now() });
     };
     instance.timeScale().subscribeVisibleTimeRangeChange(rangeHandler);
-    chartRef.current = instance; candleRef.current = candle; emaRef.current = ema; volumeRef.current = volume; markerRef.current = marker; drawingPrimitiveRef.current = drawingPrimitive; profilePrimitiveRef.current = id === "underlying" ? profilePrimitive : null;
+    chartRef.current = instance; candleRef.current = candle; emaRef.current = ema; volumeRef.current = volume; volumeEmaRef.current = volumeEma; markerRef.current = marker; drawingPrimitiveRef.current = drawingPrimitive; profilePrimitiveRef.current = id === "underlying" ? profilePrimitive : null;
     if (id === "underlying") profilePrimitive.setData(profileRowsRef.current, profileModeRef.current);
     host.dataset.chartCreateCount = "1";
 
@@ -358,7 +366,7 @@ export function ScalperV2Chart({
       body.removeEventListener("pointercancel", drawingPointerCancel, true); body.removeEventListener("contextmenu", drawingContextMenu); window.removeEventListener("keydown", drawingKeyDown); window.removeEventListener("blur", drawingBlur);
       instance.timeScale().unsubscribeVisibleTimeRangeChange(rangeHandler); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(pointerFrameRef.current); cancelAnimationFrame(profileFrameRef.current);
       candle.detachPrimitive(drawingPrimitive); if (id === "underlying") candle.detachPrimitive(profilePrimitive); marker.detach(); instance.remove(); chartRef.current = null; candleRef.current = null; emaRef.current = null; markerRef.current = null; drawingPrimitiveRef.current = null; profilePrimitiveRef.current = null;
-      volumeRef.current = null;
+      volumeRef.current = null; volumeEmaRef.current = null;
       cancelDrawingGestureRef.current = null;
     };
   }, [cursorCoordinator, id]);
@@ -393,7 +401,7 @@ export function ScalperV2Chart({
   useEffect(() => { profilePrimitiveRef.current?.setData(oiProfile, profileMode); scheduleProfile(); }, [oiProfile, profileMode]);
 
   useEffect(() => {
-    const candle = candleRef.current, ema = emaRef.current, volume = volumeRef.current;
+    const candle = candleRef.current, ema = emaRef.current, volume = volumeRef.current, volumeEma = volumeEmaRef.current;
     if (candle) {
       const plan = scalperV2SeriesUpdatePlan(candleDataRef.current, data);
       if (plan.kind === "replace") { candle.setData(plan.rows); setDataCountRef.current += 1; }
@@ -412,16 +420,25 @@ export function ScalperV2Chart({
       else if (plan.kind === "update") plan.rows.forEach((row) => volume.update(row));
       volumeDataRef.current = volumeData;
     }
-    if (bodyRef.current && id === "underlying") {
+    if (volumeEma) {
+      volumeEma.applyOptions({ title: `Volume EMA${volumeEmaPeriod}` });
+      const plan = scalperV2SeriesUpdatePlan(volumeEmaDataRef.current, volumeEmaData);
+      if (plan.kind === "replace") volumeEma.setData(plan.rows);
+      else if (plan.kind === "update") plan.rows.forEach((row) => volumeEma.update(row));
+      volumeEmaDataRef.current = volumeEmaData;
+    }
+    if (bodyRef.current) {
       bodyRef.current.dataset.volumeLabel = volumeLabel;
       bodyRef.current.dataset.volumePoints = String(volumeData.length);
+      bodyRef.current.dataset.volumeEmaPeriod = String(volumeEmaPeriod);
+      bodyRef.current.dataset.volumeEmaPoints = String(volumeEmaData.length);
     }
     if (hostRef.current) { hostRef.current.dataset.setDataCount = String(setDataCountRef.current); hostRef.current.dataset.updateCount = String(updateCountRef.current); }
     const requestedBounds = id === "underlying" && profileRangeExpanded ? profileBounds : renderBounds;
     candleRef.current?.applyOptions({ autoscaleInfoProvider: verticalView === "session" && requestedBounds ? () => ({ priceRange: { minValue: requestedBounds.low, maxValue: requestedBounds.high } }) : undefined });
     chartRef.current?.priceScale("right").setAutoScale(verticalView !== "manual" && !yLocked);
     scheduleProfile();
-  }, [data, emaData, id, profileBounds, profileRangeExpanded, renderBounds, verticalView, volumeData, volumeLabel, yLocked]);
+  }, [data, emaData, id, profileBounds, profileRangeExpanded, renderBounds, verticalView, volumeData, volumeEmaData, volumeEmaPeriod, volumeLabel, yLocked]);
 
   useEffect(() => {
     chartRef.current?.applyOptions({ handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: !yLocked }, axisDoubleClickReset: { time: true, price: !yLocked } } });
@@ -559,7 +576,7 @@ export function ScalperV2Chart({
   }, [byTime, externalCrosshair, id, inspectionMode]);
 
   return <section className={css.chartPanel} data-testid={`v2-chart-panel-${id}`} aria-label={`${title} ${interval} minute candlestick chart`}>
-    <header className={css.chartHeader}><span><strong>{title}</strong><small title={subtitle}>{subtitle} · {interval}m</small>{id === "underlying" && <small className={css.volumeSource} title={volumeLabel}>{volumeLabel}</small>}</span>
+    <header className={css.chartHeader}><span><strong>{title}</strong><small title={subtitle}>{subtitle} · {interval}m</small><small className={css.volumeSource} title={volumeLabel}>{volumeLabel} · EMA{volumeEmaPeriod}</small></span>
       <span className={css.ohlc} data-testid={`v2-chart-readout-${id}`}><b>{inspectionMode === "latest" ? "Latest" : inspectionMode === "locked" ? "Locked" : "At cursor"}</b>
         {selected ? <><span>O {format(selected.open)}</span><span>H {format(selected.high)}</span><span>L {format(selected.low)}</span><span>C {format(selected.close)}</span><span>EMA9 {format(selectedEma)}</span><span className={distance == null ? undefined : distance > 0 ? css.positive : distance < 0 ? css.negative : undefined}>C−EMA {distance == null ? "—" : `${distance > 0 ? "+" : ""}${format(distance)}`}</span></> : <span>No exact completed candle</span>}
       </span></header>

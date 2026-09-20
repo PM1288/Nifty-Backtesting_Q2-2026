@@ -54,6 +54,13 @@ export type VolumeConfirmation = {
   symbol: "✓" | "~" | "×" | "—";
 };
 
+export function previousDayCloseContext(row: ProgressionMatrixRow, direction: ScalperProgressionDirection) {
+  const actual = row.source.currentValue ?? row.stock.last ?? null;
+  const reference = row.source.previousDayClose ?? null;
+  const passed = actual == null || reference == null ? null : direction === "bull" ? actual > reference : actual < reference;
+  return { actual, reference, passed };
+}
+
 export function volumeConfirmation(stock: Quote): VolumeConfirmation {
   const multiple = typeof stock.relativeVolume === "number" && Number.isFinite(stock.relativeVolume) && stock.relativeVolume >= 0
     ? stock.relativeVolume

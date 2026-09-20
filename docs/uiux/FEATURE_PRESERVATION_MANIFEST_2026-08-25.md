@@ -1,5 +1,13 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-20 D−1 Close and volume-EMA addition: Home MWHD Bull/Bear boards add a
+compact previous-trading-day close comparison, with exact evidence in the
+drawer/CSV, without changing any gate, score, qualification or rank. Scalper V2
+adds exact-contract CE/PE volume panes alongside the retained underlying source
+volume and overlays EMA20 on 1m/5m or EMA5 on 15m/1h. Missing volume is not zero;
+collectors, chart queries, strategies, alerts and order controls are unchanged.
+Evidence: `docs/trading-analytics/SCREENER_D1_AND_SCALPER_V2_VOLUME_EMA_20260920.md`.
+
 2026-09-20 Home/screener live-refresh repair: hydrated Home and current-month
 screener data remain mounted when a background request fails. A compact,
 accessible status reports the 10-second Home and 60-second MWHD cadences,

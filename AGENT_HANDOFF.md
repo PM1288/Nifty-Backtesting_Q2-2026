@@ -1,5 +1,18 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Screener D−1 Close and Scalper V2 volume EMA
+
+- Branch `fix/screener-d1-volume-ema-options-20260920` adds a compact, explicitly
+  unscored `D−1 C` context cell to both Home MWHD rank boards. Exact values are
+  available in the drawer and CSV; MWHD gates, weights, readiness and ranks do
+  not change.
+- Scalper V2 now renders native volume for the selected CE and PE as well as the
+  existing underlying source. Each pane overlays volume EMA20 on 1m/5m and EMA5
+  on 15m/1h, using a complete-SMA seed and preserving missing-volume boundaries.
+- No new feed, broker request, strategy calculation or order capability was
+  introduced. See
+  `docs/trading-analytics/SCREENER_D1_AND_SCALPER_V2_VOLUME_EMA_20260920.md`.
+
 ## 2026-09-20 — Home and screener live-refresh repair
 
 - Home and the current-month screener now retain their last successful data

@@ -163,8 +163,14 @@ try {
   check("time-cursor-to-strike-charts", activeStrikeIndexes.length === 2 && activeStrikeIndexes.every((value) => value !== ""), JSON.stringify(activeStrikeIndexes));
   const heatmapActiveTime = await page.getByTestId("v2-side-positioning-heatmap").getByRole("img").getAttribute("data-active-time-ms");
   check("time-cursor-to-positioning-heatmap", Boolean(heatmapActiveTime), String(heatmapActiveTime ?? ""));
-  const indexVolume = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => ({ label: element.dataset.volumeLabel ?? "", points: Number(element.dataset.volumePoints ?? 0) }));
-  check("index-current-month-future-volume", indexVolume.label.includes("Current-month future") && indexVolume.points > 0, JSON.stringify(indexVolume));
+  const pricePaneVolumes = await page.locator("[data-testid^='v2-chart-body-']").evaluateAll((elements) => elements.map((element) => ({
+    id: element.getAttribute("data-testid"), label: element.dataset.volumeLabel ?? "", points: Number(element.dataset.volumePoints ?? 0),
+    emaPeriod: Number(element.dataset.volumeEmaPeriod ?? 0), emaPoints: Number(element.dataset.volumeEmaPoints ?? 0),
+  })));
+  const indexVolume = pricePaneVolumes.find((row) => row.id === "v2-chart-body-underlying");
+  check("index-current-month-future-volume", Boolean(indexVolume?.label.includes("Current-month future") && indexVolume.points > 0), JSON.stringify(indexVolume));
+  check("exact-ce-pe-volume-panes", pricePaneVolumes.length === 3 && pricePaneVolumes.every((row) => row.points > 0) && pricePaneVolumes.some((row) => row.label === "Exact CE contract volume") && pricePaneVolumes.some((row) => row.label === "Exact PE contract volume"), JSON.stringify(pricePaneVolumes));
+  check("five-minute-volume-ema20", pricePaneVolumes.every((row) => row.emaPeriod === 20 && row.emaPoints > 0), JSON.stringify(pricePaneVolumes));
   const references = await page.getByTestId("v2-chart-body-underlying").evaluate((element) => (element.dataset.referenceLevelsVisible ?? "").split(",").filter(Boolean));
   check("underlying-reference-lines-only", references.every((id) => ["today-open", "previous-day-close", "previous-day-high"].includes(id)), JSON.stringify(references));
 

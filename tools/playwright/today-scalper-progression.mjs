@@ -53,10 +53,10 @@ try {
   const bullSymbols = await bullRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
   const bearSymbols = await bearRows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-progression-symbol")));
   check("Only the top 10 Bull and Bear ranks load initially", rowCount === 10 && bearSymbols.length === 10 && new Set(bullSymbols).size === 10 && new Set(bearSymbols).size === 10, `${rowCount} Bull / ${bearSymbols.length} Bear`);
-  const expectedGateOrder = ["M−2", "M−1", "W0", "W−1", "D0", "1H", "15m", "5m"];
+  const expectedColumnOrder = ["M−2", "M−1", "W0", "W−1", "D0", "D−1 C", "1H", "15m", "5m"];
   const bullHeaders = await bullBoard.locator("thead th").allInnerTexts();
   const bearHeaders = await bearBoard.locator("thead th").allInnerTexts();
-  check("Both boards expose optional V20 and the complete MWHD tick sequence with M−2 before M−1", bullHeaders[3] === "V20 opt." && bearHeaders[3] === "V20 opt." && expectedGateOrder.every((label, index) => bullHeaders[index + 4] === label && bearHeaders[index + 4] === label), JSON.stringify({ bullHeaders, bearHeaders }));
+  check("Both boards expose optional V20, contextual D-1 Close and the complete MWHD tick sequence", bullHeaders[3] === "V20 opt." && bearHeaders[3] === "V20 opt." && expectedColumnOrder.every((label, index) => bullHeaders[index + 4] === label && bearHeaders[index + 4] === label), JSON.stringify({ bullHeaders, bearHeaders }));
   const volumeCells = widget.locator('td[class*="progressionVolumeTick"]');
   check("Optional volume indicator shows an exact multiple and never changes MWHD scoring", await volumeCells.count() === 20 && /[✓~×—]\s(?:\d+\.\d×|—)/.test(await bullBoard.innerText()), "20 V20 cells inspected across the initial Bull and Bear boards");
   const firstBullScore = await bullRows.first().locator('td[class*="progressionCompactScore"]').innerText();
@@ -92,6 +92,7 @@ try {
   await bullRows.first().click();
   const drawer = page.getByRole("dialog", { name: /MWHD evidence/ });
   check("Row drawer exposes Bull and Bear arithmetic and both ranks", await drawer.isVisible() && await drawer.getByText("MWHD-BULL arithmetic").isVisible() && await drawer.getByText("MWHD-BEAR arithmetic").isVisible() && await drawer.getByText(/Audited inverse logic/).isVisible(), "Dual-direction evidence inspected");
+  check("D-1 Close remains visible contextual evidence rather than a scored gate", await drawer.getByText(/D−1 Close context · not scored/).isVisible() && await drawer.getByText(/does not change MWHD qualification or rank/).isVisible(), "Previous trading-day close context inspected");
   check("Row drawer explains projected full-day volume and the prior 20-session SMA", await drawer.getByText(/projected full day/i).isVisible() && await drawer.getByText(/prior 20-session daily SMA/i).isVisible() && await drawer.getByText(/does not change either MWHD rank/i).isVisible(), "Volume formula evidence inspected");
   await page.keyboard.press("Escape");
   check("No browser errors", errors.length === 0, errors.join(" | "));

@@ -6,7 +6,7 @@ import {
   breadthWording, niftyMovementWording, parseBoardSort, parseQuickView, parseSummaryLens,
   serializeQuickView, slugifySector, vixWording,
 } from "../src/features/today/todayModel";
-import { buildProgressionMatrixRows, directionalProgression, highestProgressionStage, intradayVolumeConfirmation, progressionFunnel, progressionRowMatches, progressionStockState, sortProgressionRows, volumeConfirmation } from "../src/features/today/scalperProgressionMatrix";
+import { buildProgressionMatrixRows, directionalProgression, highestProgressionStage, intradayVolumeConfirmation, previousDayCloseContext, progressionFunnel, progressionRowMatches, progressionStockState, sortProgressionRows, volumeConfirmation } from "../src/features/today/scalperProgressionMatrix";
 
 test("optional projected volume confirmation preserves exact multiples and independent colour bands", () => {
   assert.deepEqual(volumeConfirmation({ symbol: "HIGH", relativeVolume: 2 } as never), { multiple: 2, state: "high", band: "green", symbol: "✓" });
@@ -19,6 +19,23 @@ test("intraday volume confirmation uses the gated 15-minute multiple without rep
   assert.equal(intradayVolumeConfirmation({ intradayVolumeMultiple: 2.1 } as never).band, "green");
   assert.equal(intradayVolumeConfirmation({ intradayVolumeMultiple: 0.4 } as never).band, "red-strong");
   assert.equal(intradayVolumeConfirmation({ intradayVolumeMultiple: null } as never).state, "unavailable");
+});
+
+test("previous-day close is directional context and does not alter MWHD score", () => {
+  const [row] = buildProgressionMatrixRows(
+    [{ symbol: "D1", last: 120, dayOpen: 110 } as never],
+    [{
+      symbol: "D1", currentValue: 120, previousDayClose: 115, todayOpen: 110,
+      currentWeekOpen: 108, previousWeekOpen: 106, currentMonthOpen: 105,
+      previousMonthClose: 100, twoMonthsAgoClose: 101, currentHourOpen: 119,
+      previousHourOpen: 118, current15mOpen: 120, previous15mOpen: 119,
+      current5mOpen: 120, previous5mOpen: 119, observedAt: null,
+    }],
+  );
+  assert.deepEqual(previousDayCloseContext(row, "bull"), { actual: 120, reference: 115, passed: true });
+  assert.deepEqual(previousDayCloseContext(row, "bear"), { actual: 120, reference: 115, passed: false });
+  assert.equal(row.best.weightedScore, 29);
+  assert.equal(row.best.maximumWeight, 29);
 });
 
 test("Today URL state canonicalizes unsupported values", () => {

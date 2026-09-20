@@ -7,6 +7,15 @@
 - Authenticated local browser validation passed 39/39, including an actual
   5m to 15m to 5m switch. No strategy, order, contract-selection, cursor,
   drawing, measurement or refresh rule changed.
+- Web checks passed (typecheck, 236/236 tests, build); API checks passed
+  (typecheck, 261/261 tests, build); preservation gate passed. Authenticated
+  production Playwright passed 39/39.
+- Deployed dashboard is healthy on image
+  `sha256:f80d2fef4430a3e3c704d6b59e46c5bc49c14236948d389566f8dffbadbbbe93`;
+  asset `/n50/assets/index-De0qqYnF.js`; rollback tag
+  `trading-stack-n50-dashboard:before-scalper-v2-timeframe-tabs-20260920`.
+- Feature is locally merged to `master` at `bdf4ef3`. Remote push is pending
+  because this host could not connect to `github.com:443` during release.
 - Report: `docs/trading-analytics/SCALPER_V2_TIMEFRAME_TABS_20260920.md`.
 
 ## 2026-09-20 — Scalper V2 option premium and spread repair

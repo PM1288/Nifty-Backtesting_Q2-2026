@@ -1,5 +1,17 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Scalper V2 parent-header reduction
+
+- Hid the redundant `Trading Analytics · Scalper V2`, `NIFTY strategy`,
+  `Health`, `Formula` and `Conditions` items on Scalper V2 only.
+- Preserved the remaining compact toolbar controls and every other Trading
+  Analytics view.
+- Web checks passed (typecheck, 236/236 tests, build); API checks passed
+  (typecheck, 261/261 tests, build). Authenticated local browser regression
+  passed 39/39.
+- Report:
+  `docs/trading-analytics/SCALPER_V2_PARENT_HEADER_REDUCTION_20260920.md`.
+
 ## 2026-09-20 — Scalper V2 timeframe tabs
 
 - Restored direct `1m`, `5m`, `15m` and `1h` buttons in the Time command group.

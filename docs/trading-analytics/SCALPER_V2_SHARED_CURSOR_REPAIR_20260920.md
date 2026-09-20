@@ -23,6 +23,13 @@ The synchronization decision is now explicit:
 - `CLEAR`: clear all transient guides together on pointer leave;
 - `HOLD`: preserve an explicitly locked time.
 
+Native panes additionally share one V2-local cursor coordinator. It fans the
+latest physical timestamp directly from canvas to canvas in the same pointer
+frame, before React renders the inspector. React remains responsible for the
+small textual inspection state, but is no longer on the visual cursor path.
+OI-history hover publishes through the same coordinator after its timestamp is
+mapped to an observed underlying candle.
+
 This does not copy a NIFTY price onto an option axis. CE and PE continue to display their own exact values. Missing exact candles remain missing.
 
 ## Files

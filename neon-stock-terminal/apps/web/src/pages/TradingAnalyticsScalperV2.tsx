@@ -17,6 +17,7 @@ import { scalperV2OiTotals, scalperV2StructureRows } from "../lib/scalperV2Struc
 import { oiComparisonState } from "../lib/scalperV2Geometry";
 import { normalizeScalperV2ProfileRows, profileBaselineLabel } from "../lib/scalperV2OiProfile";
 import { scalperV2ReferenceGauge, type ScalperV2ReferenceLevelPayload } from "../lib/scalperV2ReferenceLevels";
+import { ScalperV2CursorCoordinator } from "../lib/scalperV2Cursor";
 import {
   applyScalperLegsToChartQuery,
   availableScalperStrikes,
@@ -229,6 +230,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   }, [active.data, expiry, params, selectedCeStrike, selectedPeStrike, setParams, spot]);
 
   const [hoverCrosshair, setHoverCrosshair] = useState<ScalperV2Crosshair>(null);
+  const cursorCoordinator = useMemo(() => new ScalperV2CursorCoordinator(), []);
   const [lockedTime, setLockedTime] = useState<number | null>(null);
   const [linkedRange, setLinkedRange] = useState<ScalperV2TimeRange>(null);
   const [hoveredStrike, setHoveredStrike] = useState<number | null>(null);
@@ -529,13 +531,18 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   );
   const handleOiTimeHover = useCallback((timeMs: number | null, source: string) => {
     if (lockedTime != null) return;
-    if (timeMs == null || !Number.isFinite(timeMs)) { setHoverCrosshair(null); return; }
+    if (timeMs == null || !Number.isFinite(timeMs)) {
+      cursorCoordinator.publish({ time: null, source });
+      setHoverCrosshair(null);
+      return;
+    }
     const target = timeMs / 1000;
     const nearest = underlyingChartTimes.reduce<number | null>((best, value) => (
       best == null || Math.abs(value - target) < Math.abs(best - target) ? value : best
     ), null);
+    cursorCoordinator.publish({ time: nearest, source });
     setHoverCrosshair(nearest == null ? null : { time: nearest, source, sequence: performance.now() });
-  }, [lockedTime, underlyingChartTimes]);
+  }, [cursorCoordinator, lockedTime, underlyingChartTimes]);
   const instrumentId = (paneRole: ScalperV2PaneRole) => String((paneRole === "underlying" ? underlying : paneRole === "call" ? call : put)?.identity.tradingsymbol ?? `${symbol}:${paneRole}`);
   const createDrawing = (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: ScalperV2PaneRole, anchors: ScalperV2DrawingAnchor[]) => {
     const drawing = createScalperV2Drawing({ id: drawingStore.newId(), tool, paneRole, instrumentId: instrumentId(paneRole), anchors });
@@ -591,9 +598,9 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
         </nav>
         <div className={css.charts}>
-          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price and volume" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={signals} measurementTimes={points} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
-          <ScalperV2Chart id="call" title={`CE ${Number(selectedCeStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
-          <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price and volume" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={signals} measurementTimes={points} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="call" title={`CE ${Number(selectedCeStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} interval={interval} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
         </div>
       </div>
       <aside className={css.structureCharts} data-testid="v2-strike-side-charts" aria-label="Strike open interest comparison charts">

@@ -9,7 +9,8 @@ This manifest prevents additive dashboard work from silently removing shared she
 2026-09-20 Scalper V2 shared cursor repair: physical pointer ownership remains
 with the active NIFTY, CE or PE chart, while only programmatic receivers use
 feedback suppression. This prevents continuous movement from sticking on a
-React echo. Canonical time follows across all three price charts and the two OI
+React echo. A V2-local direct coordinator keeps React page rendering outside
+the canvas-to-canvas cursor path. Canonical time follows across all three price charts and the two OI
 history charts; every price pane retains its own numerical value, transient
 guides clear together and locked time persists. Strike charts remain
 strike-linked. Evidence:

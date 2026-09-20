@@ -9,7 +9,7 @@ import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2Profil
 import { mergeScalperV2Levels } from "../../lib/scalperV2Levels";
 import { visibleScalperV2ReferenceLevels, type ScalperV2ReferenceLevel } from "../../lib/scalperV2ReferenceLevels";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
-import { scalperV2CrosshairSyncAction } from "../../lib/scalperV2Cursor";
+import { ScalperV2CursorCoordinator, scalperV2CrosshairSyncAction } from "../../lib/scalperV2Cursor";
 import { intervalBarChartTime, istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
 import { ScalperV2OiProfilePrimitive } from "./ScalperV2OiProfilePrimitive";
@@ -39,7 +39,7 @@ export type ScalperV2VerticalView = "session" | "visible" | "manual";
 
 export function ScalperV2Chart({
   id, title, subtitle, bars, volumeBars = EMPTY_BARS, volumeLabel = "", interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
-  fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "change", profileLabel = "Change in OI",
+  cursorCoordinator, fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "change", profileLabel = "Change in OI",
   profileRangeExpanded = false,
   maxPainStrikes = EMPTY_MAX_PAIN,
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, selectedPutStrike = null, hoveredStrike = null,
@@ -49,6 +49,7 @@ export function ScalperV2Chart({
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; volumeBars?: Row[]; volumeLabel?: string;
   interval: number;
   externalCrosshair: ScalperV2Crosshair; externalRange: ScalperV2TimeRange;
+  cursorCoordinator: ScalperV2CursorCoordinator;
   inspectionMode: ScalperV2InspectionMode; inspectionTime: number | null; fitRequest: number; horizontalView: ScalperV2HorizontalView;
   verticalView: ScalperV2VerticalView; yLocked: boolean;
   onCrosshair: (value: ScalperV2Crosshair) => void; onRangeChange: (value: ScalperV2TimeRange) => void;
@@ -82,6 +83,7 @@ export function ScalperV2Chart({
   const semanticLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]);
   const profileRowsRef = useRef(oiProfile), profileModeRef = useRef(profileMode), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
   const yLockedRef = useRef(yLocked);
+  const inspectionModeRef = useRef(inspectionMode);
   const pointerFrameRef = useRef(0), profileFrameRef = useRef(0), dimensionsRef = useRef({ width: 0, height: 0 });
   const appliedFitRef = useRef<number | null>(null), setDataCountRef = useRef(0);
   const candleDataRef = useRef<CandlestickData<Time>[]>([]), emaDataRef = useRef<Array<{ time: Time; value: number }>>([]), volumeDataRef = useRef<Array<{ time: Time; value: number; color: string }>>([]), updateCountRef = useRef(0);
@@ -93,6 +95,7 @@ export function ScalperV2Chart({
   profileRowsRef.current = oiProfile;
   profileModeRef.current = profileMode;
   yLockedRef.current = yLocked;
+  inspectionModeRef.current = inspectionMode;
   const [drawingHint, setDrawingHint] = useState<string | null>(null);
   const [profileVisibility, setProfileVisibility] = useState({ visible: 0, total: 0, maximum: 0 });
   const profileVisibilityRef = useRef(profileVisibility);
@@ -206,6 +209,7 @@ export function ScalperV2Chart({
       pointerFrameRef.current = requestAnimationFrame(() => {
         const next = param.time == null ? null : { time: Number(param.time), source: id, sequence: performance.now() };
         if (hostRef.current) hostRef.current.dataset.crosshairTime = next == null ? "" : String(next.time);
+        cursorCoordinator.publish({ time: next?.time ?? null, source: id });
         callbacksRef.current.onCrosshair(next);
       });
     });
@@ -357,7 +361,29 @@ export function ScalperV2Chart({
       volumeRef.current = null;
       cancelDrawingGestureRef.current = null;
     };
-  }, [id]);
+  }, [cursorCoordinator, id]);
+
+  useEffect(() => cursorCoordinator.subscribe(id, ({ time }) => {
+    const chart = chartRef.current, candle = candleRef.current;
+    if (!chart || !candle || inspectionModeRef.current === "locked") return;
+    suppressCrosshairRef.current += 1;
+    if (time == null) {
+      chart.clearCrosshairPosition();
+      if (hostRef.current) {
+        hostRef.current.dataset.crosshairTime = "";
+        hostRef.current.dataset.crosshairExact = "";
+      }
+    } else {
+      const exact = byTime.get(time);
+      if (exact) chart.setCrosshairPosition(exact.close, exact.time, candle);
+      else chart.clearCrosshairPosition();
+      if (hostRef.current) {
+        hostRef.current.dataset.crosshairTime = String(time);
+        hostRef.current.dataset.crosshairExact = exact ? "true" : "false";
+      }
+    }
+    requestAnimationFrame(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
+  }), [byTime, cursorCoordinator, id]);
 
   useEffect(() => { drawingPrimitiveRef.current?.setData(displayDrawings, selectedDrawingId); }, [displayDrawings, selectedDrawingId]);
   useEffect(() => { cancelDrawingGestureRef.current?.(); }, [drawingTool]);
@@ -489,6 +515,15 @@ export function ScalperV2Chart({
       hasCrosshair: externalCrosshair != null,
       mode: inspectionMode,
     });
+    // Native price panes already received this physical event synchronously
+    // through the coordinator. React owns only readouts/inspection state here.
+    if (externalCrosshair && ["underlying", "call", "put"].includes(externalCrosshair.source)) {
+      if (action === "ORIGIN_OWNS" && hostRef.current) {
+        hostRef.current.dataset.crosshairTime = String(externalCrosshair.time);
+        hostRef.current.dataset.crosshairExact = "true";
+      }
+      return;
+    }
     if (action === "ORIGIN_OWNS") {
       if (hostRef.current) {
         hostRef.current.dataset.crosshairTime = String(externalCrosshair!.time);

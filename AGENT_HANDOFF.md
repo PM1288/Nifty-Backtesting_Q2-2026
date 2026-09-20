@@ -4,6 +4,8 @@
 
 - Removed self-suppression from the physically active NIFTY/CE/PE chart. Only
   receiver charts updated by `setCrosshairPosition` are feedback-suppressed.
+- Added a V2-local direct cursor coordinator so native canvas receivers update
+  in the source pointer frame instead of waiting for a whole-page React render.
 - Shared canonical time continues through all three native price charts and
   both OI-history charts; own-instrument values, global clear and locked-time
   semantics are preserved.

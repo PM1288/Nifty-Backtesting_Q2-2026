@@ -45,4 +45,14 @@ The rejected volume-by-strike chart is removed from the lower-right slot.
 - Browser evidence:
   `output/playwright/scalper-v2-option-premium-spread-local/`.
 
-Production release evidence is appended after the scoped deployment.
+## Production release
+
+- Implementation `0f2326b` was merged and pushed to `master` as `7fc7fa8`.
+- The scoped release recreated only `n50-dashboard`; it is healthy on image
+  `sha256:307b4d9b2da72e87935598725335106bd3c8acfeb09643c0cb85fd0d0402ee75`.
+- Routed entry asset: `/n50/assets/index-C5vtlmWO.js`.
+- Authenticated production browser regression: 35/35 passed. Evidence:
+  `output/playwright/scalper-v2-option-premium-spread-production/`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-premium-spread-20260920`.
+- No database, collector or order service was changed or restarted.

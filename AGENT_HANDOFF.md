@@ -13,6 +13,11 @@
   contract changed.
 - Report:
   `docs/trading-analytics/SCALPER_V2_PREMIUM_SPREAD_REPAIR_20260920.md`.
+- Release `7fc7fa8` is pushed and deployed. The dashboard is healthy on image
+  `sha256:307b4d9b2da72e87935598725335106bd3c8acfeb09643c0cb85fd0d0402ee75`;
+  asset `/n50/assets/index-C5vtlmWO.js`. Authenticated production Playwright
+  passed 35/35. Rollback tag:
+  `trading-stack-n50-dashboard:before-scalper-v2-premium-spread-20260920`.
 
 ## 2026-09-20 — Morning View latest cash and Outlook colour
 

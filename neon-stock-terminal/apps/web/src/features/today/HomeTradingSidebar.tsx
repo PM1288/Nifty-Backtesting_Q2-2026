@@ -12,12 +12,18 @@ import styles from './HomeTradingSidebar.module.css';
 const istDay = () => new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const number = (value: number | null | undefined, suffix = '') => value != null && Number.isFinite(value) ? `${value.toLocaleString('en-IN', {maximumFractionDigits:2})}${suffix}` : '—';
 const stageLabel: Record<ProgressionFunnelStage, string> = {mwd:'MWD',hour:'MWDH','15m':'MWDH 15','5m':'MWDH 5'};
-type Props = { stocks: Quote[]; progression?: ScalperProgressionResponse; progressionError: boolean };
+type Props = {
+  stocks: Quote[];
+  progression?: ScalperProgressionResponse;
+  progressionError: boolean;
+  progressionRefreshing?: boolean;
+  onProgressionRetry?: () => void;
+};
 export function HomeTradingSidebar(props: Props) {
   const {user} = useAuthGate();
   return user ? <UserSidebar key={user.uid} uid={user.uid} {...props} /> : null;
 }
-function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid: string}) {
+function UserSidebar({uid, stocks, progression, progressionError, progressionRefreshing, onProgressionRetry}: Props & {uid: string}) {
   const [open, setOpen] = useState(false);
   const [today, setToday] = useState(istDay);
   const [personal, setPersonal] = useState<PersonalPick[]>(() => { try {return parsePersonalPicks(localStorage.getItem(shortlistKey(uid)));} catch {return [];} });
@@ -110,7 +116,8 @@ function UserSidebar({uid, stocks, progression, progressionError}: Props & {uid:
         {threeMonth.isLoading && <p role="status">Loading 3Month selections…</p>}
         {threeMonth.isError && <p role="alert">3Month strategy unavailable. <button onClick={() => threeMonth.refetch()}>Retry</button></p>}
         {!threeMonth.isLoading && !threeMonth.isError && threeMonth.data?.sessionDate !== today && <p className={styles.muted}>3Month latest session is {threeMonth.data?.sessionDate ?? 'unavailable'}; it is not counted as today.</p>}
-        <p className={styles.muted}>MWHD: {progressionError ? 'refresh unavailable' : progression ? `response for ${progression.sessionDate}` : 'loading'}. Only today’s confirmed intraday bars qualify; older ranks are context only.</p>
+        {progressionError ? <p role="alert">MWHD refresh failed{progression ? " · last loaded ranks retained" : ""}. {onProgressionRetry ? <button type="button" onClick={onProgressionRetry}>Retry</button> : null}</p>
+          : <p className={styles.muted}>MWHD: {progressionRefreshing && progression ? "refreshing in place" : progression ? `response for ${progression.sessionDate}` : "loading"}. Only today’s confirmed intraday bars qualify; older ranks are context only.</p>}
         <section className={styles.consensus} aria-label="Selection consensus" data-testid="home-selection-consensus">
           <header><div><span>Today’s selection consensus</span><strong>{uniqueStocks} stocks · {rows.length} directional picks</strong></div><b>{maxAgreement || 0}/4 max agreement</b></header>
           {!rows.length ? <p>No current-session strategy or manual selection.</p> : <>

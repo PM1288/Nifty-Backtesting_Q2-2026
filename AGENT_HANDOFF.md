@@ -1,5 +1,23 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Home and screener live-refresh repair
+
+- Home and the current-month screener now retain their last successful data
+  during a failed background poll instead of replacing the hydrated surface.
+- Added visible/accessibility alerts for failed or late refreshes, source
+  timestamps, 10-second/60-second cadence disclosure and in-place Retry.
+- Progression refresh revalidates on focus/reconnect; strategy formulas,
+  ranking, data collection, exports, notifications and order permissions are
+  unchanged.
+- Added deterministic refresh-health unit coverage and the authenticated,
+  failure-injection browser regression
+  `tools/playwright/home-screener-live-refresh.mjs`.
+- Web typecheck, 240/240 tests and build passed; API typecheck, 262/262 tests
+  and build passed; the canonical gate passed. An isolated production-image
+  browser run passed 11/11, including real 10-second and 60-second polling,
+  retained DOM nodes/rows, visible failure alerts and in-place recovery.
+- Report: `docs/uiux/HOME_SCREENER_LIVE_REFRESH_20260920.md`.
+
 ## 2026-09-20 — Scalper V2 parent-header reduction
 
 - Hid the redundant `Trading Analytics · Scalper V2`, `NIFTY strategy`,

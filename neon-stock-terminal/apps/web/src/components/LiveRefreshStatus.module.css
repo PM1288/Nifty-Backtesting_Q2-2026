@@ -1,0 +1,28 @@
+.status {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 7px 10px;
+  border: 1px solid #cbd7e7;
+  border-radius: 9px;
+  background: #f7fafc;
+  color: #40536b;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.status strong { color: #174f38; }
+.status[data-state="refreshing"] strong { color: #235fa7; }
+.status[data-state="stale"], .status[data-state="error"] { border-color: #e6aa55; background: #fff7e8; color: #744d14; }
+.status[data-state="stale"] strong, .status[data-state="error"] strong { color: #9a3e18; }
+.sources { min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.source { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.source[data-state="error"], .source[data-state="stale"] { color: #9a3e18; font-weight: 700; }
+.status button { margin-left: auto; min-height: 26px; padding: 3px 8px; border: 1px solid currentColor; border-radius: 6px; background: transparent; color: inherit; font: inherit; font-weight: 750; cursor: pointer; }
+:global([data-theme="dark"]) .status { border-color: #3c4d63; background: #162131; color: #bdc9d8; }
+:global([data-theme="dark"]) .status strong { color: #7ce0aa; }
+:global([data-theme="dark"]) .status[data-state="stale"],
+:global([data-theme="dark"]) .status[data-state="error"] { border-color: #916e37; background: #2c2417; color: #f1c77f; }
+:global([data-theme="dark"]) .status[data-state="stale"] strong,
+:global([data-theme="dark"]) .status[data-state="error"] strong { color: #ffad89; }

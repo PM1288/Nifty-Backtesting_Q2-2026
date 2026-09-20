@@ -167,6 +167,9 @@ export function useScalperProgression(enabled = true) {
     enabled,
     refetchInterval: 60_000,
     staleTime: 30_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 }
 

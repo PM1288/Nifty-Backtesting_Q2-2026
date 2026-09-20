@@ -15,6 +15,7 @@ import { FuturesVolatilityPreview } from "../../components/FuturesVolatilityPrev
 import { ScalperProgressionMatrix } from "./ScalperProgressionMatrix";
 import { HomeTradingSidebar } from './HomeTradingSidebar';
 import { useMorningSummary } from "../../lib/hooks";
+import { LiveRefreshStatus } from "../../components/LiveRefreshStatus";
 
 export function TodaySummaryPage() {
   const { model, overview, progression, profiles, live, authReady } = useTodayData();
@@ -34,8 +35,15 @@ export function TodaySummaryPage() {
   const selected = model.sectors.find((sector) => sector.id === selectedId) ?? [...model.sectors].sort((a, b) => a.rank - b.rank)[0] ?? null;
   const boardHref = `/full-board${selected ? `?sector=${encodeURIComponent(selected.id)}` : ""}`;
   return <div className={styles.summaryPage} data-testid="today-summary">
-    <HomeTradingSidebar stocks={model.allStocks} progression={progression.data} progressionError={Boolean(progression.error)} />
+    <HomeTradingSidebar stocks={model.allStocks} progression={progression.data} progressionError={Boolean(progression.error)} progressionRefreshing={progression.isFetching} onProgressionRetry={() => { void progression.refetch(); }} />
     <MarketSummaryStrip model={model} />
+    <LiveRefreshStatus
+      sources={[
+        { id: "home", label: "Home", hasData: Boolean(overview.data), isError: overview.isError, isFetching: overview.isFetching, dataUpdatedAt: overview.dataUpdatedAt, intervalMs: 10_000 },
+        { id: "mwhd", label: "MWHD screener", hasData: Boolean(progression.data), isError: progression.isError, isFetching: progression.isFetching, generatedAt: progression.data?.generatedAt, dataUpdatedAt: progression.dataUpdatedAt, intervalMs: 60_000 },
+      ]}
+      onRetry={() => { void Promise.all([overview.refetch(), progression.refetch()]); }}
+    />
     <div className={styles.lensBar}>
       <div role="tablist" aria-label="Today summary lens"><button role="tab" aria-selected={lens === "story"} onClick={() => setUrl({ lens: "story" })}>Market Story</button>
       <button role="tab" aria-selected={lens === "sector-matrix"} onClick={() => setUrl({ lens: "sector-matrix" })}>Sector Matrix</button></div>

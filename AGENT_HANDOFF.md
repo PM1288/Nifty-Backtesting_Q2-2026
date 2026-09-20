@@ -1,5 +1,18 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Morning View latest cash and Outlook colour
+
+- Branch `fix/morning-view-cash-outlook-colors-20260920`; report:
+  `docs/trading-analytics/MORNING_VIEW_LATEST_CASH_AND_OUTLOOK_COLOUR_20260920.md`.
+- Fixed the exact-date coupling that made Cash unavailable when the latest NSE
+  cash report lagged the latest derivatives report. Current retained evidence
+  is derivatives 2026-09-18 and cash 2026-09-17.
+- Morning View now uses the latest NSE-only cash report on or before the active
+  date and discloses both source dates. The top Outlook uses green for bullish,
+  red for bearish and amber for neutral/unavailable results.
+- The original six-row matrix, raw signs, strategy logic, orders, collectors
+  and stored data are unchanged.
+
 ## 2026-09-20 — Scalper V2 shared cursor repair
 
 - Removed self-suppression from the physically active NIFTY/CE/PE chart. Only

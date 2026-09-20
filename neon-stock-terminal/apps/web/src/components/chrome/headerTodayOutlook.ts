@@ -36,16 +36,18 @@ export function buildHeaderTodayOutlook(summary: MorningSummaryResponse | null |
     ? summary.matrix
     : "Data unavailable";
   const report = summary?.reportDate ?? "report unavailable";
+  const derivativesReport = summary?.derivativesReportDate ?? summary?.reportDate ?? "unavailable";
+  const cashReport = summary?.cashReportDate ?? "unavailable";
   const equityValue = formatCrore(summary?.equityNet);
   const futuresValue = formatCrore(summary?.futuresNet);
   const optionsValue = formatCrore(summary?.optionsNet);
   const title = [
-    `Today outlook · FII activity · ${report}`,
+    `Today outlook · FII activity · derivatives ${derivativesReport} · cash ${cashReport}`,
     `Equity ${equity} · ₹${equityValue} crore`,
     `Index futures ${futures} · ₹${futuresValue} crore`,
     `Index options ${options} · ₹${optionsValue} crore`,
     `Original market matrix: ${result}`,
     "Index derivatives cover all indices, not NIFTY only. Options value is not premium cash flow.",
   ].join("\n");
-  return { equity, futures, options, equityValue, futuresValue, optionsValue, result, report, title, tone: outlookTone(summary?.matrix) };
+  return { equity, futures, options, equityValue, futuresValue, optionsValue, result, report, derivativesReport, cashReport, title, tone: outlookTone(summary?.matrix) };
 }

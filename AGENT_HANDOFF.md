@@ -5615,9 +5615,10 @@ or outcomes were deleted.
 - Web typecheck, 226/226 tests and production build passed; API typecheck,
   254/254 tests and build passed; canonical gate passed. Local real-data
   Chromium passed 20/20 and deterministic fixture Chromium passed 21/21.
-- Commit `485e3f0` is pushed to the feature branch and `master`. The scoped
+- History-row commit `485e3f0` and corrective side-pane commit `e843aba` are
+  pushed to their feature branches and `master`. The scoped
   dashboard deployment is healthy on image
-  `sha256:8270f7ca898b9c05147b9857c57675de2e2a0f82607ac2de28a81162df23a17c`
-  with asset `/n50/assets/index-BaR6LvwV.js`. Authenticated production Chromium
-  passed 20/20; evidence is outside Git at
-  `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-production/`.
+  `sha256:b6d5b03b42c3170c52ca2914c702e4768ceac661aec2da144a8504473937d904`
+  with asset `/n50/assets/index-hwv5hmyf.js`. Authenticated production Chromium
+  passed 22/22; evidence is outside Git at
+  `/home/novius2/NIFTY50/evidence/scalper-v2-side-oi-restored-20260920-production/`.

@@ -52,12 +52,11 @@ remains available separately.
 - Web typecheck, 226/226 tests and production build passed.
 - API typecheck, 254/254 tests and production build passed.
 - `bash scripts/verify/canonical-repository-gate.sh` passed.
-- Authenticated local Chromium passed 20/20 checks. Measured desktop geometry:
-  price grid `1788 x 640`; underlying width `996.8`; two history panels `915 x
-  250` each, starting 6 px below the price grid. The removed side-chart selector
-  was absent, all three native price cursors shared the same time, the visible
-  automatic reference IDs were `today-open` and `previous-day-high`, and no page
-  error occurred.
+- The initial local pass measured the three-price grid before the side pane was
+  restored. After scope clarification, authenticated local Chromium passed
+  22/22 checks and verified a bounded `300–360px` side pane containing two
+  separate charts, a 640px-aligned top row, two equal history panels below, the
+  shared native price cursors and no page errors.
 - The latest retained weekend context had no comparable timestamped chain-total
   samples. Both new panels therefore showed explicit unavailable states. This
   proves missingness handling and layout, not a painted live-market OI line.
@@ -69,12 +68,14 @@ remains available separately.
 - Browser screenshots and JSON evidence are outside Git at
   `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-final/`
   and `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-synthetic-pass/`.
-- Release commit `485e3f0` was pushed to the feature branch and `master`. The
+- The original history-row repair is commit `485e3f0`; corrective commit
+  `e843aba` restores the required side pane and is pushed to its feature branch
+  and `master`. The
   approved dashboard-only deployment is healthy on image
-  `sha256:8270f7ca898b9c05147b9857c57675de2e2a0f82607ac2de28a81162df23a17c`
-  with entry asset `/n50/assets/index-BaR6LvwV.js`.
-- Authenticated production Chromium passed 20/20 checks with no page errors.
+  `sha256:b6d5b03b42c3170c52ca2914c702e4768ceac661aec2da144a8504473937d904`
+  with entry asset `/n50/assets/index-hwv5hmyf.js`.
+- Authenticated production Chromium passed 22/22 checks with no page errors.
   Production screenshots and results are outside Git at
-  `/home/novius2/NIFTY50/evidence/scalper-v2-oi-history-layout-20260920-production/`.
+  `/home/novius2/NIFTY50/evidence/scalper-v2-side-oi-restored-20260920-production/`.
   The production session also truthfully showed unavailable OI-history states;
   it did not fabricate lines from current-only OI.

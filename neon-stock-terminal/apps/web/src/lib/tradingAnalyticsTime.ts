@@ -1,5 +1,16 @@
 export type ChartTimeValue = number | string | { year: number; month: number; day: number };
 
+type IntervalBarTime = { start?: unknown; end?: unknown };
+
+/** Plot interval candles at their opening timestamp. The end timestamp remains
+ * authoritative for completion, freshness and rule evaluation. */
+export function intervalBarChartTime(bar: IntervalBarTime) {
+  const start = Date.parse(String(bar.start));
+  if (Number.isFinite(start)) return Math.floor(start / 1000);
+  const end = Date.parse(String(bar.end));
+  return Number.isFinite(end) ? Math.floor(end / 1000) : null;
+}
+
 export function chartTimeToIso(value: ChartTimeValue | undefined) {
   if (typeof value === "number") return new Date(value * 1000).toISOString();
   if (typeof value === "string") {

@@ -46,3 +46,12 @@ test("shared cursor maps to the containing completed lower-frequency candle", ()
   assert.equal(containingBar(rows, "2026-09-08T04:10:00.000Z")?.close, 11);
   assert.equal(containingBar([], "2026-09-08T04:02:00.000Z"), null);
 });
+
+test("opening-time cursor selects the candle beginning at the interval boundary", () => {
+  const rows = [
+    { start: "2026-09-08T03:45:00.000Z", end: "2026-09-08T03:50:00.000Z", closed: true, close: 10 },
+    { start: "2026-09-08T03:50:00.000Z", end: "2026-09-08T03:55:00.000Z", closed: true, close: 11 },
+  ];
+  assert.equal(containingBar(rows, "2026-09-08T03:50:00.000Z")?.close, 11);
+  assert.equal(containingBar(rows, "2026-09-08T03:49:00.000Z")?.close, 10);
+});

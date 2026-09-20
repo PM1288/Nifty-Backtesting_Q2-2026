@@ -24,7 +24,7 @@ import {
   type MatrixPane,
   type MatrixSide,
 } from "../lib/multiTimeframeMatrix";
-import { chartTimeToIso, istChartTimeLabel } from "../lib/tradingAnalyticsTime";
+import { chartTimeToIso, intervalBarChartTime, istChartTimeLabel } from "../lib/tradingAnalyticsTime";
 import styles from "./TradingAnalyticsPage.module.css";
 
 type Row = Record<string, unknown>;
@@ -39,10 +39,6 @@ const finite = (value: unknown) => {
   if (value == null || value === "") return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-};
-const stamp = (value: unknown): UTCTimestamp | null => {
-  const parsed = Date.parse(String(value));
-  return Number.isFinite(parsed) ? Math.floor(parsed / 1000) as UTCTimestamp : null;
 };
 const valueText = (value: unknown) => {
   const parsed = finite(value);
@@ -92,14 +88,14 @@ function MatrixCandleChart({
     });
     const ema = chart.addSeries(LineSeries, { color: "#f59e0b", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     const candleData = rows.flatMap((row) => {
-      const time = stamp(row.end), open = finite(row.open), high = finite(row.high), low = finite(row.low), close = finite(row.close);
+      const time = intervalBarChartTime(row) as UTCTimestamp | null, open = finite(row.open), high = finite(row.high), low = finite(row.low), close = finite(row.close);
       return row.closed === true && time != null && open != null && high != null && low != null && close != null
         ? [{ time, open, high, low, close }]
         : [];
     });
     candles.setData(candleData);
     ema.setData(rows.flatMap((row) => {
-      const time = stamp(row.end), value = finite(row.ema9);
+      const time = intervalBarChartTime(row) as UTCTimestamp | null, value = finite(row.ema9);
       return row.closed === true && time != null && value != null ? [{ time, value }] : [];
     }));
     const resize = () => chart.resize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), true);
@@ -124,7 +120,7 @@ function MatrixCandleChart({
     const chart = chartRef.current, series = seriesRef.current;
     if (!chart || !series) return;
     const row = containingBar(rows, cursorTime);
-    const time = stamp(row?.end), price = finite(row?.close);
+    const time = row == null ? null : intervalBarChartTime(row) as UTCTimestamp | null, price = finite(row?.close);
     applyingExternalCursor.current = true;
     if (time == null || price == null) chart.clearCrosshairPosition();
     else chart.setCrosshairPosition(price, time, series);

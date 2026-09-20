@@ -9,7 +9,7 @@ import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2Profil
 import { mergeScalperV2Levels } from "../../lib/scalperV2Levels";
 import { visibleScalperV2ReferenceLevels, type ScalperV2ReferenceLevel } from "../../lib/scalperV2ReferenceLevels";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
-import { istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
+import { intervalBarChartTime, istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
 import { ScalperV2OiProfilePrimitive } from "./ScalperV2OiProfilePrimitive";
 import { createScalperV2Drawing, drawingAnchorCount, type ScalperV2Drawing, type ScalperV2DrawingAnchor, type ScalperV2DrawingTool } from "./scalperV2Drawings";
@@ -88,9 +88,9 @@ export function ScalperV2Chart({
   const candleDataRef = useRef<CandlestickData<Time>[]>([]), emaDataRef = useRef<Array<{ time: Time; value: number }>>([]), volumeDataRef = useRef<Array<{ time: Time; value: number; color: string }>>([]), oiDifferenceDataRef = useRef<Array<{ time: Time; value: number }>>([]), updateCountRef = useRef(0);
   const cancelDrawingGestureRef = useRef<(() => void) | null>(null);
   const drawingsRef = useRef(drawings);
+  const startToEndRef = useRef<Map<number, number>>(new Map());
   const callbacksRef = useRef({ onCrosshair, onRangeChange, onTimeClick, onDrawingCreate, onDrawingUpdate, onDrawingSelect, drawingTool });
   callbacksRef.current = { onCrosshair, onRangeChange, onTimeClick, onDrawingCreate, onDrawingUpdate, onDrawingSelect, drawingTool };
-  drawingsRef.current = drawings;
   profileRowsRef.current = oiProfile;
   profileModeRef.current = profileMode;
   yLockedRef.current = yLocked;
@@ -99,17 +99,31 @@ export function ScalperV2Chart({
   const profileVisibilityRef = useRef(profileVisibility);
 
   const data = useMemo(() => bars.flatMap((bar): CandlestickData<Time>[] => {
-    const time = chartTime(bar.end), open = numeric(bar.open), high = numeric(bar.high), low = numeric(bar.low), close = numeric(bar.close);
+    const time = intervalBarChartTime(bar) as UTCTimestamp | null, open = numeric(bar.open), high = numeric(bar.high), low = numeric(bar.low), close = numeric(bar.close);
     return bar.closed === true && time != null && open != null && high != null && low != null && close != null ? [{ time, open, high, low, close }] : [];
   }), [bars]);
   const byTime = useMemo(() => new Map(data.map((bar) => [Number(bar.time), bar])), [data]);
+  const endToStart = useMemo(() => new Map(bars.flatMap((bar) => {
+    const start = intervalBarChartTime(bar), end = chartTime(bar.end);
+    return start == null || end == null ? [] : [[Number(end), Number(start)] as const];
+  })), [bars]);
+  const startToEnd = useMemo(() => new Map(bars.flatMap((bar) => {
+    const start = intervalBarChartTime(bar), end = chartTime(bar.end);
+    return start == null || end == null ? [] : [[Number(start), Number(end)] as const];
+  })), [bars]);
+  startToEndRef.current = startToEnd;
+  const displayDrawings = useMemo(() => drawings.map((drawing) => ({
+    ...drawing,
+    anchors: drawing.anchors.map((anchor) => ({ ...anchor, time: endToStart.get(anchor.time) ?? anchor.time })),
+  })), [drawings, endToStart]);
+  drawingsRef.current = displayDrawings;
   const emaData = useMemo(() => bars.flatMap((bar) => {
-    const time = chartTime(bar.end), value = numeric(bar.ema9);
+    const time = intervalBarChartTime(bar), value = numeric(bar.ema9);
     return time != null && value != null ? [{ time: time as Time, value }] : [];
   }), [bars]);
   const emaByTime = useMemo(() => new Map(emaData.map((row) => [Number(row.time), row.value])), [emaData]);
   const volumeData = useMemo(() => volumeBars.flatMap((bar) => {
-    const time = chartTime(bar.end), value = numeric(bar.volume), open = numeric(bar.open), close = numeric(bar.close);
+    const time = intervalBarChartTime(bar), value = numeric(bar.volume), open = numeric(bar.open), close = numeric(bar.close);
     return bar.closed === true && time != null && value != null
       ? [{ time: time as Time, value, color: open != null && close != null && close < open ? "rgba(220,38,38,.58)" : "rgba(5,150,105,.58)" }]
       : [];
@@ -277,7 +291,7 @@ export function ScalperV2Chart({
         const anchor = drawingAnchorAtPointer(event); if (!anchor) return;
         suppressNextChartClick = true;
         const required = drawingAnchorCount(activeTool);
-        if (required === 1) callbacksRef.current.onDrawingCreate?.(activeTool, id, [anchor]);
+        if (required === 1) callbacksRef.current.onDrawingCreate?.(activeTool, id, [{ ...anchor, time: startToEndRef.current.get(anchor.time) ?? anchor.time }]);
         else if (!creating || creating.tool !== activeTool) {
           creating = { tool: activeTool, anchors: [anchor] }; ownChartInteraction();
           setDrawingHint(`1/${required} · move for preview, click next anchor · Esc cancels`);
@@ -288,7 +302,7 @@ export function ScalperV2Chart({
             if (first.time === second.time && first.price === second.price) {
               setDrawingHint("Choose a different second anchor"); previewCreation(anchor);
             } else {
-              callbacksRef.current.onDrawingCreate?.(activeTool, id, anchors); cancelDrawingGesture();
+              callbacksRef.current.onDrawingCreate?.(activeTool, id, anchors.map((value) => ({ ...value, time: startToEndRef.current.get(value.time) ?? value.time }))); cancelDrawingGesture();
             }
           } else {
             creating = { ...creating, anchors };
@@ -330,7 +344,11 @@ export function ScalperV2Chart({
     };
     const drawingPointerUp = (event: PointerEvent) => {
       if (!dragging || dragging.pointerId !== event.pointerId) return;
-      const completed = dragging.drawing; dragging = null; body.releasePointerCapture(event.pointerId); callbacksRef.current.onDrawingUpdate?.(completed);
+      const completed = dragging.drawing; dragging = null; body.releasePointerCapture(event.pointerId);
+      callbacksRef.current.onDrawingUpdate?.({
+        ...completed,
+        anchors: completed.anchors.map((anchor) => ({ ...anchor, time: startToEndRef.current.get(anchor.time) ?? anchor.time })),
+      });
       setDrawingHint(null); restoreChartInteraction();
       event.preventDefault(); event.stopPropagation();
     };
@@ -353,7 +371,7 @@ export function ScalperV2Chart({
     };
   }, [id]);
 
-  useEffect(() => { drawingPrimitiveRef.current?.setData(drawings, selectedDrawingId); }, [drawings, selectedDrawingId]);
+  useEffect(() => { drawingPrimitiveRef.current?.setData(displayDrawings, selectedDrawingId); }, [displayDrawings, selectedDrawingId]);
   useEffect(() => { cancelDrawingGestureRef.current?.(); }, [drawingTool]);
   useEffect(() => { profilePrimitiveRef.current?.setData(oiProfile, profileMode); scheduleProfile(); }, [oiProfile, profileMode]);
 
@@ -437,21 +455,25 @@ export function ScalperV2Chart({
 
   useEffect(() => {
     markerRef.current?.setMarkers(signalEvents.flatMap((event) => {
-      const time = chartTime(event.setupTime); if (time == null || !byTime.has(Number(time))) return [];
+      const canonicalTime = chartTime(event.setupTime);
+      const time = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
+      if (time == null || !byTime.has(Number(time))) return [];
       return [{ time: time as Time, position: event.direction === "CALL" ? "belowBar" as const : "aboveBar" as const,
         color: event.direction === "CALL" ? "#2563eb" : "#a86600", shape: event.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "arrowUp" as const : "circle" as const,
         text: event.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "Entry ref" : "Setup" }];
     }));
-  }, [byTime, signalEvents]);
+  }, [byTime, endToStart, signalEvents]);
 
   useEffect(() => {
     const candle = candleRef.current; if (!candle) return;
     measurementLinesRef.current.forEach((line) => candle.removePriceLine(line));
     measurementLinesRef.current = measurementTimes.flatMap((value, index) => {
-      const row = byTime.get(Number(chartTime(value))); if (!row) return [];
+      const canonicalTime = chartTime(value);
+      const displayTime = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
+      const row = displayTime == null ? null : byTime.get(displayTime); if (!row) return [];
       return [candle.createPriceLine({ price: index === 0 ? row.open : row.close, color: index === 0 ? "#6651d9" : "#0f766e", lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: index === 0 ? "A open" : "B close" })];
     });
-  }, [byTime, measurementTimes]);
+  }, [byTime, endToStart, measurementTimes]);
 
   useEffect(() => {
     const chart = chartRef.current; if (!chart || data.length === 0) return;
@@ -504,7 +526,7 @@ export function ScalperV2Chart({
       <span className={css.ohlc} data-testid={`v2-chart-readout-${id}`}><b>{inspectionMode === "latest" ? "Latest" : inspectionMode === "locked" ? "Locked" : "At cursor"}</b>
         {selected ? <><span>O {format(selected.open)}</span><span>H {format(selected.high)}</span><span>L {format(selected.low)}</span><span>C {format(selected.close)}</span><span>EMA9 {format(selectedEma)}</span><span className={distance == null ? undefined : distance > 0 ? css.positive : distance < 0 ? css.negative : undefined}>C−EMA {distance == null ? "—" : `${distance > 0 ? "+" : ""}${format(distance)}`}</span></> : <span>No exact completed candle</span>}
       </span></header>
-    <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`}>
+    <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`} data-first-candle-start={data.length ? String(Number(data[0].time)) : ""} data-first-candle-end={bars.length ? String(chartTime(bars.find((bar) => bar.closed === true)?.end) ?? "") : ""}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
       {id === "underlying" && oiProfile.length > 0 && <div className={css.profileCaption} tabIndex={0} data-testid="v2-oi-profile" data-mode={profileMode} aria-label="Change in open interest by strike aligned to the underlying price axis"><div className={css.profileCaptionSummary}><b>ΔOI</b><span className={css.profileIdentity}><i className={css.profileCall} />CE <i className={css.profilePut} />PE</span></div><div className={css.profileCaptionDetails}><span><b>ΔOI by strike</b> · CE yellow · PE blue</span><span>Negative ← 0 → Positive</span><span>Change: green + · red −</span><span>{profileLabel}</span><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y for off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "plotted" : "outside active Y range"}</span>}</div></div>}

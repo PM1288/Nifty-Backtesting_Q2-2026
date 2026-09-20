@@ -69,8 +69,9 @@ export function barsForIstDay(rows: Row[], day: string | null) {
   });
 }
 
-/** A lower-frequency candle represents the hovered wall-clock instant when its
- * completed interval ends at or immediately after that instant. */
+/** Resolve a shared opening-time cursor to the interval that starts at, or
+ * contains, that instant. Older payloads without start retain the end-boundary
+ * fallback instead of inventing interval widths. */
 export function containingBar(rows: Row[], isoTime: string | null) {
   if (!isoTime) return null;
   const target = Date.parse(isoTime);
@@ -78,5 +79,12 @@ export function containingBar(rows: Row[], isoTime: string | null) {
   const closed = rows
     .filter((row) => row.closed === true && Number.isFinite(Date.parse(String(row.end))))
     .sort((a, b) => Date.parse(String(a.end)) - Date.parse(String(b.end)));
+  const withStarts = closed.filter((row) => Number.isFinite(Date.parse(String(row.start))));
+  if (withStarts.length > 0) {
+    return withStarts.find((row) => {
+      const start = Date.parse(String(row.start)), end = Date.parse(String(row.end));
+      return start <= target && target < end;
+    }) ?? withStarts.at(-1) ?? null;
+  }
   return closed.find((row) => Date.parse(String(row.end)) >= target) ?? closed.at(-1) ?? null;
 }

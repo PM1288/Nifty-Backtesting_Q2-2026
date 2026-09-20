@@ -38,6 +38,7 @@ import { useScalperV2Drawings } from "./scalper-v2/useScalperV2Drawings";
 import css from "./scalper-v2/ScalperV2.module.css";
 import { ScalperV2Freshness } from "./scalper-v2/ScalperV2Freshness";
 import type { ScalperSession } from "../lib/scalperV2Freshness";
+import { intervalBarChartTime } from "../lib/tradingAnalyticsTime";
 
 const Chart = lazy(async () => ({ default: (await import("../components/visual/EChartSurface")).EChartSurface }));
 type Row = Record<string, unknown>;
@@ -110,7 +111,7 @@ const chartSide = (pane: ChartPane) => {
   return symbol.endsWith("CE") ? "CE" : symbol.endsWith("PE") ? "PE" : "UNDERLYING";
 };
 const latest = (rows: Row[]) => rows.filter((row) => row.closed === true).at(-1);
-const exactAt = (rows: Row[], selectedTime: number | null) => selectedTime == null ? latest(rows) : rows.find((row) => row.closed === true && Math.floor(Date.parse(String(row.end)) / 1000) === selectedTime);
+const exactAt = (rows: Row[], selectedTime: number | null) => selectedTime == null ? latest(rows) : rows.find((row) => row.closed === true && intervalBarChartTime(row) === selectedTime);
 const chartQuery = (symbol: string, asOf: string, expiry: string, ceStrike: string, peStrike: string, interval: number) => {
   // Retain enough canonical history for indicator warm-up and sparse OI snapshot
   // capture. The visible chart still slices to the explicitly selected session.
@@ -134,7 +135,7 @@ function Snapshot({ name, row }: { name: string; row: Row | undefined }) {
   return <section className={css.instrumentSnapshot}><h3>{name}</h3><div className={css.valueGrid}>{[
     ["Open", row?.open], ["High", row?.high], ["Low", row?.low], ["Close", row?.close], ["EMA9", row?.ema9], ["C − EMA", distance],
   ].map(([label, value]) => <div key={String(label)}><small>{String(label)}</small><strong className={label === "C − EMA" ? signClass(value) : undefined}>{label === "C − EMA" ? signed(value) : number(value)}</strong></div>)}</div>
-    <p className={css.snapshotMeta}>{row ? `Completed candle · ${String(row.end)}` : "No exact completed candle at this time"}</p></section>;
+    <p className={css.snapshotMeta}>{row ? `Candle ${String(row.start ?? "—")} → ${String(row.end)} · completed` : "No exact completed candle at this time"}</p></section>;
 }
 
 function UnderlyingLevelGauge({ payload, strikes }: { payload: ScalperV2ReferenceLevelPayload; strikes: number[] }) {
@@ -467,12 +468,15 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const selectTime = (time: string) => {
     const seconds = Math.floor(Date.parse(time) / 1000);
     if (!measureMode) { setLockedTime(seconds); setRailTab("time"); return; }
+    const canonicalTime = [underlying, call, put].flatMap((pane) => pane?.bars ?? [])
+      .find((row) => row.closed === true && intervalBarChartTime(row) === seconds)?.end;
+    const measurementTime = canonicalTime == null ? time : String(canonicalTime);
     setPoints((current) => {
       if (current.length !== 1) {
         setMeasurementContext({ panes, interval, symbol, expiry, ceStrike: selectedCeStrike, peStrike: selectedPeStrike });
-        return [time];
+        return [measurementTime];
       }
-      return [current[0], time].sort();
+      return [current[0], measurementTime].sort();
     });
     if (points.length === 1) setMeasureMode(false);
   };

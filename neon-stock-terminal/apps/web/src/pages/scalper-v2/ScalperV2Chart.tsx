@@ -382,7 +382,10 @@ export function ScalperV2Chart({
         hostRef.current.dataset.crosshairExact = exact ? "true" : "false";
       }
     }
-    requestAnimationFrame(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
+    // Lightweight Charts emits the programmatic callback in this task. Release
+    // before the next physical pointer task so entering a receiver pane cannot
+    // lose its first real movement frame.
+    queueMicrotask(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
   }), [byTime, cursorCoordinator, id]);
 
   useEffect(() => { drawingPrimitiveRef.current?.setData(displayDrawings, selectedDrawingId); }, [displayDrawings, selectedDrawingId]);
@@ -552,7 +555,7 @@ export function ScalperV2Chart({
         hostRef.current.dataset.crosshairExact = exact ? "true" : "false";
       }
     }
-    requestAnimationFrame(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
+    queueMicrotask(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
   }, [byTime, externalCrosshair, id, inspectionMode]);
 
   return <section className={css.chartPanel} data-testid={`v2-chart-panel-${id}`} aria-label={`${title} ${interval} minute candlestick chart`}>

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression, projectedFullDayVolumeMultiple } from "./overview.js";
+import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression, projectedFullDayVolumeMultiple, projectedIntervalVolumeMultiple } from "./overview.js";
 
 test("projected volume compares an as-of session pace with the prior 20-day daily SMA", () => {
   const now = new Date("2026-09-18T06:45:00.000Z"); // 12:15 IST, 180/375 minutes
@@ -10,6 +10,13 @@ test("projected volume compares an as-of session pace with the prior 20-day dail
   assert.equal(projectedFullDayVolumeMultiple(2_200_000, 1_000_000, new Date("2026-09-17T10:00:00.000Z"), now), 2.2);
   assert.equal(projectedFullDayVolumeMultiple(null, 1_000_000, now, now), null);
   assert.equal(projectedFullDayVolumeMultiple(100, 0, now, now), null);
+});
+
+test("forming 15-minute volume is projected before comparing with the prior 15-bucket SMA", () => {
+  const started = new Date("2026-09-18T05:00:00.000Z");
+  assert.equal(projectedIntervalVolumeMultiple(500, 1_000, started, 15, new Date("2026-09-18T05:07:30.000Z")), 1);
+  assert.equal(projectedIntervalVolumeMultiple(2_000, 1_000, started, 15, new Date("2026-09-18T05:15:00.000Z")), 2);
+  assert.equal(projectedIntervalVolumeMultiple(null, 1_000, started), null);
 });
 
 test("header ticker contains stock quotes and never repeats index context", () => {
@@ -57,6 +64,8 @@ test("home scalper progression preserves period references, zero and missingness
       previous_15m_open: 124,
       current_15m_started_at: "2026-09-11T05:45:00Z",
       previous_15m_started_at: "2026-09-11T05:30:00Z",
+      current_15m_volume: 2000,
+      average_15m_volume_15: 1000,
       current_5m_open: 126,
       previous_5m_open: 125,
       current_5m_started_at: "2026-09-11T05:50:00Z",
@@ -96,6 +105,9 @@ test("home scalper progression preserves period references, zero and missingness
     previous15mOpen: 124,
     current15mStartedAt: "2026-09-11T05:45:00.000Z",
     previous15mStartedAt: "2026-09-11T05:30:00.000Z",
+    current15mVolume: 2000,
+    average15mVolume15: 1000,
+    intradayVolumeMultiple: 2,
     current5mOpen: 126,
     previous5mOpen: 125,
     current5mStartedAt: "2026-09-11T05:50:00.000Z",

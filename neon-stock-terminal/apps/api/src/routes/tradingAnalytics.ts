@@ -909,6 +909,26 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
         .json({ error: { code: "CHART_SOURCE_UNAVAILABLE" } });
     }
   });
+  app.get("/v1/trading-analytics/morning-summary", async (_req, res) => {
+    if (process.env.TRADING_ANALYTICS_ENABLED === "false") return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
+    const asOf = new Date().toISOString();
+    try {
+      const payload = await loadTradingAnalytics(prisma, asOf);
+      const productSign = (name: string) => payload.activity.find((row: Facts) => row.fii_derivatives === name)?.canonical_sign ?? null;
+      res.setHeader("Cache-Control", "private, max-age=60, stale-while-revalidate=240");
+      return res.json({
+        asOf: payload.asOf,
+        reportDate: payload.reportDate,
+        equity: payload.morning.cashSign,
+        futures: productSign("INDEX FUTURES"),
+        options: productSign("INDEX OPTIONS"),
+        matrix: payload.morning.matrix,
+        knowledgeState: payload.morning.knowledgeState,
+      });
+    } catch {
+      return res.status(503).json({ error: { code: "MORNING_SUMMARY_UNAVAILABLE" } });
+    }
+  });
   app.get("/v1/trading-analytics", async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });

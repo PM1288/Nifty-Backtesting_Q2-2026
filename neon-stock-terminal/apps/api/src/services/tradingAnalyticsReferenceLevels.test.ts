@@ -14,6 +14,7 @@ test("underlying references preserve session, period and rolling extrema", () =>
   assert.equal(values.current, 154);
   assert.equal(values["today-open"], 150);
   assert.equal(values["previous-day-close"], 149);
+  assert.ok(values["previous-day-high"] != null);
   assert.ok(values["current-week-open"] != null);
   assert.ok(values["current-month-open"] != null);
   assert.ok(values["five-day-low"] < values["five-day-high"]);

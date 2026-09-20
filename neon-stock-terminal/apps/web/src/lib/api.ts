@@ -31,6 +31,7 @@ import type {
   IntradayAnalyticsStockPayload,
   IntradayAnalyticsSummaryPayload,
   HeaderMarketSummaryResponse,
+  MorningSummaryResponse,
   LeaderboardResponse,
   OpsQualityPayload,
   OptionChainAnalyticsResponse,
@@ -478,6 +479,10 @@ export function fetchHeaderMarketSummary(): Promise<HeaderMarketSummaryResponse>
 
 export function fetchScalperProgression(): Promise<ScalperProgressionResponse> {
   return getJson<ScalperProgressionResponse>("/v1/overview/scalper-progression");
+}
+
+export function fetchMorningSummary(): Promise<MorningSummaryResponse> {
+  return getJson<MorningSummaryResponse>("/v1/trading-analytics/morning-summary");
 }
 
 export function fetchThreeMonthStrategy(mode: ThreeMonthIntradayMode): Promise<ThreeMonthStrategyResponse> {

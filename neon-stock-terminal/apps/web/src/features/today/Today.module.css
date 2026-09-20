@@ -145,3 +145,5 @@
 
 @media(max-width:1023px){.progressionRankBoards{grid-template-columns:1fr}.progressionFormula{order:4;width:100%;white-space:normal}}
 @media(max-width:767px){.progressionMatrix>header{align-items:flex-start}.progressionMatrix>header>div{display:block}.progressionMatrix>header small{display:block;margin-top:2px}.progressionToolbar>label:first-child{width:100%}.progressionToolbar>label:first-child input{flex:1}.progressionFilters{order:5;flex-basis:100%}.progressionStickyRank{min-width:42px!important;max-width:42px}.progressionStickyStock{left:42px;min-width:132px!important;max-width:132px}.progressionStickyLtp{left:174px;min-width:86px!important;max-width:86px}.progressionDrawerGate{grid-template-columns:34px 54px minmax(0,1fr)}.progressionDrawerGate>em{grid-column:3;text-align:left}.progressionDrawerGate>small{grid-column:2/-1}.progressionDualRank{grid-template-columns:1fr}.progressionRankBoard table{min-width:600px}}
+
+.morningHeadline{min-width:0;max-width:52%;margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155;font-size:10px}.morningHeadline b{margin-right:5px;color:#173d78}

@@ -8,6 +8,7 @@ import type { ScalperProgressionCheck, ScalperProgressionDirection } from "./tod
 import {
   buildProgressionMatrixRows,
   directionalProgression,
+  intradayVolumeConfirmation,
   PROGRESSION_GATE_WEIGHTS,
   sortProgressionRows,
   volumeConfirmation,
@@ -61,6 +62,7 @@ function ProgressionDrawer({ row, generatedAt, onClose }: { row: ProgressionMatr
   const bull = directionalProgression(row, "bull");
   const bear = directionalProgression(row, "bear");
   const volume = volumeConfirmation(row.stock);
+  const intradayVolume = intradayVolumeConfirmation(row.source);
   const projectedVolume = volume.multiple != null && row.stock.averageVolume20 != null ? volume.multiple * row.stock.averageVolume20 : null;
   return <>
     <button type="button" className={styles.progressionDrawerBackdrop} aria-label="Close progression details" onClick={onClose} />
@@ -68,6 +70,7 @@ function ProgressionDrawer({ row, generatedAt, onClose }: { row: ProgressionMatr
       <header><div><strong>{row.stock.symbol}</strong><small>{row.stock.name} · ₹{price(row.stock.last ?? row.source.currentValue)}</small></div><button ref={closeRef} type="button" onClick={onClose} aria-label="Close"><X size={17} /></button></header>
       <div className={styles.progressionDualRank}><span data-direction="bull">MWHD-BULL <b>#{bull.rank}</b> · W {bull.best.weightedScore}/{bull.best.maximumWeight}</span><span data-direction="bear">MWHD-BEAR <b>#{bear.rank}</b> · W {bear.best.weightedScore}/{bear.best.maximumWeight}</span></div>
       <div className={styles.progressionVolumeEvidence} data-band={volume.band}><b>{volume.symbol} {volume.multiple == null ? "Volume unavailable" : `${volume.multiple.toFixed(2)}× projected volume`}</b><span>Current {quantity(row.stock.volume)} · projected full day {quantity(projectedVolume)} · prior 20-session daily SMA {quantity(row.stock.averageVolume20)}</span><small>Optional confirmation only; ≥2× is green and does not change either MWHD rank or qualification.</small></div>
+      <div className={styles.progressionVolumeEvidence} data-band={intradayVolume.band}><b>{intradayVolume.symbol} {intradayVolume.multiple == null ? "15m volume unavailable until MWD qualifies" : `${intradayVolume.multiple.toFixed(2)}× intraday volume`}</b><span>Current/projected 15m bucket {quantity(row.source.current15mVolume)} · prior 15-bucket SMA {quantity(row.source.average15mVolume15)}</span><small>Calculated only for the staged MWD cohort. The forming 15-minute bucket is time-normalised before comparison.</small></div>
       <div className={styles.progressionLogic}><b>Audited inverse logic</b><span>BULL uses actual &gt; reference. BEAR uses the same source observations, gate order and weights with actual &lt; reference. M−2 requires M−1 and M−2 monthly sufficiency before lower-timeframe confirmation.</span></div>
       <h2 className={styles.progressionDirectionTitle} data-direction="bull">MWHD-BULL arithmetic</h2>
       {bull.routes.map((route) => <DetailRoute key={`bull-${route.branch.id}`} route={route} direction="bull" />)}
@@ -96,7 +99,7 @@ function RankBoard({ direction, rows, profiles, showVolume, onSelect, onOpenStoc
     <header><strong>{label}</strong><span>{rows.filter((row) => directionalProgression(row, direction).complete).length} ready · top 10 loaded</span></header>
     <div className={styles.progressionRankScroller} data-visible-rows="10" tabIndex={0} aria-label={`${label} ranked stocks; top 10 loaded`}>
       <table>
-        <thead><tr><th>Rank</th><th>Stock</th><th>W Score</th>{showVolume && <th title="Projected full-session volume divided by prior 20-session daily-volume SMA; optional, not ranked">V20 opt.</th>}{GATES.map((gate) => <th key={gate.id}>{gate.label}</th>)}</tr></thead>
+        <thead><tr><th>Rank</th><th>Stock</th><th>W Score</th>{showVolume && <th title="Projected full-session volume divided by prior 20-session daily-volume SMA; optional, not ranked">V20 opt.</th>}{GATES.map((gate) => <th key={gate.id}>{gate.label}</th>)}{showVolume && <th title="Projected current 15-minute bucket volume divided by the prior 15 completed 15-minute buckets; only calculated after MWD qualification">Intraday volume</th>}</tr></thead>
         <tbody>{visibleRows.map((row) => {
           const summary = directionalProgression(row, direction);
           return <tr key={row.stock.symbol} data-progression-symbol={row.stock.symbol} data-direction={direction} data-candidate={summary.complete ? "true" : "false"} onClick={() => onSelect(row.stock.symbol)}>
@@ -108,6 +111,7 @@ function RankBoard({ direction, rows, profiles, showVolume, onSelect, onOpenStoc
               const check = gateFor(summary, gate.id);
               return <td className={styles.progressionTick} data-state={stateOf(check)} key={gate.id} title={check?.label ?? `${gate.label} is not part of the selected best route`}><button type="button" aria-label={`${gate.label}: ${stateOf(check)}. Select for arithmetic.`} onClick={() => onSelect(row.stock.symbol)}>{stateSymbol(check)}</button></td>;
             })}
+            {showVolume && (() => { const volume = intradayVolumeConfirmation(row.source); return <td className={styles.progressionVolumeTick} data-band={volume.band} data-state={volume.state} title={volume.multiple == null ? "Unavailable until the stock passes its MWD route and 15-minute volume history exists" : `Projected current 15-minute volume ${volume.multiple.toFixed(2)}× its prior 15-bucket SMA.`}><button type="button" aria-label={`Intraday volume: ${volume.multiple == null ? "unavailable" : `${volume.multiple.toFixed(2)} times 15-period SMA`}`} onClick={() => onSelect(row.stock.symbol)}>{volume.symbol} {volume.multiple == null ? "—" : `${volume.multiple.toFixed(1)}×`}</button></td>; })()}
           </tr>;
         })}</tbody>
       </table>
@@ -140,10 +144,10 @@ export function ScalperProgressionMatrix({ stocks, rows, generatedAt, isLoading,
   const exportCsv = () => {
     const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
     const directions = ["bull", "bear"] as const;
-    const columns = ["Stock", "LTP", "Current volume", "Prior 20-session volume SMA", "Projected full-day volume / SMA20", "MWHD-BULL rank", "BULL route", "BULL weighted", "MWHD-BEAR rank", "BEAR route", "BEAR weighted", ...directions.flatMap((direction) => GATES.map((gate) => `${direction.toUpperCase()} ${gate.label} evidence`)), "Observed at"];
+    const columns = ["Stock", "LTP", "Current volume", "Prior 20-session volume SMA", "Projected full-day volume / SMA20", "Current 15m volume", "Prior 15-bucket 15m SMA", "Projected 15m volume / SMA15", "MWHD-BULL rank", "BULL route", "BULL weighted", "MWHD-BEAR rank", "BEAR route", "BEAR weighted", ...directions.flatMap((direction) => GATES.map((gate) => `${direction.toUpperCase()} ${gate.label} evidence`)), "Observed at"];
     const lines = [columns.map(quote).join(","), ...allRows.map((row) => {
       const bull = directionalProgression(row, "bull"), bear = directionalProgression(row, "bear");
-      const values = [row.stock.symbol, row.stock.last, row.stock.volume ?? "", row.stock.averageVolume20 ?? "", volumeConfirmation(row.stock).multiple ?? "", bull.rank, routeName(bull.best), `${bull.best.weightedScore}/${bull.best.maximumWeight}`, bear.rank, routeName(bear.best), `${bear.best.weightedScore}/${bear.best.maximumWeight}`, ...([bull, bear] as const).flatMap((summary) => GATES.map((gate) => {
+      const values = [row.stock.symbol, row.stock.last, row.stock.volume ?? "", row.stock.averageVolume20 ?? "", volumeConfirmation(row.stock).multiple ?? "", row.source.current15mVolume ?? "", row.source.average15mVolume15 ?? "", intradayVolumeConfirmation(row.source).multiple ?? "", bull.rank, routeName(bull.best), `${bull.best.weightedScore}/${bull.best.maximumWeight}`, bear.rank, routeName(bear.best), `${bear.best.weightedScore}/${bear.best.maximumWeight}`, ...([bull, bear] as const).flatMap((summary) => GATES.map((gate) => {
         const check = gateFor(summary, gate.id);
         return `${stateOf(check).toUpperCase()} | actual=${check?.left ?? ""} | operator=${comparisonSymbol(summary.direction)} | reference=${check?.right ?? ""}`;
       })), row.source.observedAt ?? ""];

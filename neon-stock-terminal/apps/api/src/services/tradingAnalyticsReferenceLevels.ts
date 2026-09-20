@@ -58,6 +58,7 @@ export function underlyingReferenceLevels(dailyRows: Facts[], spot: Facts | null
   add("today-open", "Today open", "D O", liveOpen ?? current?.open, today, currentCompleted ? "daily_bar" : "live_session");
   add("previous-day-open", "Yesterday open", "D-1 O", previous?.open, previous?.date ?? null);
   add("previous-day-close", "Yesterday close", "D-1 C", numeric(spot?.previous_close) ?? previous?.close, previous?.date ?? null, numeric(spot?.previous_close) != null ? "live_session" : "daily_bar");
+  add("previous-day-high", "Yesterday high", "D-1 H", previous?.high, previous?.date ?? null);
   add("current-week-open", "Current week open", "W O", weekRows[0]?.open, weekRows[0]?.date ?? null);
   add("previous-week-open", "Previous week open", "W-1 O", previousWeek[0]?.open, previousWeek[0]?.date ?? null);
   add("previous-week-close", "Previous week close", "W-1 C", previousWeek.at(-1)?.close, previousWeek.at(-1)?.date ?? null);

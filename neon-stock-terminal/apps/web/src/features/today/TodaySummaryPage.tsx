@@ -14,11 +14,13 @@ import styles from "./Today.module.css";
 import { FuturesVolatilityPreview } from "../../components/FuturesVolatilityPreview";
 import { ScalperProgressionMatrix } from "./ScalperProgressionMatrix";
 import { HomeTradingSidebar } from './HomeTradingSidebar';
+import { useMorningSummary } from "../../lib/hooks";
 
 export function TodaySummaryPage() {
   const { model, overview, progression, profiles, live, authReady } = useTodayData();
   const [params, setParams] = useSearchParams();
   const [quick, setQuick] = useState<QuickViewState>({ target: null, rect: null });
+  const morning = useMorningSummary();
   const lens = parseSummaryLens(params.get("lens"));
   const selectedId = params.get("sector");
   const setUrl = useCallback((next: { lens?: string; sector?: string | null }) => {
@@ -37,6 +39,7 @@ export function TodaySummaryPage() {
     <div className={styles.lensBar}>
       <div role="tablist" aria-label="Today summary lens"><button role="tab" aria-selected={lens === "story"} onClick={() => setUrl({ lens: "story" })}>Market Story</button>
       <button role="tab" aria-selected={lens === "sector-matrix"} onClick={() => setUrl({ lens: "sector-matrix" })}>Sector Matrix</button></div>
+      <div className={styles.morningHeadline} data-testid="home-morning-summary" title={morning.data ? `Morning View report ${morning.data.reportDate} · ${morning.data.knowledgeState}` : "Morning View summary unavailable"}><b>Morning View</b>{morning.isLoading ? "Loading…" : morning.isError || !morning.data ? "Unavailable" : `${morning.data.equity ?? "—"} / ${morning.data.futures ?? "—"} / ${morning.data.options ?? "—"} · ${morning.data.matrix.replaceAll("_", " ")}`}</div>
       <span>{live.transport === "CONNECTED" ? "Live" : live.transport === "RECONNECTING" ? "Reconnecting" : "Snapshot"} · {model.asOf ? new Date(model.asOf).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) : "—"}</span>
       <Link to={boardHref}>Open Full Board</Link>
     </div>

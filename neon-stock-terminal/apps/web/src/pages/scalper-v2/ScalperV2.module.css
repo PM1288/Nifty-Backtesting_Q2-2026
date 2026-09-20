@@ -72,3 +72,6 @@
 .chartHeader>span:first-child{flex-wrap:wrap;overflow-wrap:anywhere}
 @media(max-width:1199px){.workspace{grid-template-columns:minmax(0,1fr)}.charts{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(620px,auto) minmax(370px,auto)}.structureCharts{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(320px,auto);height:auto}}
 @media(max-width:767px){.charts{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(620px,auto) repeat(2,minmax(370px,auto))}.structureCharts{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(320px,auto))}.topQuotes{order:5;width:100%;overflow-x:auto}.levelGaugeBody{grid-template-columns:minmax(0,1fr)}.overviewKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* OI bars use the requested side colours without changing CE/PE price labels. */
+.ceBar,.profileLegend .ce{background:#eab308;outline-color:#8a6200}.peBar,.profileLegend .pe{background:#2563eb;outline-color:#1d4ed8}

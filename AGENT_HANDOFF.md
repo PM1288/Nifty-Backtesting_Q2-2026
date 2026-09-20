@@ -5519,3 +5519,29 @@ or outcomes were deleted.
   `sha256:17d726433225be96b5662a958d3aff2b3b6465b357cdc0697e5e160e5398aa90`,
   entry asset `/n50/assets/index-D0n6N1Cp.js`. No API, collector, database,
   strategy or order behavior changed.
+
+## 2026-09-20 — Scalper V2 and market-workstation flow repair
+
+- Branch: `feat/market-workstation-flow-20260920`; durable report:
+  `docs/trading-analytics/MARKET_WORKSTATION_FLOW_REPAIR_20260920.md`.
+- Scalper V2 underlying semantic price lines are restricted to Today open,
+  Yesterday close and Yesterday high. Selected CE/PE, OI profile, ranks,
+  max-pain and hover guides no longer occupy the underlying price pane.
+- The underlying native chart adds a timestamp-aligned lower pane for total PE
+  OI minus total CE OI. It incrementally updates without rebuilding candles.
+  OI bars use CE yellow and PE blue; candle/sign colours remain unchanged.
+- Morning View inverts heat semantics only for net-put cells: negative puts are
+  favourable/green and positive puts adverse/red, while exact signed values are
+  preserved.
+- Home MWHD adds a staged current/projected 15-minute volume versus prior
+  15-bucket SMA confirmation only for the MWD-qualified cohort. It remains
+  optional/non-gating. Home also exposes the Morning View cash/futures/options
+  and matrix summary in the top lens bar without page reloads.
+- Stock 360 explicitly fits the price axis to visible OHLC with symmetric 5%
+  padding; remote M/W/D reference levels remain evidence but cannot flatten the
+  candles.
+- Web typecheck, 222/222 tests and production build pass. API typecheck,
+  253/253 tests and build pass. The canonical repository gate and diff check
+  pass. Deployment and authenticated public-browser evidence are recorded in
+  the report after release; no strategy, collector, database or order mutation
+  is part of this repair.

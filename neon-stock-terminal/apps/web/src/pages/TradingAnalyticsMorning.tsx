@@ -90,7 +90,16 @@ export function TradingAnalyticsMorning({
     [participantRows],
   );
   const participantHeatCell = (candidate: unknown, key: ParticipantHeatmapKey) => {
-    const reading = participantHeatmapReading(candidate, participantHeatmapExtents[key]);
+    // Put positioning uses the inverse directional interpretation requested by
+    // the desk: negative net PE is favourable/green; positive net PE is
+    // adverse/red. The displayed signed number is never altered.
+    const putDirectionInverted = key.includes("net_puts");
+    const semanticCandidate = putDirectionInverted && candidate != null && Number.isFinite(Number(candidate)) ? -Number(candidate) : candidate;
+    const sourceExtent = participantHeatmapExtents[key];
+    const semanticExtent = putDirectionInverted
+      ? { maximumPositive: sourceExtent.maximumNegativeMagnitude, maximumNegativeMagnitude: sourceExtent.maximumPositive }
+      : sourceExtent;
+    const reading = participantHeatmapReading(semanticCandidate, semanticExtent);
     const percentage = Math.round(reading.strength * 100);
     return {
       className: `${styles.participantHeatCell} ${
@@ -117,7 +126,7 @@ export function TradingAnalyticsMorning({
         ? "Unavailable · excluded from heatmap range"
         : reading.tone === "neutral"
           ? "Zero · neutral"
-          : `${reading.tone === "positive" ? "Positive" : "Negative"} · ${percentage}% of this column's ${reading.tone} extreme`,
+          : `${putDirectionInverted ? "PE inverse interpretation" : reading.tone === "positive" ? "Positive" : "Negative"} · ${percentage}% of this column's ${reading.tone} extreme`,
     };
   };
   return (
@@ -258,8 +267,8 @@ export function TradingAnalyticsMorning({
       <section className={styles.morningWideSection} data-testid="morning-participant-comparison">
         <h2>Participant index options · current vs previous report</h2>
         <div className={styles.participantHeatLegend} aria-label="Participant heatmap legend">
-          <span><i className={styles.participantHeatPositive} aria-hidden="true" /> Positive · green</span>
-          <span><i className={styles.participantHeatNegative} aria-hidden="true" /> Negative · red</span>
+          <span><i className={styles.participantHeatPositive} aria-hidden="true" /> Calls positive / puts negative · green</span>
+          <span><i className={styles.participantHeatNegative} aria-hidden="true" /> Calls negative / puts positive · red</span>
           <span>Deeper shade = larger magnitude within that column; zero and unavailable are neutral.</span>
         </div>
         <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Participant call and put comparison scroll area">

@@ -14,6 +14,7 @@ import {
   fetchFiiReportsRunDetail,
   fetchFiiReportsRuns,
   fetchHeaderMarketSummary,
+  fetchMorningSummary,
   fetchAnalyticsFlows,
   fetchAnalyticsQuality,
   fetchBacktestingCompare,
@@ -146,14 +147,26 @@ export function useHeaderMarketSummary(enabled = true) {
   });
 }
 
+export function useMorningSummary(enabled = true) {
+  const tokenVersion = useSessionVersion();
+  return useProfiledQuery("morning-summary", {
+    queryKey: ["morning-summary", tokenVersion],
+    queryFn: fetchMorningSummary,
+    enabled,
+    refetchInterval: 300_000,
+    staleTime: 60_000,
+    refetchIntervalInBackground: false,
+  });
+}
+
 export function useScalperProgression(enabled = true) {
   const tokenVersion = useSessionVersion();
   return useProfiledQuery("scalper-progression", {
     queryKey: ["scalper-progression", tokenVersion],
     queryFn: fetchScalperProgression,
     enabled,
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 }
 

@@ -8,10 +8,11 @@ const signedDeltaLabel = (value: DeltaOiValue) => value == null
   : `${value > 0 ? "+" : ""}${formatOiAxisValue(value)}`;
 
 const NEUTRAL = "#64748b";
-const CALL = "#2563eb";
-const CALL_BORDER = "#1d4ed8";
-const PUT = "#eab308";
-const PUT_BORDER = "#8a6200";
+// V2 OI identity colours are intentionally independent from candle direction.
+const CALL = "#eab308";
+const CALL_BORDER = "#8a6200";
+const PUT = "#2563eb";
+const PUT_BORDER = "#1d4ed8";
 
 export function scalperV2AdaptiveDeltaDomain(values: DeltaOiValue[], padding = 0.08): [number, number] {
   const observed = values.filter((value): value is number => value != null && Number.isFinite(value));
@@ -197,10 +198,10 @@ export function scalperV2HorizontalDeltaOiOption(
         },
         rich: {
           strike: { color: "#14243a", fontWeight: 700, width: 62, fontSize: 12 },
-          ce: { color: "#1d4ed8", fontWeight: 700, width: 20 },
-          pe: { color: "#785500", fontWeight: 700, width: 20 },
+          ce: { color: CALL_BORDER, fontWeight: 700, width: 20 },
+          pe: { color: PUT_BORDER, fontWeight: 700, width: 20 },
           ceValue: { color: CALL_BORDER, fontWeight: 700, width: 54, align: "right" },
-          peValue: { color: "#785500", fontWeight: 700, width: 54, align: "right" },
+          peValue: { color: PUT_BORDER, fontWeight: 700, width: 54, align: "right" },
           zero: { color: NEUTRAL, fontWeight: 650, width: 54, align: "right" },
           missing: { color: NEUTRAL, width: 54, align: "right" },
         },

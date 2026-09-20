@@ -66,6 +66,13 @@ function mwdEmaChartOption(model: MwdEmaValueModel, selectedLevel: MwdLevelId | 
   const dates = model.bars.map((row) => row.t);
   const tradedMaximum = Math.max(0, ...model.tradedValueCr.flatMap((value) => value == null ? [] : [value]));
   const plottedLevels = model.levels.filter((level) => level.plot && level.value != null);
+  // The price pane is owned by the visible session OHLC. Remote month/week
+  // anchors remain listed in the level inspector but cannot flatten today's
+  // candles by expanding the Y domain.
+  const sessionLow = model.bars.length ? Math.min(...model.bars.map((row) => row.l)) : 0;
+  const sessionHigh = model.bars.length ? Math.max(...model.bars.map((row) => row.h)) : 1;
+  const sessionSpan = Math.max(0, sessionHigh - sessionLow);
+  const sessionPadding = sessionSpan > 0 ? sessionSpan * 0.05 : Math.max(0.05, Math.abs(sessionLow) * 0.001);
   return {
     animation: false,
     backgroundColor: "#ffffff",
@@ -80,7 +87,7 @@ function mwdEmaChartOption(model: MwdEmaValueModel, selectedLevel: MwdLevelId | 
       axisLine: { lineStyle: { color: "#cbd5e1" } },
     },
     yAxis: [
-      { type: "value", scale: true, name: "Price", axisLabel: { color: "#64748b" }, splitLine: { lineStyle: { color: "#edf2f7" } } },
+      { type: "value", scale: true, min: sessionLow - sessionPadding, max: sessionHigh + sessionPadding, name: "Price", axisLabel: { color: "#64748b" }, splitLine: { lineStyle: { color: "#edf2f7" } } },
       { type: "value", min: 0, max: tradedMaximum > 0 ? tradedMaximum * 4 : 1, show: false },
     ],
     dataZoom: [{ type: "inside", start: 0, end: 100 }, { type: "slider", bottom: 12, height: 18, start: 0, end: 100 }],

@@ -119,6 +119,9 @@ export type ScalperProgressionRow = {
   previous15mOpen: number | null;
   current15mStartedAt: string | null;
   previous15mStartedAt: string | null;
+  current15mVolume: number | null;
+  average15mVolume15: number | null;
+  intradayVolumeMultiple: number | null;
   current5mOpen: number | null;
   previous5mOpen: number | null;
   current5mStartedAt: string | null;
@@ -338,6 +341,25 @@ export function projectedFullDayVolumeMultiple(
   if (elapsedMinutes < 0) return null;
   const sessionProgress = Math.min(1, Math.max(1 / 375, elapsedMinutes / 375));
   return volume / (average * sessionProgress);
+}
+
+export function projectedIntervalVolumeMultiple(
+  currentVolume: number | string | null | undefined,
+  averageVolume: number | string | null | undefined,
+  intervalStartedAt: Date | string | null | undefined,
+  intervalMinutes = 15,
+  now = new Date(),
+): number | null {
+  const volume = nullableNumber(currentVolume);
+  const average = nullableNumber(averageVolume);
+  if (volume == null || volume < 0 || average == null || average <= 0 || !intervalStartedAt || intervalMinutes <= 0) return null;
+  const started = intervalStartedAt instanceof Date ? intervalStartedAt : new Date(intervalStartedAt);
+  if (Number.isNaN(started.getTime())) return null;
+  const elapsedMinutes = (now.getTime() - started.getTime()) / 60_000;
+  const progress = elapsedMinutes >= intervalMinutes || elapsedMinutes < 0
+    ? 1
+    : Math.max(1 / intervalMinutes, elapsedMinutes / intervalMinutes);
+  return volume / (average * progress);
 }
 
 function quoteAlert(row: StackQuoteRow): Quote["alert"] {
@@ -1309,6 +1331,8 @@ export async function getScalperProgression(prisma: PrismaClient) {
     previous_15m_open: number | string | null;
     current_15m_started_at: Date | string | null;
     previous_15m_started_at: Date | string | null;
+    current_15m_volume: number | string | null;
+    average_15m_volume_15: number | string | null;
     current_5m_open: number | string | null;
     previous_5m_open: number | string | null;
     current_5m_started_at: Date | string | null;
@@ -1520,6 +1544,7 @@ export async function getScalperProgression(prisma: PrismaClient) {
         candidate.symbol,
         b.ts,
         b.open::double precision AS open,
+        COALESCE(b.volume, 0)::double precision AS volume,
         b.ts AT TIME ZONE 'Asia/Kolkata' AS local_ts
       FROM bars_1m b
       JOIN stage_candidates candidate ON candidate.symbol_token = b.symbol_token
@@ -1565,7 +1590,8 @@ export async function getScalperProgression(prisma: PrismaClient) {
     fifteen_buckets AS (
       SELECT source.symbol,
         date_trunc('hour', source.local_ts) + FLOOR(EXTRACT(minute FROM source.local_ts) / 15) * INTERVAL '15 minutes' AS bucket_start,
-        (ARRAY_AGG(source.open ORDER BY source.ts))[1] AS bucket_open
+        (ARRAY_AGG(source.open ORDER BY source.ts))[1] AS bucket_open,
+        SUM(source.volume) AS bucket_volume
       FROM intraday_source source
       JOIN hour_candidates candidate ON candidate.symbol = source.symbol
       GROUP BY source.symbol, date_trunc('hour', source.local_ts) + FLOOR(EXTRACT(minute FROM source.local_ts) / 15) * INTERVAL '15 minutes'
@@ -1581,8 +1607,10 @@ export async function getScalperProgression(prisma: PrismaClient) {
         MAX(bucket_open) FILTER (WHERE recency = 1) AS current_15m_open,
         MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_open END) AS previous_15m_open,
         MAX(bucket_start AT TIME ZONE 'Asia/Kolkata') FILTER (WHERE recency = 1) AS current_15m_started_at,
-        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_15m_started_at
-      FROM fifteen_ranked WHERE recency = 1 GROUP BY symbol
+        MAX(CASE WHEN recency = 1 AND bucket_start - previous_bucket_start = INTERVAL '15 minutes' THEN previous_bucket_start AT TIME ZONE 'Asia/Kolkata' END) AS previous_15m_started_at,
+        MAX(bucket_volume) FILTER (WHERE recency = 1) AS current_15m_volume,
+        AVG(bucket_volume) FILTER (WHERE recency BETWEEN 2 AND 16) AS average_15m_volume_15
+      FROM fifteen_ranked WHERE recency <= 16 GROUP BY symbol
     ),
     fifteen_candidates AS (
       SELECT candidate.*
@@ -1618,6 +1646,7 @@ export async function getScalperProgression(prisma: PrismaClient) {
       SELECT candidate.symbol,
         hour.current_hour_open, hour.previous_hour_open, hour.current_hour_started_at, hour.previous_hour_started_at,
         fifteen.current_15m_open, fifteen.previous_15m_open, fifteen.current_15m_started_at, fifteen.previous_15m_started_at,
+        fifteen.current_15m_volume, fifteen.average_15m_volume_15,
         five.current_5m_open, five.previous_5m_open, five.current_5m_started_at, five.previous_5m_started_at
       FROM stage_candidates candidate
       LEFT JOIN hour_values hour ON hour.symbol = candidate.symbol
@@ -1653,6 +1682,8 @@ export async function getScalperProgression(prisma: PrismaClient) {
       intraday.previous_15m_open,
       intraday.current_15m_started_at,
       intraday.previous_15m_started_at,
+      intraday.current_15m_volume,
+      intraday.average_15m_volume_15,
       intraday.current_5m_open,
       intraday.previous_5m_open,
       intraday.current_5m_started_at,
@@ -1695,6 +1726,9 @@ export async function getScalperProgression(prisma: PrismaClient) {
       previous15mOpen: nullableNumber(row.previous_15m_open),
       current15mStartedAt: row.current_15m_started_at == null ? null : toIso(row.current_15m_started_at),
       previous15mStartedAt: row.previous_15m_started_at == null ? null : toIso(row.previous_15m_started_at),
+      current15mVolume: nullableNumber(row.current_15m_volume),
+      average15mVolume15: nullableNumber(row.average_15m_volume_15),
+      intradayVolumeMultiple: projectedIntervalVolumeMultiple(row.current_15m_volume, row.average_15m_volume_15, row.current_15m_started_at),
       current5mOpen: nullableNumber(row.current_5m_open),
       previous5mOpen: nullableNumber(row.previous_5m_open),
       current5mStartedAt: row.current_5m_started_at == null ? null : toIso(row.current_5m_started_at),
@@ -1727,7 +1761,11 @@ type ScalperProgressionCache = {
 };
 const scalperProgressionCaches = new WeakMap<PrismaClient, ScalperProgressionCache>();
 const scalperProgressionWarmers = new WeakSet<PrismaClient>();
-const SCALPER_PROGRESSION_CACHE_MS = 30_000;
+// The deepest 5-minute gate consumes one-minute observations. A one-minute
+// server snapshot cadence keeps that live without recomputing higher-period
+// anchors on every browser render; SQL stage pruning prevents deeper work for
+// stocks that fail MWD/H/15m prerequisites.
+const SCALPER_PROGRESSION_CACHE_MS = 60_000;
 
 function getCachedScalperProgression(prisma: PrismaClient): Promise<ScalperProgressionPayload> {
   let cache = scalperProgressionCaches.get(prisma);

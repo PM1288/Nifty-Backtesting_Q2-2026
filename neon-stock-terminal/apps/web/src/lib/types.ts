@@ -110,6 +110,16 @@ export type OverviewResponse = {
 
 export type HeaderMarketSummaryResponse = Pick<OverviewResponse, "asOf" | "market" | "indices" | "tickerTape">;
 
+export type MorningSummaryResponse = {
+  asOf: string;
+  reportDate: string;
+  equity: string | null;
+  futures: string | null;
+  options: string | null;
+  matrix: string;
+  knowledgeState: string;
+};
+
 export type ScalperProgressionRow = {
   symbol: string;
   companyName?: string;
@@ -139,6 +149,9 @@ export type ScalperProgressionRow = {
   previous15mOpen?: number | null;
   current15mStartedAt?: string | null;
   previous15mStartedAt?: string | null;
+  current15mVolume?: number | null;
+  average15mVolume15?: number | null;
+  intradayVolumeMultiple?: number | null;
   current5mOpen?: number | null;
   previous5mOpen?: number | null;
   current5mStartedAt?: string | null;

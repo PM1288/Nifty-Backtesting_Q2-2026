@@ -6,6 +6,19 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 market workstation flow repair: Scalper V2 removes selected-contract,
+rank, hover, max-pain and strike-profile lines from the underlying price pane;
+only today open, previous close and previous high remain as semantic horizontal
+references. The former underlying OI primitive is no longer supplied, while a
+timestamp-aligned PE-total-OI minus CE-total-OI lower pane shares the native
+time scale. OI bars use CE yellow and PE blue without changing candle direction
+or signed-change colours. Morning View applies inverse directional heat for net
+put values while preserving the signed values. Home adds a staged 15-minute
+volume/SMA15 confirmation and a compact Morning View status headline. Stock 360
+price Y bounds come only from visible OHLC. Existing strategies, ranks, evidence,
+drawings, exports, source data and order permissions remain unchanged. Evidence:
+`docs/trading-analytics/MARKET_WORKSTATION_FLOW_REPAIR_20260920.md`.
+
 2026-09-19 Scalper V2 minute refresh: live cache keys no longer include moving
 response timestamps; three chart instances survive polling, inactive intervals
 are not prefetched repeatedly, and deployment reloads are explicit in V2.

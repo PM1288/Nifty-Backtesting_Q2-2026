@@ -67,6 +67,19 @@ export function volumeConfirmation(stock: Quote): VolumeConfirmation {
   return { multiple, state: "low", band: "red-strong", symbol: "×" };
 }
 
+export function intradayVolumeConfirmation(row: ScalperProgressionRow): VolumeConfirmation {
+  const multiple = typeof row.intradayVolumeMultiple === "number" && Number.isFinite(row.intradayVolumeMultiple) && row.intradayVolumeMultiple >= 0
+    ? row.intradayVolumeMultiple
+    : null;
+  if (multiple == null) return { multiple: null, state: "unavailable", band: "unavailable", symbol: "—" };
+  if (multiple >= 3) return { multiple, state: "high", band: "green-strong", symbol: "✓" };
+  if (multiple >= 2) return { multiple, state: "high", band: "green", symbol: "✓" };
+  if (multiple >= 1.5) return { multiple, state: "near", band: "yellow-strong", symbol: "~" };
+  if (multiple >= 1) return { multiple, state: "near", band: "yellow", symbol: "~" };
+  if (multiple >= 0.5) return { multiple, state: "low", band: "red", symbol: "×" };
+  return { multiple, state: "low", band: "red-strong", symbol: "×" };
+}
+
 const FUNNEL_END_GATE: Record<ProgressionFunnelStage, ScalperProgressionCheck["id"]> = {
   mwd: "today",
   hour: "hour",

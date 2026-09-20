@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AudioLines, VolumeX } from "lucide-react";
 import { useAuthGate } from "../../auth/AuthGateProvider";
 import { useTrackPageViews } from "../../analytics/useTrackPageViews";
-import { DataAge, EnvironmentBadge } from "../../design-system/TradingPrimitives";
+import { EnvironmentBadge } from "../../design-system/TradingPrimitives";
 import { DataQualityBadge } from "../../design-system/WorkspacePrimitives";
 import { buildMarketQuoteQuality } from "../../design-system/quality";
 import { useI18n } from "../../i18n/LocaleProvider";
@@ -303,16 +303,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <small><b>O</b> {todayOutlook.options} <i>₹{todayOutlook.optionsValue}Cr</i></small>
                   <strong>{todayOutlook.result}</strong>
                 </Link>
-                {overview.data?.asOf ? (
-                  <span className={styles.headerAge}><DataAge>Data {new Date(overview.data.asOf).toLocaleString("en-IN", {
-                      timeZone: "Asia/Kolkata",
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false
-                    })}</DataAge></span>
-                ) : null}
                 <span className={styles.headerQuality}><DataQualityBadge quality={feedQuality} compact operationalLabel iconOnly /></span>
               </div>
             }

@@ -21,6 +21,8 @@ outlook tooltip/accessibility label.
 
 - Product mark shortened from `NIFTY 50 TRADER` to `N50`.
 - Removed the redundant non-admin `PAPER` badge and market-open/closed sentence.
+- Removed the crowded global data-age sentence; exact report time remains in
+  the outlook tooltip and detailed freshness remains in data-quality views.
 - Feed readiness remains live but is an accessible icon rather than visible
   `READY`/`CAUTION` text.
 - Paper voice alerts retain the same persisted toggle, speech cancellation and

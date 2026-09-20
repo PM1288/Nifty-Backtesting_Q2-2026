@@ -192,7 +192,6 @@
 .todayOutlook[data-tone="positive"] strong { color: #087a50; }
 .todayOutlook[data-tone="negative"] { border-color: rgba(194, 54, 79, .3); background: #fff5f6; }
 .todayOutlook[data-tone="negative"] strong { color: #b4233d; }
-.headerAge,
 .headerQuality { display: inline-flex; }
 
 .mobileNiftyQuote {
@@ -307,7 +306,6 @@
 }
 
 @media (max-width: 1599px) {
-  .headerAge { display: none; }
   .todayOutlook small i { display: none; }
 }
 

@@ -6,6 +6,15 @@ This manifest prevents additive dashboard work from silently removing shared she
 
 ## Critical shared features
 
+2026-09-20 Scalper V2 shared cursor repair: physical pointer ownership remains
+with the active NIFTY, CE or PE chart, while only programmatic receivers use
+feedback suppression. This prevents continuous movement from sticking on a
+React echo. Canonical time follows across all three price charts and the two OI
+history charts; every price pane retains its own numerical value, transient
+guides clear together and locked time persists. Strike charts remain
+strike-linked. Evidence:
+`docs/trading-analytics/SCALPER_V2_SHARED_CURSOR_REPAIR_20260920.md`.
+
 2026-09-20 Scalper V2 OI history source repair: native NSE option-chain history
 remains preferred and provider-reported change OI remains unchanged. Sessions
 missed because calendar rows arrived after market close may use an additive,

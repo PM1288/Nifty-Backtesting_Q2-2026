@@ -9,6 +9,7 @@ import { allProfileStrikeBounds, type ScalperV2ProfileMode, type ScalperV2Profil
 import { mergeScalperV2Levels } from "../../lib/scalperV2Levels";
 import { visibleScalperV2ReferenceLevels, type ScalperV2ReferenceLevel } from "../../lib/scalperV2ReferenceLevels";
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
+import { scalperV2CrosshairSyncAction } from "../../lib/scalperV2Cursor";
 import { intervalBarChartTime, istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
 import { ScalperV2OiProfilePrimitive } from "./ScalperV2OiProfilePrimitive";
@@ -479,22 +480,40 @@ export function ScalperV2Chart({
 
   useEffect(() => {
     const chart = chartRef.current, candle = candleRef.current; if (!chart || !candle) return;
+    // The physical-origin chart already owns its native crosshair. Echoing its
+    // event through React must not suppress its next pointer frame; suppression
+    // is only for receiver charts updated programmatically.
+    const action = scalperV2CrosshairSyncAction({
+      paneId: id,
+      source: externalCrosshair?.source ?? null,
+      hasCrosshair: externalCrosshair != null,
+      mode: inspectionMode,
+    });
+    if (action === "ORIGIN_OWNS") {
+      if (hostRef.current) {
+        hostRef.current.dataset.crosshairTime = String(externalCrosshair!.time);
+        hostRef.current.dataset.crosshairExact = "true";
+      }
+      return;
+    }
+    if (action === "HOLD") return;
     suppressCrosshairRef.current += 1;
-    if (!externalCrosshair || externalCrosshair.source === id) {
-      if (!externalCrosshair && inspectionMode !== "locked") {
-        chart.clearCrosshairPosition();
-        if (hostRef.current) hostRef.current.dataset.crosshairTime = "";
-      } else if (externalCrosshair && hostRef.current) {
-        hostRef.current.dataset.crosshairTime = String(externalCrosshair.time);
+    if (action === "CLEAR") {
+      chart.clearCrosshairPosition();
+      if (hostRef.current) {
+        hostRef.current.dataset.crosshairTime = "";
+        hostRef.current.dataset.crosshairExact = "";
       }
     } else {
-      const exact = byTime.get(externalCrosshair.time);
+      // RECEIVE always has an external value by construction.
+      const received = externalCrosshair!;
+      const exact = byTime.get(received.time);
       if (exact) chart.setCrosshairPosition(exact.close, exact.time, candle);
       else chart.clearCrosshairPosition();
       // Keep a shared canonical-time trace even when this exact contract has no
       // candle. The readout remains unavailable; no adjacent price is borrowed.
       if (hostRef.current) {
-        hostRef.current.dataset.crosshairTime = String(externalCrosshair.time);
+        hostRef.current.dataset.crosshairTime = String(received.time);
         hostRef.current.dataset.crosshairExact = exact ? "true" : "false";
       }
     }

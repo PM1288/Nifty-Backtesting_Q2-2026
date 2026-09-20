@@ -1,5 +1,15 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-20 — Scalper V2 shared cursor repair
+
+- Removed self-suppression from the physically active NIFTY/CE/PE chart. Only
+  receiver charts updated by `setCrosshairPosition` are feedback-suppressed.
+- Shared canonical time continues through all three native price charts and
+  both OI-history charts; own-instrument values, global clear and locked-time
+  semantics are preserved.
+- Contract and validation details:
+  `docs/trading-analytics/SCALPER_V2_SHARED_CURSOR_REPAIR_20260920.md`.
+
 ## 2026-09-20 — Scalper V2 OI history source repair
 
 - Confirmed the live option-chain watcher is healthy and stores native OI plus

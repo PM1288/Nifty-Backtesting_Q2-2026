@@ -101,7 +101,7 @@ try {
   if (await ivPanel.count() === 0) console.log(JSON.stringify({ debugTestIds: await page.locator("[data-testid]").evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")).filter(Boolean)), pageErrors: errors, debugText: (await page.locator("body").innerText()).slice(0, 2_500) }));
   await ivPanel.waitFor({ state: "visible", timeout: 90_000 });
   const ivPanelText = await ivPanel.innerText();
-  check("iv-change-truthful-state", /Change in IV by strike/.test(ivPanelText) && (/IV change unavailable/.test(ivPanelText) || await ivPanel.getByRole("img").count() === 1), ivPanelText);
+  check("iv-change-truthful-state", (/Change in IV by strike/.test(ivPanelText) || /Tracked volume by strike/.test(ivPanelText)) && (/IV change unavailable/.test(ivPanelText) || /IV comparison unavailable/.test(ivPanelText) || await ivPanel.getByRole("img").count() === 1), ivPanelText);
   check("three-price-chart-grid", await page.locator("[data-testid^='v2-chart-panel-']").count() === 3, "Underlying plus exact CE and PE only");
   check("bounded-price-grid-height", Boolean(layout.priceGrid && layout.priceGrid.height >= 620 && layout.priceGrid.height <= 645), JSON.stringify(layout.priceGrid));
   const historyGeometry = await page.getByTestId("v2-oi-history-row").evaluate((element) => [...element.querySelectorAll("article")].map((article) => {
@@ -111,13 +111,16 @@ try {
     return { outerWidth: outer.width, chartWidth: inner?.width ?? 0, outerHeight: outer.height, chartHeight: inner?.height ?? 0 };
   }));
   check("oi-history-matches-price-columns", historyGeometry.length === 2 && layout.stage && layout.callPanel && Math.abs(historyGeometry[0].outerWidth - layout.stage.width) <= 3 && Math.abs(historyGeometry[1].outerWidth - layout.callPanel.width) <= 3, JSON.stringify({ historyGeometry, underlying: layout.stage, call: layout.callPanel }));
-  check("compact-oi-history-height", historyGeometry.every((item) => item.outerHeight <= 252), JSON.stringify(historyGeometry));
-  check("oi-history-directly-below-price-grid", Boolean(layout.oiHistory && layout.priceGrid && Math.abs(layout.oiHistory.y - (layout.priceGrid.y + layout.priceGrid.height + 6)) <= 2), JSON.stringify(layout));
+  check("aligned-auxiliary-chart-height", historyGeometry.every((item) => item.outerHeight >= 205 && item.outerHeight <= 215), JSON.stringify(historyGeometry));
+  check("oi-history-directly-below-price-grid", Boolean(layout.oiHistory && layout.priceGrid && Math.abs(layout.oiHistory.y - (layout.priceGrid.y + layout.priceGrid.height + 3)) <= 2), JSON.stringify(layout));
   const historyText = await page.getByTestId("v2-oi-history-row").innerText();
   check("separate-oi-difference-semantics", historyText.includes("Cumulative PE OI − cumulative CE OI") && historyText.includes("Cumulative PE ΔOI − cumulative CE ΔOI"), historyText);
   await page.screenshot({ path: path.join(output, "scalper-v2-price-and-oi-history-1920x1080.png"), fullPage: false });
   check("details-moved-below-price-grid", Boolean(layout.details && layout.priceGrid && layout.details.y >= layout.priceGrid.y + layout.priceGrid.height - 2), JSON.stringify(layout));
   check("top-current-values", (await page.locator("[aria-label='Current selected values'] span").count()) === 3, "underlying, CE and PE values shown in the command bar");
+  check("symbol-first", (await page.locator("[data-testid='scalper-v2'] > header").innerText()).trim().startsWith("NIFTY"), await page.locator("[data-testid='scalper-v2'] > header").innerText());
+  check("lower-timeframe-controls-removed", await page.getByRole("button", { name: /^(1m|5m|15m)$/ }).count() === 0, "1m, 5m and 15m controls are not rendered in Scalper V2");
+  check("hour-control-preserved", await page.getByRole("button", { name: "1h", exact: true }).count() === 1, "The retained 1h timeframe control remains available");
   const analyticsHeader = page.locator("section[aria-label='Trading Analytics workspace'] > header").first();
   const analyticsHeaderText = await analyticsHeader.innerText();
   check("compact-parent-header", /Trading Analytics · Scalper V2/.test(analyticsHeaderText) && await page.getByText("READ-ONLY · Research", { exact: true }).count() === 0, analyticsHeaderText);

@@ -39,6 +39,15 @@ test("Scalper V2 compact ΔOI chart keeps signed bars and PE minus CE line", () 
   assert.deepEqual(series[2].data, [-60, 40]);
 });
 
+test("Scalper V2 tracked volume fallback keeps observed side values and difference", () => {
+  const option = scalperV2VerticalStrikeOption([100, 200], [1_000, null], [1_400, 800], "volume");
+  const yAxes = option.yAxis as Array<Record<string, unknown>>;
+  const series = option.series as Array<Record<string, unknown>>;
+  assert.equal(yAxes[0].name, "Volume");
+  assert.equal(yAxes[1].name, "PE − CE Volume");
+  assert.deepEqual(series[2].data, [400, null]);
+});
+
 test("Scalper V2 ΔIV chart preserves sign, side identity, observed zero and missing baseline", () => {
   const option = scalperV2VerticalIvChangeOption([100, 200], [0.75, null], [-1.25, 0]);
   const yAxis = option.yAxis as { name: string; min: number; max: number };

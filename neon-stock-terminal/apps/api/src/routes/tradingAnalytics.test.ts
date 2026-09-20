@@ -43,14 +43,16 @@ test("chart selection accepts independent CE and PE strikes while preserving leg
   assert.deepEqual(resolveChartStrikeSelection({ strike: 23450, ceStrike: 23500, peStrike: 23400 }), { ceStrike: 23500, peStrike: 23400 });
 });
 
-test("chain comparison uses one common snapshot window and validates cumulative volume counters", () => {
-  const current = [{ strike: 23400, option_type: "CE", last_price: 90, open_interest: 140, total_traded_volume: 10650 }];
-  const prior = [{ strike: 23400, option_type: "CE", last_price: 80, open_interest: 100, total_traded_volume: 10400 }];
+test("chain comparison uses one common snapshot window and validates cumulative volume and IV", () => {
+  const current = [{ strike: 23400, option_type: "CE", last_price: 90, open_interest: 140, total_traded_volume: 10650, implied_volatility: 18.75 }];
+  const prior = [{ strike: 23400, option_type: "CE", last_price: 80, open_interest: 100, total_traded_volume: 10400, implied_volatility: 17.5 }];
   const [leg] = buildComparableChainLegs(current, prior, "2026-09-12T05:30:00Z", "2026-09-12T05:15:00Z");
   assert.equal(leg.baseline_last_price, 80);
   assert.equal(leg.oi_layers.change, 40);
   assert.equal(leg.interval_volume, 250);
   assert.equal(leg.volume_counter_state, "COMPARABLE");
+  assert.equal(leg.previous_implied_volatility, 17.5);
+  assert.equal(leg.change_in_iv, 1.25);
   const [reset] = buildComparableChainLegs([{ ...current[0], total_traded_volume: 100 }], prior, "2026-09-12T05:30:00Z", "2026-09-12T05:15:00Z");
   assert.equal(reset.interval_volume, null);
   assert.equal(reset.volume_counter_state, "RESET_OR_CORRECTION");

@@ -90,6 +90,10 @@ export function buildComparableChainLegs(currentLegs: Facts[], priorLegs: Facts[
       ...leg,
       collected_at: currentAt ?? null,
       baseline_last_price: prior?.last_price ?? null,
+      previous_implied_volatility: prior?.implied_volatility ?? null,
+      change_in_iv: prior && numeric(prior.implied_volatility) != null && numeric(leg.implied_volatility) != null
+        ? numeric(leg.implied_volatility)! - numeric(prior.implied_volatility)!
+        : null,
       baseline_open_interest: prior?.open_interest ?? null,
       baseline_total_traded_volume: prior?.total_traded_volume ?? null,
       baseline_kind: prior ? "PREVIOUS_ARCHIVED_SNAPSHOT" : "BASELINE_UNAVAILABLE",

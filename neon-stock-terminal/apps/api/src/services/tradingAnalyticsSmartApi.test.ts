@@ -22,6 +22,40 @@ test("Greeks match expiry-scoped strike and right and preserve comparable IV cha
   assert.equal(result.legs[1].change_in_iv,null);
   assert.equal(result.legs[1].previous_snapshot_delta,null);
 });
+test("fallback chain metric legs receive the same exact-contract IV and Greeks enrichment", async () => {
+  const result = await loadSmartApiNifty(async source => source === "smartapi_spot"
+    ? [{ ltp: 23800 }]
+    : source === "smartapi_expiries"
+      ? [{ expiry: "2026-09-08" }]
+      : source === "smartapi_contracts"
+        ? [{ strike: 23800, option_type: "CE", open_interest: null }, { strike: 23800, option_type: "PE", open_interest: null }]
+        : source === "smartapi_stock_chain"
+          ? [{ strike: 23800, option_type: "CE", open_interest: "120", implied_volatility: 18 }, { strike: 23800, option_type: "PE", open_interest: "140", implied_volatility: 19, previous_implied_volatility: 18.5 }]
+          : source === "smartapi_greeks"
+            ? [{ strike: 23800, option_type: "CE", implied_volatility: 18.75, previous_implied_volatility: 18.25, delta: 0.52, gamma: 0.001, theta: -8, vega: 4 }]
+            : [], "2026-09-07T06:00:00Z");
+  const call = result.metricLegs.find((leg) => leg.option_type === "CE");
+  const put = result.metricLegs.find((leg) => leg.option_type === "PE");
+  assert.equal(call?.change_in_iv, 0.5);
+  assert.equal(call?.delta, 0.52);
+  assert.equal(call?.gamma, 0.001);
+  assert.equal(put?.implied_volatility, 19);
+  assert.equal(put?.change_in_iv, 0.5);
+});
+
+test("fallback chain IV baseline is exact-token, prior and as-of bounded", async () => {
+  let fallbackSql = "";
+  await loadSmartApiNifty(async (source, sql) => {
+    if (source === "smartapi_spot") return [{ ltp: 23800 }];
+    if (source === "smartapi_expiries") return [{ expiry: "2026-09-08" }];
+    if (source === "smartapi_contracts") return [{ strike: 23800, option_type: "CE", open_interest: null }];
+    if (source === "smartapi_stock_chain") fallbackSql = sql;
+    return [];
+  }, "2026-09-07T06:00:00Z");
+  assert.match(fallbackSql, /p\.symbol_token=c\.symbol_token/);
+  assert.match(fallbackSql, /p\.ts<c\.ts/);
+  assert.match(fallbackSql, /p\.ts BETWEEN \$1::timestamptz-interval '7 days' AND \$1::timestamptz/);
+});
 test("SmartAPI distinguishes after-close retrieval from live exchange data", () => {
   const close = "2026-09-07T10:10:00Z";
   assert.equal(

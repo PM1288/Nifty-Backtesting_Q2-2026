@@ -203,7 +203,7 @@ export function AnalyticsStockPage() {
 
       <section className={styles.stock360SignalPanel} aria-label="Stock-specific signals">
         <div className={styles.stock360SectionTitle}>Stock signals</div>
-        <div className={styles.stock360SignalTable}>
+        <div className={styles.stock360SignalTable} data-testid="stock-360-signal-row">
           <div><span>Beta 20D</span><b>{fmtMaybe(payload.beta_20d)}</b></div><div><span>Residual 60m</span><b data-tone={toneFromNumber(num(payload.residual_return_60m_pct))}>{signedPct(payload.residual_return_60m_pct)}</b></div><div><span>VWAP quality</span><b>{fmtMaybe(payload.vwap_hold_quality_score ?? quality.vwap_hold_quality_score)}</b></div><div><span>Volume surprise</span><b>{fmtMaybe(payload.volume_curve_surprise)}</b></div><div><span>Range efficiency</span><b>{fmtMaybe(payload.range_efficiency_pct)}</b></div><div><span>Sector</span><b>{sector ? signedPct(sector.stocks.reduce((sum, row) => sum + row.changePct, 0) / Math.max(1, sector.stocks.length)) : "—"}</b></div><div><span>TradingView</span><b title="No authorised TradingView recommendation source is connected.">Not connected</b></div>
         </div>
         {analytics?.conclusion ? <p className={styles.stock360Conclusion}>{analytics.conclusion}</p> : stock.isLoading ? <p className={styles.stock360Conclusion}>Detailed signal context is loading; charts remain interactive.</p> : null}

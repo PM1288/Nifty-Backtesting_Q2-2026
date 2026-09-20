@@ -30,7 +30,15 @@ api build: PASS
 canonical repository gate: PASS
 ```
 
-Browser/deployment evidence is recorded after release below.
+## Production evidence
+
+- Release commit: `1480c7d`
+- Deployed entry asset: `/n50/assets/index-BCmA04qI.js`
+- Dashboard container: healthy
+- Authenticated browser, 1m: first plotted label `09:15`, canonical end `09:16`, one initial `setData`
+- Authenticated browser, 5m: first plotted label `09:15`, canonical end `09:20`, one initial `setData`
+- Evidence: `/home/novius2/NIFTY50/evidence/candle-open-time-20260920/browser-results.json`
+- Screenshots: `/home/novius2/NIFTY50/evidence/candle-open-time-20260920/scalper-v2-1m.png` and `scalper-v2-5m.png`
 
 ## Rollback
 

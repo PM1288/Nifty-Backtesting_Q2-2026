@@ -6001,3 +6001,19 @@ or outcomes were deleted.
 - Final release `6647837` is pushed on `master`; only `n50-dashboard` was
   recreated. It is healthy with zero restarts on image
   `sha256:ca6478905f22312c603d758cf4cbf73e386ec34e56ffb72ebf79b6d4607fb5a0`.
+
+## 2026-09-21 — Scalper V2 Strike Structure calculation guide
+
+- Branch: `docs/scalper-v2-strike-structure-guide-20260921`.
+- Added
+  `docs/trading-analytics/SCALPER_V2_STRIKE_STRUCTURE_CHART_GUIDE_20260921.md`
+  as the implementation-level explanation of the existing Strike Structure
+  chart.
+- The guide records the exact source precedence, OI/Delta OI/premium axes,
+  adaptive signed domain, regime truth table, chart-local CE1-CE5/PE1-PE5
+  ranking, missing-data behavior, linked hover and refresh lifecycle.
+- Focused web calculation/chart tests passed 14/14, focused API history tests
+  passed 2/2 (12 unrelated tests skipped by the name filter), and the canonical
+  repository gate passed.
+- This was documentation only. No calculation, UI, API, collector, order
+  permission or production deployment changed.

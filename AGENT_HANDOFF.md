@@ -5992,3 +5992,12 @@ or outcomes were deleted.
   exported JSON under `/home/novius2/NIFTY50/00-Screnshots/YYYY-MM-DD/`.
 - Capture failures are explicit `.error.json` records; no credentials, images,
   runtime exports or source data are committed.
+- Final validation: web typecheck/build and 254/254 tests plus the canonical
+  gate passed. A persistent 1m browser session incrementally updated all three
+  panes while their logical bounds remained `[-0.5, 87.5]`; one document load,
+  zero page errors. The final 5m capture used `[-0.5, 19.5]` and visually showed
+  aligned 09:15 NIFTY/CE/PE panes. The timer-owned service run exited 0 and
+  created user-owned PNG/JSON files.
+- Final release `6647837` is pushed on `master`; only `n50-dashboard` was
+  recreated. It is healthy with zero restarts on image
+  `sha256:ca6478905f22312c603d758cf4cbf73e386ec34e56ffb72ebf79b6d4607fb5a0`.

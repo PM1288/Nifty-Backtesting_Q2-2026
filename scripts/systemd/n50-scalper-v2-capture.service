@@ -1,0 +1,18 @@
+[Unit]
+Description=Capture NIFTY Scalper V2 Fit Day screenshot and JSON
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/novius2/trading-stack
+Environment=HOME=/root
+Environment=SCALPER_CAPTURE_BASE_URL=http://127.0.0.1:19090
+Environment=SCALPER_CAPTURE_OUTPUT_ROOT=/home/novius2/NIFTY50/00-Screnshots
+ExecStart=/usr/bin/node /home/novius2/trading-stack/tools/playwright/capture-scalper-v2-fit-day.mjs
+TimeoutStartSec=4min30s
+Nice=10
+UMask=0022
+
+[Install]
+WantedBy=multi-user.target

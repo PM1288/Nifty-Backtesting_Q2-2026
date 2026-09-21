@@ -1,0 +1,11 @@
+[Unit]
+Description=Capture NIFTY Scalper V2 every five minutes
+
+[Timer]
+OnCalendar=*-*-* *:0/5:00
+AccuracySec=5s
+Persistent=true
+Unit=n50-scalper-v2-capture.service
+
+[Install]
+WantedBy=timers.target

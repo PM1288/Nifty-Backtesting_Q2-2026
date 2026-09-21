@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   scalperV2CompletedCandleSignature,
   scalperV2RefreshClock,
+  scalperV2SessionSlotCount,
   shouldFollowScalperV2TradingDay,
   shouldRefitScalperV2Day,
 } from "../src/lib/scalperV2LiveSession";
@@ -34,4 +35,13 @@ test("Scalper V2 follows a newly observed trading day without overriding older m
 test("Scalper V2 refresh clock is explicit IST and handles the initial state", () => {
   assert.equal(scalperV2RefreshClock(0), "Waiting for refresh");
   assert.match(scalperV2RefreshClock(Date.parse("2026-09-21T04:00:00.000Z")), /^Refreshed 09:30:00 IST$/);
+});
+
+test("Scalper V2 reserves one fixed logical slot for every full-session interval", () => {
+  const open = "2026-09-21T03:45:00.000Z", close = "2026-09-21T10:00:00.000Z";
+  assert.equal(scalperV2SessionSlotCount(open, close, 1), 375);
+  assert.equal(scalperV2SessionSlotCount(open, close, 5), 75);
+  assert.equal(scalperV2SessionSlotCount(open, close, 15), 25);
+  assert.equal(scalperV2SessionSlotCount(open, close, 60), 7);
+  assert.equal(scalperV2SessionSlotCount("bad", close, 5), null);
 });

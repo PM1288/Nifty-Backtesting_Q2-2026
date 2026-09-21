@@ -6,7 +6,7 @@ Date: 21 September 2026
 
 Scalper V2 now exposes the last successful browser data-refresh time in IST beside every chart title. The three native price charts continue to use the existing 15-second React Query refresh and incremental series update path; no browser navigation, full-page reload, native chart remount, or unchanged-data hydration was added.
 
-While the horizontal view is `Fit day`, a new completed candle advances a stable three-pane candle signature and requests one new full-session range fit. Identical polling responses do not reset the range. `Last 30`, `Last 60`, replay/as-of, drawings, measurements and locked cursor state retain their existing behavior.
+While the horizontal view is `Fit day`, the chart now reserves one fixed logical slot for every interval in the canonical session (375 at 1m, 75 at 5m, 25 at 15m and 7 at 1h for a 09:15–15:30 session). A new completed candle updates its existing session slot without moving or stretching the viewport. Identical polling responses do not reset the range. `Last 30`, `Last 60`, replay/as-of, drawings, measurements and locked cursor state retain their existing behavior.
 
 The live session follows the newest canonical trading day when the first new-day candle is returned. It does not invent a 09:00 candle or switch based on the workstation clock alone: regular NSE chart evidence begins when the canonical source supplies the new session. A deliberately older historical day remains selected.
 
@@ -17,6 +17,24 @@ The live session follows the newest canonical trading day when the first new-day
 - `apps/web/src/pages/scalper-v2/ScalperV2Chart.tsx`: refresh timestamp in each native price-chart header.
 - `apps/web/src/pages/scalper-v2/ScalperV2.module.css`: compact refresh status treatment.
 - `apps/web/tests/scalperV2LiveSession.test.ts`: rollover, fit policy, signature and timezone coverage.
+- `tools/playwright/capture-scalper-v2-fit-day.mjs`: authenticated pop-out capture of a readable full-page PNG and the matching workstation JSON.
+- `scripts/systemd/n50-scalper-v2-capture.{service,timer}`: five-minute weekday-session capture schedule.
+
+## Five-minute evidence archive
+
+During the regular weekday capture window (09:15–15:35 IST), the timer opens the
+authenticated NIFTY Scalper V2 pop-out at 5m, explicitly selects Fit Day, waits
+for all three native charts and writes a timestamp-paired PNG and JSON to:
+
+```text
+/home/novius2/NIFTY50/00-Screnshots/YYYY-MM-DD/
+```
+
+The service reads the existing protected local authentication configuration;
+no credential is stored in source or in the capture directory. Outside the
+capture window it exits successfully without generating duplicate overnight
+files. A failed capture writes a timestamped `.error.json` rather than passing
+an old screenshot off as current.
 
 ## Preservation
 

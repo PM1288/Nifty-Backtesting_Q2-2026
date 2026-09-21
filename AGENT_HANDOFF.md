@@ -5941,6 +5941,11 @@ or outcomes were deleted.
 - Validation before release: web 248/248, API 263/263, both typechecks/builds,
   and canonical repository gate passed. See
   `docs/trading-analytics/LIVE_MARKET_REFRESH_REPAIR_20260921.md`.
+- Production image
+  `sha256:a550b3c61b1d5b442876a0476b6f69f53d30f3a43643d223e22eea3b38aa2002`
+  recreated only `n50-dashboard`; it is healthy with zero restarts. Live
+  authenticated evidence showed today’s 09:35 IST candle, 09:34:25 OI history,
+  a 09:36:30 screener generation using 09:36:06 quotes, and no page reload.
 - Separate blocker: the Tailscale consolidated research API health and provider
   diagnostics respond, but `/query/final` currently fails at the remote Claude
   consolidation step. Local retry/idempotency safeguards remain unchanged.

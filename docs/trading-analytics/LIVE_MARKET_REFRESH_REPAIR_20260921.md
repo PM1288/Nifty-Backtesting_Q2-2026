@@ -42,8 +42,25 @@ market value, collector, alert rule, order permission or historical record.
 - Full API suite: 263/263 PASS; typecheck and build PASS.
 - Canonical repository gate: PASS.
 - Pre-change authenticated live run: current Monday session selected, all three
-  5-minute panes through 09:20 IST, OI history through 09:20:25 IST, zero page
-  reloads. A post-deployment run must confirm the new 15/30-second cadence.
+  5-minute panes through 09:20 IST and OI history through 09:20:25 IST.
+- Post-deployment authenticated run: all three panes advanced to the 09:35 IST
+  candle; OI history reached 09:34:25 IST; completed chart responses were
+  20.1–22.4 seconds apart (15-second timer plus server-query time); the document
+  did not reload.
+- The progression payload regenerated at 09:36:30 IST from quotes observed
+  through 09:36:06 IST. The latest database one-minute bar was 09:35 IST and the
+  native option-chain snapshot was 09:36:25 IST.
+
+## Release
+
+- Application commit: `981631f827b74adb264ef6b15d4d058d3d996752` (pushed to
+  `master` before deployment).
+- Image: `sha256:a550b3c61b1d5b442876a0476b6f69f53d30f3a43643d223e22eea3b38aa2002`.
+- Only `n50-dashboard` was recreated; it became healthy with zero restarts.
+- Routed smoke: HTTP 200 with entry asset `/n50/assets/index-Cv8WX91A.js`.
+- Browser screenshots (runtime evidence, intentionally not committed):
+  `/tmp/live-refresh-scalper-v2-20260921.png` and
+  `/tmp/live-refresh-screener-20260921.png`.
 
 ## Operational distinction
 
@@ -51,4 +68,3 @@ The consolidated stock-research endpoint is independently configured on the
 Tailscale address. Its health and three diagnostic providers were reachable,
 but the final-only request failed in the remote Claude consolidation stage.
 This UI refresh repair does not mask or alter that external failure.
-

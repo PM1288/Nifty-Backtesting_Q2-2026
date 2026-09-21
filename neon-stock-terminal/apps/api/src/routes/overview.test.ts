@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression, projectedFullDayVolumeMultiple, projectedIntervalVolumeMultiple } from "./overview.js";
+import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression, projectedFullDayVolumeMultiple, projectedIntervalVolumeMultiple, SCALPER_PROGRESSION_CACHE_MS } from "./overview.js";
+
+test("shared progression snapshot refreshes every thirty seconds", () => {
+  assert.equal(SCALPER_PROGRESSION_CACHE_MS, 30_000);
+});
 
 test("projected volume compares an as-of session pace with the prior 20-day daily SMA", () => {
   const now = new Date("2026-09-18T06:45:00.000Z"); // 12:15 IST, 180/375 minutes

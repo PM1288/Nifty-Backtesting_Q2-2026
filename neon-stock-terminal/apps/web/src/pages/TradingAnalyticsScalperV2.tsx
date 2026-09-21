@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import type { EChartsOption } from "echarts";
 import { getJson } from "../lib/api";
+import { SCALPER_V2_OPTION_HISTORY_REFRESH_MS, SCALPER_V2_PRICE_REFRESH_MS } from "../lib/liveCadence";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
 import { useMwhdRankings } from "../features/mwhd/useMwhdRankings";
@@ -207,8 +208,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const active = useQuery({
     queryKey: chartKey(query),
     queryFn: ({ signal }) => getJson<ChartPayload>(`/v1/trading-analytics/charts?${query}`, signal),
-    staleTime: 60_000,
-    refetchInterval: replayAsOf ? false : 60_000,
+    staleTime: 10_000,
+    refetchInterval: replayAsOf ? false : SCALPER_V2_PRICE_REFRESH_MS,
     refetchOnWindowFocus: false,
     refetchIntervalInBackground: false,
     retry: 1,
@@ -217,9 +218,9 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     queryKey: ["trading-analytics-option-price-history", symbol, expiry, replayAsOf, interval === 15 ? 15 : 5],
     queryFn: ({ signal }) => getJson<OptionPriceHistoryPayload>(`/v1/trading-analytics/option-price-history?${new URLSearchParams({ symbol, expiry, ...(replayAsOf ? { asOf: replayAsOf } : {}), historyDays: "3", interval: String(interval === 15 ? 15 : 5) })}`, signal),
     enabled: Boolean(expiry),
-    staleTime: 60_000,
+    staleTime: 15_000,
     refetchOnWindowFocus: false,
-    refetchInterval: params.has("asOf") ? false : 60_000,
+    refetchInterval: params.has("asOf") ? false : SCALPER_V2_OPTION_HISTORY_REFRESH_MS,
     refetchIntervalInBackground: false,
     retry: 1,
   });

@@ -1761,11 +1761,11 @@ type ScalperProgressionCache = {
 };
 const scalperProgressionCaches = new WeakMap<PrismaClient, ScalperProgressionCache>();
 const scalperProgressionWarmers = new WeakSet<PrismaClient>();
-// The deepest 5-minute gate consumes one-minute observations. A one-minute
-// server snapshot cadence keeps that live without recomputing higher-period
-// anchors on every browser render; SQL stage pruning prevents deeper work for
-// stocks that fail MWD/H/15m prerequisites.
-const SCALPER_PROGRESSION_CACHE_MS = 60_000;
+// The deepest 5-minute gate consumes one-minute observations. Keep the shared
+// server result within half a minute of the source while browsers revalidate
+// more frequently; SQL stage pruning prevents deeper work for stocks that fail
+// MWD/H/15m prerequisites and the single-flight cache prevents duplicate work.
+export const SCALPER_PROGRESSION_CACHE_MS = 30_000;
 
 function getCachedScalperProgression(prisma: PrismaClient): Promise<ScalperProgressionPayload> {
   let cache = scalperProgressionCaches.get(prisma);
@@ -1919,7 +1919,7 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
   app.get("/v1/overview/scalper-progression", async (_req, res, next) => {
     try {
       const payload = await getCachedScalperProgression(prisma);
-      res.setHeader("Cache-Control", "private, max-age=15, stale-while-revalidate=30");
+      res.setHeader("Cache-Control", "private, max-age=5, stale-while-revalidate=15");
       return res.json(payload);
     } catch (error) {
       return next(error);

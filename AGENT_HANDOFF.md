@@ -5928,3 +5928,19 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:before-scalper-v2-positioning-heatmap-20260920`.
 - V1, signals, drawings, measurement, selected CE/PE, strategy formulas,
   database contents, collectors and paper/live order permissions are unchanged.
+# 2026-09-21 — Live Scalper V2 and MWHD refresh repair
+
+- Diagnosed the 09:10 IST report against the live exchange boundary: regular
+  candles begin at 09:15; raw one-minute bars and both option-chain collectors
+  advanced after open without a restart.
+- Reduced Scalper V2 price/context revalidation from 60s to 15s, option-history
+  revalidation to 30s, MWHD browser revalidation to 15s, and the shared
+  single-flight progression cache from 60s to 30s.
+- Preserved stable query keys and incremental chart updates; no page reload,
+  chart remount, strategy, order, collector or source-value change.
+- Validation before release: web 248/248, API 263/263, both typechecks/builds,
+  and canonical repository gate passed. See
+  `docs/trading-analytics/LIVE_MARKET_REFRESH_REPAIR_20260921.md`.
+- Separate blocker: the Tailscale consolidated research API health and provider
+  diagnostics respond, but `/query/final` currently fails at the remote Claude
+  consolidation step. Local retry/idempotency safeguards remain unchanged.

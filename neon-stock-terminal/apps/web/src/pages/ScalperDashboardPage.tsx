@@ -14,6 +14,7 @@ import {
 } from "../lib/scalperDashboard";
 import styles from "./ScalperDashboardPage.module.css";
 import { LiveRefreshStatus } from "../components/LiveRefreshStatus";
+import { SCALPER_PROGRESSION_REFRESH_MS } from "../lib/liveCadence";
 
 type StateFilter = "ALL" | ScalperConditionState;
 const EMPTY_ROWS: ScalperProgressionRow[] = [];
@@ -107,7 +108,7 @@ export function ScalperDashboardPage() {
     <LiveRefreshStatus
       sources={[{
         id: "scalper-screener", label: "Current-month screener", hasData: Boolean(query.data), isError: query.isError,
-        isFetching: query.isFetching, generatedAt: query.data?.generatedAt, dataUpdatedAt: query.dataUpdatedAt, intervalMs: 60_000,
+        isFetching: query.isFetching, generatedAt: query.data?.generatedAt, dataUpdatedAt: query.dataUpdatedAt, intervalMs: SCALPER_PROGRESSION_REFRESH_MS,
       }]}
       onRetry={() => { void query.refetch(); }}
     />

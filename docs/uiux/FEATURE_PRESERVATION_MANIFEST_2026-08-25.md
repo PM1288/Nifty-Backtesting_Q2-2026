@@ -1,5 +1,13 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-21 live market refresh repair: Scalper V2 price/context queries now
+revalidate every 15 seconds and option-history context every 30 seconds without
+remounting native charts. Home and the current-month MWHD screener revalidate
+every 15 seconds against a single-flight 30-second shared server result. Replay
+views remain fixed; strategy rules, ranks, source values, collectors, alerts,
+orders, chart zoom, cursor, drawings and measurements are unchanged. Evidence:
+`docs/trading-analytics/LIVE_MARKET_REFRESH_REPAIR_20260921.md`.
+
 2026-09-20 OIIS/OISS consolidated stock research delivery: newly discovered
 daily stock candidates use one final-only Tailscale research request and create
 one durable WhatsApp outbox message per `(trade_date, symbol)`. Claude, Qwen and

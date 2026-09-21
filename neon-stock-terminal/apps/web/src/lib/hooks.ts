@@ -52,6 +52,7 @@ import {
 } from "./api";
 import type { LiveQuote, ThreeMonthIntradayMode } from "./types";
 import { recordQueryTiming, trackQueryLoadProfile } from "../analytics/performance";
+import { SCALPER_PROGRESSION_REFRESH_MS } from "./liveCadence";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -165,8 +166,8 @@ export function useScalperProgression(enabled = true) {
     queryKey: ["scalper-progression", tokenVersion],
     queryFn: fetchScalperProgression,
     enabled,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: SCALPER_PROGRESSION_REFRESH_MS,
+    staleTime: 5_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,

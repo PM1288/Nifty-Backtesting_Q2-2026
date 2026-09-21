@@ -25,6 +25,7 @@ import { matchesStockProfile, type StockProfileFilters, useProfileIndex } from "
 import { StockUniverseFilterBar } from "../components/stocks/StockProfileControls";
 import { FuturesVolatilityPreview } from "../components/FuturesVolatilityPreview";
 import { LiveRefreshStatus } from "../components/LiveRefreshStatus";
+import { SCALPER_PROGRESSION_REFRESH_MS } from "../lib/liveCadence";
 
 function mergeQuote<T extends Quote>(
   quote: T,
@@ -495,7 +496,7 @@ export function LandingPage() {
       <LiveRefreshStatus
         sources={[
           { id: "home", label: "Home", hasData: Boolean(q.data), isError: q.isError, isFetching: q.isFetching, dataUpdatedAt: q.dataUpdatedAt, intervalMs: 10_000 },
-          { id: "mwhd", label: "MWHD screener", hasData: Boolean(shortlistProgression.data), isError: shortlistProgression.isError, isFetching: shortlistProgression.isFetching, generatedAt: shortlistProgression.data?.generatedAt, dataUpdatedAt: shortlistProgression.dataUpdatedAt, intervalMs: 60_000 },
+          { id: "mwhd", label: "MWHD screener", hasData: Boolean(shortlistProgression.data), isError: shortlistProgression.isError, isFetching: shortlistProgression.isFetching, generatedAt: shortlistProgression.data?.generatedAt, dataUpdatedAt: shortlistProgression.dataUpdatedAt, intervalMs: SCALPER_PROGRESSION_REFRESH_MS },
         ]}
         onRetry={() => { void Promise.all([q.refetch(), shortlistProgression.refetch()]); }}
       />

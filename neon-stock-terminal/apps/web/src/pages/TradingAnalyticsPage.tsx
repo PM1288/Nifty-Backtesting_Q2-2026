@@ -10,6 +10,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { getJson } from "../lib/api";
+import { SCALPER_V2_PRICE_REFRESH_MS } from "../lib/liveCadence";
 import type { EChartsOption } from "echarts";
 import styles from "./TradingAnalyticsPage.module.css";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
@@ -407,11 +408,11 @@ export function TradingAnalyticsPage() {
   const scalperQ = useQuery({
     queryKey: ["trading-analytics-scalper-context", scalperQuery.toString()],
     queryFn: () => getJson<ScalperContextPayload>(`/v1/trading-analytics/scalper-context?${scalperQuery}`),
-    staleTime: 60000,
+    staleTime: 10000,
     refetchOnWindowFocus: false,
     retry: 1,
     enabled: tab === "scalper" || tab === "scalper_v2",
-    refetchInterval: params.has("asOf") ? false : 60000,
+    refetchInterval: params.has("asOf") ? false : SCALPER_V2_PRICE_REFRESH_MS,
     refetchIntervalInBackground: false,
   });
   const universeQuery = new URLSearchParams();

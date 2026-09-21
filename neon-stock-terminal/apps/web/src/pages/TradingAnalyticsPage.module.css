@@ -1167,6 +1167,12 @@
   grid-template-rows: 34px minmax(0, 1fr);
   overflow: hidden;
 }
+.page[data-view="scalper"][data-popout="true"] {
+  height: auto;
+  min-height: 100dvh;
+  grid-template-rows: auto auto;
+  overflow: visible;
+}
 .page[data-view="scalper"] > .context,
 .page[data-view="scalper"] > .kpis { display: none; }
 .page[data-view="scalper"] > header.toolbar,

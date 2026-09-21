@@ -456,6 +456,7 @@ export function TradingAnalyticsPage() {
         className={styles.page}
         data-view={isScalperView ? "scalper" : tab}
         data-route-view={tab}
+        data-popout={isScalperPopout || undefined}
         aria-label="Trading Analytics workspace"
       >
         <header className={styles.toolbar}>

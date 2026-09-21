@@ -33,6 +33,37 @@ const dayOpenMark = (dayOpenMs?: number | null) => dayOpenMs == null || !Number.
   lineStyle: { color: "#0f766e", type: "dotted" as const, width: 2 },
 }];
 
+type HeatDatum = [number, number | null, number | null];
+
+/**
+ * Adds a stable visual score without changing the plotted value:
+ * session low = -1, first observed value = 0, session high = +1.
+ * This lets ECharts colour the primary line red -> black -> green even when
+ * the opening value is not the midpoint of the numerical Y range.
+ */
+export function scalperV2SessionHeatData(
+  rows: ScalperV2OiTimePoint[],
+  value: (point: ScalperV2OiTimePoint) => number | null,
+): HeatDatum[] {
+  const observed = rows.flatMap((point) => {
+    const candidate = value(point);
+    return candidate == null || !Number.isFinite(candidate) ? [] : [candidate];
+  });
+  const opening = observed[0] ?? null;
+  const minimum = observed.length ? Math.min(...observed) : null;
+  const maximum = observed.length ? Math.max(...observed) : null;
+  const score = (candidate: number | null) => {
+    if (candidate == null || opening == null || minimum == null || maximum == null) return null;
+    if (candidate === opening) return 0;
+    if (candidate < opening) return opening > minimum ? -(opening - candidate) / (opening - minimum) : 0;
+    return maximum > opening ? (candidate - opening) / (maximum - opening) : 0;
+  };
+  return rows.map((point) => {
+    const candidate = value(point);
+    return [timestamp(point), candidate, score(candidate)];
+  });
+}
+
 export function scalperV2OiMetricOption(
   points: ScalperV2OiTimePoint[],
   metric: ScalperV2OiDifferenceMetric,
@@ -43,7 +74,11 @@ export function scalperV2OiMetricOption(
   const rows = points.filter(validTime);
   const change = metric === "change";
   const name = change ? "PE ΔOI − CE ΔOI" : "PE OI − CE OI";
-  const color = change ? "#0f766e" : "#7c3aed";
+  const ceName = change ? "Cumulative CE ΔOI" : "Cumulative CE OI";
+  const peName = change ? "Cumulative PE ΔOI" : "Cumulative PE OI";
+  const differenceData = scalperV2SessionHeatData(rows, (point) => change ? point.changeOiDifference : point.oiDifference);
+  const ceData = rows.map((point) => [timestamp(point), change ? point.ceChangeOi : point.ceOi]);
+  const peData = rows.map((point) => [timestamp(point), change ? point.peChangeOi : point.peOi]);
   return {
     animation: false,
     tooltip: {
@@ -51,37 +86,92 @@ export function scalperV2OiMetricOption(
       axisPointer: { type: "line", snap: true },
       valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatOiAxisValue(Number(value)),
     },
+    legend: {
+      data: [name, ceName, peName],
+      top: 0,
+      left: 2,
+      itemGap: 7,
+      itemWidth: 11,
+      itemHeight: 7,
+      textStyle: { fontSize: 8 },
+    },
+    visualMap: {
+      show: false,
+      type: "continuous",
+      min: -1,
+      max: 1,
+      dimension: 2,
+      seriesIndex: 0,
+      inRange: { color: ["#c6283d", "#111827", "#15803d"] },
+    },
     // Match the native price panes: time starts at the plot's left edge and
     // the numeric scale occupies the right-side price-scale gutter.
-    grid: { left: 0, right: nativePriceScaleGutter, top: 16, bottom: 38, containLabel: false },
+    grid: { left: 0, right: nativePriceScaleGutter, top: 24, bottom: 38, containLabel: false },
     xAxis: timeAxis(timeLabel, domain),
-    yAxis: {
-      type: "value",
-      name,
-      position: "right",
-      nameLocation: "end",
-      scale: true,
-      axisLabel: { formatter: formatOiAxisValue },
-      splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
-    },
-    series: [{
-      name,
-      type: "line",
-      data: rows.map((point) => [timestamp(point), change ? point.changeOiDifference : point.oiDifference]),
-      connectNulls: false,
-      showSymbol: rows.length <= 1,
-      symbolSize: 7,
-      lineStyle: { color, width: 2 },
-      itemStyle: { color },
-      areaStyle: { color: change ? "rgba(15,118,110,.10)" : "rgba(124,58,237,.10)" },
-      markLine: {
-        silent: true,
-        symbol: "none",
-        label: { show: false },
-        lineStyle: { color: "#64748b", type: "dashed" },
-        data: [{ yAxis: 0 }, ...dayOpenMark(dayOpenMs)],
+    yAxis: [
+      {
+        type: "value",
+        name,
+        position: "right",
+        nameLocation: "end",
+        scale: true,
+        axisLabel: { formatter: formatOiAxisValue },
+        splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
       },
-    }],
+      {
+        type: "value",
+        name: change ? "CE / PE ΔOI" : "CE / PE OI",
+        position: "left",
+        scale: change,
+        min: change ? undefined : 0,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { inside: true, formatter: formatOiAxisValue, color: "rgba(71,85,105,.68)", fontSize: 8 },
+        nameTextStyle: { color: "rgba(71,85,105,.72)", fontSize: 8, align: "left" },
+        splitLine: { show: false },
+      },
+    ],
+    series: [
+      {
+        name,
+        type: "line",
+        yAxisIndex: 0,
+        data: differenceData,
+        encode: { x: 0, y: 1, tooltip: [1] },
+        connectNulls: false,
+        showSymbol: rows.length <= 1,
+        symbolSize: 7,
+        lineStyle: { width: 2.4 },
+        areaStyle: { color: "rgba(15,23,42,.045)" },
+        markLine: {
+          silent: true,
+          symbol: "none",
+          label: { show: false },
+          lineStyle: { color: "#64748b", type: "dashed" },
+          data: [{ yAxis: 0 }, ...dayOpenMark(dayOpenMs)],
+        },
+      },
+      {
+        name: ceName,
+        type: "line",
+        yAxisIndex: 1,
+        data: ceData,
+        connectNulls: false,
+        showSymbol: false,
+        lineStyle: { color: "#eab308", width: 1.2, type: "dotted", opacity: 0.42 },
+        itemStyle: { color: "#eab308", opacity: 0.42 },
+      },
+      {
+        name: peName,
+        type: "line",
+        yAxisIndex: 1,
+        data: peData,
+        connectNulls: false,
+        showSymbol: false,
+        lineStyle: { color: "#2563eb", width: 1.2, type: "dotted", opacity: 0.42 },
+        itemStyle: { color: "#2563eb", opacity: 0.42 },
+      },
+    ],
   };
 }
 

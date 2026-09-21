@@ -215,6 +215,17 @@ try {
   check("popout-route", new URL(popup.url()).searchParams.get("popout") === "scalper_v2", popup.url());
   check("popout-minimal-shell", await popup.locator("[data-scalper-popout='true']").count() === 1 && await popup.locator("header").filter({ has: popup.getByText("NIFTY 50 TRADER") }).count() === 0, "global application chrome is absent");
   check("popout-filters", await popup.getByLabel("Analytics underlying").count() === 1 && await popup.getByLabel("Selected CE strike").count() === 1 && await popup.getByLabel("Selected PE strike").count() === 1, "underlying and exact contract filters remain available");
+  const popoutScroll = await popup.evaluate(async () => {
+    const root = document.documentElement;
+    const before = window.scrollY;
+    window.scrollTo({ top: root.scrollHeight, behavior: "instant" });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const after = window.scrollY;
+    const history = document.querySelector("[data-testid='v2-oi-history-row']")?.getBoundingClientRect() ?? null;
+    window.scrollTo({ top: 0, behavior: "instant" });
+    return { before, after, scrollHeight: root.scrollHeight, clientHeight: root.clientHeight, historyBottom: history?.bottom ?? null };
+  });
+  check("popout-document-scroll", popoutScroll.scrollHeight > popoutScroll.clientHeight && popoutScroll.after > 0 && popoutScroll.historyBottom != null && popoutScroll.historyBottom <= 1082, JSON.stringify(popoutScroll));
 
   const stockPage = await context.newPage();
   await stockPage.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper_v2&interval=5&symbol=RELIANCE`, { waitUntil: "domcontentloaded", timeout: 90_000 });

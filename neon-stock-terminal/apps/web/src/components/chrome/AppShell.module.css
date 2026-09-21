@@ -8,8 +8,8 @@
   isolation: isolate;
 }
 
-.popoutShell{min-height:100vh;background:#eef2f7;color:var(--color-text,#14243a)}
-.popoutMain{width:100%;min-width:0;padding:4px}
+.popoutShell{min-height:100dvh;overflow:visible;background:#eef2f7;color:var(--color-text,#14243a)}
+.popoutMain{width:100%;min-width:0;min-height:100dvh;overflow:visible;padding:4px}
 
 .shell[data-ui-compact-v5="true"] {
   --app-header-height: 56px;

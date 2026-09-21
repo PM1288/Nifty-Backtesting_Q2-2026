@@ -1,5 +1,14 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-21 Scalper V2 pop-out scroll and cumulative-line context: the pop-out
+route now owns a normal document scroll path instead of inheriting the embedded
+fixed-height/hidden-overflow shell. Its two timestamp-aligned difference charts
+retain the primary `PE − CE` axis and add faint dotted CE-yellow and PE-blue
+component totals on a separate secondary axis. The primary difference line is
+coloured by a session-relative low/red, opening/black, high/green scale without
+changing its raw value or Y-axis. Missing values remain gaps; source data,
+cursor linkage, Fit Day, strategy and order behavior are unchanged.
+
 2026-09-21 Scalper V2 stable Fit Day and evidence archive: Fit Day reserves a
 small session-capped logical buffer, so ordinary one-minute/five-minute candle
 updates fill stable slots instead of shifting or stretching the three price panes.

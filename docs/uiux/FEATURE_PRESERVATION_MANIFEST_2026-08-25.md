@@ -1,5 +1,14 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-21 Scalper V2 refresh visibility and live-session fit: every chart title
+shows the last successful data refresh in IST. Live Fit Day re-fits when a new
+completed candle appears, identical polls do not reset ranges, and a newly
+observed canonical trading day replaces the prior live session. Replay and
+deliberately older historical selections remain fixed; no full-page reload,
+chart remount, strategy, source-data, collector, cursor, drawing, measurement
+or order change was introduced. Evidence:
+`docs/trading-analytics/SCALPER_V2_REFRESH_STAMPS_AND_LIVE_FIT_20260921.md`.
+
 2026-09-21 live market refresh repair: Scalper V2 price/context queries now
 revalidate every 15 seconds and option-history context every 30 seconds without
 remounting native charts. Home and the current-month MWHD screener revalidate

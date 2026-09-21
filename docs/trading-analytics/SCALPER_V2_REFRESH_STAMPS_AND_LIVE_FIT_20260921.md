@@ -1,0 +1,29 @@
+# Scalper V2 refresh stamps and live Fit Day
+
+Date: 21 September 2026
+
+## Outcome
+
+Scalper V2 now exposes the last successful browser data-refresh time in IST beside every chart title. The three native price charts continue to use the existing 15-second React Query refresh and incremental series update path; no browser navigation, full-page reload, native chart remount, or unchanged-data hydration was added.
+
+While the horizontal view is `Fit day`, a new completed candle advances a stable three-pane candle signature and requests one new full-session range fit. Identical polling responses do not reset the range. `Last 30`, `Last 60`, replay/as-of, drawings, measurements and locked cursor state retain their existing behavior.
+
+The live session follows the newest canonical trading day when the first new-day candle is returned. It does not invent a 09:00 candle or switch based on the workstation clock alone: regular NSE chart evidence begins when the canonical source supplies the new session. A deliberately older historical day remains selected.
+
+## Files
+
+- `apps/web/src/lib/scalperV2LiveSession.ts`: pure candle-signature, new-session, auto-fit and IST refresh-label rules.
+- `apps/web/src/pages/TradingAnalyticsScalperV2.tsx`: query-success stamps, day following and new-candle fit orchestration.
+- `apps/web/src/pages/scalper-v2/ScalperV2Chart.tsx`: refresh timestamp in each native price-chart header.
+- `apps/web/src/pages/scalper-v2/ScalperV2.module.css`: compact refresh status treatment.
+- `apps/web/tests/scalperV2LiveSession.test.ts`: rollover, fit policy, signature and timezone coverage.
+
+## Preservation
+
+No strategy, source values, query contract, collector, API, signal, OI arithmetic, order control or notification behavior changed. A successful HTTP refresh can update the displayed receipt time even when the source returns identical candles; the native series correctly performs no write in that case.
+
+## Validation
+
+- Web typecheck: PASS.
+- Web unit tests: PASS, 252/252.
+- Remaining build, API, preservation and deployed-browser evidence is recorded in `AGENT_HANDOFF.md` after release.

@@ -5949,3 +5949,19 @@ or outcomes were deleted.
 - Separate blocker: the Tailscale consolidated research API health and provider
   diagnostics respond, but `/query/final` currently fails at the remote Claude
   consolidation step. Local retry/idempotency safeguards remain unchanged.
+
+## 2026-09-21 — Scalper V2 refresh stamps and automatic live Fit Day
+
+- Branch: `fix/scalper-live-session-follow-20260921`.
+- Every Scalper V2 chart title now displays its own successful query refresh
+  receipt time in IST. The three price panes use the price/context receipt;
+  positioning/price-strength views use the option-history receipt.
+- Fit Day now re-applies only when the latest completed-candle signature changes.
+  Identical 15-second polls do not hydrate unchanged series or reset the view;
+  Last 30/Last 60 and replay remain stable.
+- The live session advances when the canonical response first contains a newer
+  trading day. A manually selected older historical day is not overwritten.
+  This deliberately follows source evidence rather than fabricating a 09:00
+  session before the first regular-market candle exists.
+- Focused validation: web typecheck and 252/252 web tests passed. Full release
+  and deployed-browser evidence follows below after deployment.

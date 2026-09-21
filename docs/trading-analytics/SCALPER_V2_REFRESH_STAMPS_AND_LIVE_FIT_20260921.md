@@ -57,3 +57,19 @@ No strategy, source values, query contract, collector, API, signal, OI arithmeti
   navigation; zero page errors.
 - Production: dashboard-only deployment, healthy with zero restarts on image
   `sha256:fb9606674b3416b20a8a852a52b4a9ee41d3f57e275694b2ba9d2f3e055baf61`.
+
+### Stable-range and archive follow-up
+
+- Web typecheck, 254/254 web tests and production build: PASS.
+- Canonical repository gate: PASS. API typecheck/build and 263/263 tests from
+  the immediately preceding same-scope release remained PASS; no API changed.
+- A persistent authenticated 1m browser session received one incremental update
+  in each of NIFTY, CE and PE. All three logical bounds stayed exactly
+  `[-0.5, 87.5]`; there was one document request and zero page errors.
+- Final 5m screenshot visually confirms NIFTY, CE and PE all begin at 09:15,
+  remain readable and share `[-0.5, 19.5]` at the captured point.
+- The installed systemd timer is active. Its service-owned capture completed
+  with status 0 and wrote both files as `novius2:novius2`.
+- Final dashboard image:
+  `sha256:ca6478905f22312c603d758cf4cbf73e386ec34e56ffb72ebf79b6d4607fb5a0`;
+  healthy with zero restarts. Release commit: `6647837`.

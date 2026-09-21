@@ -11,6 +11,7 @@ import { visibleScalperV2ReferenceLevels, type ScalperV2ReferenceLevel } from ".
 import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { scalperV2VolumeEma, scalperV2VolumeEmaPeriod } from "../../lib/scalperV2Volume";
 import { ScalperV2CursorCoordinator, scalperV2CrosshairSyncAction } from "../../lib/scalperV2Cursor";
+import { scalperV2RefreshClock } from "../../lib/scalperV2LiveSession";
 import { intervalBarChartTime, istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
 import { ScalperV2OiProfilePrimitive } from "./ScalperV2OiProfilePrimitive";
@@ -39,7 +40,7 @@ export type ScalperV2HorizontalView = "day" | "last30" | "last60";
 export type ScalperV2VerticalView = "session" | "visible" | "manual";
 
 export function ScalperV2Chart({
-  id, title, subtitle, bars, volumeBars = EMPTY_BARS, volumeLabel = "", interval, externalCrosshair, externalRange, inspectionMode, inspectionTime,
+  id, title, subtitle, bars, volumeBars = EMPTY_BARS, volumeLabel = "", interval, lastRefreshAt, externalCrosshair, externalRange, inspectionMode, inspectionTime,
   cursorCoordinator, fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "change", profileLabel = "Change in OI",
   profileRangeExpanded = false,
   maxPainStrikes = EMPTY_MAX_PAIN,
@@ -48,7 +49,7 @@ export function ScalperV2Chart({
   drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; volumeBars?: Row[]; volumeLabel?: string;
-  interval: number;
+  interval: number; lastRefreshAt: number;
   externalCrosshair: ScalperV2Crosshair; externalRange: ScalperV2TimeRange;
   cursorCoordinator: ScalperV2CursorCoordinator;
   inspectionMode: ScalperV2InspectionMode; inspectionTime: number | null; fitRequest: number; horizontalView: ScalperV2HorizontalView;
@@ -576,7 +577,7 @@ export function ScalperV2Chart({
   }, [byTime, externalCrosshair, id, inspectionMode]);
 
   return <section className={css.chartPanel} data-testid={`v2-chart-panel-${id}`} aria-label={`${title} ${interval} minute candlestick chart`}>
-    <header className={css.chartHeader}><span><strong>{title}</strong><small title={subtitle}>{subtitle} · {interval}m</small><small className={css.volumeSource} title={volumeLabel}>{volumeLabel} · EMA{volumeEmaPeriod}</small></span>
+    <header className={css.chartHeader}><span><strong>{title}</strong><small className={css.refreshStamp} data-testid={`v2-chart-refresh-${id}`}>{scalperV2RefreshClock(lastRefreshAt)}</small><small title={subtitle}>{subtitle} · {interval}m</small><small className={css.volumeSource} title={volumeLabel}>{volumeLabel} · EMA{volumeEmaPeriod}</small></span>
       <span className={css.ohlc} data-testid={`v2-chart-readout-${id}`}><b>{inspectionMode === "latest" ? "Latest" : inspectionMode === "locked" ? "Locked" : "At cursor"}</b>
         {selected ? <><span>O {format(selected.open)}</span><span>H {format(selected.high)}</span><span>L {format(selected.low)}</span><span>C {format(selected.close)}</span><span>EMA9 {format(selectedEma)}</span><span className={distance == null ? undefined : distance > 0 ? css.positive : distance < 0 ? css.negative : undefined}>C−EMA {distance == null ? "—" : `${distance > 0 ? "+" : ""}${format(distance)}`}</span></> : <span>No exact completed candle</span>}
       </span></header>

@@ -36,3 +36,23 @@ above; a non-rendering side-column spacer preserves that X-axis alignment.
 - Screenshot:
   `output/playwright/scalper-v2-delta-panel-order-local-final/scalper-v2-popout-1920x1080.png`.
 
+## Production release — 21 September 2026
+
+- Functional commit `56ca4566c0b7eb6fbf8101ce6806d55dad2f1155` was pushed to the
+  feature branch and fast-forwarded to remote `master` before deployment.
+- Only `n50-dashboard` was recreated. The deployed container is healthy with
+  zero restarts on image
+  `sha256:3fa7002513bcf4adea9eac79144a559694ff16852b5733fa7b8dfd52b1d776aa`.
+- Routed entry asset: `/n50/assets/index-CeF0EzFt.js`.
+- Authenticated deployed-container Scalper V2 regression: 46/46 pass. Evidence:
+  `output/playwright/scalper-v2-delta-panel-order-deployed-20260921/`.
+- The authenticated Home/Screener refresh regression also passed 11/11 against
+  this deployment. It retained the same hydrated DOM surfaces and last-good
+  data through forced background-request failures, recovered in place, and
+  recorded no reload/navigation. Evidence:
+  `output/playwright/home-screener-live-refresh-deployed-20260921/`.
+- Measured first visible authenticated surfaces on the local production gateway:
+  Home 685 ms and Screener 589 ms. Live quotes continue through the stream;
+  cached structural snapshots refresh in place rather than remounting the page.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-delta-panel-order-20260921`.

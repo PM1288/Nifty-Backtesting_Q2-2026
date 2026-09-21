@@ -10,6 +10,14 @@
 - Web typecheck, 247/247 tests and build passed. Authenticated local browser
   regression passed 46/46. Evidence and rollback guidance:
   `docs/trading-analytics/SCALPER_V2_DELTA_PANEL_ORDER_20260920.md`.
+- Release `56ca456` was pushed to remote `master` and deployed by recreating
+  only `n50-dashboard`. The container is healthy with zero restarts on image
+  `sha256:3fa7002513bcf4adea9eac79144a559694ff16852b5733fa7b8dfd52b1d776aa`;
+  routed asset `/n50/assets/index-CeF0EzFt.js`. Authenticated deployed-container
+  checks passed 46/46 for Scalper V2 and 11/11 for Home/Screener in-place
+  refresh, including forced refresh failures with no DOM remount or page
+  navigation. Rollback tag:
+  `trading-stack-n50-dashboard:before-scalper-v2-delta-panel-order-20260921`.
 
 ## 2026-09-20 — OIIS/OISS consolidated stock-research webhook
 

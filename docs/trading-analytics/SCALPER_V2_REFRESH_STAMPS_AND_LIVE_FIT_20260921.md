@@ -8,6 +8,10 @@ Scalper V2 now exposes the last successful browser data-refresh time in IST besi
 
 While the horizontal view is `Fit day`, the chart now anchors at the selected session's first displayed bar and reserves a small readable future buffer (15 minutes at 1m, 30 minutes at 5m, and 60 minutes at 15m/1h), capped by the canonical session length. New completed candles fill those reserved slots without moving or stretching the viewport. The budget extends only after the buffer is consumed, rather than on every candle. Identical polling responses do not reset the range. `Last 30`, `Last 60`, replay/as-of, drawings, measurements and locked cursor state retain their existing behavior.
 
+The underlying's futures/cash volume series is filtered to the same selected
+session as its candles before entering the shared native time scale. Retained
+warm-up volume therefore cannot displace the current-day NIFTY candles.
+
 The live session follows the newest canonical trading day when the first new-day candle is returned. It does not invent a 09:00 candle or switch based on the workstation clock alone: regular NSE chart evidence begins when the canonical source supplies the new session. A deliberately older historical day remains selected.
 
 ## Files

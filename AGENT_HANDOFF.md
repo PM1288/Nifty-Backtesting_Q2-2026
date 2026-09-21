@@ -5964,4 +5964,14 @@ or outcomes were deleted.
   This deliberately follows source evidence rather than fabricating a 09:00
   session before the first regular-market candle exists.
 - Focused validation: web typecheck and 252/252 web tests passed. Full release
-  and deployed-browser evidence follows below after deployment.
+  validation also passed the web build, API typecheck/build and 263/263 tests,
+  plus the canonical repository gate.
+- Release commit `e938c8800597e3d7fdff8975f5d95d4c738e88f9` is pushed on `master`.
+  Only `n50-dashboard` was recreated. Container `1067efe0a1da...` is healthy
+  with zero restarts on image
+  `sha256:fb9606674b3416b20a8a852a52b4a9ee41d3f57e275694b2ba9d2f3e055baf61`.
+- Authenticated deployed Chromium observed the refresh stamp advance from
+  `09:50:30` to `09:50:48 IST`, session `2026-09-21`, exactly three native
+  chart roots, nine visible chart stamps, one initial document request, no
+  later page navigation and zero page errors. Screenshot evidence remained in
+  `/tmp/scalper-refresh-live.png` and was not committed per repository policy.

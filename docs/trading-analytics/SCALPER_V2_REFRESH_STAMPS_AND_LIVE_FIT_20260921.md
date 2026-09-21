@@ -26,4 +26,12 @@ No strategy, source values, query contract, collector, API, signal, OI arithmeti
 
 - Web typecheck: PASS.
 - Web unit tests: PASS, 252/252.
-- Remaining build, API, preservation and deployed-browser evidence is recorded in `AGENT_HANDOFF.md` after release.
+- Web build: PASS.
+- API typecheck/build and 263/263 tests: PASS.
+- Canonical repository gate: PASS.
+- Authenticated deployed Chromium: PASS. Refresh advanced from `09:50:30`
+  to `09:50:48 IST`; session `2026-09-21`; three native roots; nine visible
+  chart refresh stamps; one initial document request and no subsequent page
+  navigation; zero page errors.
+- Production: dashboard-only deployment, healthy with zero restarts on image
+  `sha256:fb9606674b3416b20a8a852a52b4a9ee41d3f57e275694b2ba9d2f3e055baf61`.

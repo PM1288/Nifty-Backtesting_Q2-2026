@@ -20,7 +20,7 @@ import { oiComparisonState } from "../lib/scalperV2Geometry";
 import { normalizeScalperV2ProfileRows, profileBaselineLabel } from "../lib/scalperV2OiProfile";
 import { scalperV2ReferenceGauge, type ScalperV2ReferenceLevelPayload } from "../lib/scalperV2ReferenceLevels";
 import { ScalperV2CursorCoordinator } from "../lib/scalperV2Cursor";
-import { scalperV2CompletedCandleSignature, scalperV2RefreshClock, scalperV2SessionSlotCount, shouldFollowScalperV2TradingDay, shouldRefitScalperV2Day } from "../lib/scalperV2LiveSession";
+import { scalperV2CompletedCandleSignature, scalperV2RefreshClock, scalperV2SessionSlotCount, scalperV2StableFitSlotBudget, shouldFollowScalperV2TradingDay, shouldRefitScalperV2Day } from "../lib/scalperV2LiveSession";
 import {
   applyScalperLegsToChartQuery,
   availableScalperStrikes,
@@ -250,6 +250,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [showAllPriceSeries, setShowAllPriceSeries] = useState(false);
   const latestDayRef = useRef<string | null>(null);
   const completedCandleSignatureRef = useRef<string | null>(null);
+  const fitDayBudgetRef = useRef<{ key: string; slots: number | null }>({ key: "", slots: null });
   const drawingStore = useScalperV2Drawings(symbol);
   const drawingSelectedId = drawingStore.selectedId, removeDrawing = drawingStore.remove;
   const inspectionMode: ScalperV2InspectionMode = lockedTime != null ? "locked" : hoverCrosshair ? "hover" : "latest";
@@ -362,7 +363,23 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     return value == null ? [] : [Number(value) * 1000];
   }).sort((left, right) => left - right), [underlying?.bars]);
   const selectedSession = activeData?.calendar?.sessions.find((session) => session.trade_date === tradingDay);
-  const fitDaySlotCount = selectedSession ? scalperV2SessionSlotCount(selectedSession.market_open_ts, selectedSession.market_close_ts, interval) : null;
+  const fitDayStartTimeMs = selectedSession ? Date.parse(selectedSession.market_open_ts) : Number.NaN;
+  const fitDayCloseTimeMs = selectedSession ? Date.parse(selectedSession.market_close_ts) : Number.NaN;
+  const fitDaySessionSlotCount = selectedSession ? scalperV2SessionSlotCount(selectedSession.market_open_ts, selectedSession.market_close_ts, interval) : null;
+  const latestSessionEndMs = (underlying?.bars ?? []).reduce((latestEnd, bar) => {
+    if (bar.closed !== true) return latestEnd;
+    const end = Date.parse(String(bar.end ?? ""));
+    return Number.isFinite(end) && end > fitDayStartTimeMs && end <= fitDayCloseTimeMs ? Math.max(latestEnd, end) : latestEnd;
+  }, Number.NEGATIVE_INFINITY);
+  const observedFitSlots = Number.isFinite(fitDayStartTimeMs) && Number.isFinite(latestSessionEndMs)
+    ? Math.ceil((latestSessionEndMs - fitDayStartTimeMs) / (interval * 60_000))
+    : 0;
+  const fitDayBudgetKey = `${tradingDay}:${interval}:${fitDayStartTimeMs}:${fitDaySessionSlotCount}`;
+  if (fitDayBudgetRef.current.key !== fitDayBudgetKey) fitDayBudgetRef.current = { key: fitDayBudgetKey, slots: null };
+  fitDayBudgetRef.current.slots = fitDaySessionSlotCount == null
+    ? null
+    : scalperV2StableFitSlotBudget(observedFitSlots, fitDaySessionSlotCount, interval, fitDayBudgetRef.current.slots);
+  const fitDaySlotCount = fitDayBudgetRef.current.slots;
   const dayOpenMs = selectedSession && Number.isFinite(Date.parse(selectedSession.market_open_ts))
     ? Date.parse(selectedSession.market_open_ts)
     : sessionTimes[0] ?? null;

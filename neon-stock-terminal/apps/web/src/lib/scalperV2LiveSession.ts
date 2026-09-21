@@ -50,3 +50,12 @@ export function scalperV2SessionSlotCount(open: string, close: string, intervalM
   if (!Number.isFinite(openMs) || !Number.isFinite(closeMs) || closeMs <= openMs || !Number.isFinite(intervalMinutes) || intervalMinutes <= 0) return null;
   return Math.ceil((closeMs - openMs) / (intervalMinutes * 60_000));
 }
+
+export function scalperV2StableFitSlotBudget(observedSlots: number, sessionSlots: number, intervalMinutes: number, previousSlots: number | null) {
+  if (![observedSlots, sessionSlots, intervalMinutes].every(Number.isFinite) || observedSlots <= 0 || sessionSlots <= 0 || intervalMinutes <= 0) return null;
+  const boundedObserved = Math.min(sessionSlots, Math.ceil(observedSlots));
+  if (previousSlots != null && previousSlots >= boundedObserved && previousSlots <= sessionSlots) return previousSlots;
+  const bufferMinutes = intervalMinutes <= 1 ? 15 : intervalMinutes <= 5 ? 30 : 60;
+  const bufferSlots = Math.max(1, Math.ceil(bufferMinutes / intervalMinutes));
+  return Math.min(sessionSlots, boundedObserved + bufferSlots);
+}

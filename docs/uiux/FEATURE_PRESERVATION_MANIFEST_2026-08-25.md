@@ -1,8 +1,9 @@
 # UI feature preservation manifest — 25 August 2026
 
 2026-09-21 Scalper V2 stable Fit Day and evidence archive: Fit Day reserves a
-fixed canonical-session logical range, so one-minute/five-minute candle updates
-do not shift or stretch the three price panes. The existing incremental refresh
+small session-capped logical buffer, so ordinary one-minute/five-minute candle
+updates fill stable slots instead of shifting or stretching the three price panes.
+The budget expands only after its buffer is consumed. The existing incremental refresh
 continues without document reload. An authenticated five-minute weekday-session
 job stores a readable full-page pop-out PNG and the matching exported JSON in
 `/home/novius2/NIFTY50/00-Screnshots/YYYY-MM-DD/`. Last 30/60, cursor, drawings,

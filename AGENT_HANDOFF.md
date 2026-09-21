@@ -5979,9 +5979,10 @@ or outcomes were deleted.
 ## 2026-09-21 — Stable Fit Day and five-minute Scalper evidence archive
 
 - Branch: `fix/scalper-fixed-fit-day-20260921`.
-- Fit Day now uses a fixed full-session logical range derived from the canonical
-  session open/close and active interval. A new candle updates in place instead
-  of redefining the right edge and visibly shifting all three price charts.
+- Fit Day now uses a session-capped stable logical buffer derived from the
+  canonical session and active interval. A new candle fills an existing slot
+  instead of redefining the right edge and visibly shifting all three charts;
+  the buffer extends only after it has been consumed, preserving readability.
 - Added `tools/playwright/capture-scalper-v2-fit-day.mjs` and systemd service/
   timer definitions. Every five minutes during 09:15–15:35 IST on weekdays the
   authenticated 5m NIFTY pop-out is captured as a full-page PNG and its matching

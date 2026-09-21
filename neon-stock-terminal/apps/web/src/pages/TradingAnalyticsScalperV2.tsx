@@ -656,7 +656,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const latestSignal = signals.filter((signal) => signal.state === "RETROSPECTIVE_ENTRY_REFERENCE").at(-1) ?? signals.at(-1);
   const structureOiMaximum = Math.max(1, ...structureRows.flatMap((row) => [row.ce.oi ?? 0, row.pe.oi ?? 0]));
   const structureDeltaMaximum = Math.max(1, ...structureRows.flatMap((row) => [Math.abs(row.ce.changeOi ?? 0), Math.abs(row.pe.changeOi ?? 0)]));
-  const volumeSeries = activeData?.volumeSeries;
+  const volumeSeries = useMemo(() => activeData?.volumeSeries ? {
+    ...activeData.volumeSeries,
+    bars: dayRows(activeData.volumeSeries.bars, tradingDay, "end"),
+  } : undefined, [activeData?.volumeSeries, tradingDay]);
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
   return <section className={css.page} data-testid="scalper-v2" data-popout={isPopout || undefined}>

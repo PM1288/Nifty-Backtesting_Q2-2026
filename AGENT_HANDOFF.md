@@ -5983,6 +5983,9 @@ or outcomes were deleted.
   canonical session and active interval. A new candle fills an existing slot
   instead of redefining the right edge and visibly shifting all three charts;
   the buffer extends only after it has been consumed, preserving readability.
+- The underlying futures/cash volume series is display-filtered to the same
+  selected day as the candles, preventing retained warm-up timestamps from
+  shifting the shared native time scale.
 - Added `tools/playwright/capture-scalper-v2-fit-day.mjs` and systemd service/
   timer definitions. Every five minutes during 09:15–15:35 IST on weekdays the
   authenticated 5m NIFTY pop-out is captured as a full-page PNG and its matching

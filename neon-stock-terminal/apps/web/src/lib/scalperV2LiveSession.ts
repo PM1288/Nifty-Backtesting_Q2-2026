@@ -44,3 +44,9 @@ export function scalperV2RefreshClock(updatedAt: number) {
     hour12: false,
   }).format(new Date(updatedAt))} IST`;
 }
+
+export function scalperV2SessionSlotCount(open: string, close: string, intervalMinutes: number) {
+  const openMs = Date.parse(open), closeMs = Date.parse(close);
+  if (!Number.isFinite(openMs) || !Number.isFinite(closeMs) || closeMs <= openMs || !Number.isFinite(intervalMinutes) || intervalMinutes <= 0) return null;
+  return Math.ceil((closeMs - openMs) / (intervalMinutes * 60_000));
+}

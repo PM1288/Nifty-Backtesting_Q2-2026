@@ -5975,3 +5975,16 @@ or outcomes were deleted.
   chart roots, nine visible chart stamps, one initial document request, no
   later page navigation and zero page errors. Screenshot evidence remained in
   `/tmp/scalper-refresh-live.png` and was not committed per repository policy.
+
+## 2026-09-21 — Stable Fit Day and five-minute Scalper evidence archive
+
+- Branch: `fix/scalper-fixed-fit-day-20260921`.
+- Fit Day now uses a fixed full-session logical range derived from the canonical
+  session open/close and active interval. A new candle updates in place instead
+  of redefining the right edge and visibly shifting all three price charts.
+- Added `tools/playwright/capture-scalper-v2-fit-day.mjs` and systemd service/
+  timer definitions. Every five minutes during 09:15–15:35 IST on weekdays the
+  authenticated 5m NIFTY pop-out is captured as a full-page PNG and its matching
+  exported JSON under `/home/novius2/NIFTY50/00-Screnshots/YYYY-MM-DD/`.
+- Capture failures are explicit `.error.json` records; no credentials, images,
+  runtime exports or source data are committed.

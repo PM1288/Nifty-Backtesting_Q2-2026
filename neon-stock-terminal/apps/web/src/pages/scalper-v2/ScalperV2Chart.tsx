@@ -40,7 +40,7 @@ export type ScalperV2HorizontalView = "day" | "last30" | "last60";
 export type ScalperV2VerticalView = "session" | "visible" | "manual";
 
 export function ScalperV2Chart({
-  id, title, subtitle, bars, volumeBars = EMPTY_BARS, volumeLabel = "", interval, lastRefreshAt, externalCrosshair, externalRange, inspectionMode, inspectionTime,
+  id, title, subtitle, bars, volumeBars = EMPTY_BARS, volumeLabel = "", interval, lastRefreshAt, fitDaySlotCount, externalCrosshair, externalRange, inspectionMode, inspectionTime,
   cursorCoordinator, fitRequest, horizontalView, verticalView, yLocked, onCrosshair, onRangeChange, onTimeClick, rankLevels = EMPTY_LEVELS, oiProfile = EMPTY_PROFILE, profileMode = "change", profileLabel = "Change in OI",
   profileRangeExpanded = false,
   maxPainStrikes = EMPTY_MAX_PAIN,
@@ -49,7 +49,7 @@ export function ScalperV2Chart({
   drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; volumeBars?: Row[]; volumeLabel?: string;
-  interval: number; lastRefreshAt: number;
+  interval: number; lastRefreshAt: number; fitDaySlotCount: number | null;
   externalCrosshair: ScalperV2Crosshair; externalRange: ScalperV2TimeRange;
   cursorCoordinator: ScalperV2CursorCoordinator;
   inspectionMode: ScalperV2InspectionMode; inspectionTime: number | null; fitRequest: number; horizontalView: ScalperV2HorizontalView;
@@ -507,12 +507,27 @@ export function ScalperV2Chart({
     const chart = chartRef.current; if (!chart || data.length === 0) return;
     if (appliedFitRef.current === fitRequest) return;
     appliedFitRef.current = fitRequest;
+    chart.applyOptions({ timeScale: { shiftVisibleRangeOnNewBar: horizontalView !== "day" } });
+    if (horizontalView === "day" && fitDaySlotCount != null) {
+      const from = -0.5, to = fitDaySlotCount - 0.5;
+      if (hostRef.current) {
+        hostRef.current.dataset.visibleFrom = String(Number(data[0].time));
+        hostRef.current.dataset.visibleTo = String(Number(data[0].time) + (fitDaySlotCount - 1) * interval * 60);
+        hostRef.current.dataset.visibleLogicalFrom = String(from);
+        hostRef.current.dataset.visibleLogicalTo = String(to);
+        hostRef.current.dataset.horizontalView = horizontalView;
+      }
+      suppressRangeRef.current += 1;
+      chart.timeScale().setVisibleLogicalRange({ from, to });
+      requestAnimationFrame(() => { suppressRangeRef.current = Math.max(0, suppressRangeRef.current - 1); });
+      return;
+    }
     const count = horizontalView === "last30" ? 30 : horizontalView === "last60" ? 60 : data.length;
     const visible = data.slice(-count);
     if (hostRef.current) { hostRef.current.dataset.visibleFrom = String(Number(visible[0].time)); hostRef.current.dataset.visibleTo = String(Number(visible[visible.length - 1].time)); hostRef.current.dataset.horizontalView = horizontalView; }
     suppressRangeRef.current += 1; chart.timeScale().setVisibleRange({ from: visible[0].time, to: visible[visible.length - 1].time });
     requestAnimationFrame(() => { suppressRangeRef.current = Math.max(0, suppressRangeRef.current - 1); });
-  }, [fitRequest, horizontalView, data]);
+  }, [fitDaySlotCount, fitRequest, horizontalView, data, interval]);
 
   useEffect(() => {
     const chart = chartRef.current;

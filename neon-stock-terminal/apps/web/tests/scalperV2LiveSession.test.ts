@@ -4,6 +4,7 @@ import {
   scalperV2CompletedCandleSignature,
   scalperV2RefreshClock,
   scalperV2SessionSlotCount,
+  scalperV2StableFitSlotBudget,
   shouldFollowScalperV2TradingDay,
   shouldRefitScalperV2Day,
 } from "../src/lib/scalperV2LiveSession";
@@ -44,4 +45,13 @@ test("Scalper V2 reserves one fixed logical slot for every full-session interval
   assert.equal(scalperV2SessionSlotCount(open, close, 15), 25);
   assert.equal(scalperV2SessionSlotCount(open, close, 60), 7);
   assert.equal(scalperV2SessionSlotCount("bad", close, 5), null);
+});
+
+test("Scalper V2 Fit Day keeps a readable buffer without moving for every candle", () => {
+  assert.equal(scalperV2StableFitSlotBudget(12, 75, 5, null), 18);
+  assert.equal(scalperV2StableFitSlotBudget(13, 75, 5, 18), 18);
+  assert.equal(scalperV2StableFitSlotBudget(18, 75, 5, 18), 18);
+  assert.equal(scalperV2StableFitSlotBudget(19, 75, 5, 18), 25);
+  assert.equal(scalperV2StableFitSlotBudget(60, 375, 1, null), 75);
+  assert.equal(scalperV2StableFitSlotBudget(0, 75, 5, null), null);
 });

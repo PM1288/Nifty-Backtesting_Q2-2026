@@ -6017,3 +6017,34 @@ or outcomes were deleted.
   repository gate passed.
 - This was documentation only. No calculation, UI, API, collector, order
   permission or production deployment changed.
+
+## 2026-09-21 — Scalper V2 pop-out scrolling and cumulative context lines
+
+- Branch: `fix/scalper-v2-popout-scroll-cumulative-lines-20260921`.
+- Root cause: the shared Scalper route shell applied a fixed viewport height and
+  `overflow: hidden` to the pop-out as well as the embedded page. The lower
+  analytics existed below the fold, but the pop-out document could not scroll.
+  Pop-out mode now has an explicit route attribute and an auto-height,
+  visible-overflow shell; the embedded Scalper V2 layout remains unchanged.
+- The two OI-history difference charts retain their existing primary arithmetic:
+  `cumulative PE OI - cumulative CE OI` and
+  `cumulative PE Delta OI - cumulative CE Delta OI`. Each now adds faint dotted
+  secondary-axis context lines: CE in yellow and PE in blue, with no area fill.
+- The primary difference line preserves its raw numerical value while its
+  per-point colour is derived from the observed session range: session low red,
+  first observed/open value black and session high green, with separate linear
+  interpolation on either side of open.
+- Release validation passed: 255/255 web tests, web typecheck/build, 263/263 API
+  tests, API typecheck/build, canonical repository gate and `git diff --check`.
+- Authenticated production Chromium passed 47/47 checks. The pop-out measured
+  `scrollHeight=2160`, `clientHeight=1040` and reached `scrollY=1120`, proving
+  the lower charts are reachable. Deterministic OI-history rendering used the
+  browser test's labelled synthetic injection; this proves layout/series
+  behaviour, not live-source OI-history availability.
+- Implementation release commit `8ebab5e` is pushed on `master`. Only
+  `n50-dashboard` was recreated. Container `31e72ac51246...` is healthy with
+  zero restarts on image
+  `sha256:65313ac6f8471ef123f1c6180d4f8dbd33786b933a72c975e5e8ef539d4dace0`.
+  Rollback image: `trading-stack-n50-dashboard:before-scalper-v2-scroll-context-20260921`.
+- Detailed implementation and rollback notes:
+  `docs/trading-analytics/SCALPER_V2_POPOUT_SCROLL_AND_CUMULATIVE_CONTEXT_20260921.md`.

@@ -51,6 +51,7 @@ import css from "./scalper-v2/ScalperV2.module.css";
 import { ScalperV2Freshness } from "./scalper-v2/ScalperV2Freshness";
 import type { ScalperSession } from "../lib/scalperV2Freshness";
 import { intervalBarChartTime } from "../lib/tradingAnalyticsTime";
+import { scalperV3AccelerationArrow, scalperV3AgeLabel, scalperV3Delta, scalperV3FeedState, scalperV3ReferenceTime, scalperV3RowAtOrBefore, scalperV3Velocity, type ScalperV3ComparisonReference } from "../lib/scalperV3Live";
 
 const Chart = lazy(async () => ({ default: (await import("../components/visual/EChartSurface")).EChartSurface }));
 type Row = Record<string, unknown>;
@@ -304,6 +305,13 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [v3ShowVolumeEma, setV3ShowVolumeEma] = useState(true);
   const [v3ShowSignals, setV3ShowSignals] = useState(true);
   const [v3ShowReferences, setV3ShowReferences] = useState(true);
+  const [v3Clock, setV3Clock] = useState(() => Date.now());
+  const [v3CompareA, setV3CompareA] = useState<number | null>(null);
+  const [v3CompareB, setV3CompareB] = useState<number | null>(null);
+  const [v3ComparisonReference, setV3ComparisonReference] = useState<ScalperV3ComparisonReference>("pinned");
+  const [v3WhatChanged, setV3WhatChanged] = useState(false);
+  const [v3AtmShift, setV3AtmShift] = useState<{ from: number; to: number } | null>(null);
+  const [v3PulseStrikeIndices, setV3PulseStrikeIndices] = useState<number[]>([]);
   const [measureMode, setMeasureMode] = useState(false), [points, setPoints] = useState<string[]>([]), [quantity, setQuantity] = useState("65");
   const [measurementContext, setMeasurementContext] = useState<{ panes: ChartPane[]; interval: number; symbol: string; expiry: string; ceStrike: string; peStrike: string } | null>(null);
   const [drawingTool, setDrawingTool] = useState<ScalperV2DrawingTool>("select");
@@ -316,6 +324,9 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const latestDayRef = useRef<string | null>(null);
   const completedCandleSignatureRef = useRef<string | null>(null);
   const fitDayBudgetRef = useRef<{ key: string; slots: number | null }>({ key: "", slots: null });
+  const v3ShiftDownRef = useRef(false);
+  const v3PreviousAtmRef = useRef<number | null>(null);
+  const v3PreviousStrikeValuesRef = useRef<Map<number, string>>(new Map());
   const drawingStore = useScalperV2Drawings(symbol);
   const drawingSelectedId = drawingStore.selectedId, removeDrawing = drawingStore.remove;
   const inspectionMode: ScalperV2InspectionMode = lockedTime != null ? "locked" : hoverCrosshair ? "hover" : "latest";
@@ -324,9 +335,20 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   useEffect(() => { if (!isV3 || typeof window === "undefined") return; window.localStorage.setItem("n50.scalper-v3.right", v3RightOpen ? "open" : "closed"); window.localStorage.setItem("n50.scalper-v3.bottom", v3BottomOpen ? "open" : "closed"); window.localStorage.setItem("n50.scalper-v3.bottom-height", String(v3BottomHeight)); window.localStorage.setItem("n50.scalper-v3.link-time", String(v3LinkTime)); window.localStorage.setItem("n50.scalper-v3.link-strike", String(v3LinkStrike)); window.localStorage.setItem("n50.scalper-v3.layout", v3LayoutPreset); window.localStorage.setItem("n50.scalper-v3.density", v3Density); }, [isV3, v3BottomHeight, v3BottomOpen, v3Density, v3LayoutPreset, v3LinkStrike, v3LinkTime, v3RightOpen]);
 
   useEffect(() => {
+    if (!isV3) return;
+    const update = () => setV3Clock(Date.now());
+    const timer = window.setInterval(update, 5_000);
+    const down = (event: KeyboardEvent) => { if (event.key === "Shift") v3ShiftDownRef.current = true; };
+    const up = (event: KeyboardEvent) => { if (event.key === "Shift") v3ShiftDownRef.current = false; };
+    const blur = () => { v3ShiftDownRef.current = false; };
+    window.addEventListener("keydown", down); window.addEventListener("keyup", up); window.addEventListener("blur", blur);
+    return () => { window.clearInterval(timer); window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); window.removeEventListener("blur", blur); };
+  }, [isV3]);
+
+  useEffect(() => {
     const clear = (event: KeyboardEvent) => {
       const editing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement;
-      if (event.key === "Escape") { setExpandedChart(null); setV3MaximizedPrice(null); setChartInfo(null); setLockedTime(null); setHoverCrosshair(null); setV3HelpOpen(false); setDrawingTool("select"); }
+      if (event.key === "Escape") { setExpandedChart(null); setV3MaximizedPrice(null); setChartInfo(null); setLockedTime(null); setHoverCrosshair(null); setV3PinnedStrike(null); setV3CompareA(null); setV3CompareB(null); setV3HelpOpen(false); setV3WhatChanged(false); setDrawingTool("select"); }
       if (isV3 && !editing && event.key === "1") setV3MaximizedPrice("underlying");
       if (isV3 && !editing && event.key === "2") setV3MaximizedPrice("call");
       if (isV3 && !editing && event.key === "3") setV3MaximizedPrice("put");
@@ -727,7 +749,14 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
 
   const selectTime = (time: string) => {
     const seconds = Math.floor(Date.parse(time) / 1000);
-    if (!measureMode) { setLockedTime(seconds); setRailTab("time"); return; }
+    if (!measureMode) {
+      if (isV3) {
+        if (v3ShiftDownRef.current && v3CompareA != null) setV3CompareB(seconds);
+        else { setV3CompareA(seconds); setV3CompareB(null); }
+        setV3ComparisonReference("pinned");
+      }
+      setLockedTime(seconds); setRailTab("time"); return;
+    }
     const canonicalTime = [underlying, call, put].flatMap((pane) => pane?.bars ?? [])
       .find((row) => row.closed === true && intervalBarChartTime(row) === seconds)?.end;
     const measurementTime = canonicalTime == null ? time : String(canonicalTime);
@@ -799,8 +828,13 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     const target = timeMs / 1000;
     const nearest = underlyingChartTimes.reduce<number | null>((best, value) => best == null || Math.abs(value - target) < Math.abs(best - target) ? value : best, null);
     const selected = v3CursorSnap === "candle" ? nearest : Math.floor(target);
-    if (selected != null) { setLockedTime(selected); setHoverCrosshair({ time: selected, source: "v3-time-pin", sequence: performance.now() }); }
-  }, [underlyingChartTimes, v3CursorSnap]);
+    if (selected != null) {
+      if (v3ShiftDownRef.current && v3CompareA != null) setV3CompareB(selected);
+      else { setV3CompareA(selected); setV3CompareB(null); }
+      setV3ComparisonReference("pinned");
+      setLockedTime(selected); setHoverCrosshair({ time: selected, source: "v3-time-pin", sequence: performance.now() });
+    }
+  }, [underlyingChartTimes, v3CompareA, v3CursorSnap]);
   const hoverStrike = useCallback((index: number | null) => {
     if (isV3 && !v3LinkStrike) return;
     setHoveredStrike(index == null ? null : strikeRows[index] ?? null);
@@ -860,6 +894,131 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     ...activeData.volumeSeries,
     bars: dayRows(activeData.volumeSeries.bars, tradingDay, "end"),
   } : undefined, [activeData?.volumeSeries, tradingDay]);
+  const latestChartTime = underlyingChartTimes.at(-1) ?? null;
+  const latestObservationMs = (() => {
+    const parsed = Date.parse(String(latest(underlying?.bars ?? [])?.end ?? ""));
+    return Number.isFinite(parsed) ? parsed : null;
+  })();
+  const marketOpenNow = Boolean(!replayAsOf && selectedSession && tradingDay === istDay(new Date(v3Clock).toISOString()) && v3Clock >= Date.parse(selectedSession.market_open_ts) && v3Clock <= Date.parse(selectedSession.market_close_ts));
+  const v3FeedAgeMs = latestObservationMs == null ? null : Math.max(0, v3Clock - latestObservationMs);
+  const v3FeedStatus = scalperV3FeedState(v3FeedAgeMs, interval, marketOpenNow);
+  const v3FeedAge = scalperV3AgeLabel(v3FeedAgeMs);
+  const previousSessionRow = useMemo(() => {
+    const candidates = (rawUnderlying?.bars ?? []).filter((row) => row.closed === true && istDay(row.end) < tradingDay);
+    return candidates.at(-1) ?? null;
+  }, [rawUnderlying?.bars, tradingDay]);
+  const previousCloseTime = previousSessionRow == null ? null : intervalBarChartTime(previousSessionRow);
+  const comparisonReferenceTime = scalperV3ReferenceTime({
+    reference: v3ComparisonReference,
+    latestTime: latestChartTime,
+    sessionOpenTime: underlyingChartTimes[0] ?? null,
+    previousCloseTime,
+    pinnedTime: v3CompareA,
+  });
+  const comparisonTargetTime = v3CompareB ?? latestChartTime;
+  const rowAt = (pane: ChartPane | undefined, target: number | null) => scalperV3RowAtOrBefore(
+    pane?.bars.filter((row) => row.closed === true) ?? [], target, (row) => intervalBarChartTime(row),
+  );
+  const comparisonPanes = [
+    rawUnderlying,
+    rawPanes.find((pane) => chartSide(pane) === "CE"),
+    rawPanes.find((pane) => chartSide(pane) === "PE"),
+  ];
+  const comparisonReferenceRows = comparisonPanes.map((pane) => rowAt(pane, comparisonReferenceTime));
+  const comparisonTargetRows = comparisonPanes.map((pane) => rowAt(pane, comparisonTargetTime));
+  const cumulativeAt = (target: number | null) => scalperV3RowAtOrBefore(cumulativeOiPoints, target == null ? null : target * 1000, (point) => Date.parse(point.capturedAt));
+  const comparisonReferenceOi = cumulativeAt(comparisonReferenceTime);
+  const comparisonTargetOi = cumulativeAt(comparisonTargetTime);
+  const selectedPositioningAt = (wanted: "CE" | "PE", strike: number, target: number | null) => scalperV3RowAtOrBefore(
+    positioningModel.cells.filter((cell) => cell.side === wanted && cell.strike === strike), target == null ? null : target * 1000, (cell) => cell.timestamp,
+  );
+  const comparisonReferenceCe = selectedPositioningAt("CE", Number(selectedCeStrike), comparisonReferenceTime);
+  const comparisonReferencePe = selectedPositioningAt("PE", Number(selectedPeStrike), comparisonReferenceTime);
+  const comparisonTargetCe = selectedPositioningAt("CE", Number(selectedCeStrike), comparisonTargetTime);
+  const comparisonTargetPe = selectedPositioningAt("PE", Number(selectedPeStrike), comparisonTargetTime);
+  const comparisonDeltas = {
+    nifty: scalperV3Delta(numeric(comparisonTargetRows[0]?.close), numeric(comparisonReferenceRows[0]?.close)),
+    ce: scalperV3Delta(numeric(comparisonTargetRows[1]?.close), numeric(comparisonReferenceRows[1]?.close)),
+    pe: scalperV3Delta(numeric(comparisonTargetRows[2]?.close), numeric(comparisonReferenceRows[2]?.close)),
+    ceOi: scalperV3Delta(comparisonTargetCe?.oi, comparisonReferenceCe?.oi),
+    peOi: scalperV3Delta(comparisonTargetPe?.oi, comparisonReferencePe?.oi),
+    netOi: scalperV3Delta(comparisonTargetOi?.oiDifference, comparisonReferenceOi?.oiDifference),
+  };
+  const inspectedStrikeCells = inspectedStrikeRow == null ? [] : positioningModel.cells.filter((cell) => cell.strike === inspectedStrikeRow.strike).sort((left, right) => left.timestamp - right.timestamp);
+  const strikeVelocity = (wanted: "CE" | "PE") => {
+    const cells = inspectedStrikeCells.filter((cell) => cell.side === wanted && cell.oi != null);
+    const current = cells.at(-1) ?? null, previous = cells.at(-2) ?? null, prior = cells.at(-3) ?? null;
+    const velocity = scalperV3Velocity(current?.oi ?? null, previous?.oi ?? null, current?.timestamp ?? null, previous?.timestamp ?? null);
+    const priorVelocity = scalperV3Velocity(previous?.oi ?? null, prior?.oi ?? null, previous?.timestamp ?? null, prior?.timestamp ?? null);
+    return { velocity, arrow: scalperV3AccelerationArrow(velocity, priorVelocity) };
+  };
+  const ceVelocity = strikeVelocity("CE"), peVelocity = strikeVelocity("PE");
+  const largestChange = structureRows.flatMap((row) => [
+    { strike: row.strike, side: "CE" as const, value: row.ce.changeOi },
+    { strike: row.strike, side: "PE" as const, value: row.pe.changeOi },
+  ]).filter((row): row is { strike: number; side: "CE" | "PE"; value: number } => row.value != null).sort((left, right) => Math.abs(right.value) - Math.abs(left.value))[0] ?? null;
+
+  useEffect(() => {
+    if (!isV3 || defaultStrike == null) return;
+    const previous = v3PreviousAtmRef.current;
+    v3PreviousAtmRef.current = defaultStrike;
+    if (previous == null || previous === defaultStrike) return;
+    setV3AtmShift({ from: previous, to: defaultStrike });
+    const timeout = window.setTimeout(() => setV3AtmShift(null), 1_000);
+    return () => window.clearTimeout(timeout);
+  }, [defaultStrike, isV3]);
+
+  useEffect(() => {
+    if (!isV3 || !profileRows.length) return;
+    const previous = v3PreviousStrikeValuesRef.current;
+    const next = new Map<number, string>();
+    strikeRows.forEach((strike) => {
+      const ce = profileRows.find((row) => row.side === "CE" && row.strike === strike);
+      const pe = profileRows.find((row) => row.side === "PE" && row.strike === strike);
+      next.set(strike, `${ce?.currentOi ?? ""}:${ce?.changeOi ?? ""}:${pe?.currentOi ?? ""}:${pe?.changeOi ?? ""}`);
+    });
+    if (previous.size) {
+      const changed = strikeRows.flatMap((strike, index) => previous.get(strike) !== next.get(strike) ? [index] : []);
+      if (changed.length) {
+        setV3PulseStrikeIndices(changed);
+        const timeout = window.setTimeout(() => setV3PulseStrikeIndices([]), 900);
+        v3PreviousStrikeValuesRef.current = next;
+        return () => window.clearTimeout(timeout);
+      }
+    }
+    v3PreviousStrikeValuesRef.current = next;
+  }, [isV3, profileRows, strikeRows]);
+
+  useEffect(() => {
+    if (!isV3) return;
+    const keydown = (event: KeyboardEvent) => {
+      const editing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement;
+      if (editing || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.code === "Space") {
+        event.preventDefault(); setV3WhatChanged(true);
+        window.setTimeout(() => setV3WhatChanged(false), 3_000);
+        return;
+      }
+      if ((event.key === "ArrowUp" || event.key === "ArrowDown") && strikeRows.length) {
+        event.preventDefault();
+        const current = v3PinnedStrike == null ? Math.max(0, strikeRows.indexOf(nearestSpotStrike ?? strikeRows[0])) : strikeRows.indexOf(v3PinnedStrike);
+        const nextIndex = Math.max(0, Math.min(strikeRows.length - 1, current + (event.key === "ArrowUp" ? 1 : -1)));
+        setV3PinnedStrike(strikeRows[nextIndex]); return;
+      }
+      if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key) && underlyingChartTimes.length) {
+        event.preventDefault();
+        const currentTime = lockedTime ?? hoverCrosshair?.time ?? underlyingChartTimes.at(-1)!;
+        const currentIndex = Math.max(0, underlyingChartTimes.reduce((best, time, index) => Math.abs(time - currentTime) < Math.abs(underlyingChartTimes[best] - currentTime) ? index : best, 0));
+        const jump = event.shiftKey ? 5 : 1;
+        const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? underlyingChartTimes.length - 1 : Math.max(0, Math.min(underlyingChartTimes.length - 1, currentIndex + (event.key === "ArrowRight" ? jump : -jump)));
+        const time = underlyingChartTimes[nextIndex];
+        setLockedTime(time); setV3CompareA(time); setV3CompareB(null); setV3ComparisonReference("pinned");
+        cursorCoordinator.publish({ time, source: "v3-keyboard" });
+      }
+    };
+    window.addEventListener("keydown", keydown);
+    return () => window.removeEventListener("keydown", keydown);
+  }, [cursorCoordinator, hoverCrosshair?.time, isV3, lockedTime, nearestSpotStrike, strikeRows, underlyingChartTimes, v3PinnedStrike]);
   const maximizeV3Price = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (!isV3 || (event.target as HTMLElement).closest("button,select,input,a")) return;
     const panel = (event.target as HTMLElement).closest<HTMLElement>('[data-testid^="v2-chart-panel-"]');
@@ -880,18 +1039,20 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     setV3FollowLive(true); setHorizontalView("day"); setLinkedRange(null); setLockedTime(null); setHoverCrosshair(null); setFitRequest((value) => value + 1);
   }, []);
   const presetColumns = v3LayoutPreset === "options" ? { main: 72, right: 28, nifty: 36, options: 36 } : v3LayoutPreset === "structure" ? { main: 82, right: 18, nifty: 46, options: 36 } : { main: 78, right: 22, nifty: 41, options: 37 };
+  const sessionProgress = selectedSession ? Math.max(0, Math.min(1, (v3Clock - Date.parse(selectedSession.market_open_ts)) / Math.max(1, Date.parse(selectedSession.market_close_ts) - Date.parse(selectedSession.market_open_ts)))) : 0;
   const v3Style = isV3 ? {
     "--v3-bottom-height": `${v3BottomHeight}px`,
     "--v3-main-width": `${presetColumns.main}fr`,
     "--v3-right-width": `${presetColumns.right}fr`,
     "--v3-nifty-width": `${presetColumns.nifty}fr`,
     "--v3-options-width": `${presetColumns.options}fr`,
+    "--v3-session-progress": `${sessionProgress * 100}%`,
   } as CSSProperties : undefined;
   const cursorVolumeRow = exactAt(volumeSeries?.bars ?? [], inspectionTime);
   const cursorNetOi = callProfile?.currentOi != null && putProfile?.currentOi != null ? putProfile.currentOi - callProfile.currentOi : null;
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
-  return <section className={css.page} data-testid={isV3 ? "scalper-v3" : "scalper-v2"} data-layout={layout} data-popout={isPopout || undefined} data-right-open={isV3 ? v3RightOpen : undefined} data-bottom-open={isV3 ? v3BottomOpen : undefined} data-maximized-price={v3MaximizedPrice ?? undefined} data-v3-density={isV3 ? v3Density : undefined} data-v3-preset={isV3 ? v3LayoutPreset : undefined} data-v3-live={isV3 ? v3FollowLive : undefined} style={v3Style} data-potential-ema-state={potentialEmaAvailability.state} data-potential-ema-references={potentialEmaAvailability.state === "READY" ? potentialEmaSignals.length : ""}>
+  return <section className={css.page} data-testid={isV3 ? "scalper-v3" : "scalper-v2"} data-layout={layout} data-popout={isPopout || undefined} data-right-open={isV3 ? v3RightOpen : undefined} data-bottom-open={isV3 ? v3BottomOpen : undefined} data-maximized-price={v3MaximizedPrice ?? undefined} data-v3-density={isV3 ? v3Density : undefined} data-v3-preset={isV3 ? v3LayoutPreset : undefined} data-v3-live={isV3 ? v3FollowLive : undefined} data-v3-feed={isV3 ? v3FeedStatus : undefined} data-what-changed={isV3 && v3WhatChanged ? true : undefined} style={v3Style} data-potential-ema-state={potentialEmaAvailability.state} data-potential-ema-references={potentialEmaAvailability.state === "READY" ? potentialEmaSignals.length : ""}>
     <header className={css.commandBar}>
       <strong className={css.commandSymbol}>{symbol}</strong>
       <div className={css.topQuotes} aria-label="Current selected values"><span><b>{label}</b>{number(inspectedUnderlying)}</span><span className={css.callText}><b>CE {selectedCeStrike}</b>{price(inspectedRows[1]?.close ?? callLeg?.last_price)}</span><span className={css.putText}><b>PE {selectedPeStrike}</b>{price(inspectedRows[2]?.close ?? putLeg?.last_price)}</span></div>
@@ -901,12 +1062,13 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <details className={css.commandMenu}><summary>Scale</summary><div><button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button><button aria-pressed={profileRangeExpanded} disabled={!profileRows.length} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button><button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button><button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button><button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button><button onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button><button onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button></div></details>
       <details className={css.commandMenu}><summary>OI</summary><div><button onClick={() => { setAnalyticsTab("matrix"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>Strike matrix</button><button onClick={() => { setAnalyticsTab("oi"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>OI &amp; ΔOI charts</button></div></details>
       <details className={css.commandMenu}><summary>Tools</summary><div><button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button><button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button><button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button><button onClick={() => { setRailOpen(true); setRailTab("objects"); }}>Drawings</button></div></details>
-      {isV3 && <><button type="button" className={css.linkToggle} aria-pressed={v3LinkTime} onClick={() => setV3LinkTime((value) => !value)}>Link time</button><button type="button" className={css.linkToggle} aria-pressed={v3LinkStrike} onClick={() => setV3LinkStrike((value) => !value)}>Link strike</button><button type="button" className={v3FollowLive ? css.liveButton : css.pausedButton} onClick={returnToLive}>{v3FollowLive ? "● LIVE" : "↦ Return live"}</button><details className={css.commandMenu}><summary>Chart</summary><div><label>Cursor <select value={v3CursorSnap} onChange={(event) => setV3CursorSnap(event.target.value as V3CursorSnap)}><option value="candle">Candle</option><option value="exact">Exact time</option><option value="free">Free</option></select></label><button aria-pressed={v3ShowEma} onClick={() => setV3ShowEma((value) => !value)}>EMA</button><button aria-pressed={v3ShowVolumeEma} onClick={() => setV3ShowVolumeEma((value) => !value)}>Volume EMA</button><button aria-pressed={v3ShowSignals} onClick={() => setV3ShowSignals((value) => !value)}>Entry markers</button><button aria-pressed={v3ShowReferences} onClick={() => setV3ShowReferences((value) => !value)}>References</button><label>Range traces <select value={v3RangeDisplay} onChange={(event) => setV3RangeDisplay(event.target.value as V3RangeDisplay)}><option value="current">Current only</option><option value="context">Context</option><option value="all">All</option></select></label></div></details><details className={css.commandMenu}><summary>Layout</summary><div><label>Workspace <select value={v3LayoutPreset} onChange={(event) => setV3LayoutPreset(event.target.value as V3LayoutPreset)}><option value="trading">Trading</option><option value="options">Options Analysis</option><option value="structure">Market Structure</option></select></label><label>Density <select value={v3Density} onChange={(event) => setV3Density(event.target.value as V3Density)}><option value="standard">Standard</option><option value="dense">Ultra dense</option><option value="readable">Readable</option></select></label><button aria-pressed={v3RightOpen} onClick={() => setV3RightOpen((value) => !value)}>{v3RightOpen ? "Collapse strike rail" : "Show strike rail"}</button><button aria-pressed={v3BottomOpen} onClick={() => setV3BottomOpen((value) => !value)}>{v3BottomOpen ? "Collapse bottom strip" : "Show bottom strip"}</button><button onClick={() => setV3BottomHeight(120)}>Compact 120</button><button onClick={() => setV3BottomHeight(180)}>Default 180</button><button onClick={() => setV3BottomHeight(260)}>Analysis 260</button><button onClick={() => { setV3RightOpen(true); setV3BottomOpen(true); setV3BottomHeight(180); setV3LayoutPreset("trading"); setV3Density("standard"); }}>Reset workspace</button><button onClick={() => setV3HelpOpen(true)}>Keyboard help</button></div></details></>}
+      {isV3 && <><button type="button" className={css.linkToggle} aria-pressed={v3LinkTime} onClick={() => setV3LinkTime((value) => !value)}>Link time</button><button type="button" className={css.linkToggle} aria-pressed={v3LinkStrike} onClick={() => setV3LinkStrike((value) => !value)}>Link strike</button><button type="button" className={v3FollowLive ? css.liveButton : css.pausedButton} data-feed-state={v3FeedStatus} data-testid="v3-live-state" onClick={returnToLive}>{v3FollowLive ? `${v3FeedStatus === "closed" ? "CLOSED" : v3FeedStatus.toUpperCase()} · ${v3FeedAge}` : "↦ Return live"}</button><label className={css.referenceChip}>Δ vs <select aria-label="Global comparison reference" value={v3ComparisonReference} onChange={(event) => setV3ComparisonReference(event.target.value as ScalperV3ComparisonReference)}><option value="previous-close">Previous close</option><option value="session-open">Session open</option><option value="15m">15m</option><option value="5m">5m</option><option value="pinned">Pinned cursor</option></select></label><details className={css.commandMenu}><summary>Chart</summary><div><label>Cursor <select value={v3CursorSnap} onChange={(event) => setV3CursorSnap(event.target.value as V3CursorSnap)}><option value="candle">Candle</option><option value="exact">Exact time</option><option value="free">Free</option></select></label><button aria-pressed={v3ShowEma} onClick={() => setV3ShowEma((value) => !value)}>EMA</button><button aria-pressed={v3ShowVolumeEma} onClick={() => setV3ShowVolumeEma((value) => !value)}>Volume EMA</button><button aria-pressed={v3ShowSignals} onClick={() => setV3ShowSignals((value) => !value)}>Entry markers</button><button aria-pressed={v3ShowReferences} onClick={() => setV3ShowReferences((value) => !value)}>References</button><label>Range traces <select value={v3RangeDisplay} onChange={(event) => setV3RangeDisplay(event.target.value as V3RangeDisplay)}><option value="current">Current only</option><option value="context">Context</option><option value="all">All</option></select></label></div></details><details className={css.commandMenu}><summary>Layout</summary><div><label>Workspace <select value={v3LayoutPreset} onChange={(event) => setV3LayoutPreset(event.target.value as V3LayoutPreset)}><option value="trading">Trading</option><option value="options">Options Analysis</option><option value="structure">Market Structure</option></select></label><label>Density <select value={v3Density} onChange={(event) => setV3Density(event.target.value as V3Density)}><option value="standard">Standard</option><option value="dense">Ultra dense</option><option value="readable">Readable</option></select></label><button aria-pressed={v3RightOpen} onClick={() => setV3RightOpen((value) => !value)}>{v3RightOpen ? "Collapse strike rail" : "Show strike rail"}</button><button aria-pressed={v3BottomOpen} onClick={() => setV3BottomOpen((value) => !value)}>{v3BottomOpen ? "Collapse bottom strip" : "Show bottom strip"}</button><button onClick={() => setV3BottomHeight(120)}>Compact 120</button><button onClick={() => setV3BottomHeight(180)}>Default 180</button><button onClick={() => setV3BottomHeight(260)}>Analysis 260</button><button onClick={() => { setV3RightOpen(true); setV3BottomOpen(true); setV3BottomHeight(180); setV3LayoutPreset("trading"); setV3Density("standard"); }}>Reset workspace</button><button onClick={() => setV3HelpOpen(true)}>Keyboard help</button></div></details></>}
       <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide details" : "Show details"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, referenceLevels: referenceLevels ?? null, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
       <ScalperV2Freshness compact sessions={active.data.calendar?.sessions ?? []} observations={['UNDERLYING', 'CE', 'PE'].map(name => ({ name, end: String(latest(rawPanes.find(pane => chartSide(pane) === name)?.bars ?? [])?.end ?? '') }))} interval={interval} historical={Boolean(replayAsOf || (selectedDayParam && selectedDayParam < (active.data.calendar?.sessions.at(-1)?.trade_date ?? '')))} symbol={symbol} failed={active.isError} />
       {!isPopout && <button type="button" className={css.popoutButton} data-testid={`${viewId}-popout`} onClick={openPopout} title={`Pop out ${isV3 ? "Scalper V3" : "Scalper V2"}`}><span aria-hidden="true">↗</span><span className={css.popoutLabel}> Pop out</span></button>}
     </header>
-    {isV3 && <div className={css.cursorStrip} data-testid="v3-cursor-strip" data-mode={inspectionMode} data-snap={v3CursorSnap}><b>{inspectionMode === "locked" ? "PINNED" : inspectionMode === "hover" ? "CURSOR" : "LATEST"}</b><span>{inspectionTime == null ? inspectedTimeLabel(inspectedRows[0]) : istClock(inspectionTime * 1000)}</span><span>NIFTY O {number(inspectedRows[0]?.open)} H {number(inspectedRows[0]?.high)} L {number(inspectedRows[0]?.low)} C {number(inspectedRows[0]?.close)}</span><span className={css.callText}>CE {number(inspectedRows[1]?.close)}</span><span className={css.putText}>PE {number(inspectedRows[2]?.close)}</span><span>CE OI {compact(callProfile?.currentOi)}</span><span>PE OI {compact(putProfile?.currentOi)}</span><span>Net {signed(cursorNetOi)}</span><span>Vol {compact(cursorVolumeRow?.volume)}</span>{lockedTime != null && <button type="button" onClick={() => setLockedTime(null)}>Unpin</button>}</div>}
+    {isV3 && <div className={css.cursorStrip} data-testid="v3-cursor-strip" data-mode={inspectionMode} data-snap={v3CursorSnap}><b>{inspectionMode === "locked" ? "PINNED" : inspectionMode === "hover" ? "CURSOR" : "LATEST"}</b><span>{inspectionTime == null ? inspectedTimeLabel(inspectedRows[0]) : istClock(inspectionTime * 1000)}</span><span>NIFTY O {number(inspectedRows[0]?.open)} H {number(inspectedRows[0]?.high)} L {number(inspectedRows[0]?.low)} C {number(inspectedRows[0]?.close)}</span><span className={css.callText}>CE {number(inspectedRows[1]?.close)}</span><span className={css.putText}>PE {number(inspectedRows[2]?.close)}</span><span>CE OI {compact(callProfile?.currentOi)}</span><span>PE OI {compact(putProfile?.currentOi)}</span><span>Net {signed(cursorNetOi)}</span><span>Vol {compact(cursorVolumeRow?.volume)}</span>{comparisonReferenceTime != null && <span className={css.comparisonValues} data-testid="v3-comparison-values"><b>{istClock(comparisonReferenceTime * 1000)} → {comparisonTargetTime == null ? "NOW" : istClock(comparisonTargetTime * 1000)}</b> NIFTY {signed(comparisonDeltas.nifty)} · CE {signed(comparisonDeltas.ce)} · PE {signed(comparisonDeltas.pe)} · CE OI {signed(comparisonDeltas.ceOi)} · PE OI {signed(comparisonDeltas.peOi)} · Net {signed(comparisonDeltas.netOi)}</span>}{v3AtmShift && <span className={css.atmShift}>ATM shifted {v3AtmShift.from.toLocaleString("en-IN")} → {v3AtmShift.to.toLocaleString("en-IN")}</span>}{lockedTime != null && <button type="button" onClick={() => { setLockedTime(null); setV3CompareA(null); setV3CompareB(null); }}>Unpin</button>}</div>}
+    {isV3 && v3WhatChanged && <div className={css.whatChanged} data-testid="v3-what-changed" role="status"><b>WHAT CHANGED · {v3ComparisonReference === "pinned" ? "FROM PIN" : v3ComparisonReference.toUpperCase()}</b><span>NIFTY {signed(comparisonDeltas.nifty)}</span><span>CE {signed(comparisonDeltas.ce)}</span><span>PE {signed(comparisonDeltas.pe)}</span><span>Net OI {signed(comparisonDeltas.netOi)}</span>{largestChange && <button type="button" onClick={() => setV3PinnedStrike(largestChange.strike)}>Largest ΔOI {largestChange.side} {largestChange.strike.toLocaleString("en-IN")} · {signed(largestChange.value)}</button>}</div>}
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
     <div className={css.workspace}>
       <div className={css.chartStage}>
@@ -921,18 +1083,18 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
         </div>
       </div>
       {(!isV3 || v3RightOpen) && <aside className={css.structureCharts} data-testid={`${viewId}-strike-side-charts`} aria-label="Strike open interest comparison charts" onDoubleClick={expandV3Analytic}>
-        {isV3 && <button type="button" className={css.strikeInspector} data-testid="v3-strike-inspector" data-pinned={v3PinnedStrike != null || undefined} aria-expanded={v3InspectorExpanded} aria-live="polite" onClick={() => setV3InspectorExpanded((value) => !value)}>{inspectedStrikeRow ? <><b>{v3PinnedStrike === inspectedStrikeRow.strike ? "PIN " : ""}{inspectedStrikeRow.strike.toLocaleString("en-IN")}</b><span className={css.callText}>CE OI {compact(inspectedStrikeRow.ce.oi)} · Δ {signed(inspectedStrikeRow.ce.changeOi)}</span><span className={css.putText}>PE OI {compact(inspectedStrikeRow.pe.oi)} · Δ {signed(inspectedStrikeRow.pe.changeOi)}</span>{v3InspectorExpanded && <span>Net OI {signed((inspectedStrikeRow.pe.oi ?? 0) - (inspectedStrikeRow.ce.oi ?? 0))} · premium CE {percent(inspectedStrikeRow.ce.priceChangePct)} / PE {percent(inspectedStrikeRow.pe.priceChangePct)}</span>}</> : <span>Hover a strike to inspect it across all strike charts</span>}</button>}
+        {isV3 && <button type="button" className={css.strikeInspector} data-testid="v3-strike-inspector" data-pinned={v3PinnedStrike != null || undefined} aria-expanded={v3InspectorExpanded} aria-live="polite" onClick={() => setV3InspectorExpanded((value) => !value)}>{inspectedStrikeRow ? <><b>{v3PinnedStrike === inspectedStrikeRow.strike ? "PIN " : ""}{inspectedStrikeRow.strike.toLocaleString("en-IN")}</b><span>{spot == null ? "spot —" : `${signed(inspectedStrikeRow.strike - spot)} from spot`}</span><span className={css.callText}>CE OI {compact(inspectedStrikeRow.ce.oi)} · Δ {signed(inspectedStrikeRow.ce.changeOi)} · {ceVelocity.arrow} {ceVelocity.velocity == null ? "—" : `${signed(ceVelocity.velocity)}/5m`}</span><span className={css.putText}>PE OI {compact(inspectedStrikeRow.pe.oi)} · Δ {signed(inspectedStrikeRow.pe.changeOi)} · {peVelocity.arrow} {peVelocity.velocity == null ? "—" : `${signed(peVelocity.velocity)}/5m`}</span>{v3InspectorExpanded && <span>Net OI {signed((inspectedStrikeRow.pe.oi ?? 0) - (inspectedStrikeRow.ce.oi ?? 0))} · premium CE {percent(inspectedStrikeRow.ce.priceChangePct)} / PE {percent(inspectedStrikeRow.pe.priceChangePct)} · {inspectedStrikeRow.ce.priceChangePct != null && inspectedStrikeRow.ce.changeOi != null ? `CE price ${inspectedStrikeRow.ce.priceChangePct >= 0 ? "↑" : "↓"} / OI ${inspectedStrikeRow.ce.changeOi >= 0 ? "↑" : "↓"}` : "CE state unavailable"}</span>}</> : <span>Hover a strike to inspect it across all strike charts</span>}</button>}
         <article data-testid="v2-side-oi-chart">
           <header><strong>OI by strike</strong><RefreshStamp at={active.dataUpdatedAt} /><span>CE / PE · PE − CE</span><ChartActions title="OI by strike" onExpand={() => setExpandedChart("oi")} /></header>
-          <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={compactOiOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense>
+          <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={compactOiOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} pulseCategoryIndices={v3PulseStrikeIndices} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense>
         </article>
         <article data-testid="v2-side-delta-oi-chart">
-          <header><strong>ΔOI by strike</strong><RefreshStamp at={active.dataUpdatedAt} /><span>CE / PE · PE ΔOI − CE ΔOI</span><ChartActions title="Change in OI by strike" onExpand={() => setExpandedChart("delta-oi")} /></header>
-          {profileComparable > 0 ? <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put delta OI minus call delta OI difference" axisExtentPolicy="native" option={compactDeltaOiOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense> : <div className={css.sideState}><strong>ΔOI unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}
+          <header><strong>ΔOI by strike</strong>{largestChange && <button type="button" className={css.headerMetric} onClick={() => setV3PinnedStrike(largestChange.strike)} title="Focus the largest absolute change in OI">Largest {largestChange.side} {largestChange.strike.toLocaleString("en-IN")} {signed(largestChange.value)}</button>}<RefreshStamp at={active.dataUpdatedAt} /><span>CE / PE · PE ΔOI − CE ΔOI</span><ChartActions title="Change in OI by strike" onExpand={() => setExpandedChart("delta-oi")} /></header>
+          {profileComparable > 0 ? <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put delta OI minus call delta OI difference" axisExtentPolicy="native" option={compactDeltaOiOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} pulseCategoryIndices={v3PulseStrikeIndices} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense> : <div className={css.sideState}><strong>ΔOI unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}
         </article>
         <article data-testid="v2-side-strike-structure-chart">
           <header><strong>Strike structure</strong><RefreshStamp at={active.dataUpdatedAt} /><span>OI bars · ΔOI lines · premium markers · CE1–5 / PE1–5</span><ChartActions title="Strike structure" onInfo={() => setChartInfo("strike-structure")} onExpand={() => setExpandedChart("strike-structure")} /></header>
-          {strikeRows.length ? <Suspense fallback={<p>Loading strike structure…</p>}><Chart className={css.structureChart} ariaLabel="Strike wise open interest change in open interest premium return and buildup regime" axisExtentPolicy="native" option={compactStrikeStructureOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense> : <div className={css.sideState}><strong>Strike structure unavailable</strong><span>No exact tracked strikes exist for this snapshot.</span></div>}
+          {strikeRows.length ? <Suspense fallback={<p>Loading strike structure…</p>}><Chart className={css.structureChart} ariaLabel="Strike wise open interest change in open interest premium return and buildup regime" axisExtentPolicy="native" option={compactStrikeStructureOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} pulseCategoryIndices={v3PulseStrikeIndices} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense> : <div className={css.sideState}><strong>Strike structure unavailable</strong><span>No exact tracked strikes exist for this snapshot.</span></div>}
         </article>
         <article data-testid="v2-side-positioning-heatmap">
           <header><strong>Strike × time positioning</strong><RefreshStamp at={optionPriceHistory.dataUpdatedAt} /><span>{interval === 15 ? "15m" : "5m"} · ΔOI share + premium + volume + depth</span>{isV3 && <button type="button" className={css.scaleToggle} onClick={() => setV3HeatmapFixed((value) => !value)} title="Toggle fixed or automatic heatmap colour scale">{v3HeatmapFixed ? "±100" : "AUTO"}</button>}<ChartActions title="Strike by time positioning" onInfo={() => setChartInfo("positioning-heatmap")} onExpand={() => setExpandedChart("positioning-heatmap")} /></header>
@@ -1004,7 +1166,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     </section>
     {expandedChart && <ChartOverlay title={expandedCharts[expandedChart].title} option={expandedCharts[expandedChart].option} onClose={() => setExpandedChart(null)} />}
     {chartInfo && <ChartInfoOverlay kind={chartInfo} onClose={() => setChartInfo(null)} />}
-    {isV3 && v3HelpOpen && <div className={css.chartOverlay} role="dialog" aria-modal="true" aria-label="Scalper V3 keyboard shortcuts"><header><h2>Keyboard shortcuts</h2><button type="button" onClick={() => setV3HelpOpen(false)}>Close</button></header><div className={css.shortcutHelp}><kbd>1</kbd><span>Maximise NIFTY</span><kbd>2</kbd><span>Maximise CE</span><kbd>3</kbd><span>Maximise PE</span><kbd>L</kbd><span>Return to live</span><kbd>K</kbd><span>Pin/unpin cursor time</span><kbd>B</kbd><span>Collapse/restore bottom strip</span><kbd>Esc</kbd><span>Restore workspace</span><kbd>?</kbd><span>Toggle this help</span></div></div>}
+    {isV3 && v3HelpOpen && <div className={css.chartOverlay} role="dialog" aria-modal="true" aria-label="Scalper V3 keyboard shortcuts"><header><h2>Keyboard shortcuts</h2><button type="button" onClick={() => setV3HelpOpen(false)}>Close</button></header><div className={css.shortcutHelp}><kbd>1</kbd><span>Maximise NIFTY</span><kbd>2</kbd><span>Maximise CE</span><kbd>3</kbd><span>Maximise PE</span><kbd>L / End</kbd><span>Return to live / latest candle</span><kbd>K</kbd><span>Pin/unpin cursor time</span><kbd>← / →</kbd><span>Previous/next candle; Shift jumps five</span><kbd>↑ / ↓</kbd><span>Move locked strike one interval</span><kbd>Home</kbd><span>Jump to session open</span><kbd>Space</kbd><span>What changed overlay</span><kbd>Shift+click</kbd><span>Set comparison point B after point A</span><kbd>B</kbd><span>Collapse/restore bottom strip</span><kbd>Esc</kbd><span>Clear pins and restore workspace</span><kbd>?</kbd><span>Toggle this help</span></div></div>}
     <details><summary>Indicator evidence</summary><p>Underlying RSI14 and MACD are calculated from retained completed bars before the selected day is sliced for display.</p><table className={css.snapshotGrid}><thead><tr><th>End</th><th>RSI14</th><th>MACD</th><th>Signal</th></tr></thead><tbody>{indicators.filter((row) => istDay(row.time) === tradingDay).slice(-20).map((row) => <tr key={row.time}><td>{row.time}</td><td>{row.rsi?.toFixed(2) ?? "—"}</td><td>{row.macd?.toFixed(4) ?? "—"}</td><td>{row.signal?.toFixed(4) ?? "—"}</td></tr>)}</tbody></table></details>
   </section>;
 }

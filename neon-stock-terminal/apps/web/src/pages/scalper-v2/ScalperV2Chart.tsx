@@ -24,6 +24,7 @@ const EMPTY_PROFILE: ScalperV2ProfileRow[] = [];
 const EMPTY_REFERENCE_LEVELS: ScalperV2ReferenceLevel[] = [];
 const EMPTY_SIGNALS: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string; rule?: string }> = [];
 const EMPTY_MEASUREMENT: string[] = [];
+const EMPTY_COMPARISON: number[] = [];
 const EMPTY_MAX_PAIN: number[] = [];
 const EMPTY_BARS: Row[] = [];
 const numeric = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
@@ -47,6 +48,7 @@ export function ScalperV2Chart({
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, selectedPutStrike = null, hoveredStrike = null,
   referenceLevels = EMPTY_REFERENCE_LEVELS,
   showEma = true, showVolumeEma = true, showSignals = true, showReferences = true, hideReadout = false, rightOffset = 1, linkCursor = true, onMaximize,
+  liveCockpit = false, feedState = "closed", feedAgeLabel = "—", comparisonTimes = EMPTY_COMPARISON,
   drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; volumeBars?: Row[]; volumeLabel?: string;
@@ -77,6 +79,10 @@ export function ScalperV2Chart({
   rightOffset?: number;
   linkCursor?: boolean;
   onMaximize?: () => void;
+  liveCockpit?: boolean;
+  feedState?: "live" | "delayed" | "stale" | "closed";
+  feedAgeLabel?: string;
+  comparisonTimes?: number[];
   drawingTool?: ScalperV2DrawingTool;
   drawings?: ScalperV2Drawing[];
   selectedDrawingId?: string | null;
@@ -84,6 +90,7 @@ export function ScalperV2Chart({
   onDrawingUpdate?: (drawing: ScalperV2Drawing) => void;
   onDrawingSelect?: (id: string | null) => void;
 }) {
+  const liveCockpitEnabled = liveCockpit || hideReadout;
   const bodyRef = useRef<HTMLDivElement>(null), hostRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null), emaRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -109,6 +116,9 @@ export function ScalperV2Chart({
   inspectionModeRef.current = inspectionMode;
   const [drawingHint, setDrawingHint] = useState<string | null>(null);
   const [profileVisibility, setProfileVisibility] = useState({ visible: 0, total: 0, maximum: 0 });
+  const [liveDirection, setLiveDirection] = useState<"up" | "down" | "flat">("flat");
+  const [livePulse, setLivePulse] = useState(0);
+  const previousLatestCloseRef = useRef<number | null>(null);
   const profileVisibilityRef = useRef(profileVisibility);
 
   const data = useMemo(() => bars.flatMap((bar): CandlestickData<Time>[] => {
@@ -156,6 +166,18 @@ export function ScalperV2Chart({
   const selected = inspectionTime == null ? data.at(-1) : byTime.get(inspectionTime);
   const selectedEma = selected ? emaByTime.get(Number(selected.time)) ?? null : null;
   const distance = selected && selectedEma != null ? selected.close - selectedEma : null;
+  const latestClose = data.at(-1)?.close ?? null;
+
+  useEffect(() => {
+    if (!liveCockpitEnabled || latestClose == null) return;
+    const previous = previousLatestCloseRef.current;
+    previousLatestCloseRef.current = latestClose;
+    if (previous == null || previous === latestClose) return;
+    setLiveDirection(latestClose > previous ? "up" : "down");
+    setLivePulse((value) => value + 1);
+    const timeout = window.setTimeout(() => setLiveDirection("flat"), 220);
+    return () => window.clearTimeout(timeout);
+  }, [latestClose, liveCockpitEnabled]);
 
   const scheduleProfile = () => {
     cancelAnimationFrame(profileFrameRef.current);
@@ -199,7 +221,7 @@ export function ScalperV2Chart({
     });
     const candle = instance.addSeries(CandlestickSeries, {
       upColor: "#059669", downColor: "#dc2626", borderUpColor: "#059669", borderDownColor: "#dc2626",
-      wickUpColor: "#059669", wickDownColor: "#dc2626", priceLineVisible: false, lastValueVisible: id !== "underlying",
+      wickUpColor: "#059669", wickDownColor: "#dc2626", priceLineVisible: liveCockpitEnabled, lastValueVisible: liveCockpitEnabled || id !== "underlying",
     });
     const ema = instance.addSeries(LineSeries, {
       color: "#d97706", lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
@@ -379,7 +401,7 @@ export function ScalperV2Chart({
       volumeRef.current = null; volumeEmaRef.current = null;
       cancelDrawingGestureRef.current = null;
     };
-  }, [cursorCoordinator, id, linkCursor, rightOffset]);
+  }, [cursorCoordinator, id, linkCursor, liveCockpitEnabled, rightOffset]);
 
   useEffect(() => {
     if (!linkCursor) return;
@@ -495,7 +517,7 @@ export function ScalperV2Chart({
   }, [data, hoveredStrike, id, maxPainOverlay, rankLevels, referenceLevels, selectedPutStrike, selectedStrike, sessionBounds, showReferences]);
 
   useEffect(() => {
-    markerRef.current?.setMarkers((showSignals ? signalEvents : []).flatMap((event) => {
+    const signalMarkers = (showSignals ? signalEvents : []).flatMap((event) => {
       const canonicalTime = chartTime(event.setupTime);
       const time = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
       if (time == null || !byTime.has(Number(time))) return [];
@@ -506,9 +528,18 @@ export function ScalperV2Chart({
         color: potentialEma ? "#eab308" : event.direction === "CALL" ? "#2563eb" : "#a86600",
         shape: potentialEma ? "circle" as const : isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
         text: potentialEma ? `★ ${event.direction} potential` : isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
-    }));
+    });
+    const activeComparisonTimes = comparisonTimes.length ? comparisonTimes : inspectionMode === "locked" && inspectionTime != null ? [inspectionTime] : [];
+    const comparisonMarkers = activeComparisonTimes.slice(0, 2).flatMap((value, index) => byTime.has(value) ? [{
+      time: value as Time,
+      position: index === 0 ? "aboveBar" as const : "belowBar" as const,
+      color: index === 0 ? "#7c3aed" : "#0f766e",
+      shape: "circle" as const,
+      text: index === 0 ? "A" : "B",
+    }] : []);
+    markerRef.current?.setMarkers([...signalMarkers, ...comparisonMarkers].sort((left, right) => Number(left.time) - Number(right.time)));
     if (bodyRef.current) bodyRef.current.dataset.potentialEmaMarkers = String(signalEvents.filter((event) => event.rule === "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1").length);
-  }, [byTime, endToStart, showSignals, signalEvents]);
+  }, [byTime, comparisonTimes, endToStart, inspectionMode, inspectionTime, showSignals, signalEvents]);
 
   useEffect(() => {
     const candle = candleRef.current; if (!candle) return;
@@ -609,13 +640,14 @@ export function ScalperV2Chart({
     queueMicrotask(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
   }, [byTime, externalCrosshair, id, inspectionMode]);
 
-  return <section className={css.chartPanel} data-testid={`v2-chart-panel-${id}`} aria-label={`${title} ${interval} minute candlestick chart`}>
+  return <section className={css.chartPanel} data-testid={`v2-chart-panel-${id}`} data-live-direction={liveCockpitEnabled ? liveDirection : undefined} data-live-pulse={liveCockpitEnabled ? livePulse : undefined} aria-label={`${title} ${interval} minute candlestick chart`}>
     <header className={css.chartHeader}><span><strong>{title}</strong><small className={css.refreshStamp} data-testid={`v2-chart-refresh-${id}`}>{scalperV2RefreshClock(lastRefreshAt)}</small><small title={subtitle}>{subtitle} · {interval}m</small><small className={css.volumeSource} title={volumeLabel}>{volumeLabel} · EMA{volumeEmaPeriod}</small></span>
       {!hideReadout && <span className={css.ohlc} data-testid={`v2-chart-readout-${id}`}><b>{inspectionMode === "latest" ? "Latest" : inspectionMode === "locked" ? "Locked" : "At cursor"}</b>
         {selected ? <><span>O {format(selected.open)}</span><span>H {format(selected.high)}</span><span>L {format(selected.low)}</span><span>C {format(selected.close)}</span><span>EMA9 {format(selectedEma)}</span><span className={distance == null ? undefined : distance > 0 ? css.positive : distance < 0 ? css.negative : undefined}>C−EMA {distance == null ? "—" : `${distance > 0 ? "+" : ""}${format(distance)}`}</span></> : <span>No exact completed candle</span>}
       </span>}{onMaximize && <button type="button" className={css.panelMaximize} onClick={onMaximize} aria-label={`Maximize ${title} chart`} title="Maximize chart">↗</button>}</header>
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`} data-first-candle-start={data.length ? String(Number(data[0].time)) : ""} data-first-candle-end={bars.length ? String(chartTime(bars.find((bar) => bar.closed === true)?.end) ?? "") : ""}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
+      {liveCockpitEnabled && <div className={css.liveEdge} data-feed-state={feedState} aria-label={`Current live edge; workspace feed ${feedState}; latest observation ${feedAgeLabel} old`}><span>NOW</span></div>}
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}
       {id === "underlying" && oiProfile.length > 0 && <div className={css.profileCaption} tabIndex={0} data-testid="v2-oi-profile" data-mode={profileMode} aria-label="Change in open interest by strike aligned to the underlying price axis"><div className={css.profileCaptionSummary}><b>ΔOI</b><span className={css.profileIdentity}><i className={css.profileCall} />CE <i className={css.profilePut} />PE</span></div><div className={css.profileCaptionDetails}><span><b>ΔOI by strike</b> · CE yellow · PE blue</span><span>Negative ← 0 → Positive</span><span>Change: green + · red −</span><span>{profileLabel}</span><span>{profileVisibility.visible}/{profileVisibility.total} strikes visible</span>{profileVisibility.total > profileVisibility.visible && <span>Use All strikes Y for off-screen strikes</span>}{maxPainOverlay.candidates.length > 0 && <span data-testid="v2-max-pain-chart-status">Max pain {maxPainOverlay.candidates.map((strike) => strike.toLocaleString("en-IN")).join(" / ")} · {maxPainOverlay.hidden.length === 0 ? "plotted" : "outside active Y range"}</span>}</div></div>}
     </div>

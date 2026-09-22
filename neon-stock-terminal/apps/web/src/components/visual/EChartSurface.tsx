@@ -484,6 +484,7 @@ export function EChartSurface({
   onDataClick,
   activeCategoryIndex,
   pinnedCategoryIndex,
+  pulseCategoryIndices,
   onTimeHover,
   activeTimeMs,
   axisExtentPolicy = "normalized",
@@ -500,6 +501,7 @@ export function EChartSurface({
   onDataClick?: (data: unknown, index: number) => void;
   activeCategoryIndex?: number | null;
   pinnedCategoryIndex?: number | null;
+  pulseCategoryIndices?: number[];
   onTimeHover?: (timeMs: number | null) => void;
   activeTimeMs?: number | null;
   axisExtentPolicy?: "normalized" | "native";
@@ -650,6 +652,18 @@ export function EChartSurface({
 
   useEffect(() => {
     const chart = chartRef.current;
+    if (!chart || !pulseCategoryIndices?.length) return;
+    pulseCategoryIndices.forEach((dataIndex) => chart.dispatchAction({ type: "highlight", dataIndex }));
+    const timeout = window.setTimeout(() => {
+      pulseCategoryIndices.forEach((dataIndex) => chart.dispatchAction({ type: "downplay", dataIndex }));
+      const selectedIndex = activeCategoryIndex ?? pinnedCategoryIndex;
+      if (selectedIndex != null && selectedIndex >= 0) chart.dispatchAction({ type: "highlight", dataIndex: selectedIndex });
+    }, 700);
+    return () => window.clearTimeout(timeout);
+  }, [activeCategoryIndex, pinnedCategoryIndex, pulseCategoryIndices]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
     if (!chart) return;
     suppressTimeHoverRef.current = true;
     if (activeTimeMs == null || !Number.isFinite(activeTimeMs)) {
@@ -661,5 +675,5 @@ export function EChartSurface({
     requestAnimationFrame(() => { suppressTimeHoverRef.current = false; });
   }, [activeTimeMs]);
 
-  return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" data-active-time-ms={activeTimeMs ?? ""} data-active-category-index={activeCategoryIndex ?? ""} data-pinned-category-index={pinnedCategoryIndex ?? ""} />;
+  return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" data-active-time-ms={activeTimeMs ?? ""} data-active-category-index={activeCategoryIndex ?? ""} data-pinned-category-index={pinnedCategoryIndex ?? ""} data-pulse-category-indices={pulseCategoryIndices?.join(",") ?? ""} />;
 }

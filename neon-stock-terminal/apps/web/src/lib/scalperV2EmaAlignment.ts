@@ -26,6 +26,11 @@ export type ScalperV2EmaAlignmentSignal = {
   legs: [ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg];
 };
 
+export type ScalperV2EmaAlignmentAvailability = {
+  state: "READY" | "INACTIVE_TIMEFRAME" | "UNAVAILABLE";
+  reasons: string[];
+};
+
 const numeric = (value: unknown) => {
   const parsed = value == null || value === "" ? Number.NaN : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -37,6 +42,11 @@ const paneSide = (pane: Pane): "CE" | "PE" | "UNDERLYING" => {
 };
 
 const symbolOf = (pane: Pane) => String(pane.identity.tradingsymbol ?? pane.identity.tradingSymbol ?? pane.identity.symbol ?? "Unknown");
+
+const validClosedTimes = (pane: Pane | undefined) => new Set((pane?.bars ?? []).flatMap((bar) => (
+  bar.closed === true && numeric(bar.close) != null && numeric(bar.ema9) != null && Number.isFinite(Date.parse(String(bar.end)))
+    ? [String(bar.end)] : []
+)));
 
 const sideAt = (bar: Row): EmaSide | null => {
   const close = numeric(bar.close), ema = numeric(bar.ema9);
@@ -134,6 +144,23 @@ export function scalperV2EmaAlignmentSignals(panes: Pane[], intervalMinutes: num
     }
   }
   return results;
+}
+
+export function scalperV2EmaAlignmentAvailability(panes: Pane[], intervalMinutes: number): ScalperV2EmaAlignmentAvailability {
+  if (intervalMinutes !== 5) return { state: "INACTIVE_TIMEFRAME", reasons: ["Select 5m to evaluate this reference"] };
+  const entries = (["UNDERLYING", "CE", "PE"] as const).map((instrument) => ({
+    instrument,
+    pane: panes.find((candidate) => paneSide(candidate) === instrument),
+  }));
+  const reasons = entries.flatMap(({ instrument, pane }) => {
+    const count = validClosedTimes(pane).size;
+    return count >= 6 ? [] : [`${instrument} needs six completed 5m close/EMA observations; ${count} available`];
+  });
+  if (reasons.length) return { state: "UNAVAILABLE", reasons };
+  const sets = entries.map(({ pane }) => validClosedTimes(pane));
+  const common = [...sets[0]].filter((time) => sets.slice(1).every((values) => values.has(time)));
+  if (common.length < 6) return { state: "UNAVAILABLE", reasons: [`Exact shared 5m history is incomplete; ${common.length} aligned observations available`] };
+  return { state: "READY", reasons: [] };
 }
 
 export function scalperV2EmaAlignmentSpeech(signal: ScalperV2EmaAlignmentSignal, underlyingSymbol: string) {

@@ -52,6 +52,10 @@ zone.
 - Voice is limited to the current IST trading day and references no older than
   ten minutes. Spoken IDs are retained locally (bounded to 100) to prevent
   refresh/re-mount repetition. Historical/replay references are never spoken.
+- The Rules inspector distinguishes `0 references` from unavailable evidence.
+  Fewer than six valid completed close/EMA observations for any leg, or fewer
+  than six exact shared timestamps, reports the affected input rather than a
+  misleading zero-signal result.
 
 ## Calculation ownership
 

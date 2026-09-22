@@ -100,3 +100,21 @@ script is read-only and writes only under the ignored StratLab output root.
 - Fees, slippage, liquidity, capital overlap and position sizing are excluded.
 - Corporate-action quality follows the retained source.
 - Missing forward horizons remain blank, never zero.
+
+## Validation and release
+
+- Web: typecheck and production build passed; 260/260 tests passed.
+- API: typecheck and production build passed; 264/264 tests passed.
+- Canonical repository gate and `git diff --check` passed.
+- Generated PDF: 945 pages, 23,345,037 bytes. The first two pages and a stock
+  evidence page were visually inspected; the complete CSV is 6,909,794 bytes.
+- Authenticated Chromium passed the final desktop and mobile report checks with
+  no page errors. It verified the direct desktop `Reports` header tab, both
+  download actions and report ID `three_month_reversal_20260922` containing
+  15,042 signals. Evidence is under
+  `output/playwright/three-month-reports-20260922/`.
+- Commits `8094e98` and `ab496e5` are pushed to `master`.
+- Only `n50-dashboard` was recreated. It is healthy on image
+  `sha256:3c9a901ed360307fff7a25f5374c25f83876c138e9902e19cf1a97aaaed76e2d`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-reports-20260922`.

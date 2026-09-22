@@ -6160,3 +6160,27 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:before-scalper-v2-tooltip-direction-20260922`.
 - Detailed evidence and rerun commands:
   `docs/trading-analytics/SCALPER_V2_TOOLTIP_EXPANSION_DIRECTION_ENTRY_20260922.md`.
+
+## 2026-09-22 — 3Month Bull/Bear selector and Backtesting Reports
+
+- Branch `feat/three-month-bull-bear-backtest-20260922` introduced exact BULL
+  logic and its exact BEAR inverse. All Month/Week/Day/1H/15m pairs are
+  mandatory; M-1/M-2/M-3 is one explicit ANY-ONE group. Legacy bullish API
+  fields remain backward compatible and additive `bull`/`bear` evidence powers
+  the Home selector, full 3Month screen and trading shortlist.
+- Added the direct desktop/mobile `Reports` destination at
+  `/backtesting/reports`. It serves the latest generated PDF and complete CSV
+  through authenticated, whitelisted read-only endpoints.
+- Generated `three_month_reversal_20260922`: 500 symbols, 15,042 fresh signal
+  transitions, 945-page PDF and complete 6.9 MB CSV. The requested same-day-open
+  result is labelled look-ahead; next-day-open is the causal comparison.
+- Validation passed: web typecheck/build and 260/260 tests; API typecheck/build
+  and 264/264 tests; canonical gate and `git diff --check`; authenticated final
+  desktop/mobile report checks with zero page errors.
+- Feature commit `8094e98` and direct-header correction `ab496e5` are pushed to
+  `master`. Only `n50-dashboard` was recreated; it is healthy on image
+  `sha256:3c9a901ed360307fff7a25f5374c25f83876c138e9902e19cf1a97aaaed76e2d`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-reports-20260922`.
+- Evidence and rerun details:
+  `docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.

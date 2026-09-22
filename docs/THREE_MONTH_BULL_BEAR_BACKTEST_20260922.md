@@ -65,20 +65,21 @@ The user-requested entry at the signal day's open is included as a
 the daily conditions pass, so that entry was not knowable at the open. The
 report's causal comparison enters at the next retained trading-day open.
 
-For each fresh signal the CSV records direction-adjusted 1/5/15-session return,
-15-session maximum favourable excursion, 15-session maximum drawdown, and the
-first session touching +3%. The displayed potential exit is a reporting
-scenario only: first +3% touch, otherwise the fifteenth-session close. It is not
-presented as a strategy-authored exit.
+For each fresh signal the CSV records direction-adjusted 1/5/15-session return
+and the 15-session path drawdown, together with exact gate/reference evidence.
+The PDF intentionally does not duplicate the trade ledger. It contains the
+formula/summary on one page and one full-page Daily/Weekly/Monthly chart review
+per stock. Blue upward markers are Bull qualifications, yellow downward markers
+are Bear qualifications, purple is EMA9 and green/red are candle direction.
 
 ## Current run summary
 
-| Direction | Basis | Signals | Mean 1D | Mean 5D | Mean 15D | Mean MFE | Mean MDD | +3% reached |
+| Direction | Basis | Signals | Avg 1D | Avg 5D | Avg 15D | Max 15D | Min 15D | Worst drawdown |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| Bull | same-day open, look-ahead | 7,959 | 2.32% | 2.44% | 2.60% | 9.04% | -4.04% | 86.15% |
-| Bull | next-day open, causal | 7,959 | -0.09% | -0.06% | 0.15% | 6.53% | -5.96% | 64.28% |
-| Bear | same-day open, look-ahead | 7,083 | 2.03% | 1.93% | 1.83% | 8.32% | -4.56% | 84.60% |
-| Bear | next-day open, causal | 7,083 | 0.12% | 0.05% | -0.25% | 6.43% | -6.10% | 66.16% |
+| Bull | same-day open, look-ahead | 7,959 | 2.32% | 2.44% | 2.60% | 65.42% | -62.54% | -62.94% |
+| Bull | next-day open, causal | 7,959 | -0.09% | -0.06% | 0.15% | 50.28% | -63.30% | -63.69% |
+| Bear | same-day open, look-ahead | 7,083 | 2.03% | 1.93% | 1.83% | 71.56% | -36.09% | -40.06% |
+| Bear | next-day open, causal | 7,083 | 0.12% | 0.05% | -0.25% | 67.93% | -40.82% | -41.08% |
 
 The large difference between the look-ahead and causal rows is evidence that
 the same-day-open assumption materially inflates results.
@@ -103,11 +104,14 @@ script is read-only and writes only under the ignored StratLab output root.
 
 ## Validation and release
 
-- Web: typecheck and production build passed; 260/260 tests passed.
+- Web: typecheck and production build passed; 271/271 tests passed.
 - API: typecheck and production build passed; 264/264 tests passed.
 - Canonical repository gate and `git diff --check` passed.
-- Generated PDF: 945 pages, 23,345,037 bytes. The first two pages and a stock
-  evidence page were visually inspected; the complete CSV is 6,909,794 bytes.
+- Regenerated PDF: 501 pages, 11,276,190 bytes. The combined formula/summary
+  page and a stock evidence page were visually inspected. The complete CSV is
+  6,045,431 bytes. All 15,042 emitted signals passed all six historical
+  mandatory gates and at least one M-1/M-2/M-3 OR gate; invalid signal count is
+  zero.
 - Authenticated Chromium passed the final desktop and mobile report checks with
   no page errors. It verified the direct desktop `Reports` header tab, both
   download actions and report ID `three_month_reversal_20260922` containing

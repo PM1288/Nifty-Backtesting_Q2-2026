@@ -397,7 +397,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     () => scalperV2DirectionalOiEntries(panes, cumulativeOiPoints, activeReferenceLevels),
     [activeReferenceLevels, cumulativeOiPoints, panes],
   );
-  const chartSignals = useMemo(() => [...signals, ...directionalSignals], [directionalSignals, signals]);
+  const chartSignals = useMemo(
+    () => [...signals, ...directionalSignals].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)),
+    [directionalSignals, signals],
+  );
   const callSignals = useMemo(() => chartSignals.filter((signal) => signal.direction === "CALL"), [chartSignals]);
   const putSignals = useMemo(() => chartSignals.filter((signal) => signal.direction === "PUT"), [chartSignals]);
   const sessionTimes = useMemo(() => (underlying?.bars ?? []).flatMap((bar) => {

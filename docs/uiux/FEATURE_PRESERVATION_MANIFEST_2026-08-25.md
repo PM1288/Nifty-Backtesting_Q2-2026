@@ -1,5 +1,14 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 Paper Trading progressive hydration: `/paper-trading` retains every
+canonical trade, chart, calculation, evidence field, export and detail drawer
+while using an additive core read for first trade-row paint. Entry-session,
+month-path and exact stop-path simulations hydrate afterward and remain
+unavailable rather than zero until the complete read arrives. The default API
+response remains complete and backward compatible; paper/live permissions and
+all mutation guards are unchanged. Evidence:
+`docs/paper-trading/PAPER_TRADING_PROGRESSIVE_HYDRATION_20260922.md`.
+
 2026-09-22 Scalper V2 cumulative context and compact range chart: the two
 tracked-chain PE-minus-CE history charts retain their raw difference arithmetic
 and low/red, opening/black, high/green primary-line scale. Their component CE

@@ -289,6 +289,7 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
       if (!active || inFlight || document.hidden) return;
       inFlight = true;
       let bootstrapLoaded = false;
+      const corePromise = fetchPayload("/v1/workspace/paper-trading?detail=core");
       try {
         const bootstrap = await fetchPayload("/v1/workspace/paper-trading/bootstrap");
         if (!active) return;
@@ -299,6 +300,15 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
       } catch (reason) {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         if (active) setDetailError(`Summary bootstrap delayed: ${reason instanceof Error ? reason.message : String(reason)}`);
+      }
+      try {
+        const core = await corePromise;
+        if (!active) return;
+        bootstrapLoaded = true;
+        setData(core);
+      } catch (reason) {
+        if (reason instanceof DOMException && reason.name === "AbortError") return;
+        if (active) setDetailError(`Trade list delayed: ${reason instanceof Error ? reason.message : String(reason)}`);
       }
       try {
         const payload = await fetchPayload("/v1/workspace/paper-trading");
@@ -318,7 +328,7 @@ function usePaperData(authReady: boolean, authenticatedUserId?: string) {
       } finally {
         inFlight = false;
         if (active) setDetailsLoading(false);
-        if (active) refreshTimer = window.setTimeout(() => void load(), 30_000);
+        if (active) refreshTimer = window.setTimeout(() => void load(), 60_000);
       }
     };
     const revalidate = () => {
@@ -582,7 +592,7 @@ export function PaperTradingCommandCenter() {
         <p>{trades.filter((trade) => trade.evidence_audit?.status === "DATA_INVALID").length} trades have invalid price evidence. {trades.filter((trade) => trade.evidence_audit?.issues?.includes("LEGACY_HORIZON_REQUIRES_SESSION_RECONCILIATION")).length} trades have stored horizons requiring exchange-session reconciliation. Raw records are preserved; these outcomes are not certified.</p>
         <p>Research candidates: fresh-trigger qualification, one active position per issuer, matched 30/60-minute windows, alternative targets, execution-cost stress and finite-capital replay. These are unvalidated comparisons, not changes to the active strategy. Model profit reserves are not a statement of tax liability.</p>
         <button type="button" onClick={query.reload}>Refresh paper values</button>
-        <small data-testid="paper-refresh-time">Last successful refresh: {query.refreshedAt ? time(query.refreshedAt) : "Waiting for complete ledger"}. Refreshes after each completed request plus 30 seconds, and when returning to this tab. No paper order is submitted by refresh.</small>
+        <small data-testid="paper-refresh-time">Last successful refresh: {query.refreshedAt ? time(query.refreshedAt) : "Waiting for complete ledger"}. Fast trade rows load before path simulations; complete evidence refreshes after each request plus 60 seconds and when returning to this tab. No paper order is submitted by refresh.</small>
       </details>
 
       {query.detailsLoading ? (

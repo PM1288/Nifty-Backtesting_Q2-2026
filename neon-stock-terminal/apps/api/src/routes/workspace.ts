@@ -472,6 +472,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
     try {
       const session = await auth.getSession(req);
       const canComment = canManagePaperTradeComments(session?.user);
+      const coreOnly = req.query.detail === "core";
       // The production API pool has four connections and also serves snapshot,
       // notification and quote work. This read previously fanned eight queries
       // out at once, causing Prisma P2024 acquisition timeouts. Keep this route
@@ -563,6 +564,13 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                     and (g.closed_at at time zone 'Asia/Kolkata')::time<=time '15:30:59'
                    then true else false end as closed_in_intraday,
                  carry_quote.ltp::text as carry_mark,carry_quote.ts as carry_mark_at,
+                 ${coreOnly ? `
+                 null::text as intraday_eod_mark,null::timestamptz as intraday_eod_mark_at,
+                 null::text as intraday_session_high,null::text as intraday_session_low,
+                 0::int as intraday_bar_count,false as intraday_eod_complete,
+                 null::text as entry_month_later_high,null::text as entry_month_later_low,
+                 null::timestamptz as entry_month_observed_through,0::int as entry_month_daily_sessions,
+                 ` : `
                  entry_day.eod_close::text as intraday_eod_mark,entry_day.eod_mark_at as intraday_eod_mark_at,
                  entry_day.session_high::text as intraday_session_high,entry_day.session_low::text as intraday_session_low,
                  entry_day.bar_count::int as intraday_bar_count,entry_day.eod_complete as intraday_eod_complete,
@@ -570,11 +578,14 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                  entry_month_later.daily_low::text as entry_month_later_low,
                  entry_month_later.observed_through as entry_month_observed_through,
                  entry_month_later.daily_sessions::int as entry_month_daily_sessions,
+                 `}
                  ((now() at time zone 'Asia/Kolkata')::date >=
                    (date_trunc('month',l.opened_at at time zone 'Asia/Kolkata')+interval '1 month')::date
                  ) as entry_month_complete,
-                 stop_rule.stop_price::text as stop_loss_price,stop_hit.hit_at as stop_loss_hit_at,
-                 stop_hit.exit_price::text as stop_loss_exit_price,
+                 stop_rule.stop_price::text as stop_loss_price,
+                 ${coreOnly
+                   ? `null::timestamptz as stop_loss_hit_at,null::text as stop_loss_exit_price,`
+                   : `stop_hit.hit_at as stop_loss_hit_at,stop_hit.exit_price::text as stop_loss_exit_price,`}
                  coalesce((select sum(e.amount) from paper_trading.pnl_ledger e
                    where e.trade_group_id=g.trade_group_id and e.entry_kind='REALISED_GROSS'),0)::text as realised_gross_pnl,
                  case when p.average_entry_price>0 and p.last_mark is not null then
@@ -623,7 +634,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
             where q.exchange=i.exchange and q.symbol_token=i.instrument_token and q.last_price>0
             limit 1
           ) carry_quote on true
-          left join lateral (
+          ${coreOnly ? `` : `left join lateral (
             select (array_agg(b.close order by b.ts desc))[1] as eod_close,
                    max(b.ts) as eod_mark_at,max(b.high) as session_high,min(b.low) as session_low,
                    count(*)::int as bar_count,
@@ -643,14 +654,14 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                 (date_trunc('month',l.opened_at at time zone 'Asia/Kolkata')+interval '1 month')::date,
                 (now() at time zone 'Asia/Kolkata')::date+1
               )
-          ) entry_month_later on true
+          ) entry_month_later on true`}
           left join lateral (
             select case when l.side='SELL'
               then p.average_entry_price+(6000::numeric/nullif(p.opened_quantity,0))
               else p.average_entry_price-(6000::numeric/nullif(p.opened_quantity,0))
             end as stop_price
           ) stop_rule on true
-          left join lateral (
+          ${coreOnly ? `` : `left join lateral (
             select b.ts as hit_at,
                    case when l.side='SELL'
                      then greatest(stop_rule.stop_price,b.open)
@@ -669,7 +680,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                 or (l.side<>'SELL' and b.low<=stop_rule.stop_price))
             order by b.ts
             limit 1
-          ) stop_hit on true
+          ) stop_hit on true`}
           left join paper_trading.observation_trackers o using(trade_leg_id)
           left join lateral (
             select d.* from oiis_live.daily_candidate d
@@ -742,6 +753,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
       res.json({
         asOf: new Date().toISOString(),
         environment: "PAPER",
+        detailState: coreOnly ? "CORE" : "COMPLETE",
         summary: {
           ...(summary[0] ?? {}),
           total_evaluated_trades: trades.length,

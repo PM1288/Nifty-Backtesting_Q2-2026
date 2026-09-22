@@ -24,7 +24,7 @@ Scalper V3 tests a data-canvas-first layout using the existing Scalper V2 querie
 - Hovering an OI/Delta OI/Strike Structure category updates one docked inspector instead of showing a large floating tooltip over the compact panel.
 - The right analytical rail and bottom strip can be independently collapsed. Reset Layout restores both and a 180px bottom strip.
 - The drawing toolbar occupies a 6px edge handle until pointer/focus reveals its 32px overlay.
-- Existing analytical expand buttons remain available. Escape retains its existing clear/close behavior.
+- Existing analytical expand buttons remain available, and every analytical panel also expands on double-click. Native price panes maximize in place on double-click and restore on a second double-click or Escape.
 
 ## Chrome reduction
 
@@ -52,6 +52,4 @@ The test records 1920x1080 and 1440x900 screenshots, measured column shares, CE/
 ## Limitations of this evaluation pass
 
 - Column widths are fixed at the requested 41/37/22 proportions. The requested draggable vertical splitters are deferred until the visual evaluation establishes that the default geometry is worth retaining.
-- Existing analytical panels retain their expand buttons. Native price panes do not yet double-click-maximize.
 - The range-normalised view intentionally retains V2 arithmetic and is not redefined by this layout experiment.
-

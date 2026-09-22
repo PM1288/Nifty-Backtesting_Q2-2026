@@ -48,12 +48,19 @@ try {
   check("No browser page errors", errors.length === 0, JSON.stringify(errors));
   await page.screenshot({ path: path.join(output, "desktop-1920-scalper-v3.png"), fullPage: true });
 
+  await page.getByTestId("v2-chart-panel-underlying").dblclick({ position: { x: 320, y: 220 } });
+  const maximized = await page.getByTestId("v2-chart-panel-underlying").boundingBox();
+  check("Price pane double-click maximize and Escape restore", Boolean(maximized && maximized.width > 1800 && maximized.height > 1000), JSON.stringify(maximized));
+  await page.keyboard.press("Escape");
+
   await page.getByText("Layout", { exact: true }).click();
   await page.getByRole("button", { name: "Collapse bottom strip" }).click();
   check("Bottom strip collapses to a restore control", await page.getByRole("button", { name: "Show time analytics" }).isVisible(), "collapsed");
   await page.getByRole("button", { name: "Show time analytics" }).click();
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.waitForTimeout(500);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await terminal.waitFor({ state: "visible", timeout: 90_000 });
+  await page.waitForTimeout(1_000);
   await page.screenshot({ path: path.join(output, "desktop-1440-scalper-v3.png"), fullPage: true });
   check("Original V2 remains independently reachable", (await context.request.get(`${base}/strategy/trading-analytics?view=scalper_v2`)).ok(), "V2 route HTTP");
   await fs.writeFile(path.join(output, "results.json"), JSON.stringify({ results, geometry, shares, url: page.url() }, null, 2));

@@ -1198,6 +1198,7 @@
 .page[data-view="scalper"] > header.toolbar button,
 .page[data-view="scalper"] > header.toolbar a { white-space: nowrap; }
 .toolbarMetric{display:inline-flex;align-items:baseline;gap:4px;padding:2px 6px;border-radius:5px;background:#f1f5f9;white-space:nowrap;font-variant-numeric:tabular-nums}.toolbarMetric strong{font-size:14px}
+.page[data-route-view="scalper_v3"]{padding:4px;gap:4px}.page[data-route-view="scalper_v3"]>header.toolbar{height:32px;min-height:32px;gap:4px;padding:1px 4px}.page[data-route-view="scalper_v3"]>header.toolbar button,.page[data-route-view="scalper_v3"]>header.toolbar select{min-height:26px;padding:1px 5px;border-radius:3px;font-size:11px}.page[data-route-view="scalper_v3"] .toolbarMetric{padding:1px 4px;font-size:10px}.page[data-route-view="scalper_v3"] .toolbarMetric strong{font-size:11px}
 .page[data-view="scalper"] > .tabs { min-height: 30px; padding: 0; flex-wrap: nowrap; overflow-x: auto; }
 .page[data-view="scalper"] > .tabs button { min-height: 27px; padding-block: 1px; white-space: nowrap; }
 .page[data-view="scalper"] > .context { height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 0; line-height: 20px; }

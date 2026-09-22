@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import type { EChartsOption } from "echarts";
@@ -292,6 +292,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [priceMode, setPriceMode] = useState<ScalperV2PriceMode>("return");
   const [showAllPriceSeries, setShowAllPriceSeries] = useState(false);
   const [expandedChart, setExpandedChart] = useState<ExpandableChartId | null>(null);
+  const [v3MaximizedPrice, setV3MaximizedPrice] = useState<"underlying" | "call" | "put" | null>(null);
   const [chartInfo, setChartInfo] = useState<ChartInfoId | null>(null);
   const latestDayRef = useRef<string | null>(null);
   const completedCandleSignatureRef = useRef<string | null>(null);
@@ -305,7 +306,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
 
   useEffect(() => {
     const clear = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setExpandedChart(null); setChartInfo(null); setLockedTime(null); setHoverCrosshair(null); setDrawingTool("select"); }
+      if (event.key === "Escape") { setExpandedChart(null); setV3MaximizedPrice(null); setChartInfo(null); setLockedTime(null); setHoverCrosshair(null); setDrawingTool("select"); }
       if ((event.key === "Delete" || event.key === "Backspace") && drawingSelectedId && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) removeDrawing(drawingSelectedId);
     };
     window.addEventListener("keydown", clear); return () => window.removeEventListener("keydown", clear);
@@ -783,9 +784,21 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     ...activeData.volumeSeries,
     bars: dayRows(activeData.volumeSeries.bars, tradingDay, "end"),
   } : undefined, [activeData?.volumeSeries, tradingDay]);
+  const maximizeV3Price = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!isV3 || (event.target as HTMLElement).closest("button,select,input,a")) return;
+    const panel = (event.target as HTMLElement).closest<HTMLElement>('[data-testid^="v2-chart-panel-"]');
+    const id = panel?.dataset.testid?.replace("v2-chart-panel-", "");
+    if (id === "underlying" || id === "call" || id === "put") setV3MaximizedPrice((current) => current === id ? null : id);
+  };
+  const expandV3Analytic = (event: ReactMouseEvent<HTMLElement>) => {
+    if (!isV3 || (event.target as HTMLElement).closest("button,select,input,a")) return;
+    const testId = (event.target as HTMLElement).closest<HTMLElement>("article")?.dataset.testid;
+    const id = testId === "v2-side-oi-chart" ? "oi" : testId === "v2-side-delta-oi-chart" ? "delta-oi" : testId === "v2-side-strike-structure-chart" ? "strike-structure" : testId === "v2-side-positioning-heatmap" ? "positioning-heatmap" : testId === "v2-oi-difference-time" ? "oi-difference" : testId === "v2-change-oi-difference-time" ? "change-oi-difference" : testId === "v2-compact-range-price" ? "range-price" : null;
+    if (id) setExpandedChart(id);
+  };
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
-  return <section className={css.page} data-testid={isV3 ? "scalper-v3" : "scalper-v2"} data-layout={layout} data-popout={isPopout || undefined} data-right-open={isV3 ? v3RightOpen : undefined} data-bottom-open={isV3 ? v3BottomOpen : undefined} style={isV3 ? { "--v3-bottom-height": `${v3BottomHeight}px` } as CSSProperties : undefined} data-potential-ema-state={potentialEmaAvailability.state} data-potential-ema-references={potentialEmaAvailability.state === "READY" ? potentialEmaSignals.length : ""}>
+  return <section className={css.page} data-testid={isV3 ? "scalper-v3" : "scalper-v2"} data-layout={layout} data-popout={isPopout || undefined} data-right-open={isV3 ? v3RightOpen : undefined} data-bottom-open={isV3 ? v3BottomOpen : undefined} data-maximized-price={v3MaximizedPrice ?? undefined} style={isV3 ? { "--v3-bottom-height": `${v3BottomHeight}px` } as CSSProperties : undefined} data-potential-ema-state={potentialEmaAvailability.state} data-potential-ema-references={potentialEmaAvailability.state === "READY" ? potentialEmaSignals.length : ""}>
     <header className={css.commandBar}>
       <strong className={css.commandSymbol}>{symbol}</strong>
       <div className={css.topQuotes} aria-label="Current selected values"><span><b>{label}</b>{number(inspectedUnderlying)}</span><span className={css.callText}><b>CE {selectedCeStrike}</b>{price(inspectedRows[1]?.close ?? callLeg?.last_price)}</span><span className={css.putText}><b>PE {selectedPeStrike}</b>{price(inspectedRows[2]?.close ?? putLeg?.last_price)}</span></div>
@@ -807,15 +820,15 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           {DRAWING_TOOLS.map((entry) => <button key={entry.tool} type="button" title={entry.label} aria-label={entry.label} aria-pressed={drawingTool === entry.tool} onClick={() => { setDrawingTool(entry.tool); setMeasureMode(false); }}>{entry.short}</button>)}
           <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
         </nav>
-        <div className={css.charts}>
+        <div className={css.charts} onDoubleClick={maximizeV3Price} title={isV3 ? "Double-click a price pane to maximize or restore" : undefined}>
           <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price and volume" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={chartSignals} measurementTimes={points} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="call" title={`CE ${Number(selectedCeStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} volumeBars={call?.bars ?? []} volumeLabel="Exact CE contract volume" interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
           <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} volumeBars={put?.bars ?? []} volumeLabel="Exact PE contract volume" interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
         </div>
       </div>
-      {(!isV3 || v3RightOpen) && <aside className={css.structureCharts} data-testid={`${viewId}-strike-side-charts`} aria-label="Strike open interest comparison charts">
+      {(!isV3 || v3RightOpen) && <aside className={css.structureCharts} data-testid={`${viewId}-strike-side-charts`} aria-label="Strike open interest comparison charts" onDoubleClick={expandV3Analytic}>
         {isV3 && <div className={css.strikeInspector} data-testid="v3-strike-inspector" aria-live="polite">{inspectedStrikeRow ? <><b>{inspectedStrikeRow.strike.toLocaleString("en-IN")}</b><span className={css.callText}>CE OI {compact(inspectedStrikeRow.ce.oi)} · Δ {signed(inspectedStrikeRow.ce.changeOi)} · premium {percent(inspectedStrikeRow.ce.priceChangePct)}</span><span className={css.putText}>PE OI {compact(inspectedStrikeRow.pe.oi)} · Δ {signed(inspectedStrikeRow.pe.changeOi)} · premium {percent(inspectedStrikeRow.pe.priceChangePct)}</span></> : <span>Hover a strike to inspect it across all strike charts</span>}</div>}
-        <article>
+        <article data-testid="v2-side-oi-chart">
           <header><strong>OI by strike</strong><RefreshStamp at={active.dataUpdatedAt} /><span>CE / PE · PE − CE</span><ChartActions title="OI by strike" onExpand={() => setExpandedChart("oi")} /></header>
           <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={compactOiOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>
         </article>
@@ -832,7 +845,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           {positioningModel.cells.some((cell) => cell.pressure != null) ? <Suspense fallback={<p>Loading positioning heatmap…</p>}><Chart className={css.structureChart} ariaLabel="Strike by time option positioning pressure heatmap" axisExtentPolicy="native" option={compactPositioningHeatmapOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "positioning-heatmap")} /></Suspense> : <div className={css.sideState}><strong>Positioning history unavailable</strong><span>No retained session observations have enough OI, premium, volume or depth evidence. Missing inputs are not zero.</span></div>}
         </article>
       </aside>}
-      {(!isV3 || v3BottomOpen) && <section className={css.oiHistoryRow} data-testid={`${viewId}-oi-history-row`} aria-label="Tracked option-chain open-interest differences over time">
+      {(!isV3 || v3BottomOpen) && <section className={css.oiHistoryRow} data-testid={`${viewId}-oi-history-row`} aria-label="Tracked option-chain open-interest differences over time" onDoubleClick={expandV3Analytic}>
         <div className={css.oiHistoryPair}>
           <article data-testid="v2-oi-difference-time"><header><strong>Cumulative PE OI − cumulative CE OI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · timestamp aligned</span><ChartActions title="Cumulative PE OI minus cumulative CE OI" onExpand={() => setExpandedChart("oi-difference")} /></header>{cumulativeOiPoints.some((point) => point.oiDifference != null) ? <Suspense fallback={<p>Loading OI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put open interest minus cumulative call open interest over time" axisExtentPolicy="native" option={compactOiDifferenceOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>OI history unavailable</strong><span>No comparable CE/PE tracked-chain snapshots for this session.</span></div>}</article>
           <article data-testid="v2-change-oi-difference-time"><header><strong>Cumulative PE ΔOI − cumulative CE ΔOI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · {cumulativeChangeBasis}</span><ChartActions title="Cumulative PE change in OI minus cumulative CE change in OI" onExpand={() => setExpandedChart("change-oi-difference")} /></header>{cumulativeOiPoints.some((point) => point.changeOiDifference != null) ? <Suspense fallback={<p>Loading ΔOI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put change in open interest minus cumulative call change in open interest over time" axisExtentPolicy="native" option={compactChangeOiDifferenceOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "change-oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>Change-in-OI history unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}</article>

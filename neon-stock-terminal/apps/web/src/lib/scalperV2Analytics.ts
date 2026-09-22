@@ -14,14 +14,30 @@ const CALL_BORDER = "#8a6200";
 const PUT = "#2563eb";
 const PUT_BORDER = "#1d4ed8";
 
-/** Compact side charts keep hover linkage but suppress the large floating
- * value card that obscures their narrow plotting area. Expanded analytics
- * continue to receive the original option with full tooltips. */
+const compactTooltip = (tooltip: EChartsOption["tooltip"]): EChartsOption["tooltip"] => ({
+  ...(tooltip && typeof tooltip === "object" ? tooltip : {}),
+  show: true,
+  triggerOn: "mousemove|click",
+  alwaysShowContent: false,
+  confine: true,
+  enterable: false,
+  padding: [2, 4],
+  borderWidth: 1,
+  extraCssText: "max-width:190px;max-height:112px;overflow:auto;white-space:normal;word-break:break-word;line-height:1.15;box-shadow:0 2px 7px rgba(15,23,42,.14);",
+  textStyle: {
+    ...((tooltip && typeof tooltip === "object" && "textStyle" in tooltip && tooltip.textStyle && typeof tooltip.textStyle === "object") ? tooltip.textStyle : {}),
+    fontSize: 8,
+    lineHeight: 10,
+  },
+});
+
+/** Compact side charts retain their full evidence on pointer/focus without a
+ * large floating card obscuring the narrow plotting area. */
 export function scalperV2CompactSideOption(option: EChartsOption): EChartsOption {
   const axes = Array.isArray(option.yAxis) ? option.yAxis : option.yAxis ? [option.yAxis] : [];
   return {
     ...option,
-    tooltip: { show: false, triggerOn: "none", alwaysShowContent: false },
+    tooltip: compactTooltip(option.tooltip),
     yAxis: axes.map((axis) => {
       if (!axis || typeof axis !== "object" || !("type" in axis) || axis.type !== "value") return axis;
       return {
@@ -31,6 +47,44 @@ export function scalperV2CompactSideOption(option: EChartsOption): EChartsOption
         axisLabel: { ...(("axisLabel" in axis && axis.axisLabel && typeof axis.axisLabel === "object") ? axis.axisLabel : {}), show: false },
       };
     }),
+  };
+}
+
+/** Bottom timestamp panes use the same bounded tooltip treatment. */
+export function scalperV2CompactTooltipOption(option: EChartsOption): EChartsOption {
+  return { ...option, tooltip: compactTooltip(option.tooltip) };
+}
+
+/** Full-screen charts keep the exact data/formatters while increasing only
+ * presentation sizes. The source option is never mutated. */
+export function scalperV2ExpandedOption(option: EChartsOption): EChartsOption {
+  const axes = (value: EChartsOption["xAxis"] | EChartsOption["yAxis"]) => {
+    const list = Array.isArray(value) ? value : value ? [value] : [];
+    return list.map((axis) => axis && typeof axis === "object" ? {
+      ...axis,
+      nameTextStyle: { ...(("nameTextStyle" in axis && axis.nameTextStyle && typeof axis.nameTextStyle === "object") ? axis.nameTextStyle : {}), fontSize: 14 },
+      axisLabel: { ...(("axisLabel" in axis && axis.axisLabel && typeof axis.axisLabel === "object") ? axis.axisLabel : {}), show: true, fontSize: 13 },
+    } : axis);
+  };
+  return {
+    ...option,
+    tooltip: {
+      ...(option.tooltip && typeof option.tooltip === "object" ? option.tooltip : {}),
+      show: true,
+      triggerOn: "mousemove|click",
+      confine: true,
+      padding: [8, 10],
+      textStyle: {
+        ...((option.tooltip && typeof option.tooltip === "object" && "textStyle" in option.tooltip && option.tooltip.textStyle && typeof option.tooltip.textStyle === "object") ? option.tooltip.textStyle : {}),
+        fontSize: 14,
+        lineHeight: 19,
+      },
+    },
+    legend: option.legend && typeof option.legend === "object" && !Array.isArray(option.legend)
+      ? { ...option.legend, textStyle: { ...((option.legend.textStyle && typeof option.legend.textStyle === "object") ? option.legend.textStyle : {}), fontSize: 13 }, itemGap: 18 }
+      : option.legend,
+    xAxis: (Array.isArray(option.xAxis) ? axes(option.xAxis) : axes(option.xAxis)[0]) as EChartsOption["xAxis"],
+    yAxis: (Array.isArray(option.yAxis) ? axes(option.yAxis) : axes(option.yAxis)[0]) as EChartsOption["yAxis"],
   };
 }
 

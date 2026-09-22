@@ -1,5 +1,18 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 Scalper V2 compact inspection and independent OI-direction entry
+reference: the four right-side and three lower analytical charts expose bounded
+compact tooltips and an on-demand viewport expansion which mounts only while
+open. Strike Structure and Strike-by-Time Positioning expose their exact
+calculation from keyboard/click-accessible information controls. The existing
+V7 paired EMA rule remains unchanged; a separately identified V2 research rule
+requires a fresh aggregate OI crossover, same-direction aggregate Delta-OI
+pressure relative to the first session observation, a pure completed-bar EMA9
+crossover, and named price-reference confirmation. Exact option premium remains
+unavailable when the matching completed bar is absent. No order eligibility,
+collector, API, V1, drawing or measurement behavior changes. Evidence:
+`docs/trading-analytics/SCALPER_V2_TOOLTIP_EXPANSION_DIRECTION_ENTRY_20260922.md`.
+
 2026-09-22 Paper Trading progressive hydration: `/paper-trading` retains every
 canonical trade, chart, calculation, evidence field, export and detail drawer
 while using an additive core read for first trade-row paint. Entry-session,

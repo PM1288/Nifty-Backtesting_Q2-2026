@@ -22,7 +22,7 @@ type Row = Record<string, unknown>;
 const EMPTY_LEVELS: Array<{ side: "CE" | "PE"; rank: number; strike: number; currentOi: number }> = [];
 const EMPTY_PROFILE: ScalperV2ProfileRow[] = [];
 const EMPTY_REFERENCE_LEVELS: ScalperV2ReferenceLevel[] = [];
-const EMPTY_SIGNALS: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string }> = [];
+const EMPTY_SIGNALS: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string; rule?: string }> = [];
 const EMPTY_MEASUREMENT: string[] = [];
 const EMPTY_MAX_PAIN: number[] = [];
 const EMPTY_BARS: Row[] = [];
@@ -62,7 +62,7 @@ export function ScalperV2Chart({
   profileLabel?: string;
   profileRangeExpanded?: boolean;
   maxPainStrikes?: number[];
-  signalEvents?: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string }>;
+  signalEvents?: Array<{ direction: "CALL" | "PUT"; setupTime: string; state: string; rule?: string }>;
   measurementTimes?: string[];
   selectedStrike?: number | null;
   selectedPutStrike?: number | null;
@@ -486,9 +486,12 @@ export function ScalperV2Chart({
       const canonicalTime = chartTime(event.setupTime);
       const time = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
       if (time == null || !byTime.has(Number(time))) return [];
+      const isEntryReference = event.state.includes("ENTRY_REFERENCE");
+      const directionalOi = event.rule === "SCALPER_V2_OI_DIRECTION_EMA_CROSS_V1";
       return [{ time: time as Time, position: event.direction === "CALL" ? "belowBar" as const : "aboveBar" as const,
-        color: event.direction === "CALL" ? "#2563eb" : "#a86600", shape: event.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "arrowUp" as const : "circle" as const,
-        text: event.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "Entry ref" : "Setup" }];
+        color: event.direction === "CALL" ? "#2563eb" : "#a86600",
+        shape: isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
+        text: isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
     }));
   }, [byTime, endToStart, signalEvents]);
 

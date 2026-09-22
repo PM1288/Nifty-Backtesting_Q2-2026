@@ -13,6 +13,11 @@ import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSi
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
 import { scalperV2CompactSideOption, scalperV2CompactTooltipOption, scalperV2ExpandedOption, scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
 import { SCALPER_DIRECTIONAL_OI_ENTRY_RULE, scalperV2DirectionalOiEntries } from "../lib/scalperV2DirectionalEntry";
+import {
+  SCALPER_V2_THREE_INSTRUMENT_EMA_RULE,
+  scalperV2EmaAlignmentSignals,
+  scalperV2EmaAlignmentSpeech,
+} from "../lib/scalperV2EmaAlignment";
 import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
 import { scalperV2CompactRangePriceOption, scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
 import { scalperV2PositioningHeatmapOption, scalperV2PositioningModel, scalperV2StrikeStructureOption } from "../lib/scalperV2Positioning";
@@ -342,6 +347,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const pcr = useMemo(() => oiPcr(rankSource), [rankSource]);
   const indicators = useMemo(() => scalperIndicators(rawUnderlying?.bars ?? []), [rawUnderlying]);
   const signals = useMemo(() => scalperPairedBody70Signals(panes, interval), [panes, interval]);
+  const potentialEmaSignals = useMemo(() => scalperV2EmaAlignmentSignals(panes, interval), [panes, interval]);
   const measurement = useMemo(() => points.length === 2 ? measurePanes(measurementContext?.panes ?? panes, points[0], points[1], Number(quantity)) : null, [measurementContext, panes, points, quantity]);
   const inspectedRows = [underlying, call, put].map((pane) => exactAt(pane?.bars ?? [], inspectionTime));
   const measurementOptions = useMemo(() => {
@@ -397,12 +403,50 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     () => scalperV2DirectionalOiEntries(panes, cumulativeOiPoints, activeReferenceLevels),
     [activeReferenceLevels, cumulativeOiPoints, panes],
   );
-  const chartSignals = useMemo(
+  const establishedSignals = useMemo(
     () => [...signals, ...directionalSignals].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)),
     [directionalSignals, signals],
   );
-  const callSignals = useMemo(() => chartSignals.filter((signal) => signal.direction === "CALL"), [chartSignals]);
-  const putSignals = useMemo(() => chartSignals.filter((signal) => signal.direction === "PUT"), [chartSignals]);
+  const chartSignals = useMemo(
+    () => [...establishedSignals, ...potentialEmaSignals].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)),
+    [establishedSignals, potentialEmaSignals],
+  );
+  // A potential reference is a three-instrument observation, so its yellow
+  // star belongs on all three panes. Existing direction-specific references
+  // retain their original CE-only / PE-only presentation.
+  const callSignals = useMemo(() => [
+    ...establishedSignals.filter((signal) => signal.direction === "CALL"),
+    ...potentialEmaSignals,
+  ].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)), [establishedSignals, potentialEmaSignals]);
+  const putSignals = useMemo(() => [
+    ...establishedSignals.filter((signal) => signal.direction === "PUT"),
+    ...potentialEmaSignals,
+  ].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)), [establishedSignals, potentialEmaSignals]);
+  useEffect(() => {
+    if (typeof window === "undefined" || replayAsOf || interval !== 5 || tradingDay !== istDay(new Date().toISOString())) return;
+    if (window.localStorage.getItem("n50.paper-alert-voice") !== "speak" || !("speechSynthesis" in window)) return;
+    const now = Date.now();
+    const recent = potentialEmaSignals.filter((signal) => {
+      const age = now - Date.parse(signal.setupTime);
+      return age >= 0 && age <= 10 * 60_000;
+    });
+    if (!recent.length) return;
+    const storageKey = "n50.scalper-v2-ema-reference-spoken";
+    let spoken: string[] = [];
+    try { spoken = JSON.parse(window.localStorage.getItem(storageKey) ?? "[]"); } catch { spoken = []; }
+    const known = new Set(spoken);
+    const fresh = recent.filter((signal) => !known.has(signal.id));
+    if (!fresh.length) return;
+    fresh.forEach((signal) => {
+      const utterance = new SpeechSynthesisUtterance(scalperV2EmaAlignmentSpeech(signal, symbol));
+      utterance.lang = "en-IN";
+      utterance.rate = 0.96;
+      utterance.volume = 0.9;
+      window.speechSynthesis.speak(utterance);
+      known.add(signal.id);
+    });
+    window.localStorage.setItem(storageKey, JSON.stringify([...known].slice(-100)));
+  }, [interval, potentialEmaSignals, replayAsOf, symbol, tradingDay]);
   const sessionTimes = useMemo(() => (underlying?.bars ?? []).flatMap((bar) => {
     const value = intervalBarChartTime(bar);
     return value == null ? [] : [Number(value) * 1000];
@@ -731,7 +775,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   } : undefined, [activeData?.volumeSeries, tradingDay]);
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
-  return <section className={css.page} data-testid="scalper-v2" data-popout={isPopout || undefined}>
+  return <section className={css.page} data-testid="scalper-v2" data-popout={isPopout || undefined} data-potential-ema-references={potentialEmaSignals.length}>
     <header className={css.commandBar}>
       <strong className={css.commandSymbol}>{symbol}</strong>
       <div className={css.topQuotes} aria-label="Current selected values"><span><b>{label}</b>{number(inspectedUnderlying)}</span><span className={css.callText}><b>CE {selectedCeStrike}</b>{price(inspectedRows[1]?.close ?? callLeg?.last_price)}</span><span className={css.putText}><b>PE {selectedPeStrike}</b>{price(inspectedRows[2]?.close ?? putLeg?.last_price)}</span></div>
@@ -805,7 +849,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <tr><th>Bid–ask spread · ₹</th><td>{price(legSpread(callLeg))}</td><td>{price(legSpread(putLeg))}</td></tr>
         </tbody></table>
         {(inspectionMode !== "latest" || differentSnapshotDay) && <p className={css.scopeNotice}>Prices use the selected candle · OI, IV, PCR and Max Pain use the latest snapshot.</p>}
-        <section className={css.structureSummary}><h3>Structure · latest snapshot</h3><div><span>OI PCR <b>{pcr == null ? "—" : pcr.toFixed(2)}</b></span><span>Max Pain <b>{maxPainValue == null ? "—" : maxPainValue.toLocaleString("en-IN")}</b></span><span>Distance <b className={signClass(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)}>{signed(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)} pts</b></span><span>Signal <b>{latestSignal ? `${latestSignal.direction} · ${latestSignal.state === "DIRECTIONAL_ENTRY_REFERENCE" ? "OI direction entry reference" : latestSignal.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "EMA entry reference" : latestSignal.state.replaceAll("_", " ").toLowerCase()}` : "None"}</b></span></div></section>
+        <section className={css.structureSummary}><h3>Structure · latest snapshot</h3><div><span>OI PCR <b>{pcr == null ? "—" : pcr.toFixed(2)}</b></span><span>Max Pain <b>{maxPainValue == null ? "—" : maxPainValue.toLocaleString("en-IN")}</b></span><span>Distance <b className={signClass(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)}>{signed(inspectedUnderlying != null && maxPainValue != null ? inspectedUnderlying - maxPainValue : null)} pts</b></span><span>Signal <b>{latestSignal ? `${latestSignal.direction} · ${latestSignal.state === "POTENTIAL_ENTRY_REFERENCE" ? "potential EMA alignment" : latestSignal.state === "DIRECTIONAL_ENTRY_REFERENCE" ? "OI direction entry reference" : latestSignal.state === "RETROSPECTIVE_ENTRY_REFERENCE" ? "EMA entry reference" : latestSignal.state.replaceAll("_", " ").toLowerCase()}` : "None"}</b></span></div></section>
         <div className={css.leaders}>{leaders.filter((leader) => leader.rank <= 2).map((leader) => <div className={css.leader} key={`${leader.side}-${leader.rank}`}><span className={leader.side === "CE" ? css.callText : css.putText}>{leader.side}{leader.rank}</span><b>{leader.strike.toLocaleString("en-IN")}</b><small>OI {compact(leader.currentOi)} · Δ {signed(leader.changeOi)}</small></div>)}</div>
         <div className={css.inspectionModes} data-testid="v2-inspection-mode"><div><button aria-pressed={inspectionMode === "latest"} onClick={() => { setLockedTime(null); setHoverCrosshair(null); }}>Latest</button><button aria-pressed={inspectionMode === "hover"} disabled={!hoverCrosshair}>Cursor</button><button aria-pressed={inspectionMode === "locked"} disabled={!hoverCrosshair && lockedTime == null} onClick={() => setLockedTime((current) => current ?? hoverCrosshair?.time ?? null)}>Lock time</button></div><span data-testid="v2-cursor-time">{inspectionLabel}</span></div>
         <div className={css.tabs} role="tablist">{(["time", "chain", "profile", "levels", "rules", "measure", "objects", "health"] as const).map((tab) => <button key={tab} role="tab" aria-selected={railTab === tab} onClick={() => setRailTab(tab)}>{tab === "time" ? "Snapshot" : tab === "profile" ? "ΔOI profile" : tab[0].toUpperCase() + tab.slice(1)}</button>)}</div>
@@ -820,7 +864,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
             <p>Bars use one shared maximum of <strong>{formatOiAxisValue(deltaMaximum)}</strong>. Positive extends right and negative extends left from zero; yellow is CE and blue is PE. Missing baseline is dashed evidence, not zero.</p>
           </section>}
           {railTab === "levels" && <><p>Ranked from <strong>{metricLegs.length ? "the retained observed cohort" : "the nearest paired observed window"}</strong>. Off-session leaders remain here and are not promoted.</p>{leaders.map((leader) => <p key={`${leader.side}${leader.rank}`}><b>{leader.side}{leader.rank}</b> {leader.strike.toLocaleString("en-IN")} · OI {leader.currentOi.toLocaleString("en-IN")} · ΔOI {signed(leader.changeOi)}</p>)}</>}
-          {railTab === "rules" && <><p><strong>{SCALPER_ENTRY_RULE}</strong></p><p>Entry references {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0} · waiting {signalCounts.WAIT_NEXT_OPEN ?? 0} · missing {signalCounts.NEXT_BAR_MISSING ?? 0} · failed {signalCounts.NEXT_OPEN_FAILED ?? 0}</p>{signals.slice(-20).map((signal) => <p key={signal.id}><b>{signal.direction}</b> · {signal.state.replaceAll("_", " ")} · {signal.setupTime}</p>)}<p><strong>{SCALPER_DIRECTIONAL_OI_ENTRY_RULE}</strong></p><p>Independent direction/OI references {directionalSignals.filter((signal) => signal.state === "DIRECTIONAL_ENTRY_REFERENCE").length} · option price unavailable {directionalSignals.filter((signal) => signal.state === "OPTION_PRICE_UNAVAILABLE").length}</p>{directionalSignals.slice(-20).map((signal) => <p key={signal.id}><b>{signal.direction}</b> · {signal.state.replaceAll("_", " ")} · {signal.setupTime}<br /><small>OI cross {signed(signal.previousOiDifference)} → {signed(signal.oiDifference)} · ΔOI pressure {signed(signal.changeOiDifference)} vs open {signed(signal.dayOpenChangeOiDifference)} · refs {signal.matchedReferences.join(", ")}</small></p>)}</>}
+          {railTab === "rules" && <><p><strong>{SCALPER_V2_THREE_INSTRUMENT_EMA_RULE}</strong></p><p data-testid="v2-potential-ema-count">Potential 5m references {potentialEmaSignals.length} · yellow stars are evidence, not executed trades</p>{potentialEmaSignals.slice(-20).map((signal) => <p key={signal.id}><b>{signal.direction}</b> · potential entry reference · {signal.setupTime}<br /><small>{signal.legs.map((leg) => `${leg.instrument} ${leg.targetSide.toLowerCase()} at ${leg.crossTime} (${leg.sourceSideCloses}/5 prior source-side closes)`).join(" · ")}</small></p>)}<p><strong>{SCALPER_ENTRY_RULE}</strong></p><p>Entry references {signalCounts.RETROSPECTIVE_ENTRY_REFERENCE ?? 0} · waiting {signalCounts.WAIT_NEXT_OPEN ?? 0} · missing {signalCounts.NEXT_BAR_MISSING ?? 0} · failed {signalCounts.NEXT_OPEN_FAILED ?? 0}</p>{signals.slice(-20).map((signal) => <p key={signal.id}><b>{signal.direction}</b> · {signal.state.replaceAll("_", " ")} · {signal.setupTime}</p>)}<p><strong>{SCALPER_DIRECTIONAL_OI_ENTRY_RULE}</strong></p><p>Independent direction/OI references {directionalSignals.filter((signal) => signal.state === "DIRECTIONAL_ENTRY_REFERENCE").length} · option price unavailable {directionalSignals.filter((signal) => signal.state === "OPTION_PRICE_UNAVAILABLE").length}</p>{directionalSignals.slice(-20).map((signal) => <p key={signal.id}><b>{signal.direction}</b> · {signal.state.replaceAll("_", " ")} · {signal.setupTime}<br /><small>OI cross {signed(signal.previousOiDifference)} → {signed(signal.oiDifference)} · ΔOI pressure {signed(signal.changeOiDifference)} vs open {signed(signal.dayOpenChangeOiDifference)} · refs {signal.matchedReferences.join(", ")}</small></p>)}</>}
           {railTab === "measure" && <><p><strong>A open → B close</strong> · illustrative, before costs/slippage, not booked P&amp;L.</p>{measurementContext && <p><strong>Locked evidence:</strong> {measurementContext.interval === 60 ? "1h" : `${measurementContext.interval}m`} · CE {measurementContext.ceStrike} / PE {measurementContext.peStrike} · {measurementContext.expiry}. Display timeframe changes do not rebind these values.</p>}<label>Quantity units <input type="number" min="1" value={quantity} onChange={(event) => setQuantity(event.target.value)} /></label><label>A interval <select aria-label="Measurement A interval" value={points[0] ?? ""} onChange={(event) => selectMeasurementTime(0, event.target.value)}><option value="">Select exact candle</option>{measurementOptions.map((time) => <option key={`a-${time}`} value={time}>{time}</option>)}</select></label><label>B interval <select aria-label="Measurement B interval" value={points[1] ?? ""} onChange={(event) => selectMeasurementTime(1, event.target.value)}><option value="">Select exact candle</option>{measurementOptions.map((time) => <option key={`b-${time}`} value={time}>{time}</option>)}</select></label><p>{points[0] ? `A ${points[0]}` : "Click a chart candle or select A"}</p><p>{points[1] ? `B ${points[1]}` : "Then click a candle or select B"}</p>{measurement && <table className={css.metricGrid} data-testid="v2-measurement-pnl"><tbody><tr><th>Underlying points</th><td className={signClass(measurement.rows.find((row) => row.kind === "UNDERLYING")?.delta)}>{signed(measurement.rows.find((row) => row.kind === "UNDERLYING")?.delta)}</td></tr><tr><th>CE premium Δ</th><td className={signClass(measurement.rows.find((row) => row.kind === "CE")?.delta)}>{signed(measurement.rows.find((row) => row.kind === "CE")?.delta)}</td></tr><tr><th>PE premium Δ</th><td className={signClass(measurement.rows.find((row) => row.kind === "PE")?.delta)}>{signed(measurement.rows.find((row) => row.kind === "PE")?.delta)}</td></tr><tr><th>Combined premium Δ</th><td className={signClass(measurement.combined)}>{signed(measurement.combined)}</td></tr><tr><th>Illustrative P&amp;L</th><td className={signClass(measurement.pnl)}>{price(measurement.pnl)}</td></tr></tbody></table>}<button onClick={() => { setPoints([]); setMeasureMode(false); setMeasurementContext(null); }}>Clear A/B and unlock contracts</button></>}
           {railTab === "objects" && <section className={css.objectPanel} data-testid="v2-drawing-objects"><header><strong>Drawing objects</strong><span>{drawingStore.drawings.length} · {drawingStore.saveState}</span></header><div className={css.objectActions}><button type="button" data-testid="v2-clear-drawings" disabled={drawingStore.drawings.length === 0} onClick={drawingStore.clearAll}>Clear all drawings</button><small>Undo restores the cleared set.</small></div>{drawingStore.drawings.length === 0 ? <p>No saved drawings for {symbol}. Choose a tool and click its market anchors on any price pane.</p> : <ul>{drawingStore.drawings.map((drawing) => <li key={drawing.id} aria-current={drawing.id === drawingStore.selectedId}><button type="button" onClick={() => drawingStore.setSelectedId(drawing.id)}><b>{drawing.tool.replaceAll("_", " ")}</b><span>{drawing.paneRole} · {drawing.instrumentId}</span></button><div><button type="button" onClick={() => drawingStore.patch(drawing.id, { visible: !drawing.visible })}>{drawing.visible ? "Hide" : "Show"}</button><button type="button" onClick={() => drawingStore.patch(drawing.id, { locked: !drawing.locked })}>{drawing.locked ? "Unlock" : "Lock"}</button><button type="button" onClick={() => drawingStore.duplicate(drawing.id)}>Duplicate</button><button type="button" onClick={() => drawingStore.remove(drawing.id)}>Delete</button></div></li>)}</ul>}{selectedDrawing && <DrawingEditor key={`${selectedDrawing.id}:${selectedDrawing.updatedAt}`} drawing={selectedDrawing} onApply={(changes) => drawingStore.patch(selectedDrawing.id, changes)} />}</section>}
           {railTab === "health" && <><p><strong>{state}</strong> · {errors.length} source failures</p><p>Ranking: {metricLegs.length ? "Observed retained cohort" : "Nearest paired observed window; not full expiry"}</p><p>As-of {asOf}</p>{inspectionMode !== "latest" && <p><strong>Historical chain unavailable at this time.</strong> Price OHLC/EMA use the exact inspected candle; OI, PCR and payout remain separately labelled latest retained snapshot evidence.</p>}<p>OI totals are displayed in contracts; each time point retains its source and baseline kind. No account position source is connected in this view; selected pair is not a holding.</p><p>Canvas screenshot export is not provided by V2. Complete source and measurement evidence is available through JSON; chain observations through CSV.</p>{active.data.limitations.map((item) => <p key={item}>{item}</p>)}</>}

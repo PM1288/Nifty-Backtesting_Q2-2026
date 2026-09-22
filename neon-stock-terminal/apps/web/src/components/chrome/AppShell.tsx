@@ -318,8 +318,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className={styles.paperVoiceToggle}
                 data-active={paperVoiceEnabled ? "true" : "false"}
                 aria-pressed={paperVoiceEnabled}
-                aria-label={paperVoiceEnabled ? "Mute paper trade voice alerts" : "Enable concise paper trade voice alerts"}
-                title={speechSupported ? (paperVoiceEnabled ? "Mute paper trade voice alerts" : "Speak stock, entry and target using this browser") : "Browser speech is unavailable"}
+                aria-label={paperVoiceEnabled ? "Mute market and paper trade voice alerts" : "Enable market and paper trade voice alerts"}
+                title={speechSupported ? (paperVoiceEnabled ? "Mute market and paper trade voice alerts" : "Speak market references and paper trade updates using this browser") : "Browser speech is unavailable"}
                 disabled={!speechSupported}
                 onClick={() => setPaperVoiceEnabled((current) => {
                   const next = !current;

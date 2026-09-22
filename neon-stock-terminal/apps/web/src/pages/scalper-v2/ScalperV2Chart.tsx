@@ -486,13 +486,15 @@ export function ScalperV2Chart({
       const canonicalTime = chartTime(event.setupTime);
       const time = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
       if (time == null || !byTime.has(Number(time))) return [];
+      const potentialEma = event.rule === "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1";
       const isEntryReference = event.state.includes("ENTRY_REFERENCE");
       const directionalOi = event.rule === "SCALPER_V2_OI_DIRECTION_EMA_CROSS_V1";
       return [{ time: time as Time, position: event.direction === "CALL" ? "belowBar" as const : "aboveBar" as const,
-        color: event.direction === "CALL" ? "#2563eb" : "#a86600",
-        shape: isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
-        text: isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
+        color: potentialEma ? "#eab308" : event.direction === "CALL" ? "#2563eb" : "#a86600",
+        shape: potentialEma ? "circle" as const : isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
+        text: potentialEma ? `★ ${event.direction} potential` : isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
     }));
+    if (bodyRef.current) bodyRef.current.dataset.potentialEmaMarkers = String(signalEvents.filter((event) => event.rule === "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1").length);
   }, [byTime, endToStart, signalEvents]);
 
   useEffect(() => {

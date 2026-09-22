@@ -43,11 +43,18 @@ expiry-selector defect.
 
 This change does not fabricate Tuesday candles or historical OI for contracts
 that were not collected. SmartAPI historical candles do not provide historical
-OI. Before Wednesday's first completed candle, the latest OI snapshot remains
-available while the new-expiry price panes correctly have no completed session
-bar. From the Wednesday open onward the existing WebSocket and bounded REST
-fallback paths populate the selected contracts normally. Future rollovers keep
-the following expiry warm in advance, avoiding the same blank-history gap.
+OI. A bounded recovery utility therefore restores only provider-returned
+price/volume candles for an exact underlying, expiry, session and nearest-strike
+window. It rate-limits requests, writes idempotently, and never supplies OI.
+Future rollovers keep the following expiry warm in advance, avoiding the same
+gap without requiring recovery.
+
+For this incident the utility recovered 14,960 real one-minute price/volume
+bars across 42 exact NIFTY 29 September contracts (ATM plus ten listed strikes
+on each side, CE and PE) for 22 September. The selected 23,350 CE and PE each
+then produced 75 completed five-minute chart bars. An authenticated production
+browser check showed all three price readouts, expiry `2026-09-29`, no page
+alert and no JavaScript error. Historical OI was not backfilled.
 
 ## Verification
 
@@ -55,8 +62,17 @@ Run:
 
 ```bash
 go test ./internal/universe ./internal/config ./cmd/collector
+go test ./cmd/index-option-backfill
 go test ./...
 bash scripts/verify/canonical-repository-gate.sh
+```
+
+The recovery utility is deliberately explicit:
+
+```bash
+index-option-backfill --config /app/config.yaml \
+  --underlying NIFTY50 --expiry 2026-09-29 --session 2026-09-22 \
+  --spot 23329 --strikes-each-side 10 --request-spacing 1s
 ```
 
 After deployment verify that active NIFTY subscriptions include both the front

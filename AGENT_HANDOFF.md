@@ -14,7 +14,14 @@
   fixed 3,000-token ceiling. A rollover regression covers both complete CE/PE
   ladders.
 - No historical price/OI was invented. Missing Tuesday history remains an
-  honest gap; Wednesday price candles begin with actual session observations.
+  honest gap unless the provider returned an exact candle. A bounded 1 request
+  per second recovery restored 14,960 provider price/volume bars for 42 exact
+  NIFTY 29 September contracts around ATM; it did not write OI. The selected
+  23,350 CE/PE now each expose 75 completed five-minute bars in production.
+- Authenticated production browser verification showed expiry `2026-09-29`,
+  populated NIFTY/CE/PE readouts, no freshness alert and no JavaScript error.
+  Screenshot evidence: `/tmp/scalper-v2-expiry-rollover-recovered-20260923.png`
+  (operational host artifact, intentionally not committed).
 - Evidence and commands:
   `docs/trading-analytics/SCALPER_V2_INDEX_EXPIRY_ROLLOVER_DATA_20260923.md`.
 

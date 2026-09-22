@@ -126,6 +126,8 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.scalperLoadingShell{display:grid;grid-template-rows:34px 18px minmax(640px,1fr);gap:4px;min-height:890px;padding:3px;border:1px solid #d7e0eb;border-radius:8px;background:#f4f7fb;color:#526175}.scalperLoadingShell>strong,.scalperLoadingShell>span{display:flex;align-items:center;padding:0 7px;background:#fff}.scalperLoadingShell>div{display:grid;grid-template-columns:minmax(0,56fr) minmax(360px,44fr) clamp(300px,21vw,360px);grid-template-rows:1fr 1fr;gap:3px}.scalperLoadingShell i{display:block;border:1px solid #d7e0eb;background:linear-gradient(100deg,#f4f7fb 20%,#fff 38%,#f4f7fb 56%);background-size:220% 100%;animation:scalperLoadingShimmer 1.4s linear infinite}.scalperLoadingShell i:first-child{grid-row:1/3}.scalperLoadingShell i:last-child{grid-column:3;grid-row:1/3}@keyframes scalperLoadingShimmer{to{background-position-x:-220%}}
+@media(max-width:1199px){.scalperLoadingShell>div{grid-template-columns:1fr 1fr;grid-template-rows:500px 280px 600px}.scalperLoadingShell i:first-child,.scalperLoadingShell i:last-child{grid-column:1/3;grid-row:auto}}
 .page details {
   padding: 8px;
   border: 1px solid #dce4ef;
@@ -1167,7 +1169,7 @@
   grid-template-rows: 34px minmax(0, 1fr);
   overflow: hidden;
 }
-.page[data-view="scalper"]:not([data-popout="true"]) > [data-testid="scalper-v2"] {
+.page[data-view="scalper"]:not([data-popout="true"]) > :is([data-testid="scalper-v2"],[data-testid="scalper-v2-loading"],[data-testid="scalper-v2-context-loading"]) {
   /* The application header stays fixed while the complete V2 workstation owns
      the remaining viewport. Lower chart rows must scroll inside this grid item;
      leaving overflow on the fixed-height parent clips them below the fold. */

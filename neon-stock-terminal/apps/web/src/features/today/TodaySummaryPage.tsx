@@ -32,7 +32,14 @@ export function TodaySummaryPage() {
     setParams(copy);
   }, [params, setParams]);
   const selectSector = useCallback((sector: TodaySector) => { setQuick({ target: null, rect: null }); setUrl({ lens: "sector-matrix", sector: sector.id }); }, [setUrl]);
-  if (!model) return <PanelState loading={!authReady || overview.isLoading} error={overview.error} />;
+  if (!model) return <div className={styles.summaryPage} data-testid="today-summary" data-state="loading" aria-busy="true">
+    <div className={styles.homeInitialState}>
+      <PanelState loading={!authReady || overview.isLoading} error={overview.error} />
+      <div className={styles.homeInitialGrid} aria-hidden="true">
+        {Array.from({ length: 8 }, (_, index) => <span key={index} />)}
+      </div>
+    </div>
+  </div>;
   const selected = model.sectors.find((sector) => sector.id === selectedId) ?? [...model.sectors].sort((a, b) => a.rank - b.rank)[0] ?? null;
   const boardHref = `/full-board${selected ? `?sector=${encodeURIComponent(selected.id)}` : ""}`;
   return <div className={styles.summaryPage} data-testid="today-summary">

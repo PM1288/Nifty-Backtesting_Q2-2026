@@ -6,7 +6,7 @@ test("current version is derived from the loaded Vite entry script", () => {
   assert.equal(currentClientBuildVersion([{ src: "/n50/assets/index-old.js" }], "https://example.test/n50/"), "index-old.js");
 });
 
-test("version guard reloads only for a different valid deployment", () => {
+test("version guard detects only a different valid deployment", () => {
   assert.equal(shouldReloadForVersion("index-old.js", "index-new.js", null, 200_000), true);
   assert.equal(shouldReloadForVersion("index-new.js", "index-new.js", null, 200_000), false);
   assert.equal(shouldReloadForVersion("index-old.js", "index-new.js", "index-new.js@150000", 200_000), false);

@@ -80,6 +80,13 @@ and following expiry before expiry-day close, the collector remains within
 3,000 active tokens, and Scalper V2 receives new selected-contract bars without
 a page reload after the market opens.
 
+Production verification recorded 162 active NIFTY contracts for 29 September
+and 162 for 6 October (81 CE plus 81 PE for each expiry), 3,000 active tokens in
+total, a healthy collector with zero restarts, and image
+`sha256:9843dc14fb12e9b65955c8cdaf3bccfca2feb1cbadafa25db8f387acedb9eef7`.
+The preserved rollback image is
+`trading-stack-novius2-collector:before-index-expiry-rollover-20260923`.
+
 ## Rollback
 
 Revert the scoped commit and recreate only `collector`. No schema or historical

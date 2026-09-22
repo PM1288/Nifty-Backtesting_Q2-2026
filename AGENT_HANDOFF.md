@@ -24,6 +24,11 @@
   (operational host artifact, intentionally not committed).
 - Evidence and commands:
   `docs/trading-analytics/SCALPER_V2_INDEX_EXPIRY_ROLLOVER_DATA_20260923.md`.
+- Production collector is healthy with zero restarts on image
+  `sha256:9843dc14fb12e9b65955c8cdaf3bccfca2feb1cbadafa25db8f387acedb9eef7`.
+  NIFTY has 162 active 29 September and 162 active 6 October option
+  subscriptions inside the unchanged 3,000-token ceiling. Rollback tag:
+  `trading-stack-novius2-collector:before-index-expiry-rollover-20260923`.
 
 ## 2026-09-20 — Scalper V2 ΔOI panel restored and reordered
 

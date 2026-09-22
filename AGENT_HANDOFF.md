@@ -1,5 +1,23 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-23 — Scalper V2 index-option expiry rollover data repair
+
+- Confirmed that expiry resolution was correct (`2026-09-29`) and current OI
+  evidence was present, while the selected 29 September CE/PE had zero valid
+  regular-session price candles. The underlying had 762 retained bars and the
+  expiry had 1,523 cumulative OI snapshots at the diagnostic cutoff.
+- Root cause: index options subscribed only to expiry rank zero on Tuesday, so
+  the 29 September ladder was not warm before the 22 September expiry rolled
+  off.
+- Collector selection now keeps the current and following listed index-option
+  expiry warm, including across month boundaries, without raising SmartAPI's
+  fixed 3,000-token ceiling. A rollover regression covers both complete CE/PE
+  ladders.
+- No historical price/OI was invented. Missing Tuesday history remains an
+  honest gap; Wednesday price candles begin with actual session observations.
+- Evidence and commands:
+  `docs/trading-analytics/SCALPER_V2_INDEX_EXPIRY_ROLLOVER_DATA_20260923.md`.
+
 ## 2026-09-20 — Scalper V2 ΔOI panel restored and reordered
 
 - Removed the dedicated bid–ask-spread chart from the Scalper V2 workstation.

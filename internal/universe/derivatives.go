@@ -63,8 +63,14 @@ func ResolveDerivativeSelection(insts []instruments.Instrument, equities []store
 		for _, name := range cfg.Options.IndexUnderlyings {
 			underlying := NormalizeIndexUnderlying(name)
 			opts := filterInstrumentType(byUnderlying[underlying], "OPTIDX")
-			optSubs := buildOptions(underlying, opts, cfg.Options.ExpiryRankIndex, cfg.FNOCurrentMonthOnly, now, wsCfg.ModeOptions, "OPTIDX", 40, cfg.Options.StrikesEachSide, priceProvider, logger)
-			subs = append(subs, optSubs...)
+			// Keep the front and following listed expiry warm at the same ATM
+			// ladder. On the morning after expiry the UI moves to the following
+			// contract; collecting it before rollover prevents an empty CE/PE
+			// chart while preserving exact contract identity.
+			for offset := 0; offset < cfg.Options.IndexExpiryCount; offset++ {
+				optSubs := buildOptions(underlying, opts, cfg.Options.ExpiryRankIndex+offset, false, now, wsCfg.ModeOptions, "OPTIDX", 40+offset, cfg.Options.StrikesEachSide, priceProvider, logger)
+				subs = append(subs, optSubs...)
+			}
 		}
 	}
 

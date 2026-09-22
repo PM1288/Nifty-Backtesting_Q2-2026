@@ -123,6 +123,7 @@ type OptionsConfig struct {
 	IndexUnderlyings     []string `yaml:"index_underlyings"`
 	StockUnderlyingsMax  int      `yaml:"stock_underlyings_max"`
 	ExpiryRankIndex      int      `yaml:"expiry_rank_index"`
+	IndexExpiryCount     int      `yaml:"index_expiry_count"`
 	ExpiryRankStock      int      `yaml:"expiry_rank_stock"`
 	StrikesEachSide      int      `yaml:"strikes_each_side"`
 	StockStrikesEachSide int      `yaml:"stock_strikes_each_side"`
@@ -748,6 +749,9 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.Universe.Options.StrikesEachSide == 0 {
 		cfg.Universe.Options.StrikesEachSide = 10
+	}
+	if cfg.Universe.Options.IndexExpiryCount == 0 {
+		cfg.Universe.Options.IndexExpiryCount = 2
 	}
 	if cfg.Universe.Options.StockStrikesEachSide <= 0 {
 		cfg.Universe.Options.StockStrikesEachSide = 10
@@ -2058,6 +2062,9 @@ func (c *Config) Validate() error {
 	}
 	if c.WS.InsecureSkipVerify {
 		return errors.New("ws.insecure_skip_verify must be false; SmartAPI TLS verification is mandatory")
+	}
+	if c.Universe.Options.IndexExpiryCount < 1 || c.Universe.Options.IndexExpiryCount > 2 {
+		return errors.New("universe.options.index_expiry_count must be between 1 and 2")
 	}
 	if c.WS.EnableDepthSnapshots && c.WS.DepthSnapshotIntervalSeconds < 1 {
 		return errors.New("ws.depth_snapshot_interval_seconds must be >= 1 when depth snapshots are enabled")

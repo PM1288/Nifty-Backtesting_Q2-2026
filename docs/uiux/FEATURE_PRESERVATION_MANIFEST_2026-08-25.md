@@ -1,5 +1,15 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-23 Scalper V2 index-option expiry rollover data repair: the SmartAPI
+collector now keeps the front and next listed index-option expiries warm at the
+same ATM ladder, including across month boundaries. This prevents the selected
+CE/PE price panes from becoming empty solely because the UI correctly advances
+to the next expiry after expiry day. Exact contract identity, the 3,000-token
+WebSocket ceiling, OI missingness, chart/session logic, strategies and order
+permissions remain unchanged. Uncollected historical candles/OI are never
+fabricated. Evidence:
+`docs/trading-analytics/SCALPER_V2_INDEX_EXPIRY_ROLLOVER_DATA_20260923.md`.
+
 2026-09-22 Scalper V3 retirement: the evaluation workspace is no longer
 selectable. Historical `view=scalper_v3` and `popout=scalper_v3` links are
 canonicalized to the retained `scalper_v2` workstation. Scalper V2 data,

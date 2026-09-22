@@ -75,6 +75,7 @@ universe:
     index_underlyings: ["NIFTY50","BANKNIFTY","FINNIFTY","MIDCPNIFTY","NIFTYNXT50"]
     stock_underlyings_max: 250
     expiry_rank_index: 0
+    index_expiry_count: 2 # Keep current and next index-option expiries warm across rollover.
     expiry_rank_stock: 0
     strikes_each_side: 40
     stock_strikes_each_side: 10 # ATM plus ten actual listed strikes each side, both CE/PE

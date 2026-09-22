@@ -57,6 +57,40 @@ func TestResolveDerivativesOptions(t *testing.T) {
 	}
 }
 
+func TestResolveDerivativesKeepsCurrentAndNextIndexOptionExpiriesWarm(t *testing.T) {
+	now := time.Date(2026, time.September, 22, 10, 0, 0, 0, time.UTC)
+	current := time.Date(2026, time.September, 22, 0, 0, 0, 0, time.UTC)
+	next := time.Date(2026, time.October, 6, 0, 0, 0, 0, time.UTC)
+	insts := make([]instruments.Instrument, 0, 8)
+	for expiryIndex, expiry := range []time.Time{current, next} {
+		for strikeIndex, strike := range []float64{23300, 23350} {
+			for sideIndex, right := range []string{"CE", "PE"} {
+				token := fmt.Sprintf("%d%d%d", expiryIndex+1, strikeIndex+1, sideIndex+1)
+				insts = append(insts, instruments.Instrument{Exchange: "NFO", InstrumentType: "OPTIDX", TradingSymbol: fmt.Sprintf("NIFTY%d%s", int(strike), right), Name: "NIFTY", SymbolToken: token, Strike: floatPtr(strike), Expiry: &expiry})
+			}
+		}
+	}
+	cfg := config.UniverseConfig{
+		DerivativesExchange: "NFO",
+		FNOCurrentMonthOnly: true,
+		Options:             config.OptionsConfig{EnableIndexOptions: true, IndexUnderlyings: []string{"NIFTY"}, IndexExpiryCount: 2, StrikesEachSide: 1},
+	}
+	indexSubs := []store.Subscription{{Exchange: "NSE", SymbolToken: "99926000", Kind: "INDEX", TradingSymbol: "Nifty 50", Underlying: "NIFTY"}}
+	selection, err := ResolveDerivativeSelection(insts, nil, indexSubs, cfg, config.WSConfig{ModeOptions: "SNAPQUOTE"}, func(string) (float64, bool) { return 23325, true }, nil, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	counts := map[string]int{}
+	for _, sub := range selection.Subscriptions {
+		if sub.Expiry != nil {
+			counts[sub.Expiry.Format("2006-01-02")]++
+		}
+	}
+	if counts["2026-09-22"] != 4 || counts["2026-10-06"] != 4 {
+		t.Fatalf("expected complete CE/PE ladders for both expiries, got %#v", counts)
+	}
+}
+
 func TestBuildStockDerivativePlanSelectsTwoFuturesAndATMOptions(t *testing.T) {
 	expiryCurrent := time.Date(2026, time.January, 27, 0, 0, 0, 0, time.UTC)
 	expiryNext := time.Date(2026, time.February, 24, 0, 0, 0, 0, time.UTC)

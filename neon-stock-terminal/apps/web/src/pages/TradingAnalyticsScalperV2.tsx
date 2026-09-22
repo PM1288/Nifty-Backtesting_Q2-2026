@@ -747,11 +747,11 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     "range-price": { title: "Range-normalised CE / PE", option: compactRangePriceOption },
   }), [analyticOptions, compactRangePriceOption, cumulativeChangeDifferenceOnlyOption, cumulativeOiDifferenceOnlyOption, positioningHeatmapOption, strikeStructureOption]);
 
-  const selectTime = (time: string) => {
+  const selectTime = (time: string, modifiers?: { shiftKey: boolean }) => {
     const seconds = Math.floor(Date.parse(time) / 1000);
     if (!measureMode) {
       if (isV3) {
-        if (v3ShiftDownRef.current && v3CompareA != null) setV3CompareB(seconds);
+        if ((modifiers?.shiftKey || v3ShiftDownRef.current) && v3CompareA != null) setV3CompareB(seconds);
         else { setV3CompareA(seconds); setV3CompareB(null); }
         setV3ComparisonReference("pinned");
       }

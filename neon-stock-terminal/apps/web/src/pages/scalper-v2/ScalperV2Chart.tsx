@@ -58,7 +58,7 @@ export function ScalperV2Chart({
   inspectionMode: ScalperV2InspectionMode; inspectionTime: number | null; fitRequest: number; horizontalView: ScalperV2HorizontalView;
   verticalView: ScalperV2VerticalView; yLocked: boolean;
   onCrosshair: (value: ScalperV2Crosshair) => void; onRangeChange: (value: ScalperV2TimeRange) => void;
-  onTimeClick?: (time: string) => void;
+  onTimeClick?: (time: string, modifiers?: { shiftKey: boolean }) => void;
   rankLevels?: Array<{ side: "CE" | "PE"; rank: number; strike: number; currentOi: number }>;
   oiProfile?: ScalperV2ProfileRow[];
   profileMode?: ScalperV2ProfileMode;
@@ -262,14 +262,16 @@ export function ScalperV2Chart({
         const hoveredId = typeof param.hoveredObjectId === "string" ? param.hoveredObjectId : null;
         if (hoveredId) { callbacksRef.current.onDrawingSelect?.(hoveredId); return; }
         callbacksRef.current.onDrawingSelect?.(null);
-        if (param.time != null) callbacksRef.current.onTimeClick?.(new Date(Number(param.time) * 1000).toISOString());
+        if (param.time != null) callbacksRef.current.onTimeClick?.(new Date(Number(param.time) * 1000).toISOString(), { shiftKey: param.sourceEvent?.shiftKey === true });
         return;
       }
       body.dataset.lastDrawingClickResult = "owned-by-drawing-controller";
       return;
     });
+    let rangeGestureUntil = 0;
+    const markRangeGesture = () => { rangeGestureUntil = performance.now() + 1_500; };
     const rangeHandler = (range: { from: Time; to: Time } | null) => {
-      if (suppressRangeRef.current > 0 || !range) return;
+      if (suppressRangeRef.current > 0 || !range || performance.now() > rangeGestureUntil) return;
       host.dataset.visibleFrom = String(Number(range.from)); host.dataset.visibleTo = String(Number(range.to));
       callbacksRef.current.onRangeChange({ from: Number(range.from), to: Number(range.to), source: id, sequence: performance.now() });
     };
@@ -391,9 +393,11 @@ export function ScalperV2Chart({
     const drawingBlur = () => { if (creating || dragging) cancelDrawingGesture(); };
     body.addEventListener("pointerdown", drawingPointerDown, true); body.addEventListener("pointermove", drawingPointerMove, true); body.addEventListener("pointerup", drawingPointerUp, true);
     body.addEventListener("pointercancel", drawingPointerCancel, true); body.addEventListener("contextmenu", drawingContextMenu); window.addEventListener("keydown", drawingKeyDown); window.addEventListener("blur", drawingBlur);
+    body.addEventListener("pointerdown", markRangeGesture, true); body.addEventListener("wheel", markRangeGesture, { passive: true });
     body.addEventListener("pointermove", scheduleProfile, { passive: true }); body.addEventListener("pointerup", scheduleProfile, { passive: true }); body.addEventListener("wheel", scheduleProfile, { passive: true }); resize();
     return () => {
       observer.disconnect(); body.removeEventListener("pointermove", scheduleProfile); body.removeEventListener("pointerup", scheduleProfile); body.removeEventListener("wheel", scheduleProfile);
+      body.removeEventListener("pointerdown", markRangeGesture, true); body.removeEventListener("wheel", markRangeGesture);
       body.removeEventListener("pointerdown", drawingPointerDown, true); body.removeEventListener("pointermove", drawingPointerMove, true); body.removeEventListener("pointerup", drawingPointerUp, true);
       body.removeEventListener("pointercancel", drawingPointerCancel, true); body.removeEventListener("contextmenu", drawingContextMenu); window.removeEventListener("keydown", drawingKeyDown); window.removeEventListener("blur", drawingBlur);
       instance.timeScale().unsubscribeVisibleTimeRangeChange(rangeHandler); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(pointerFrameRef.current); cancelAnimationFrame(profileFrameRef.current);

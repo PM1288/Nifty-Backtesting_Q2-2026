@@ -6318,7 +6318,7 @@ or outcomes were deleted.
 - Removed the PDF trade ledger and MFE/MAE/MDD/+3% fields. The summary contains
   only Avg 1D/5D/15D, Max 15D, Min 15D and worst 15-session drawdown. The full
   exact signal/evidence ledger remains in CSV.
-- Generated `three_month_backtest_report.pdf` (501 pages, 10,881,056 bytes) and
+- Generated `three_month_backtest_report.pdf` (501 pages, 10,832,853 bytes) and
   `three_month_trades.csv` (15,042 rows, 6,045,431 bytes) under
   `platform/nifty_stratlab/outputs/three_month_reversal_20260922/`.
 - Web typecheck/build and 271/271 tests passed; API typecheck/build and 264/264
@@ -6343,3 +6343,9 @@ or outcomes were deleted.
   exact signal date; higher-timeframe charts are explicitly labelled context.
 - Added a generator fail-closed invariant for any future same-date Bull/Bear
   collision and extended the authenticated browser regression to require it.
+- Released follow-up commit `01b72fe`. Authenticated production Chromium passed
+  10/10 checks with no page errors. Only `n50-dashboard` was recreated; it is
+  healthy with zero restarts on image
+  `sha256:9ce3ef95ffa08bd183e9d8eebd329645b29777cbafe56486e9b6ea3d369f4cdf`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-direction-clarity-20260922`.

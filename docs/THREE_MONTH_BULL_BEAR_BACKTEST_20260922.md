@@ -118,7 +118,7 @@ script is read-only and writes only under the ignored StratLab output root.
 - Web: typecheck and production build passed; 271/271 tests passed.
 - API: typecheck and production build passed; 264/264 tests passed.
 - Canonical repository gate and `git diff --check` passed.
-- Regenerated PDF: 501 pages, 10,881,056 bytes. The combined formula/summary
+- Regenerated PDF: 501 pages, 10,832,853 bytes. The combined formula/summary
   page and a stock evidence page were visually inspected. The complete CSV is
   6,045,431 bytes. All 15,042 emitted signals passed all six historical
   mandatory gates and at least one M-1/M-2/M-3 OR gate; invalid signal count is
@@ -131,10 +131,10 @@ script is read-only and writes only under the ignored StratLab output root.
   visible summary columns, removed metrics and the Bull/Bear marker legend.
   Evidence is under
   `/home/novius2/NIFTY50/evidence/three-month-report-redesign-20260922/`.
-- Code commit `3380192` is pushed to `master`; the reusable authenticated
+- Code commits `3380192` and `01b72fe` are pushed to `master`; the reusable authenticated
   regression is `tools/playwright/three-month-report-regression.mjs`.
 - Only `n50-dashboard` was recreated. It is healthy on image
-  `sha256:ad5b09778db6c4f972a0a00787a9b0547f3c58648d4eaeb14a106b612224d446`
+  `sha256:9ce3ef95ffa08bd183e9d8eebd329645b29777cbafe56486e9b6ea3d369f4cdf`
   with zero restarts.
 - Rollback image:
-  `trading-stack-n50-dashboard:before-three-month-report-redesign-20260922`.
+  `trading-stack-n50-dashboard:before-three-month-direction-clarity-20260922`.

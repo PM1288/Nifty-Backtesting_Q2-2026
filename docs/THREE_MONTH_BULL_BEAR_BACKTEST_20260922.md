@@ -112,13 +112,16 @@ script is read-only and writes only under the ignored StratLab output root.
   6,045,431 bytes. All 15,042 emitted signals passed all six historical
   mandatory gates and at least one M-1/M-2/M-3 OR gate; invalid signal count is
   zero.
-- Authenticated Chromium passed the final desktop and mobile report checks with
-  no page errors. It verified the direct desktop `Reports` header tab, both
-  download actions and report ID `three_month_reversal_20260922` containing
-  15,042 signals. Evidence is under
-  `output/playwright/three-month-reports-20260922/`.
-- Commits `8094e98` and `ab496e5` are pushed to `master`.
+- Authenticated production Chromium passed 10/10 focused checks with no page
+  errors. It verified the deployed report identity, six mandatory historical
+  gates, zero invalid signals, the reduced summary contract, PDF/CSV files,
+  visible summary columns, removed metrics and the Bull/Bear marker legend.
+  Evidence is under
+  `/home/novius2/NIFTY50/evidence/three-month-report-redesign-20260922/`.
+- Code commit `3380192` is pushed to `master`; the reusable authenticated
+  regression is `tools/playwright/three-month-report-regression.mjs`.
 - Only `n50-dashboard` was recreated. It is healthy on image
-  `sha256:3c9a901ed360307fff7a25f5374c25f83876c138e9902e19cf1a97aaaed76e2d`.
+  `sha256:ad5b09778db6c4f972a0a00787a9b0547f3c58648d4eaeb14a106b612224d446`
+  with zero restarts.
 - Rollback image:
-  `trading-stack-n50-dashboard:before-three-month-reports-20260922`.
+  `trading-stack-n50-dashboard:before-three-month-report-redesign-20260922`.

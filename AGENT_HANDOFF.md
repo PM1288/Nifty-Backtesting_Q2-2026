@@ -6302,3 +6302,31 @@ or outcomes were deleted.
   `docs/trading-analytics/SCALPER_V3_LIVE_READINESS_AUDIT_20260922.md`.
   A real next-session exchange tick remains an explicit open-market acceptance
   check because the release audit occurred after close.
+
+## 2026-09-22 — 3Month Bull/Bear Reversal report redesign
+
+- Re-audited the historical strategy predicate against the live 3Month
+  contract. Bull and Bear each require all six Monthly/Weekly/Daily gates plus
+  any one of the M-1/M-2/M-3 reversal candles. All 15,042 emitted signals pass
+  that contract; `invalidSignals=0`. Historical 1H/15m confirmation remains
+  explicitly excluded because year-long intraday history is not retained.
+- Rebuilt the PDF as one combined formula/summary page plus one full-page chart
+  page per stock. Blue upward triangles mean Bull qualification, yellow
+  downward triangles mean Bear qualification, purple is EMA9 and candle
+  direction remains green/red. Daily, weekly and monthly candlesticks now use
+  dynamic widths, real ticks and substantially more of each page.
+- Removed the PDF trade ledger and MFE/MAE/MDD/+3% fields. The summary contains
+  only Avg 1D/5D/15D, Max 15D, Min 15D and worst 15-session drawdown. The full
+  exact signal/evidence ledger remains in CSV.
+- Generated `three_month_backtest_report.pdf` (501 pages, 11,276,190 bytes) and
+  `three_month_trades.csv` (15,042 rows, 6,045,431 bytes) under
+  `platform/nifty_stratlab/outputs/three_month_reversal_20260922/`.
+- Web typecheck/build and 271/271 tests passed; API typecheck/build and 264/264
+  tests passed; canonical gate and diff check passed. Authenticated production
+  Chromium passed 10/10 checks without page errors. Evidence:
+  `/home/novius2/NIFTY50/evidence/three-month-report-redesign-20260922/`.
+- Released code commit `3380192` on canonical `master`. Only `n50-dashboard`
+  was recreated; it is healthy with zero restarts on image
+  `sha256:ad5b09778db6c4f972a0a00787a9b0547f3c58648d4eaeb14a106b612224d446`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-report-redesign-20260922`.

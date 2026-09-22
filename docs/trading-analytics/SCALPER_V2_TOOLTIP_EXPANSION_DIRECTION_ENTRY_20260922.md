@@ -73,8 +73,23 @@ are retrospective/research references, not recorded fills or order permission.
 - Authenticated local Chromium: 9/9 passed at 1920x1080, covering all seven
   expand controls, viewport geometry, both click calculation dialogs, compact
   tooltip visibility, zero chart-data requests during hover and no page errors.
-- Local evidence:
-  `/tmp/scalper-v2-tooltip-expand-local-20260922-rerun/`.
+- API typecheck/build and 263/263 tests: passed.
+- Canonical repository gate and `git diff --check`: passed.
+- Authenticated deployed local-gateway focused run: 9/9 passed; the broader
+  pop-out/geometry/cursor/preservation run passed 49/49 on the final image.
+- Public route and current Vite asset returned HTTP 200. The public focused run
+  passed all eight functional checks, but its console-only check recorded
+  `ERR_NETWORK_CHANGED` on two runs; this external transport warning remains
+  disclosed rather than represented as a clean public 9/9.
+- Evidence:
+  `/tmp/scalper-v2-tooltip-expand-local-final-20260922/`,
+  `/tmp/scalper-v2-tooltip-expand-deployed-601aa4c/`, and
+  `/tmp/scalper-v2-popout-structure-deployed-601aa4c/`.
 
-API checks, canonical gate, deployed browser evidence and release identity are
-recorded in `AGENT_HANDOFF.md` after release. No database migration is required.
+Feature commit `5b3e942` and chronological signal-order fix `601aa4c` are pushed
+to `master`. Only `n50-dashboard` was recreated. Container `61497fdc891c...` is
+healthy with zero restarts on image
+`sha256:36f20bbef0c009fa2036ff5388ffda829af30ac3438d738fc94e72d5ab37f19d`.
+Rollback image:
+`trading-stack-n50-dashboard:before-scalper-v2-tooltip-direction-20260922`.
+No database migration is required.

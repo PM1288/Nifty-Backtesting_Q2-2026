@@ -6131,3 +6131,32 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:before-paper-progressive-hydration-20260922`.
 - Full evidence:
   `docs/paper-trading/PAPER_TRADING_PROGRESSIVE_HYDRATION_20260922.md`.
+
+## 2026-09-22 — Scalper V2 tooltip, expansion and direction/OI reference
+
+- Branch: `feat/scalper-v2-tooltips-expand-direction-entry-20260922`.
+- Re-enabled compact, confined tooltips on all four right-side and three lower
+  analytical charts. All seven can expand into one on-demand viewport chart;
+  closing disposes the extra instance. Strike Structure and Positioning expose
+  exact calculation dialogs through click/keyboard `i` controls.
+- Preserved the existing V7 rule unchanged and added the independent
+  `SCALPER_V2_OI_DIRECTION_EMA_CROSS_V1` research reference. It requires a fresh
+  aggregate OI zero crossover, same-direction aggregate Delta-OI pressure
+  relative to the first session observation, a pure completed-bar EMA9 cross,
+  and confirmation against at least one of Today Open/PDC/PDH. Exact selected
+  option close is retained or explicitly unavailable; no nearest value is used.
+- Validation passed: web typecheck/build and 260/260 tests; API typecheck/build
+  and 263/263 tests; canonical gate and `git diff --check`; authenticated
+  deployed focused Chromium 9/9 and full Scalper V2 preservation 49/49 on the
+  final image.
+  Public HTML/current asset and eight functional browser checks passed, while
+  the public console-only check retained a disclosed transient
+  `ERR_NETWORK_CHANGED` on two runs.
+- Feature commit `5b3e942` and chronological signal-order fix `601aa4c` are
+  pushed on `master`. Only `n50-dashboard` was recreated. Container
+  `61497fdc891c...` is healthy with zero restarts on image
+  `sha256:36f20bbef0c009fa2036ff5388ffda829af30ac3438d738fc94e72d5ab37f19d`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-tooltip-direction-20260922`.
+- Detailed evidence and rerun commands:
+  `docs/trading-analytics/SCALPER_V2_TOOLTIP_EXPANSION_DIRECTION_ENTRY_20260922.md`.

@@ -962,6 +962,12 @@ func runOptionGreeks(ctx context.Context, cfg *config.Config, provider smartapi.
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
+			// Option Greeks are a live-session observation. Angel returns "No Data
+			// Available" after close, so polling here only burns the bounded REST
+			// budget and can reduce readiness for the next session.
+			if !marketSessionAt(time.Now(), cfg) {
+				continue
+			}
 			subs, err := st.ListActiveSubscriptions(ctx)
 			if err != nil {
 				if logger != nil {
@@ -1092,6 +1098,11 @@ func runGainersLosers(ctx context.Context, cfg *config.Config, provider smartapi
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
+			// Gainers/losers are live-session aggregates. Preserve the final
+			// observation after close instead of spending REST quota on stale data.
+			if !marketSessionAt(time.Now(), cfg) {
+				continue
+			}
 			ts := time.Now().UTC()
 			for _, payload := range cfg.RestTasks.GainersLosersPayloads {
 				payloadCopy := clonePayload(payload)
@@ -1170,6 +1181,10 @@ func runOIBuildup(ctx context.Context, cfg *config.Config, provider smartapi.Tok
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
+			// OI buildup is meaningful only while exchange observations can change.
+			if !marketSessionAt(time.Now(), cfg) {
+				continue
+			}
 			ts := time.Now().UTC()
 			for _, payload := range cfg.RestTasks.OIBuildupPayloads {
 				payloadCopy := clonePayload(payload)
@@ -1238,6 +1253,11 @@ func runPutCallRatio(ctx context.Context, cfg *config.Config, provider smartapi.
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
+			// PCR is an exchange-session aggregate. Preserve the final snapshot
+			// instead of repeatedly calling an endpoint with no after-hours data.
+			if !marketSessionAt(time.Now(), cfg) {
+				continue
+			}
 			ts := time.Now().UTC()
 			done := queue.Submit(restJob{
 				endpoint: endpointAggregates,

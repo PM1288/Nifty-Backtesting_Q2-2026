@@ -6279,3 +6279,26 @@ or outcomes were deleted.
   `/tmp/scalper-v3-live-cockpit-p3/` and `/tmp/scalper-v3-linked-workspace/`.
   The run was after market close, so live-session animation cadence remains
   explicitly not run.
+
+## 2026-09-22 — Scalper V3 live-readiness and collector quota repair
+
+- Verified V3 against retained 22 September NIFTY/CE/PE session data. The
+  deterministic 15-second refresh test passed with one document navigation,
+  three stable native chart roots and incremental updates on all three price
+  series; no page errors or database writes occurred.
+- Found four SmartAPI live-only aggregate loops continuing after exchange
+  close. Option Greeks, gainers/losers, OI buildup and PCR now skip polling
+  outside the configured weekday market session and preserve the final stored
+  observation.
+- Full Go, web and API tests/typechecks/builds and the canonical repository gate
+  passed. Released from pushed canonical master commit `c5e3c91`; only
+  `collector` was recreated. It is healthy with zero restarts on image
+  `sha256:23b7eb33655e01071e403c9a58d117c124ff4434a5b2d2a4f962bdbcba419d62`.
+- Post-release logs recorded zero failures from the four suppressed live-only
+  endpoints. The active NIFTY option plan contains 162 contracts for
+  29 September, strikes 21,350–25,350. The independent option-chain watcher
+  remained healthy and was not restarted.
+- Report and rerun instructions:
+  `docs/trading-analytics/SCALPER_V3_LIVE_READINESS_AUDIT_20260922.md`.
+  A real next-session exchange tick remains an explicit open-market acceptance
+  check because the release audit occurred after close.

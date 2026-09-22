@@ -12,7 +12,7 @@ The 22 September 2026 session contained:
 
 - 148 distinct NIFTY expiry-day option tokens and 52,809 NFO minute bars from 09:15 through 15:31 IST.
 - 187 NSE chain snapshots for the 22 September expiry and 187 for the 29 September expiry, each with 4,862 retained legs, through 15:28 IST.
-- 152 active NIFTY 29 September option subscriptions after rollover, spanning strikes 21,600–25,350.
+- 162 active NIFTY 29 September option subscriptions after the deployed collector refreshed its plan, spanning strikes 21,350–25,350.
 - Three WebSocket shards with 3,000 total admitted subscriptions and zero archive drops at audit time.
 - An exchange-session-aware option-chain watcher in healthy state. Its last successful session poll was 15:28 IST, followed by intentional outside-session suppression.
 
@@ -56,6 +56,14 @@ The live-readiness script uses actual retained 22 September NIFTY, CE and PE can
 True open-market acceptance remains a separate observation: during the next NSE session, confirm that Sep-29 CE/PE minute bars advance and that the V3 header moves from `LIVE` to `DELAYED`/`STALE` at the configured thresholds without reloading the page.
 
 ## Operational verification
+
+Production deployment completed from pushed canonical commit `c5e3c91` at
+21:24 UTC. Only `collector` was rebuilt/recreated. The deployed image is
+`sha256:23b7eb33655e01071e403c9a58d117c124ff4434a5b2d2a4f962bdbcba419d62`;
+the container is healthy with restart count zero. After startup and more than
+one polling cadence, logs contained zero `option_greeks_failed`,
+`put_call_ratio_failed`, `gainers_losers_failed` or `oi_buildup_failed` events.
+The option-chain watcher remained independently healthy and was not restarted.
 
 ```bash
 # Collector health

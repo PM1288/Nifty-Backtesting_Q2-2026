@@ -6184,3 +6184,32 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:before-three-month-reports-20260922`.
 - Evidence and rerun details:
   `docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.
+
+## 2026-09-22 — Scalper V2 three-instrument EMA potential reference
+
+- Feature branch `feat/scalper-v2-three-instrument-ema-reference-20260922` and
+  evidence-state follow-up branch `fix/scalper-v2-ema-evidence-state-20260922`
+  were pushed and merged into `master`.
+- Added the read-only `SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1` 5-minute
+  rule. CALL requires underlying and selected CE below-to-above EMA9 plus
+  selected PE above-to-below; PUT is the exact inverse. Each exact leg crosses
+  on the current/prior candle and has at least two source-side closes among the
+  five completed pre-cross candles. Candle body/open are irrelevant.
+- A yellow potential-reference star renders on all three native panes. New,
+  fresh current-day references use the existing opt-in browser voice setting
+  and are locally deduplicated. Existing V7/OI rules and all order controls are
+  unchanged.
+- Missing evidence is distinct from zero references. Production on 22 September
+  had NIFTY through 15:30 IST but no retained completed 5m candles for selected
+  `NIFTY29SEP2623350CE`/`PE`, so the rule truthfully showed `UNAVAILABLE`.
+- Validation: 265/265 web and 264/264 API tests passed before the initial
+  release; the final availability addition passed web typecheck and 6/6 focused
+  rule tests. Both production builds and the canonical gate passed.
+  Authenticated final production regression passed 7/7 with no page errors.
+- Master release commit: `aa65d4c`. Only `n50-dashboard` was recreated. Final
+  container is healthy with zero restarts on image
+  `sha256:89210e74be559e1c07c7d570de1c1b5fbcb4145f9f4c5d75670ae21e05aa920a`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-three-leg-ema-20260922`.
+- Detailed rule/evidence:
+  `docs/trading-analytics/SCALPER_V2_THREE_INSTRUMENT_EMA_REFERENCE_20260922.md`.

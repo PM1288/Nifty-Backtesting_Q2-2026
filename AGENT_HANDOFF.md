@@ -6318,7 +6318,7 @@ or outcomes were deleted.
 - Removed the PDF trade ledger and MFE/MAE/MDD/+3% fields. The summary contains
   only Avg 1D/5D/15D, Max 15D, Min 15D and worst 15-session drawdown. The full
   exact signal/evidence ledger remains in CSV.
-- Generated `three_month_backtest_report.pdf` (501 pages, 11,276,190 bytes) and
+- Generated `three_month_backtest_report.pdf` (501 pages, 10,881,056 bytes) and
   `three_month_trades.csv` (15,042 rows, 6,045,431 bytes) under
   `platform/nifty_stratlab/outputs/three_month_reversal_20260922/`.
 - Web typecheck/build and 271/271 tests passed; API typecheck/build and 264/264
@@ -6330,3 +6330,16 @@ or outcomes were deleted.
   `sha256:ad5b09778db6c4f972a0a00787a9b0547f3c58648d4eaeb14a106b612224d446`.
   Rollback image:
   `trading-stack-n50-dashboard:before-three-month-report-redesign-20260922`.
+
+### Direction-clarity follow-up
+
+- Confirmed Bull and Bear are mutually exclusive for the same stock/date:
+  `oppositeSameDateSignals=0`. The report contains 1,002 stock-months where the
+  still-forming monthly candle crossed its reference opens and qualified in
+  opposite directions on different daily closes. This is an intramonth state
+  change, not one monthly candle simultaneously satisfying both predicates.
+- Removed qualification markers from aggregated Weekly and Monthly charts.
+  Blue Bull and yellow Bear markers now appear only on the Daily chart at the
+  exact signal date; higher-timeframe charts are explicitly labelled context.
+- Added a generator fail-closed invariant for any future same-date Bull/Bear
+  collision and extended the authenticated browser regression to require it.

@@ -26,7 +26,7 @@ try {
   check("report API", api.ok(), `HTTP ${api.status()}`);
   const report = await api.json();
   check("report identity", report.id === "three_month_reversal_20260922", String(report.id));
-  check("strategy validation", report.summary?.strategyValidation?.invalidSignals === 0 && report.summary?.strategyValidation?.mandatoryGateCount === 6, JSON.stringify(report.summary?.strategyValidation));
+  check("strategy validation", report.summary?.strategyValidation?.invalidSignals === 0 && report.summary?.strategyValidation?.oppositeSameDateSignals === 0 && report.summary?.strategyValidation?.mandatoryGateCount === 6, JSON.stringify(report.summary?.strategyValidation));
   check("summary contract", report.summary?.summary?.every((row) => ["average1", "average5", "average15", "maximum15", "minimum15", "drawdown15"].every((key) => Object.hasOwn(row, key))), JSON.stringify(report.summary?.summary?.[0]));
   const pdf = report.files?.find((file) => file.name.endsWith(".pdf"));
   const csv = report.files?.find((file) => file.name.endsWith(".csv"));
@@ -40,7 +40,7 @@ try {
   const header = await page.locator("thead").innerText();
   check("visible summary columns", header.includes("Avg 15D") && header.includes("Max 15D") && header.includes("Min 15D") && header.includes("Worst drawdown"), header);
   check("removed metrics absent", !header.includes("MFE") && !header.includes("MDD") && !header.includes("Reached +3%"), header);
-  check("legend disclosure", await page.getByText(/Blue upward markers identify Bull qualifications/).isVisible(), "legend copy unavailable");
+  check("legend disclosure", await page.getByText(/Blue upward markers identify dated Bull qualifications/).isVisible(), "legend copy unavailable");
   check("no page errors", pageErrors.length === 0, pageErrors.join(" | "));
   await page.screenshot({ path: path.join(output, "desktop-backtesting-reports.png"), fullPage: true });
 } finally {

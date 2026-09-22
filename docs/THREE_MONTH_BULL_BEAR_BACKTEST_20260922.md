@@ -69,8 +69,19 @@ For each fresh signal the CSV records direction-adjusted 1/5/15-session return
 and the 15-session path drawdown, together with exact gate/reference evidence.
 The PDF intentionally does not duplicate the trade ledger. It contains the
 formula/summary on one page and one full-page Daily/Weekly/Monthly chart review
-per stock. Blue upward markers are Bull qualifications, yellow downward markers
-are Bear qualifications, purple is EMA9 and green/red are candle direction.
+per stock. Blue upward markers are dated Bull qualifications and yellow
+downward markers are dated Bear qualifications. They appear only on the Daily
+chart at their exact signal dates. Weekly and Monthly charts are context only;
+purple is EMA9 and green/red are candle direction.
+
+Bull and Bear are mutually exclusive for the same stock and date. The current
+monthly candle is nevertheless re-evaluated at every daily close, as required
+by the live strategy. It may cross its month-open references and qualify Bull
+on one date and Bear on a later date within the same still-forming month. The
+old report collapsed those distinct daily events onto one monthly candle,
+which looked like a contradictory candle classification. That presentation has
+been removed. The generated validation now fails if an opposite-direction
+same-date pair is ever emitted.
 
 ## Current run summary
 
@@ -107,11 +118,13 @@ script is read-only and writes only under the ignored StratLab output root.
 - Web: typecheck and production build passed; 271/271 tests passed.
 - API: typecheck and production build passed; 264/264 tests passed.
 - Canonical repository gate and `git diff --check` passed.
-- Regenerated PDF: 501 pages, 11,276,190 bytes. The combined formula/summary
+- Regenerated PDF: 501 pages, 10,881,056 bytes. The combined formula/summary
   page and a stock evidence page were visually inspected. The complete CSV is
   6,045,431 bytes. All 15,042 emitted signals passed all six historical
   mandatory gates and at least one M-1/M-2/M-3 OR gate; invalid signal count is
-  zero.
+  zero. Opposite-direction signals for the same stock/date are also zero. There
+  are 1,002 stock-months with dated intramonth direction changes; these remain
+  separate Daily events and are no longer collapsed onto a Monthly candle.
 - Authenticated production Chromium passed 10/10 focused checks with no page
   errors. It verified the deployed report identity, six mandatory historical
   gates, zero invalid signals, the reduced summary contract, PDF/CSV files,

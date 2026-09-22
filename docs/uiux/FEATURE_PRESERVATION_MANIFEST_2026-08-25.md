@@ -1,5 +1,15 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 Scalper V3 compact evaluation: `view=scalper_v3` is an additive
+presentation experiment backed by the exact Scalper V2 data, calculation,
+cursor, drawing and measurement contracts. It uses a 41/37/22 synchronized
+desktop grid, aligned 180px bottom strip, compact workspace selector, docked
+strike inspector, auto-revealing drawing edge, hidden repeated refresh labels,
+and persistent right/bottom collapse controls. V2 remains independently
+selectable and its DOM, defaults and saved state are not replaced. Strategy,
+collector, evidence, export and order behavior are unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V3_COMPACT_EVALUATION_20260922.md`.
+
 2026-09-22 3Month Bull/Bear selector and downloadable backtest: the existing
 bullish ten-gate contract remains backward compatible and gains an exact inverse
 Bear evaluation. Both require all Month/Week/Day/1H/15m pairs, while M-1/M-2/M-3

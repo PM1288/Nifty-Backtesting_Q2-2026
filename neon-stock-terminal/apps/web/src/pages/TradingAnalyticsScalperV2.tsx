@@ -114,6 +114,10 @@ type RailTab = "time" | "chain" | "profile" | "levels" | "rules" | "measure" | "
 type AnalyticsTab = "overview" | "matrix" | "oi" | "strength" | "total" | "maxpain";
 type ExpandableChartId = "oi" | "delta-oi" | "strike-structure" | "positioning-heatmap" | "oi-difference" | "change-oi-difference" | "range-price";
 type ChartInfoId = "strike-structure" | "positioning-heatmap";
+type V3LayoutPreset = "trading" | "options" | "structure";
+type V3Density = "standard" | "dense" | "readable";
+type V3CursorSnap = "candle" | "exact" | "free";
+type V3RangeDisplay = "current" | "context" | "all";
 
 const numeric = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
 const compact = (value: unknown) => numeric(value) == null ? "—" : new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 2 }).format(Number(value));
@@ -285,6 +289,21 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const [v3RightOpen, setV3RightOpen] = useState(() => !isV3 || typeof window === "undefined" || window.localStorage.getItem("n50.scalper-v3.right") !== "closed");
   const [v3BottomOpen, setV3BottomOpen] = useState(() => !isV3 || typeof window === "undefined" || window.localStorage.getItem("n50.scalper-v3.bottom") !== "closed");
   const [v3BottomHeight, setV3BottomHeight] = useState(() => { const saved = typeof window === "undefined" ? NaN : Number(window.localStorage.getItem("n50.scalper-v3.bottom-height")); return isV3 && Number.isFinite(saved) && saved >= 150 && saved <= 320 ? saved : 180; });
+  const [v3LinkTime, setV3LinkTime] = useState(() => !isV3 || typeof window === "undefined" || window.localStorage.getItem("n50.scalper-v3.link-time") !== "false");
+  const [v3LinkStrike, setV3LinkStrike] = useState(() => !isV3 || typeof window === "undefined" || window.localStorage.getItem("n50.scalper-v3.link-strike") !== "false");
+  const [v3PinnedStrike, setV3PinnedStrike] = useState<number | null>(null);
+  const [v3InspectorExpanded, setV3InspectorExpanded] = useState(false);
+  const [v3CursorSnap, setV3CursorSnap] = useState<V3CursorSnap>("candle");
+  const [v3FollowLive, setV3FollowLive] = useState(true);
+  const [v3LayoutPreset, setV3LayoutPreset] = useState<V3LayoutPreset>(() => (typeof window !== "undefined" ? window.localStorage.getItem("n50.scalper-v3.layout") as V3LayoutPreset : null) || "trading");
+  const [v3Density, setV3Density] = useState<V3Density>(() => (typeof window !== "undefined" ? window.localStorage.getItem("n50.scalper-v3.density") as V3Density : null) || "standard");
+  const [v3RangeDisplay, setV3RangeDisplay] = useState<V3RangeDisplay>("context");
+  const [v3HeatmapFixed, setV3HeatmapFixed] = useState(true);
+  const [v3HelpOpen, setV3HelpOpen] = useState(false);
+  const [v3ShowEma, setV3ShowEma] = useState(true);
+  const [v3ShowVolumeEma, setV3ShowVolumeEma] = useState(true);
+  const [v3ShowSignals, setV3ShowSignals] = useState(true);
+  const [v3ShowReferences, setV3ShowReferences] = useState(true);
   const [measureMode, setMeasureMode] = useState(false), [points, setPoints] = useState<string[]>([]), [quantity, setQuantity] = useState("65");
   const [measurementContext, setMeasurementContext] = useState<{ panes: ChartPane[]; interval: number; symbol: string; expiry: string; ceStrike: string; peStrike: string } | null>(null);
   const [drawingTool, setDrawingTool] = useState<ScalperV2DrawingTool>("select");
@@ -302,15 +321,23 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const inspectionMode: ScalperV2InspectionMode = lockedTime != null ? "locked" : hoverCrosshair ? "hover" : "latest";
   const inspectionTime = lockedTime ?? hoverCrosshair?.time ?? null;
   const crosshair = lockedTime == null ? hoverCrosshair : { time: lockedTime, source: "locked", sequence: lockedTime };
-  useEffect(() => { if (!isV3 || typeof window === "undefined") return; window.localStorage.setItem("n50.scalper-v3.right", v3RightOpen ? "open" : "closed"); window.localStorage.setItem("n50.scalper-v3.bottom", v3BottomOpen ? "open" : "closed"); window.localStorage.setItem("n50.scalper-v3.bottom-height", String(v3BottomHeight)); }, [isV3, v3BottomHeight, v3BottomOpen, v3RightOpen]);
+  useEffect(() => { if (!isV3 || typeof window === "undefined") return; window.localStorage.setItem("n50.scalper-v3.right", v3RightOpen ? "open" : "closed"); window.localStorage.setItem("n50.scalper-v3.bottom", v3BottomOpen ? "open" : "closed"); window.localStorage.setItem("n50.scalper-v3.bottom-height", String(v3BottomHeight)); window.localStorage.setItem("n50.scalper-v3.link-time", String(v3LinkTime)); window.localStorage.setItem("n50.scalper-v3.link-strike", String(v3LinkStrike)); window.localStorage.setItem("n50.scalper-v3.layout", v3LayoutPreset); window.localStorage.setItem("n50.scalper-v3.density", v3Density); }, [isV3, v3BottomHeight, v3BottomOpen, v3Density, v3LayoutPreset, v3LinkStrike, v3LinkTime, v3RightOpen]);
 
   useEffect(() => {
     const clear = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setExpandedChart(null); setV3MaximizedPrice(null); setChartInfo(null); setLockedTime(null); setHoverCrosshair(null); setDrawingTool("select"); }
+      const editing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement;
+      if (event.key === "Escape") { setExpandedChart(null); setV3MaximizedPrice(null); setChartInfo(null); setLockedTime(null); setHoverCrosshair(null); setV3HelpOpen(false); setDrawingTool("select"); }
+      if (isV3 && !editing && event.key === "1") setV3MaximizedPrice("underlying");
+      if (isV3 && !editing && event.key === "2") setV3MaximizedPrice("call");
+      if (isV3 && !editing && event.key === "3") setV3MaximizedPrice("put");
+      if (isV3 && !editing && event.key.toLowerCase() === "b") setV3BottomOpen((value) => !value);
+      if (isV3 && !editing && event.key.toLowerCase() === "k") setLockedTime((current) => current == null ? hoverCrosshair?.time ?? null : null);
+      if (isV3 && !editing && event.key.toLowerCase() === "l") { setV3FollowLive(true); setHorizontalView("day"); setLinkedRange(null); setFitRequest((value) => value + 1); }
+      if (isV3 && !editing && event.key === "?") setV3HelpOpen((value) => !value);
       if ((event.key === "Delete" || event.key === "Backspace") && drawingSelectedId && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) removeDrawing(drawingSelectedId);
     };
     window.addEventListener("keydown", clear); return () => window.removeEventListener("keydown", clear);
-  }, [drawingSelectedId, removeDrawing]);
+  }, [drawingSelectedId, hoverCrosshair?.time, isV3, removeDrawing]);
   useEffect(() => { setFitRequest((value) => value + 1); setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); setLockedTime(null); setHoverCrosshair(null); }, [symbol, expiry, selectedCeStrike, selectedPeStrike, interval, selectedDayParam]);
 
   const activeData = active.data;
@@ -336,8 +363,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     if (!completedCandleSignature) return;
     const previousSignature = completedCandleSignatureRef.current;
     completedCandleSignatureRef.current = completedCandleSignature;
-    if (shouldRefitScalperV2Day({ historical: Boolean(replayAsOf), horizontalView, previousSignature, nextSignature: completedCandleSignature })) setFitRequest((value) => value + 1);
-  }, [completedCandleSignature, horizontalView, replayAsOf]);
+    if ((!isV3 || v3FollowLive) && shouldRefitScalperV2Day({ historical: Boolean(replayAsOf), horizontalView, previousSignature, nextSignature: completedCandleSignature })) setFitRequest((value) => value + 1);
+  }, [completedCandleSignature, horizontalView, isV3, replayAsOf, v3FollowLive]);
   const underlying = panes.find((pane) => chartSide(pane) === "UNDERLYING"), call = panes.find((pane) => chartSide(pane) === "CE"), put = panes.find((pane) => chartSide(pane) === "PE");
   const rawUnderlying = rawPanes.find((pane) => chartSide(pane) === "UNDERLYING");
   const callLeg = legs.find((leg) => String(leg.strike) === selectedCeStrike && side(leg) === "CE");
@@ -559,9 +586,19 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     defaultStrike,
     defaultStrike,
   ), [defaultStrike, optionPriceHistory.data?.points, selectedCeStrike, selectedPeStrike, tradingDay]);
+  const compactRangeDisplayModel = useMemo(() => ({
+    ...compactRangePriceModel,
+    series: v3RangeDisplay === "all" ? compactRangePriceModel.series : visibleScalperV2PriceSeries(
+      compactRangePriceModel.series,
+      numeric(selectedCeStrike),
+      numeric(selectedPeStrike),
+      v3RangeDisplay === "current" ? [] : leaders.slice(0, 4).map((leader) => `${leader.side}:${leader.strike}`),
+      false,
+    ).filter((series) => v3RangeDisplay !== "current" || series.selected),
+  }), [compactRangePriceModel, leaders, selectedCeStrike, selectedPeStrike, v3RangeDisplay]);
   const compactRangePriceOption = useMemo(
-    () => scalperV2CompactRangePriceOption(compactRangePriceModel, istClock, sharedTimeDomain),
-    [compactRangePriceModel, sharedTimeDomain],
+    () => scalperV2CompactRangePriceOption(isV3 ? compactRangeDisplayModel : compactRangePriceModel, istClock, sharedTimeDomain),
+    [compactRangeDisplayModel, compactRangePriceModel, isV3, sharedTimeDomain],
   );
   const visiblePriceSeries = useMemo(() => visibleScalperV2PriceSeries(
     normalizedPriceModel.series,
@@ -669,7 +706,12 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const compactOiOption = useMemo(() => dockTooltip(scalperV2CompactSideOption(analyticOptions[0])), [analyticOptions, dockTooltip]);
   const compactDeltaOiOption = useMemo(() => dockTooltip(scalperV2CompactSideOption(analyticOptions[1])), [analyticOptions, dockTooltip]);
   const compactStrikeStructureOption = useMemo(() => dockTooltip(scalperV2CompactSideOption(strikeStructureOption)), [dockTooltip, strikeStructureOption]);
-  const compactPositioningHeatmapOption = useMemo(() => dockTooltip(scalperV2CompactSideOption(positioningHeatmapOption)), [dockTooltip, positioningHeatmapOption]);
+  const compactPositioningHeatmapOption = useMemo(() => {
+    const compactOption = dockTooltip(scalperV2CompactSideOption(positioningHeatmapOption));
+    if (!isV3 || v3HeatmapFixed) return compactOption;
+    const maximum = Math.max(10, ...positioningModel.cells.map((cell) => Math.abs(cell.pressure ?? 0)));
+    return { ...compactOption, visualMap: { ...(compactOption.visualMap as Record<string, unknown> ?? {}), min: -maximum, max: maximum } };
+  }, [dockTooltip, isV3, positioningHeatmapOption, positioningModel.cells, v3HeatmapFixed]);
   const compactOiDifferenceOption = useMemo(() => scalperV2CompactTooltipOption(cumulativeOiDifferenceOnlyOption), [cumulativeOiDifferenceOnlyOption]);
   const compactChangeOiDifferenceOption = useMemo(() => scalperV2CompactTooltipOption(cumulativeChangeDifferenceOnlyOption), [cumulativeChangeDifferenceOnlyOption]);
   const compactRangeOption = useMemo(() => scalperV2CompactTooltipOption(compactRangePriceOption), [compactRangePriceOption]);
@@ -724,7 +766,11 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     for (const key of ["strike", "ceStrike", "peStrike", "pin"]) next.delete(key);
     setParams(next);
   };
-  const handleCrosshair = (value: ScalperV2Crosshair) => { if (lockedTime == null) setHoverCrosshair(value); };
+  const handleCrosshair = (value: ScalperV2Crosshair) => {
+    if (lockedTime != null) return;
+    setHoverCrosshair(value);
+    if (isV3 && value && !v3LinkTime) return;
+  };
   const underlyingChartTimes = useMemo(
     () => (underlying?.bars ?? []).flatMap((bar) => {
       const value = intervalBarChartTime(bar);
@@ -734,6 +780,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   );
   const handleOiTimeHover = useCallback((timeMs: number | null, source: string) => {
     if (lockedTime != null) return;
+    if (isV3 && !v3LinkTime) return;
     if (timeMs == null || !Number.isFinite(timeMs)) {
       cursorCoordinator.publish({ time: null, source });
       setHoverCrosshair(null);
@@ -743,9 +790,37 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     const nearest = underlyingChartTimes.reduce<number | null>((best, value) => (
       best == null || Math.abs(value - target) < Math.abs(best - target) ? value : best
     ), null);
-    cursorCoordinator.publish({ time: nearest, source });
-    setHoverCrosshair(nearest == null ? null : { time: nearest, source, sequence: performance.now() });
-  }, [cursorCoordinator, lockedTime, underlyingChartTimes]);
+    const selected = isV3 && v3CursorSnap !== "candle" ? Math.floor(target) : nearest;
+    cursorCoordinator.publish({ time: selected, source });
+    setHoverCrosshair(selected == null ? null : { time: selected, source, sequence: performance.now() });
+  }, [cursorCoordinator, isV3, lockedTime, underlyingChartTimes, v3CursorSnap, v3LinkTime]);
+  const pinOiTime = useCallback((timeMs: number) => {
+    if (!Number.isFinite(timeMs)) return;
+    const target = timeMs / 1000;
+    const nearest = underlyingChartTimes.reduce<number | null>((best, value) => best == null || Math.abs(value - target) < Math.abs(best - target) ? value : best, null);
+    const selected = v3CursorSnap === "candle" ? nearest : Math.floor(target);
+    if (selected != null) { setLockedTime(selected); setHoverCrosshair({ time: selected, source: "v3-time-pin", sequence: performance.now() }); }
+  }, [underlyingChartTimes, v3CursorSnap]);
+  const hoverStrike = useCallback((index: number | null) => {
+    if (isV3 && !v3LinkStrike) return;
+    setHoveredStrike(index == null ? null : strikeRows[index] ?? null);
+  }, [isV3, strikeRows, v3LinkStrike]);
+  const pinStrike = useCallback((index: number) => {
+    const strike = strikeRows[index];
+    if (strike == null) return;
+    setV3PinnedStrike((current) => current === strike ? null : strike);
+  }, [strikeRows]);
+  const heatmapCell = (data: unknown) => data && typeof data === "object" && "cell" in data ? (data as { cell?: { strike?: number; timestamp?: number } }).cell : undefined;
+  const hoverHeatmapCell = useCallback((data: unknown) => {
+    if (!v3LinkStrike) return;
+    const cell = heatmapCell(data);
+    setHoveredStrike(typeof cell?.strike === "number" ? cell.strike : null);
+  }, [v3LinkStrike]);
+  const pinHeatmapCell = useCallback((data: unknown) => {
+    const cell = heatmapCell(data);
+    if (typeof cell?.strike === "number") setV3PinnedStrike((current) => current === cell.strike ? null : cell.strike!);
+    if (typeof cell?.timestamp === "number") pinOiTime(cell.timestamp);
+  }, [pinOiTime]);
   const instrumentId = (paneRole: ScalperV2PaneRole) => String((paneRole === "underlying" ? underlying : paneRole === "call" ? call : put)?.identity.tradingsymbol ?? `${symbol}:${paneRole}`);
   const createDrawing = (tool: Exclude<ScalperV2DrawingTool, "select">, paneRole: ScalperV2PaneRole, anchors: ScalperV2DrawingAnchor[]) => {
     const drawing = createScalperV2Drawing({ id: drawingStore.newId(), tool, paneRole, instrumentId: instrumentId(paneRole), anchors });
@@ -755,6 +830,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const inspectionLabel = inspectionMode === "latest" ? "Latest completed candles" : `${inspectionMode === "locked" ? "Locked" : "At cursor"} · ${inspectionTime == null ? "—" : new Date(inspectionTime * 1000).toISOString()}`;
   const signalCounts = useMemo(() => Object.fromEntries(["WAIT_NEXT_OPEN", "NEXT_BAR_MISSING", "NEXT_OPEN_FAILED", "RETROSPECTIVE_ENTRY_REFERENCE"].map((key) => [key, signals.filter((signal) => signal.state === key).length])), [signals]);
   const hoveredStrikeIndex = hoveredStrike == null ? null : strikeRows.indexOf(hoveredStrike);
+  const pinnedStrikeIndex = v3PinnedStrike == null ? null : strikeRows.indexOf(v3PinnedStrike);
   const hoveredPayoutIndex = hoveredStrike == null ? null : maxPain.points.findIndex((point) => point.settlement === hoveredStrike);
   const callProfile = profileRows.find((row) => row.side === "CE" && row.strike === numeric(selectedCeStrike));
   const putProfile = profileRows.find((row) => row.side === "PE" && row.strike === numeric(selectedPeStrike));
@@ -763,7 +839,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const cursorStrikeIndex = inspectionTime == null || inspectedUnderlying == null || !strikeRows.length ? null : strikeRows.reduce((best, strike, index) => (
     Math.abs(strike - inspectedUnderlying) < Math.abs(strikeRows[best] - inspectedUnderlying) ? index : best
   ), 0);
-  const activeStrikeIndex = hoveredStrikeIndex ?? cursorStrikeIndex;
+  const activeStrikeIndex = hoveredStrikeIndex ?? pinnedStrikeIndex ?? cursorStrikeIndex;
   const underlyingOpen = numeric(underlying?.bars.find((row) => row.closed === true)?.open);
   const underlyingChange = inspectedUnderlying != null && underlyingOpen != null && underlyingOpen > 0 ? 100 * (inspectedUnderlying / underlyingOpen - 1) : null;
   const selectedDistance = (row: Row | undefined) => { const close = numeric(row?.close), ema = numeric(row?.ema9); return close == null || ema == null ? null : close - ema; };
@@ -779,7 +855,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const latestSignal = chartSignals.filter((signal) => signal.state.includes("ENTRY_REFERENCE")).at(-1) ?? chartSignals.at(-1);
   const structureOiMaximum = Math.max(1, ...structureRows.flatMap((row) => [row.ce.oi ?? 0, row.pe.oi ?? 0]));
   const structureDeltaMaximum = Math.max(1, ...structureRows.flatMap((row) => [Math.abs(row.ce.changeOi ?? 0), Math.abs(row.pe.changeOi ?? 0)]));
-  const inspectedStrikeRow = structureRows.find((row) => row.strike === hoveredStrike) ?? structureRows.find((row) => row.strike === Number(selectedCeStrike)) ?? structureRows.find((row) => row.strike === Number(selectedPeStrike));
+  const inspectedStrikeRow = structureRows.find((row) => row.strike === hoveredStrike) ?? structureRows.find((row) => row.strike === v3PinnedStrike) ?? structureRows.find((row) => row.strike === Number(selectedCeStrike)) ?? structureRows.find((row) => row.strike === Number(selectedPeStrike));
   const volumeSeries = useMemo(() => activeData?.volumeSeries ? {
     ...activeData.volumeSeries,
     bars: dayRows(activeData.volumeSeries.bars, tradingDay, "end"),
@@ -796,9 +872,26 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     const id = testId === "v2-side-oi-chart" ? "oi" : testId === "v2-side-delta-oi-chart" ? "delta-oi" : testId === "v2-side-strike-structure-chart" ? "strike-structure" : testId === "v2-side-positioning-heatmap" ? "positioning-heatmap" : testId === "v2-oi-difference-time" ? "oi-difference" : testId === "v2-change-oi-difference-time" ? "change-oi-difference" : testId === "v2-compact-range-price" ? "range-price" : null;
     if (id) setExpandedChart(id);
   };
+  const handleRangeChange = useCallback((value: ScalperV2TimeRange) => {
+    if (isV3) setV3FollowLive(false);
+    if (!isV3 || v3LinkTime) setLinkedRange(value);
+  }, [isV3, v3LinkTime]);
+  const returnToLive = useCallback(() => {
+    setV3FollowLive(true); setHorizontalView("day"); setLinkedRange(null); setLockedTime(null); setHoverCrosshair(null); setFitRequest((value) => value + 1);
+  }, []);
+  const presetColumns = v3LayoutPreset === "options" ? { main: 72, right: 28, nifty: 36, options: 36 } : v3LayoutPreset === "structure" ? { main: 82, right: 18, nifty: 46, options: 36 } : { main: 78, right: 22, nifty: 41, options: 37 };
+  const v3Style = isV3 ? {
+    "--v3-bottom-height": `${v3BottomHeight}px`,
+    "--v3-main-width": `${presetColumns.main}fr`,
+    "--v3-right-width": `${presetColumns.right}fr`,
+    "--v3-nifty-width": `${presetColumns.nifty}fr`,
+    "--v3-options-width": `${presetColumns.options}fr`,
+  } as CSSProperties : undefined;
+  const cursorVolumeRow = exactAt(volumeSeries?.bars ?? [], inspectionTime);
+  const cursorNetOi = callProfile?.currentOi != null && putProfile?.currentOi != null ? putProfile.currentOi - callProfile.currentOi : null;
 
   if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
-  return <section className={css.page} data-testid={isV3 ? "scalper-v3" : "scalper-v2"} data-layout={layout} data-popout={isPopout || undefined} data-right-open={isV3 ? v3RightOpen : undefined} data-bottom-open={isV3 ? v3BottomOpen : undefined} data-maximized-price={v3MaximizedPrice ?? undefined} style={isV3 ? { "--v3-bottom-height": `${v3BottomHeight}px` } as CSSProperties : undefined} data-potential-ema-state={potentialEmaAvailability.state} data-potential-ema-references={potentialEmaAvailability.state === "READY" ? potentialEmaSignals.length : ""}>
+  return <section className={css.page} data-testid={isV3 ? "scalper-v3" : "scalper-v2"} data-layout={layout} data-popout={isPopout || undefined} data-right-open={isV3 ? v3RightOpen : undefined} data-bottom-open={isV3 ? v3BottomOpen : undefined} data-maximized-price={v3MaximizedPrice ?? undefined} data-v3-density={isV3 ? v3Density : undefined} data-v3-preset={isV3 ? v3LayoutPreset : undefined} data-v3-live={isV3 ? v3FollowLive : undefined} style={v3Style} data-potential-ema-state={potentialEmaAvailability.state} data-potential-ema-references={potentialEmaAvailability.state === "READY" ? potentialEmaSignals.length : ""}>
     <header className={css.commandBar}>
       <strong className={css.commandSymbol}>{symbol}</strong>
       <div className={css.topQuotes} aria-label="Current selected values"><span><b>{label}</b>{number(inspectedUnderlying)}</span><span className={css.callText}><b>CE {selectedCeStrike}</b>{price(inspectedRows[1]?.close ?? callLeg?.last_price)}</span><span className={css.putText}><b>PE {selectedPeStrike}</b>{price(inspectedRows[2]?.close ?? putLeg?.last_price)}</span></div>
@@ -808,11 +901,12 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       <details className={css.commandMenu}><summary>Scale</summary><div><button aria-pressed={verticalView === "session" && !profileRangeExpanded} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(false); setYLocked(false); }}>Session Y</button><button aria-pressed={profileRangeExpanded} disabled={!profileRows.length} onClick={() => { setVerticalView("session"); setProfileRangeExpanded(true); setYLocked(false); }}>All strikes Y</button><button aria-pressed={verticalView === "visible"} onClick={() => { setVerticalView("visible"); setProfileRangeExpanded(false); setYLocked(false); }}>Visible Y</button><button aria-pressed={verticalView === "manual"} onClick={() => { setVerticalView("manual"); setProfileRangeExpanded(false); setYLocked(false); }}>Manual Y</button><button aria-pressed={yLocked} onClick={() => setYLocked((value) => !value)}>{yLocked ? "Unlock Y" : "Lock Y"}</button><button onClick={() => { setHorizontalView("last30"); setFitRequest((value) => value + 1); }}>Last 30</button><button onClick={() => { setHorizontalView("last60"); setFitRequest((value) => value + 1); }}>Last 60</button></div></details>
       <details className={css.commandMenu}><summary>OI</summary><div><button onClick={() => { setAnalyticsTab("matrix"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>Strike matrix</button><button onClick={() => { setAnalyticsTab("oi"); document.getElementById("scalper-v2-analytics")?.scrollIntoView({ block: "nearest" }); }}>OI &amp; ΔOI charts</button></div></details>
       <details className={css.commandMenu}><summary>Tools</summary><div><button aria-pressed={measureMode} onClick={() => { setMeasureMode(!measureMode); if (!measureMode) setRailTab("measure"); }}>Measure A–B</button><button onClick={drawingStore.undo} disabled={!drawingStore.canUndo}>Undo drawing</button><button onClick={drawingStore.redo} disabled={!drawingStore.canRedo}>Redo drawing</button><button onClick={() => { setRailOpen(true); setRailTab("objects"); }}>Drawings</button></div></details>
-      {isV3 && <details className={css.commandMenu}><summary>Layout</summary><div><button aria-pressed={v3RightOpen} onClick={() => setV3RightOpen((value) => !value)}>{v3RightOpen ? "Collapse strike rail" : "Show strike rail"}</button><button aria-pressed={v3BottomOpen} onClick={() => setV3BottomOpen((value) => !value)}>{v3BottomOpen ? "Collapse bottom strip" : "Show bottom strip"}</button><label>Bottom height <input aria-label="Scalper V3 bottom strip height" type="range" min="150" max="320" step="10" value={v3BottomHeight} onChange={(event) => setV3BottomHeight(Number(event.target.value))} /></label><button onClick={() => { setV3RightOpen(true); setV3BottomOpen(true); setV3BottomHeight(180); }}>Reset layout</button></div></details>}
+      {isV3 && <><button type="button" className={css.linkToggle} aria-pressed={v3LinkTime} onClick={() => setV3LinkTime((value) => !value)}>Link time</button><button type="button" className={css.linkToggle} aria-pressed={v3LinkStrike} onClick={() => setV3LinkStrike((value) => !value)}>Link strike</button><button type="button" className={v3FollowLive ? css.liveButton : css.pausedButton} onClick={returnToLive}>{v3FollowLive ? "● LIVE" : "↦ Return live"}</button><details className={css.commandMenu}><summary>Chart</summary><div><label>Cursor <select value={v3CursorSnap} onChange={(event) => setV3CursorSnap(event.target.value as V3CursorSnap)}><option value="candle">Candle</option><option value="exact">Exact time</option><option value="free">Free</option></select></label><button aria-pressed={v3ShowEma} onClick={() => setV3ShowEma((value) => !value)}>EMA</button><button aria-pressed={v3ShowVolumeEma} onClick={() => setV3ShowVolumeEma((value) => !value)}>Volume EMA</button><button aria-pressed={v3ShowSignals} onClick={() => setV3ShowSignals((value) => !value)}>Entry markers</button><button aria-pressed={v3ShowReferences} onClick={() => setV3ShowReferences((value) => !value)}>References</button><label>Range traces <select value={v3RangeDisplay} onChange={(event) => setV3RangeDisplay(event.target.value as V3RangeDisplay)}><option value="current">Current only</option><option value="context">Context</option><option value="all">All</option></select></label></div></details><details className={css.commandMenu}><summary>Layout</summary><div><label>Workspace <select value={v3LayoutPreset} onChange={(event) => setV3LayoutPreset(event.target.value as V3LayoutPreset)}><option value="trading">Trading</option><option value="options">Options Analysis</option><option value="structure">Market Structure</option></select></label><label>Density <select value={v3Density} onChange={(event) => setV3Density(event.target.value as V3Density)}><option value="standard">Standard</option><option value="dense">Ultra dense</option><option value="readable">Readable</option></select></label><button aria-pressed={v3RightOpen} onClick={() => setV3RightOpen((value) => !value)}>{v3RightOpen ? "Collapse strike rail" : "Show strike rail"}</button><button aria-pressed={v3BottomOpen} onClick={() => setV3BottomOpen((value) => !value)}>{v3BottomOpen ? "Collapse bottom strip" : "Show bottom strip"}</button><button onClick={() => setV3BottomHeight(120)}>Compact 120</button><button onClick={() => setV3BottomHeight(180)}>Default 180</button><button onClick={() => setV3BottomHeight(260)}>Analysis 260</button><button onClick={() => { setV3RightOpen(true); setV3BottomOpen(true); setV3BottomHeight(180); setV3LayoutPreset("trading"); setV3Density("standard"); }}>Reset workspace</button><button onClick={() => setV3HelpOpen(true)}>Keyboard help</button></div></details></>}
       <details className={css.commandMenu}><summary>More</summary><div><button aria-pressed={railOpen} onClick={() => setRailOpen(!railOpen)}>{railOpen ? "Hide details" : "Show details"}</button><button onClick={() => { const body = JSON.stringify({ version: "SCALPER_V2_WORKSTATION_V2", symbol, expiry, selectedCeStrike, selectedPeStrike, interval, asOf, tradingDay, inspectionMode, inspectionTime, horizontalView, priceMode, referenceLevels: referenceLevels ?? null, rankLevels: leaders, source: contextRows, chart: active.data, optionPriceHistory: optionPriceHistory.data ?? null, drawings: drawingStore.drawings, measurement }, null, 2); const url = URL.createObjectURL(new Blob([body], { type: "application/json" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-${symbol}-${tradingDay || "current"}.json`; anchor.click(); URL.revokeObjectURL(url); }}>Export JSON</button><button onClick={() => { const url = URL.createObjectURL(new Blob([evidenceCsv(contextRows)], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `scalper-v2-chain-${symbol}-${tradingDay || "current"}.csv`; anchor.click(); URL.revokeObjectURL(url); }}>Chain CSV</button><button onClick={() => { setRailOpen(true); setRailTab("health"); }}>Data health</button></div></details>
       <ScalperV2Freshness compact sessions={active.data.calendar?.sessions ?? []} observations={['UNDERLYING', 'CE', 'PE'].map(name => ({ name, end: String(latest(rawPanes.find(pane => chartSide(pane) === name)?.bars ?? [])?.end ?? '') }))} interval={interval} historical={Boolean(replayAsOf || (selectedDayParam && selectedDayParam < (active.data.calendar?.sessions.at(-1)?.trade_date ?? '')))} symbol={symbol} failed={active.isError} />
       {!isPopout && <button type="button" className={css.popoutButton} data-testid={`${viewId}-popout`} onClick={openPopout} title={`Pop out ${isV3 ? "Scalper V3" : "Scalper V2"}`}><span aria-hidden="true">↗</span><span className={css.popoutLabel}> Pop out</span></button>}
     </header>
+    {isV3 && <div className={css.cursorStrip} data-testid="v3-cursor-strip" data-mode={inspectionMode} data-snap={v3CursorSnap}><b>{inspectionMode === "locked" ? "PINNED" : inspectionMode === "hover" ? "CURSOR" : "LATEST"}</b><span>{inspectionTime == null ? inspectedTimeLabel(inspectedRows[0]) : istClock(inspectionTime * 1000)}</span><span>NIFTY O {number(inspectedRows[0]?.open)} H {number(inspectedRows[0]?.high)} L {number(inspectedRows[0]?.low)} C {number(inspectedRows[0]?.close)}</span><span className={css.callText}>CE {number(inspectedRows[1]?.close)}</span><span className={css.putText}>PE {number(inspectedRows[2]?.close)}</span><span>CE OI {compact(callProfile?.currentOi)}</span><span>PE OI {compact(putProfile?.currentOi)}</span><span>Net {signed(cursorNetOi)}</span><span>Vol {compact(cursorVolumeRow?.volume)}</span>{lockedTime != null && <button type="button" onClick={() => setLockedTime(null)}>Unpin</button>}</div>}
     {active.error && <div className={css.warning} role="alert">The selected timeframe could not refresh. Cached timeframes remain available.</div>}
     <div className={css.workspace}>
       <div className={css.chartStage}>
@@ -821,38 +915,38 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <span title={`Drawing persistence ${drawingStore.saveState}`}>{drawingStore.saveState === "saved" ? "Saved" : drawingStore.saveState}</span>
         </nav>
         <div className={css.charts} onDoubleClick={maximizeV3Price} title={isV3 ? "Double-click a price pane to maximize or restore" : undefined}>
-          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price and volume" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={chartSignals} measurementTimes={points} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
-          <ScalperV2Chart id="call" title={`CE ${Number(selectedCeStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} volumeBars={call?.bars ?? []} volumeLabel="Exact CE contract volume" interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
-          <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} volumeBars={put?.bars ?? []} volumeLabel="Exact PE contract volume" interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={crosshair} externalRange={linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={setLinkedRange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} />
+          <ScalperV2Chart id="underlying" title={label} subtitle="Underlying · price and volume" bars={underlying?.bars ?? []} volumeBars={volumeSeries?.bars ?? []} volumeLabel={volumeSeries?.identity ? `${volumeSeries.kind === "CURRENT_MONTH_FUTURE" ? "Current-month future" : "Cash stock"} volume · ${volumeSeries.identity.tradingSymbol}${volumeSeries.identity.expiry ? ` · ${volumeSeries.identity.expiry}` : ""}` : "Volume unavailable"} interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={isV3 && !v3LinkTime ? null : crosshair} externalRange={isV3 && !v3LinkTime ? null : linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={handleRangeChange} onTimeClick={selectTime} signalEvents={chartSignals} measurementTimes={points} referenceLevels={activeReferenceLevels} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "underlying" && drawing.instrumentId === instrumentId("underlying"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} linkCursor={!isV3 || v3LinkTime} hideReadout={isV3} showEma={!isV3 || v3ShowEma} showVolumeEma={!isV3 || v3ShowVolumeEma} showSignals={!isV3 || v3ShowSignals} showReferences={!isV3 || v3ShowReferences} rightOffset={isV3 ? 6 : 1} onMaximize={isV3 ? () => setV3MaximizedPrice((current) => current === "underlying" ? null : "underlying") : undefined} />
+          <ScalperV2Chart id="call" title={`CE ${Number(selectedCeStrike).toLocaleString("en-IN")}`} subtitle={String(call?.identity.tradingsymbol ?? "Exact call unavailable")} bars={call?.bars ?? []} volumeBars={call?.bars ?? []} volumeLabel="Exact CE contract volume" interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={isV3 && !v3LinkTime ? null : crosshair} externalRange={isV3 && !v3LinkTime ? null : linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={handleRangeChange} onTimeClick={selectTime} signalEvents={callSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "call" && drawing.instrumentId === instrumentId("call"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} linkCursor={!isV3 || v3LinkTime} hideReadout={isV3} showEma={!isV3 || v3ShowEma} showVolumeEma={!isV3 || v3ShowVolumeEma} showSignals={!isV3 || v3ShowSignals} rightOffset={isV3 ? 6 : 1} onMaximize={isV3 ? () => setV3MaximizedPrice((current) => current === "call" ? null : "call") : undefined} />
+          <ScalperV2Chart id="put" title={`PE ${Number(selectedPeStrike).toLocaleString("en-IN")}`} subtitle={String(put?.identity.tradingsymbol ?? "Exact put unavailable")} bars={put?.bars ?? []} volumeBars={put?.bars ?? []} volumeLabel="Exact PE contract volume" interval={interval} lastRefreshAt={active.dataUpdatedAt} fitDaySlotCount={fitDaySlotCount} externalCrosshair={isV3 && !v3LinkTime ? null : crosshair} externalRange={isV3 && !v3LinkTime ? null : linkedRange} inspectionMode={inspectionMode} inspectionTime={inspectionTime} cursorCoordinator={cursorCoordinator} fitRequest={fitRequest} horizontalView={horizontalView} verticalView={verticalView} yLocked={yLocked} onCrosshair={handleCrosshair} onRangeChange={handleRangeChange} onTimeClick={selectTime} signalEvents={putSignals} measurementTimes={points} drawingTool={drawingTool} drawings={drawingStore.drawings.filter((drawing) => drawing.paneRole === "put" && drawing.instrumentId === instrumentId("put"))} selectedDrawingId={drawingStore.selectedId} onDrawingCreate={createDrawing} onDrawingUpdate={drawingStore.upsert} onDrawingSelect={drawingStore.setSelectedId} linkCursor={!isV3 || v3LinkTime} hideReadout={isV3} showEma={!isV3 || v3ShowEma} showVolumeEma={!isV3 || v3ShowVolumeEma} showSignals={!isV3 || v3ShowSignals} rightOffset={isV3 ? 6 : 1} onMaximize={isV3 ? () => setV3MaximizedPrice((current) => current === "put" ? null : "put") : undefined} />
         </div>
       </div>
       {(!isV3 || v3RightOpen) && <aside className={css.structureCharts} data-testid={`${viewId}-strike-side-charts`} aria-label="Strike open interest comparison charts" onDoubleClick={expandV3Analytic}>
-        {isV3 && <div className={css.strikeInspector} data-testid="v3-strike-inspector" aria-live="polite">{inspectedStrikeRow ? <><b>{inspectedStrikeRow.strike.toLocaleString("en-IN")}</b><span className={css.callText}>CE OI {compact(inspectedStrikeRow.ce.oi)} · Δ {signed(inspectedStrikeRow.ce.changeOi)} · premium {percent(inspectedStrikeRow.ce.priceChangePct)}</span><span className={css.putText}>PE OI {compact(inspectedStrikeRow.pe.oi)} · Δ {signed(inspectedStrikeRow.pe.changeOi)} · premium {percent(inspectedStrikeRow.pe.priceChangePct)}</span></> : <span>Hover a strike to inspect it across all strike charts</span>}</div>}
+        {isV3 && <button type="button" className={css.strikeInspector} data-testid="v3-strike-inspector" data-pinned={v3PinnedStrike != null || undefined} aria-expanded={v3InspectorExpanded} aria-live="polite" onClick={() => setV3InspectorExpanded((value) => !value)}>{inspectedStrikeRow ? <><b>{v3PinnedStrike === inspectedStrikeRow.strike ? "PIN " : ""}{inspectedStrikeRow.strike.toLocaleString("en-IN")}</b><span className={css.callText}>CE OI {compact(inspectedStrikeRow.ce.oi)} · Δ {signed(inspectedStrikeRow.ce.changeOi)}</span><span className={css.putText}>PE OI {compact(inspectedStrikeRow.pe.oi)} · Δ {signed(inspectedStrikeRow.pe.changeOi)}</span>{v3InspectorExpanded && <span>Net OI {signed((inspectedStrikeRow.pe.oi ?? 0) - (inspectedStrikeRow.ce.oi ?? 0))} · premium CE {percent(inspectedStrikeRow.ce.priceChangePct)} / PE {percent(inspectedStrikeRow.pe.priceChangePct)}</span>}</> : <span>Hover a strike to inspect it across all strike charts</span>}</button>}
         <article data-testid="v2-side-oi-chart">
           <header><strong>OI by strike</strong><RefreshStamp at={active.dataUpdatedAt} /><span>CE / PE · PE − CE</span><ChartActions title="OI by strike" onExpand={() => setExpandedChart("oi")} /></header>
-          <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={compactOiOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense>
+          <Suspense fallback={<p>Loading OI chart…</p>}><Chart className={css.structureChart} ariaLabel="Open interest by strike with put minus call difference" axisExtentPolicy="native" option={compactOiOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense>
         </article>
         <article data-testid="v2-side-delta-oi-chart">
           <header><strong>ΔOI by strike</strong><RefreshStamp at={active.dataUpdatedAt} /><span>CE / PE · PE ΔOI − CE ΔOI</span><ChartActions title="Change in OI by strike" onExpand={() => setExpandedChart("delta-oi")} /></header>
-          {profileComparable > 0 ? <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put delta OI minus call delta OI difference" axisExtentPolicy="native" option={compactDeltaOiOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense> : <div className={css.sideState}><strong>ΔOI unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}
+          {profileComparable > 0 ? <Suspense fallback={<p>Loading ΔOI chart…</p>}><Chart className={css.structureChart} ariaLabel="Change in open interest by strike with put delta OI minus call delta OI difference" axisExtentPolicy="native" option={compactDeltaOiOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense> : <div className={css.sideState}><strong>ΔOI unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}
         </article>
         <article data-testid="v2-side-strike-structure-chart">
           <header><strong>Strike structure</strong><RefreshStamp at={active.dataUpdatedAt} /><span>OI bars · ΔOI lines · premium markers · CE1–5 / PE1–5</span><ChartActions title="Strike structure" onInfo={() => setChartInfo("strike-structure")} onExpand={() => setExpandedChart("strike-structure")} /></header>
-          {strikeRows.length ? <Suspense fallback={<p>Loading strike structure…</p>}><Chart className={css.structureChart} ariaLabel="Strike wise open interest change in open interest premium return and buildup regime" axisExtentPolicy="native" option={compactStrikeStructureOption} activeCategoryIndex={activeStrikeIndex} onCategoryHover={(index) => setHoveredStrike(index == null ? null : strikeRows[index] ?? null)} /></Suspense> : <div className={css.sideState}><strong>Strike structure unavailable</strong><span>No exact tracked strikes exist for this snapshot.</span></div>}
+          {strikeRows.length ? <Suspense fallback={<p>Loading strike structure…</p>}><Chart className={css.structureChart} ariaLabel="Strike wise open interest change in open interest premium return and buildup regime" axisExtentPolicy="native" option={compactStrikeStructureOption} activeCategoryIndex={v3LinkStrike ? activeStrikeIndex : null} pinnedCategoryIndex={pinnedStrikeIndex} onCategoryHover={hoverStrike} onCategoryClick={pinStrike} /></Suspense> : <div className={css.sideState}><strong>Strike structure unavailable</strong><span>No exact tracked strikes exist for this snapshot.</span></div>}
         </article>
         <article data-testid="v2-side-positioning-heatmap">
-          <header><strong>Strike × time positioning</strong><RefreshStamp at={optionPriceHistory.dataUpdatedAt} /><span>{interval === 15 ? "15m" : "5m"} · ΔOI share + premium + volume + depth</span><ChartActions title="Strike by time positioning" onInfo={() => setChartInfo("positioning-heatmap")} onExpand={() => setExpandedChart("positioning-heatmap")} /></header>
-          {positioningModel.cells.some((cell) => cell.pressure != null) ? <Suspense fallback={<p>Loading positioning heatmap…</p>}><Chart className={css.structureChart} ariaLabel="Strike by time option positioning pressure heatmap" axisExtentPolicy="native" option={compactPositioningHeatmapOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "positioning-heatmap")} /></Suspense> : <div className={css.sideState}><strong>Positioning history unavailable</strong><span>No retained session observations have enough OI, premium, volume or depth evidence. Missing inputs are not zero.</span></div>}
+          <header><strong>Strike × time positioning</strong><RefreshStamp at={optionPriceHistory.dataUpdatedAt} /><span>{interval === 15 ? "15m" : "5m"} · ΔOI share + premium + volume + depth</span>{isV3 && <button type="button" className={css.scaleToggle} onClick={() => setV3HeatmapFixed((value) => !value)} title="Toggle fixed or automatic heatmap colour scale">{v3HeatmapFixed ? "±100" : "AUTO"}</button>}<ChartActions title="Strike by time positioning" onInfo={() => setChartInfo("positioning-heatmap")} onExpand={() => setExpandedChart("positioning-heatmap")} /></header>
+          {positioningModel.cells.some((cell) => cell.pressure != null) ? <Suspense fallback={<p>Loading positioning heatmap…</p>}><Chart className={css.structureChart} ariaLabel="Strike by time option positioning pressure heatmap" axisExtentPolicy="native" option={compactPositioningHeatmapOption} activeTimeMs={v3LinkTime && inspectionTime != null ? inspectionTime * 1000 : null} onTimeHover={(value) => handleOiTimeHover(value, "positioning-heatmap")} onTimeClick={(value) => pinOiTime(value)} onDataHover={hoverHeatmapCell} onDataClick={pinHeatmapCell} /></Suspense> : <div className={css.sideState}><strong>Positioning history unavailable</strong><span>No retained session observations have enough OI, premium, volume or depth evidence. Missing inputs are not zero.</span></div>}
         </article>
       </aside>}
       {(!isV3 || v3BottomOpen) && <section className={css.oiHistoryRow} data-testid={`${viewId}-oi-history-row`} aria-label="Tracked option-chain open-interest differences over time" onDoubleClick={expandV3Analytic}>
         <div className={css.oiHistoryPair}>
-          <article data-testid="v2-oi-difference-time"><header><strong>Cumulative PE OI − cumulative CE OI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · timestamp aligned</span><ChartActions title="Cumulative PE OI minus cumulative CE OI" onExpand={() => setExpandedChart("oi-difference")} /></header>{cumulativeOiPoints.some((point) => point.oiDifference != null) ? <Suspense fallback={<p>Loading OI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put open interest minus cumulative call open interest over time" axisExtentPolicy="native" option={compactOiDifferenceOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>OI history unavailable</strong><span>No comparable CE/PE tracked-chain snapshots for this session.</span></div>}</article>
-          <article data-testid="v2-change-oi-difference-time"><header><strong>Cumulative PE ΔOI − cumulative CE ΔOI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · {cumulativeChangeBasis}</span><ChartActions title="Cumulative PE change in OI minus cumulative CE change in OI" onExpand={() => setExpandedChart("change-oi-difference")} /></header>{cumulativeOiPoints.some((point) => point.changeOiDifference != null) ? <Suspense fallback={<p>Loading ΔOI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put change in open interest minus cumulative call change in open interest over time" axisExtentPolicy="native" option={compactChangeOiDifferenceOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "change-oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>Change-in-OI history unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}</article>
+          <article data-testid="v2-oi-difference-time"><header><strong>Cum PE OI − CE OI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · timestamp aligned</span><ChartActions title="Cumulative PE OI minus cumulative CE OI" onExpand={() => setExpandedChart("oi-difference")} /></header>{cumulativeOiPoints.some((point) => point.oiDifference != null) ? <Suspense fallback={<p>Loading OI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put open interest minus cumulative call open interest over time" axisExtentPolicy="native" option={compactOiDifferenceOption} activeTimeMs={v3LinkTime && inspectionTime != null ? inspectionTime * 1000 : null} onTimeHover={(value) => handleOiTimeHover(value, "oi-difference")} onTimeClick={pinOiTime} /></Suspense> : <div className={css.oiHistoryState}><strong>OI history unavailable</strong><span>No comparable CE/PE tracked-chain snapshots for this session.</span></div>}</article>
+          <article data-testid="v2-change-oi-difference-time"><header><strong>Cum PE ΔOI − CE ΔOI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · {cumulativeChangeBasis}</span><ChartActions title="Cumulative PE change in OI minus cumulative CE change in OI" onExpand={() => setExpandedChart("change-oi-difference")} /></header>{cumulativeOiPoints.some((point) => point.changeOiDifference != null) ? <Suspense fallback={<p>Loading ΔOI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put change in open interest minus cumulative call change in open interest over time" axisExtentPolicy="native" option={compactChangeOiDifferenceOption} activeTimeMs={v3LinkTime && inspectionTime != null ? inspectionTime * 1000 : null} onTimeHover={(value) => handleOiTimeHover(value, "change-oi-difference")} onTimeClick={pinOiTime} /></Suspense> : <div className={css.oiHistoryState}><strong>Change-in-OI history unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}</article>
         </div>
         <article className={css.oiHistorySideChart} data-testid="v2-compact-range-price">
-          <header><strong>Range-normalised CE / PE</strong><RefreshStamp at={optionPriceHistory.dataUpdatedAt} /><span>CE yellow · PE blue · open 0 · high +100 · low −100</span><ChartActions title="Range-normalised CE and PE" onExpand={() => setExpandedChart("range-price")} /></header>
-          {compactRangePriceModel.series.length ? <Suspense fallback={<p>Loading range-normalised prices…</p>}><Chart className={css.oiHistoryChart} ariaLabel="All tracked call and put prices range normalised from minus one hundred to plus one hundred" axisExtentPolicy="native" option={compactRangeOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "compact-range-price")} /></Suspense> : <div className={css.oiHistoryState}><strong>Option price history unavailable</strong><span>No exact tracked CE/PE observations exist for this session.</span></div>}
+          <header><strong>Norm CE / PE · {v3RangeDisplay}</strong><RefreshStamp at={optionPriceHistory.dataUpdatedAt} /><span>CE yellow · PE blue · open 0 · high +100 · low −100</span><ChartActions title="Range-normalised CE and PE" onExpand={() => setExpandedChart("range-price")} /></header>
+          {compactRangePriceModel.series.length ? <Suspense fallback={<p>Loading range-normalised prices…</p>}><Chart className={css.oiHistoryChart} ariaLabel="All tracked call and put prices range normalised from minus one hundred to plus one hundred" axisExtentPolicy="native" option={compactRangeOption} activeTimeMs={v3LinkTime && inspectionTime != null ? inspectionTime * 1000 : null} onTimeHover={(value) => handleOiTimeHover(value, "compact-range-price")} onTimeClick={pinOiTime} /></Suspense> : <div className={css.oiHistoryState}><strong>Option price history unavailable</strong><span>No exact tracked CE/PE observations exist for this session.</span></div>}
         </article>
       </section>}
       {isV3 && !v3BottomOpen && <button type="button" className={css.collapsedStrip} onClick={() => setV3BottomOpen(true)}>Show time analytics</button>}
@@ -910,6 +1004,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     </section>
     {expandedChart && <ChartOverlay title={expandedCharts[expandedChart].title} option={expandedCharts[expandedChart].option} onClose={() => setExpandedChart(null)} />}
     {chartInfo && <ChartInfoOverlay kind={chartInfo} onClose={() => setChartInfo(null)} />}
+    {isV3 && v3HelpOpen && <div className={css.chartOverlay} role="dialog" aria-modal="true" aria-label="Scalper V3 keyboard shortcuts"><header><h2>Keyboard shortcuts</h2><button type="button" onClick={() => setV3HelpOpen(false)}>Close</button></header><div className={css.shortcutHelp}><kbd>1</kbd><span>Maximise NIFTY</span><kbd>2</kbd><span>Maximise CE</span><kbd>3</kbd><span>Maximise PE</span><kbd>L</kbd><span>Return to live</span><kbd>K</kbd><span>Pin/unpin cursor time</span><kbd>B</kbd><span>Collapse/restore bottom strip</span><kbd>Esc</kbd><span>Restore workspace</span><kbd>?</kbd><span>Toggle this help</span></div></div>}
     <details><summary>Indicator evidence</summary><p>Underlying RSI14 and MACD are calculated from retained completed bars before the selected day is sliced for display.</p><table className={css.snapshotGrid}><thead><tr><th>End</th><th>RSI14</th><th>MACD</th><th>Signal</th></tr></thead><tbody>{indicators.filter((row) => istDay(row.time) === tradingDay).slice(-20).map((row) => <tr key={row.time}><td>{row.time}</td><td>{row.rsi?.toFixed(2) ?? "—"}</td><td>{row.macd?.toFixed(4) ?? "—"}</td><td>{row.signal?.toFixed(4) ?? "—"}</td></tr>)}</tbody></table></details>
   </section>;
 }

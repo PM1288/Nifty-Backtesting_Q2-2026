@@ -478,8 +478,12 @@ export function EChartSurface({
   option,
   setOptionOpts,
   onCategoryClick,
+  onTimeClick,
   onCategoryHover,
+  onDataHover,
+  onDataClick,
   activeCategoryIndex,
+  pinnedCategoryIndex,
   onTimeHover,
   activeTimeMs,
   axisExtentPolicy = "normalized",
@@ -490,8 +494,12 @@ export function EChartSurface({
   option: EChartsOption;
   setOptionOpts?: SetOptionOpts;
   onCategoryClick?: (index: number, gridIndex: number) => void;
+  onTimeClick?: (timeMs: number, gridIndex: number) => void;
   onCategoryHover?: (index: number | null) => void;
+  onDataHover?: (data: unknown, index: number) => void;
+  onDataClick?: (data: unknown, index: number) => void;
   activeCategoryIndex?: number | null;
+  pinnedCategoryIndex?: number | null;
   onTimeHover?: (timeMs: number | null) => void;
   activeTimeMs?: number | null;
   axisExtentPolicy?: "normalized" | "native";
@@ -504,8 +512,14 @@ export function EChartSurface({
   const chartRef = useRef<ReturnType<typeof echarts.init> | null>(null);
   const clickRef = useRef(onCategoryClick);
   clickRef.current = onCategoryClick;
+  const timeClickRef = useRef(onTimeClick);
+  timeClickRef.current = onTimeClick;
   const hoverRef = useRef(onCategoryHover);
   hoverRef.current = onCategoryHover;
+  const dataHoverRef = useRef(onDataHover);
+  dataHoverRef.current = onDataHover;
+  const dataClickRef = useRef(onDataClick);
+  dataClickRef.current = onDataClick;
   const timeHoverRef = useRef(onTimeHover);
   timeHoverRef.current = onTimeHover;
   const suppressTimeHoverRef = useRef(false);
@@ -532,13 +546,16 @@ export function EChartSurface({
     let timeHoverFrame = 0;
     let pendingTime: number | null = null;
     chart.getZr().on("click", (event) => {
-      if (!clickRef.current) return;
+      if (!clickRef.current && !timeClickRef.current) return;
       const grids = asArray(chart.getOption().grid);
       for (let i=0; i<grids.length; i++) {
         const point=[event.offsetX,event.offsetY];
         if (!chart.containPixel({gridIndex:i},point)) continue;
         const value=chart.convertFromPixel({gridIndex:i},point);
-        if (Array.isArray(value) && Number.isFinite(value[0])) clickRef.current(Math.round(value[0]), i);
+        if (Array.isArray(value) && Number.isFinite(Number(value[0]))) {
+          if (timeClickRef.current) timeClickRef.current(Number(value[0]), i);
+          else clickRef.current?.(Math.round(Number(value[0])), i);
+        }
         break;
       }
     });
@@ -560,9 +577,14 @@ export function EChartSurface({
     });
     chart.on("mouseover", (params) => {
       if (hoverRef.current && typeof params.dataIndex === "number") hoverRef.current(params.dataIndex);
+      if (dataHoverRef.current && typeof params.dataIndex === "number") dataHoverRef.current(params.data, params.dataIndex);
+    });
+    chart.on("click", (params) => {
+      if (dataClickRef.current && typeof params.dataIndex === "number") dataClickRef.current(params.data, params.dataIndex);
     });
     chart.on("globalout", () => {
       hoverRef.current?.(null);
+      dataHoverRef.current?.(null, -1);
       if (!suppressTimeHoverRef.current) timeHoverRef.current?.(null);
     });
 
@@ -617,13 +639,14 @@ export function EChartSurface({
     const chart = chartRef.current;
     if (!chart) return;
     chart.dispatchAction({ type: "downplay", seriesIndex: "all" });
-    if (activeCategoryIndex == null || activeCategoryIndex < 0) {
+    const selectedIndex = activeCategoryIndex ?? pinnedCategoryIndex;
+    if (selectedIndex == null || selectedIndex < 0) {
       chart.dispatchAction({ type: "hideTip" });
       return;
     }
-    chart.dispatchAction({ type: "highlight", dataIndex: activeCategoryIndex });
-    chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: activeCategoryIndex });
-  }, [activeCategoryIndex]);
+    chart.dispatchAction({ type: "highlight", dataIndex: selectedIndex });
+    chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: selectedIndex });
+  }, [activeCategoryIndex, pinnedCategoryIndex]);
 
   useEffect(() => {
     const chart = chartRef.current;
@@ -638,5 +661,5 @@ export function EChartSurface({
     requestAnimationFrame(() => { suppressTimeHoverRef.current = false; });
   }, [activeTimeMs]);
 
-  return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" data-active-time-ms={activeTimeMs ?? ""} data-active-category-index={activeCategoryIndex ?? ""} />;
+  return <div ref={hostRef} className={className} role="img" aria-label={tr(ariaLabel)} data-clarity-unmask="true" data-active-time-ms={activeTimeMs ?? ""} data-active-category-index={activeCategoryIndex ?? ""} data-pinned-category-index={pinnedCategoryIndex ?? ""} />;
 }

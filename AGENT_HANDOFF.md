@@ -6235,3 +6235,18 @@ or outcomes were deleted.
   `sha256:cc7fcb625148c28ca4126d153bc8bf05e5d4c9fca2e9ca38ee0e58f278b8561e`.
   Rollback: `trading-stack-n50-dashboard:before-scalper-v3-compact-20260922`.
   No migration, collector, strategy, alert eligibility or order-permission change.
+
+## 2026-09-22 — Scalper V3 linked analytical workspace
+
+- V3-only P1 implementation links NIFTY/CE/PE and every compact time panel,
+  adds click-to-pin time and strike, a shared cursor strip, a docked expandable
+  strike inspector, Link time/strike controls and honest LIVE/Paused behavior.
+- New candles do not force the user back to the right edge after a physical pan.
+  The Return live control and `L` key explicitly restore Fit Day.
+- Added native pane maximize controls, keyboard help, approved chart/reference
+  toggles, Context/Current/All normalized-price modes, heatmap scale control,
+  named width presets, density modes and persisted V3 layout state.
+- Scalper V2 and all strategy, data, export and order contracts are unchanged.
+- Pre-release validation: web 266/266 and API 264/264 tests, both typechecks and
+  builds, canonical gate and diff check pass. Deployment/browser evidence is in
+  `docs/trading-analytics/SCALPER_V3_LINKED_WORKSPACE_P1_P2_20260922.md`.

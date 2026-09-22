@@ -1,7 +1,7 @@
 import { istDay } from "./tradingAnalyticsChartView";
 
 type Row = Record<string, unknown>;
-type Pane = { identity: Row; bars: Row[] };
+export type ScalperV2EmaPane = { identity: Row; bars: Row[] };
 type EmaSide = "ABOVE" | "BELOW";
 
 export const SCALPER_V2_THREE_INSTRUMENT_EMA_RULE = "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1";
@@ -36,14 +36,14 @@ const numeric = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const paneSide = (pane: Pane): "CE" | "PE" | "UNDERLYING" => {
+const paneSide = (pane: ScalperV2EmaPane): "CE" | "PE" | "UNDERLYING" => {
   const symbol = String(pane.identity.tradingsymbol ?? pane.identity.tradingSymbol ?? "").toUpperCase();
   return symbol.endsWith("CE") ? "CE" : symbol.endsWith("PE") ? "PE" : "UNDERLYING";
 };
 
-const symbolOf = (pane: Pane) => String(pane.identity.tradingsymbol ?? pane.identity.tradingSymbol ?? pane.identity.symbol ?? "Unknown");
+const symbolOf = (pane: ScalperV2EmaPane) => String(pane.identity.tradingsymbol ?? pane.identity.tradingSymbol ?? pane.identity.symbol ?? "Unknown");
 
-const validClosedTimes = (pane: Pane | undefined) => new Set((pane?.bars ?? []).flatMap((bar) => (
+const validClosedTimes = (pane: ScalperV2EmaPane | undefined) => new Set((pane?.bars ?? []).flatMap((bar) => (
   bar.closed === true && numeric(bar.close) != null && numeric(bar.ema9) != null && Number.isFinite(Date.parse(String(bar.end)))
     ? [String(bar.end)] : []
 )));
@@ -62,7 +62,7 @@ const consecutive = (bars: Row[]) => bars.every((bar, index) => {
 });
 
 function legEvidence(
-  pane: Pane,
+  pane: ScalperV2EmaPane,
   candidateTime: string,
   instrument: ScalperV2EmaAlignmentLeg["instrument"],
   targetSide: EmaSide,
@@ -101,7 +101,7 @@ function legEvidence(
  * underlying, CE and PE. This is evidence only: it does not create an order,
  * fill, target or exit.
  */
-export function scalperV2EmaAlignmentSignals(panes: Pane[], intervalMinutes: number): ScalperV2EmaAlignmentSignal[] {
+export function scalperV2EmaAlignmentSignals(panes: ScalperV2EmaPane[], intervalMinutes: number): ScalperV2EmaAlignmentSignal[] {
   if (intervalMinutes !== 5) return [];
   const underlying = panes.find((pane) => paneSide(pane) === "UNDERLYING");
   const call = panes.find((pane) => paneSide(pane) === "CE");
@@ -146,7 +146,7 @@ export function scalperV2EmaAlignmentSignals(panes: Pane[], intervalMinutes: num
   return results;
 }
 
-export function scalperV2EmaAlignmentAvailability(panes: Pane[], intervalMinutes: number): ScalperV2EmaAlignmentAvailability {
+export function scalperV2EmaAlignmentAvailability(panes: ScalperV2EmaPane[], intervalMinutes: number): ScalperV2EmaAlignmentAvailability {
   if (intervalMinutes !== 5) return { state: "INACTIVE_TIMEFRAME", reasons: ["Select 5m to evaluate this reference"] };
   const entries = (["UNDERLYING", "CE", "PE"] as const).map((instrument) => ({
     instrument,
@@ -165,4 +165,17 @@ export function scalperV2EmaAlignmentAvailability(panes: Pane[], intervalMinutes
 
 export function scalperV2EmaAlignmentSpeech(signal: ScalperV2EmaAlignmentSignal, underlyingSymbol: string) {
   return `${underlyingSymbol}. Potential ${signal.direction === "CALL" ? "call" : "put"} entry reference. Underlying, call and put E M A alignment confirmed on completed five minute candles.`;
+}
+
+/**
+ * The reference is shared by three panes, but the price direction is local to
+ * each instrument. In a CALL alignment the put is the inverse leg; in a PUT
+ * alignment the put is the only rising leg.
+ */
+export function scalperV2EmaMarkerDirection(
+  pane: "underlying" | "call" | "put",
+  direction: ScalperV2EmaAlignmentSignal["direction"],
+): "up" | "down" {
+  if (pane === "put") return direction === "CALL" ? "down" : "up";
+  return direction === "CALL" ? "up" : "down";
 }

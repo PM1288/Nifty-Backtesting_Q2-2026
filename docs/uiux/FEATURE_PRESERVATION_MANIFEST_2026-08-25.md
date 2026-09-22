@@ -1,5 +1,17 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-23 Scalper V2 entry-arrow and strategy-evidence repair: valid
+three-instrument EMA references render as yellow directional arrows instead of
+indistinct circles. Arrow direction follows each pane's actual EMA leg, so the
+PE arrow is inverse to NIFTY/CE for CALL and inverse in the opposite direction
+for PUT. The former Rules inspector is labelled Strategy and adds the exact
+closed-bar methodology, retained exact-time correlation, and 1/3/6-bar
+descriptive follow-through with explicit sample/session counts. Export JSON
+retains the same strategy evidence. No missing timestamp is substituted, no
+fill/P&L/target is reconstructed, and signal rules, collectors, orders,
+contracts, charts, V1 retirement and permissions remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_ENTRY_ARROWS_AND_STRATEGY_EVIDENCE_20260923.md`.
+
 2026-09-23 Scalper V2 index-option expiry rollover data repair: the SmartAPI
 collector now keeps the front and next listed index-option expiries warm at the
 same ATM ladder, including across month boundaries. This prevents the selected

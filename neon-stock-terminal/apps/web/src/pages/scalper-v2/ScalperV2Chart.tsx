@@ -12,6 +12,7 @@ import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { scalperV2VolumeEma, scalperV2VolumeEmaPeriod } from "../../lib/scalperV2Volume";
 import { ScalperV2CursorCoordinator, scalperV2CrosshairSyncAction } from "../../lib/scalperV2Cursor";
 import { scalperV2RefreshClock } from "../../lib/scalperV2LiveSession";
+import { scalperV2EmaMarkerDirection } from "../../lib/scalperV2EmaAlignment";
 import { intervalBarChartTime, istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
 import { ScalperV2OiProfilePrimitive } from "./ScalperV2OiProfilePrimitive";
@@ -528,10 +529,12 @@ export function ScalperV2Chart({
       const potentialEma = event.rule === "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1";
       const isEntryReference = event.state.includes("ENTRY_REFERENCE");
       const directionalOi = event.rule === "SCALPER_V2_OI_DIRECTION_EMA_CROSS_V1";
-      return [{ time: time as Time, position: event.direction === "CALL" ? "belowBar" as const : "aboveBar" as const,
+      const potentialDirection = potentialEma ? scalperV2EmaMarkerDirection(id, event.direction) : null;
+      const pointsUp = potentialDirection ? potentialDirection === "up" : event.direction === "CALL";
+      return [{ time: time as Time, position: pointsUp ? "belowBar" as const : "aboveBar" as const,
         color: potentialEma ? "#eab308" : event.direction === "CALL" ? "#2563eb" : "#a86600",
-        shape: potentialEma ? "circle" as const : isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
-        text: potentialEma ? `★ ${event.direction} potential` : isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
+        shape: potentialEma ? pointsUp ? "arrowUp" as const : "arrowDown" as const : isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
+        text: potentialEma ? `★ ${event.direction} reference` : isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
     });
     const activeComparisonTimes = comparisonTimes.length ? comparisonTimes : inspectionMode === "locked" && inspectionTime != null ? [inspectionTime] : [];
     const comparisonMarkers = activeComparisonTimes.slice(0, 2).flatMap((value, index) => byTime.has(value) ? [{

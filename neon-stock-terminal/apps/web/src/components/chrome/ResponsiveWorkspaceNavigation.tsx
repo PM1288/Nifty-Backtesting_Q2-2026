@@ -77,6 +77,7 @@ export function ResponsiveWorkspaceNavigation({
   const strategyActive = currentParent === "oiis-lab";
   const paperActive = currentParent === "paper-trading";
   const todayActive = currentParent === "today";
+  const reportsActive = currentParent === "backtesting-reports";
   const moreActive = currentParent === "data-operations";
 
   const closeMenus = (restore = false) => {
@@ -175,6 +176,7 @@ export function ResponsiveWorkspaceNavigation({
       </div>
       <Link to={paper.path} className={styles.primaryLink} data-active={paperActive ? "true" : "false"} aria-current={paperActive ? "page" : undefined} onClick={() => record({ path: paper.path, label: paper.label }, "desktop_header")}><PaperIcon size={18} aria-hidden="true" /><span className={styles.paperLong}>Paper Trading</span><span className={styles.paperShort}>Paper</span></Link>
       <Link to="/predictor" className={styles.primaryLink} data-active={pathname.startsWith("/predictor") ? "true" : "false"} aria-current={pathname.startsWith("/predictor") ? "page" : undefined} onClick={() => record({path:"/predictor",label:"Predictor"},"desktop_header")}><span>Predictor</span></Link>
+      <Link to="/backtesting/reports" className={styles.primaryLink} data-active={reportsActive ? "true" : "false"} aria-current={reportsActive ? "page" : undefined} onClick={() => record({ path: "/backtesting/reports", label: "Backtest Reports" }, "desktop_header")}><span>Reports</span></Link>
     </nav>
     <Link to={MANEESH_HEADER_SHORTCUT.path} className={styles.maneeshShortcut} title="Trading Analytics · 9 EMA scalper" onClick={() => record(MANEESH_HEADER_SHORTCUT, "desktop_header")}>{MANEESH_HEADER_SHORTCUT.label}</Link>
     <div className={styles.statusSlot}>{statusSlot}</div>

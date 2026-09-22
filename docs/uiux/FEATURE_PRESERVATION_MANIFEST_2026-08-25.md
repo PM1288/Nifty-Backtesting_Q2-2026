@@ -835,3 +835,19 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
   title and evidence controls.
 - Implementation record:
   `docs/trading-analytics/SCALPER_V2_PARENT_HEADER_REDUCTION_20260920.md`.
+
+## 2026-09-22 Scalper V2 three-instrument EMA potential reference
+
+- The existing `scalper_v2` three-pane workstation adds a yellow potential
+  reference star from exact, completed 5-minute underlying + selected CE +
+  selected PE EMA9 alignment.
+- CALL requires underlying/CE below-to-above and PE above-to-below; PUT is the
+  exact inverse. Each leg crosses on the current or prior bar and retains at
+  least two source-side closes in its five-bar pre-cross history.
+- The signal is evidence only. Existing V7 and OI-direction rules, independent
+  CE/PE selection, measurements, drawings, exports and execution restrictions
+  are unchanged. Missing exact bars remain missing.
+- Voice uses the existing opt-in browser preference, announces only a newly
+  generated current-day reference and is locally deduplicated.
+- Evidence:
+  `docs/trading-analytics/SCALPER_V2_THREE_INSTRUMENT_EMA_REFERENCE_20260922.md`.

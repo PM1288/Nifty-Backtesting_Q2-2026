@@ -1,0 +1,141 @@
+import { istDay } from "./tradingAnalyticsChartView";
+
+type Row = Record<string, unknown>;
+type Pane = { identity: Row; bars: Row[] };
+type EmaSide = "ABOVE" | "BELOW";
+
+export const SCALPER_V2_THREE_INSTRUMENT_EMA_RULE = "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1";
+export const SCALPER_V2_THREE_INSTRUMENT_EMA_STATE = "POTENTIAL_ENTRY_REFERENCE";
+
+export type ScalperV2EmaAlignmentLeg = {
+  instrument: "UNDERLYING" | "CE" | "PE";
+  symbol: string;
+  targetSide: EmaSide;
+  crossTime: string;
+  sourceSideCloses: number;
+  sourceLookback: 5;
+};
+
+export type ScalperV2EmaAlignmentSignal = {
+  id: string;
+  rule: typeof SCALPER_V2_THREE_INSTRUMENT_EMA_RULE;
+  state: typeof SCALPER_V2_THREE_INSTRUMENT_EMA_STATE;
+  direction: "CALL" | "PUT";
+  setupTime: string;
+  intervalMinutes: 5;
+  legs: [ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg];
+};
+
+const numeric = (value: unknown) => {
+  const parsed = value == null || value === "" ? Number.NaN : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const paneSide = (pane: Pane): "CE" | "PE" | "UNDERLYING" => {
+  const symbol = String(pane.identity.tradingsymbol ?? pane.identity.tradingSymbol ?? "").toUpperCase();
+  return symbol.endsWith("CE") ? "CE" : symbol.endsWith("PE") ? "PE" : "UNDERLYING";
+};
+
+const symbolOf = (pane: Pane) => String(pane.identity.tradingsymbol ?? pane.identity.tradingSymbol ?? pane.identity.symbol ?? "Unknown");
+
+const sideAt = (bar: Row): EmaSide | null => {
+  const close = numeric(bar.close), ema = numeric(bar.ema9);
+  if (close == null || ema == null || close === ema) return null;
+  return close > ema ? "ABOVE" : "BELOW";
+};
+
+const consecutive = (bars: Row[]) => bars.every((bar, index) => {
+  if (index === 0) return true;
+  const previous = bars[index - 1];
+  return Date.parse(String(bar.end)) - Date.parse(String(previous.end)) === 5 * 60_000
+    && istDay(bar.end) === istDay(previous.end);
+});
+
+function legEvidence(
+  pane: Pane,
+  candidateTime: string,
+  instrument: ScalperV2EmaAlignmentLeg["instrument"],
+  targetSide: EmaSide,
+): ScalperV2EmaAlignmentLeg | null {
+  const bars = pane.bars
+    .filter((bar) => bar.closed === true && Number.isFinite(Date.parse(String(bar.end))))
+    .sort((left, right) => Date.parse(String(left.end)) - Date.parse(String(right.end)));
+  const candidateIndex = bars.findIndex((bar) => String(bar.end) === candidateTime);
+  if (candidateIndex < 0 || sideAt(bars[candidateIndex]) !== targetSide) return null;
+
+  for (const crossIndex of [candidateIndex, candidateIndex - 1]) {
+    if (crossIndex < 1 || candidateIndex - crossIndex > 1) continue;
+    const previousSide = sideAt(bars[crossIndex - 1]);
+    const currentSide = sideAt(bars[crossIndex]);
+    if (previousSide == null || currentSide !== targetSide || previousSide === targetSide) continue;
+    const lookbackStart = crossIndex - 5;
+    if (lookbackStart < 0) continue;
+    const required = bars.slice(lookbackStart, candidateIndex + 1);
+    if (!consecutive(required)) continue;
+    const sourceSideCloses = bars.slice(lookbackStart, crossIndex).filter((bar) => sideAt(bar) === previousSide).length;
+    if (sourceSideCloses < 2) continue;
+    return {
+      instrument,
+      symbol: symbolOf(pane),
+      targetSide,
+      crossTime: String(bars[crossIndex].end),
+      sourceSideCloses,
+      sourceLookback: 5,
+    };
+  }
+  return null;
+}
+
+/**
+ * Finds closed-bar, exact-time EMA9 alignment references for the selected
+ * underlying, CE and PE. This is evidence only: it does not create an order,
+ * fill, target or exit.
+ */
+export function scalperV2EmaAlignmentSignals(panes: Pane[], intervalMinutes: number): ScalperV2EmaAlignmentSignal[] {
+  if (intervalMinutes !== 5) return [];
+  const underlying = panes.find((pane) => paneSide(pane) === "UNDERLYING");
+  const call = panes.find((pane) => paneSide(pane) === "CE");
+  const put = panes.find((pane) => paneSide(pane) === "PE");
+  if (!underlying || !call || !put) return [];
+
+  const commonTimes = [...new Set(underlying.bars.filter((bar) => bar.closed === true).map((bar) => String(bar.end)))]
+    .filter((time) => call.bars.some((bar) => bar.closed === true && String(bar.end) === time))
+    .filter((time) => put.bars.some((bar) => bar.closed === true && String(bar.end) === time))
+    .sort((left, right) => Date.parse(left) - Date.parse(right));
+  const results: ScalperV2EmaAlignmentSignal[] = [];
+
+  for (const setupTime of commonTimes) {
+    const configurations = [
+      { direction: "CALL" as const, underlying: "ABOVE" as const, call: "ABOVE" as const, put: "BELOW" as const },
+      { direction: "PUT" as const, underlying: "BELOW" as const, call: "BELOW" as const, put: "ABOVE" as const },
+    ];
+    for (const configuration of configurations) {
+      const legs = [
+        legEvidence(underlying, setupTime, "UNDERLYING", configuration.underlying),
+        legEvidence(call, setupTime, "CE", configuration.call),
+        legEvidence(put, setupTime, "PE", configuration.put),
+      ] as const;
+      if (legs.some((leg) => leg == null)) continue;
+      const typedLegs = legs as [ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg];
+      // Emit one reference at the first fully aligned bar. The one-bar grace
+      // period must not duplicate the same zone on the following candle.
+      const previous = results.at(-1);
+      if (previous?.direction === configuration.direction
+        && Date.parse(setupTime) - Date.parse(previous.setupTime) === 5 * 60_000) continue;
+      results.push({
+        id: `${SCALPER_V2_THREE_INSTRUMENT_EMA_RULE}-5m-${configuration.direction}-${symbolOf(call)}-${symbolOf(put)}-${setupTime}`,
+        rule: SCALPER_V2_THREE_INSTRUMENT_EMA_RULE,
+        state: SCALPER_V2_THREE_INSTRUMENT_EMA_STATE,
+        direction: configuration.direction,
+        setupTime,
+        intervalMinutes: 5,
+        legs: typedLegs,
+      });
+    }
+  }
+  return results;
+}
+
+export function scalperV2EmaAlignmentSpeech(signal: ScalperV2EmaAlignmentSignal, underlyingSymbol: string) {
+  return `${underlyingSymbol}. Potential ${signal.direction === "CALL" ? "call" : "put"} entry reference. Underlying, call and put E M A alignment confirmed on completed five minute candles.`;
+}

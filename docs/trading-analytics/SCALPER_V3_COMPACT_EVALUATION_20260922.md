@@ -53,3 +53,24 @@ The test records 1920x1080 and 1440x900 screenshots, measured column shares, CE/
 
 - Column widths are fixed at the requested 41/37/22 proportions. The requested draggable vertical splitters are deferred until the visual evaluation establishes that the default geometry is worth retaining.
 - The range-normalised view intentionally retains V2 arithmetic and is not redefined by this layout experiment.
+
+## Production evaluation evidence
+
+Released from canonical master commit `8943a1e`. Only `n50-dashboard` was
+recreated. The healthy production image is
+`sha256:cc7fcb625148c28ca4126d153bc8bf05e5d4c9fca2e9ca38ee0e58f278b8561e`;
+rollback image `trading-stack-n50-dashboard:before-scalper-v3-compact-20260922`
+preserves the preceding release.
+
+Authenticated Chromium passed 11/11 checks. At 1920x1080 it measured:
+
+- NIFTY `767.86 x 640px` (40.97%);
+- CE and PE each `692.95 x 318px` with the same X coordinate and width (36.98%);
+- strike rail `413.17 x 640px` (22.05%);
+- bottom analytics strip `1882 x 180px`;
+- maximized price pane `1904 x 1064px`;
+- zero visible repeated per-panel refresh stamps and zero browser page errors.
+
+Evidence is stored outside Git at `/tmp/scalper-v3-compact-evaluation/`:
+`desktop-1920-scalper-v3.png`, `desktop-1440-scalper-v3.png`, and
+`results.json`. The V2 route remained independently reachable.

@@ -6250,3 +6250,10 @@ or outcomes were deleted.
 - Pre-release validation: web 266/266 and API 264/264 tests, both typechecks and
   builds, canonical gate and diff check pass. Deployment/browser evidence is in
   `docs/trading-analytics/SCALPER_V3_LINKED_WORKSPACE_P1_P2_20260922.md`.
+- Released on master at `15631ae`. Production container
+  `e89d71731a7fee30dc709968b80dc84f6c03254fbbf6e3987cf190c6d30373a9`
+  is healthy with zero restarts on image
+  `sha256:cf9bc5c5b4a9c8d2a22812a90f8d2eb402e0dfe94864e69e6b25543d1f441b6a`.
+- Authenticated production Chromium audit passed 16/16 checks with no page
+  errors. Evidence is under `/tmp/scalper-v3-linked-workspace/`; rollback tag is
+  `trading-stack-n50-dashboard:before-scalper-v3-linked-20260922`.

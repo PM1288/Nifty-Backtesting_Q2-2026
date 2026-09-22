@@ -79,7 +79,38 @@ canonical repository gate: PASS
 git diff --check: PASS
 ```
 
-Production browser and deployment evidence is appended after the pushed master
-release is deployed. No database migration, collector, strategy calculation,
-alert eligibility, paper/live order permission or V2 default was changed.
+Production release evidence:
 
+```text
+feature commit: 78c5d84
+master release commit: 15631ae
+container: e89d71731a7fee30dc709968b80dc84f6c03254fbbf6e3987cf190c6d30373a9
+image: sha256:cf9bc5c5b4a9c8d2a22812a90f8d2eb402e0dfe94864e69e6b25543d1f441b6a
+container health: healthy
+restart count: 0
+authenticated Chromium checks: PASS (16/16)
+uncaught page errors: 0
+```
+
+The authenticated production run verified the V3 route and all three native
+price panes, the shared cursor strip, default time/strike links, identical
+crosshair timestamps in NIFTY/CE/PE, cursor and click-to-pin behavior, pinned
+strike inspection, link-time disable, named layouts, density mode, keyboard
+maximize/bottom-collapse/help, independent V2 access and absence of V3 controls
+in V2. Production data for the selected latest session did not contain exact
+CE/PE price bars, so their cursor values correctly remained unavailable while
+the available OI snapshot values were separately displayed.
+
+Browser artifacts:
+
+- `/tmp/scalper-v3-linked-workspace/results.json`
+- `/tmp/scalper-v3-linked-workspace/desktop-1920-v3-linked.png`
+- `/tmp/scalper-v3-linked-workspace/desktop-1920-v2-preserved.png`
+
+Rollback image tag:
+`trading-stack-n50-dashboard:before-scalper-v3-linked-20260922`.
+
+No database migration, collector, strategy calculation, alert eligibility,
+paper/live order permission or V2 default was changed. The unrelated existing
+OIIS report files in the working tree were preserved and were not included in
+this release.

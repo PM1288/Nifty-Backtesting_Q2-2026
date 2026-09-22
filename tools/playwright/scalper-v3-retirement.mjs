@@ -33,8 +33,10 @@ try {
   await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 60_000 });
   await page.waitForFunction(() => new URLSearchParams(location.search).get("view") === "scalper_v2");
   check("legacy route canonicalized", new URL(page.url()).searchParams.get("view") === "scalper_v2", page.url());
-  check("V3 absent from navigation", await page.getByRole("button", { name: "Scalper V3", exact: true }).count() === 0, "retired button is still visible");
-  check("V2 remains available", await page.getByRole("button", { name: "Scalper V2", exact: true }).count() === 1, "V2 navigation missing");
+  const v3ButtonCount = await page.getByRole("button", { name: "Scalper V3", exact: true }).count();
+  const v2ButtonCount = await page.getByRole("button", { name: "Scalper V2", exact: true }).count();
+  check("V3 absent from navigation", v3ButtonCount === 0, `visible V3 buttons: ${v3ButtonCount}`);
+  check("V2 remains available", v2ButtonCount === 1, `visible V2 buttons: ${v2ButtonCount}`);
   await page.screenshot({ path: path.join(output, "desktop-scalper-v2-after-v3-retirement.png"), fullPage: true });
 
   await page.goto(`${base}/strategy/trading-analytics?view=scalper_v3&popout=scalper_v3`, { waitUntil: "domcontentloaded" });

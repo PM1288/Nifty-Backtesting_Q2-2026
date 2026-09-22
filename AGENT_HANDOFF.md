@@ -6366,3 +6366,13 @@ or outcomes were deleted.
 - Pre-release validation: web typecheck/build and 271/271 tests passed; API
   typecheck/build and 264/264 tests passed; canonical repository gate and diff
   check passed.
+- Released commit `fa09cb9`. Only `n50-dashboard` was recreated; it is healthy
+  with zero restarts on image
+  `sha256:92113aa4714728b588f32a1dbc140fc7200e02093d3061198ce1a1688bcde9d2`.
+  Authenticated production Chromium passed 6/6 retirement checks without page
+  errors. The deployment script's immediate first route probe saw a transient
+  502 during gateway reconnection; the route then returned HTTP 200 and both
+  legacy normal/pop-out redirect checks passed. Evidence:
+  `/home/novius2/NIFTY50/evidence/scalper-v3-retirement-20260922/`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v3-retirement-20260922`.

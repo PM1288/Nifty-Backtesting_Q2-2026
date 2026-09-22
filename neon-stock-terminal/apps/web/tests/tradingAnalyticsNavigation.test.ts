@@ -4,12 +4,13 @@ import {
   analyticsMainView,
   analyticsTabs,
 } from "../src/lib/tradingAnalyticsNavigation";
-test("IO navigation keeps V2 and adds the isolated V3 evaluation workspace", () => {
-  assert.equal(Object.keys(analyticsTabs).length, 10);
+test("IO navigation keeps V2 and retires the V3 evaluation workspace", () => {
+  assert.equal(Object.keys(analyticsTabs).length, 9);
   assert.equal(Object.hasOwn(analyticsTabs, "scalper"), false);
+  assert.equal(Object.hasOwn(analyticsTabs, "scalper_v3"), false);
   assert.equal(analyticsMainView("scalper"), "scalper_v2");
+  assert.equal(analyticsMainView("scalper_v3"), "scalper_v2");
   assert.equal(analyticsTabs.scalper_v2, "Scalper V2");
-  assert.equal(analyticsTabs.scalper_v3, "Scalper V3");
   assert.equal(analyticsTabs["trade-log"], "Trade Log");
   assert.equal(analyticsTabs.flow, "Positioning & Flow");
 });

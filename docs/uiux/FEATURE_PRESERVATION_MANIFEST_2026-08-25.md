@@ -1,6 +1,13 @@
 # UI feature preservation manifest — 25 August 2026
 
-2026-09-22 Scalper V3 live-cockpit pass: `view=scalper_v3` gains truthful
+2026-09-22 Scalper V3 retirement: the evaluation workspace is no longer
+selectable. Historical `view=scalper_v3` and `popout=scalper_v3` links are
+canonicalized to the retained `scalper_v2` workstation. Scalper V2 data,
+contracts, charts, drawings, measurements, exports and read-only permissions
+remain unchanged. The historical V3 entries below are retained as an audit
+record, not as active feature claims.
+
+2026-09-22 Scalper V3 live-cockpit pass (historical): `view=scalper_v3` gains truthful
 interval-aware feed age/state, a restrained NOW edge and price-direction flash,
 one global delta reference, click-A/Shift-click-B comparison, exact retained
 price/OI deltas, strike velocity, keyboard time/strike navigation,

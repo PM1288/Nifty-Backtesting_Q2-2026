@@ -6349,3 +6349,20 @@ or outcomes were deleted.
   `sha256:9ce3ef95ffa08bd183e9d8eebd329645b29777cbafe56486e9b6ea3d369f4cdf`.
   Rollback image:
   `trading-stack-n50-dashboard:before-three-month-direction-clarity-20260922`.
+
+## 2026-09-22 — Scalper V3 retired
+
+- Removed Scalper V3 from the Trading Analytics workspace navigation. Scalper
+  V2 remains the sole selectable Scalper workstation.
+- Historical `view=scalper_v3` and `popout=scalper_v3` bookmarks now
+  canonicalize to their `scalper_v2` equivalents while preserving the other
+  symbol, expiry, strike, interval and session query parameters.
+- Removed V3 from pop-out chrome handling and active-version chart exemptions.
+  No data collector, API, strategy, signal, chart calculation, export, drawing,
+  measurement, authentication or order-permission contract changed.
+- Historical V3 implementation documents remain as an audit record. Current
+  scope and rerun instructions are in
+  `docs/trading-analytics/SCALPER_V3_RETIREMENT_20260922.md`.
+- Pre-release validation: web typecheck/build and 271/271 tests passed; API
+  typecheck/build and 264/264 tests passed; canonical repository gate and diff
+  check passed.

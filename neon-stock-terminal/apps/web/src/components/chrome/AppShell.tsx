@@ -156,7 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const niftyRsi = overview.data?.indices?.nifty50?.rsi ?? null;
   const workspaceRoute = resolveWorkspaceRoute(location.pathname);
   const scalperPopout = location.pathname === "/strategy/trading-analytics"
-    && ["scalper_v2", "scalper_v3"].includes(new URLSearchParams(location.search).get("popout") ?? "");
+    && new URLSearchParams(location.search).get("popout") === "scalper_v2";
   const workspace = workspaceRoute.id;
   const isAdminRoute = location.pathname.startsWith("/control-plane");
   const secondaryLinks = workspaceLinks(workspace, user?.role === "admin");

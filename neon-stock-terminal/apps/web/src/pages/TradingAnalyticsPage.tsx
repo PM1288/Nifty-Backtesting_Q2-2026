@@ -136,7 +136,6 @@ const tabs = {
   flow: "Positioning & Flow",
   scalper: "Scalper / Exact Contracts",
   scalper_v2: "Scalper V2 / Three Charts",
-  scalper_v3: "Scalper V3 / Compact Canvas",
   "trade-log": "Scalper Trade Log",
   matrix: "1m / 5m / 15m Matrix",
   structure: "Price & EMA",
@@ -372,18 +371,19 @@ export function TradingAnalyticsPage() {
   >(null);
   const [inspected, setInspected] = useState<Row | null>(null);
   const [params, setParams] = useSearchParams();
-  const isScalperPopout = ["scalper_v2", "scalper_v3"].includes(params.get("popout") ?? "");
+  const isScalperPopout = params.get("popout") === "scalper_v2";
   const [logMarketContext, setLogMarketContext] = useState(false);
   const tab: Tab =
-    params.get("view") === "scalper" ? "scalper_v2" : params.get("view") === "oi"
+    ["scalper", "scalper_v3"].includes(params.get("view") ?? "") ? "scalper_v2" : params.get("view") === "oi"
       ? "smartapi"
       : Object.hasOwn(tabs, params.get("view") ?? "")
         ? (params.get("view") as Tab)
         : "morning";
   useEffect(() => {
-    if (params.get("view") !== "scalper") return;
+    if (!["scalper", "scalper_v3"].includes(params.get("view") ?? "") && params.get("popout") !== "scalper_v3") return;
     const next = new URLSearchParams(params);
     next.set("view", "scalper_v2");
+    if (next.get("popout") === "scalper_v3") next.set("popout", "scalper_v2");
     setParams(next, { replace: true });
   }, [params, setParams]);
   const [replayInput, setReplayInput] = useState(params.get("asOf") ?? "");
@@ -401,7 +401,7 @@ export function TradingAnalyticsPage() {
     // Scalper has a deliberately small context endpoint. Load the full research
     // contract only when another lens owns it or a shared evidence drawer is
     // explicitly requested.
-    enabled: !["scalper", "scalper_v2", "scalper_v3"].includes(tab) || drawer != null,
+    enabled: !["scalper", "scalper_v2"].includes(tab) || drawer != null,
   });
   const scalperQuery = new URLSearchParams();
   for (const k of ["symbol", "expiry", "asOf"])
@@ -412,7 +412,7 @@ export function TradingAnalyticsPage() {
     staleTime: 10000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: tab === "scalper" || tab === "scalper_v2" || tab === "scalper_v3",
+    enabled: tab === "scalper" || tab === "scalper_v2",
     refetchInterval: params.has("asOf") ? false : SCALPER_V2_PRICE_REFRESH_MS,
     refetchIntervalInBackground: false,
   });
@@ -433,7 +433,7 @@ export function TradingAnalyticsPage() {
   };
   const d = q.data;
   const scalperContext = scalperQ.data;
-  const isScalperView = tab === "scalper" || tab === "scalper_v2" || tab === "scalper_v3";
+  const isScalperView = tab === "scalper" || tab === "scalper_v2";
   const pageContext = isScalperView ? scalperContext : d;
   const pageUniverse = isScalperView && universeQ.data?.universe.length
     ? universeQ.data.universe
@@ -467,9 +467,9 @@ export function TradingAnalyticsPage() {
           <button onClick={() => setDrawer("health")} title="Data health">Health</button>
           <button onClick={() => setDrawer("source")} title="Source and formula">Formula</button>
           <button onClick={() => setDrawer("condition")}>Conditions</button></>}
-          {isScalperView && (tab === "scalper_v3" ? <label>Workspace <select aria-label="Trading Analytics workspace" value={tab} onChange={(event) => change("view", event.target.value)}>{Object.entries(analyticsTabs).map(([id, label]) => <option key={id} value={id === "oi" ? "smartapi" : id}>{label}</option>)}</select></label> : Object.entries(analyticsTabs).map(([id, label]) => <button key={id} aria-current={main === id ? "page" : undefined} onClick={() => change("view", id === "oi" ? "smartapi" : id)}>{label}</button>))}
+          {isScalperView && Object.entries(analyticsTabs).map(([id, label]) => <button key={id} aria-current={main === id ? "page" : undefined} onClick={() => change("view", id === "oi" ? "smartapi" : id)}>{label}</button>)}
           {isScalperView && pageContext && <><span className={styles.toolbarMetric}>OI PCR <strong>{display(pageContext.smartapi.metrics.oiPcr)}</strong></span><span className={styles.toolbarMetric}>Volume PCR <strong>{display(pageContext.smartapi.metrics.volumePcr)}</strong></span></>}</>}
-          {isScalperPopout && <strong>{tab === "scalper_v3" ? "Scalper V3 · compact evaluation" : "Scalper V2 · live workspace"}</strong>}
+          {isScalperPopout && <strong>Scalper V2 · live workspace</strong>}
           <button disabled={activeQuery.isFetching} onClick={() => void activeQuery.refetch()}>
             {activeQuery.isFetching ? "Refreshing…" : "Refresh"}
           </button>
@@ -573,7 +573,7 @@ export function TradingAnalyticsPage() {
             ))}
           </nav>
         )}
-        {d && !["scalper", "scalper_v2", "scalper_v3", "trade-log", "matrix", "replay", "stock", "flow"].includes(tab) && (
+        {d && !["scalper", "scalper_v2", "trade-log", "matrix", "replay", "stock", "flow"].includes(tab) && (
           <button
             onClick={() => {
               const rows =
@@ -605,8 +605,8 @@ export function TradingAnalyticsPage() {
             <button onClick={() => void activeQuery.refetch()}>Retry</button>
           </section>
         )}
-        {(tab === "scalper_v2" || tab === "scalper_v3") ? (!scalperContext ? (
-          <p role="status">{scalperQ.isLoading ? `Loading ${tab === "scalper_v3" ? "Scalper V3" : "Scalper V2"} market context…` : `No ${tab === "scalper_v3" ? "Scalper V3" : "Scalper V2"} context response.`}</p>
+        {tab === "scalper_v2" ? (!scalperContext ? (
+          <p role="status">{scalperQ.isLoading ? "Loading Scalper V2 market context…" : "No Scalper V2 context response."}</p>
         ) : (
           <Suspense fallback={<p role="status">Loading the three-chart Scalper V2 workspace…</p>}>
             <ScalperV2
@@ -621,7 +621,7 @@ export function TradingAnalyticsPage() {
               state={scalperContext.state}
               errors={scalperContext.errors}
               referenceLevels={scalperContext.referenceLevels}
-              layout={tab === "scalper_v3" ? "v3" : "v2"}
+              layout="v2"
               spot={scalperContext.smartapi.spot?.ltp == null ? null : Number(scalperContext.smartapi.spot.ltp)}
             />
           </Suspense>

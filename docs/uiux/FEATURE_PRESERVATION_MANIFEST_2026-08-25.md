@@ -1,5 +1,15 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 Scalper V3 live-cockpit pass: `view=scalper_v3` gains truthful
+interval-aware feed age/state, a restrained NOW edge and price-direction flash,
+one global delta reference, click-A/Shift-click-B comparison, exact retained
+price/OI deltas, strike velocity, keyboard time/strike navigation,
+changed-strike highlights, ATM-shift notice, session progress and a temporary
+What Changed view. Missing historical values remain unavailable. V2, sources,
+polling, strategy, alerts, exports, drawings, measurement and order contracts
+remain unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V3_LIVE_COCKPIT_P3_20260922.md`.
+
 2026-09-22 Scalper V3 linked-workspace pass: `view=scalper_v3` gains a shared
 time cursor and value strip, click-to-pin time/strike, persisted Link time/Link
 strike controls, paused/live-follow behavior, shared strike inspector, native

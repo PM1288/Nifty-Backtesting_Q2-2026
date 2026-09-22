@@ -6257,3 +6257,15 @@ or outcomes were deleted.
 - Authenticated production Chromium audit passed 16/16 checks with no page
   errors. Evidence is under `/tmp/scalper-v3-linked-workspace/`; rollback tag is
   `trading-stack-n50-dashboard:before-scalper-v3-linked-20260922`.
+
+## 2026-09-22 — Scalper V3 live cockpit P3
+
+- V3-only live layer adds observation-age feed state, NOW edges, brief
+  price-direction flashes, one comparison reference, exact causal A/B deltas,
+  keyboard candle/strike navigation, strike velocity, changed-strike pulses,
+  ATM shift notice, session progress and What Changed scanning.
+- No forming tick or missing historical OI is fabricated. V2, data collectors,
+  strategies, alerts, exports, drawings, measurements and order guards remain
+  unchanged.
+- Full scope, explicit deferrals and release evidence:
+  `docs/trading-analytics/SCALPER_V3_LIVE_COCKPIT_P3_20260922.md`.

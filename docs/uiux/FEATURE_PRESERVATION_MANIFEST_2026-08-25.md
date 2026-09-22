@@ -1,5 +1,15 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 Scalper V3 linked-workspace pass: `view=scalper_v3` gains a shared
+time cursor and value strip, click-to-pin time/strike, persisted Link time/Link
+strike controls, paused/live-follow behavior, shared strike inspector, native
+pane maximize controls, chart visibility toggles, range-trace modes, heatmap
+scale control, keyboard help and persisted named layout/density presets. V2
+keeps its existing DOM defaults and saved state. Missing exact candles and
+historical chain values remain unavailable; no selection, calculation, export,
+collector, strategy, alert or order contract changes. Evidence:
+`docs/trading-analytics/SCALPER_V3_LINKED_WORKSPACE_P1_P2_20260922.md`.
+
 2026-09-22 Scalper V3 compact evaluation: `view=scalper_v3` is an additive
 presentation experiment backed by the exact Scalper V2 data, calculation,
 cursor, drawing and measurement contracts. It uses a 41/37/22 synchronized

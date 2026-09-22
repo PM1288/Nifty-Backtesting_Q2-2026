@@ -46,6 +46,7 @@ export function ScalperV2Chart({
   maxPainStrikes = EMPTY_MAX_PAIN,
   signalEvents = EMPTY_SIGNALS, measurementTimes = EMPTY_MEASUREMENT, selectedStrike = null, selectedPutStrike = null, hoveredStrike = null,
   referenceLevels = EMPTY_REFERENCE_LEVELS,
+  showEma = true, showVolumeEma = true, showSignals = true, showReferences = true, hideReadout = false, rightOffset = 1, linkCursor = true, onMaximize,
   drawingTool = "select", drawings = [], selectedDrawingId = null, onDrawingCreate, onDrawingUpdate, onDrawingSelect,
 }: {
   id: "underlying" | "call" | "put"; title: string; subtitle: string; bars: Row[]; volumeBars?: Row[]; volumeLabel?: string;
@@ -68,6 +69,14 @@ export function ScalperV2Chart({
   selectedPutStrike?: number | null;
   hoveredStrike?: number | null;
   referenceLevels?: ScalperV2ReferenceLevel[];
+  showEma?: boolean;
+  showVolumeEma?: boolean;
+  showSignals?: boolean;
+  showReferences?: boolean;
+  hideReadout?: boolean;
+  rightOffset?: number;
+  linkCursor?: boolean;
+  onMaximize?: () => void;
   drawingTool?: ScalperV2DrawingTool;
   drawings?: ScalperV2Drawing[];
   selectedDrawingId?: string | null;
@@ -185,7 +194,7 @@ export function ScalperV2Chart({
       localization: { locale: "en-IN", timeFormatter: istChartTimeLabel },
       grid: { vertLines: { color: "#edf1f6" }, horzLines: { color: "#edf1f6" } }, crosshair: { mode: CrosshairMode.Normal },
       rightPriceScale: { borderColor: "#d7e0eb", scaleMargins: { top: 0, bottom: 0 } },
-      timeScale: { borderColor: "#d7e0eb", timeVisible: true, secondsVisible: false, barSpacing: 8, minBarSpacing: 0.5, rightOffset: 1, tickMarkFormatter: istChartTimeLabel },
+      timeScale: { borderColor: "#d7e0eb", timeVisible: true, secondsVisible: false, barSpacing: 8, minBarSpacing: 0.5, rightOffset, tickMarkFormatter: istChartTimeLabel },
       handleScale: true, handleScroll: true,
     });
     const candle = instance.addSeries(CandlestickSeries, {
@@ -218,7 +227,7 @@ export function ScalperV2Chart({
       pointerFrameRef.current = requestAnimationFrame(() => {
         const next = param.time == null ? null : { time: Number(param.time), source: id, sequence: performance.now() };
         if (hostRef.current) hostRef.current.dataset.crosshairTime = next == null ? "" : String(next.time);
-        cursorCoordinator.publish({ time: next?.time ?? null, source: id });
+        if (linkCursor) cursorCoordinator.publish({ time: next?.time ?? null, source: id });
         callbacksRef.current.onCrosshair(next);
       });
     });
@@ -370,9 +379,11 @@ export function ScalperV2Chart({
       volumeRef.current = null; volumeEmaRef.current = null;
       cancelDrawingGestureRef.current = null;
     };
-  }, [cursorCoordinator, id]);
+  }, [cursorCoordinator, id, linkCursor, rightOffset]);
 
-  useEffect(() => cursorCoordinator.subscribe(id, ({ time }) => {
+  useEffect(() => {
+    if (!linkCursor) return;
+    return cursorCoordinator.subscribe(id, ({ time }) => {
     const chart = chartRef.current, candle = candleRef.current;
     if (!chart || !candle || inspectionModeRef.current === "locked") return;
     suppressCrosshairRef.current += 1;
@@ -395,7 +406,8 @@ export function ScalperV2Chart({
     // before the next physical pointer task so entering a receiver pane cannot
     // lose its first real movement frame.
     queueMicrotask(() => { suppressCrosshairRef.current = Math.max(0, suppressCrosshairRef.current - 1); });
-  }), [byTime, cursorCoordinator, id]);
+    });
+  }, [byTime, cursorCoordinator, id, linkCursor]);
 
   useEffect(() => { drawingPrimitiveRef.current?.setData(displayDrawings, selectedDrawingId); }, [displayDrawings, selectedDrawingId]);
   useEffect(() => { cancelDrawingGestureRef.current?.(); }, [drawingTool]);
@@ -410,6 +422,7 @@ export function ScalperV2Chart({
       candleDataRef.current = data;
     }
     if (ema) {
+      ema.applyOptions({ visible: showEma });
       const plan = scalperV2SeriesUpdatePlan(emaDataRef.current, emaData);
       if (plan.kind === "replace") ema.setData(plan.rows);
       else if (plan.kind === "update") plan.rows.forEach((row) => ema.update(row));
@@ -422,7 +435,7 @@ export function ScalperV2Chart({
       volumeDataRef.current = volumeData;
     }
     if (volumeEma) {
-      volumeEma.applyOptions({ title: `Volume EMA${volumeEmaPeriod}` });
+      volumeEma.applyOptions({ title: `Volume EMA${volumeEmaPeriod}`, visible: showVolumeEma });
       const plan = scalperV2SeriesUpdatePlan(volumeEmaDataRef.current, volumeEmaData);
       if (plan.kind === "replace") volumeEma.setData(plan.rows);
       else if (plan.kind === "update") plan.rows.forEach((row) => volumeEma.update(row));
@@ -439,7 +452,7 @@ export function ScalperV2Chart({
     candleRef.current?.applyOptions({ autoscaleInfoProvider: verticalView === "session" && requestedBounds ? () => ({ priceRange: { minValue: requestedBounds.low, maxValue: requestedBounds.high } }) : undefined });
     chartRef.current?.priceScale("right").setAutoScale(verticalView !== "manual" && !yLocked);
     scheduleProfile();
-  }, [data, emaData, id, profileBounds, profileRangeExpanded, renderBounds, verticalView, volumeData, volumeEmaData, volumeEmaPeriod, volumeLabel, yLocked]);
+  }, [data, emaData, id, profileBounds, profileRangeExpanded, renderBounds, showEma, showVolumeEma, verticalView, volumeData, volumeEmaData, volumeEmaPeriod, volumeLabel, yLocked]);
 
   useEffect(() => {
     chartRef.current?.applyOptions({ handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: !yLocked }, axisDoubleClickReset: { time: true, price: !yLocked } } });
@@ -456,7 +469,7 @@ export function ScalperV2Chart({
     }
     semanticLinesRef.current.forEach((line) => candle.removePriceLine(line));
     const permittedReferenceIds = new Set(["today-open", "previous-day-close", "previous-day-high"]);
-    const visibleReferences = visibleScalperV2ReferenceLevels(referenceLevels, sessionBounds)
+    const visibleReferences = (showReferences ? visibleScalperV2ReferenceLevels(referenceLevels, sessionBounds) : [])
       .filter((level) => permittedReferenceIds.has(level.id));
     const candidates = visibleReferences.map((level) => ({
       price: level.value,
@@ -479,10 +492,10 @@ export function ScalperV2Chart({
         ? "unavailable"
         : maxPainOverlay.hidden.length === 0 ? "plotted" : "outside-active-y-range";
     }
-  }, [data, hoveredStrike, id, maxPainOverlay, rankLevels, referenceLevels, selectedPutStrike, selectedStrike, sessionBounds]);
+  }, [data, hoveredStrike, id, maxPainOverlay, rankLevels, referenceLevels, selectedPutStrike, selectedStrike, sessionBounds, showReferences]);
 
   useEffect(() => {
-    markerRef.current?.setMarkers(signalEvents.flatMap((event) => {
+    markerRef.current?.setMarkers((showSignals ? signalEvents : []).flatMap((event) => {
       const canonicalTime = chartTime(event.setupTime);
       const time = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
       if (time == null || !byTime.has(Number(time))) return [];
@@ -495,7 +508,7 @@ export function ScalperV2Chart({
         text: potentialEma ? `★ ${event.direction} potential` : isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
     }));
     if (bodyRef.current) bodyRef.current.dataset.potentialEmaMarkers = String(signalEvents.filter((event) => event.rule === "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1").length);
-  }, [byTime, endToStart, signalEvents]);
+  }, [byTime, endToStart, showSignals, signalEvents]);
 
   useEffect(() => {
     const candle = candleRef.current; if (!candle) return;
@@ -598,9 +611,9 @@ export function ScalperV2Chart({
 
   return <section className={css.chartPanel} data-testid={`v2-chart-panel-${id}`} aria-label={`${title} ${interval} minute candlestick chart`}>
     <header className={css.chartHeader}><span><strong>{title}</strong><small className={css.refreshStamp} data-testid={`v2-chart-refresh-${id}`}>{scalperV2RefreshClock(lastRefreshAt)}</small><small title={subtitle}>{subtitle} · {interval}m</small><small className={css.volumeSource} title={volumeLabel}>{volumeLabel} · EMA{volumeEmaPeriod}</small></span>
-      <span className={css.ohlc} data-testid={`v2-chart-readout-${id}`}><b>{inspectionMode === "latest" ? "Latest" : inspectionMode === "locked" ? "Locked" : "At cursor"}</b>
+      {!hideReadout && <span className={css.ohlc} data-testid={`v2-chart-readout-${id}`}><b>{inspectionMode === "latest" ? "Latest" : inspectionMode === "locked" ? "Locked" : "At cursor"}</b>
         {selected ? <><span>O {format(selected.open)}</span><span>H {format(selected.high)}</span><span>L {format(selected.low)}</span><span>C {format(selected.close)}</span><span>EMA9 {format(selectedEma)}</span><span className={distance == null ? undefined : distance > 0 ? css.positive : distance < 0 ? css.negative : undefined}>C−EMA {distance == null ? "—" : `${distance > 0 ? "+" : ""}${format(distance)}`}</span></> : <span>No exact completed candle</span>}
-      </span></header>
+      </span>}{onMaximize && <button type="button" className={css.panelMaximize} onClick={onMaximize} aria-label={`Maximize ${title} chart`} title="Maximize chart">↗</button>}</header>
     <div ref={bodyRef} className={css.chartBody} data-testid={`v2-chart-body-${id}`} data-first-candle-start={data.length ? String(Number(data[0].time)) : ""} data-first-candle-end={bars.length ? String(chartTime(bars.find((bar) => bar.closed === true)?.end) ?? "") : ""}>
       <div ref={hostRef} className={css.chartCanvas} data-testid={`v2-chart-host-${id}`} />
       {drawingTool !== "select" && <div className={css.drawingHint} aria-live="polite">{drawingHint ?? `${drawingAnchorCount(drawingTool)} anchor tool · click first anchor · Esc cancels`}</div>}

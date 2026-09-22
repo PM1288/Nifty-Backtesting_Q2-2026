@@ -93,3 +93,20 @@ npx tsx --test tests/scalperV2EmaAlignment.test.ts tests/scalperV2EmaEvaluation.
 Run the complete repository-required web/API checks and canonical gate before
 release. Authenticated browser acceptance must confirm the six arrows, Strategy
 panel, sample counts, and no page/API error before completion is claimed.
+
+## Production release evidence
+
+- Released application commit: `bac238c` on pushed canonical `master`.
+- Web tests: 274/274 passed; API tests: 264/264 passed.
+- Web/API typechecks and production builds passed; canonical repository gate
+  and diff check passed.
+- Authenticated Chromium found `READY`, six references and six native markers
+  on each of NIFTY, CE and PE. Strategy evidence displayed the exact six
+  references, one-session scope, 1/3/6-bar table and both correlations.
+- No page error, API failure or UI alert occurred in the authenticated run.
+- Evidence:
+  `/home/novius2/NIFTY50/evidence/scalper-v2-entry-arrows-20260923/`.
+- Only `n50-dashboard` was recreated. It is healthy with zero restarts on image
+  `sha256:6f9c6354cf0e0d41018a54bda41e8ca4f2311a63c40e74ef89efa660c5bc06d5`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-entry-arrows-20260923`.

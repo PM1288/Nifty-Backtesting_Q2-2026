@@ -6406,3 +6406,32 @@ or outcomes were deleted.
   `/home/novius2/NIFTY50/evidence/scalper-v3-retirement-20260922/`.
 - Rollback image:
   `trading-stack-n50-dashboard:before-scalper-v3-retirement-20260922`.
+
+## 2026-09-23 — Scalper V2 entry arrows and Strategy evidence
+
+- Diagnosed the missing entry arrows in live production. The exact selected
+  pair was `READY` with six valid references and six markers on every pane, but
+  the marker adapter forced potential EMA references to circles.
+- Potential references now render as yellow directional arrows using each
+  pane's real EMA leg: CALL is up on NIFTY/CE and down on PE; PUT is the inverse.
+  The calculation itself is unchanged.
+- Renamed the right inspector label from Rules to Strategy and added a direct
+  `More -> Strategy evidence` action. It displays the closed-bar methodology,
+  exact leg evidence, selected-pair retained-data 1/3/6-bar follow-through and
+  exact-time NIFTY/CE and NIFTY/PE return correlations. JSON export includes the
+  same evidence and sample scope.
+- The current retained exact pair contains one shared session and six
+  references (3 CALL/3 PUT). Correlations are +0.869 for NIFTY/CE and -0.902
+  for NIFTY/PE with n=74. This is explicitly labelled descriptive and not a
+  fill, P&L, exit or validated edge.
+- Web 274/274 and API 264/264 tests passed; both typechecks/builds, the canonical
+  gate and diff check passed. Authenticated production Chromium confirmed the
+  six markers on all panes, complete Strategy evidence, no alerts, no API
+  failures and no page errors.
+- Released application commit `bac238c` on pushed canonical `master`. Only
+  `n50-dashboard` was recreated; it is healthy with zero restarts on image
+  `sha256:6f9c6354cf0e0d41018a54bda41e8ca4f2311a63c40e74ef89efa660c5bc06d5`.
+  Evidence:
+  `/home/novius2/NIFTY50/evidence/scalper-v2-entry-arrows-20260923/`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-entry-arrows-20260923`.

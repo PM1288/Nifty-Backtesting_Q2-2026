@@ -6213,3 +6213,25 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:before-scalper-v2-three-leg-ema-20260922`.
 - Detailed rule/evidence:
   `docs/trading-analytics/SCALPER_V2_THREE_INSTRUMENT_EMA_REFERENCE_20260922.md`.
+# 2026-09-22 — Scalper V3 compact evaluation workspace
+
+- Added the alternate `view=scalper_v3` workspace without replacing Scalper V2.
+  V3 reuses the exact V2 APIs, calculations, cursor coordinator, drawings,
+  measurement state, contract selection and missing-data semantics.
+- Desktop geometry uses the requested 41/37/22 upper canvas and matching bottom
+  boundaries. NIFTY spans 640px, CE/PE split it into matching 318px panes, the
+  right rail uses a shared docked strike inspector, and the bottom strip defaults
+  to 180px. Repeated panel refresh labels are hidden only in V3.
+- Added persistent right-rail and bottom-strip collapse, adjustable bottom height,
+  reset layout, a 6px auto-revealing drawing edge and double-click maximize for
+  price and analytical panes. The workspace destination row becomes one selector.
+- Validation: web 266/266, API 264/264, web/API typecheck and builds PASS;
+  canonical repository gate PASS. Authenticated production Chromium 11/11 PASS
+  at 1920x1080 plus a 1440x900 screenshot. Exact measured column shares were
+  40.97%, 36.98%, 22.05%; CE/PE X/width matched; bottom height was 180px; no
+  browser page errors occurred. Evidence: `/tmp/scalper-v3-compact-evaluation/`.
+- Production: canonical master `8943a1e`; only `n50-dashboard` recreated; healthy
+  with zero restarts on image
+  `sha256:cc7fcb625148c28ca4126d153bc8bf05e5d4c9fca2e9ca38ee0e58f278b8561e`.
+  Rollback: `trading-stack-n50-dashboard:before-scalper-v3-compact-20260922`.
+  No migration, collector, strategy, alert eligibility or order-permission change.

@@ -95,3 +95,22 @@ bash scripts/verify/canonical-repository-gate.sh
 Rollback is a scoped revert of the calculation, tests and two UI integrations,
 followed by rebuilding/recreating only `n50-dashboard`. There is no stored-data
 rollback.
+
+## Production evidence — 22 September 2026
+
+- Authenticated production browser checks: 7/7 passed at 1920×1080 with no page
+  errors.
+- Production explicitly reported `UNAVAILABLE`, not zero references.
+- Underlying NIFTY completed data extended through `2026-09-22T10:00:00Z`
+  (15:30 IST).
+- Exact selected `NIFTY29SEP2623350CE` and `NIFTY29SEP2623350PE` panes contained
+  zero completed retained 5-minute candles. Today therefore cannot be evaluated
+  under the exact-candle rule. The native option-chain archive has snapshots,
+  but they are not silently converted into complete option candles.
+- Browser evidence:
+  `/tmp/scalper-v2-three-leg-ema-reference/results.json` and
+  `/tmp/scalper-v2-three-leg-ema-reference/scalper-v2-three-leg-ema-reference.png`.
+- Deployed dashboard image:
+  `sha256:89210e74be559e1c07c7d570de1c1b5fbcb4145f9f4c5d75670ae21e05aa920a`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-three-leg-ema-20260922`.

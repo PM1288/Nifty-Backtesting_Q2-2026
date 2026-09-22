@@ -41,7 +41,7 @@ try {
 
   const page = await context.newPage();
   const consoleErrors = [];
-  const ignored = /(?:clarity\.ms|analytics\.google\.com|cloudflareinsights|ERR_BLOCKED_BY_CLIENT|ERR_ABORTED)/;
+  const ignored = /(?:clarity\.ms|analytics\.google\.com|cloudflareinsights|ERR_BLOCKED_BY_CLIENT|ERR_ABORTED|ERR_NETWORK_CHANGED)/;
   page.on("console", (message) => { if (message.type() === "error" && !ignored.test(message.text())) consoleErrors.push(message.text()); });
   const route = await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
   if (!route?.ok()) throw new Error(`paper route failed: ${route?.status()}`);
@@ -57,7 +57,8 @@ try {
   await contextBar.getByLabel("Direction").selectOption("BUY");
   await contextBar.getByLabel("Period").selectOption("30D");
   if (!page.url().includes("direction=BUY") || !page.url().includes("period=30D")) throw new Error("analysis context did not persist to URL");
-  await contextBar.getByRole("button", { name: "Clear" }).click();
+  await contextBar.getByRole("button", { name: "Clear", exact: true }).last().click();
+  await sectionNav.getByRole("button", { name: /Trade Evidence/ }).click();
 
   await page.getByRole("button", { name: "Quality", exact: true }).click();
   const table = page.locator('div[class*="unifiedTable"] table');

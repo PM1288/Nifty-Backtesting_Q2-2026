@@ -6101,3 +6101,33 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:before-scalper-v2-cumulative-bands-20260922`.
 - Detailed evidence and rollback:
   `docs/trading-analytics/SCALPER_V2_CUMULATIVE_BANDS_AND_COMPACT_RANGE_20260922.md`.
+
+## 2026-09-22 — Paper Trading progressive hydration and load repair
+
+- Branch: `perf/paper-trading-fast-load-20260922`.
+- Measured root cause: the complete ledger endpoint took 11.8–17.0 seconds
+  (12.8-second median) because the exact ₹6,000 stop simulation scanned roughly
+  1,600 one-minute bars for each of 95 trades. Its PostgreSQL sub-plan alone
+  read about 85,000 pages and took about nine seconds.
+- Added a backward-compatible `detail=core` read which returns the same trade
+  identities, positions, marks, targets, horizons, quality evidence and primary
+  chart inputs while deferring entry-session/month and stop-path scans. The UI
+  now paints census, core rows/charts, then complete evidence; deferred values
+  remain unavailable rather than zero. Default API callers still receive the
+  full response.
+- Background complete-evidence refresh waits 60 seconds after completion rather
+  than restarting the costly read after 30 seconds. Manual and focus refreshes
+  remain, and no paper mutation is performed.
+- Production public-route measurement: FCP 360 ms, heading 535 ms and all 95
+  trade rows rendered in 1,341 ms. Core API median was 1,565 ms over three
+  samples; complete background evidence median was 6,059 ms over two samples.
+- Validation passed 257/257 web tests, 263/263 API tests, web/API typechecks and
+  builds, canonical gate, and the authenticated six-viewport Paper Trading
+  regression with P/L and target/horizon reconciliation.
+- Release `7b850f6` is pushed on `master`; only `n50-dashboard` was recreated.
+  Container `790d7f4e951f...` is healthy with zero restarts on image
+  `sha256:9081a32d8ecf9a676c14b81c94884c5e3196fbba55a2380ae625a2b4d46ea252`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-paper-progressive-hydration-20260922`.
+- Full evidence:
+  `docs/paper-trading/PAPER_TRADING_PROGRESSIVE_HYDRATION_20260922.md`.

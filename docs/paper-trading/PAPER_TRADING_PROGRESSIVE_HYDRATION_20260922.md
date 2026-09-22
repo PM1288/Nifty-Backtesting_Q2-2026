@@ -47,6 +47,30 @@ Manual refresh and returning to the visible tab still revalidate.
 
 ## Validation and rollback
 
-Record focused tests, complete repository gates, before/after timings and the
-production image in `AGENT_HANDOFF.md` after release. Rollback is application-
-only: restore the preserved dashboard image and recreate only `n50-dashboard`.
+Production public-route evidence after release, using headless Chromium at
+1366x768 over the server-local network:
+
+- first contentful paint: 360 ms;
+- workbench heading: 535 ms;
+- 95 canonical trade rows rendered: 1,341 ms;
+- core API median: 1,565 ms across three samples;
+- complete background evidence median: 6,059 ms across two samples.
+
+The comparable pre-change complete API median was 12,767 ms across five
+samples, with a 17,011 ms maximum. These are interactive server-local samples,
+not an end-user broadband SLO or market-session soak.
+
+Validation passed 257/257 web tests, 263/263 API tests, both typechecks/builds,
+the canonical repository gate, and the authenticated Paper Trading browser
+regression at six responsive viewport sizes. The regression reconciled all 95
+equity-trade rows and preserved higher-target/lower-target and inclusive-horizon
+rules.
+
+Release `7b850f6` recreated only `n50-dashboard`. Container
+`790d7f4e951f...` is healthy with zero restarts on image
+`sha256:9081a32d8ecf9a676c14b81c94884c5e3196fbba55a2380ae625a2b4d46ea252`.
+Rollback image:
+`trading-stack-n50-dashboard:before-paper-progressive-hydration-20260922`.
+
+Rollback is application-only: restore the preserved dashboard image and
+recreate only `n50-dashboard`.

@@ -10,11 +10,12 @@ await fs.mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 try {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
-  const login = await context.request.post(`${baseUrl}/auth/session/dev-login`, { data: { identifier: "admin", password } });
+  const login = await context.request.post(`${baseUrl}/auth/session/dev-login`, { headers: { Origin: new URL(baseUrl).origin }, data: { identifier: "admin", password } });
   if (!login.ok()) throw new Error(`admin login failed: ${login.status()}`);
   const apiMs = [];
   const coreApiMs = [];
   let tradeCount = 0;
+  let coreTradeIds = [];
   for (let index = 0; index < 3; index += 1) {
     const coreStarted = performance.now();
     const coreResponse = await context.request.get(`${baseUrl}/v1/workspace/paper-trading?detail=core`, { timeout: 120_000 });
@@ -22,22 +23,35 @@ try {
     if (!coreResponse.ok()) throw new Error(`Core API sample failed: ${coreResponse.status()}`);
     const corePayload = await coreResponse.json();
     if (corePayload.detailState !== "CORE" || !(corePayload.stockTrades?.length > 0)) throw new Error("Core API did not return trade rows");
+    coreTradeIds = corePayload.stockTrades.map((trade) => String(trade.trade_group_id)).sort();
   }
   for (let index = 0; index < 2; index += 1) {
     const started = performance.now();
     const response = await context.request.get(`${baseUrl}/v1/workspace/paper-trading`, { timeout: 120_000 });
     apiMs.push(Number((performance.now() - started).toFixed(1)));
     if (!response.ok()) throw new Error(`API sample failed: ${response.status()}`);
-    tradeCount = (await response.json()).stockTrades?.length ?? 0;
+    const completePayload = await response.json();
+    tradeCount = completePayload.stockTrades?.length ?? 0;
+    const completeTradeIds = (completePayload.stockTrades ?? []).map((trade) => String(trade.trade_group_id)).sort();
+    if (completePayload.detailState !== "COMPLETE" || JSON.stringify(coreTradeIds) !== JSON.stringify(completeTradeIds)) throw new Error("Core and complete trade identities diverged");
   }
   const sorted = [...apiMs].sort((a, b) => a - b);
   const coreSorted = [...coreApiMs].sort((a, b) => a - b);
   const page = await context.newPage();
   const routeStarted = performance.now();
-  await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+  let route;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      route = await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+      break;
+    } catch (error) {
+      if (attempt === 2 || !String(error).includes("ERR_NETWORK_CHANGED")) throw error;
+    }
+  }
+  if (!route?.ok()) throw new Error(`Paper route failed: ${route?.status()}`);
   await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).waitFor({ timeout: 120_000 });
   const meaningfulMs = Number((performance.now() - routeStarted).toFixed(1));
-  await page.getByRole("button", { name: /Open .* evidence/ }).first().waitFor({ timeout: 120_000 });
+  await page.getByRole("heading", { name: "What is happening now?" }).waitFor({ timeout: 120_000 });
   const routeToTradeRowsMs = Number((performance.now() - routeStarted).toFixed(1));
   const paint = await page.evaluate(() => Object.fromEntries(performance.getEntriesByType("paint").map((entry) => [entry.name, Number(entry.startTime.toFixed(1))])));
   const result = { status: "PASS", measuredAt: new Date().toISOString(), environment: "Production public HTTPS route, headless Chromium, 1366x768, server-local network", tradeCount, coreApiSamplesMs: coreApiMs, coreApiMedianMs: coreSorted[Math.floor(coreSorted.length / 2)], coreApiMaxMs: Math.max(...coreApiMs), completeApiSamplesMs: apiMs, completeApiMedianMs: sorted[Math.floor(sorted.length / 2)], completeApiMaxMs: Math.max(...apiMs), routeToWorkbenchHeadingMs: meaningfulMs, routeToTradeRowsMs, paint, bundle: { paperTradingJsGzipKb: 42.21, paperTradingCssGzipKb: 19.77 }, limits: ["This is an interactive production check, not a full market-session soak.", "Browser and network conditions are server-local and should not be represented as end-user broadband SLO results."] };

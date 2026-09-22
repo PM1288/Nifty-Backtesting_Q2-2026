@@ -31,15 +31,21 @@ try {
     versionChecks += 1;
     await route.fulfill({ status: 200, contentType: "application/json", headers: { "Cache-Control": "no-store" }, body: JSON.stringify({ version: forcedVersion }) });
   });
-  const reload = page.waitForEvent("framenavigated", { predicate: (frame) => frame === page.mainFrame(), timeout: 15_000 });
+  let navigations = 0;
+  page.on("framenavigated", (frame) => { if (frame === page.mainFrame()) navigations += 1; });
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await page.getByRole("button", { name: "Apply update", exact: true }).waitFor({ state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(750);
+  check("mismatch does not reload an active workspace", navigations === 0, `navigations=${navigations}`);
+  const reload = page.waitForEvent("framenavigated", { predicate: (frame) => frame === page.mainFrame(), timeout: 15_000 });
+  await page.getByRole("button", { name: "Apply update", exact: true }).click();
   await reload;
   await page.waitForLoadState("domcontentloaded");
-  check("mismatch forces reload", versionChecks >= 1, `checks=${versionChecks}`);
+  check("explicit update action reloads", versionChecks >= 1, `checks=${versionChecks}`);
   check("route and filters preserved", page.url().includes("/paper-trading?tab=simple&period=30D"), page.url());
   await page.waitForTimeout(750);
   check("reload loop prevented", versionChecks <= 2, `checks=${versionChecks}`);
-  await page.screenshot({ path: path.join(outputDir, "post-version-reload.png"), fullPage: false });
+  await page.screenshot({ path: path.join(outputDir, "post-explicit-version-reload.png"), fullPage: false });
   await context.close();
 } finally {
   await browser.close();

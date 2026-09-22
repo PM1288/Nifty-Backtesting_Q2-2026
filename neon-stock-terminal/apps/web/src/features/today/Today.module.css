@@ -10,6 +10,10 @@
 .summaryPage,.fullBoardPage{--n50-text-3:#52647b}.marketStrip:focus-visible{outline:2px solid rgba(49,90,215,.35);outline-offset:2px}
 
 .summaryPage{height:auto;min-height:calc(100dvh - var(--app-sticky-content-top) - 20px);overflow:visible}
+.homeInitialState{grid-column:1/-1;min-height:calc(100dvh - var(--app-sticky-content-top) - 32px);display:grid;grid-template-rows:auto minmax(420px,1fr);gap:8px}
+.homeInitialGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(96px,1fr);gap:8px}
+.homeInitialGrid span{border:1px solid var(--n50-border);border-radius:8px;background:linear-gradient(100deg,#f2f5f9 20%,#fff 38%,#f2f5f9 56%);background-size:220% 100%;animation:homeHydrationShimmer 1.4s linear infinite}
+@keyframes homeHydrationShimmer{to{background-position-x:-220%}}
 .lensBody{grid-template-rows:58px minmax(300px,auto) auto auto 124px;overflow:visible}
 .progressionStrip{min-width:0;min-height:0;display:grid;grid-template-rows:30px minmax(0,1fr);overflow:hidden;border:1px solid var(--n50-border);border-radius:8px;background:var(--n50-surface);box-shadow:0 1px 2px rgba(11,31,58,.06)}
 .progressionStrip>header{min-width:0;border-bottom:1px solid var(--n50-border);padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px}

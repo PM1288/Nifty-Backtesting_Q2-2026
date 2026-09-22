@@ -1053,7 +1053,16 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const cursorVolumeRow = exactAt(volumeSeries?.bars ?? [], inspectionTime);
   const cursorNetOi = callProfile?.currentOi != null && putProfile?.currentOi != null ? putProfile.currentOi - callProfile.currentOi : null;
 
-  if (!active.data) return <section className={css.loading} role="status">{active.isLoading ? `Loading ${label} ${interval}m first…` : "Exact chart context unavailable."}{active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}</section>;
+  if (!active.data) return <section className={css.loadingWorkspace} role="status" aria-busy={active.isLoading} data-testid="scalper-v2-loading">
+    <header><strong>{symbol}</strong><span>{active.isLoading ? `Loading ${label} ${interval}m market data…` : "Exact chart context unavailable."}</span></header>
+    <div className={css.loadingWorkspaceGrid} aria-hidden="true">
+      <i className={css.loadingUnderlying} />
+      <i /><i />
+      <i className={css.loadingSide} />
+    </div>
+    <div className={css.loadingWorkspaceBottom} aria-hidden="true"><i /><i /><i /></div>
+    {active.isError && <ScalperV2Freshness sessions={[]} observations={[]} interval={interval} historical={Boolean(replayAsOf)} symbol={symbol} failed />}
+  </section>;
   return <section className={css.page} data-testid={isV3 ? "scalper-v3" : "scalper-v2"} data-layout={layout} data-popout={isPopout || undefined} data-right-open={isV3 ? v3RightOpen : undefined} data-bottom-open={isV3 ? v3BottomOpen : undefined} data-maximized-price={v3MaximizedPrice ?? undefined} data-v3-density={isV3 ? v3Density : undefined} data-v3-preset={isV3 ? v3LayoutPreset : undefined} data-v3-live={isV3 ? v3FollowLive : undefined} data-v3-feed={isV3 ? v3FeedStatus : undefined} data-what-changed={isV3 && v3WhatChanged ? true : undefined} style={v3Style} data-potential-ema-state={potentialEmaAvailability.state} data-potential-ema-references={potentialEmaAvailability.state === "READY" ? potentialEmaSignals.length : ""}>
     <header className={css.commandBar}>
       <strong className={css.commandSymbol}>{symbol}</strong>

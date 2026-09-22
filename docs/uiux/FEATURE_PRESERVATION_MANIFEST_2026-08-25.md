@@ -1,5 +1,14 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-23 Home and Scalper V2 stable hydration: both workspaces reserve their
+final viewport while initial/deferred evidence loads, so async Home selectors
+and the exact Scalper chart payload cannot collapse and re-expand the page.
+Open tabs never auto-reload when a new dashboard build is detected; an explicit
+Apply update action preserves user control, charts, drawings and inspection
+state. Polling cadences, data, strategy calculations, routes, exports, alerts,
+authentication and paper/live permissions are unchanged. Evidence:
+`docs/uiux/HOME_SCALPER_STABLE_HYDRATION_20260923.md`.
+
 2026-09-23 Scalper V2 entry-arrow and strategy-evidence repair: valid
 three-instrument EMA references render as yellow directional arrows instead of
 indistinct circles. Arrow direction follows each pane's actual EMA leg, so the

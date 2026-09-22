@@ -34,6 +34,14 @@ const TimeframeMatrix = lazy(async () => ({
 const ScalperV2 = lazy(async () => ({
   default: (await import("./TradingAnalyticsScalperV2")).TradingAnalyticsScalperV2,
 }));
+
+function ScalperV2LoadingShell({ label }: { label: string }) {
+  return <section className={styles.scalperLoadingShell} role="status" aria-busy="true" data-testid="scalper-v2-context-loading">
+    <strong>{label}</strong>
+    <span>Preparing the live chart workspace…</span>
+    <div aria-hidden="true"><i /><i /><i /><i /></div>
+  </section>;
+}
 const PositioningFlow = lazy(async () => ({
   default: (await import("./TradingAnalyticsPositioningFlow")).TradingAnalyticsPositioningFlow,
 }));
@@ -606,9 +614,11 @@ export function TradingAnalyticsPage() {
           </section>
         )}
         {tab === "scalper_v2" ? (!scalperContext ? (
-          <p role="status">{scalperQ.isLoading ? "Loading Scalper V2 market context…" : "No Scalper V2 context response."}</p>
+          scalperQ.isLoading
+            ? <ScalperV2LoadingShell label="Scalper V2" />
+            : <p role="status">No Scalper V2 context response.</p>
         ) : (
-          <Suspense fallback={<p role="status">Loading the three-chart Scalper V2 workspace…</p>}>
+          <Suspense fallback={<ScalperV2LoadingShell label={scalperContext.underlying.label} />}>
             <ScalperV2
               key={scalperContext.underlying.symbol}
               symbol={scalperContext.underlying.symbol}

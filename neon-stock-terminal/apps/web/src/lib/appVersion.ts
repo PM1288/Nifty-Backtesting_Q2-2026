@@ -35,13 +35,18 @@ export function shouldReloadForVersion(current: string | null, remote: string | 
   return !recentAttempt;
 }
 
-function showUpdatingNotice() {
+function showUpdateAvailableNotice(onApply: () => void) {
   if (document.getElementById("n50-ui-version-update")) return;
   const notice = document.createElement("div");
   notice.id = "n50-ui-version-update";
   notice.setAttribute("role", "status");
   notice.setAttribute("aria-live", "assertive");
-  notice.textContent = "A new NIFTY 50 Trader version is available. Updating now…";
+  notice.textContent = "An app update is available. This screen will keep running. ";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Apply update";
+  button.addEventListener("click", onApply);
+  notice.appendChild(button);
   Object.assign(notice.style, {
     position: "fixed",
     inset: "16px 16px auto auto",
@@ -69,27 +74,18 @@ export function startAppVersionGuard(options: { pollMs?: number } = {}): () => v
   let reloadQueued = false;
   const channel = typeof BroadcastChannel === "function" ? new BroadcastChannel(VERSION_CHANNEL) : null;
 
-  const reloadInto = (version: string) => {
+  const announceVersion = (version: string) => {
     if (reloadQueued || !shouldReloadForVersion(current, version, sessionStorage.getItem(RELOAD_TARGET_KEY))) return;
-    // Keep the active chart and unsaved inspection state intact across releases.
-    const route = new URL(window.location.href);
-    if (route.pathname.endsWith('/strategy/trading-analytics') && ['scalper', 'scalper_v2'].includes(route.searchParams.get('view') ?? '')) {
-      if (!document.getElementById('n50-ui-version-update')) {
-        showUpdatingNotice();
-        const notice = document.getElementById('n50-ui-version-update')!;
-        notice.textContent = 'An app update is available. Your charts will continue updating. ';
-        const button = document.createElement('button');
-        button.textContent = 'Apply update';
-        button.onclick = () => window.location.reload();
-        notice.appendChild(button);
-      }
-      return;
-    }
-    reloadQueued = true;
-    sessionStorage.setItem(RELOAD_TARGET_KEY, `${version}@${Date.now()}`);
-    showUpdatingNotice();
-    channel?.postMessage({ version });
-    window.setTimeout(() => window.location.reload(), 350);
+    // Never replace a live workspace underneath the user. Applying a release is
+    // explicit on every route so Home, charts, drawings and cursor state cannot
+    // disappear merely because a deployment completed in the background.
+    showUpdateAvailableNotice(() => {
+      if (reloadQueued) return;
+      reloadQueued = true;
+      sessionStorage.setItem(RELOAD_TARGET_KEY, `${version}@${Date.now()}`);
+      channel?.postMessage({ version });
+      window.location.reload();
+    });
   };
 
   const check = async () => {
@@ -105,7 +101,7 @@ export function startAppVersionGuard(options: { pollMs?: number } = {}): () => v
       if (!response.ok) return;
       const remote = remoteClientBuildVersion(await response.json() as AppVersionPayload);
       if (remote === current) sessionStorage.removeItem(RELOAD_TARGET_KEY);
-      else if (remote) reloadInto(remote);
+      else if (remote) announceVersion(remote);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       // A version check must never interrupt the trading UI during a network outage.
@@ -118,7 +114,7 @@ export function startAppVersionGuard(options: { pollMs?: number } = {}): () => v
   const onFocus = () => { void check(); };
   const onChannel = (event: MessageEvent<{ version?: unknown }>) => {
     const remote = remoteClientBuildVersion(event.data ?? {});
-    if (remote) reloadInto(remote);
+    if (remote) announceVersion(remote);
   };
   document.addEventListener("visibilitychange", onVisible);
   window.addEventListener("focus", onFocus);

@@ -1,5 +1,22 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-23 — Home and Scalper V2 stable hydration repair
+
+- Removed automatic build-version reloads from active workspaces. A new release
+  now produces an explicit Apply update notice on every route, so Home and
+  Scalper are never replaced underneath the user.
+- Home now mounts one stable root/viewport before overview data and reserves the
+  final 3Month and Futures preview envelopes while their requests complete.
+  Scalper market-context and chart loaders own the same remaining viewport and
+  internal scroll contract as the hydrated terminal.
+- The authenticated delayed-response regression passed 11/11: Home root stayed
+  connected, navigation counts stayed fixed after mount, the 3Month panel was
+  exactly 369px before/after hydration, the Scalper canvas did not collapse,
+  and both pages had zero runtime errors.
+- No data, polling interval, strategy, chart calculation, route, export, alert,
+  authentication or order behavior changed. Evidence and rollback:
+  `docs/uiux/HOME_SCALPER_STABLE_HYDRATION_20260923.md`.
+
 ## 2026-09-23 — Scalper V2 index-option expiry rollover data repair
 
 - Confirmed that expiry resolution was correct (`2026-09-29`) and current OI

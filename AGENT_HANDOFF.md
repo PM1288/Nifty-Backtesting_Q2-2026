@@ -6073,3 +6073,31 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:before-scalper-v2-embedded-scroll-20260922`.
 - Detailed evidence and rollback:
   `docs/trading-analytics/SCALPER_V2_EMBEDDED_SCROLL_REPAIR_20260922.md`.
+
+## 2026-09-22 — Scalper V2 cumulative context bands and compact range chart
+
+- Branch: `feat/scalper-v2-compact-normalized-context-20260922`.
+- The cumulative PE-minus-CE OI and Delta OI charts retain their primary raw
+  arithmetic and session heat colouring. Thin dotted CE yellow and PE blue
+  context lines now render at 70% visible opacity. A 30%-opacity green band
+  marks PE above CE; red marks CE above PE. Missing sides remain gaps.
+- The unused lower-right cell now contains an all-contract range-normalised
+  time chart using the existing per-contract open=0, observed high=+100 and
+  observed low=-100 calculation. CE is yellow, PE blue, selected contracts are
+  darkest, distant strikes fade, and the shared time cursor remains linked.
+- Compact OI, Delta OI and Strike Structure value-axis labels are hidden to
+  reclaim plot width; the positioning heatmap retains its categorical strike
+  labels. Compact chart readouts use integer display rounding without changing
+  raw data or exports.
+- Validation passed: 257/257 web tests, web typecheck/build, 263/263 API tests,
+  API typecheck/build, canonical gate and `git diff --check`. Authenticated
+  preview and production Chromium each passed 49/49 checks at 1920x1080.
+  Synthetic OI history was injected only for deterministic band evidence; it
+  does not prove live-source history completeness.
+- Release `01d5d21` is pushed on `master`. Only `n50-dashboard` was recreated.
+  Container `63efdd643bf7...` is healthy on image
+  `sha256:2868e6d2973dc2cfd6fc3ae761f92d65508508a30f265335f58252a90b17b91d`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-cumulative-bands-20260922`.
+- Detailed evidence and rollback:
+  `docs/trading-analytics/SCALPER_V2_CUMULATIVE_BANDS_AND_COMPACT_RANGE_20260922.md`.

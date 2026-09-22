@@ -58,12 +58,19 @@ heatmap keeps its categorical Y labels.
 - Focused calculations: 22/22 tests passed.
 - Full web suite: 257/257 tests passed.
 - Production web typecheck and build passed.
-- Authenticated preview browser regression: 49/49 checks passed at 1920x1080.
+- Authenticated preview and production browser regressions each passed 49/49
+  checks at 1920x1080.
 
 The browser run used a labelled synthetic tracked-chain history injection only
 for deterministic cumulative-band rendering. The option-price range chart used
 the retained application endpoint. Fixture evidence is not proof of live-source
 history completeness.
+
+Production release `01d5d21` recreated only `n50-dashboard`. Container
+`63efdd643bf7...` was healthy on image
+`sha256:2868e6d2973dc2cfd6fc3ae761f92d65508508a30f265335f58252a90b17b91d`.
+Rollback image:
+`trading-stack-n50-dashboard:before-scalper-v2-cumulative-bands-20260922`.
 
 ## Rollback
 

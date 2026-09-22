@@ -6269,3 +6269,13 @@ or outcomes were deleted.
   unchanged.
 - Full scope, explicit deferrals and release evidence:
   `docs/trading-analytics/SCALPER_V3_LIVE_COCKPIT_P3_20260922.md`.
+- Released on canonical master at `0ecf61d`. Only `n50-dashboard` was recreated;
+  it is healthy on image
+  `sha256:d404058d2c4c7dd2f00602fac28a4d2b2eaa6425b1497b496f2d0ace15017c09`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v3-p3-20260922`.
+- Authenticated production Chromium passed the focused P3 audit 11/11 and the
+  linked-workspace regression 16/16 with zero page errors. Evidence is under
+  `/tmp/scalper-v3-live-cockpit-p3/` and `/tmp/scalper-v3-linked-workspace/`.
+  The run was after market close, so live-session animation cadence remains
+  explicitly not run.

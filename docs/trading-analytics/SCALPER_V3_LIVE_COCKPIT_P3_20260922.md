@@ -81,5 +81,33 @@ canonical repository gate: PASS
 git diff --check: PASS
 ```
 
-Authenticated production browser evidence, pushed release SHA, deployed image
-and rollback tag are appended at release time.
+Release evidence:
+
+```text
+canonical master release: 0ecf61d
+production container health: healthy
+production entry asset: /n50/assets/index-D1KB-WDD.js
+production image: sha256:d404058d2c4c7dd2f00602fac28a4d2b2eaa6425b1497b496f2d0ace15017c09
+rollback image: trading-stack-n50-dashboard:before-scalper-v3-p3-20260922
+linked-workspace browser audit: PASS (16/16)
+focused P3 browser audit: PASS (11/11)
+uncaught browser page errors: 0
+```
+
+Authenticated production screenshots and machine-readable results:
+
+- `/tmp/scalper-v3-live-cockpit-p3/desktop-1920-v3-p3-live-cockpit.png`
+- `/tmp/scalper-v3-live-cockpit-p3/desktop-1920-v2-preservation.png`
+- `/tmp/scalper-v3-live-cockpit-p3/results.json`
+- `/tmp/scalper-v3-linked-workspace/desktop-1920-v3-linked.png`
+- `/tmp/scalper-v3-linked-workspace/desktop-1920-v2-preserved.png`
+- `/tmp/scalper-v3-linked-workspace/results.json`
+
+The production audit ran after market hours. The dashboard correctly reported
+`CLOSED` and the age of the latest retained observation; it did not claim a
+live feed. Selected CE/PE historical candles were unavailable for the selected
+contracts in that retained session, so their comparison values remained `—`.
+The browser audit still verified exact linked-time propagation, retained OI
+comparison, A/B selection across linked charts, strike pinning/navigation and
+V2 isolation. Live-session animation cadence remains untested outside market
+hours.

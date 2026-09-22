@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   SCALPER_V2_THREE_INSTRUMENT_EMA_RULE,
+  scalperV2EmaAlignmentAvailability,
   scalperV2EmaAlignmentSignals,
 } from "../src/lib/scalperV2EmaAlignment";
 
@@ -81,4 +82,18 @@ test("the current-or-previous crossover grace period creates one marker, not a r
   ], 5);
   assert.equal(result.length, 1);
   assert.equal(result[0].setupTime, time(5));
+});
+
+test("availability separates no signal from missing exact 5m evidence", () => {
+  const valid = [
+    pane("NIFTY 50", ["BELOW", "BELOW", "BELOW", "BELOW", "BELOW", "ABOVE"]),
+    pane("XCE", ["BELOW", "BELOW", "BELOW", "BELOW", "BELOW", "ABOVE"]),
+    pane("XPE", ["ABOVE", "ABOVE", "ABOVE", "ABOVE", "ABOVE", "BELOW"]),
+  ];
+  assert.deepEqual(scalperV2EmaAlignmentAvailability(valid, 5), { state: "READY", reasons: [] });
+  const missing = structuredClone(valid); missing[1].bars = [];
+  const unavailable = scalperV2EmaAlignmentAvailability(missing, 5);
+  assert.equal(unavailable.state, "UNAVAILABLE");
+  assert.match(unavailable.reasons.join(" "), /CE needs six completed 5m/);
+  assert.equal(scalperV2EmaAlignmentAvailability(valid, 15).state, "INACTIVE_TIMEFRAME");
 });

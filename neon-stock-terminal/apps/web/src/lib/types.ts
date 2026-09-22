@@ -2856,6 +2856,7 @@ export type SessionState = {
 };
 
 export type ThreeMonthIntradayMode = "completed" | "forming";
+export type ThreeMonthDirection = "BULL" | "BEAR";
 export type ThreeMonthGateState = "PASS" | "FAIL" | "UNAVAILABLE" | "SKIPPED";
 export type ThreeMonthGate = {
   id: string;
@@ -2866,6 +2867,15 @@ export type ThreeMonthGate = {
   state: ThreeMonthGateState;
   timeframe: "MONTH" | "WEEK" | "DAY" | "1H" | "15M" | "HISTORY";
   forming: boolean;
+};
+export type ThreeMonthEvaluation = {
+  direction: ThreeMonthDirection;
+  qualification: "QUALIFIED" | "REJECTED" | "INCOMPLETE";
+  passedGateCount: number;
+  availableGateCount: number;
+  gates: ThreeMonthGate[];
+  weaknessMonths: ThreeMonthGate[];
+  weaknessState: ThreeMonthGateState;
 };
 export type ThreeMonthStrategyRow = {
   symbol: string;
@@ -2879,6 +2889,8 @@ export type ThreeMonthStrategyRow = {
   gates: ThreeMonthGate[];
   weaknessMonths: ThreeMonthGate[];
   weaknessState: ThreeMonthGateState;
+  bull: ThreeMonthEvaluation;
+  bear: ThreeMonthEvaluation;
   intraday: Record<string, { open: number | null; close: number | null; startedAt: string | null; complete: boolean; index: number } | null>;
 };
 export type ThreeMonthStrategyResponse = {
@@ -2888,7 +2900,7 @@ export type ThreeMonthStrategyResponse = {
   intradayMode: ThreeMonthIntradayMode;
   sessionDate: string | null;
   basis: string;
-  counts: { universe: number; expectedUniverse: number; membershipCoveragePct: number; qualified: number; rejected: number; incomplete: number; intradayEvaluated: number };
+  counts: { universe: number; expectedUniverse: number; membershipCoveragePct: number; qualified: number; bullQualified: number; bearQualified: number; rejected: number; incomplete: number; intradayEvaluated: number };
   rows: ThreeMonthStrategyRow[];
 };
 

@@ -1,5 +1,16 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 3Month Bull/Bear selector and downloadable backtest: the existing
+bullish ten-gate contract remains backward compatible and gains an exact inverse
+Bear evaluation. Both require all Month/Week/Day/1H/15m pairs, while M-1/M-2/M-3
+remain one explicit ANY-1 group. Home exposes compact directional tick boards
+and the shortlist maps qualified Bull to LONG and Bear to SHORT without order
+permission. A new top-level Backtest Reports route serves the generated PDF and
+complete CSV from the existing read-only StratLab artifact mount. The report
+separates the requested same-day-open look-ahead scenario from causal next-day
+open results and never claims unavailable historical intraday confirmation.
+Evidence: `docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.
+
 2026-09-22 Scalper V2 compact inspection and independent OI-direction entry
 reference: the four right-side and three lower analytical charts expose bounded
 compact tooltips and an on-demand viewport expansion which mounts only while

@@ -22,7 +22,7 @@ test('strategy selections require current session and true selected flag, not re
   ]} as never;
   const result = buildTradingShortlist(day,day,ranks,oiis,[{symbol:'AAA',side:'LONG'}],threeMonth);
   assert.equal(result.length,3);
-  assert.deepEqual(result.find(r=>r.symbol==='AAA')?.sources,['MWHD-BULL · all gates','OIIS · selected','3Month · qualified','Manual']);
+  assert.deepEqual(result.find(r=>r.symbol==='AAA')?.sources,['MWHD-BULL · all gates','OIIS · selected','3Month BULL · qualified','Manual']);
   assert.deepEqual(result.find(r=>r.symbol==='AAA')?.sourceIds,['MWHD','OIIS','THREE_MONTH','MANUAL']);
   assert.equal(result[0].symbol,'AAA');
   assert.equal(result[0].agreementCount,4);
@@ -38,9 +38,11 @@ test('personal directions are separate and storage is scoped per account', () =>
   assert.equal(buildTradingShortlist(day,undefined,[],undefined,[{symbol:'AAA',side:'SHORT'}])[0].sources[0],'Manual');
 });
 
-test('3Month selections are accepted only for the current session and qualified rows', () => {
+test('3Month bull and bear selections are accepted only for the current session and qualified rows', () => {
   const current = {sessionDate:day,rows:[{symbol:'AAA',sessionDate:day,qualification:'QUALIFIED'}]} as never;
+  const directional = {sessionDate:day,rows:[{symbol:'BBB',sessionDate:day,qualification:'REJECTED',bull:{qualification:'REJECTED'},bear:{qualification:'QUALIFIED'}}]} as never;
   const stale = {sessionDate:'2026-09-18',rows:[{symbol:'AAA',sessionDate:'2026-09-18',qualification:'QUALIFIED'}]} as never;
-  assert.equal(buildTradingShortlist(day,undefined,[],undefined,[],current)[0].sources[0],'3Month · qualified');
+  assert.equal(buildTradingShortlist(day,undefined,[],undefined,[],current)[0].sources[0],'3Month BULL · qualified');
+  assert.equal(buildTradingShortlist(day,undefined,[],undefined,[],directional)[0].side,'SHORT');
   assert.deepEqual(buildTradingShortlist(day,undefined,[],undefined,[],stale),[]);
 });

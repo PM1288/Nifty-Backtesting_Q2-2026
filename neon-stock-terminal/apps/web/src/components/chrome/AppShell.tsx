@@ -46,6 +46,12 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Events", to: "/catalysts/context", match: (path) => path.startsWith("/catalysts/") },
     { label: "Institutional Context", to: "/institutional/flow" }
   ];
+  if (workspace === "backtesting-reports") return [
+    { label: "Reports", to: "/backtesting/reports" },
+    { label: "Backtest Overview", to: "/backtesting" },
+    { label: "Strategy Definition", to: "/backtesting/strategies" },
+    { label: "Run Monitor", to: "/backtesting/runs" },
+  ];
   if (workspace === "oiis-lab") return [
     { label: "Live Selection", to: "/strategy/oiis-live", match: (path) => path === "/strategy/oiis-live" },
     { label: "OISS v1.202608", to: "/strategy/oiss-v1-202608", match: (path) => path.startsWith("/strategy/oiss-v1-202608") },

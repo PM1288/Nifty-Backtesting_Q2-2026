@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import path from "node:path";
+import fs from "node:fs/promises";
 import { serveSnapshotRoute } from "../lib/dashboardSnapshots";
 import {
   loadPublishedBacktestingCompare,
@@ -730,6 +731,42 @@ export async function getBacktestingRuns(prisma: PrismaClient) {
 }
 
 export function registerBacktesting(app: Express, prisma: PrismaClient) {
+  const latestThreeMonthReport = async () => {
+    const root = path.resolve(process.env.H30_ARTIFACT_ROOT ?? "");
+    if (!process.env.H30_ARTIFACT_ROOT) return null;
+    const entries = await fs.readdir(root, { withFileTypes: true }).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return [];
+      throw error;
+    });
+    const reportDirectories = entries.filter((entry) => entry.isDirectory() && /^three_month_reversal_\d{8}$/.test(entry.name)).sort((left, right) => right.name.localeCompare(left.name));
+    if (!reportDirectories.length) return null;
+    const directory = path.resolve(root, reportDirectories[0].name);
+    if (!directory.startsWith(`${root}${path.sep}`)) return null;
+    return { root, directory, id: reportDirectories[0].name };
+  };
+
+  app.get("/v1/backtesting/reports/three-month/latest", async (_req, res) => {
+    const report = await latestThreeMonthReport();
+    if (!report) return res.status(404).json({ code: "THREE_MONTH_REPORT_NOT_FOUND", message: "No generated 3Month report is mounted." });
+    const summary = JSON.parse(await fs.readFile(path.join(report.directory, "summary.json"), "utf8")) as Record<string, unknown>;
+    const files = await Promise.all(["three_month_backtest_report.pdf", "three_month_trades.csv", "README.md"].map(async (name) => {
+      const stat = await fs.stat(path.join(report.directory, name));
+      return { name, bytes: stat.size, url: `/v1/backtesting/reports/three-month/files/${encodeURIComponent(name)}` };
+    }));
+    res.setHeader("Cache-Control", "private, max-age=60");
+    return res.json({ id: report.id, summary, files });
+  });
+
+  app.get("/v1/backtesting/reports/three-month/files/:name", async (req, res) => {
+    const allowed = new Set(["three_month_backtest_report.pdf", "three_month_trades.csv", "README.md"]);
+    if (!allowed.has(req.params.name)) return res.status(404).json({ code: "REPORT_FILE_NOT_FOUND" });
+    const report = await latestThreeMonthReport();
+    if (!report) return res.status(404).json({ code: "THREE_MONTH_REPORT_NOT_FOUND" });
+    const candidate = path.resolve(report.directory, req.params.name);
+    if (!candidate.startsWith(`${report.directory}${path.sep}`)) return res.status(404).json({ code: "REPORT_FILE_NOT_FOUND" });
+    return res.download(candidate, req.params.name);
+  });
+
   app.get("/v1/backtesting/h30/latest", async (req, res) => {
     const requestedRun = typeof req.query.runId === "string" ? req.query.runId : null;
     const runRows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`

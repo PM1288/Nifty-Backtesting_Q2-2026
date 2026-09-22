@@ -26,6 +26,7 @@ import { StockUniverseFilterBar } from "../components/stocks/StockProfileControl
 import { FuturesVolatilityPreview } from "../components/FuturesVolatilityPreview";
 import { LiveRefreshStatus } from "../components/LiveRefreshStatus";
 import { SCALPER_PROGRESSION_REFRESH_MS } from "../lib/liveCadence";
+import { ThreeMonthSelectorBoard } from "../features/today/ThreeMonthSelectorBoard";
 
 function mergeQuote<T extends Quote>(
   quote: T,
@@ -577,6 +578,7 @@ export function LandingPage() {
       </section>
 
       <FuturesVolatilityPreview />
+      <ThreeMonthSelectorBoard />
 
       {q.data.derivatives.anomalies.length ? (
         <section className={styles.anomalyFlash} data-analytics-section="home_fno_anomaly_flash" aria-label={tr("Live F&O anomalies")}>

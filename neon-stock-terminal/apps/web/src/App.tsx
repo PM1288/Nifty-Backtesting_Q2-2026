@@ -84,6 +84,7 @@ const BacktestingDailySummaryPage = lazy(async () => ({ default: (await preloadB
 const BacktestingComparePage = lazy(async () => ({ default: (await preloadBacktestingComparePage()).BacktestingComparePage }));
 const BacktestingRunsPage = lazy(async () => ({ default: (await preloadBacktestingRunsPage()).BacktestingRunsPage }));
 const BacktestingH30Page = lazy(async () => ({ default: (await import("./pages/BacktestingH30Page")).BacktestingH30Page }));
+const BacktestingReportsPage = lazy(async () => ({ default: (await import("./pages/BacktestingReportsPage")).BacktestingReportsPage }));
 const OiisLivePage = lazy(async () => ({ default: (await preloadOiisLivePage()).OiisLivePage }));
 const OissV1Page = lazy(async () => ({ default: (await import("./pages/OissV1Page")).OissV1Page }));
 const RollingMonthlyPage = lazy(async () => ({ default: (await preloadRollingMonthlyPage()).RollingMonthlyPage }));
@@ -175,6 +176,7 @@ export default function App() {
           <Route path="/backtesting/compare" element={<BacktestingComparePage />} />
           <Route path="/backtesting/runs" element={<BacktestingRunsPage />} />
           <Route path="/backtesting/h30" element={<BacktestingH30Page />} />
+          <Route path="/backtesting/reports" element={<BacktestingReportsPage />} />
           <Route path="/institutional" element={<Navigate to="/institutional/flow" replace />} />
           <Route path="/institutional/flow" element={<AnalyticsFiiFlowPage />} />
           <Route path="/institutional/reports" element={<AnalyticsFiiReportsPage />} />

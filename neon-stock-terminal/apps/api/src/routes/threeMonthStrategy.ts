@@ -2,6 +2,7 @@ import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
 export type ThreeMonthMode = "completed" | "forming";
+export type ThreeMonthDirection = "BULL" | "BEAR";
 export type ThreeMonthGateState = "PASS" | "FAIL" | "UNAVAILABLE" | "SKIPPED";
 export type ThreeMonthGate = {
   id: string;
@@ -69,33 +70,39 @@ export function buildThreeMonthEvaluation(
   row: DailyRow,
   intraday: { hourCurrent?: Candle; hourPrevious?: Candle; fifteenCurrent?: Candle; fifteenPrevious?: Candle } = {},
   mode: ThreeMonthMode = "completed",
+  direction: ThreeMonthDirection = "BULL",
 ) {
+  const bullish = direction === "BULL";
+  const operator: ">" | "<" = bullish ? ">" : "<";
+  const historyOperator: ">" | "<" = bullish ? "<" : ">";
+  const suffix = bullish ? "GT" : "LT";
+  const comparison = bullish ? ">" : "<";
   const value = (key: keyof DailyRow) => numberOrNull(row[key]);
   const monthlyClose = value("current_month_close");
   const weeklyClose = value("current_week_close");
   const dailyClose = value("today_close");
   const higher = [
-    gate("M0_CLOSE_GT_OPEN", "Current month close > current month open", "MONTH", monthlyClose, ">", value("current_month_open"), true),
-    gate("M0_CLOSE_GT_M1_OPEN", "Current month close > previous month open", "MONTH", monthlyClose, ">", value("previous_month_open"), true),
-    gate("W0_CLOSE_GT_OPEN", "Current week close > current week open", "WEEK", weeklyClose, ">", value("current_week_open"), true),
-    gate("W0_CLOSE_GT_W1_OPEN", "Current week close > previous week open", "WEEK", weeklyClose, ">", value("previous_week_open"), true),
-    gate("D0_CLOSE_GT_D1_OPEN", "Current day close > previous day open", "DAY", dailyClose, ">", value("previous_day_open"), true),
-    gate("D0_CLOSE_GT_OPEN", "Current day close > current day open", "DAY", dailyClose, ">", value("today_open"), true),
+    gate(`M0_CLOSE_${suffix}_OPEN`, `Current month close ${comparison} current month open`, "MONTH", monthlyClose, operator, value("current_month_open"), true),
+    gate(`M0_CLOSE_${suffix}_M1_OPEN`, `Current month close ${comparison} previous month open`, "MONTH", monthlyClose, operator, value("previous_month_open"), true),
+    gate(`W0_CLOSE_${suffix}_OPEN`, `Current week close ${comparison} current week open`, "WEEK", weeklyClose, operator, value("current_week_open"), true),
+    gate(`W0_CLOSE_${suffix}_W1_OPEN`, `Current week close ${comparison} previous week open`, "WEEK", weeklyClose, operator, value("previous_week_open"), true),
+    gate(`D0_CLOSE_${suffix}_D1_OPEN`, `Current day close ${comparison} previous day open`, "DAY", dailyClose, operator, value("previous_day_open"), true),
+    gate(`D0_CLOSE_${suffix}_OPEN`, `Current day close ${comparison} current day open`, "DAY", dailyClose, operator, value("today_open"), true),
   ];
   const weaknessMonths = [
-    { id: "M1_RED", label: "Previous month close < open", left: value("previous_month_close"), right: value("previous_month_open") },
-    { id: "M2_RED", label: "Two months ago close < open", left: value("two_months_ago_close"), right: value("two_months_ago_open") },
-    { id: "M3_RED", label: "Three months ago close < open", left: value("three_months_ago_close"), right: value("three_months_ago_open") },
-  ].map((item) => gate(item.id, item.label, "HISTORY", item.left, "<", item.right, false));
+    { id: bullish ? "M1_RED" : "M1_GREEN", label: `Previous month close ${bullish ? "<" : ">"} open`, left: value("previous_month_close"), right: value("previous_month_open") },
+    { id: bullish ? "M2_RED" : "M2_GREEN", label: `Two months ago close ${bullish ? "<" : ">"} open`, left: value("two_months_ago_close"), right: value("two_months_ago_open") },
+    { id: bullish ? "M3_RED" : "M3_GREEN", label: `Three months ago close ${bullish ? "<" : ">"} open`, left: value("three_months_ago_close"), right: value("three_months_ago_open") },
+  ].map((item) => gate(item.id, item.label, "HISTORY", item.left, historyOperator, item.right, false));
   const weaknessState: ThreeMonthGateState = weaknessMonths.some((item) => item.state === "PASS")
     ? "PASS"
     : weaknessMonths.every((item) => item.state === "FAIL") ? "FAIL" : "UNAVAILABLE";
   const shouldInspectIntraday = higher.every((item) => item.state === "PASS") && weaknessState === "PASS";
   const intradayGates = [
-    gate("H0_CLOSE_GT_OPEN", "Current 1-hour close > current 1-hour open", "1H", intraday.hourCurrent?.close ?? null, ">", intraday.hourCurrent?.open ?? null, mode === "forming" && intraday.hourCurrent?.complete === false, !shouldInspectIntraday),
-    gate("H0_CLOSE_GT_H1_OPEN", "Current 1-hour close > previous 1-hour open", "1H", intraday.hourCurrent?.close ?? null, ">", intraday.hourPrevious?.open ?? null, mode === "forming" && intraday.hourCurrent?.complete === false, !shouldInspectIntraday),
-    gate("M15_CLOSE_GT_OPEN", "Current 15-minute close > current 15-minute open", "15M", intraday.fifteenCurrent?.close ?? null, ">", intraday.fifteenCurrent?.open ?? null, mode === "forming" && intraday.fifteenCurrent?.complete === false, !shouldInspectIntraday),
-    gate("M15_CLOSE_GT_PREVIOUS_OPEN", "Current 15-minute close > previous 15-minute open", "15M", intraday.fifteenCurrent?.close ?? null, ">", intraday.fifteenPrevious?.open ?? null, mode === "forming" && intraday.fifteenCurrent?.complete === false, !shouldInspectIntraday),
+    gate(`H0_CLOSE_${suffix}_OPEN`, `Current 1-hour close ${comparison} current 1-hour open`, "1H", intraday.hourCurrent?.close ?? null, operator, intraday.hourCurrent?.open ?? null, mode === "forming" && intraday.hourCurrent?.complete === false, !shouldInspectIntraday),
+    gate(`H0_CLOSE_${suffix}_H1_OPEN`, `Current 1-hour close ${comparison} previous 1-hour open`, "1H", intraday.hourCurrent?.close ?? null, operator, intraday.hourPrevious?.open ?? null, mode === "forming" && intraday.hourCurrent?.complete === false, !shouldInspectIntraday),
+    gate(`M15_CLOSE_${suffix}_OPEN`, `Current 15-minute close ${comparison} current 15-minute open`, "15M", intraday.fifteenCurrent?.close ?? null, operator, intraday.fifteenCurrent?.open ?? null, mode === "forming" && intraday.fifteenCurrent?.complete === false, !shouldInspectIntraday),
+    gate(`M15_CLOSE_${suffix}_PREVIOUS_OPEN`, `Current 15-minute close ${comparison} previous 15-minute open`, "15M", intraday.fifteenCurrent?.close ?? null, operator, intraday.fifteenPrevious?.open ?? null, mode === "forming" && intraday.fifteenCurrent?.complete === false, !shouldInspectIntraday),
   ];
   const gates = [...higher, ...intradayGates];
   const hasFail = gates.some((item) => item.state === "FAIL") || weaknessState === "FAIL";
@@ -103,6 +110,7 @@ export function buildThreeMonthEvaluation(
   const qualification = !hasFail && !hasUnavailable && gates.every((item) => item.state === "PASS") && weaknessState === "PASS"
     ? "QUALIFIED" : hasFail ? "REJECTED" : "INCOMPLETE";
   return {
+    direction,
     gates,
     weaknessMonths,
     weaknessState,
@@ -221,19 +229,22 @@ const cache = new Map<ThreeMonthMode, { expires: number; value: Promise<unknown>
 
 export async function getThreeMonthStrategy(prisma: Pick<PrismaClient, "$queryRawUnsafe">, mode: ThreeMonthMode = "completed") {
   const daily = await prisma.$queryRawUnsafe<DailyRow[]>(DAILY_SQL);
-  const preliminary = daily.map((row) => ({ row, evaluation: buildThreeMonthEvaluation(row, {}, mode) }));
-  const eligibleSymbols = preliminary.filter(({ evaluation }) => evaluation.weaknessState === "PASS" && evaluation.gates.slice(0, 6).every((item) => item.state === "PASS")).map(({ row }) => row.symbol);
+  const preliminary = daily.map((row) => ({ row, bull: buildThreeMonthEvaluation(row, {}, mode, "BULL"), bear: buildThreeMonthEvaluation(row, {}, mode, "BEAR") }));
+  const eligibleSymbols = preliminary.filter(({ bull, bear }) => [bull, bear].some((evaluation) => evaluation.weaknessState === "PASS" && evaluation.gates.slice(0, 6).every((item) => item.state === "PASS"))).map(({ row }) => row.symbol);
   const sessionDate = isoOrNull(daily[0]?.session_date)?.slice(0, 10) ?? String(daily[0]?.session_date ?? "");
   const intradayRows = eligibleSymbols.length && sessionDate ? await prisma.$queryRawUnsafe<IntradayRow[]>(INTRADAY_SQL, eligibleSymbols, sessionDate) : [];
   const candles = selectCandles(intradayRows, mode);
   const rows = daily.map((row) => {
     const hour = candles.get(`${row.symbol}:1H`) ?? {};
     const fifteen = candles.get(`${row.symbol}:15M`) ?? {};
-    const evaluation = buildThreeMonthEvaluation(row, { hourCurrent: hour.current, hourPrevious: hour.previous, fifteenCurrent: fifteen.current, fifteenPrevious: fifteen.previous }, mode);
+    const intraday = { hourCurrent: hour.current, hourPrevious: hour.previous, fifteenCurrent: fifteen.current, fifteenPrevious: fifteen.previous };
+    const evaluation = buildThreeMonthEvaluation(row, intraday, mode, "BULL");
+    const bear = buildThreeMonthEvaluation(row, intraday, mode, "BEAR");
     return {
       symbol: row.symbol, companyName: row.company_name, sector: row.sector, sessionDate: isoOrNull(row.session_date)?.slice(0, 10) ?? String(row.session_date ?? ""), observedAt: isoOrNull(row.observed_at),
       qualification: evaluation.qualification, passedGateCount: evaluation.passedGateCount, availableGateCount: evaluation.availableGateCount,
       gates: evaluation.gates, weaknessMonths: evaluation.weaknessMonths, weaknessState: evaluation.weaknessState,
+      bull: evaluation, bear,
       intraday: { hour: hour.current ?? null, previousHour: hour.previous ?? null, fifteen: fifteen.current ?? null, previousFifteen: fifteen.previous ?? null },
     };
   }).sort((a, b) => (a.qualification === "QUALIFIED" ? -1 : b.qualification === "QUALIFIED" ? 1 : 0) || b.passedGateCount - a.passedGateCount || a.symbol.localeCompare(b.symbol));
@@ -241,7 +252,7 @@ export async function getThreeMonthStrategy(prisma: Pick<PrismaClient, "$queryRa
     generatedAt: new Date().toISOString(), strategyVersion: "three_month_recovery_v1", scope: "CURRENT_NIFTY_500", intradayMode: mode,
     sessionDate: rows[0]?.sessionDate || null,
     basis: "Current monthly/weekly/daily close is the latest retained session value. Intraday candles are session-anchored at 09:15 IST; completed mode requires every expected minute.",
-    counts: { universe: rows.length, expectedUniverse: 500, membershipCoveragePct: Math.round(rows.length / 500 * 10_000) / 100, qualified: rows.filter((row) => row.qualification === "QUALIFIED").length, rejected: rows.filter((row) => row.qualification === "REJECTED").length, incomplete: rows.filter((row) => row.qualification === "INCOMPLETE").length, intradayEvaluated: eligibleSymbols.length },
+    counts: { universe: rows.length, expectedUniverse: 500, membershipCoveragePct: Math.round(rows.length / 500 * 10_000) / 100, qualified: rows.filter((row) => row.qualification === "QUALIFIED").length, bullQualified: rows.filter((row) => row.bull.qualification === "QUALIFIED").length, bearQualified: rows.filter((row) => row.bear.qualification === "QUALIFIED").length, rejected: rows.filter((row) => row.qualification === "REJECTED").length, incomplete: rows.filter((row) => row.qualification === "INCOMPLETE").length, intradayEvaluated: eligibleSymbols.length },
     rows,
   };
 }

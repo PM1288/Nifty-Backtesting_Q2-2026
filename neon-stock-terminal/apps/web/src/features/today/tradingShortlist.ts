@@ -47,7 +47,9 @@ export function buildTradingShortlist(today: string, progressionDate: string | u
     if (row.direction === 'LONG' || row.direction === 'SHORT') add(String(row.symbol), row.direction, 'OIIS', 'OIIS · selected');
   }
   if (threeMonth?.sessionDate === today) for (const row of threeMonth.rows) {
-    if (row.sessionDate === today && row.qualification === 'QUALIFIED') add(row.symbol, 'LONG', 'THREE_MONTH', '3Month · qualified');
+    if (row.sessionDate !== today) continue;
+    if (row.bull?.qualification === 'QUALIFIED' || (!row.bull && row.qualification === 'QUALIFIED')) add(row.symbol, 'LONG', 'THREE_MONTH', '3Month BULL · qualified');
+    if (row.bear?.qualification === 'QUALIFIED') add(row.symbol, 'SHORT', 'THREE_MONTH', '3Month BEAR · qualified');
   }
   for (const row of personal) add(row.symbol, row.side, 'MANUAL', 'Manual');
   const rankMap = new Map(ranks.map(row => [row.stock.symbol, row]));

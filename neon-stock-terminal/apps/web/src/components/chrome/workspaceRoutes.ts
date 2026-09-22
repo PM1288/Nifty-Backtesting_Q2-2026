@@ -21,6 +21,7 @@ export type WorkspaceRouteId =
   | "today"
   | "markets"
   | "stocks"
+  | "backtesting-reports"
   | "oiis-lab"
   | "rolling-monthly"
   | "monthly-strategy"
@@ -243,6 +244,17 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
       pathname.startsWith("/analytics/indicators") ||
       pathname.startsWith("/catalysts/") ||
       pathname.startsWith("/stock/"),
+  },
+  {
+    id: "backtesting-reports",
+    label: "Backtest Reports",
+    compactLabel: "Reports",
+    description: "Downloadable PDF and CSV strategy research",
+    path: "/backtesting/reports",
+    icon: FileCheck2,
+    primaryDesktop: true,
+    primaryMobile: true,
+    match: (pathname) => pathname.startsWith("/backtesting/reports"),
   },
   {
     id: "oiis-lab",

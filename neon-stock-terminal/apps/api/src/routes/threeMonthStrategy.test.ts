@@ -53,3 +53,25 @@ test("forming mode does not relabel an already complete intraday candle", () => 
   }, "forming");
   assert.ok(result.gates.slice(6).every((item) => !item.forming));
 });
+
+test("bear strategy is the exact inverse with any one prior green month", () => {
+  const bearish = {
+    ...daily,
+    current_month_open: 120, current_month_close: 90,
+    previous_month_open: 110, previous_month_close: 105,
+    current_week_open: 112, current_week_close: 90, previous_week_open: 111,
+    today_open: 96, today_close: 90, previous_day_open: 95,
+    two_months_ago_open: 100, two_months_ago_close: 101,
+  };
+  const result = buildThreeMonthEvaluation(bearish, {
+    hourCurrent: { open: 93, close: 89, startedAt: null, complete: true, index: 4 },
+    hourPrevious: { open: 94, close: 93, startedAt: null, complete: true, index: 3 },
+    fifteenCurrent: { open: 91, close: 88, startedAt: null, complete: true, index: 18 },
+    fifteenPrevious: { open: 92, close: 91, startedAt: null, complete: true, index: 17 },
+  }, "completed", "BEAR");
+  assert.equal(result.qualification, "QUALIFIED");
+  assert.equal(result.passedGateCount, 10);
+  assert.equal(result.weaknessState, "PASS");
+  assert.ok(result.gates.every((item) => item.operator === "<"));
+  assert.ok(result.weaknessMonths.every((item) => item.operator === ">"));
+});

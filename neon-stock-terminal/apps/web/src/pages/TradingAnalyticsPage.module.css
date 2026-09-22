@@ -1167,6 +1167,17 @@
   grid-template-rows: 34px minmax(0, 1fr);
   overflow: hidden;
 }
+.page[data-view="scalper"]:not([data-popout="true"]) > [data-testid="scalper-v2"] {
+  /* The application header stays fixed while the complete V2 workstation owns
+     the remaining viewport. Lower chart rows must scroll inside this grid item;
+     leaving overflow on the fixed-height parent clips them below the fold. */
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
 .page[data-view="scalper"][data-popout="true"] {
   height: auto;
   min-height: 100dvh;

@@ -73,6 +73,40 @@ try {
   });
   await page.waitForTimeout(2_000);
 
+  const embeddedScroll = await page.getByTestId("scalper-v2").evaluate(async (element) => {
+    const before = element.scrollTop;
+    const historyElement = document.querySelector("[data-testid='v2-oi-history-row']");
+    const initialViewport = element.getBoundingClientRect();
+    const initialHistory = historyElement?.getBoundingClientRect() ?? null;
+    element.scrollTop += (initialHistory?.top ?? initialViewport.bottom) - initialViewport.top - 8;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const after = element.scrollTop;
+    const history = historyElement?.getBoundingClientRect() ?? null;
+    const viewport = element.getBoundingClientRect();
+    const result = {
+      before,
+      after,
+      scrollHeight: element.scrollHeight,
+      clientHeight: element.clientHeight,
+      overflowY: getComputedStyle(element).overflowY,
+      historyTop: history?.top ?? null,
+      viewportTop: viewport.top,
+      viewportBottom: viewport.bottom,
+    };
+    element.scrollTop = 0;
+    return result;
+  });
+  check(
+    "embedded-workstation-scroll",
+    embeddedScroll.overflowY === "auto"
+      && embeddedScroll.scrollHeight > embeddedScroll.clientHeight
+      && embeddedScroll.after > 0
+      && embeddedScroll.historyTop != null
+      && embeddedScroll.historyTop >= embeddedScroll.viewportTop
+      && embeddedScroll.historyTop < embeddedScroll.viewportBottom,
+    JSON.stringify(embeddedScroll),
+  );
+
   const layout = await page.evaluate(() => {
     const rect = (selector) => {
       const element = document.querySelector(selector);

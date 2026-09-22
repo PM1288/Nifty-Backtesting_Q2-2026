@@ -1,5 +1,14 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 Scalper V2 embedded-route scrolling: the normal Trading Analytics
+route keeps its compact fixed-height application shell and stationary analytics
+header, while the direct Scalper V2 child now owns the remaining viewport as a
+vertical scroll container. This makes every lower chart and inspector reachable
+without changing the separately validated pop-out document scroll, chart sizes,
+data, cursor linkage, selection, drawings, measurements, refresh, strategy or
+order behavior. Evidence:
+`docs/trading-analytics/SCALPER_V2_EMBEDDED_SCROLL_REPAIR_20260922.md`.
+
 2026-09-21 Scalper V2 pop-out scroll and cumulative-line context: the pop-out
 route now owns a normal document scroll path instead of inheriting the embedded
 fixed-height/hidden-overflow shell. Its two timestamp-aligned difference charts

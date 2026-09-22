@@ -6048,3 +6048,28 @@ or outcomes were deleted.
   Rollback image: `trading-stack-n50-dashboard:before-scalper-v2-scroll-context-20260921`.
 - Detailed implementation and rollback notes:
   `docs/trading-analytics/SCALPER_V2_POPOUT_SCROLL_AND_CUMULATIVE_CONTEXT_20260921.md`.
+
+## 2026-09-22 — Scalper V2 embedded-route scroll repair
+
+- Branch: `fix/scalper-v2-embedded-scroll-20260922`.
+- Root cause: the normal Trading Analytics Scalper shell intentionally used a
+  fixed viewport height and hidden parent overflow, but the direct Scalper V2
+  child did not own a vertical scroll path after lower chart rows were added.
+  The dedicated pop-out scroll was already correct and remains separate.
+- The non-pop-out V2 child now fills the remaining shell row and owns contained
+  vertical scrolling. The compact analytics header stays fixed and every lower
+  chart/inspector row is reachable; no chart dimensions, data, strategy,
+  cursor, drawing, measurement, refresh or order behavior changed.
+- Validation passed: web typecheck/build and 255/255 tests, API typecheck/build
+  and 263/263 tests, canonical repository gate and `git diff --check`.
+- Authenticated production Chromium passed 48/48 checks. The embedded scroller
+  measured `2072px` content / `955px` viewport and scrolled `676px` to bring the
+  OI-history row into view. The independent pop-out retained `1120px` document
+  scroll.
+- Release commit `5c10906` is pushed on `master`. Only `n50-dashboard` was
+  recreated. Container `af707e03ca52...` is healthy with zero restarts on image
+  `sha256:1a14567085b443fe4a8ded1c9671b432a7a66c604a2f0c309a9e7c44905933a2`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-embedded-scroll-20260922`.
+- Detailed evidence and rollback:
+  `docs/trading-analytics/SCALPER_V2_EMBEDDED_SCROLL_REPAIR_20260922.md`.

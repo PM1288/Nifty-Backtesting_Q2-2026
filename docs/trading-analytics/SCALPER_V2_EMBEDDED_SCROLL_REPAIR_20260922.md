@@ -41,6 +41,12 @@ Preview validation at 1920x1080 passed 48/48 authenticated browser checks. The
 embedded workstation measured `scrollHeight=2072`, `clientHeight=955` and a
 positive scroll range of `1117px`.
 
+After release, authenticated production Chromium again passed 48/48 checks.
+The embedded container measured `scrollHeight=2072`, `clientHeight=955`,
+`overflow-y=auto` and scrolled `676px` to place the OI-history row inside the
+visible workstation. The independent pop-out document also retained a positive
+`1120px` scroll position.
+
 ## Rollback
 
 Revert the release commit and recreate only `n50-dashboard`. No database or API

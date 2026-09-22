@@ -1,5 +1,18 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-22 Scalper V2 cumulative context and compact range chart: the two
+tracked-chain PE-minus-CE history charts retain their raw difference arithmetic
+and low/red, opening/black, high/green primary-line scale. Their component CE
+yellow and PE blue dotted lines are now 70% visible, and a 30%-opacity band is
+green where PE exceeds CE or red where CE exceeds PE. The formerly empty lower
+right slot now contains all tracked exact-option prices in legacy range-normalised
+coordinates (open 0, observed high +100, observed low -100), with selected
+contracts darkest and distant strikes progressively faded. It shares the time
+cursor/domain. Compact right-column value-axis labels are hidden except on the
+positioning heatmap; source values, missingness, strategy, selection, refresh,
+drawings, measurements and order behavior are unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_CUMULATIVE_BANDS_AND_COMPACT_RANGE_20260922.md`.
+
 2026-09-22 Scalper V2 embedded-route scrolling: the normal Trading Analytics
 route keeps its compact fixed-height application shell and stationary analytics
 header, while the direct Scalper V2 child now owns the remaining viewport as a

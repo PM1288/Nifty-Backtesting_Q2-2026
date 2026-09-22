@@ -1,3 +1,5 @@
+import type { EChartsOption } from "echarts";
+
 export type ScalperV2OptionPricePoint = {
   capturedAt: string; strike: number | null; side: unknown; price: number | null;
   oi?: number | null; reportedChangeOi?: number | null; volume?: number | null;
@@ -66,4 +68,76 @@ export function visibleScalperV2PriceSeries(series: ScalperV2NormalizedPriceSeri
     series.filter((row) => row.side === side).sort((a, b) => Math.abs(a.strike - strike) - Math.abs(b.strike - strike)).slice(0, 5).forEach((row) => wanted.add(row.id));
   }
   return series.filter((row) => wanted.has(row.id));
+}
+
+export function scalperV2CompactRangePriceOption(
+  model: ReturnType<typeof scalperV2NormalizedPriceSeries>,
+  timeLabel: (value: number) => string,
+  domain?: { from: number; to: number },
+): EChartsOption {
+  return {
+    animation: false,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "line", snap: true },
+      formatter: (input: unknown) => {
+        const rows = (Array.isArray(input) ? input : [input]) as Array<{ axisValue?: unknown; seriesName?: string; data?: ScalperV2NormalizedPriceDatum }>;
+        const time = Number(rows[0]?.data?.value?.[0] ?? rows[0]?.axisValue);
+        const heading = Number.isFinite(time) ? timeLabel(time) : "Time unavailable";
+        return [heading, ...rows.flatMap((row) => {
+          const normalized = row.data?.value?.[1];
+          if (normalized == null) return [];
+          const raw = row.data?.rawPrice;
+          return [`${row.seriesName ?? "Series"}: ${Math.round(normalized)} · raw ${raw == null ? "—" : `₹${Math.round(raw).toLocaleString("en-IN")}`}`];
+        })].join("<br/>");
+      },
+    },
+    legend: { show: false },
+    grid: { left: 25, right: 3, top: 3, bottom: 20, containLabel: false },
+    xAxis: {
+      type: "time",
+      min: domain?.from,
+      max: domain?.to,
+      axisLabel: { formatter: timeLabel, fontSize: 7, hideOverlap: true, margin: 4 },
+      axisTick: { show: false },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: "value",
+      min: -100,
+      max: 100,
+      interval: 100,
+      axisLabel: { formatter: (value: number) => Math.round(value).toString(), fontSize: 7, margin: 2 },
+      axisTick: { show: false },
+      splitLine: { lineStyle: { color: "rgba(100,116,139,.12)" } },
+    },
+    series: model.series.map((series, index) => {
+      const opacity = series.selected ? 0.95 : Math.max(0.18, Math.min(0.7, series.opacity * 0.7));
+      return {
+        id: `compact-range:${series.id}`,
+        name: series.name,
+        type: "line",
+        data: series.data,
+        connectNulls: false,
+        showSymbol: false,
+        symbol: "none",
+        lineStyle: {
+          color: series.side === "CE" ? "#eab308" : "#2563eb",
+          width: series.selected ? 1.6 : 0.8,
+          type: "dotted",
+          opacity,
+        },
+        itemStyle: { color: series.side === "CE" ? "#eab308" : "#2563eb", opacity },
+        emphasis: { focus: "series", lineStyle: { width: 2, opacity: 1 } },
+        z: series.selected ? 4 : 1,
+        markLine: index === 0 ? {
+          silent: true,
+          symbol: "none",
+          label: { show: false },
+          lineStyle: { color: "#111827", type: "dotted", width: 1 },
+          data: [{ yAxis: 0 }],
+        } : undefined,
+      };
+    }),
+  };
 }

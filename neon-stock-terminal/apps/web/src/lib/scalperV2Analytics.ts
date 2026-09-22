@@ -18,9 +18,19 @@ const PUT_BORDER = "#1d4ed8";
  * value card that obscures their narrow plotting area. Expanded analytics
  * continue to receive the original option with full tooltips. */
 export function scalperV2CompactSideOption(option: EChartsOption): EChartsOption {
+  const axes = Array.isArray(option.yAxis) ? option.yAxis : option.yAxis ? [option.yAxis] : [];
   return {
     ...option,
     tooltip: { show: false, triggerOn: "none", alwaysShowContent: false },
+    yAxis: axes.map((axis) => {
+      if (!axis || typeof axis !== "object" || !("type" in axis) || axis.type !== "value") return axis;
+      return {
+        ...axis,
+        name: "",
+        axisTick: { ...(("axisTick" in axis && axis.axisTick && typeof axis.axisTick === "object") ? axis.axisTick : {}), show: false },
+        axisLabel: { ...(("axisLabel" in axis && axis.axisLabel && typeof axis.axisLabel === "object") ? axis.axisLabel : {}), show: false },
+      };
+    }),
   };
 }
 

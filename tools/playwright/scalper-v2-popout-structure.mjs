@@ -156,8 +156,10 @@ try {
   }));
   check("oi-history-matches-price-columns", historyGeometry.length === 2 && layout.stage && layout.callPanel && Math.abs(historyGeometry[0].outerWidth - layout.stage.width) <= 3 && Math.abs(historyGeometry[1].outerWidth - layout.callPanel.width) <= 3, JSON.stringify({ historyGeometry, underlying: layout.stage, call: layout.callPanel }));
   check("aligned-auxiliary-chart-height", historyGeometry.every((item) => item.outerHeight >= 205 && item.outerHeight <= 215), JSON.stringify(historyGeometry));
-  const historySpacer = await page.getByTestId("v2-oi-history-side-spacer").evaluate((element) => { const box = element.getBoundingClientRect(); return { width: box.width, height: box.height }; });
-  check("removed-spread-keeps-axis-alignment", Boolean(layout.sideOi && historySpacer.width >= layout.sideOi.width - 2), JSON.stringify({ sideOi: layout.sideOi, historySpacer }));
+  const compactRange = page.getByTestId("v2-compact-range-price");
+  const compactRangeGeometry = await compactRange.evaluate((element) => { const box = element.getBoundingClientRect(); return { width: box.width, height: box.height }; });
+  check("compact-range-fills-lower-right", Boolean(layout.sideOi && compactRangeGeometry.width >= layout.sideOi.width - 2 && compactRangeGeometry.height >= 205), JSON.stringify({ sideOi: layout.sideOi, compactRangeGeometry }));
+  check("compact-range-chart-rendered", await compactRange.getByRole("img").count() === 1 || /unavailable/i.test(await compactRange.innerText()), await compactRange.innerText());
   check("oi-history-directly-below-price-grid", Boolean(layout.oiHistory && layout.priceGrid && Math.abs(layout.oiHistory.y - (layout.priceGrid.y + layout.priceGrid.height + 3)) <= 2), JSON.stringify(layout));
   const historyText = await page.getByTestId("v2-oi-history-row").innerText();
   check("separate-oi-difference-semantics", historyText.includes("Cumulative PE OI − cumulative CE OI") && historyText.includes("Cumulative PE ΔOI − cumulative CE ΔOI"), historyText);

@@ -36,6 +36,9 @@ test("Scalper V2 compact side charts suppress obstructive hover cards without ch
   assert.equal((compact.tooltip as Record<string, unknown>).triggerOn, "none");
   assert.notEqual((expanded.tooltip as Record<string, unknown>).show, false);
   assert.deepEqual(compact.series, expanded.series);
+  const compactAxes = compact.yAxis as Array<{ type: string; name: string; axisLabel: { show: boolean } }>;
+  assert.ok(compactAxes.every((axis) => axis.type !== "value" || (axis.name === "" && axis.axisLabel.show === false)));
+  assert.equal((expanded.yAxis as Array<{ name: string }>)[0].name, "OI");
 });
 
 test("Scalper V2 compact ΔOI chart keeps signed bars and PE minus CE line", () => {

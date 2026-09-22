@@ -16,6 +16,17 @@ const timestamp = (point: ScalperV2OiTimePoint) => Date.parse(point.capturedAt);
 const validTime = (point: ScalperV2OiTimePoint) => Number.isFinite(timestamp(point));
 const nativePriceScaleGutter = 72;
 
+const roundedOiAxisValue = (value: unknown) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return "—";
+  const absolute = Math.abs(parsed);
+  const sign = parsed < 0 ? "−" : "";
+  if (absolute >= 10_000_000) return `${sign}${Math.round(absolute / 10_000_000).toLocaleString("en-IN")}Cr`;
+  if (absolute >= 100_000) return `${sign}${Math.round(absolute / 100_000).toLocaleString("en-IN")}L`;
+  if (absolute >= 1_000) return `${sign}${Math.round(absolute / 1_000).toLocaleString("en-IN")}K`;
+  return `${sign}${Math.round(absolute).toLocaleString("en-IN")}`;
+};
+
 export type ScalperV2OiDifferenceMetric = "oi" | "change";
 export type ScalperV2TimeDomain = { from: number; to: number };
 
@@ -64,6 +75,30 @@ export function scalperV2SessionHeatData(
   });
 }
 
+export function scalperV2OiContextBands(
+  rows: ScalperV2OiTimePoint[],
+  metric: ScalperV2OiDifferenceMetric,
+) {
+  const change = metric === "change";
+  const values = rows.map((point) => {
+    const ce = change ? point.ceChangeOi : point.ceOi;
+    const pe = change ? point.peChangeOi : point.peOi;
+    return { time: timestamp(point), ce, pe };
+  });
+  const band = (positive: boolean, base: boolean) => values.map(({ time, ce, pe }) => {
+    if (ce == null || pe == null || !Number.isFinite(ce) || !Number.isFinite(pe)) return [time, null];
+    const matches = positive ? pe >= ce : ce > pe;
+    if (!matches) return [time, null];
+    return [time, base ? Math.min(ce, pe) : Math.abs(pe - ce)];
+  });
+  return {
+    peAboveBase: band(true, true),
+    peAboveGap: band(true, false),
+    ceAboveBase: band(false, true),
+    ceAboveGap: band(false, false),
+  };
+}
+
 export function scalperV2OiMetricOption(
   points: ScalperV2OiTimePoint[],
   metric: ScalperV2OiDifferenceMetric,
@@ -79,12 +114,43 @@ export function scalperV2OiMetricOption(
   const differenceData = scalperV2SessionHeatData(rows, (point) => change ? point.changeOiDifference : point.oiDifference);
   const ceData = rows.map((point) => [timestamp(point), change ? point.ceChangeOi : point.ceOi]);
   const peData = rows.map((point) => [timestamp(point), change ? point.peChangeOi : point.peOi]);
+  const contextBands = scalperV2OiContextBands(rows, metric);
+  const bandBase = (name: string, stack: string, data: Array<Array<number | null>>) => ({
+    name,
+    type: "line" as const,
+    yAxisIndex: 1,
+    stack,
+    data,
+    connectNulls: false,
+    showSymbol: false,
+    symbol: "none" as const,
+    silent: true,
+    tooltip: { show: false },
+    lineStyle: { opacity: 0, width: 0 },
+    areaStyle: { opacity: 0 },
+    z: 0,
+  });
+  const bandGap = (name: string, stack: string, data: Array<Array<number | null>>, color: string) => ({
+    name,
+    type: "line" as const,
+    yAxisIndex: 1,
+    stack,
+    data,
+    connectNulls: false,
+    showSymbol: false,
+    symbol: "none" as const,
+    silent: true,
+    tooltip: { show: false },
+    lineStyle: { opacity: 0, width: 0 },
+    areaStyle: { color, opacity: 0.3 },
+    z: 0,
+  });
   return {
     animation: false,
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "line", snap: true },
-      valueFormatter: (value: unknown) => value == null ? "Unavailable" : formatOiAxisValue(Number(value)),
+      valueFormatter: (value: unknown) => value == null ? "Unavailable" : roundedOiAxisValue(value),
     },
     legend: {
       data: [name, ceName, peName],
@@ -93,7 +159,7 @@ export function scalperV2OiMetricOption(
       itemGap: 7,
       itemWidth: 11,
       itemHeight: 7,
-      textStyle: { fontSize: 8 },
+      textStyle: { fontSize: 7 },
     },
     visualMap: {
       show: false,
@@ -106,7 +172,7 @@ export function scalperV2OiMetricOption(
     },
     // Match the native price panes: time starts at the plot's left edge and
     // the numeric scale occupies the right-side price-scale gutter.
-    grid: { left: 0, right: nativePriceScaleGutter, top: 24, bottom: 38, containLabel: false },
+    grid: { left: 0, right: nativePriceScaleGutter, top: 20, bottom: 28, containLabel: false },
     xAxis: timeAxis(timeLabel, domain),
     yAxis: [
       {
@@ -115,7 +181,7 @@ export function scalperV2OiMetricOption(
         position: "right",
         nameLocation: "end",
         scale: true,
-        axisLabel: { formatter: formatOiAxisValue },
+        axisLabel: { formatter: roundedOiAxisValue, fontSize: 8 },
         splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
       },
       {
@@ -126,8 +192,8 @@ export function scalperV2OiMetricOption(
         min: change ? undefined : 0,
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { inside: true, formatter: formatOiAxisValue, color: "rgba(71,85,105,.68)", fontSize: 8 },
-        nameTextStyle: { color: "rgba(71,85,105,.72)", fontSize: 8, align: "left" },
+        axisLabel: { inside: true, formatter: roundedOiAxisValue, color: "rgba(71,85,105,.72)", fontSize: 7 },
+        nameTextStyle: { color: "rgba(71,85,105,.72)", fontSize: 7, align: "left" },
         splitLine: { show: false },
       },
     ],
@@ -142,7 +208,7 @@ export function scalperV2OiMetricOption(
         showSymbol: rows.length <= 1,
         symbolSize: 7,
         lineStyle: { width: 2.4 },
-        areaStyle: { color: "rgba(15,23,42,.045)" },
+        z: 3,
         markLine: {
           silent: true,
           symbol: "none",
@@ -151,6 +217,10 @@ export function scalperV2OiMetricOption(
           data: [{ yAxis: 0 }, ...dayOpenMark(dayOpenMs)],
         },
       },
+      bandBase("PE above CE base", "pe-above", contextBands.peAboveBase),
+      bandGap("PE above CE area", "pe-above", contextBands.peAboveGap, "#15803d"),
+      bandBase("CE above PE base", "ce-above", contextBands.ceAboveBase),
+      bandGap("CE above PE area", "ce-above", contextBands.ceAboveGap, "#c6283d"),
       {
         name: ceName,
         type: "line",
@@ -158,8 +228,9 @@ export function scalperV2OiMetricOption(
         data: ceData,
         connectNulls: false,
         showSymbol: false,
-        lineStyle: { color: "#eab308", width: 1.2, type: "dotted", opacity: 0.42 },
-        itemStyle: { color: "#eab308", opacity: 0.42 },
+        lineStyle: { color: "#eab308", width: 1, type: "dotted", opacity: 0.7 },
+        itemStyle: { color: "#eab308", opacity: 0.7 },
+        z: 2,
       },
       {
         name: peName,
@@ -168,8 +239,9 @@ export function scalperV2OiMetricOption(
         data: peData,
         connectNulls: false,
         showSymbol: false,
-        lineStyle: { color: "#2563eb", width: 1.2, type: "dotted", opacity: 0.42 },
-        itemStyle: { color: "#2563eb", opacity: 0.42 },
+        lineStyle: { color: "#2563eb", width: 1, type: "dotted", opacity: 0.7 },
+        itemStyle: { color: "#2563eb", opacity: 0.7 },
+        z: 2,
       },
     ],
   };

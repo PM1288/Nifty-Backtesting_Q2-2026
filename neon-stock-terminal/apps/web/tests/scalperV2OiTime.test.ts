@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption, scalperV2SessionHeatData, type ScalperV2OiTimePoint } from "../src/lib/scalperV2OiTime";
+import { scalperV2OiContextBands, scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption, scalperV2SessionHeatData, type ScalperV2OiTimePoint } from "../src/lib/scalperV2OiTime";
 
 const points: ScalperV2OiTimePoint[] = [{
   capturedAt: "2026-09-19T04:00:00.000Z",
@@ -40,30 +40,46 @@ test("separate OI history panels retain the requested tracked-chain arithmetic",
   assert.equal((oi.xAxis as { min: number }).min, domain.from);
   assert.equal((oi.xAxis as { max: number }).max, domain.to);
   assert.equal(oi.dataZoom, undefined);
-  assert.deepEqual(oi.grid, { left: 0, right: 72, top: 24, bottom: 38, containLabel: false });
+  assert.deepEqual(oi.grid, { left: 0, right: 72, top: 20, bottom: 28, containLabel: false });
   assert.equal((oi.yAxis as Array<{ position: string }>)[0].position, "right");
   assert.equal((oi.yAxis as Array<{ position: string }>)[1].position, "left");
-  assert.equal(oiSeries.length, 3);
-  assert.equal(changeSeries.length, 3);
+  assert.equal(oiSeries.length, 7);
+  assert.equal(changeSeries.length, 7);
   assert.equal(oiSeries[0].name, "PE OI − CE OI");
   assert.equal(changeSeries[0].name, "PE ΔOI − CE ΔOI");
   assert.equal(oiSeries[0].data[0][1], 40);
   assert.equal(changeSeries[0].data[0][1], -50);
-  assert.deepEqual(oiSeries.slice(1).map((series) => [series.name, series.yAxisIndex, series.lineStyle?.type, series.areaStyle]), [
-    ["Cumulative CE OI", 1, "dotted", undefined],
-    ["Cumulative PE OI", 1, "dotted", undefined],
+  const oiContext = oiSeries.filter((series) => series.name === "Cumulative CE OI" || series.name === "Cumulative PE OI");
+  const changeContext = changeSeries.filter((series) => series.name === "Cumulative CE ΔOI" || series.name === "Cumulative PE ΔOI");
+  assert.deepEqual(oiContext.map((series) => [series.name, series.yAxisIndex, series.lineStyle?.type, series.lineStyle?.opacity, series.areaStyle]), [
+    ["Cumulative CE OI", 1, "dotted", 0.7, undefined],
+    ["Cumulative PE OI", 1, "dotted", 0.7, undefined],
   ]);
-  assert.deepEqual(changeSeries.slice(1).map((series) => [series.name, series.yAxisIndex, series.lineStyle?.type, series.areaStyle]), [
-    ["Cumulative CE ΔOI", 1, "dotted", undefined],
-    ["Cumulative PE ΔOI", 1, "dotted", undefined],
+  assert.deepEqual(changeContext.map((series) => [series.name, series.yAxisIndex, series.lineStyle?.type, series.lineStyle?.opacity, series.areaStyle]), [
+    ["Cumulative CE ΔOI", 1, "dotted", 0.7, undefined],
+    ["Cumulative PE ΔOI", 1, "dotted", 0.7, undefined],
   ]);
-  assert.equal(oiSeries[1].data[0][1], 100);
-  assert.equal(oiSeries[2].data[0][1], 140);
-  assert.equal(changeSeries[1].data[0][1], 30);
-  assert.equal(changeSeries[2].data[0][1], -20);
+  assert.equal(oiContext[0].data[0][1], 100);
+  assert.equal(oiContext[1].data[0][1], 140);
+  assert.equal(changeContext[0].data[0][1], 30);
+  assert.equal(changeContext[1].data[0][1], -20);
+  assert.equal((oiSeries.find((series) => series.name === "PE above CE area")?.areaStyle as Record<string, unknown>).opacity, 0.3);
+  assert.equal((changeSeries.find((series) => series.name === "CE above PE area")?.areaStyle as Record<string, unknown>).opacity, 0.3);
   assert.deepEqual((oi.visualMap as { inRange: { color: string[] } }).inRange.color, ["#c6283d", "#111827", "#15803d"]);
   const markLine = oiSeries[0] as unknown as { markLine: { data: Array<Record<string, unknown>> } };
   assert.equal(markLine.markLine.data[1].xAxis, domain.from);
+});
+
+test("CE and PE context bands encode green PE-above and red CE-above gaps without changing values", () => {
+  const rows: ScalperV2OiTimePoint[] = [
+    { ...points[0], capturedAt: "2026-09-19T03:45:00.000Z", ceOi: 100, peOi: 140 },
+    { ...points[0], capturedAt: "2026-09-19T03:50:00.000Z", ceOi: 180, peOi: 120 },
+  ];
+  const bands = scalperV2OiContextBands(rows, "oi");
+  assert.deepEqual(bands.peAboveBase.map((row) => row[1]), [100, null]);
+  assert.deepEqual(bands.peAboveGap.map((row) => row[1]), [40, null]);
+  assert.deepEqual(bands.ceAboveBase.map((row) => row[1]), [null, 120]);
+  assert.deepEqual(bands.ceAboveGap.map((row) => row[1]), [null, 60]);
 });
 
 test("difference line heat score anchors session low red, open black and high green", () => {

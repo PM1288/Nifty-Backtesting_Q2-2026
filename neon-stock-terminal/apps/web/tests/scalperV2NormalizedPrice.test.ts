@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { scalperV2NormalizedPrice, scalperV2NormalizedPriceSeries, scalperV2PriceValue, visibleScalperV2PriceSeries } from "../src/lib/scalperV2NormalizedPrice";
+import { scalperV2CompactRangePriceOption, scalperV2NormalizedPrice, scalperV2NormalizedPriceSeries, scalperV2PriceValue, visibleScalperV2PriceSeries } from "../src/lib/scalperV2NormalizedPrice";
 
 test("Scalper V2 normalized price maps open high and low to 0 +100 and -100", () => {
   assert.equal(scalperV2NormalizedPrice(100, 100, 120, 80), 0);
@@ -59,4 +59,24 @@ test("Scalper V2 default line selection keeps selected, leaders and nearby conte
   assert.ok(visible.some((row) => row.id === "PE:130"));
   assert.ok(visible.some((row) => row.id === "CE:150"));
   assert.ok(visible.length < model.series.length);
+});
+
+test("compact range chart plots every CE and PE on a fixed integer minus-100 to plus-100 scale", () => {
+  const model = scalperV2NormalizedPriceSeries([
+    { capturedAt: "2026-09-10T03:46:00Z", strike: 100, side: "CE", price: 10 },
+    { capturedAt: "2026-09-10T03:51:00Z", strike: 100, side: "CE", price: 12 },
+    { capturedAt: "2026-09-10T03:46:00Z", strike: 110, side: "PE", price: 20 },
+    { capturedAt: "2026-09-10T03:51:00Z", strike: 110, side: "PE", price: 18 },
+  ], 100, 110, "range");
+  const option = scalperV2CompactRangePriceOption(model, String, { from: 1, to: 2 });
+  const axis = option.yAxis as { min: number; max: number; interval: number; axisLabel: { formatter: (value: number) => string } };
+  const series = option.series as Array<{ name: string; lineStyle: { color: string; type: string; opacity: number }; markLine?: unknown }>;
+  assert.deepEqual([axis.min, axis.max, axis.interval], [-100, 100, 100]);
+  assert.equal(axis.axisLabel.formatter(49.8), "50");
+  assert.equal(series.length, 2);
+  assert.equal(series[0].lineStyle.color, "#eab308");
+  assert.equal(series[1].lineStyle.color, "#2563eb");
+  assert.equal(series[0].lineStyle.type, "dotted");
+  assert.ok(series[0].lineStyle.opacity >= 0.7);
+  assert.ok(series[0].markLine);
 });

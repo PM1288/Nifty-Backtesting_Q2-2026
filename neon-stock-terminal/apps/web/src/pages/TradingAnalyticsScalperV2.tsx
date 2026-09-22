@@ -13,7 +13,7 @@ import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSi
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
 import { scalperV2CompactSideOption, scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
 import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
-import { scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
+import { scalperV2CompactRangePriceOption, scalperV2NormalizedPriceSeries, visibleScalperV2PriceSeries, type ScalperV2OptionPricePoint, type ScalperV2PriceMode } from "../lib/scalperV2NormalizedPrice";
 import { scalperV2PositioningHeatmapOption, scalperV2PositioningModel, scalperV2StrikeStructureOption } from "../lib/scalperV2Positioning";
 import { scalperV2OiTotals, scalperV2StructureRows } from "../lib/scalperV2Structure";
 import { oiComparisonState } from "../lib/scalperV2Geometry";
@@ -453,6 +453,18 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     defaultStrike,
     defaultStrike,
   ), [defaultStrike, optionPriceHistory.data?.points, priceMode, selectedCeStrike, selectedPeStrike, tradingDay]);
+  const compactRangePriceModel = useMemo(() => scalperV2NormalizedPriceSeries(
+    (optionPriceHistory.data?.points ?? []).filter((point) => istDay(point.capturedAt) === tradingDay),
+    numeric(selectedCeStrike),
+    numeric(selectedPeStrike),
+    "range",
+    defaultStrike,
+    defaultStrike,
+  ), [defaultStrike, optionPriceHistory.data?.points, selectedCeStrike, selectedPeStrike, tradingDay]);
+  const compactRangePriceOption = useMemo(
+    () => scalperV2CompactRangePriceOption(compactRangePriceModel, istClock, sharedTimeDomain),
+    [compactRangePriceModel, sharedTimeDomain],
+  );
   const visiblePriceSeries = useMemo(() => visibleScalperV2PriceSeries(
     normalizedPriceModel.series,
     numeric(selectedCeStrike),
@@ -712,7 +724,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
           <article data-testid="v2-oi-difference-time"><header><strong>Cumulative PE OI − cumulative CE OI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · timestamp aligned</span></header>{cumulativeOiPoints.some((point) => point.oiDifference != null) ? <Suspense fallback={<p>Loading OI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put open interest minus cumulative call open interest over time" axisExtentPolicy="native" option={cumulativeOiDifferenceOnlyOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>OI history unavailable</strong><span>No comparable CE/PE tracked-chain snapshots for this session.</span></div>}</article>
           <article data-testid="v2-change-oi-difference-time"><header><strong>Cumulative PE ΔOI − cumulative CE ΔOI</strong><RefreshStamp at={active.dataUpdatedAt} /><span>All tracked strikes · {cumulativeChangeBasis}</span></header>{cumulativeOiPoints.some((point) => point.changeOiDifference != null) ? <Suspense fallback={<p>Loading ΔOI difference…</p>}><Chart className={css.oiHistoryChart} ariaLabel="Cumulative put change in open interest minus cumulative call change in open interest over time" axisExtentPolicy="native" option={cumulativeChangeDifferenceOnlyOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "change-oi-difference")} /></Suspense> : <div className={css.oiHistoryState}><strong>Change-in-OI history unavailable</strong><span>A comparable baseline is required; missing values are not zero.</span></div>}</article>
         </div>
-        <div className={css.oiHistorySideSpacer} data-testid="v2-oi-history-side-spacer" aria-hidden="true" />
+        <article className={css.oiHistorySideChart} data-testid="v2-compact-range-price">
+          <header><strong>Range-normalised CE / PE</strong><RefreshStamp at={optionPriceHistory.dataUpdatedAt} /><span>CE yellow · PE blue · open 0 · high +100 · low −100</span></header>
+          {compactRangePriceModel.series.length ? <Suspense fallback={<p>Loading range-normalised prices…</p>}><Chart className={css.oiHistoryChart} ariaLabel="All tracked call and put prices range normalised from minus one hundred to plus one hundred" axisExtentPolicy="native" option={compactRangePriceOption} activeTimeMs={inspectionTime == null ? null : inspectionTime * 1000} onTimeHover={(value) => handleOiTimeHover(value, "compact-range-price")} /></Suspense> : <div className={css.oiHistoryState}><strong>Option price history unavailable</strong><span>No exact tracked CE/PE observations exist for this session.</span></div>}
+        </article>
       </section>
       {railOpen && <aside className={css.rail} aria-label="Scalper V2 option chain and inspector">
         <header className={css.railHeader}><h2>{label} · CE {Number(selectedCeStrike).toLocaleString("en-IN")} / PE {Number(selectedPeStrike).toLocaleString("en-IN")}</h2><span className={css.identity}>{expiry} · <b>Selected independently</b>{selectedCeIsAtm && selectedPeIsAtm ? " · both ATM" : defaultStrike == null ? "" : ` · ATM ${defaultStrike.toLocaleString("en-IN")}`}</span></header>

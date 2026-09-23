@@ -6592,3 +6592,16 @@ or outcomes were deleted.
   equations, M-1/M-2/M-3 open-close values and individual/group pass states.
 - Calculation, signal selection, CSV semantics and order permissions are
   unchanged.
+- Current artifact:
+  `platform/nifty_stratlab/outputs/three_month_reversal_20260923/`.
+- PDF: 1,813 A4 landscape pages (1 overall + 500 stock charts + 1,312 stock
+  evidence pages), 73,077,959 bytes. CSV: 15,042 rows, 8,113,744 bytes.
+- Every evidence page repeats that stock's Bull/Bear performance summary and
+  carries at most 14 rows so the final row is not clipped.
+- Authenticated production regression passed 13/13 checks with zero page
+  errors. Evidence:
+  `/home/novius2/NIFTY50/evidence/three-month-stock-trade-pages-20260923/`.
+- Deployed pushed commit `3b94900` on image
+  `trading-stack-n50-dashboard:three-month-stock-pages-20260923-3b94900`;
+  rollback image is
+  `trading-stack-n50-dashboard:before-three-month-stock-pages-20260923`.

@@ -70,10 +70,11 @@ report's causal comparison enters at the next retained trading-day open.
 
 For each fresh signal the CSV records direction-adjusted 1/5/15-session return
 and the 15-session path drawdown, together with exact gate/reference evidence.
-The PDF intentionally does not duplicate the trade ledger. It contains the
-formula/summary on one page and one full-page Daily/Weekly/Monthly chart review
-per stock. Blue upward markers are Bull qualifications and yellow downward
-markers are Bear qualifications. Daily markers retain exact signal dates.
+The PDF contains the formula/overall summary on one page, one full-page
+Daily/Weekly/Monthly chart review per stock, and one or more immediately
+following trade-evidence pages for that stock. Blue upward markers are Bull
+qualifications and yellow downward markers are Bear qualifications. Daily
+markers retain exact signal dates.
 Weekly and Monthly markers aggregate those dated events into their containing
 period; `×N` is the count of dated events and does not classify the whole
 candle. Purple is EMA9 and green/red are candle direction.
@@ -106,7 +107,7 @@ same-date pair is ever emitted.
 The large difference between the look-ahead and causal rows is evidence that
 the same-day-open assumption materially inflates results.
 
-## 23 September 2026 chart-evidence refresh
+## 23 September 2026 chart and stock-evidence refresh
 
 The current downloadable artifact is
 `platform/nifty_stratlab/outputs/three_month_reversal_20260923/`.
@@ -115,19 +116,20 @@ signals and zero opposite-direction same-date signals. Strategy results did
 not change; only evidence presentation and exported reference completeness
 changed.
 
-- PDF: 501 A4 landscape pages.
+- PDF: 1,813 A4 landscape pages: one overall summary, 500 stock chart pages and
+  1,312 stock trade-evidence pages.
 - CSV: 15,042 rows with every required Monthly/Weekly/Daily reference column.
 - Visual evidence:
   `/home/novius2/NIFTY50/evidence/three-month-report-period-evidence-20260923/`.
 - Web validation: typecheck, 280/280 tests and production build passed.
 - API validation: typecheck, 269/269 tests and build passed.
-- Authenticated production regression: 11/11 checks passed, including report
-  identity, file availability, strategy validation, period-overlay disclosure
-  and zero browser page errors.
-- Deployed source: `6953315`; production image:
-  `trading-stack-n50-dashboard:three-month-period-evidence-20260923-6953315`.
+- Authenticated production regression: 13/13 checks passed, including report
+  identity, file availability, strategy validation, period-overlay disclosure,
+  stock-table disclosure and zero browser page errors.
+- Deployed source: `3b94900`; production image:
+  `trading-stack-n50-dashboard:three-month-stock-pages-20260923-3b94900`.
 - Rollback image:
-  `trading-stack-n50-dashboard:before-three-month-period-evidence-20260923`.
+  `trading-stack-n50-dashboard:before-three-month-stock-pages-20260923`.
 
 ## Stock-wise summaries and trade evidence
 
@@ -144,6 +146,20 @@ the table exposes:
 
 The CSV remains the complete machine-readable ledger. Missing results stay
 unavailable rather than becoming zero.
+
+The current PDF uses 14 trade rows per evidence page so no final row is clipped
+at A4 landscape size. Its `summary.json` records the page contract:
+
+```text
+overall              1
+stock charts       500
+stock evidence   1,312
+total pages       1,813
+```
+
+The generated PDF is 73,077,959 bytes and the CSV is 8,113,744 bytes. The
+stock-table visual sample is:
+`/home/novius2/NIFTY50/evidence/three-month-report-period-evidence-20260923/page-003-stock-trades.png`.
 
 ## Rerun
 
@@ -164,6 +180,26 @@ script is read-only and writes only under the ignored StratLab output root.
 - Missing forward horizons remain blank, never zero.
 
 ## Validation and release
+
+### Current stock-wise release (`3b94900`)
+
+- Web: typecheck, 280/280 tests and production build passed.
+- API: typecheck, 269/269 tests and production build passed.
+- Canonical repository gate and `git diff --check` passed.
+- The regenerated PDF has 1,813 pages, exactly matching the page contract in
+  `summary.json`; all 15,042 signal rows are represented across the stock-wise
+  evidence tables and CSV.
+- Generated validation reports zero invalid signals and zero opposite-direction
+  signals for the same stock/date.
+- Authenticated production Chromium passed 13/13 focused checks with no page
+  errors. Evidence is under
+  `/home/novius2/NIFTY50/evidence/three-month-stock-trade-pages-20260923/`.
+- Production is healthy with zero container restarts on image
+  `trading-stack-n50-dashboard:three-month-stock-pages-20260923-3b94900`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-stock-pages-20260923`.
+
+### Prior chart-only release history
 
 - Web: typecheck and production build passed; 271/271 tests passed.
 - API: typecheck and production build passed; 264/264 tests passed.

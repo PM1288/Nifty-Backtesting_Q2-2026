@@ -57,6 +57,25 @@ Evidence is stored locally under
 `output/playwright/home-scalper-stable-hydration/` and intentionally excluded
 from Git.
 
+## Production evidence
+
+- Released from pushed `master` commit `d4050f7`.
+- Dashboard image:
+  `sha256:a4c2f183fce46d2dc58917e4163fdeb9951b8eccbe592581525a02c10c52ab65`.
+- Routed Vite entry: `/n50/assets/index-BL9T2vUl.js`.
+- Container health: healthy, zero restarts after deployment.
+- Authenticated delayed-response production regression: 11/11 PASS.
+- Version-mismatch regression: 7/7 PASS; an active page did not navigate until
+  **Apply update** was clicked.
+- Existing Home/Screener refresh-failure regression: 11/11 PASS, including
+  last-good DOM retention and recovery in place.
+- Scalper live observation: one document, the same three native chart roots
+  after 70.6 seconds, zero page errors, four bounded chart polls at the
+  15-second cadence and two bounded option-history polls at the 30-second
+  cadence.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-stable-hydration-20260923`.
+
 ## Preservation
 
 This is presentation/lifecycle work only. It does not change Home calculations,

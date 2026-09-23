@@ -45,13 +45,18 @@ try {
     dataOperations: [...document.querySelectorAll('[data-testid^="v2-chart-host-"]')].map(n => ({id:n.dataset.testid,setData:n.dataset.setDataCount,update:n.dataset.updateCount})),
   }));
   const pollRequests = requests.filter(r => r.at >= start);
+  const observedMs = Date.now() - start;
+  const expectedPricePolls = observedMs / 15_000;
   assert(stable.samePage && stable.sameCharts && stable.roots === 3, JSON.stringify(stable));
   assert.equal(documents,1,'No document reloads');
   assert(await page.getByRole('button',{name:'Apply update',exact:true}).isVisible());
   assert(pollRequests.some(r => r.url.includes('/charts?')), 'Minute refresh must occur');
-  assert(pollRequests.filter(r => r.url.includes('/charts?')).length <= 2, 'Bounded minute refresh');
+  const chartPollCount = pollRequests.filter(r => r.url.includes('/charts?')).length;
+  assert(chartPollCount >= Math.max(1, Math.floor(expectedPricePolls) - 1) && chartPollCount <= Math.ceil(expectedPricePolls) + 1, `Bounded 15-second price refresh: ${chartPollCount} requests across ${observedMs}ms`);
   assert(requests.filter(r => r.url.includes('/charts?')).every(r => !new URL(r.url).searchParams.has('asOf') && new URL(r.url).searchParams.get('interval') === '5'));
-  assert(!requests.some(r => r.url.includes('/option-price-history?')), 'Hidden price analysis must not fetch');
+  const optionHistoryPolls = pollRequests.filter(r => r.url.includes('/option-price-history?'));
+  assert(optionHistoryPolls.length >= 1 && optionHistoryPolls.length <= Math.ceil(observedMs / 30_000) + 1, `Bounded 30-second option-history refresh: ${optionHistoryPolls.length} requests across ${observedMs}ms`);
+  assert(optionHistoryPolls.every(r => new URL(r.url).searchParams.get('historyDays') === '3' && new URL(r.url).searchParams.get('interval') === '5'), 'Option-history refresh keeps the bounded active context');
   assert.equal(errors.length,0,JSON.stringify(errors));
   const freshness = await page.getByTestId('v2-data-freshness').innerText();
   await page.screenshot({path:path.join(output,'stable-minute-refresh.png'),fullPage:false});
@@ -77,6 +82,6 @@ try {
   const notifications = await alertPage.evaluate(() => window.__notifications);
   assert.equal(notifications.length,1,'One notification per missing-data episode');
   await alertPage.screenshot({path:path.join(output,'synthetic-missing-data-alert.png'),fullPage:false});
-  await fs.writeFile(path.join(output,'results.json'),JSON.stringify({stable,documents,freshness,pollRequests,responseTimings,syntheticAlert:notifications,errors,observedMs:Date.now()-start},null,2));
+  await fs.writeFile(path.join(output,'results.json'),JSON.stringify({stable,documents,freshness,pollRequests,responseTimings,syntheticAlert:notifications,errors,observedMs},null,2));
   console.log(JSON.stringify({stable,documents,freshness,pollRequests:pollRequests.length,output}));
 } finally { await browser.close(); }

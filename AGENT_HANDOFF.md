@@ -16,6 +16,16 @@
 - No data, polling interval, strategy, chart calculation, route, export, alert,
   authentication or order behavior changed. Evidence and rollback:
   `docs/uiux/HOME_SCALPER_STABLE_HYDRATION_20260923.md`.
+- Web typecheck, 274/274 tests and production build passed; API typecheck,
+  264/264 tests and build passed; canonical repository gate passed. Production
+  browser checks passed 11/11 for delayed hydration, 7/7 for explicit app
+  update, 11/11 for Home/Screener refresh retention, and a 70.6-second Scalper
+  observation retained one document and the same three native chart roots.
+- Pushed/merged `master` commit `d4050f7`; deployed dashboard image
+  `sha256:a4c2f183fce46d2dc58917e4163fdeb9951b8eccbe592581525a02c10c52ab65`
+  is healthy with zero restarts and serves `/n50/assets/index-BL9T2vUl.js`.
+  Rollback tag:
+  `trading-stack-n50-dashboard:before-stable-hydration-20260923`.
 
 ## 2026-09-23 — Scalper V2 index-option expiry rollover data repair
 

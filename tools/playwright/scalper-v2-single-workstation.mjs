@@ -52,6 +52,7 @@ try {
   check("READABLE-HEIGHTS", Number(geometry[0]?.body?.height) >= 500 && Number(geometry[1]?.body?.height) >= 240 && Number(geometry[2]?.body?.height) >= 240, JSON.stringify(geometry));
   check("PRIMARY-SNAPSHOT", await terminal.locator("table[aria-label='Selected contracts snapshot metrics']").count() === 1 && await terminal.locator("aside h3", { hasText: "Structure" }).count() === 1, "selected pair and structure are permanent in the rail");
   check("STRUCTURE-MATRIX", await page.getByTestId("v2-strike-matrix").count() === 1, "matrix is visible in the default overview");
+  check("OI-RATE-BY-STRIKE", await page.getByTestId("v2-side-positioning-heatmap").getByText("OI rate by strike", { exact: true }).count() === 1, "rate-by-strike view replaces the legacy positioning heatmap");
   check("ANALYTICS-DOCK", await page.getByTestId("v2-analytics-dock").count() === 1, "single compact analytics dock is mounted");
   const primaryText = await terminal.innerText();
   const forbidden = ["provider-native", "retained cohort", "retained snapshot", "background timeframe cache", "SCALPER_V2_WORKSTATION_V1"];

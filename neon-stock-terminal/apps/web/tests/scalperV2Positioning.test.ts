@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2PositioningModel, scalperV2Regime, scalperV2StrikeStructureOption } from "../src/lib/scalperV2Positioning";
+import { scalperV2OiRateByStrikeOption, scalperV2OiRateSnapshot, scalperV2PositioningModel, scalperV2Regime, scalperV2StrikeStructureOption } from "../src/lib/scalperV2Positioning";
 
 test("Scalper V2 classifies option price and OI regimes mechanically", () => {
   assert.equal(scalperV2Regime(2, 10), "Long buildup");
@@ -38,4 +38,27 @@ test("strike structure exposes OI, signed delta, premium and top-five rank label
   assert.equal(series[0].type, "bar");
   assert.match(series[0].data[0]?.label?.formatter ?? "", /CE1 SB/);
   assert.match(series[1].data[5]?.label?.formatter ?? "", /PE1 SB/);
+});
+
+test("OI rate by strike uses exact predecessor intervals and preserves missingness", () => {
+  const model = scalperV2PositioningModel([
+    { capturedAt: "2026-09-18T03:45:00Z", strike: 23_400, side: "CE", oi: 1_000 },
+    { capturedAt: "2026-09-18T03:50:00Z", strike: 23_400, side: "CE", oi: 1_100 },
+    { capturedAt: "2026-09-18T03:45:00Z", strike: 23_400, side: "PE", oi: 1_300 },
+    { capturedAt: "2026-09-18T03:50:00Z", strike: 23_400, side: "PE", oi: 1_250 },
+    { capturedAt: "2026-09-18T03:45:00Z", strike: 23_450, side: "CE", oi: 800 },
+    { capturedAt: "2026-09-18T03:50:00Z", strike: 23_450, side: "CE", oi: 850 },
+  ]);
+  const snapshot = scalperV2OiRateSnapshot(model, Date.parse("2026-09-18T03:52:00Z"));
+  assert.equal(snapshot.timestamp, Date.parse("2026-09-18T03:50:00Z"));
+  assert.deepEqual(snapshot.calls, [20, 10]);
+  assert.deepEqual(snapshot.puts, [-10, null]);
+  assert.deepEqual(snapshot.difference, [-30, null]);
+  const option = scalperV2OiRateByStrikeOption(model, snapshot.timestamp, String, "×65", 65);
+  const series = option.series as Array<{ name: string; yAxisIndex?: number; data: Array<number | null> }>;
+  assert.deepEqual(series.map((row) => row.name), ["CE OI rate", "PE OI rate", "PE rate − CE rate"]);
+  assert.deepEqual(series[0].data, [1300, 650]);
+  assert.deepEqual(series[1].data, [-650, null]);
+  assert.deepEqual(series[2].data, [-1950, null]);
+  assert.equal(series[2].yAxisIndex, 1);
 });

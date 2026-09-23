@@ -96,3 +96,71 @@ export function scalperV2PositioningHeatmapOption(model: ReturnType<typeof scalp
   const data = model.cells.flatMap((cell) => cell.pressure == null ? [] : [{ value: [timeIndex.get(cell.timestamp), labelIndex.get(`${cell.side} ${cell.strike.toLocaleString("en-IN")}`), cell.pressure], cell }]);
   return { animation: false, tooltip: { formatter: (raw: unknown) => { const cell = (raw as { data?: { cell?: PositioningCell } }).data?.cell; return !cell ? "Unavailable" : `${cell.side} ${cell.strike.toLocaleString("en-IN")} · ${clock(cell.timestamp)}<br/>Pressure ${cell.pressure == null ? "—" : cell.pressure.toFixed(1)} · ${cell.componentCount}/4 components<br/>ΔOI share ${cell.deltaOiShare == null ? "—" : `${(100 * cell.deltaOiShare).toFixed(1)}%`} · premium ${cell.premiumReturnPct == null ? "—" : `${cell.premiumReturnPct.toFixed(2)}%`}<br/>Volume share ${cell.volumeShare == null ? "—" : `${(100 * cell.volumeShare).toFixed(1)}%`} · depth ${cell.depthImbalance == null ? "—" : cell.depthImbalance.toFixed(2)}<br/>${cell.regime} · ${cell.baselineKind.replaceAll("_", " ")}`; } }, grid: { left: 2, right: 2, top: 8, bottom: 2, containLabel: true }, xAxis: { type: "category", data: model.timestamps, axisLabel: { formatter: (value: string) => clock(Number(value)), fontSize: 8, hideOverlap: true } }, yAxis: { type: "category", data: labels, axisLabel: { fontSize: 8, color: (value?: string | number) => String(value ?? "").startsWith("CE") ? "#785500" : "#1d4ed8" } }, visualMap: { show: false, min: -100, max: 100, inRange: { color: ["#b42336", "#f8fafc", "#15803d"] } }, series: [{ type: "heatmap", data, progressive: 0, emphasis: { itemStyle: { borderColor: "#14243a", borderWidth: 1 } } }] };
 }
+
+export type ScalperV2OiRateSnapshot = {
+  timestamp: number | null;
+  calls: Array<number | null>;
+  puts: Array<number | null>;
+  difference: Array<number | null>;
+};
+
+/** Uses the last exact observation at or before the cursor and its immediately
+ * preceding observation for the same contract. Rate is normalized per minute,
+ * keeping 5m and 15m collection cadences comparable. */
+export function scalperV2OiRateSnapshot(
+  model: ReturnType<typeof scalperV2PositioningModel>,
+  targetTimeMs: number | null,
+  multiplier = 1,
+): ScalperV2OiRateSnapshot {
+  const timestamp = [...model.timestamps].filter((value) => targetTimeMs == null || value <= targetTimeMs).at(-1) ?? null;
+  if (timestamp == null) return { timestamp: null, calls: [], puts: [], difference: [] };
+  const rateFor = (side: "CE" | "PE", strike: number) => {
+    const rows = model.cells.filter((cell) => cell.side === side && cell.strike === strike && cell.timestamp <= timestamp && cell.oi != null).sort((left, right) => left.timestamp - right.timestamp);
+    const current = rows.at(-1), previous = rows.at(-2);
+    if (current?.oi == null || previous?.oi == null) return null;
+    const elapsedMinutes = (current.timestamp - previous.timestamp) / 60_000;
+    return elapsedMinutes > 0 ? multiplier * (current.oi - previous.oi) / elapsedMinutes : null;
+  };
+  const calls = model.strikes.map((strike) => rateFor("CE", strike));
+  const puts = model.strikes.map((strike) => rateFor("PE", strike));
+  return { timestamp, calls, puts, difference: calls.map((call, index) => call == null || puts[index] == null ? null : puts[index]! - call) };
+}
+
+/** CE/PE OI velocity bars by strike; the independent line is PE rate minus CE
+ * rate at the same strike. The value sample is owned by the linked time cursor. */
+export function scalperV2OiRateByStrikeOption(
+  model: ReturnType<typeof scalperV2PositioningModel>,
+  targetTimeMs: number | null,
+  clock: (value: number) => string,
+  unitLabel = "",
+  multiplier = 1,
+): EChartsOption {
+  const snapshot = scalperV2OiRateSnapshot(model, targetTimeMs, multiplier);
+  const [minimum, maximum] = scalperV2AdaptiveDeltaDomain([...snapshot.calls, ...snapshot.puts]);
+  const [differenceMinimum, differenceMaximum] = scalperV2AdaptiveDeltaDomain(snapshot.difference);
+  const suffix = unitLabel ? ` · ${unitLabel}/min` : " / min";
+  return {
+    animation: false,
+    tooltip: {
+      trigger: "axis", axisPointer: { type: "shadow" },
+      formatter: (raw: unknown) => {
+        const rows = (Array.isArray(raw) ? raw : [raw]) as Array<{ dataIndex?: number; seriesName?: string; value?: number | null }>;
+        const index = Number(rows[0]?.dataIndex ?? -1), strike = model.strikes[index];
+        const header = `${strike == null ? "Strike unavailable" : `Strike ${strike.toLocaleString("en-IN")}`} · ${snapshot.timestamp == null ? "No comparable interval" : clock(snapshot.timestamp)}`;
+        return [header, ...rows.map((row) => `${row.seriesName ?? "Rate"}: ${row.value == null ? "—" : `${row.value > 0 ? "+" : ""}${formatOiAxisValue(Number(row.value))}/min`}`)].join("<br/>");
+      },
+    },
+    legend: { data: ["CE OI rate", "PE OI rate", "PE rate − CE rate"], top: 0, left: 2, itemGap: 5, itemWidth: 9, itemHeight: 6, textStyle: { fontSize: 7 } },
+    grid: { left: 2, right: 2, top: 24, bottom: 2, containLabel: true },
+    xAxis: { type: "category", data: model.strikes, axisLabel: { hideOverlap: true, fontSize: 8 } },
+    yAxis: [
+      { type: "value", name: `OI rate${suffix}`, min: minimum, max: maximum, axisLabel: { formatter: formatOiAxisValue, fontSize: 8 }, splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } } },
+      { type: "value", name: `PE − CE${suffix}`, min: differenceMinimum, max: differenceMaximum, axisLabel: { formatter: formatOiAxisValue, fontSize: 8 }, splitLine: { show: false } },
+    ],
+    series: [
+      { name: "CE OI rate", type: "bar", data: snapshot.calls, barMaxWidth: 13, itemStyle: { color: sideColor.CE }, markLine: { silent: true, symbol: "none", label: { show: false }, lineStyle: { color: "#64748b", type: "dashed" }, data: [{ yAxis: 0 }] } },
+      { name: "PE OI rate", type: "bar", data: snapshot.puts, barMaxWidth: 13, itemStyle: { color: sideColor.PE } },
+      { name: "PE rate − CE rate", type: "line", yAxisIndex: 1, data: snapshot.difference, symbolSize: 3, lineStyle: { color: "#7c3aed", width: 1.7 }, itemStyle: { color: "#7c3aed" }, markLine: { silent: true, symbol: "none", label: { show: false }, lineStyle: { color: "#64748b", type: "dashed" }, data: [{ yAxis: 0 }] } },
+    ],
+  };
+}

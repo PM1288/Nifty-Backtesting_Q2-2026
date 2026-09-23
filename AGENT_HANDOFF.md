@@ -6732,3 +6732,6 @@ or outcomes were deleted.
   (`sha256:42345eb0fe80bf1667e00f11388d3641e496f7898d1db107d3fda0dab52a0f30`)
   is healthy with zero restarts and serves `/n50/assets/index-LlsQ237D.js`.
 - Rollback image: `trading-stack-n50-dashboard:before-cumulative-no-y-axis-20260923`.
+## 2026-09-23 — Scalper V2 OI rate by strike
+
+The former `Strike × time positioning` right-rail heatmap is now an OI-rate-by-strike chart. At the linked cursor time (or latest snapshot if no cursor is active), each CE/PE bar is calculated from its own immediately preceding observed OI point as `(current OI - prior OI) / elapsed minutes`. CE rate uses yellow, PE rate uses blue, and a secondary purple line shows `PE OI rate - CE OI rate` at each strike. Missing predecessors remain unavailable rather than becoming zero. The existing OI display-unit toggle is respected, including `× lot` mode. The chart retains its stable selector `v2-side-positioning-heatmap` for browser-test compatibility while its visible title and aria label describe the new rate view. This changes presentation only; OI rankings, ΔOI baseline semantics, chain collection, strategy logic, exports and order permissions are unchanged.

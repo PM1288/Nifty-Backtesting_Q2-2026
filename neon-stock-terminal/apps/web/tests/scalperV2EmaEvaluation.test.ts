@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2EmaMarkerDirection } from "../src/lib/scalperV2EmaAlignment";
+import { scalperV2EmaMarkerDirection, scalperV2EmaSignalsForPane, type ScalperV2EmaAlignmentSignal } from "../src/lib/scalperV2EmaAlignment";
 import { scalperV2EmaEvaluation } from "../src/lib/scalperV2EmaEvaluation";
 
 const start = Date.parse("2026-09-22T03:45:00.000Z");
@@ -25,6 +25,14 @@ test("tentative markers use an underlying direction plus fixed CE-up and PE-down
   assert.equal(scalperV2EmaMarkerDirection("underlying", "PUT"), "down");
   assert.equal(scalperV2EmaMarkerDirection("call", "PUT"), "up");
   assert.equal(scalperV2EmaMarkerDirection("put", "PUT"), "down");
+});
+
+test("tentative option markers are routed only to the actionable CE or PE pane", () => {
+  const signal = (direction: "CALL" | "PUT", index: number) => ({ direction, setupTime: new Date(start + index * 300_000).toISOString() }) as ScalperV2EmaAlignmentSignal;
+  const signals = [signal("CALL", 1), signal("PUT", 2)];
+  assert.deepEqual(scalperV2EmaSignalsForPane(signals, "underlying").map((item) => item.direction), ["CALL", "PUT"]);
+  assert.deepEqual(scalperV2EmaSignalsForPane(signals, "call").map((item) => item.direction), ["CALL"]);
+  assert.deepEqual(scalperV2EmaSignalsForPane(signals, "put").map((item) => item.direction), ["PUT"]);
 });
 
 test("retained evaluation reports exact-session signal outcomes and correlations", () => {

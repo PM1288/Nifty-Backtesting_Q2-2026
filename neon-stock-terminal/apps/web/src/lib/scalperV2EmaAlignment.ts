@@ -202,6 +202,20 @@ export function scalperV2EmaAlignmentSpeech(signal: ScalperV2EmaAlignmentSignal,
 }
 
 /**
+ * A three-instrument setup is calculated from all panes, but its actionable
+ * option marker belongs only to the matching contract side. The underlying
+ * retains both directions as the shared setup context.
+ */
+export function scalperV2EmaSignalsForPane(
+  signals: ScalperV2EmaAlignmentSignal[],
+  pane: "underlying" | "call" | "put",
+) {
+  if (pane === "underlying") return signals;
+  const direction = pane === "call" ? "CALL" : "PUT";
+  return signals.filter((signal) => signal.direction === direction);
+}
+
+/**
  * Tentative-reference glyphs use a stable option identity contract: CE is an
  * upward triangle and PE is a downward triangle. Only the underlying glyph
  * follows the CALL/PUT setup direction.

@@ -19,6 +19,7 @@ import {
   scalperV2EmaAlignmentAvailability,
   scalperV2EmaAlignmentSignals,
   scalperV2EmaAlignmentSpeech,
+  scalperV2EmaSignalsForPane,
 } from "../lib/scalperV2EmaAlignment";
 import { scalperV2EmaEvaluation } from "../lib/scalperV2EmaEvaluation";
 import { scalperV2OiDifferenceOption, scalperV2OiMetricOption, scalperV2PcrTimeOption } from "../lib/scalperV2OiTime";
@@ -471,16 +472,16 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     () => [...establishedSignals, ...potentialEmaSignals].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)),
     [establishedSignals, potentialEmaSignals],
   );
-  // A tentative reference is a three-instrument observation. It remains on all
-  // three panes, but is visually distinct from an actual strategy reference.
-  // Existing direction-specific references retain their CE-only/PE-only view.
+  // All three instruments remain calculation evidence, while the actionable
+  // option marker is routed only to its matching side. A PUT reference must
+  // never appear as a Tentative CE marker (and vice versa).
   const callSignals = useMemo(() => [
     ...establishedSignals.filter((signal) => signal.direction === "CALL"),
-    ...potentialEmaSignals,
+    ...scalperV2EmaSignalsForPane(potentialEmaSignals, "call"),
   ].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)), [establishedSignals, potentialEmaSignals]);
   const putSignals = useMemo(() => [
     ...establishedSignals.filter((signal) => signal.direction === "PUT"),
-    ...potentialEmaSignals,
+    ...scalperV2EmaSignalsForPane(potentialEmaSignals, "put"),
   ].sort((left, right) => Date.parse(left.setupTime) - Date.parse(right.setupTime)), [establishedSignals, potentialEmaSignals]);
   useEffect(() => {
     if (typeof window === "undefined" || replayAsOf || interval !== 5 || tradingDay !== istDay(new Date().toISOString())) return;

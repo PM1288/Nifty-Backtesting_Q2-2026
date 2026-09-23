@@ -942,3 +942,13 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
   NSE contract/session-change cohort.
 - Existing chart layout, selection, drawings, signals, exports, collectors and
   order restrictions remain unchanged.
+
+## 2026-09-23 Scalper V2 tentative marker pane routing
+
+- Three-instrument tentative calculations remain unchanged.
+- The underlying displays CALL and PUT context; CE displays tentative CALL only;
+  PE displays tentative PUT only. A valid PE/PUT reference can no longer be
+  duplicated as a false `Tentative CE` marker.
+- Marker shapes/colours, volume confirmation, speech, established signals,
+  exports and order restrictions remain unchanged.
+- Evidence: `docs/trading-analytics/SCALPER_V2_TENTATIVE_PANE_ROUTING_20260923.md`.

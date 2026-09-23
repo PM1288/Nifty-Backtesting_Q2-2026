@@ -6549,3 +6549,12 @@ or outcomes were deleted.
 - Only `n50-dashboard` was recreated. It is healthy on image
   `sha256:aaf8256f4389807dbfbe31f843c4cc0ca98c01ee51ffd6c71bc0bbc130d21b38`.
   Rollback: `trading-stack-n50-dashboard:before-scalper-oi-cohort-20260923`.
+
+## 2026-09-23 — Scalper V2 tentative option-marker routing
+
+- Cause: every tentative three-instrument signal was appended to both option
+  pane event arrays, so a valid PUT/PE reference also appeared as Tentative CE.
+- Repair: underlying keeps both directions; CE receives tentative CALL only;
+  PE receives tentative PUT only. Signal calculation and marker styling are
+  unchanged.
+- Evidence: `docs/trading-analytics/SCALPER_V2_TENTATIVE_PANE_ROUTING_20260923.md`.

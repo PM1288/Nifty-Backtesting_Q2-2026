@@ -28,6 +28,7 @@ try {
   check("report identity", /^three_month_reversal_\d{8}$/.test(report.id) && report.id === (process.env.THREE_MONTH_EXPECTED_REPORT_ID ?? "three_month_reversal_20260923"), String(report.id));
   check("strategy validation", report.summary?.strategyValidation?.invalidSignals === 0 && report.summary?.strategyValidation?.oppositeSameDateSignals === 0 && report.summary?.strategyValidation?.mandatoryGateCount === 6, JSON.stringify(report.summary?.strategyValidation));
   check("summary contract", report.summary?.summary?.every((row) => ["average1", "average5", "average15", "maximum15", "minimum15", "drawdown15"].every((key) => Object.hasOwn(row, key))), JSON.stringify(report.summary?.summary?.[0]));
+  check("stock trade page contract", report.summary?.reportPages?.stockCharts === report.summary?.symbols && report.summary?.reportPages?.stockTradeEvidence > 0 && report.summary?.reportPages?.expectedTotal === 1 + report.summary?.reportPages?.stockCharts + report.summary?.reportPages?.stockTradeEvidence && report.summary?.reportPages?.tradeRowsPerPage === 14, JSON.stringify(report.summary?.reportPages));
   const pdf = report.files?.find((file) => file.name.endsWith(".pdf"));
   const csv = report.files?.find((file) => file.name.endsWith(".csv"));
   check("report files", Number(pdf?.bytes) > 0 && Number(pdf?.bytes) < 80 * 1024 * 1024 && Number(csv?.bytes) > 0, JSON.stringify(report.files));
@@ -40,8 +41,9 @@ try {
   const header = await page.locator("thead").innerText();
   check("visible summary columns", header.includes("Avg 15D") && header.includes("Max 15D") && header.includes("Min 15D") && header.includes("Worst drawdown"), header);
   check("removed metrics absent", !header.includes("MFE") && !header.includes("MDD") && !header.includes("Reached +3%"), header);
-  check("legend disclosure", await page.getByText(/Blue upward markers identify Bull qualifications/).isVisible(), "legend copy unavailable");
-  check("period overlay disclosure", await page.getByText(/Daily chart includes dashed month boundaries/).isVisible(), "period overlay copy unavailable");
+  check("legend disclosure", await page.getByText(/Daily triangles retain exact dates/).isVisible(), "legend copy unavailable");
+  check("period overlay disclosure", await page.getByText(/Daily chart includes month\/week boundaries/).isVisible(), "period overlay copy unavailable");
+  check("stock table disclosure", await page.getByText(/Each stock table includes signal date/).isVisible(), "stock table copy unavailable");
   check("no page errors", pageErrors.length === 0, pageErrors.join(" | "));
   await page.screenshot({ path: path.join(output, "desktop-backtesting-reports.png"), fullPage: true });
 } finally {

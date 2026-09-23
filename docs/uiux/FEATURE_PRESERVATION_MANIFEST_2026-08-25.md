@@ -109,6 +109,13 @@ The CSV adds complete M/W/D OHLC references without adding a PDF trade ledger
 or changing strategy selection. Evidence remains in
 `docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.
 
+2026-09-23 3Month stock-wise report tables: every stock chart is immediately
+followed by paginated stock summary and trade-evidence tables covering both
+entry bases, causal outcomes, all six mandatory M/W/D equations, and exact
+M-1/M-2/M-3 open-close OR evidence. The CSV remains available and strategy
+logic is unchanged. Evidence:
+`docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.
+
 2026-09-22 Scalper V2 compact inspection and independent OI-direction entry
 reference: the four right-side and three lower analytical charts expose bounded
 compact tooltips and an on-demand viewport expansion which mounts only while

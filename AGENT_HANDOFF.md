@@ -6584,3 +6584,11 @@ or outcomes were deleted.
   `platform/nifty_stratlab/outputs/three_month_reversal_20260923/`.
 - Visual evidence:
   `/home/novius2/NIFTY50/evidence/three-month-report-period-evidence-20260923/`.
+# 2026-09-23 — 3Month stock-wise trade pages
+
+- The 3Month PDF now repeats a stock-wise Bull/Bear performance summary after
+  each chart and adds paginated trade-entry/evidence tables.
+- Each row includes both entry bases, causal returns/drawdown, all six M/W/D
+  equations, M-1/M-2/M-3 open-close values and individual/group pass states.
+- Calculation, signal selection, CSV semantics and order permissions are
+  unchanged.

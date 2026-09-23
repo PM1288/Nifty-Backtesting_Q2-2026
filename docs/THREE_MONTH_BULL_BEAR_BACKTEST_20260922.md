@@ -129,6 +129,22 @@ changed.
 - Rollback image:
   `trading-stack-n50-dashboard:before-three-month-period-evidence-20260923`.
 
+## Stock-wise summaries and trade evidence
+
+The report now places one or more paginated trade-evidence pages immediately
+after every stock chart page. The stock summary is repeated on those pages and
+the table exposes:
+
+- exact signal date and Bull/Bear direction;
+- signal-day open, clearly labelled look-ahead;
+- next-day causal entry and 1D/5D/15D/drawdown outcomes;
+- all six Monthly/Weekly/Daily mandatory equations and pass states;
+- M-1, M-2 and M-3 open/close equations and individual pass states;
+- the combined ANY-1 historical reversal result.
+
+The CSV remains the complete machine-readable ledger. Missing results stay
+unavailable rather than becoming zero.
+
 ## Rerun
 
 ```bash

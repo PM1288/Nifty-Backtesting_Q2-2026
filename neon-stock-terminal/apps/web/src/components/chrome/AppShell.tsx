@@ -303,11 +303,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                   title={todayOutlook.title}
                   aria-label={todayOutlook.title.replaceAll("\n", ". ")}
                 >
-                  <span>Today outlook</span>
-                  <small><b>E</b> {todayOutlook.equity} <i>₹{todayOutlook.equityValue}Cr</i></small>
-                  <small><b>F</b> {todayOutlook.futures} <i>₹{todayOutlook.futuresValue}Cr</i></small>
-                  <small><b>O</b> {todayOutlook.options} <i>₹{todayOutlook.optionsValue}Cr</i></small>
-                  <strong>{todayOutlook.result}</strong>
+                  <span className={styles.outlookPrimary} data-testid="header-today-outlook-primary">
+                    <span>Today outlook</span>
+                    <strong>{todayOutlook.result}</strong>
+                  </span>
+                  <span className={styles.outlookSummary} data-testid="header-today-outlook-summary">
+                    <small><b>E</b> {todayOutlook.equity} <i>₹{todayOutlook.equityValue}Cr</i></small>
+                    <small><b>F</b> {todayOutlook.futures} <i>₹{todayOutlook.futuresValue}Cr</i></small>
+                    <small><b>O</b> {todayOutlook.options} <i>₹{todayOutlook.optionsValue}Cr</i></small>
+                  </span>
                 </Link>
                 <span className={styles.headerQuality}><DataQualityBadge quality={feedQuality} compact operationalLabel iconOnly /></span>
               </div>

@@ -70,10 +70,22 @@ for (const viewport of [
     throw new Error(`Header unavailable at ${viewport.name}; url=${page.url()}; title=${await page.title()}; body=${(await page.locator("body").innerText()).slice(0, 300)}`, { cause: error });
   }
   const visibleText = (await header.innerText()).replace(/\s+/g, " ");
+  const primary = outlook.getByTestId("header-today-outlook-primary");
+  const summary = outlook.getByTestId("header-today-outlook-summary");
+  const rowGeometry = await outlook.evaluate((element) => {
+    const primaryRow = element.querySelector('[data-testid="header-today-outlook-primary"]')?.getBoundingClientRect();
+    const summaryRow = element.querySelector('[data-testid="header-today-outlook-summary"]')?.getBoundingClientRect();
+    const box = element.getBoundingClientRect();
+    return { primaryTop: primaryRow?.top ?? null, summaryTop: summaryRow?.top ?? null, contained: element.scrollWidth <= element.clientWidth + 1 && element.scrollHeight <= element.clientHeight + 1, width: box.width };
+  });
   const checks = {
     n50Brand: await header.getByText("N50", { exact: true }).isVisible(),
     outlookVisible: await outlook.isVisible(),
     canonicalResult: (await outlook.innerText()).includes("Super Bullish"),
+    finalResultOnPrimaryRow: (await primary.innerText()).includes("Super Bullish"),
+    twoRowsOnDesktop: viewport.width < 768 || (rowGeometry.primaryTop != null && rowGeometry.summaryTop != null && rowGeometry.summaryTop > rowGeometry.primaryTop),
+    compactSummaryOnSecondRow: viewport.width < 768 || /E Buy.*F Buy.*O Buy/s.test((await summary.innerText()).replace(/\s+/g, " ")),
+    outlookContained: rowGeometry.contained,
     valuesVisibleOnDesktop: viewport.width < 768 || /125\.50.*264\.47.*4,404\.77/s.test((await outlook.innerText()).replace(/\s+/g, " ")),
     noOldBrand: !visibleText.includes("NIFTY 50 TRADER"),
     noMarketClosed: !visibleText.includes("Market closed"),

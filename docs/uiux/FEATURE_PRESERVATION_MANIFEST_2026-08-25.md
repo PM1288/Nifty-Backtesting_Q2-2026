@@ -992,3 +992,15 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
   strategy calculations, report files, live screening and order permissions
   are unchanged.
 - Evidence: `docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.
+
+## 2026-09-23 Header Today Outlook containment
+
+- The existing Morning View market-matrix result remains the source of the
+  header outlook and retains its positive/negative/neutral colour semantics.
+- The header control is now two rows: the final result remains prominent on the
+  first row, while Equity/Futures/Options activity and values occupy a smaller
+  second row. The complete source/date disclosure remains in the accessible
+  title and label.
+- Desktop and mobile containment checks prevent the outlook from overflowing
+  its header slot. Morning View calculations, reports and navigation are
+  unchanged.

@@ -166,12 +166,14 @@
 .mobileNiftyQuote[data-tone="negative"] { border-color: rgba(194, 54, 79, 0.25); }
 
 .todayOutlook {
-  min-height: 30px;
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
+  width: clamp(178px, 20vw, 310px);
+  min-height: 32px;
+  min-width: 178px;
+  display: inline-grid;
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 1px;
+  padding: 3px 7px;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   background: #f8fafc;
@@ -180,14 +182,15 @@
   font-variant-numeric: tabular-nums;
   text-decoration: none;
   white-space: nowrap;
+  overflow: hidden;
 }
 .todayOutlook:hover { border-color: #9dbce5; background: #f3f7fd; }
 .todayOutlook:focus-visible { outline: 3px solid rgba(23, 94, 200, .2); outline-offset: 2px; }
-.todayOutlook > span { color: var(--text-3); font-family: var(--font-sans); font-size: 10.5px; font-weight: 750; text-transform: uppercase; letter-spacing: .03em; }
+.outlookPrimary,.outlookSummary{min-width:0;display:flex;align-items:center;overflow:hidden}.outlookPrimary{justify-content:space-between;gap:8px}.outlookPrimary>span{overflow:hidden;color:var(--text-3);font-family:var(--font-sans);font-size:9px;font-weight:750;text-transform:uppercase;letter-spacing:.03em;text-overflow:ellipsis}.outlookSummary{justify-content:space-between;gap:7px;color:var(--text-2)}
 .todayOutlook small { font-size: 10.5px; font-weight: 700; }
 .todayOutlook small b { color: var(--text-3); }
 .todayOutlook small i { color: var(--text-3); font-style: normal; font-weight: 600; }
-.todayOutlook strong { padding-left: 6px; border-left: 1px solid var(--border-subtle); font-family: var(--font-sans); font-size: 11px; }
+.todayOutlook strong { min-width:0;overflow:hidden;font-family:var(--font-sans);font-size:11px;text-overflow:ellipsis; }
 .todayOutlook[data-tone="positive"] { border-color: rgba(8, 122, 80, .48); background:#dcfce7;color:#075b3e;box-shadow:inset 3px 0 0 #16a34a; }
 .todayOutlook[data-tone="positive"] small b,.todayOutlook[data-tone="positive"] small i,.todayOutlook[data-tone="positive"] strong { color:#087a50; }
 .todayOutlook[data-tone="negative"] { border-color:rgba(194,54,79,.48);background:#ffe4e6;color:#8f1830;box-shadow:inset 3px 0 0 #dc2648; }
@@ -319,8 +322,9 @@
   .niftyHeaderQuote { min-height: 28px; gap: 4px; padding-inline: 5px; }
   .niftyHeaderQuote strong,
   .niftyHeaderQuote em { font-size: 10.5px; }
-  .todayOutlook { min-height: 28px; gap: 4px; padding-inline: 5px; }
-  .todayOutlook > span { display: none; }
+  .todayOutlook { width:clamp(150px,19vw,230px);min-width:150px;min-height:30px;gap:1px;padding-inline:5px; }
+  .outlookPrimary > span { display: none; }
+  .outlookPrimary { justify-content:center; }
   .todayOutlook small { font-size: 10px; }
   .todayOutlook strong { font-size: 10.5px; }
   .body { padding: 0 10px 20px; }
@@ -345,7 +349,8 @@
   .niftyHeaderQuote span,
   .niftyHeaderQuote em,
   .todayOutlook small { display: none; }
-  .todayOutlook strong { padding-left: 0; border-left: 0; }
+  .todayOutlook {width:auto;min-width:104px;grid-template-rows:auto;padding-inline:5px}
+  .outlookSummary {display:none}
   .body { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 

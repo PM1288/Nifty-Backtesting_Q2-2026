@@ -6654,3 +6654,35 @@ or outcomes were deleted.
   (`sha256:1e9b2f7247acd54e924f60732f2df276fe5b610e1402cdb65ec5e649353ae11f`).
 - Rollback image:
   `trading-stack-n50-dashboard:before-header-outlook-two-row-20260923`.
+
+# 2026-09-23 — 3Month live 5-minute confirmation
+
+- Added one compact `5m` tick after `15m` on both Home Bull/Bear lanes. It is
+  backed by two real gates: current 5-minute close versus its own open and
+  versus the immediately previous 5-minute open. Both must pass for the Home
+  tick to be green; Bear uses the exact inverse comparisons.
+- The API now builds session-anchored 5-minute candles from retained 1-minute
+  bars. Completed mode requires all five expected observations; forming mode
+  labels the current incomplete candle. Missing and skipped data remain neutral,
+  never zero or a pass.
+- Live qualification is now 12 mandatory comparisons plus the M−3/M−2/M−1 OR
+  group counted once, so the score is `/13`. The full strategy table, drawer
+  and CSV expose both 5-minute equations. The daily-only historical PDF/CSV was
+  not silently reclassified because year-long intraday evidence is unavailable.
+- Required checks passed: API typecheck, 272/272 tests and build; web typecheck,
+  280/280 tests and build; canonical repository gate and `git diff --check`.
+- Authenticated production Chromium passed 37/37 desktop/mobile checks. It
+  verified strategy version `three_month_recovery_v2`, 12 exact gates, grouped
+  `/13` scoring, completed/forming policy, CSV export, arithmetic drawer and the
+  Home 5m pair. At the observed live session the API returned 268/500 profile
+  members and 32 intraday-evaluated stocks; counts changed during the run as
+  current 5-minute candles completed, which is expected for live evidence.
+- Evidence:
+  `/home/novius2/NIFTY50/evidence/three-month-five-minute-20260923/`.
+- Deployed pushed commit `9054167`; production image
+  `trading-stack-n50-dashboard:three-month-5m-20260923-9054167`
+  (`sha256:c7cd17b777ffd7a167dec9c403b2eca4228d701ee22afe2b0083112e1763ae64`)
+  is healthy with zero restarts. Entry asset:
+  `/n50/assets/index-e3q5mZ9X.js`.
+- Rollback image:
+  `trading-stack-n50-dashboard:header-outlook-two-row-20260923-f73d22b`.

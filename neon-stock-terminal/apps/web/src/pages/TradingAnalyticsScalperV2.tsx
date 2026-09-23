@@ -718,7 +718,10 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
       xAxis: { type: "category", data: timestamps.map(String), axisLabel: { formatter: (value: string) => istClock(Number(value)) } },
       yAxis: { type: "category", data: labels, axisLabel: { color: (value?: string | number) => String(value ?? "").startsWith("CE") ? "#1d4ed8" : "#785500", fontWeight: 650 } },
       visualMap: { min: -maximum, max: maximum, calculable: false, orient: "horizontal", left: "center", top: 0, show: false, inRange: { color: ["#b42336", "#f7f8fa", "#15803d"] } },
-      series: [{ type: "heatmap", data: values, progressive: 5000, emphasis: { itemStyle: { borderColor: "#14243a", borderWidth: 2 } } }],
+      // The tracked strike set is intentionally bounded.  Rendering it in one
+      // pass avoids leaving a progressive ECharts pipeline alive when the
+      // analytics tab is changed immediately after paint.
+      series: [{ type: "heatmap", data: values, progressive: 0, emphasis: { itemStyle: { borderColor: "#14243a", borderWidth: 2 } } }],
     };
   }, [normalizedPriceModel.series, normalizedPriceModel.timestamps]);
   const niftyCurrentGuide = useCallback((categoryIndex: number) => spot == null || nearestSpotStrike == null || categoryIndex < 0 ? undefined : ({

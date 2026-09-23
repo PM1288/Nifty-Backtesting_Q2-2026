@@ -25,7 +25,7 @@ try {
   const page = await context.newPage();
   const errors = [];
   const hoverRequests = [];
-  page.on("pageerror", (error) => errors.push(String(error)));
+  page.on("pageerror", (error) => errors.push(error.stack ?? String(error)));
   page.on("request", (request) => {
     if (/\/v1\/trading-analytics\/(charts|scalper-context)/.test(request.url())) hoverRequests.push(request.url());
   });

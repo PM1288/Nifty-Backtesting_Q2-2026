@@ -632,7 +632,12 @@ export function EChartSurface({
   useEffect(() => {
     chartRef.current?.setOption(normalizedOption, {
       notMerge: true,
-      lazyUpdate: true,
+      // ECharts' deferred pipeline can outlive a tab panel that is unmounted
+      // immediately after setOption.  A subsequent dispatch/dispose then
+      // observes a missing scheduler pipeline (`getPipeline` on undefined).
+      // Apply the already memoized option synchronously; live cursor movement
+      // does not rebuild this option and therefore stays off this path.
+      lazyUpdate: false,
       ...setOptionOpts
     });
   }, [normalizedOption, setOptionOpts]);

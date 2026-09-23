@@ -6724,3 +6724,11 @@ or outcomes were deleted.
   chart view while recovering their duplicated scale gutters.
 - Web 282/282 tests, web build, API typecheck/build and 272/272 API tests,
   canonical repository gate and diff check passed before deployment.
+- Authenticated production Chromium passed 23/23 checks. The screenshot shows
+  both cumulative-difference plots filling the recovered width with no visible
+  Y-axis gutters: `/home/novius2/NIFTY50/evidence/scalper-v2-cumulative-no-y-axis-20260923/production/`.
+- Deployed commit `14d533f`; image
+  `trading-stack-n50-dashboard:scalper-v2-cumulative-no-y-axis-20260923-14d533f`
+  (`sha256:42345eb0fe80bf1667e00f11388d3641e496f7898d1db107d3fda0dab52a0f30`)
+  is healthy with zero restarts and serves `/n50/assets/index-LlsQ237D.js`.
+- Rollback image: `trading-stack-n50-dashboard:before-cumulative-no-y-axis-20260923`.

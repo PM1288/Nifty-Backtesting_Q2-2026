@@ -29,11 +29,12 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
   await page.getByTestId("three-month-strategy").waitFor({ state: "visible", timeout: 45_000 });
   await page.getByText("Profile coverage").waitFor();
   check(`${target.name} route`, await page.getByRole("heading", { name: "3Month Strategy" }).isVisible(), page.url());
-  const headerText = await page.locator("thead").innerText();
+  const strategyTable = page.getByTestId("three-month-live-evidence").locator("table");
+  const headerText = await strategyTable.locator("thead").innerText();
   check(`${target.name} grouped gates`, headerText.includes("15 Minute") && headerText.includes("5 Minute") && headerText.includes("Previous weakness") && headerText.indexOf("M−3") < headerText.indexOf("M−2") && headerText.indexOf("M−2") < headerText.indexOf("M−1"), headerText);
   check(`${target.name} completed default`, await page.getByLabel("Completed candles").isChecked(), "forming unexpectedly default");
-  const firstRow = page.locator("tbody tr").first();
-  check(`${target.name} rows`, await firstRow.isVisible(), `count=${await page.locator("tbody tr").count()}`);
+  const firstRow = strategyTable.locator("tbody tr").first();
+  check(`${target.name} rows`, await firstRow.isVisible(), `count=${await strategyTable.locator("tbody tr").count()}`);
   const presentation = await page.getByTestId("three-month-strategy").evaluate((root) => {
     const row = root.querySelector("tbody tr");
     const symbol = row?.querySelector("td:first-child a");

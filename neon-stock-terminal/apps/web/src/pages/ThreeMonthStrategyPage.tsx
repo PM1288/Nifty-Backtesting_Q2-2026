@@ -126,7 +126,7 @@ export function ThreeMonthStrategyPage() {
       <p>{mode === "completed" ? "Intraday gates use only complete, gap-free session candles." : "Current 1H, 15m and 5m candles may reverse before close and are marked forming."}</p>
     </section>
 
-    <section className={styles.tableCard}>
+    <section className={styles.tableCard} data-testid="three-month-live-evidence">
       <div className={styles.meta}><span>Session <strong>{query.data?.sessionDate ?? "—"}</strong></span><span>Visible <strong>{visible.length}</strong></span><span>Membership coverage <strong>{query.data ? `${query.data.counts.membershipCoveragePct}%` : "—"}</strong></span><span>Generated <strong>{formatDateIST(query.data?.generatedAt, { includeTime: true })}</strong></span></div>
       {query.isLoading ? <div className={styles.state}>Loading NIFTY 500 evidence…</div> : null}
       {query.isError ? <div className={`${styles.state} ${styles.error}`}>The strategy evidence could not be loaded. Missing values were not replaced with zero.</div> : null}

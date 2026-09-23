@@ -181,6 +181,17 @@ first parse. The summary response does not send all 15,042 trade rows to the
 browser; `?symbol=...` returns details on demand. This is presentation of the
 existing report calculation, not a second strategy implementation.
 
+Production acceptance on 23 September 2026 passed 20/20 authenticated checks:
+500 stock summaries reconciled to the report, a selected 52-trade stock loaded
+all six mandatory gates plus three history gates, the page exposed M−2, M−3 and
+ANY-1 columns, and no browser errors occurred. Evidence and screenshots are in
+`/home/novius2/NIFTY50/evidence/three-month-page-stock-evidence-20260923/`.
+The deployed application commit is `4b81856`; image
+`trading-stack-n50-dashboard:three-month-page-evidence-20260923-4b81856`
+(`sha256:7d6ef2e952d4cc17590e5c95610b9f65ea1477b3eca258d775c401166009d4b3`)
+is healthy with zero restarts. Rollback image:
+`trading-stack-n50-dashboard:before-three-month-page-evidence-20260923`.
+
 ## Rerun
 
 ```bash

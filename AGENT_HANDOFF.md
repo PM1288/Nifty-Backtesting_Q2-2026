@@ -6605,3 +6605,29 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:three-month-stock-pages-20260923-3b94900`;
   rollback image is
   `trading-stack-n50-dashboard:before-three-month-stock-pages-20260923`.
+
+# 2026-09-23 — 3Month Strategy page stock-wise evidence
+
+- `/strategy/three-month` now includes the generated report's four-row overall
+  summary plus a dense 500-stock Bull/Bear causal-results matrix.
+- Selecting a stock loads only that stock's historical entries and displays
+  signal-day look-ahead open, next-day causal entry, causal 1D/5D/15D/drawdown,
+  all six Month/Week/Day equations, M−1/M−2/M−3 open-close equations and the
+  ANY-1 OR result.
+- `/v1/backtesting/reports/three-month/evidence` parses the mounted trusted CSV
+  once per report ID and caches it in-process. Summary responses do not send the
+  complete 15,042-row ledger; `?symbol=...` supplies on-demand detail.
+- Live screening, completed/forming intraday policy, PDF/CSV artifacts,
+  strategy calculations and order permissions are unchanged.
+- Required checks passed: web typecheck, 280/280 tests and build; API typecheck,
+  271/271 tests and build; canonical repository gate and `git diff --check`.
+- Authenticated production regression passed 20/20 checks with no page errors;
+  it reconciled all 500 stock summaries and inspected BANKINDIA's 52 exact
+  trade rows. Evidence:
+  `/home/novius2/NIFTY50/evidence/three-month-page-stock-evidence-20260923/`.
+- Deployed pushed application commit `4b81856`; production image
+  `trading-stack-n50-dashboard:three-month-page-evidence-20260923-4b81856`
+  (`sha256:7d6ef2e952d4cc17590e5c95610b9f65ea1477b3eca258d775c401166009d4b3`)
+  is healthy with zero restarts. Public health reports ready DB and Redis.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-page-evidence-20260923`.

@@ -49,3 +49,19 @@ retaining the canonical raw source payload.
 - Contracts mode remains byte-for-byte numerically identical to the prior view.
 - Mixed lot sizes or non-contract source units disable `× Lot`.
 - Switching units performs no network request and does not remount price charts.
+
+## Completion evidence
+
+- Source revision: `ae7828c` on `master`.
+- Web: typecheck, 280 tests and production build passed.
+- API: typecheck, 269 tests and build passed.
+- Canonical repository gate and `git diff --check` passed.
+- Authenticated production browser check resolved NIFTY lot size 65, changed
+  `contracts` to `underlying_units`, retained the selection after reload,
+  emitted no request from the toggle and produced no page error.
+- Screenshot:
+  `/home/novius2/NIFTY50/00-Screnshots/2026-09-23/scalper-v2-oi-lot-units-2026-09-23.png`.
+- Deployed image:
+  `trading-stack-n50-dashboard:scalper-oi-lot-toggle-20260923-ae7828c`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-oi-lot-toggle-20260923`.

@@ -119,6 +119,15 @@ changed.
 - CSV: 15,042 rows with every required Monthly/Weekly/Daily reference column.
 - Visual evidence:
   `/home/novius2/NIFTY50/evidence/three-month-report-period-evidence-20260923/`.
+- Web validation: typecheck, 280/280 tests and production build passed.
+- API validation: typecheck, 269/269 tests and build passed.
+- Authenticated production regression: 11/11 checks passed, including report
+  identity, file availability, strategy validation, period-overlay disclosure
+  and zero browser page errors.
+- Deployed source: `6953315`; production image:
+  `trading-stack-n50-dashboard:three-month-period-evidence-20260923-6953315`.
+- Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-period-evidence-20260923`.
 
 ## Rerun
 

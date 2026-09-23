@@ -57,13 +57,10 @@ try {
   const forbidden = ["provider-native", "retained cohort", "retained snapshot", "background timeframe cache", "SCALPER_V2_WORKSTATION_V1"];
   check("CUSTOMER-LANGUAGE", forbidden.every((term) => !primaryText.includes(term)), forbidden.filter((term) => primaryText.includes(term)).join(", ") || "no internal terms in primary view");
 
-  const profile = await page.getByTestId("v2-oi-profile").getAttribute("data-mode");
-  check("DELTA-OI-ONLY-PROFILE", profile === "change", `profile mode=${profile}`);
-  const profileState = await page.getByTestId("v2-chart-body-underlying").evaluate((body) => ({
-    geometry: JSON.parse(body.dataset.profileGeometry || "[]"),
-    maximumError: Number(body.dataset.profileMaxAlignmentError),
-  }));
-  check("PROFILE-ALIGNMENT", profileState.geometry.length > 0 && profileState.maximumError <= 2 && profileState.geometry.every((row) => row.metric === "change"), `${profileState.geometry.length} bars; max error=${profileState.maximumError}px; metrics=${[...new Set(profileState.geometry.map((row) => row.metric))].join(",")}`);
+  check("NO-UNDERLYING-OI-PROFILE", await page.getByTestId("v2-oi-profile").count() === 0, "OI and ΔOI remain in dedicated strike charts; the candle plot has no overlay lane");
+  const guideLabels = await page.getByTestId("v2-chart-body-underlying").getAttribute("data-oi-guide-labels");
+  check("OPPOSING-OI-GUIDES", /CE1/.test(guideLabels ?? "") && /PE1/.test(guideLabels ?? ""), `underlying labels=${guideLabels}`);
+  check("TIMEFRAME-SELECT", await page.getByLabel("Scalper timeframe").count() === 1, `timeframe select count=${await page.getByLabel("Scalper timeframe").count()}`);
 
   const beforeHoverRequests = hoverRequests.length;
   const beforeSetData = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="v2-chart-host-"]')].map((host) => host.dataset.setDataCount));
@@ -73,6 +70,13 @@ try {
   const afterSetData = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="v2-chart-host-"]')].map((host) => host.dataset.setDataCount));
   check("NO-HOVER-NETWORK", hoverRequests.length === beforeHoverRequests, `${hoverRequests.length - beforeHoverRequests} requests during hover`);
   check("NO-HOVER-HYDRATION", JSON.stringify(beforeSetData) === JSON.stringify(afterSetData), `${JSON.stringify(beforeSetData)} -> ${JSON.stringify(afterSetData)}`);
+  const refreshBefore = await page.getByTestId("v2-chart-refresh-underlying").innerText();
+  const createsBefore = await page.locator('[data-testid^="v2-chart-host-"]').evaluateAll((hosts) => hosts.map((host) => host.dataset.chartCreateCount));
+  await page.waitForTimeout(17_000);
+  const refreshAfter = await page.getByTestId("v2-chart-refresh-underlying").innerText();
+  const createsAfter = await page.locator('[data-testid^="v2-chart-host-"]').evaluateAll((hosts) => hosts.map((host) => host.dataset.chartCreateCount));
+  check("IN-PLACE-REFRESH", refreshAfter !== refreshBefore, `${refreshBefore} -> ${refreshAfter}`);
+  check("NO-REFRESH-REMOUNT", JSON.stringify(createsAfter) === JSON.stringify(createsBefore), `${JSON.stringify(createsBefore)} -> ${JSON.stringify(createsAfter)} (development StrictMode may create twice during initial mount)`);
   await page.screenshot({ path: path.join(output, "workstation-default-1920x1080.png"), fullPage: false });
 
   const analyticsNav = page.getByRole("navigation", { name: "Scalper analytics" });
@@ -84,7 +88,7 @@ try {
   const strengthCharts = await page.getByTestId("v2-normalized-option-price").getByRole("img").count();
   check("HEATMAP", strengthCharts === 2, `price-strength chart count=${strengthCharts}; expected line plus all-strike heatmap`);
   await analyticsNav.getByRole("button", { name: "Total OI", exact: true }).click();
-  check("TOTAL-OI-NAME", /Total OI vs Time/.test(await page.getByTestId("v2-cumulative-oi-time").innerText()), "customer-facing total OI semantics");
+  check("TOTAL-OI-NAME", /Total OI.*vs Time/i.test(await page.getByTestId("v2-cumulative-oi-time").innerText()), "customer-facing total OI semantics");
   await analyticsNav.getByRole("button", { name: "OI & ΔOI", exact: true }).click();
   check("ADAPTIVE-DELTA", await page.getByTestId("v2-deltaoi-chart").count() === 1, "expanded signed ΔOI view remains available");
   await page.screenshot({ path: path.join(output, "desktop-1920x1080.png"), fullPage: true });
@@ -94,8 +98,8 @@ try {
   check("NO-PAGE-X-OVERFLOW-1440", await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), "page width contained");
   await page.screenshot({ path: path.join(output, "desktop-1440x900.png"), fullPage: true });
   await page.goto(`${appOrigin}/n50/strategy/trading-analytics?view=scalper&interval=5`, { waitUntil: "domcontentloaded", timeout: 90_000 });
-  await page.getByRole("button", { name: "Scalper V2", exact: true }).waitFor({ state: "visible", timeout: 90_000 });
-  check("ORIGINAL-SCALPER-PRESERVED", new URL(page.url()).searchParams.get("view") === "scalper" && await page.getByTestId("scalper-v2").count() === 0, "original Scalper remains a distinct route");
+  await page.getByTestId("scalper-v2").waitFor({ state: "visible", timeout: 90_000 });
+  check("RETIRED-SCALPER-REDIRECT", new URL(page.url()).searchParams.get("view") === "scalper_v2", "retired view=scalper alias redirects to the preserved V2 workstation");
   check("NO-PAGE-ERRORS", errors.length === 0, errors.join(" | ") || "none");
   await fs.writeFile(path.join(output, "results.json"), JSON.stringify({ appOrigin, geometry, results }, null, 2));
 } finally {

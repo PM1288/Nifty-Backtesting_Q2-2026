@@ -223,6 +223,16 @@ charts no longer display floating hover-value cards over their plotting area.
 Strike/time hover linkage and highlighting remain active, while the expanded
 analytics OI charts retain full tooltips and numerical inspection.
 
+2026-09-23 Scalper V2 axis/space/refresh repair: the obsolete underlying-pane
+OI primitive and its pointer/resize reprojection loop are removed; OI and Delta
+OI remain in the dedicated strike, matrix, time and detail views. The candle
+pane adds raw-session-eligible dotted rank guides using the requested opposing
+labels (CE OI ranks -> PE1/PE2; PE OI ranks -> CE1/CE2) without changing the
+canonical ranks. Timeframe selection is one dropdown, verified OI x lot is the
+new default display, and chart/side headers remain contained. Strategy, data,
+exports and order boundaries are unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_AXIS_SPACE_REFRESH_REPAIR_20260923.md`.
+
 2026-09-20 D−1 Close and volume-EMA addition: Home MWHD Bull/Bear boards add a
 compact previous-trading-day close comparison, with exact evidence in the
 drawer/CSV, without changing any gate, score, qualification or rank. Scalper V2

@@ -1,5 +1,22 @@
 export type ScalperV2SemanticLevel = { price: number; label: string; priority: number; color: string };
 
+export type ScalperV2OiLeader = {
+  side: "CE" | "PE";
+  rank: number;
+  strike: number;
+  currentOi: number;
+};
+
+/** Keep canonical source-side ranks, but label their opposing underlying guide. */
+export function scalperV2OpposingOiGuides(leaders: ScalperV2OiLeader[]) {
+  return leaders
+    .filter((leader) => leader.rank <= 2 && Number.isFinite(leader.strike))
+    .map((leader) => ({
+      ...leader,
+      label: `${leader.side === "CE" ? "PE" : "CE"}${leader.rank}`,
+    }));
+}
+
 /** Merge coincident labels before they reach the native right price axis. */
 export function mergeScalperV2Levels(levels: ScalperV2SemanticLevel[], tolerance = 0.05) {
   const groups: ScalperV2SemanticLevel[][] = [];

@@ -6686,3 +6686,22 @@ or outcomes were deleted.
   `/n50/assets/index-e3q5mZ9X.js`.
 - Rollback image:
   `trading-stack-n50-dashboard:header-outlook-two-row-20260923-f73d22b`.
+
+# 2026-09-23 — Scalper V2 axis, space and refresh repair
+
+- Removed the dormant OI/Delta-OI primitive from the underlying candle pane and
+  removed its pointer/wheel/resize/data reprojection hot path. Dedicated OI,
+  Delta-OI, matrix and time-history views remain intact.
+- Native grid lines are dotted. The underlying price scale now receives only
+  in-session CE1/CE2/PE1/PE2 guide strikes using the requested opposing label
+  convention; canonical option-side ranks remain unchanged elsewhere.
+- Timeframe is a compact 1m/5m/15m/1h select. OI x exact lot is the new default
+  when exact lot metadata permits it, and the unit control has a visible border.
+- Price and strike-chart headers are fixed to one contained row.
+- Web 281/281 tests, typecheck and build passed. API 272/272 tests and build
+  passed. Authenticated local Chromium confirms in-place 15-second refresh,
+  no native-chart remount during refresh, no hover network/hydration and the
+  corrected 1920x1080/1440x900 geometry.
+- Evidence and implementation detail:
+  `docs/trading-analytics/SCALPER_V2_AXIS_SPACE_REFRESH_REPAIR_20260923.md` and
+  `/home/novius2/NIFTY50/evidence/scalper-v2-axis-space-refresh-20260923/`.

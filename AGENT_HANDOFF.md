@@ -6631,3 +6631,26 @@ or outcomes were deleted.
   is healthy with zero restarts. Public health reports ready DB and Redis.
 - Rollback image:
   `trading-stack-n50-dashboard:before-three-month-page-evidence-20260923`.
+
+# 2026-09-23 — Header Today Outlook two-row containment
+
+- Reflowed the existing Today Outlook header control into two bounded rows.
+  The final market-matrix state is prominent on row one; compact
+  Equity/Futures/Options activity and crore values are on row two.
+- Full report-date, source-scope and options-value disclosures remain in the
+  accessible title/label. Morning View calculations and routing are unchanged.
+- Required checks passed: web typecheck, 280/280 tests and production build;
+  API typecheck, 271/271 tests and build; canonical repository gate.
+- Authenticated desktop 1920x1080 and mobile 390x844 regression passed all 28
+  checks: final state on row one, two desktop rows, compact second row,
+  component containment and no page-level horizontal overflow. Evidence:
+  `/home/novius2/NIFTY50/evidence/header-today-outlook-two-row-20260923/`.
+- The canonical deploy verifier encountered one transient nginx 502 immediately
+  after container recreation; the next routed request succeeded with the new
+  `/n50/assets/index-BKfQ7eeF.js` asset. Production is healthy with zero
+  restarts, and public health reports ready DB and Redis stores.
+- Deployed pushed application commit `f73d22b`; image
+  `trading-stack-n50-dashboard:header-outlook-two-row-20260923-f73d22b`
+  (`sha256:1e9b2f7247acd54e924f60732f2df276fe5b610e1402cdb65ec5e649353ae11f`).
+- Rollback image:
+  `trading-stack-n50-dashboard:before-header-outlook-two-row-20260923`.

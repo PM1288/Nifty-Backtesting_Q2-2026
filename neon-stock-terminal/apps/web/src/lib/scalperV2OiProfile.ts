@@ -47,7 +47,7 @@ const layers = (row: Record<string, unknown>) => row.oi_layers && typeof row.oi_
   ? row.oi_layers as Record<string, unknown>
   : null;
 
-const BASELINE_PRIORITY = ["PREVIOUS_SESSION_FINAL", "FIRST_SESSION_OBSERVATION", "PREVIOUS_ARCHIVED_SNAPSHOT"] as const;
+const BASELINE_PRIORITY = ["PROVIDER_REPORTED_CHANGE", "PREVIOUS_SESSION_FINAL", "FIRST_SESSION_OBSERVATION", "PREVIOUS_ARCHIVED_SNAPSHOT"] as const;
 
 /**
  * Builds one truthful comparison cohort. Rows from another baseline definition stay
@@ -159,6 +159,7 @@ export function layoutScalperV2Profile(
 }
 
 export function profileBaselineLabel(kind: string | null) {
+  if (kind === "PROVIDER_REPORTED_CHANGE") return "Provider-reported session";
   if (kind === "PREVIOUS_SESSION_FINAL") return "Previous-session final";
   if (kind === "FIRST_SESSION_OBSERVATION") return "Session initial observation";
   if (kind === "PREVIOUS_ARCHIVED_SNAPSHOT") return "Previous archived snapshot";

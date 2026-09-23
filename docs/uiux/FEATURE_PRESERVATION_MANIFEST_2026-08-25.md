@@ -930,3 +930,15 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
   generated current-day reference and is locally deduplicated.
 - Evidence:
   `docs/trading-analytics/SCALPER_V2_THREE_INSTRUMENT_EMA_REFERENCE_20260922.md`.
+
+## 2026-09-23 Scalper V2 OI source consistency
+
+- Selected values, profile, ranking, strike structure and cumulative analytics
+  use one current atomic NSE option-chain snapshot for NIFTY.
+- OI is displayed in contracts. Delta OI is the exchange/provider-reported
+  session change from that same snapshot; missing/stale values remain missing.
+- SmartAPI quote/depth evidence remains retained and accessible, but its
+  underlying-unit OI and local one-minute OI difference are not mixed into the
+  NSE contract/session-change cohort.
+- Existing chart layout, selection, drawings, signals, exports, collectors and
+  order restrictions remain unchanged.

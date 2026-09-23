@@ -18,10 +18,11 @@ order permissions.
   Prisma pool timeout `P2024` errors.
 - Multiple open live tabs could start identical chart, context and positioning
   reads at the same time.
-- Exact-contract SmartAPI FULL quotes could remain non-null but stale. That
-  allowed an old individually timed OI quote to win over a newer atomic chain
-  cohort. During diagnosis the selected quotes were about 22 minutes old while
-  the retained SmartAPI chain cohort was about one minute old.
+- Exact-contract SmartAPI FULL quotes could remain non-null but stale. The V2
+  profile then displayed those provider-native values while the strike and
+  cumulative panels displayed the newer NSE chain archive. The two sources also
+  used different Delta OI definitions. During diagnosis the selected FULL
+  quotes were more than 18 minutes behind the latest atomic NSE chain snapshot.
 
 ## Repair
 
@@ -35,9 +36,20 @@ order permissions.
 - The production dashboard pool default is eight, matching the existing stage
   default. The four overview subqueries can run without consuming every API
   connection, leaving capacity for live chart reads.
-- A fresh atomic SmartAPI chain cohort replaces stale individually timed FULL
-  OI quotes. Missing or stale evidence is not converted to zero, and a cohort
-  without verifiable current timing does not displace otherwise usable quotes.
+- A current atomic NSE option-chain snapshot is now the canonical V2 OI cohort.
+  Selected-strike values, profile bars, rankings, strike charts and cumulative
+  analytics therefore use the same timestamp, contract unit and strike set.
+- Delta OI uses the provider-reported `change_in_oi` from that same snapshot.
+  The comparison baseline is represented as `current OI - reported Delta OI`,
+  so the profile cannot silently switch to a prior-quote or first-session
+  definition. Missing or stale evidence is not converted to zero.
+- SmartAPI does provide per-strike OI, LTP, volume, bid/ask and depth. Its OI is
+  stored in underlying units (65 units per NIFTY contract on the inspected
+  expiry), while the NSE chain uses contracts. The collector's stored
+  `oi_change` is the change from its prior one-minute cache observation, not the
+  exchange session Delta OI. SmartAPI remains quote/depth corroboration; those
+  differently scoped values are not relabelled or mixed into the canonical V2
+  OI/Delta OI cohort.
 
 ## Verification contract
 

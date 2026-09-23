@@ -1,10 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  atomicChainState,
   loadSmartApiNifty,
   smartApiQuoteState,
   observedOiChange,
 } from "./tradingAnalyticsSmartApi";
+test("native atomic chain cadence distinguishes current, stale and future snapshots", () => {
+  assert.equal(atomicChainState("2026-09-07T05:57:00Z", "2026-09-07T06:00:00Z", null), "OBSERVED");
+  assert.equal(atomicChainState("2026-09-07T05:56:59Z", "2026-09-07T06:00:00Z", null), "STALE");
+  assert.equal(atomicChainState("2026-09-07T06:00:01Z", "2026-09-07T06:00:00Z", null), "INVALID_FUTURE_TIMESTAMP");
+});
 test("OI difference preserves zero, negative and missing and is not option delta",()=>{
   assert.equal(observedOiChange("100","150"),-50);
   assert.equal(observedOiChange(0,0),0);
@@ -152,6 +158,38 @@ test("fresh atomic chain cohort replaces stale individually timed FULL OI quotes
   assert.equal(result.source, "smartapi_option_chain_snapshots");
   assert.deepEqual(result.legs.map((leg) => leg.open_interest), ["200", "220"]);
   assert.ok(result.legs.every((leg) => leg.quote_state === "OBSERVED"));
+});
+test("native NSE chain is the canonical current OI and reported delta OI cohort", async () => {
+  const result = await loadSmartApiNifty(async (source) => {
+    if (source === "smartapi_spot") return [{ ltp: 23800 }];
+    if (source === "smartapi_expiries") return [{ expiry: "2026-09-08" }];
+    if (source === "smartapi_contracts") return [
+      { strike: 23800, option_type: "CE", open_interest: "100", exchange_feed_at: "2026-09-07T05:59:30Z" },
+      { strike: 23800, option_type: "PE", open_interest: "110", exchange_feed_at: "2026-09-07T05:59:30Z" },
+    ];
+    if (source === "nse_option_chain") return [
+      { strike: 23800, option_type: "CE", open_interest: "200", change_in_oi: "40", collected_at: "2026-09-07T05:58:30Z" },
+      { strike: 23800, option_type: "PE", open_interest: "220", change_in_oi: "-20", collected_at: "2026-09-07T05:58:30Z" },
+    ];
+    return [];
+  }, "2026-09-07T06:00:00Z");
+  assert.equal(result.source, "nse_option_chain_snapshots");
+  assert.deepEqual(result.legs.map((leg) => leg.open_interest), ["200", "220"]);
+  assert.deepEqual(result.legs.map((leg) => {
+    const layers = leg.oi_layers as Record<string, unknown>;
+    return {
+      current: layers.current,
+      baseline: layers.baseline,
+      change: layers.change,
+      state: layers.state,
+    };
+  }), [
+    { current: 200, baseline: 160, change: 40, state: "COMPARABLE" },
+    { current: 220, baseline: 240, change: -20, state: "COMPARABLE" },
+  ]);
+  assert.equal(result.oiAnalytics.fixedCohort.unit, "contracts");
+  assert.equal(result.metrics.collectedAt, "2026-09-07T05:58:30Z");
+  assert.equal(result.oiAnalytics.baselinePreference[0], "PROVIDER_REPORTED_CHANGE");
 });
 test("SmartAPI unavailable sources never produce synthetic quotes", async () => {
   const result = await loadSmartApiNifty(

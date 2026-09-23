@@ -14,6 +14,19 @@ test("Scalper V2 profile keeps one declared baseline and preserves missingness",
   assert.deepEqual(model.rows.map((row) => row.state), ["comparable", "comparable", "incompatible_baseline", "missing_baseline"]);
 });
 
+test("provider-reported Delta OI remains the canonical comparison cohort", () => {
+  const model = normalizeScalperV2ProfileRows([
+    { option_type: "CE", strike: 23_400, open_interest: 194_265 },
+    { option_type: "PE", strike: 23_400, open_interest: 195_357 },
+  ], [
+    { option_type: "CE", strike: 23_400, open_interest: 194_265, baseline_open_interest: 111_120, baseline_kind: "PROVIDER_REPORTED_CHANGE", oi_layers: { change: 83_145 }, oi_unit: "contracts" },
+    { option_type: "PE", strike: 23_400, open_interest: 195_357, baseline_open_interest: 94_024, baseline_kind: "PROVIDER_REPORTED_CHANGE", oi_layers: { change: 101_333 }, oi_unit: "contracts" },
+  ]);
+  assert.equal(model.baselineKind, "PROVIDER_REPORTED_CHANGE");
+  assert.deepEqual(model.rows.map((row) => row.changeOi), [83_145, 101_333]);
+  assert.ok(model.rows.every((row) => row.unit === "contracts" && row.state === "comparable"));
+});
+
 test("Scalper V2 profile geometry uses the full cohort maximum and native strike coordinates", () => {
   const rows = normalizeScalperV2ProfileRows([
     { option_type: "CE", strike: 100, open_interest: 200, baseline_open_interest: 100, baseline_kind: "PREVIOUS_SESSION_FINAL" },

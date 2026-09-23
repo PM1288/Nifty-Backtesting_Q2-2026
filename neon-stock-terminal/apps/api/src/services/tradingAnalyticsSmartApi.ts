@@ -53,6 +53,19 @@ export function smartApiQuoteState(
   return now - feed > 60000 ? "STALE" : "OBSERVED";
 }
 
+export function atomicChainState(capturedAt: unknown, asOf: string, close: unknown): string {
+  const captured = capturedAt == null ? NaN : Date.parse(String(capturedAt));
+  const now = Date.parse(asOf);
+  if (!Number.isFinite(captured)) return "EXCHANGE_TIME_UNAVAILABLE";
+  if (captured > now) return "INVALID_FUTURE_TIMESTAMP";
+  const end = close == null ? NaN : Date.parse(String(close));
+  if (Number.isFinite(end) && now >= end && captured >= end - 180000 && captured <= end + 180000)
+    return "SESSION_CLOSED_LAST_QUOTE";
+  // The native chain watcher has a two-minute cadence. Three minutes admits
+  // one delayed poll without allowing an old FULL quote to masquerade as live.
+  return now - captured > 180000 ? "STALE" : "OBSERVED";
+}
+
 // Reuse the sole collector's durable FULL quote requests; never create another broker session.
 export async function loadSmartApiNifty(
   read: EvidenceReader,
@@ -165,6 +178,43 @@ export async function loadSmartApiNifty(
     spot == null
       ? { legs: [], strikes: [], shortfall: 10 }
       : nearestPairs(rows, spot);
+  const native = expiry ? await read(
+    "nse_option_chain",
+    `WITH latest AS (
+       SELECT id,captured_at,underlying_value
+       FROM public.option_chain_snapshots
+       WHERE symbol=$2 AND expiry_date=$3::date AND captured_at<=$1::timestamptz
+         AND captured_at>=$1::timestamptz-interval '7 days'
+       ORDER BY captured_at DESC LIMIT 1
+     )
+     SELECT latest.captured_at collected_at,latest.captured_at exchange_feed_at,
+       latest.underlying_value::float8 spot_price,l.instrument_identifier,
+       l.strike::float8 strike,l.option_type,l.last_price::float8 last_price,
+       l.open_interest::text open_interest,l.change_in_oi::text change_in_oi,
+       l.total_traded_volume::text total_traded_volume,l.bid_price::float8 bid_price,
+       l.ask_price::float8 ask_price,l.bid_qty::text bid_qty,l.ask_qty::text ask_qty,
+       l.implied_volatility::float8 implied_volatility,l.delta::float8,l.gamma::float8,
+       l.theta::float8,l.vega::float8,i.symbol_token,i.lotsize,
+       'nse_option_chain_snapshots'::text source,'contracts'::text oi_unit
+     FROM latest JOIN public.option_chain_legs l ON l.snapshot_id=latest.id
+     LEFT JOIN LATERAL (
+       SELECT symbol_token,lotsize FROM public.instruments i
+       WHERE i.exchange='NFO' AND i.name=$2 AND i.instrumenttype=$4
+         AND i.expiry=$3::date AND i.strike=l.strike
+         AND right(i.tradingsymbol,2)=l.option_type AND i.updated_at<=$1::timestamptz
+       ORDER BY i.updated_at DESC LIMIT 1
+     ) i ON true
+     ORDER BY l.strike,l.option_type`,
+    asOf, underlying.symbol, expiry, underlying.optionType,
+  ) : [];
+  const nativeSpot = spot ?? numeric(native[0]?.spot_price);
+  const nativeState = atomicChainState(native[0]?.collected_at, asOf, calendar[0]?.market_close_ts);
+  const nativeCohort = native.length && nativeSpot != null
+    ? nearestPairs(native.map((row) => ({ ...withGreeks(row), quote_state: nativeState })), nativeSpot)
+    : paired;
+  const nativeUsable = native.length > 0 && nativeSpot != null
+    && (nativeState === "OBSERVED" || nativeState === "SESSION_CLOSED_LAST_QUOTE")
+    && nativeCohort.legs.some((leg) => numeric(leg.open_interest) != null);
   // The stock-option collector persists its own immutable chain cohort. Do not
   // stitch its rows into individually timed FULL quotes or invent a last price
   // from bid/ask midpoint. Use one whole cohort when FULL OI is absent, invalid
@@ -206,26 +256,29 @@ export async function loadSmartApiNifty(
     && cohort.legs.every((leg) => leg.quote_state === "OBSERVED" || leg.quote_state === "SESSION_CLOSED_LAST_QUOTE");
   const pairedHasOi = paired.legs.some((leg) => numeric(leg.open_interest) != null);
   const useCohortQuotes=hasCohort && (!pairedHasOi || (pairedNeedsCohort && cohortUsable));
-  const chosen=useCohortQuotes?cohort:paired;
-  const selectedSource=useCohortQuotes?'smartapi_option_chain_snapshots':'smartapi';
+  const chosen=nativeUsable?nativeCohort:useCohortQuotes?cohort:paired;
+  const selectedSource=nativeUsable?'nse_option_chain_snapshots':useCohortQuotes?'smartapi_option_chain_snapshots':'smartapi';
   // Preserve partial FULL quote evidence, but never fill missing legs from a
   // different observation. A complete fallback cohort gets its own metric scope.
-  const metricWindow=hasCohort?cohort:chosen;
+  const metricWindow=nativeUsable?nativeCohort:hasCohort?cohort:chosen;
   const analyticLegs: Facts[] = chosen.legs.map((input) => {
     const row=input as Facts;
+    const reportedChange=numeric(row.change_in_oi);
+    const currentOi=numeric(row.open_interest);
+    const reportedBaseline=reportedChange!=null && currentOi!=null ? currentOi-reportedChange : null;
     const previousSession=numeric(row.previous_session_open_interest);
     const firstSession=numeric(row.session_first_open_interest);
-    const baseline=previousSession??firstSession;
-    const baselineKind=previousSession!=null?'PREVIOUS_SESSION_FINAL':firstSession!=null?'FIRST_SESSION_OBSERVATION':'BASELINE_UNAVAILABLE';
+    const baseline=reportedBaseline??previousSession??firstSession;
+    const baselineKind=reportedBaseline!=null?'PROVIDER_REPORTED_CHANGE':previousSession!=null?'PREVIOUS_SESSION_FINAL':firstSession!=null?'FIRST_SESSION_OBSERVATION':'BASELINE_UNAVAILABLE';
     return {...row,contractId:String(row.symbol_token??row.instrument_identifier??''),baseline_open_interest:baseline,
       baseline_kind:baselineKind,
-      baseline_collected_at:previousSession!=null?row.previous_session_collected_at:row.session_first_collected_at,
-      baseline_exchange_feed_at:previousSession!=null?row.previous_session_exchange_feed_at:row.session_first_exchange_feed_at,
+      baseline_collected_at:reportedBaseline!=null?row.collected_at:previousSession!=null?row.previous_session_collected_at:row.session_first_collected_at,
+      baseline_exchange_feed_at:reportedBaseline!=null?row.exchange_feed_at:previousSession!=null?row.previous_session_exchange_feed_at:row.session_first_exchange_feed_at,
       oi_layers:oiLayers(baseline,row.open_interest)};
   });
   const fixedCohort={
     id:`${underlying.symbol}:${expiry}:${selectedSource}`,
-    expiry:expiry||null,source:selectedSource,unit:"PROVIDER_NATIVE_UNVERIFIED",
+    expiry:expiry||null,source:selectedSource,unit:nativeUsable?"contracts":"PROVIDER_NATIVE_UNVERIFIED",
     state:"FIXED_DISPLAY_COHORT",
     ce:aggregateOi(analyticLegs.filter(row=>row.option_type==='CE')),
     pe:aggregateOi(analyticLegs.filter(row=>row.option_type==='PE')),
@@ -240,16 +293,18 @@ export async function loadSmartApiNifty(
     strikes: chosen.strikes,
     shortfall: chosen.shortfall,
     metrics: {...chainMetrics(metricWindow.legs),...windowMaxPain(metricWindow.legs),
-      source:hasCohort?'smartapi_option_chain_snapshots':selectedSource,
+      source:nativeUsable?'nse_option_chain_snapshots':hasCohort?'smartapi_option_chain_snapshots':selectedSource,
       strikes:metricWindow.strikes,
-      collectedAt:hasCohort?fallback[0].collected_at:null},
+      collectedAt:nativeUsable?native[0].collected_at:hasCohort?fallback[0].collected_at:null},
     metricLegs:metricWindow.legs.map(withGreeks),
     oiAnalytics:{
-      baselinePreference:["PREVIOUS_SESSION_FINAL","FIRST_SESSION_OBSERVATION"],
+      baselinePreference:["PROVIDER_REPORTED_CHANGE","PREVIOUS_SESSION_FINAL","FIRST_SESSION_OBSERVATION"],
       fixedCohort,
       profile:analyticLegs.map(row=>({contractId:row.contractId,strike:row.strike,option_type:row.option_type,current:row.open_interest,baseline:row.baseline_open_interest,change:(row.oi_layers as Facts).change,state:(row.oi_layers as Facts).state})),
     },
     fallbackNote: selectedSource==='smartapi_option_chain_snapshots'?'One retained stock-chain cohort; midpoint is not LTP; missing prior OI change remains null.':null,
-    note: "Existing collector FULL quotes, individually timestamped; not an atomic chain snapshot. OI uses provider-native units, not verified lots/contracts. Prior snapshot ΔOI = current OI minus the immediately preceding retained quote for the same token; not day change. Provider day ΔOI is unavailable in FULL quotes. Option Delta is a Greek, not ΔOI; Greeks match underlying/expiry/strike/right and carry their own collection time, not verified exchange freshness. Missing is never zero. FII/DII cash is a separate NSE report.",
+    note: nativeUsable
+      ? "One current atomic NSE option-chain snapshot supplies OI and provider-reported change in OI in contracts for every displayed strike. Option Delta is a Greek, not ΔOI. Missing is never zero. FII/DII cash is a separate NSE report."
+      : "Existing collector FULL quotes, individually timestamped; not an atomic chain snapshot. OI uses provider-native units, not verified lots/contracts. Prior snapshot ΔOI = current OI minus the immediately preceding retained quote for the same token; not day change. Provider day ΔOI is unavailable in FULL quotes. Option Delta is a Greek, not ΔOI; Greeks match underlying/expiry/strike/right and carry their own collection time, not verified exchange freshness. Missing is never zero. FII/DII cash is a separate NSE report.",
   };
 }

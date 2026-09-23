@@ -6524,8 +6524,21 @@ or outcomes were deleted.
   coalesced/cached for 15/30 seconds, while historical `asOf` reads bypass it.
   The dashboard pool default is eight (matching stage), so a four-query
   overview refresh cannot consume the whole live API pool.
-- OI freshness: stale non-null FULL quotes no longer override a fresh atomic
-  SmartAPI chain cohort.
+- OI freshness: stale non-null FULL quotes no longer override a current atomic
+  NSE option-chain cohort.
 - Evidence and rollback:
   `docs/trading-analytics/LIVE_REFRESH_LATENCY_AND_OI_FRESHNESS_20260923.md`.
 - No schema migration and no strategy/order/collector permission change.
+
+## 2026-09-23 — Scalper V2 atomic OI / Delta OI consistency
+
+- Cause confirmed: the side profile/selected values could use stale SmartAPI
+  FULL OI while strike and cumulative charts used a newer NSE chain snapshot;
+  Delta OI definitions also differed.
+- V2 now selects one current atomic NSE option-chain cohort for every OI view.
+  OI is in contracts and Delta OI is the provider-reported `change_in_oi` from
+  that exact snapshot. Missing/stale data remains unavailable rather than zero.
+- SmartAPI strike data remains available for broker quotes/depth. Its OI is in
+  underlying units and the collector's `oi_change` is a one-minute local
+  difference, so neither is silently labelled as NSE contracts/session Delta OI.
+- No collector, strategy, signal, order permission or database schema change.

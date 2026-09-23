@@ -105,6 +105,7 @@ export function scalperV2OiMetricOption(
   timeLabel: (value: number) => string,
   domain?: ScalperV2TimeDomain,
   dayOpenMs?: number | null,
+  unitLabel = "",
 ): EChartsOption {
   const rows = points.filter(validTime);
   const change = metric === "change";
@@ -177,7 +178,7 @@ export function scalperV2OiMetricOption(
     yAxis: [
       {
         type: "value",
-        name,
+        name: unitLabel ? `${name} · ${unitLabel}` : name,
         position: "right",
         nameLocation: "end",
         scale: true,
@@ -186,7 +187,7 @@ export function scalperV2OiMetricOption(
       },
       {
         type: "value",
-        name: change ? "CE / PE ΔOI" : "CE / PE OI",
+        name: unitLabel ? `${change ? "CE / PE ΔOI" : "CE / PE OI"} · ${unitLabel}` : change ? "CE / PE ΔOI" : "CE / PE OI",
         position: "left",
         scale: change,
         min: change ? undefined : 0,
@@ -252,6 +253,7 @@ export function scalperV2OiDifferenceOption(
   timeLabel: (value: number) => string,
   domain?: ScalperV2TimeDomain,
   dayOpenMs?: number | null,
+  unitLabel = "",
 ): EChartsOption {
   const rows = points.filter(validTime);
   return {
@@ -263,11 +265,11 @@ export function scalperV2OiDifferenceOption(
     xAxis: { ...timeAxis(timeLabel, domain), name: "Timestamp · IST", nameGap: 32 },
     yAxis: [
       {
-        type: "value", name: "PE OI − CE OI", axisLabel: { formatter: formatOiAxisValue },
+        type: "value", name: unitLabel ? `PE OI − CE OI · ${unitLabel}` : "PE OI − CE OI", axisLabel: { formatter: formatOiAxisValue },
         splitLine: { lineStyle: { color: "rgba(100,116,139,.14)" } },
       },
       {
-        type: "value", name: "PE ΔOI − CE ΔOI", axisLabel: { formatter: formatOiAxisValue },
+        type: "value", name: unitLabel ? `PE ΔOI − CE ΔOI · ${unitLabel}` : "PE ΔOI − CE ΔOI", axisLabel: { formatter: formatOiAxisValue },
         splitLine: { show: false },
       },
     ],

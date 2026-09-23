@@ -120,6 +120,7 @@ export function scalperV2VerticalStrikeOption(
   metric: "oi" | "change" | "volume" | "premium" | "spread",
   underlyingValue: number | null = null,
   nearestStrike: number | null = null,
+  unitLabel = "",
 ): EChartsOption {
   const difference = scalperV2PutMinusCall(calls, puts);
   const [primaryMinimum, primaryMaximum] = metric === "change"
@@ -166,7 +167,7 @@ export function scalperV2VerticalStrikeOption(
     yAxis: [
       {
         type: "value",
-        name: suffix,
+        name: priceMetric || !unitLabel ? suffix : `${suffix} · ${unitLabel}`,
         min: primaryMinimum,
         max: primaryMaximum,
         axisLabel: { formatter: formatValue },
@@ -174,7 +175,7 @@ export function scalperV2VerticalStrikeOption(
       },
       {
         type: "value",
-        name: `PE − CE ${suffix}`,
+        name: priceMetric || !unitLabel ? `PE − CE ${suffix}` : `PE − CE ${suffix} · ${unitLabel}`,
         min: differenceMinimum,
         max: differenceMaximum,
         axisLabel: { formatter: formatValue },

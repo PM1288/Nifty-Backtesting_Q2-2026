@@ -6558,3 +6558,15 @@ or outcomes were deleted.
   PE receives tentative PUT only. Signal calculation and marker styling are
   unchanged.
 - Evidence: `docs/trading-analytics/SCALPER_V2_TENTATIVE_PANE_ROUTING_20260923.md`.
+# Scalper V2 OI lot-unit display toggle — 23 September 2026
+
+- Added `Contracts` / `× Lot N` to the Scalper V2 command bar.
+- The alternate view multiplies OI, signed Delta-OI and every cumulative
+  component/difference by the exact common expiry lot size from instrument
+  metadata; current NIFTY evidence resolves lot 65.
+- Conversion is display-only. Canonical source values, PCR, ranks, heatmap
+  shares, max pain and all strategy calculations remain unchanged.
+- Mixed lot sizes and provider-native/unverified units block multiplication;
+  null remains null.
+- Implementation and acceptance contract:
+  `docs/trading-analytics/SCALPER_V2_OI_LOT_UNIT_TOGGLE_20260923.md`.

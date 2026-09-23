@@ -1,5 +1,15 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-23 Scalper V2 OI unit display: one persistent command-bar toggle now
+switches all visible strike, selected-pair, structure and cumulative OI/Delta-OI
+values between canonical contracts and underlying-equivalent units calculated
+as OI times the exact common expiry lot size. The multiplied view is disabled
+for mixed lot sizes or provider-native/unverified units, and missing values stay
+missing. Raw exports are preserved with additive display metadata; PCR, ranks,
+percentages, max-pain candidates, positioning shares, strategies, collectors,
+alerts and order permissions are unchanged. Evidence:
+`docs/trading-analytics/SCALPER_V2_OI_LOT_UNIT_TOGGLE_20260923.md`.
+
 2026-09-23 live refresh latency and OI freshness repair: the Home overview now
 reads only the latest 22 daily observations per F&O equity once for its daily
 indicators instead of repeatedly ranking full history. Identical concurrent

@@ -62,7 +62,7 @@ export function scalperV2PositioningModel(input: ScalperV2OptionPricePoint[]) {
 const regimeShort: Record<ScalperV2Regime, string> = { "Long buildup": "LB", "Short buildup": "SB", "Short covering": "SC", "Long unwinding": "LU", Neutral: "N", Unavailable: "—" };
 const sideColor = { CE: "#eab308", PE: "#2563eb" } as const;
 
-export function scalperV2StrikeStructureOption(strikes: number[], calls: Array<{ oi: number | null; changeOi: number | null; premiumReturnPct: number | null }>, puts: Array<{ oi: number | null; changeOi: number | null; premiumReturnPct: number | null }>, underlyingValue: number | null, nearestStrike: number | null): EChartsOption {
+export function scalperV2StrikeStructureOption(strikes: number[], calls: Array<{ oi: number | null; changeOi: number | null; premiumReturnPct: number | null }>, puts: Array<{ oi: number | null; changeOi: number | null; premiumReturnPct: number | null }>, underlyingValue: number | null, nearestStrike: number | null, unitLabel = ""): EChartsOption {
   const ranks = (values: typeof calls) => new Map(values.map((row, index) => ({ index, value: row.oi })).filter((row) => row.value != null).sort((a, b) => b.value! - a.value!).slice(0, 5).map((row, index) => [row.index, index + 1]));
   const ceRanks = ranks(calls), peRanks = ranks(puts);
   const changes = [...calls, ...puts].map((row) => row.changeOi);
@@ -77,7 +77,7 @@ export function scalperV2StrikeStructureOption(strikes: number[], calls: Array<{
     legend: { data: ["CE OI", "PE OI", "CE ΔOI", "PE ΔOI", "CE premium %", "PE premium %"], top: 0, type: "scroll", textStyle: { fontSize: 8 }, itemWidth: 10, itemHeight: 7 },
     grid: { left: 2, right: 2, top: 35, bottom: 2, containLabel: true },
     xAxis: { type: "category", data: strikes, axisLabel: { hideOverlap: true, fontSize: 8 } },
-    yAxis: [{ type: "value", min: 0, name: "OI", axisLabel: { formatter: formatOiAxisValue, fontSize: 8 } }, { type: "value", min: deltaMin, max: deltaMax, name: "ΔOI", splitLine: { show: false }, axisLabel: { formatter: formatOiAxisValue, fontSize: 8 } }, { type: "value", min: -returnMax, max: returnMax, show: false }],
+    yAxis: [{ type: "value", min: 0, name: unitLabel ? `OI · ${unitLabel}` : "OI", axisLabel: { formatter: formatOiAxisValue, fontSize: 8 } }, { type: "value", min: deltaMin, max: deltaMax, name: unitLabel ? `ΔOI · ${unitLabel}` : "ΔOI", splitLine: { show: false }, axisLabel: { formatter: formatOiAxisValue, fontSize: 8 } }, { type: "value", min: -returnMax, max: returnMax, show: false }],
     series: [
       { name: "CE OI", type: "bar", data: barData(calls, "CE", ceRanks), barMaxWidth: 14, itemStyle: { color: sideColor.CE }, markLine: nearestIndex < 0 || underlyingValue == null ? undefined : { silent: true, symbol: "none", label: { formatter: `Spot ${underlyingValue.toFixed(1)}`, fontSize: 8 }, lineStyle: { color: "#0f766e", type: "dotted" }, data: [{ xAxis: nearestIndex }] } },
       { name: "PE OI", type: "bar", data: barData(puts, "PE", peRanks), barMaxWidth: 14, itemStyle: { color: sideColor.PE } },

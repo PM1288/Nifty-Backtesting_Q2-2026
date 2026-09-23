@@ -32,6 +32,9 @@ order permissions.
   identical concurrent requests and briefly reuse successful results for the
   same cadence already used by the browser. Explicit historical `asOf` reads
   bypass the cache.
+- The production dashboard pool default is eight, matching the existing stage
+  default. The four overview subqueries can run without consuming every API
+  connection, leaving capacity for live chart reads.
 - A fresh atomic SmartAPI chain cohort replaces stale individually timed FULL
   OI quotes. Missing or stale evidence is not converted to zero, and a cohort
   without verifiable current timing does not displace otherwise usable quotes.

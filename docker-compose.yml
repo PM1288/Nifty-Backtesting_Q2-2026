@@ -796,11 +796,11 @@ services:
       PORT: "18184"
       SERVE_CLIENT: "1"
       TZ: "Asia/Kolkata"
-      N50_API_DB_CONNECTION_LIMIT: ${N50_API_DB_CONNECTION_LIMIT:-4}
+      N50_API_DB_CONNECTION_LIMIT: ${N50_API_DB_CONNECTION_LIMIT:-8}
       N50_API_DB_POOL_TIMEOUT: ${N50_API_DB_POOL_TIMEOUT:-15}
       N50_PAPER_DB_CONNECTION_LIMIT: ${N50_PAPER_DB_CONNECTION_LIMIT:-3}
       N50_PAPER_DB_POOL_TIMEOUT: ${N50_PAPER_DB_POOL_TIMEOUT:-20}
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=${POSTGRES_SCHEMA:-public}&connection_limit=${N50_API_DB_CONNECTION_LIMIT:-4}&pool_timeout=${N50_API_DB_POOL_TIMEOUT:-15}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=${POSTGRES_SCHEMA:-public}&connection_limit=${N50_API_DB_CONNECTION_LIMIT:-8}&pool_timeout=${N50_API_DB_POOL_TIMEOUT:-15}
       # Analytical snapshots are stale-while-revalidate on their own routes.
       # Running every heavy market/derivatives materializer inside the shared
       # API process starved Paper and Strategy during market hours.

@@ -6522,6 +6522,8 @@ or outcomes were deleted.
 - Repair: one bounded 22-row-per-symbol daily dataset now feeds RSI, Williams
   %R, five-day change and average volume. Identical live Scalper reads are
   coalesced/cached for 15/30 seconds, while historical `asOf` reads bypass it.
+  The dashboard pool default is eight (matching stage), so a four-query
+  overview refresh cannot consume the whole live API pool.
 - OI freshness: stale non-null FULL quotes no longer override a fresh atomic
   SmartAPI chain cohort.
 - Evidence and rollback:

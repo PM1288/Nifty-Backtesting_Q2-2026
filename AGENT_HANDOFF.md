@@ -6705,3 +6705,12 @@ or outcomes were deleted.
 - Evidence and implementation detail:
   `docs/trading-analytics/SCALPER_V2_AXIS_SPACE_REFRESH_REPAIR_20260923.md` and
   `/home/novius2/NIFTY50/evidence/scalper-v2-axis-space-refresh-20260923/`.
+- The first authenticated production pass exposed an ECharts deferred-pipeline
+  race during rapid analytics-tab replacement. Commit `346eac2` applies bounded
+  heatmaps synchronously and disables progressive rendering for these small
+  datasets. The final authenticated production run passed 23/23 with no page
+  errors and retained the signed Delta-OI view.
+- Deployed production image
+  `trading-stack-n50-dashboard:scalper-v2-axis-space-refresh-20260923-346eac2`
+  (`sha256:c13931efb1893b30fcd77ddeeba07597899b792204fb2be734be63611d90df26`)
+  is healthy with zero restarts and serves `/n50/assets/index-C99uRvnV.js`.

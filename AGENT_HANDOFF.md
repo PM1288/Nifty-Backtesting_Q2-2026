@@ -6542,3 +6542,10 @@ or outcomes were deleted.
   underlying units and the collector's `oi_change` is a one-minute local
   difference, so neither is silently labelled as NSE contracts/session Delta OI.
 - No collector, strategy, signal, order permission or database schema change.
+- Released commit `562c730` on canonical `master`. API 269/269 and web 276/276
+  passed; both typechecks/builds and the canonical gate passed. The deployed
+  API matched the 10:40:25 IST 23,350 CE snapshot exactly: OI 64,845 contracts,
+  Delta OI +29,162, `OBSERVED`.
+- Only `n50-dashboard` was recreated. It is healthy on image
+  `sha256:aaf8256f4389807dbfbe31f843c4cc0ca98c01ee51ffd6c71bc0bbc130d21b38`.
+  Rollback: `trading-stack-n50-dashboard:before-scalper-oi-cohort-20260923`.

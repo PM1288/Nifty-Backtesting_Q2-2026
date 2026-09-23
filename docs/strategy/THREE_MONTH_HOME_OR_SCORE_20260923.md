@@ -52,6 +52,21 @@ passing month. The authenticated browser regression checks the API score
 invariant, both Home directions, M-3/M-2/M-1 order, `/11` scoring, exact
 arithmetic drawer and CSV export.
 
+Final release evidence:
+
+- web: 274/274 tests, typecheck and production build passed;
+- API: 265/265 tests, typecheck and production build passed;
+- canonical repository gate and `git diff --check` passed;
+- authenticated public Chromium: 37/37 desktop/mobile checks passed;
+- latest retained response: 268/500 profiles (53.6% membership coverage),
+  2 Bull-qualified and 17 Bear-qualified rows; this is disclosed coverage, not
+  a claim of a complete 500-stock census;
+- evidence: `/home/novius2/NIFTY50/evidence/three-month-home-or-score-20260923/`;
+- deployed dashboard image:
+  `sha256:c67d228e35d94fdf82cd379b34ec1d26c5fb8a3c217f0cf5354924b3cb7df0c4`,
+  healthy with zero restarts;
+- rollback image: `trading-stack-n50-dashboard:before-three-month-or-score-20260923`.
+
 Rerun:
 
 ```bash

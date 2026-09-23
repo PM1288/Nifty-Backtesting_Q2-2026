@@ -6481,3 +6481,12 @@ or outcomes were deleted.
 - Unit, typecheck, build, canonical-gate, authenticated browser and deployment
   evidence are recorded in
   `docs/strategy/THREE_MONTH_HOME_OR_SCORE_20260923.md`.
+- Released application commit `36e960d` on pushed canonical `master`. Web
+  274/274 and API 265/265 tests passed; authenticated production Chromium
+  passed 37/37 desktop/mobile checks. The retained response disclosed 268/500
+  profiles (53.6% coverage), 2 Bull-qualified and 17 Bear-qualified rows.
+- Only `n50-dashboard` was recreated. It is healthy with zero restarts on image
+  `sha256:c67d228e35d94fdf82cd379b34ec1d26c5fb8a3c217f0cf5354924b3cb7df0c4`.
+  Evidence: `/home/novius2/NIFTY50/evidence/three-month-home-or-score-20260923/`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-three-month-or-score-20260923`.

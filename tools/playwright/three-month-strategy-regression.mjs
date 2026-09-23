@@ -59,14 +59,15 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "Download CSV" }).click();
     const download = await downloadPromise;
-    check("CSV export", download.suggestedFilename().includes("three-month-strategy-forming"), download.suggestedFilename());
+    check("CSV export", download.suggestedFilename() === "three-month-strategy-bull-forming.csv", download.suggestedFilename());
   }
   await page.screenshot({ path: path.join(output, `${target.name}-three-month-strategy.png`), fullPage: true });
   await page.goto(`${base}/`, { waitUntil: "domcontentloaded" });
   const homeBoard = page.getByTestId("home-three-month-selector");
   await homeBoard.waitFor({ state: "visible", timeout: 45_000 });
+  await homeBoard.getByText("3MONTH BULL", { exact: true }).waitFor({ state: "visible", timeout: 45_000 });
   const boardText = await homeBoard.innerText();
-  check(`${target.name} home OR group`, boardText.includes("M−3 OR M−2 OR M−1") && boardText.includes("one point"), boardText.slice(0, 500));
+  check(`${target.name} home OR group`, boardText.includes("M−3 OR M−2 OR M−1") && boardText.includes("1 pt"), boardText.slice(0, 500));
   check(`${target.name} home bull bear`, boardText.includes("3MONTH BULL") && boardText.includes("3MONTH BEAR"), boardText.slice(0, 500));
   check(`${target.name} home /11 score`, /\b\d+\/11\b/.test(boardText), boardText.slice(0, 500));
   await homeBoard.screenshot({ path: path.join(output, `${target.name}-home-three-month-selector.png`) });

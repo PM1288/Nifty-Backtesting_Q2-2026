@@ -6514,3 +6514,16 @@ or outcomes were deleted.
   `/home/novius2/NIFTY50/evidence/scalper-v2-tentative-volume-20260923/`.
   Rollback image:
   `trading-stack-n50-dashboard:before-scalper-v2-tentative-volume-20260923`.
+# 2026-09-23 — Live refresh latency and OI freshness repair
+
+- Cause: the Home overview repeatedly window-ranked full `bars_1d` history for
+  the F&O equity universe. A production query exceeded 225 seconds and starved
+  the four-connection dashboard pool; Scalper reads then took 25–40 seconds.
+- Repair: one bounded 22-row-per-symbol daily dataset now feeds RSI, Williams
+  %R, five-day change and average volume. Identical live Scalper reads are
+  coalesced/cached for 15/30 seconds, while historical `asOf` reads bypass it.
+- OI freshness: stale non-null FULL quotes no longer override a fresh atomic
+  SmartAPI chain cohort.
+- Evidence and rollback:
+  `docs/trading-analytics/LIVE_REFRESH_LATENCY_AND_OI_FRESHNESS_20260923.md`.
+- No schema migration and no strategy/order/collector permission change.

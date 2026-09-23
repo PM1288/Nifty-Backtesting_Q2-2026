@@ -167,8 +167,15 @@ export async function loadSmartApiNifty(
       : nearestPairs(rows, spot);
   // The stock-option collector persists its own immutable chain cohort. Do not
   // stitch its rows into individually timed FULL quotes or invent a last price
-  // from bid/ask midpoint. Use one whole cohort only when FULL OI is absent.
-  const fallback = expiry && (!paired.legs.length || paired.legs.some(l=>numeric(l.open_interest)==null))
+  // from bid/ask midpoint. Use one whole cohort when FULL OI is absent, invalid
+  // or stale and the atomic cohort has a verified current/session-close time.
+  const pairedNeedsCohort = !paired.legs.length || paired.legs.some((leg) =>
+    numeric(leg.open_interest) == null
+    || leg.quote_state === "STALE"
+    || leg.quote_state === "EXCHANGE_TIME_UNAVAILABLE"
+    || leg.quote_state === "INVALID_FUTURE_TIMESTAMP"
+  );
+  const fallback = expiry && pairedNeedsCohort
     ? await read('smartapi_stock_chain', `SELECT c.ts collected_at,c.source_quote_ts exchange_feed_at,
       c.underlying,c.expiry::text,c.symbol_token,c.tradingsymbol instrument_identifier,c.strike::float8 strike,c."right" option_type,c.lotsize,
       c.spot_price::float8,c.oi::text open_interest,c.volume::text total_traded_volume,
@@ -195,7 +202,10 @@ export async function loadSmartApiNifty(
   const cohort=fallback.length && fallbackSpot!=null ? nearestPairs(fallback.map(r=>({...withGreeks(r),
     quote_state:smartApiQuoteState(r,asOf,calendar[0]?.market_close_ts),oi_unit:'PROVIDER_NATIVE_UNVERIFIED'})),fallbackSpot):paired;
   const hasCohort=fallback.length>0 && fallbackSpot!=null;
-  const useCohortQuotes=hasCohort && !paired.legs.some(l=>numeric(l.open_interest)!=null);
+  const cohortUsable = cohort.legs.some((leg) => numeric(leg.open_interest) != null)
+    && cohort.legs.every((leg) => leg.quote_state === "OBSERVED" || leg.quote_state === "SESSION_CLOSED_LAST_QUOTE");
+  const pairedHasOi = paired.legs.some((leg) => numeric(leg.open_interest) != null);
+  const useCohortQuotes=hasCohort && (!pairedHasOi || (pairedNeedsCohort && cohortUsable));
   const chosen=useCohortQuotes?cohort:paired;
   const selectedSource=useCohortQuotes?'smartapi_option_chain_snapshots':'smartapi';
   // Preserve partial FULL quote evidence, but never fill missing legs from a

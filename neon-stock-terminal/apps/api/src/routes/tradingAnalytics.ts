@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, RequestHandler, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -38,6 +38,68 @@ const querySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
 });
+
+type LiveJsonResult = { statusCode: number; body: unknown };
+const liveJsonResults = new Map<string, { expiresAt: number; result: LiveJsonResult }>();
+const liveJsonInflight = new Map<string, Promise<LiveJsonResult>>();
+
+/**
+ * Live workstations often poll the same expensive read from more than one open
+ * tab. Coalesce those reads and briefly reuse only successful live responses.
+ * Historical as-of requests remain exact and bypass this cache entirely.
+ */
+export function liveJsonSingleflight(ttlMs: number): RequestHandler {
+  return async (req, res, next) => {
+    if (typeof req.query.asOf === "string" && req.query.asOf.length > 0) return next();
+    const key = req.originalUrl;
+    const now = Date.now();
+    for (const [cachedKey, entry] of liveJsonResults) {
+      if (entry.expiresAt <= now) liveJsonResults.delete(cachedKey);
+    }
+    const cached = liveJsonResults.get(key);
+    if (cached && cached.expiresAt > now) {
+      res.setHeader("X-Live-Read-Cache", "hit");
+      return res.status(cached.result.statusCode).json(cached.result.body);
+    }
+    if (cached) liveJsonResults.delete(key);
+
+    const pending = liveJsonInflight.get(key);
+    if (pending) {
+      try {
+        const result = await pending;
+        res.setHeader("X-Live-Read-Cache", "coalesced");
+        return res.status(result.statusCode).json(result.body);
+      } catch {
+        return next();
+      }
+    }
+
+    let resolveResult!: (value: LiveJsonResult) => void;
+    let rejectResult!: (reason?: unknown) => void;
+    const promise = new Promise<LiveJsonResult>((resolve, reject) => {
+      resolveResult = resolve;
+      rejectResult = reject;
+    });
+    liveJsonInflight.set(key, promise);
+    let settled = false;
+    const originalJson = res.json.bind(res);
+    res.json = ((body: unknown) => {
+      const result = { statusCode: res.statusCode, body };
+      settled = true;
+      liveJsonInflight.delete(key);
+      if (res.statusCode < 400) liveJsonResults.set(key, { expiresAt: Date.now() + ttlMs, result });
+      resolveResult(result);
+      res.setHeader("X-Live-Read-Cache", "miss");
+      return originalJson(body);
+    }) as Response["json"];
+    res.once("close", () => {
+      if (settled) return;
+      liveJsonInflight.delete(key);
+      rejectResult(new Error("response closed before JSON completion"));
+    });
+    return next();
+  };
+}
 export function resolveChartStrikeSelection(input: { strike?: number; ceStrike?: number; peStrike?: number }) {
   return {
     ceStrike: input.ceStrike ?? input.strike,
@@ -604,7 +666,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       return res.status(503).json({ error: { code: "SCALPER_LOG_UNAVAILABLE" } });
     }
   });
-  app.get("/v1/trading-analytics/scalper-context", async (req, res) => {
+  app.get("/v1/trading-analytics/scalper-context", liveJsonSingleflight(15_000), async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = querySchema.pick({ symbol: true, asOf: true, expiry: true }).safeParse(req.query);
@@ -683,7 +745,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       return res.status(503).json({ error: { code: "UNDERLYING_UNIVERSE_UNAVAILABLE" } });
     }
   });
-  app.get("/v1/trading-analytics/option-price-history", async (req, res) => {
+  app.get("/v1/trading-analytics/option-price-history", liveJsonSingleflight(30_000), async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = z.object({
@@ -803,7 +865,7 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
       return res.status(503).json({ error: { code: "OPTION_PRICE_HISTORY_UNAVAILABLE" } });
     }
   });
-  app.get("/v1/trading-analytics/charts", async (req, res) => {
+  app.get("/v1/trading-analytics/charts", liveJsonSingleflight(15_000), async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const q = z

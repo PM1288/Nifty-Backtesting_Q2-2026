@@ -804,30 +804,37 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
         FROM universe u
         LEFT JOIN instrument_profiles ip ON ip.symbol = u.symbol
       ),
+      daily_recent AS MATERIALIZED (
+        SELECT
+          u.symbol_token,
+          b.trade_date,
+          b.high::double precision AS high,
+          b.low::double precision AS low,
+          b.close::double precision AS close,
+          b.volume::double precision AS volume
+        FROM universe u
+        CROSS JOIN LATERAL (
+          SELECT trade_date, high, low, close, volume
+          FROM bars_1d
+          WHERE exchange = 'NSE' AND symbol_token = u.symbol_token
+          ORDER BY trade_date DESC
+          LIMIT 22
+        ) b
+      ),
+      daily_ordered AS (
+        SELECT
+          d.*,
+          ROW_NUMBER() OVER (PARTITION BY d.symbol_token ORDER BY d.trade_date DESC) AS rn_desc,
+          LAG(d.close) OVER (PARTITION BY d.symbol_token ORDER BY d.trade_date) AS prev_close
+        FROM daily_recent d
+      ),
       rsi_window AS (
         SELECT
           d.symbol_token,
-          AVG(d.gain) AS avg_gain,
-          AVG(d.loss) AS avg_loss
-        FROM (
-          SELECT
-            b.symbol_token,
-            ROW_NUMBER() OVER (PARTITION BY b.symbol_token ORDER BY b.trade_date DESC) AS rn_desc,
-            GREATEST(
-              b.close::double precision
-              - LAG(b.close::double precision) OVER (PARTITION BY b.symbol_token ORDER BY b.trade_date),
-              0
-            ) AS gain,
-            GREATEST(
-              LAG(b.close::double precision) OVER (PARTITION BY b.symbol_token ORDER BY b.trade_date)
-              - b.close::double precision,
-              0
-            ) AS loss
-          FROM bars_1d b
-          JOIN universe u ON u.symbol_token = b.symbol_token
-          WHERE b.exchange = 'NSE'
-        ) d
-        WHERE d.rn_desc <= 15 AND (d.gain IS NOT NULL OR d.loss IS NOT NULL)
+          AVG(GREATEST(d.close - d.prev_close, 0)) AS avg_gain,
+          AVG(GREATEST(d.prev_close - d.close, 0)) AS avg_loss
+        FROM daily_ordered d
+        WHERE d.rn_desc <= 15 AND d.prev_close IS NOT NULL
         GROUP BY d.symbol_token
       ),
       willr_window AS (
@@ -836,18 +843,7 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
           MAX(d.high) AS high_max,
           MIN(d.low) AS low_min,
           (ARRAY_AGG(d.close ORDER BY d.trade_date DESC))[1] AS close_latest
-        FROM (
-          SELECT
-            b.symbol_token,
-            b.trade_date,
-            b.high::double precision AS high,
-            b.low::double precision AS low,
-            b.close::double precision AS close,
-            ROW_NUMBER() OVER (PARTITION BY b.symbol_token ORDER BY b.trade_date DESC) AS rn_desc
-          FROM bars_1d b
-          JOIN universe u ON u.symbol_token = b.symbol_token
-          WHERE b.exchange = 'NSE'
-        ) d
+        FROM daily_ordered d
         WHERE d.rn_desc <= 14
         GROUP BY d.symbol_token
       ),
@@ -873,13 +869,11 @@ async function getTradingStackOverview(prisma: PrismaClient): Promise<OverviewPa
       ),
       daily_ranked AS (
         SELECT
-          b.symbol_token,
-          b.close::double precision AS close,
-          b.volume::double precision AS volume,
-          ROW_NUMBER() OVER (PARTITION BY b.symbol_token ORDER BY b.trade_date DESC) AS rn
-        FROM bars_1d b
-        JOIN universe u ON u.symbol_token = b.symbol_token
-        WHERE b.exchange = 'NSE'
+          symbol_token,
+          close,
+          volume,
+          rn_desc AS rn
+        FROM daily_ordered
       ),
       daily_metrics AS (
         SELECT

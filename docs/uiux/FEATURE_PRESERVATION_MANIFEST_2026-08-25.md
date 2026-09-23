@@ -1,5 +1,16 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-23 live refresh latency and OI freshness repair: the Home overview now
+reads only the latest 22 daily observations per F&O equity once for its daily
+indicators instead of repeatedly ranking full history. Identical concurrent
+live Scalper chart/context/history requests are single-flight and briefly
+reused at their existing browser cadence; historical as-of reads bypass the
+cache. A fresh atomic SmartAPI option cohort supersedes stale individually
+timed FULL OI quotes, while missing values remain unavailable. UI polling,
+strategies, chart arithmetic, collectors, alerts, exports and order permissions
+are unchanged. Evidence:
+`docs/trading-analytics/LIVE_REFRESH_LATENCY_AND_OI_FRESHNESS_20260923.md`.
+
 2026-09-23 Home and Scalper V2 stable hydration: both workspaces reserve their
 final viewport while initial/deferred evidence loads, so async Home selectors
 and the exact Scalper chart payload cannot collapse and re-expand the page.

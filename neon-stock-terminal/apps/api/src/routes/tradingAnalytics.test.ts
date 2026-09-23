@@ -3,7 +3,33 @@ import assert from "node:assert/strict";
 import express from "express";
 import type { AddressInfo } from "node:net";
 import type { PrismaClient } from "@prisma/client";
-import { buildComparableChainLegs, buildCumulativeOiHistory, registerTradingAnalytics,loadMorningSummary,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
+import { buildComparableChainLegs, buildCumulativeOiHistory, liveJsonSingleflight, registerTradingAnalytics,loadMorningSummary,loadTradingAnalytics,resolveChartStrikeSelection } from "./tradingAnalytics";
+
+test("live read cache coalesces simultaneous refreshes and reuses the brief result", async () => {
+  const app = express();
+  let reads = 0;
+  app.get("/live", liveJsonSingleflight(1_000), async (_req, res) => {
+    reads += 1;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    res.json({ reads });
+  });
+  const server = app.listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const [first, second] = await Promise.all([fetch(`${base}/live`), fetch(`${base}/live`)]);
+    assert.deepEqual(await first.json(), { reads: 1 });
+    assert.deepEqual(await second.json(), { reads: 1 });
+    assert.equal(reads, 1);
+    const third = await fetch(`${base}/live`);
+    assert.deepEqual(await third.json(), { reads: 1 });
+    assert.equal(third.headers.get("x-live-read-cache"), "hit");
+    assert.equal(reads, 1);
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
 
 test("morning summary exposes exact cash and index-derivative values with the canonical matrix", async () => {
   const responses = [

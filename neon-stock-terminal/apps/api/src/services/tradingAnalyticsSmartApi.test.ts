@@ -135,6 +135,24 @@ test("SmartAPI quote age exact threshold and zero OI remain distinct from missin
   assert.equal(result.metrics.oiPcr, null);
   assert.equal(result.shortfall, 9);
 });
+test("fresh atomic chain cohort replaces stale individually timed FULL OI quotes", async () => {
+  const result = await loadSmartApiNifty(async (source) => {
+    if (source === "smartapi_spot") return [{ ltp: 23800 }];
+    if (source === "smartapi_expiries") return [{ expiry: "2026-09-08" }];
+    if (source === "smartapi_contracts") return [
+      { strike: 23800, option_type: "CE", open_interest: "100", exchange_feed_at: "2026-09-07T05:30:00Z" },
+      { strike: 23800, option_type: "PE", open_interest: "110", exchange_feed_at: "2026-09-07T05:30:00Z" },
+    ];
+    if (source === "smartapi_stock_chain") return [
+      { strike: 23800, option_type: "CE", open_interest: "200", exchange_feed_at: "2026-09-07T05:59:30Z", collected_at: "2026-09-07T05:59:35Z" },
+      { strike: 23800, option_type: "PE", open_interest: "220", exchange_feed_at: "2026-09-07T05:59:30Z", collected_at: "2026-09-07T05:59:35Z" },
+    ];
+    return [];
+  }, "2026-09-07T06:00:00Z");
+  assert.equal(result.source, "smartapi_option_chain_snapshots");
+  assert.deepEqual(result.legs.map((leg) => leg.open_interest), ["200", "220"]);
+  assert.ok(result.legs.every((leg) => leg.quote_state === "OBSERVED"));
+});
 test("SmartAPI unavailable sources never produce synthetic quotes", async () => {
   const result = await loadSmartApiNifty(
     async () => [],

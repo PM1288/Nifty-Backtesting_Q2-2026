@@ -72,10 +72,18 @@ For each fresh signal the CSV records direction-adjusted 1/5/15-session return
 and the 15-session path drawdown, together with exact gate/reference evidence.
 The PDF intentionally does not duplicate the trade ledger. It contains the
 formula/summary on one page and one full-page Daily/Weekly/Monthly chart review
-per stock. Blue upward markers are dated Bull qualifications and yellow
-downward markers are dated Bear qualifications. They appear only on the Daily
-chart at their exact signal dates. Weekly and Monthly charts are context only;
-purple is EMA9 and green/red are candle direction.
+per stock. Blue upward markers are Bull qualifications and yellow downward
+markers are Bear qualifications. Daily markers retain exact signal dates.
+Weekly and Monthly markers aggregate those dated events into their containing
+period; `×N` is the count of dated events and does not classify the whole
+candle. Purple is EMA9 and green/red are candle direction.
+
+The Daily chart additionally shows dashed month boundaries, dotted week
+boundaries, and separate Monthly/Weekly open and retrospective final-close
+segments. Retrospective closes are explicitly labelled so they are not treated
+as values known at period open. The CSV now carries current Month/Week/Day
+OHLC references, previous Month/Week/Day references, and M-2/M-3 open/close
+values for every emitted qualification.
 
 Bull and Bear are mutually exclusive for the same stock and date. The current
 monthly candle is nevertheless re-evaluated at every daily close, as required
@@ -97,6 +105,20 @@ same-date pair is ever emitted.
 
 The large difference between the look-ahead and causal rows is evidence that
 the same-day-open assumption materially inflates results.
+
+## 23 September 2026 chart-evidence refresh
+
+The current downloadable artifact is
+`platform/nifty_stratlab/outputs/three_month_reversal_20260923/`.
+It retains the same 500 symbols, 15,042 validated transitions, zero invalid
+signals and zero opposite-direction same-date signals. Strategy results did
+not change; only evidence presentation and exported reference completeness
+changed.
+
+- PDF: 501 A4 landscape pages.
+- CSV: 15,042 rows with every required Monthly/Weekly/Daily reference column.
+- Visual evidence:
+  `/home/novius2/NIFTY50/evidence/three-month-report-period-evidence-20260923/`.
 
 ## Rerun
 

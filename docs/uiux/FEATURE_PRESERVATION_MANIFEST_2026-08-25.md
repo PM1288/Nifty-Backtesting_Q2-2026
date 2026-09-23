@@ -100,6 +100,15 @@ separates the requested same-day-open look-ahead scenario from causal next-day
 open results and never claims unavailable historical intraday confirmation.
 Evidence: `docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.
 
+2026-09-23 3Month report period evidence: the same Bull/Bear calculations and
+results now render qualification triangles on Daily, Weekly and Monthly
+charts. Daily markers retain exact dates; Weekly/Monthly markers are explicit
+period aggregates with event counts, not candle-direction labels. Daily charts
+add month/week boundaries plus open and retrospective final-close segments.
+The CSV adds complete M/W/D OHLC references without adding a PDF trade ledger
+or changing strategy selection. Evidence remains in
+`docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.
+
 2026-09-22 Scalper V2 compact inspection and independent OI-direction entry
 reference: the four right-side and three lower analytical charts expose bounded
 compact tooltips and an on-demand viewport expansion which mounts only while

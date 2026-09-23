@@ -6570,3 +6570,17 @@ or outcomes were deleted.
   null remains null.
 - Implementation and acceptance contract:
   `docs/trading-analytics/SCALPER_V2_OI_LOT_UNIT_TOGGLE_20260923.md`.
+# 2026-09-23 — 3Month report period evidence
+
+- Enhanced `tools/reports/three_month_reversal_backtest.mjs` without changing
+  Bull/Bear qualification logic or results.
+- Daily charts now show dashed month and dotted week boundaries, plus period
+  open and explicitly retrospective final-close lines.
+- Weekly and Monthly charts now carry aggregated Bull/ Bear triangles; `×N`
+  means dated qualification count, not candle direction.
+- CSV exports current/prior Month, Week and Day OHLC references plus M-2/M-3
+  opens/closes for every signal.
+- Generated artifact:
+  `platform/nifty_stratlab/outputs/three_month_reversal_20260923/`.
+- Visual evidence:
+  `/home/novius2/NIFTY50/evidence/three-month-report-period-evidence-20260923/`.

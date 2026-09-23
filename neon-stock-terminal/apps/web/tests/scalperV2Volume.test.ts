@@ -9,13 +9,15 @@ test("volume EMA period follows the selected Scalper V2 timeframe", () => {
   assert.equal(scalperV2VolumeEmaPeriod(60), 5);
 });
 
-test("volume EMA is SMA-seeded and preserves missing-volume boundaries", () => {
+test("volume EMA progressively warms from the first candle and preserves missing-volume boundaries", () => {
   assert.deepEqual(scalperV2VolumeEma([
     { time: 1, value: 10 },
     { time: 2, value: 20 },
     { time: 3, value: 30 },
     { time: 4, value: 40 },
   ], 3), [
+    { time: 1, value: 10 },
+    { time: 2, value: 15 },
     { time: 3, value: 20 },
     { time: 4, value: 30 },
   ]);
@@ -26,7 +28,9 @@ test("volume EMA is SMA-seeded and preserves missing-volume boundaries", () => {
     { time: 4, value: 30 },
     { time: 5, value: 60 },
   ], 2), [
+    { time: 1, value: 10 },
     { time: 2, value: 15 },
+    { time: 4, value: 30 },
     { time: 5, value: 45 },
   ]);
 });

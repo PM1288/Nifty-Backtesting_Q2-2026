@@ -14,17 +14,17 @@ const pane = (kind: keyof typeof sides) => ({
   bars: sides[kind].map((emaSide, index) => {
     const rising = kind !== "PE", base = kind === "UNDERLYING" ? 23_300 : 200;
     const close = base + (rising ? index ** 2 : -(index ** 2));
-    return { end: new Date(start + index * 300_000).toISOString(), close, open: close - 1, high: close + 2, low: close - 2, ema9: emaSide === "ABOVE" ? close - 1 : close + 1, closed: true };
+    return { end: new Date(start + index * 300_000).toISOString(), close, open: close - 1, high: close + 2, low: close - 2, ema9: emaSide === "ABOVE" ? close - 1 : close + 1, volume: 100, closed: true };
   }),
 });
 
-test("potential reference arrows follow each instrument's local EMA direction", () => {
+test("tentative markers use an underlying direction plus fixed CE-up and PE-down triangles", () => {
   assert.equal(scalperV2EmaMarkerDirection("underlying", "CALL"), "up");
   assert.equal(scalperV2EmaMarkerDirection("call", "CALL"), "up");
   assert.equal(scalperV2EmaMarkerDirection("put", "CALL"), "down");
   assert.equal(scalperV2EmaMarkerDirection("underlying", "PUT"), "down");
-  assert.equal(scalperV2EmaMarkerDirection("call", "PUT"), "down");
-  assert.equal(scalperV2EmaMarkerDirection("put", "PUT"), "up");
+  assert.equal(scalperV2EmaMarkerDirection("call", "PUT"), "up");
+  assert.equal(scalperV2EmaMarkerDirection("put", "PUT"), "down");
 });
 
 test("retained evaluation reports exact-session signal outcomes and correlations", () => {

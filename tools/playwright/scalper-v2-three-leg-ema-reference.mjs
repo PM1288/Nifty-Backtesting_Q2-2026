@@ -16,7 +16,10 @@ const check = (name, pass, detail = "") => {
   results.push({ name, status: pass ? "PASS" : "FAIL", detail });
   if (!pass) throw new Error(`${name}: ${detail}`);
 };
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}),
+});
 try {
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, reducedMotion: "reduce" });
   const login = await context.request.post(`${base}/auth/session/dev-login`, {
@@ -55,9 +58,11 @@ try {
   check("Reference count is shown only with sufficient evidence", state === "READY" ? Number.isInteger(count) && count >= 0 : count == null, JSON.stringify({ state, count }));
   const markerCounts = await Promise.all(["underlying", "call", "put"].map((id) => page.getByTestId(`v2-chart-body-${id}`).evaluate((element) => Number(element.dataset.potentialEmaMarkers))));
   check("Same three-instrument references render on all three panes", markerCounts.every((value) => value === (count ?? 0)), JSON.stringify({ count, markerCounts }));
-  await page.getByRole("tab", { name: "Rules", exact: true }).click();
+  const markerStyles = await Promise.all(["underlying", "call", "put"].map((id) => page.getByTestId(`v2-chart-body-${id}`).evaluate((element) => element.dataset.potentialEmaMarkerStyle)));
+  check("Potential references use the hollow tentative marker contract", markerStyles.every((value) => value === "hollow-triangle-60pct-transparent-tentative"), JSON.stringify(markerStyles));
+  await page.getByRole("tab", { name: "Strategy", exact: true }).click();
   const rulesText = await page.getByTestId("v2-potential-ema-count").innerText();
-  check("Rules inspector labels evidence truthfully and as non-executed", (state === "READY" ? rulesText.includes(`Potential 5m references ${count}`) : rulesText.includes("needs six completed 5m")) && rulesText.includes("not executed trades"), rulesText);
+  check("Strategy inspector labels evidence truthfully and as tentative", (state === "READY" ? rulesText.includes(`Tentative references ${count}`) : rulesText.includes("needs six completed 5m")) && rulesText.includes("not actual or executed trades") && rulesText.includes("60% transparent"), rulesText);
   check("Chart API returned three exact panes", chartPayload?.interval === 5 && chartPayload?.panes?.length === 3, JSON.stringify({ interval: chartPayload?.interval, panes: chartPayload?.panes?.length }));
   check("No browser page errors", errors.length === 0, JSON.stringify(errors));
   const day = new URL(page.url()).searchParams.get("day");

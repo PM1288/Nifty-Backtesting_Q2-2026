@@ -12,10 +12,11 @@ import { scalperV2SeriesUpdatePlan } from "../../lib/scalperV2SeriesUpdate";
 import { scalperV2VolumeEma, scalperV2VolumeEmaPeriod } from "../../lib/scalperV2Volume";
 import { ScalperV2CursorCoordinator, scalperV2CrosshairSyncAction } from "../../lib/scalperV2Cursor";
 import { scalperV2RefreshClock } from "../../lib/scalperV2LiveSession";
-import { scalperV2EmaMarkerDirection } from "../../lib/scalperV2EmaAlignment";
+import { SCALPER_V2_THREE_INSTRUMENT_EMA_RULE } from "../../lib/scalperV2EmaAlignment";
 import { intervalBarChartTime, istChartTimeLabel } from "../../lib/tradingAnalyticsTime";
 import { ScalperV2DrawingPrimitive } from "./ScalperV2DrawingPrimitive";
 import { ScalperV2OiProfilePrimitive } from "./ScalperV2OiProfilePrimitive";
+import { ScalperV2TentativeMarkerPrimitive } from "./ScalperV2TentativeMarkerPrimitive";
 import { createScalperV2Drawing, drawingAnchorCount, type ScalperV2Drawing, type ScalperV2DrawingAnchor, type ScalperV2DrawingTool } from "./scalperV2Drawings";
 import css from "./ScalperV2.module.css";
 
@@ -99,6 +100,7 @@ export function ScalperV2Chart({
   const markerRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const drawingPrimitiveRef = useRef<ScalperV2DrawingPrimitive | null>(null);
   const profilePrimitiveRef = useRef<ScalperV2OiProfilePrimitive | null>(null);
+  const tentativeMarkerPrimitiveRef = useRef<ScalperV2TentativeMarkerPrimitive | null>(null);
   const semanticLinesRef = useRef<IPriceLine[]>([]), measurementLinesRef = useRef<IPriceLine[]>([]);
   const profileRowsRef = useRef(oiProfile), profileModeRef = useRef(profileMode), suppressCrosshairRef = useRef(0), suppressRangeRef = useRef(0);
   const yLockedRef = useRef(yLocked);
@@ -240,6 +242,8 @@ export function ScalperV2Chart({
     panes[0]?.setStretchFactor(6);
     panes[1]?.setStretchFactor(1);
     const marker = createSeriesMarkers(candle, []);
+    const tentativeMarkerPrimitive = new ScalperV2TentativeMarkerPrimitive();
+    candle.attachPrimitive(tentativeMarkerPrimitive);
     const drawingPrimitive = new ScalperV2DrawingPrimitive();
     const profilePrimitive = new ScalperV2OiProfilePrimitive();
     candle.attachPrimitive(drawingPrimitive);
@@ -277,7 +281,7 @@ export function ScalperV2Chart({
       callbacksRef.current.onRangeChange({ from: Number(range.from), to: Number(range.to), source: id, sequence: performance.now() });
     };
     instance.timeScale().subscribeVisibleTimeRangeChange(rangeHandler);
-    chartRef.current = instance; candleRef.current = candle; emaRef.current = ema; volumeRef.current = volume; volumeEmaRef.current = volumeEma; markerRef.current = marker; drawingPrimitiveRef.current = drawingPrimitive; profilePrimitiveRef.current = id === "underlying" ? profilePrimitive : null;
+    chartRef.current = instance; candleRef.current = candle; emaRef.current = ema; volumeRef.current = volume; volumeEmaRef.current = volumeEma; markerRef.current = marker; drawingPrimitiveRef.current = drawingPrimitive; profilePrimitiveRef.current = id === "underlying" ? profilePrimitive : null; tentativeMarkerPrimitiveRef.current = tentativeMarkerPrimitive;
     if (id === "underlying") profilePrimitive.setData(profileRowsRef.current, profileModeRef.current);
     host.dataset.chartCreateCount = "1";
 
@@ -402,7 +406,7 @@ export function ScalperV2Chart({
       body.removeEventListener("pointerdown", drawingPointerDown, true); body.removeEventListener("pointermove", drawingPointerMove, true); body.removeEventListener("pointerup", drawingPointerUp, true);
       body.removeEventListener("pointercancel", drawingPointerCancel, true); body.removeEventListener("contextmenu", drawingContextMenu); window.removeEventListener("keydown", drawingKeyDown); window.removeEventListener("blur", drawingBlur);
       instance.timeScale().unsubscribeVisibleTimeRangeChange(rangeHandler); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(pointerFrameRef.current); cancelAnimationFrame(profileFrameRef.current);
-      candle.detachPrimitive(drawingPrimitive); if (id === "underlying") candle.detachPrimitive(profilePrimitive); marker.detach(); instance.remove(); chartRef.current = null; candleRef.current = null; emaRef.current = null; markerRef.current = null; drawingPrimitiveRef.current = null; profilePrimitiveRef.current = null;
+      candle.detachPrimitive(drawingPrimitive); candle.detachPrimitive(tentativeMarkerPrimitive); if (id === "underlying") candle.detachPrimitive(profilePrimitive); marker.detach(); instance.remove(); chartRef.current = null; candleRef.current = null; emaRef.current = null; markerRef.current = null; drawingPrimitiveRef.current = null; profilePrimitiveRef.current = null; tentativeMarkerPrimitiveRef.current = null;
       volumeRef.current = null; volumeEmaRef.current = null;
       cancelDrawingGestureRef.current = null;
     };
@@ -526,15 +530,15 @@ export function ScalperV2Chart({
       const canonicalTime = chartTime(event.setupTime);
       const time = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
       if (time == null || !byTime.has(Number(time))) return [];
-      const potentialEma = event.rule === "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1";
+      const potentialEma = event.rule === SCALPER_V2_THREE_INSTRUMENT_EMA_RULE;
+      if (potentialEma) return [];
       const isEntryReference = event.state.includes("ENTRY_REFERENCE");
       const directionalOi = event.rule === "SCALPER_V2_OI_DIRECTION_EMA_CROSS_V1";
-      const potentialDirection = potentialEma ? scalperV2EmaMarkerDirection(id, event.direction) : null;
-      const pointsUp = potentialDirection ? potentialDirection === "up" : event.direction === "CALL";
+      const pointsUp = event.direction === "CALL";
       return [{ time: time as Time, position: pointsUp ? "belowBar" as const : "aboveBar" as const,
-        color: potentialEma ? "#eab308" : event.direction === "CALL" ? "#2563eb" : "#a86600",
-        shape: potentialEma ? pointsUp ? "arrowUp" as const : "arrowDown" as const : isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
-        text: potentialEma ? `★ ${event.direction} reference` : isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
+        color: event.direction === "CALL" ? "#2563eb" : "#a86600",
+        shape: isEntryReference ? event.direction === "CALL" ? "arrowUp" as const : "arrowDown" as const : "circle" as const,
+        text: isEntryReference ? directionalOi ? "OI entry ref" : "Entry ref" : "Setup" }];
     });
     const activeComparisonTimes = comparisonTimes.length ? comparisonTimes : inspectionMode === "locked" && inspectionTime != null ? [inspectionTime] : [];
     const comparisonMarkers = activeComparisonTimes.slice(0, 2).flatMap((value, index) => byTime.has(value) ? [{
@@ -545,7 +549,21 @@ export function ScalperV2Chart({
       text: index === 0 ? "A" : "B",
     }] : []);
     markerRef.current?.setMarkers([...signalMarkers, ...comparisonMarkers].sort((left, right) => Number(left.time) - Number(right.time)));
-    if (bodyRef.current) bodyRef.current.dataset.potentialEmaMarkers = String(signalEvents.filter((event) => event.rule === "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1").length);
+    const tentativeMarkers = (showSignals ? signalEvents : []).filter((event) => event.rule === SCALPER_V2_THREE_INSTRUMENT_EMA_RULE).flatMap((event) => {
+      const canonicalTime = chartTime(event.setupTime);
+      const time = canonicalTime == null ? null : endToStart.get(Number(canonicalTime)) ?? Number(canonicalTime);
+      const row = time == null ? null : byTime.get(Number(time));
+      if (time == null || !row) return [];
+      const direction = id === "call" ? "up" as const : id === "put" ? "down" as const : event.direction === "CALL" ? "up" as const : "down" as const;
+      const color = id === "call" ? "#eab308" : id === "put" ? "#2563eb" : event.direction === "CALL" ? "#eab308" : "#2563eb";
+      const label = id === "call" ? "Tentative CE" : id === "put" ? "Tentative PE" : `Tentative ${event.direction}`;
+      return [{ id: `${event.setupTime}-${event.direction}-${id}`, time: Number(time), price: direction === "up" ? row.low : row.high, direction, color, label }];
+    });
+    tentativeMarkerPrimitiveRef.current?.setData(tentativeMarkers);
+    if (bodyRef.current) {
+      bodyRef.current.dataset.potentialEmaMarkers = String(tentativeMarkers.length);
+      bodyRef.current.dataset.potentialEmaMarkerStyle = "hollow-triangle-60pct-transparent-tentative";
+    }
   }, [byTime, comparisonTimes, endToStart, inspectionMode, inspectionTime, showSignals, signalEvents]);
 
   useEffect(() => {

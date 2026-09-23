@@ -6490,3 +6490,16 @@ or outcomes were deleted.
   Evidence: `/home/novius2/NIFTY50/evidence/three-month-home-or-score-20260923/`.
   Rollback image:
   `trading-stack-n50-dashboard:before-three-month-or-score-20260923`.
+
+## 2026-09-23 — Scalper V2 tentative triangle and volume confirmation repair
+
+- The three-instrument EMA reference is explicitly tentative. The old
+  star/circle presentation is replaced by hollow triangles: CE up/yellow, PE
+  down/blue, and underlying direction-aware. They render 60% transparent.
+- Both exact option legs must independently have setup-candle volume at least
+  95% of their progressively warmed Volume EMA20. Missing evidence cannot pass.
+- Volume EMA20 is visible from the first valid candle using a progressive mean,
+  becomes an SMA20 seed at candle 20, and uses the standard EMA recurrence
+  thereafter. Missing volume starts a new evidence run.
+- Calculation and validation detail:
+  `docs/trading-analytics/SCALPER_V2_TENTATIVE_VOLUME_CONFIRMATION_20260923.md`.

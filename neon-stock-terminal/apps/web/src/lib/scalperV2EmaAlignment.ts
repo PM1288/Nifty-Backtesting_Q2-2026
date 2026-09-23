@@ -1,11 +1,14 @@
 import { istDay } from "./tradingAnalyticsChartView";
+import { scalperV2VolumeEma } from "./scalperV2Volume";
 
 type Row = Record<string, unknown>;
 export type ScalperV2EmaPane = { identity: Row; bars: Row[] };
 type EmaSide = "ABOVE" | "BELOW";
 
-export const SCALPER_V2_THREE_INSTRUMENT_EMA_RULE = "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_V1";
+export const SCALPER_V2_THREE_INSTRUMENT_EMA_RULE = "SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_VOLUME_V2";
 export const SCALPER_V2_THREE_INSTRUMENT_EMA_STATE = "POTENTIAL_ENTRY_REFERENCE";
+export const SCALPER_V2_OPTION_VOLUME_EMA_PERIOD = 20;
+export const SCALPER_V2_OPTION_VOLUME_MIN_RATIO = 0.95;
 
 export type ScalperV2EmaAlignmentLeg = {
   instrument: "UNDERLYING" | "CE" | "PE";
@@ -14,6 +17,10 @@ export type ScalperV2EmaAlignmentLeg = {
   crossTime: string;
   sourceSideCloses: number;
   sourceLookback: 5;
+  volume: number | null;
+  volumeEma20: number | null;
+  volumeToEmaRatio: number | null;
+  volumeConfirmed: boolean | null;
 };
 
 export type ScalperV2EmaAlignmentSignal = {
@@ -61,11 +68,28 @@ const consecutive = (bars: Row[]) => bars.every((bar, index) => {
     && istDay(bar.end) === istDay(previous.end);
 });
 
+function volumeEvidenceAt(pane: ScalperV2EmaPane, candidateTime: string) {
+  const day = istDay(candidateTime);
+  const rows = pane.bars
+    .filter((bar) => bar.closed === true && istDay(bar.end) === day && Number.isFinite(Date.parse(String(bar.end))))
+    .sort((left, right) => Date.parse(String(left.end)) - Date.parse(String(right.end)));
+  const emaByTime = new Map(scalperV2VolumeEma(rows.map((bar) => ({
+    time: Date.parse(String(bar.end)),
+    value: numeric(bar.volume),
+  })), SCALPER_V2_OPTION_VOLUME_EMA_PERIOD).map((point) => [point.time, point.value]));
+  const row = rows.find((bar) => String(bar.end) === candidateTime);
+  const volume = numeric(row?.volume);
+  const volumeEma20 = emaByTime.get(Date.parse(candidateTime)) ?? null;
+  const volumeToEmaRatio = volume != null && volumeEma20 != null && volumeEma20 > 0 ? volume / volumeEma20 : null;
+  return { volume, volumeEma20, volumeToEmaRatio, volumeConfirmed: volumeToEmaRatio != null && volumeToEmaRatio >= SCALPER_V2_OPTION_VOLUME_MIN_RATIO };
+}
+
 function legEvidence(
   pane: ScalperV2EmaPane,
   candidateTime: string,
   instrument: ScalperV2EmaAlignmentLeg["instrument"],
   targetSide: EmaSide,
+  requireVolumeConfirmation = false,
 ): ScalperV2EmaAlignmentLeg | null {
   const bars = pane.bars
     .filter((bar) => bar.closed === true && Number.isFinite(Date.parse(String(bar.end))))
@@ -84,6 +108,8 @@ function legEvidence(
     if (!consecutive(required)) continue;
     const sourceSideCloses = bars.slice(lookbackStart, crossIndex).filter((bar) => sideAt(bar) === previousSide).length;
     if (sourceSideCloses < 2) continue;
+    const volumeEvidence = requireVolumeConfirmation ? volumeEvidenceAt(pane, candidateTime) : null;
+    if (requireVolumeConfirmation && !volumeEvidence?.volumeConfirmed) continue;
     return {
       instrument,
       symbol: symbolOf(pane),
@@ -91,6 +117,10 @@ function legEvidence(
       crossTime: String(bars[crossIndex].end),
       sourceSideCloses,
       sourceLookback: 5,
+      volume: volumeEvidence?.volume ?? null,
+      volumeEma20: volumeEvidence?.volumeEma20 ?? null,
+      volumeToEmaRatio: volumeEvidence?.volumeToEmaRatio ?? null,
+      volumeConfirmed: volumeEvidence?.volumeConfirmed ?? null,
     };
   }
   return null;
@@ -122,8 +152,8 @@ export function scalperV2EmaAlignmentSignals(panes: ScalperV2EmaPane[], interval
     for (const configuration of configurations) {
       const legs = [
         legEvidence(underlying, setupTime, "UNDERLYING", configuration.underlying),
-        legEvidence(call, setupTime, "CE", configuration.call),
-        legEvidence(put, setupTime, "PE", configuration.put),
+        legEvidence(call, setupTime, "CE", configuration.call, true),
+        legEvidence(put, setupTime, "PE", configuration.put, true),
       ] as const;
       if (legs.some((leg) => leg == null)) continue;
       const typedLegs = legs as [ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg, ScalperV2EmaAlignmentLeg];
@@ -154,7 +184,11 @@ export function scalperV2EmaAlignmentAvailability(panes: ScalperV2EmaPane[], int
   }));
   const reasons = entries.flatMap(({ instrument, pane }) => {
     const count = validClosedTimes(pane).size;
-    return count >= 6 ? [] : [`${instrument} needs six completed 5m close/EMA observations; ${count} available`];
+    const volumeCount = instrument === "UNDERLYING" ? 6 : (pane?.bars ?? []).filter((bar) => bar.closed === true && numeric(bar.volume) != null).length;
+    return [
+      ...(count >= 6 ? [] : [`${instrument} needs six completed 5m close/EMA observations; ${count} available`]),
+      ...(instrument === "UNDERLYING" || volumeCount >= 6 ? [] : [`${instrument} needs completed 5m volume evidence; ${volumeCount} observations available`]),
+    ];
   });
   if (reasons.length) return { state: "UNAVAILABLE", reasons };
   const sets = entries.map(({ pane }) => validClosedTimes(pane));
@@ -164,18 +198,19 @@ export function scalperV2EmaAlignmentAvailability(panes: ScalperV2EmaPane[], int
 }
 
 export function scalperV2EmaAlignmentSpeech(signal: ScalperV2EmaAlignmentSignal, underlyingSymbol: string) {
-  return `${underlyingSymbol}. Potential ${signal.direction === "CALL" ? "call" : "put"} entry reference. Underlying, call and put E M A alignment confirmed on completed five minute candles.`;
+  return `${underlyingSymbol}. Tentative ${signal.direction === "CALL" ? "call" : "put"} reference. Underlying, call and put E M A alignment and option volume confirmation observed on completed five minute candles.`;
 }
 
 /**
- * The reference is shared by three panes, but the price direction is local to
- * each instrument. In a CALL alignment the put is the inverse leg; in a PUT
- * alignment the put is the only rising leg.
+ * Tentative-reference glyphs use a stable option identity contract: CE is an
+ * upward triangle and PE is a downward triangle. Only the underlying glyph
+ * follows the CALL/PUT setup direction.
  */
 export function scalperV2EmaMarkerDirection(
   pane: "underlying" | "call" | "put",
   direction: ScalperV2EmaAlignmentSignal["direction"],
 ): "up" | "down" {
-  if (pane === "put") return direction === "CALL" ? "down" : "up";
+  if (pane === "call") return "up";
+  if (pane === "put") return "down";
   return direction === "CALL" ? "up" : "down";
 }

@@ -16,6 +16,7 @@ const bar = (index: number, side: "ABOVE" | "BELOW", overrides: Record<string, u
   low: 60,
   close: side === "ABOVE" ? 101 : 99,
   ema9: 100,
+  volume: 100,
   closed: true,
   ...overrides,
 });
@@ -82,6 +83,22 @@ test("the current-or-previous crossover grace period creates one marker, not a r
   ], 5);
   assert.equal(result.length, 1);
   assert.equal(result[0].setupTime, time(5));
+});
+
+test("CE and PE each require at least 95 percent of their progressive volume EMA20", () => {
+  const valid = [
+    pane("NIFTY 50", ["BELOW", "BELOW", "BELOW", "BELOW", "BELOW", "ABOVE"]),
+    pane("XCE", ["BELOW", "BELOW", "BELOW", "BELOW", "BELOW", "ABOVE"]),
+    pane("XPE", ["ABOVE", "ABOVE", "ABOVE", "ABOVE", "ABOVE", "BELOW"]),
+  ];
+  valid[1].bars[5].volume = 94;
+  assert.equal(scalperV2EmaAlignmentSignals(valid, 5).length, 0);
+  valid[1].bars[5].volume = 95;
+  const result = scalperV2EmaAlignmentSignals(valid, 5);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].legs[1].volumeConfirmed, true);
+  assert.ok((result[0].legs[1].volumeToEmaRatio ?? 0) >= 0.95);
+  assert.equal(result[0].legs[2].volumeConfirmed, true);
 });
 
 test("availability separates no signal from missing exact 5m evidence", () => {

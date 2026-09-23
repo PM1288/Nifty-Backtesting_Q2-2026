@@ -17,8 +17,11 @@ export function scalperV2VolumeEmaPeriod(interval: number): 5 | 20 {
 }
 
 /**
- * Standard EMA seeded by the first complete simple average. Missing volume
- * breaks the run, so the chart never joins two separate evidence windows.
+ * Progressive EMA warm-up. Before `period` observations exist the line uses
+ * the mean of every valid observation seen in the current run, so it is visible
+ * from the first candle. At `period` it becomes the normal SMA seed and then
+ * continues as the standard EMA. Missing volume breaks the run, so the chart
+ * never joins two separate evidence windows.
  */
 export function scalperV2VolumeEma(
   observations: ScalperV2VolumeObservation[],
@@ -36,12 +39,18 @@ export function scalperV2VolumeEma(
       previous = null;
       continue;
     }
-    if (previous == null) {
+    if (seed.length < period) {
       seed.push(observation);
-      if (seed.length < period) continue;
       const value = seed.reduce((sum, row) => sum + row.value!, 0) / period;
-      previous = value;
-      output.push({ time: observation.time, value });
+      const progressiveValue = seed.reduce((sum, row) => sum + row.value!, 0) / seed.length;
+      previous = seed.length === period ? value : null;
+      output.push({ time: observation.time, value: seed.length === period ? value : progressiveValue });
+      continue;
+    }
+    if (previous == null) {
+      // Defensive fallback: a valid full seed always sets `previous` above.
+      previous = observation.value;
+      output.push({ time: observation.time, value: observation.value });
       continue;
     }
     const value: number = observation.value * alpha + previous * (1 - alpha);

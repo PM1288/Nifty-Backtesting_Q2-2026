@@ -3,7 +3,7 @@
 Date: 19 September 2026  
 Route: `/strategy/three-month`  
 API: `GET /v1/strategy/three-month?intradayMode=completed|forming`  
-Version: `three_month_recovery_v1`
+Version: `three_month_recovery_v2`
 
 ## Scope
 
@@ -14,7 +14,7 @@ stop, target, position size, volume gate, exit or re-entry rule.
 
 ## Exact formula
 
-All ten bullish gates must pass:
+All twelve bullish gates must pass:
 
 1. current month close/as-of value > current month open;
 2. current month close/as-of value > previous month open;
@@ -26,11 +26,13 @@ All ten bullish gates must pass:
 8. selected current 1-hour close > the immediately previous 1-hour open;
 9. selected current 15-minute close > its open;
 10. selected current 15-minute close > the immediately previous 15-minute open.
+11. selected current 5-minute close > its open;
+12. selected current 5-minute close > the immediately previous 5-minute open.
 
 In addition, at least one of M-1, M-2 or M-3 must have close < open. The three
 historical checks use OR; missing history never becomes a pass or a zero.
 
-`QUALIFIED` means all ten gates plus the historical OR passed. `REJECTED` means
+`QUALIFIED` means all twelve gates plus the historical OR passed. `REJECTED` means
 at least one known gate failed. `INCOMPLETE` means evidence was unavailable or a
 lower stage was intentionally not evaluated.
 
@@ -42,7 +44,7 @@ observation is present through its final minute. The previous candle is the
 immediately adjacent bucket; a gap is not replaced with a nearby candle.
 
 `forming` is an explicit alternate inspection mode. It may use the latest
-incomplete 1-hour and 15-minute buckets. Such gates carry a forming marker and
+incomplete 1-hour, 15-minute and 5-minute buckets. Such gates carry a forming marker and
 can reverse before candle close. The current month, week and day values are
 as-of/current-period values rather than audited final-period closes.
 
@@ -67,9 +69,25 @@ mixing another universe.
 
 The Strategy menu, workspace navigation and command palette expose the route.
 The screen provides a dense row per available member, grouped two-column
-Month/Week/Day/1H/15m gates, three separate weakness cells, search/status
+Month/Week/Day/1H/15m/5m gates, three separate weakness cells, search/status
 filters, exact arithmetic in a side inspector, Stock 360 links and CSV export.
 PASS, FAIL, unavailable and skipped are visually and semantically distinct.
+
+## Five-minute live confirmation — 23 September 2026
+
+The Home `3MONTH REVERSAL SELECTOR` now includes one compact `5m` tick after
+`15m`. That tick summarizes two mandatory comparisons: current 5-minute close
+versus current 5-minute open, and current 5-minute close versus the immediately
+previous 5-minute open. Both must pass for the single Home tick to be green.
+The Bear direction uses the exact inverse `<` comparisons. Completed mode
+requires all five expected one-minute observations; forming mode labels the
+current incomplete candle and does not present it as final evidence.
+
+The live score therefore changes from 11 to 13 conditions: twelve mandatory
+comparisons plus the M−3/M−2/M−1 OR group counted once. The daily-only
+historical PDF/CSV cannot reconstruct 1H, 15m or 5m evidence and remains an
+explicit higher-timeframe research report; no historical result was silently
+reclassified by this live-screen addition.
 
 ## Release validation
 
@@ -80,11 +98,12 @@ PASS, FAIL, unavailable and skipped are visually and semantically distinct.
 - Authenticated browser route, navigation, mode, arithmetic drawer, CSV and
   responsive layout checks after deployment.
 
-All repository checks passed: API typecheck, 252 API tests and build; web
+For the original v1 release, all repository checks passed: API typecheck, 252 API tests and build; web
 typecheck, 217 web tests and build; canonical repository gate. Live session
 2026-09-18 produced 268 available members, 20 intraday-evaluated rows and 6
-completed-candle qualifiers. Every qualified row was browser-checked to contain
-exactly ten PASS gates plus a PASS historical-weakness OR.
+completed-candle qualifiers. Every qualified v1 row was browser-checked to contain
+exactly ten PASS gates plus a PASS historical-weakness OR. The v2 five-minute
+release validation is recorded in the 23 September handoff.
 
 The initial cold read measured about 24 seconds. The final set-based token map,
 index-friendly exact-session query and post-computation per-mode cache measured

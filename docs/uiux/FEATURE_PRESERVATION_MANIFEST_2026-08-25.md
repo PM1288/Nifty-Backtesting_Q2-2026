@@ -1,5 +1,16 @@
 # UI feature preservation manifest — 25 August 2026
 
+2026-09-23 3Month live 5-minute confirmation: the Home Bull/Bear selector and
+the full 3Month evidence table add one compact 5m group backed by two real,
+mandatory session-anchored comparisons: current 5m close versus its open and
+versus the immediately previous 5m open. Both must pass for the Home tick to be
+green; Bear remains the exact inverse. Completed mode requires all five source
+minutes, forming mode is explicitly labelled, missing evidence remains
+unavailable, and M−3/M−2/M−1 still count as one OR condition. The live score is
+now 13 (12 mandatory comparisons plus one OR group). The daily-only historical
+report is not reclassified because it has no historical intraday evidence.
+Evidence: `docs/strategy/THREE_MONTH_STRATEGY_20260919.md`.
+
 2026-09-23 Scalper V2 OI unit display: one persistent command-bar toggle now
 switches all visible strike, selected-pair, structure and cumulative OI/Delta-OI
 values between canonical contracts and underlying-equivalent units calculated

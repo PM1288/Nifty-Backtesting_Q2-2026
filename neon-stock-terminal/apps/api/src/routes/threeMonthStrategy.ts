@@ -11,7 +11,7 @@ export type ThreeMonthGate = {
   operator: ">" | "<";
   right: number | null;
   state: ThreeMonthGateState;
-  timeframe: "MONTH" | "WEEK" | "DAY" | "1H" | "15M" | "HISTORY";
+  timeframe: "MONTH" | "WEEK" | "DAY" | "1H" | "15M" | "5M" | "HISTORY";
   forming: boolean;
 };
 
@@ -39,7 +39,7 @@ type DailyRow = {
 
 type IntradayRow = {
   symbol: string;
-  timeframe: "1H" | "15M";
+  timeframe: "1H" | "15M" | "5M";
   bucket_start: Date | string;
   bucket_index: number | bigint | string;
   open: number | string | null;
@@ -68,7 +68,7 @@ function gate(id: string, label: string, timeframe: ThreeMonthGate["timeframe"],
 
 export function buildThreeMonthEvaluation(
   row: DailyRow,
-  intraday: { hourCurrent?: Candle; hourPrevious?: Candle; fifteenCurrent?: Candle; fifteenPrevious?: Candle } = {},
+  intraday: { hourCurrent?: Candle; hourPrevious?: Candle; fifteenCurrent?: Candle; fifteenPrevious?: Candle; fiveCurrent?: Candle; fivePrevious?: Candle } = {},
   mode: ThreeMonthMode = "completed",
   direction: ThreeMonthDirection = "BULL",
 ) {
@@ -103,6 +103,8 @@ export function buildThreeMonthEvaluation(
     gate(`H0_CLOSE_${suffix}_H1_OPEN`, `Current 1-hour close ${comparison} previous 1-hour open`, "1H", intraday.hourCurrent?.close ?? null, operator, intraday.hourPrevious?.open ?? null, mode === "forming" && intraday.hourCurrent?.complete === false, !shouldInspectIntraday),
     gate(`M15_CLOSE_${suffix}_OPEN`, `Current 15-minute close ${comparison} current 15-minute open`, "15M", intraday.fifteenCurrent?.close ?? null, operator, intraday.fifteenCurrent?.open ?? null, mode === "forming" && intraday.fifteenCurrent?.complete === false, !shouldInspectIntraday),
     gate(`M15_CLOSE_${suffix}_PREVIOUS_OPEN`, `Current 15-minute close ${comparison} previous 15-minute open`, "15M", intraday.fifteenCurrent?.close ?? null, operator, intraday.fifteenPrevious?.open ?? null, mode === "forming" && intraday.fifteenCurrent?.complete === false, !shouldInspectIntraday),
+    gate(`M5_CLOSE_${suffix}_OPEN`, `Current 5-minute close ${comparison} current 5-minute open`, "5M", intraday.fiveCurrent?.close ?? null, operator, intraday.fiveCurrent?.open ?? null, mode === "forming" && intraday.fiveCurrent?.complete === false, !shouldInspectIntraday),
+    gate(`M5_CLOSE_${suffix}_PREVIOUS_OPEN`, `Current 5-minute close ${comparison} previous 5-minute open`, "5M", intraday.fiveCurrent?.close ?? null, operator, intraday.fivePrevious?.open ?? null, mode === "forming" && intraday.fiveCurrent?.complete === false, !shouldInspectIntraday),
   ];
   const gates = [...higher, ...intradayGates];
   const hasFail = gates.some((item) => item.state === "FAIL") || weaknessState === "FAIL";
@@ -227,6 +229,8 @@ WITH session AS (
   SELECT symbol,'1H'::text timeframe,FLOOR(elapsed_minute/60)::int bucket_index,60 duration,ts,open,close,trade_date FROM source WHERE elapsed_minute>=0
   UNION ALL
   SELECT symbol,'15M',FLOOR(elapsed_minute/15)::int,15,ts,open,close,trade_date FROM source WHERE elapsed_minute>=0
+  UNION ALL
+  SELECT symbol,'5M',FLOOR(elapsed_minute/5)::int,5,ts,open,close,trade_date FROM source WHERE elapsed_minute>=0
 )
 SELECT symbol,timeframe,(trade_date+TIME '09:15'+bucket_index*duration*INTERVAL '1 minute') AT TIME ZONE 'Asia/Kolkata' bucket_start,
   bucket_index,(ARRAY_AGG(open ORDER BY ts))[1] open,(ARRAY_AGG(close ORDER BY ts DESC))[1] close,
@@ -246,7 +250,8 @@ export async function getThreeMonthStrategy(prisma: Pick<PrismaClient, "$queryRa
   const rows = daily.map((row) => {
     const hour = candles.get(`${row.symbol}:1H`) ?? {};
     const fifteen = candles.get(`${row.symbol}:15M`) ?? {};
-    const intraday = { hourCurrent: hour.current, hourPrevious: hour.previous, fifteenCurrent: fifteen.current, fifteenPrevious: fifteen.previous };
+    const five = candles.get(`${row.symbol}:5M`) ?? {};
+    const intraday = { hourCurrent: hour.current, hourPrevious: hour.previous, fifteenCurrent: fifteen.current, fifteenPrevious: fifteen.previous, fiveCurrent: five.current, fivePrevious: five.previous };
     const evaluation = buildThreeMonthEvaluation(row, intraday, mode, "BULL");
     const bear = buildThreeMonthEvaluation(row, intraday, mode, "BEAR");
     return {
@@ -255,13 +260,13 @@ export async function getThreeMonthStrategy(prisma: Pick<PrismaClient, "$queryRa
       scoredConditionCount: evaluation.scoredConditionCount, availableConditionCount: evaluation.availableConditionCount, totalConditionCount: evaluation.totalConditionCount,
       gates: evaluation.gates, weaknessMonths: evaluation.weaknessMonths, weaknessState: evaluation.weaknessState,
       bull: evaluation, bear,
-      intraday: { hour: hour.current ?? null, previousHour: hour.previous ?? null, fifteen: fifteen.current ?? null, previousFifteen: fifteen.previous ?? null },
+      intraday: { hour: hour.current ?? null, previousHour: hour.previous ?? null, fifteen: fifteen.current ?? null, previousFifteen: fifteen.previous ?? null, five: five.current ?? null, previousFive: five.previous ?? null },
     };
   }).sort((a, b) => (a.qualification === "QUALIFIED" ? -1 : b.qualification === "QUALIFIED" ? 1 : 0) || b.scoredConditionCount - a.scoredConditionCount || a.symbol.localeCompare(b.symbol));
   return {
-    generatedAt: new Date().toISOString(), strategyVersion: "three_month_recovery_v1", scope: "CURRENT_NIFTY_500", intradayMode: mode,
+    generatedAt: new Date().toISOString(), strategyVersion: "three_month_recovery_v2", scope: "CURRENT_NIFTY_500", intradayMode: mode,
     sessionDate: rows[0]?.sessionDate || null,
-    basis: "Current monthly/weekly/daily close is the latest retained session value. Intraday candles are session-anchored at 09:15 IST; completed mode requires every expected minute.",
+    basis: "Current monthly/weekly/daily close is the latest retained session value. The 1-hour, 15-minute and 5-minute candles are session-anchored at 09:15 IST; completed mode requires every expected minute.",
     counts: { universe: rows.length, expectedUniverse: 500, membershipCoveragePct: Math.round(rows.length / 500 * 10_000) / 100, qualified: rows.filter((row) => row.qualification === "QUALIFIED").length, bullQualified: rows.filter((row) => row.bull.qualification === "QUALIFIED").length, bearQualified: rows.filter((row) => row.bear.qualification === "QUALIFIED").length, rejected: rows.filter((row) => row.qualification === "REJECTED").length, incomplete: rows.filter((row) => row.qualification === "INCOMPLETE").length, intradayEvaluated: eligibleSymbols.length },
     rows,
   };

@@ -21,16 +21,16 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
   const response = await context.request.get(`${base}/v1/strategy/three-month?intradayMode=completed`);
   check(`${target.name} API`, response.ok(), `HTTP ${response.status()}`);
   const payload = await response.json();
-  check(`${target.name} formula payload`, payload.strategyVersion === "three_month_recovery_v1" && payload.rows.length === payload.counts.universe, JSON.stringify(payload.counts));
+  check(`${target.name} formula payload`, payload.strategyVersion === "three_month_recovery_v2" && payload.rows.length === payload.counts.universe, JSON.stringify(payload.counts));
   check(`${target.name} coverage disclosure`, payload.counts.universe > 0 && payload.counts.universe <= payload.counts.expectedUniverse && payload.counts.expectedUniverse === 500, JSON.stringify(payload.counts));
-  check(`${target.name} qualification invariant`, payload.rows.filter((row) => row.qualification === "QUALIFIED").every((row) => row.gates.length === 10 && row.gates.every((gate) => gate.state === "PASS") && row.weaknessState === "PASS"), "qualified row mismatch");
-  check(`${target.name} grouped scoring contract`, payload.rows.every((row) => [row.bull, row.bear].every((result) => result.totalConditionCount === 11 && result.scoredConditionCount === result.passedGateCount + Number(result.weaknessState === "PASS") && result.availableConditionCount === result.availableGateCount + Number(result.weaknessState === "PASS" || result.weaknessState === "FAIL"))), "M-3/M-2/M-1 OR group was not scored exactly once");
+  check(`${target.name} qualification invariant`, payload.rows.filter((row) => row.qualification === "QUALIFIED").every((row) => row.gates.length === 12 && row.gates.filter((gate) => gate.timeframe === "5M").length === 2 && row.gates.every((gate) => gate.state === "PASS") && row.weaknessState === "PASS"), "qualified row mismatch");
+  check(`${target.name} grouped scoring contract`, payload.rows.every((row) => [row.bull, row.bear].every((result) => result.totalConditionCount === 13 && result.scoredConditionCount === result.passedGateCount + Number(result.weaknessState === "PASS") && result.availableConditionCount === result.availableGateCount + Number(result.weaknessState === "PASS" || result.weaknessState === "FAIL"))), "M-3/M-2/M-1 OR group was not scored exactly once");
   await page.goto(`${base}/strategy/three-month`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("three-month-strategy").waitFor({ state: "visible", timeout: 45_000 });
   await page.getByText("Profile coverage").waitFor();
   check(`${target.name} route`, await page.getByRole("heading", { name: "3Month Strategy" }).isVisible(), page.url());
   const headerText = await page.locator("thead").innerText();
-  check(`${target.name} grouped gates`, headerText.includes("15 Minute") && headerText.includes("Previous weakness") && headerText.indexOf("M−3") < headerText.indexOf("M−2") && headerText.indexOf("M−2") < headerText.indexOf("M−1"), headerText);
+  check(`${target.name} grouped gates`, headerText.includes("15 Minute") && headerText.includes("5 Minute") && headerText.includes("Previous weakness") && headerText.indexOf("M−3") < headerText.indexOf("M−2") && headerText.indexOf("M−2") < headerText.indexOf("M−1"), headerText);
   check(`${target.name} completed default`, await page.getByLabel("Completed candles").isChecked(), "forming unexpectedly default");
   const firstRow = page.locator("tbody tr").first();
   check(`${target.name} rows`, await firstRow.isVisible(), `count=${await page.locator("tbody tr").count()}`);
@@ -49,7 +49,7 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
   check(`${target.name} compact symbol rows`, presentation.rowHeight <= 32 && presentation.companyLines === 0, JSON.stringify(presentation));
   check(`${target.name} hover details`, presentation.symbolTitle.length > 0 && presentation.rowTitle.includes("scored conditions"), JSON.stringify(presentation));
   await firstRow.click();
-  check(`${target.name} arithmetic drawer`, await page.getByText("Mandatory M/W/D/1H/15m arithmetic").isVisible(), "drawer missing");
+  check(`${target.name} arithmetic drawer`, await page.getByText("Mandatory M/W/D/1H/15m/5m arithmetic").isVisible(), "drawer missing");
   await page.getByLabel("Close details").click();
   const formingResponse = page.waitForResponse((item) => item.url().includes("/v1/strategy/three-month?intradayMode=forming") && item.status() === 200, { timeout: 45_000 });
   await page.getByLabel("Include forming candle").check();
@@ -69,7 +69,7 @@ for (const target of [{ name: "desktop", width: 1920, height: 1080 }, { name: "m
   const boardText = await homeBoard.innerText();
   check(`${target.name} home OR group`, boardText.includes("M−3 OR M−2 OR M−1") && boardText.includes("1 pt"), boardText.slice(0, 500));
   check(`${target.name} home bull bear`, boardText.includes("3MONTH BULL") && boardText.includes("3MONTH BEAR"), boardText.slice(0, 500));
-  check(`${target.name} home /11 score`, /\b\d+\/11\b/.test(boardText), boardText.slice(0, 500));
+  check(`${target.name} home 5m pair`, boardText.includes("5m") && /\b\d+\/13\b/.test(boardText), boardText.slice(0, 500));
   await homeBoard.screenshot({ path: path.join(output, `${target.name}-home-three-month-selector.png`) });
   await context.close();
 }

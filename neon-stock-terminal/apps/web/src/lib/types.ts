@@ -2865,7 +2865,7 @@ export type ThreeMonthGate = {
   operator: ">" | "<";
   right: number | null;
   state: ThreeMonthGateState;
-  timeframe: "MONTH" | "WEEK" | "DAY" | "1H" | "15M" | "HISTORY";
+  timeframe: "MONTH" | "WEEK" | "DAY" | "1H" | "15M" | "5M" | "HISTORY";
   forming: boolean;
 };
 export type ThreeMonthEvaluation = {

@@ -15,9 +15,9 @@ Bull requires all six higher-timeframe comparisons:
 6. current day close/current price > current day open.
 
 It additionally requires any one of M-1, M-2 or M-3 close < its own open.
-After that preselection, both current 1H comparisons and both current 15m
-comparisons are mandatory. Completed mode uses only complete, gap-free candles;
-forming mode is explicitly labelled.
+After that preselection, both current 1H comparisons, both current 15m
+comparisons and both current 5m comparisons are mandatory. Completed mode uses
+only complete, gap-free candles; forming mode is explicitly labelled.
 
 Bear is the exact inverse: every mandatory comparison uses `<`, while the
 three-month OR group passes when any M-1/M-2/M-3 close is greater than its own
@@ -30,11 +30,11 @@ The existing bullish top-level API fields remain backward compatible. Additive
 ## UI
 
 - Home exposes a dense Bull/Bear board with Month, Week, Day, grouped
-  M-3/M-2/M-1 OR ticks, 1H and 15m evidence. The historical OR group is one
-  scored condition, so the live screen score is out of 11: ten mandatory
+  M-3/M-2/M-1 OR ticks, 1H, 15m and live 5m evidence. The historical OR group is one
+  scored condition, so the live screen score is out of 13: twelve mandatory
   comparisons plus one historical reversal group. Passing two or three prior
   months never awards more than one point.
-- Clicking a symbol opens exact arithmetic; qualification requires all ten
+- Clicking a symbol opens exact arithmetic; qualification requires all twelve
   mandatory gates plus the grouped OR condition.
 - The 3Month page has a Bull/Bear selector and downloads the selected
   direction's exact evidence.
@@ -60,7 +60,7 @@ Source coverage used in this run:
 - 15,042 fresh false-to-true qualification transitions.
 
 The daily report evaluates the six higher-timeframe gates and the three-month
-OR group. It does not claim historical 1H/15m confirmation because the retained
+OR group. It does not claim historical 1H/15m/5m confirmation because the retained
 minute store does not span the requested year.
 
 The user-requested entry at the signal day's open is included as a

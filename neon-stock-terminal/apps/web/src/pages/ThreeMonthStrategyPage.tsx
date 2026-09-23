@@ -7,8 +7,8 @@ import { useThreeMonthStrategy } from "../lib/hooks";
 import type { ThreeMonthDirection, ThreeMonthEvaluation, ThreeMonthGate, ThreeMonthGateState, ThreeMonthIntradayMode, ThreeMonthReportDirectionSummary, ThreeMonthReportTrade, ThreeMonthStrategyRow } from "../lib/types";
 import styles from "./ThreeMonthStrategyPage.module.css";
 
-const GATE_GROUPS = ["Monthly", "Weekly", "Daily", "1 Hour", "15 Minute"] as const;
-const SHORT_LABELS = ["C {op} O", "C {op} previous O", "C {op} O", "C {op} previous O", "C {op} previous-day O", "C {op} O", "C {op} O", "C {op} previous O", "C {op} O", "C {op} previous O"];
+const GATE_GROUPS = ["Monthly", "Weekly", "Daily", "1 Hour", "15 Minute", "5 Minute"] as const;
+const SHORT_LABELS = ["C {op} O", "C {op} previous O", "C {op} O", "C {op} previous O", "C {op} previous-day O", "C {op} O", "C {op} O", "C {op} previous O", "C {op} O", "C {op} previous O", "C {op} O", "C {op} previous O"];
 
 function evaluation(row: ThreeMonthStrategyRow, direction: ThreeMonthDirection): ThreeMonthEvaluation {
   if (direction === "BULL" && row.bull) return row.bull;
@@ -123,7 +123,7 @@ export function ThreeMonthStrategyPage() {
       <fieldset><legend>Intraday candle policy</legend><label><input type="radio" checked={mode === "completed"} onChange={() => setMode("completed")} /> Completed candles</label><label><input type="radio" checked={mode === "forming"} onChange={() => setMode("forming")} /> Include forming candle</label></fieldset>
       <label>Find stock<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Symbol, company or sector" /></label>
       <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="ALL">All</option><option value="QUALIFIED">Qualified</option><option value="REJECTED">Rejected</option><option value="INCOMPLETE">Incomplete</option></select></label>
-      <p>{mode === "completed" ? "Intraday gates use only complete, gap-free session candles." : "Current 1H and 15m candles may reverse before close and are marked forming."}</p>
+      <p>{mode === "completed" ? "Intraday gates use only complete, gap-free session candles." : "Current 1H, 15m and 5m candles may reverse before close and are marked forming."}</p>
     </section>
 
     <section className={styles.tableCard}>
@@ -159,6 +159,6 @@ export function ThreeMonthStrategyPage() {
       </section> : null}
     </section>
 
-    {selectedRow && selectedResult ? <aside className={styles.drawer} aria-label={`${selectedRow.symbol} ${direction} strategy arithmetic`}><button className={styles.close} onClick={() => setSelected(null)} aria-label="Close details">×</button><h2>{selectedRow.symbol} · {direction}</h2><p>{selectedRow.companyName} · {selectedRow.sector || "Sector unavailable"}</p><div className={styles.drawerSummary}><strong>{selectedResult.qualification}</strong><span>{selectedResult.scoredConditionCount}/{selectedResult.totalConditionCount} scored conditions</span></div><h3>Historical {direction === "BULL" ? "weakness" : "strength"} · M−3 OR M−2 OR M−1 · one point</h3><ul>{historyNewestLast(selectedResult).map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}</span></li>)}</ul><h3>Mandatory M/W/D/1H/15m arithmetic</h3><ol>{selectedResult.gates.map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}{gate.forming ? " · forming" : ""}</span></li>)}</ol><p className={styles.disclosure}>This is a screening result, not an entry, exit, stop, target or position-size recommendation.</p></aside> : null}
+    {selectedRow && selectedResult ? <aside className={styles.drawer} aria-label={`${selectedRow.symbol} ${direction} strategy arithmetic`}><button className={styles.close} onClick={() => setSelected(null)} aria-label="Close details">×</button><h2>{selectedRow.symbol} · {direction}</h2><p>{selectedRow.companyName} · {selectedRow.sector || "Sector unavailable"}</p><div className={styles.drawerSummary}><strong>{selectedResult.qualification}</strong><span>{selectedResult.scoredConditionCount}/{selectedResult.totalConditionCount} scored conditions</span></div><h3>Historical {direction === "BULL" ? "weakness" : "strength"} · M−3 OR M−2 OR M−1 · one point</h3><ul>{historyNewestLast(selectedResult).map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}</span></li>)}</ul><h3>Mandatory M/W/D/1H/15m/5m arithmetic</h3><ol>{selectedResult.gates.map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}{gate.forming ? " · forming" : ""}</span></li>)}</ol><p className={styles.disclosure}>This is a screening result, not an entry, exit, stop, target or position-size recommendation.</p></aside> : null}
   </main>;
 }

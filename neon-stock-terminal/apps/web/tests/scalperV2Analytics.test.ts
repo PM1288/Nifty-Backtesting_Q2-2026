@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scalperV2AdaptiveDeltaDomain, scalperV2CompactSideOption, scalperV2HorizontalDeltaOiOption, scalperV2PutMinusCall, scalperV2VerticalIvChangeOption, scalperV2VerticalStrikeOption } from "../src/lib/scalperV2Analytics";
+import { scalperV2AdaptiveDeltaDomain, scalperV2CompactNoYAxisOption, scalperV2CompactSideOption, scalperV2HorizontalDeltaOiOption, scalperV2PutMinusCall, scalperV2VerticalIvChangeOption, scalperV2VerticalStrikeOption } from "../src/lib/scalperV2Analytics";
 
 test("Scalper V2 strike comparison preserves put minus call meaning and missingness", () => {
   assert.deepEqual(scalperV2PutMinusCall([100, 200, null, 50], [140, 80, 30, null]), [40, -120, null, null]);
@@ -41,6 +41,19 @@ test("Scalper V2 compact side charts retain bounded hover evidence without chang
   const compactAxes = compact.yAxis as Array<{ type: string; name: string; axisLabel: { show: boolean } }>;
   assert.ok(compactAxes.every((axis) => axis.type !== "value" || (axis.name === "" && axis.axisLabel.show === false)));
   assert.equal((expanded.yAxis as Array<{ name: string }>)[0].name, "OI");
+});
+
+test("Scalper V2 compact cumulative panes remove both Y-axis gutters", () => {
+  const source = {
+    grid: { left: 0, right: 72, top: 20, bottom: 28, containLabel: false },
+    yAxis: [{ type: "value", name: "Difference" }, { type: "value", name: "Context" }],
+    series: [{ type: "line", yAxisIndex: 0, data: [[1, 4]] }, { type: "line", yAxisIndex: 1, data: [[1, 2]] }],
+  };
+  const compact = scalperV2CompactNoYAxisOption(source);
+  assert.deepEqual(compact.grid, { left: 2, right: 2, top: 20, bottom: 28, containLabel: false });
+  const axes = compact.yAxis as Array<{ name: string; axisLine: { show: boolean }; axisLabel: { show: boolean } }>;
+  assert.deepEqual(axes.map((axis) => [axis.name, axis.axisLine.show, axis.axisLabel.show]), [["", false, false], ["", false, false]]);
+  assert.deepEqual(compact.series, source.series);
 });
 
 test("Scalper V2 compact ΔOI chart keeps signed bars and PE minus CE line", () => {

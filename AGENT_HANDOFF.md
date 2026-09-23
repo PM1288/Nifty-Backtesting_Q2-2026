@@ -6714,3 +6714,13 @@ or outcomes were deleted.
   `trading-stack-n50-dashboard:scalper-v2-axis-space-refresh-20260923-346eac2`
   (`sha256:c13931efb1893b30fcd77ddeeba07597899b792204fb2be734be63611d90df26`)
   is healthy with zero restarts and serves `/n50/assets/index-C99uRvnV.js`.
+
+# 2026-09-23 — Scalper V2 cumulative-difference compact axes
+
+- The two bottom compact cumulative-difference panes (`Cum PE OI − CE OI` and
+  `Cum PE ΔOI − CE ΔOI`) now hide both Y-axis names, labels, ticks and axis
+  lines. Their compact grid uses a 2px left/right inset, retaining all plotted
+  series, zero/day-open guides, linked time cursor, tooltip values and expanded
+  chart view while recovering their duplicated scale gutters.
+- Web 282/282 tests, web build, API typecheck/build and 272/272 API tests,
+  canonical repository gate and diff check passed before deployment.

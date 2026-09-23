@@ -55,6 +55,26 @@ export function scalperV2CompactTooltipOption(option: EChartsOption): EChartsOpt
   return { ...option, tooltip: compactTooltip(option.tooltip) };
 }
 
+/** The paired cumulative-difference panes identify their metric in the panel
+ * header and expose exact values through the linked cursor. Hide both Y scales
+ * so duplicated gutters do not consume their compact plotting width. */
+export function scalperV2CompactNoYAxisOption(option: EChartsOption): EChartsOption {
+  const compact = scalperV2CompactTooltipOption(option);
+  const axes = Array.isArray(compact.yAxis) ? compact.yAxis : compact.yAxis ? [compact.yAxis] : [];
+  const grid = compact.grid && !Array.isArray(compact.grid) && typeof compact.grid === "object" ? compact.grid : {};
+  return {
+    ...compact,
+    grid: { ...grid, left: 2, right: 2, containLabel: false },
+    yAxis: axes.map((axis) => axis && typeof axis === "object" ? {
+      ...axis,
+      name: "",
+      axisLine: { ...(("axisLine" in axis && axis.axisLine && typeof axis.axisLine === "object") ? axis.axisLine : {}), show: false },
+      axisTick: { ...(("axisTick" in axis && axis.axisTick && typeof axis.axisTick === "object") ? axis.axisTick : {}), show: false },
+      axisLabel: { ...(("axisLabel" in axis && axis.axisLabel && typeof axis.axisLabel === "object") ? axis.axisLabel : {}), show: false },
+    } : axis) as EChartsOption["yAxis"],
+  };
+}
+
 /** Full-screen charts keep the exact data/formatters while increasing only
  * presentation sizes. The source option is never mutated. */
 export function scalperV2ExpandedOption(option: EChartsOption): EChartsOption {

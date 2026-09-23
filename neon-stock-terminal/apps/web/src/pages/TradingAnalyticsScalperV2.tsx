@@ -12,7 +12,7 @@ import { dayRows, istDay } from "../lib/tradingAnalyticsChartView";
 import { measurePanes, scalperIndicators } from "../lib/scalperMeasurement";
 import { SCALPER_ENTRY_RULE, scalperPairedBody70Signals } from "../lib/scalperSignals";
 import { formatOiAxisValue, maxPainDistribution, oiPcr, rankCurrentOi } from "../lib/scalperV2";
-import { scalperV2CompactSideOption, scalperV2CompactTooltipOption, scalperV2ExpandedOption, scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
+import { scalperV2CompactNoYAxisOption, scalperV2CompactSideOption, scalperV2CompactTooltipOption, scalperV2ExpandedOption, scalperV2VerticalStrikeOption } from "../lib/scalperV2Analytics";
 import { SCALPER_DIRECTIONAL_OI_ENTRY_RULE, scalperV2DirectionalOiEntries } from "../lib/scalperV2DirectionalEntry";
 import {
   SCALPER_V2_THREE_INSTRUMENT_EMA_RULE,
@@ -773,8 +773,8 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     const maximum = Math.max(10, ...positioningModel.cells.map((cell) => Math.abs(cell.pressure ?? 0)));
     return { ...compactOption, visualMap: { ...(compactOption.visualMap as Record<string, unknown> ?? {}), min: -maximum, max: maximum } };
   }, [dockTooltip, isV3, positioningHeatmapOption, positioningModel.cells, v3HeatmapFixed]);
-  const compactOiDifferenceOption = useMemo(() => scalperV2CompactTooltipOption(cumulativeOiDifferenceOnlyOption), [cumulativeOiDifferenceOnlyOption]);
-  const compactChangeOiDifferenceOption = useMemo(() => scalperV2CompactTooltipOption(cumulativeChangeDifferenceOnlyOption), [cumulativeChangeDifferenceOnlyOption]);
+  const compactOiDifferenceOption = useMemo(() => scalperV2CompactNoYAxisOption(cumulativeOiDifferenceOnlyOption), [cumulativeOiDifferenceOnlyOption]);
+  const compactChangeOiDifferenceOption = useMemo(() => scalperV2CompactNoYAxisOption(cumulativeChangeDifferenceOnlyOption), [cumulativeChangeDifferenceOnlyOption]);
   const compactRangeOption = useMemo(() => scalperV2CompactTooltipOption(compactRangePriceOption), [compactRangePriceOption]);
   const expandedCharts = useMemo<Record<ExpandableChartId, { title: string; option: EChartsOption }>>(() => ({
     oi: { title: `OI by strike · ${oiDisplayLabel}`, option: analyticOptions[0] },

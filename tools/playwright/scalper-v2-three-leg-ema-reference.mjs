@@ -60,6 +60,7 @@ try {
   check("Same three-instrument references render on all three panes", markerCounts.every((value) => value === (count ?? 0)), JSON.stringify({ count, markerCounts }));
   const markerStyles = await Promise.all(["underlying", "call", "put"].map((id) => page.getByTestId(`v2-chart-body-${id}`).evaluate((element) => element.dataset.potentialEmaMarkerStyle)));
   check("Potential references use the hollow tentative marker contract", markerStyles.every((value) => value === "hollow-triangle-60pct-transparent-tentative"), JSON.stringify(markerStyles));
+  await page.screenshot({ path: path.join(output, "scalper-v2-tentative-markers.png") });
   await page.getByRole("tab", { name: "Strategy", exact: true }).click();
   const rulesText = await page.getByTestId("v2-potential-ema-count").innerText();
   check("Strategy inspector labels evidence truthfully and as tentative", (state === "READY" ? rulesText.includes(`Tentative references ${count}`) : rulesText.includes("needs six completed 5m")) && rulesText.includes("not actual or executed trades") && rulesText.includes("60% transparent"), rulesText);

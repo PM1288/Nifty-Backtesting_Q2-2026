@@ -66,3 +66,18 @@ is reported.
 - Typecheck/build and the repository preservation gate must pass.
 - Authenticated browser acceptance must confirm the three-pane marker counts,
   marker-style contract and truthful Strategy wording on the deployed page.
+
+## Completion evidence
+
+- Web tests: 275 passed, 0 failed.
+- API tests: 265 passed, 0 failed.
+- Web/API typecheck and production build: passed.
+- Canonical repository and diff checks: passed.
+- Authenticated production Chromium: 8/8 passed. The retained exact pair was
+  `READY` with three qualified tentative references, and all three panes
+  reported the same marker count and style contract. No browser page errors
+  occurred.
+- Production image:
+  `sha256:f36624d2f9169ccba579491e0c00760327ff1ddf12ee4f617eff395be7dfd814`.
+- Evidence folder:
+  `/home/novius2/NIFTY50/evidence/scalper-v2-tentative-volume-20260923/`.

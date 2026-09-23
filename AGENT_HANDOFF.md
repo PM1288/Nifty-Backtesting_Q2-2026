@@ -6503,3 +6503,14 @@ or outcomes were deleted.
   thereafter. Missing volume starts a new evidence run.
 - Calculation and validation detail:
   `docs/trading-analytics/SCALPER_V2_TENTATIVE_VOLUME_CONFIRMATION_20260923.md`.
+- Web 275/275 and API 265/265 tests passed; both typechecks/builds, the
+  canonical gate and diff check passed. Authenticated production Chromium
+  passed 8/8 checks with `READY`, three references on every pane, exact marker
+  style metadata, truthful Strategy text and no page errors.
+- Released application commit `05d7d64` on pushed canonical `master`. Only
+  `n50-dashboard` was recreated; it is healthy with zero restarts on image
+  `sha256:f36624d2f9169ccba579491e0c00760327ff1ddf12ee4f617eff395be7dfd814`.
+  Evidence:
+  `/home/novius2/NIFTY50/evidence/scalper-v2-tentative-volume-20260923/`.
+  Rollback image:
+  `trading-stack-n50-dashboard:before-scalper-v2-tentative-volume-20260923`.

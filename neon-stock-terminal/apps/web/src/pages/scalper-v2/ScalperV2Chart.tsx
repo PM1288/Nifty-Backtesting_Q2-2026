@@ -168,7 +168,7 @@ export function ScalperV2Chart({
     candleDataRef.current = []; emaDataRef.current = []; volumeDataRef.current = []; volumeEmaDataRef.current = [];
     const instance = createChart(host, {
       autoSize: false, width: Math.max(1, host.clientWidth), height: Math.max(1, host.clientHeight),
-      layout: { background: { type: ColorType.Solid, color: "#ffffff" }, textColor: "#526175", fontSize: 12 },
+      layout: { background: { type: ColorType.Solid, color: "#ffffff" }, textColor: "#526175", fontSize: 10 },
       localization: { locale: "en-IN", timeFormatter: istChartTimeLabel },
       grid: {
         vertLines: { color: "#e3e9f1", style: LineStyle.Dotted },

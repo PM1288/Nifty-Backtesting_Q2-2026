@@ -1158,7 +1158,7 @@
 .page .alignedLadderScroll button { min-height: 30px; padding: 2px 3px; border: 0; background: transparent; color: inherit; font: inherit; }
 .page .alignedLadderScroll tr[aria-selected="true"] { outline: 1px solid #315ad7; outline-offset: -1px; background: #eaf0ff; }
 .alignedMuted { color: #64748b !important; font-weight: 400 !important; }
-.page[data-view="scalper"] { gap: 3px; padding: 4px 6px; }
+.page[data-view="scalper"] { gap: 0; padding: 0; }
 .page[data-view="scalper"] {
   /* The application shell leaves 22px of outer main/gutter geometry in
      addition to the 56px command header. Account for it so this workstation

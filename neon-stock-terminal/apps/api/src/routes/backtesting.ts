@@ -17,6 +17,131 @@ import {
 } from "../lib/backtestingRegistry";
 import { scoreTradeQuality, TRADE_QUALITY_POLICY } from "../lib/tradeQuality";
 
+type ThreeMonthEvidenceTrade = {
+  symbol: string;
+  direction: "BULL" | "BEAR";
+  signalDate: string;
+  signalOpen: number | null;
+  signalClose: number | null;
+  mandatoryGates: string[];
+  historyPass: string[];
+  references: Record<string, number | null>;
+  causalEntryDate: string | null;
+  causalEntryOpen: number | null;
+  causalReturn1: number | null;
+  causalReturn5: number | null;
+  causalReturn15: number | null;
+  causalDrawdown15: number | null;
+};
+
+type ThreeMonthDirectionSummary = {
+  direction: "BULL" | "BEAR";
+  count: number;
+  average1: number | null;
+  average5: number | null;
+  average15: number | null;
+  maximum15: number | null;
+  minimum15: number | null;
+  drawdown15: number | null;
+};
+
+type ThreeMonthEvidenceCache = {
+  reportId: string;
+  tradesBySymbol: Map<string, ThreeMonthEvidenceTrade[]>;
+  stocks: Array<{ symbol: string; totalSignals: number; bull: ThreeMonthDirectionSummary; bear: ThreeMonthDirectionSummary }>;
+};
+
+let threeMonthEvidenceCache: Promise<ThreeMonthEvidenceCache> | null = null;
+let threeMonthEvidenceCacheId: string | null = null;
+
+function parseCsvLine(line: string) {
+  const values: string[] = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"') {
+      if (quoted && line[index + 1] === '"') { value += '"'; index += 1; }
+      else quoted = !quoted;
+    } else if (character === "," && !quoted) { values.push(value); value = ""; }
+    else value += character;
+  }
+  values.push(value);
+  return values;
+}
+
+const reportNumber = (value: string | undefined) => {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+function directionSummary(trades: ThreeMonthEvidenceTrade[], direction: "BULL" | "BEAR"): ThreeMonthDirectionSummary {
+  const selected = trades.filter((trade) => trade.direction === direction);
+  const values = (key: "causalReturn1" | "causalReturn5" | "causalReturn15" | "causalDrawdown15") => selected.map((trade) => trade[key]).filter((value): value is number => value != null);
+  const mean = (items: number[]) => items.length ? items.reduce((sum, item) => sum + item, 0) / items.length : null;
+  const one = values("causalReturn1");
+  const five = values("causalReturn5");
+  const fifteen = values("causalReturn15");
+  const drawdown = values("causalDrawdown15");
+  return {
+    direction,
+    count: selected.length,
+    average1: mean(one),
+    average5: mean(five),
+    average15: mean(fifteen),
+    maximum15: fifteen.length ? Math.max(...fifteen) : null,
+    minimum15: fifteen.length ? Math.min(...fifteen) : null,
+    drawdown15: drawdown.length ? Math.min(...drawdown) : null,
+  };
+}
+
+async function loadThreeMonthEvidence(report: { id: string; directory: string }): Promise<ThreeMonthEvidenceCache> {
+  if (threeMonthEvidenceCache && threeMonthEvidenceCacheId === report.id) return threeMonthEvidenceCache;
+  threeMonthEvidenceCacheId = report.id;
+  threeMonthEvidenceCache = (async () => {
+    const content = await fs.readFile(path.join(report.directory, "three_month_trades.csv"), "utf8");
+    const lines = content.split(/\r?\n/).filter(Boolean);
+    const headers = parseCsvLine(lines.shift() ?? "");
+    const tradesBySymbol = new Map<string, ThreeMonthEvidenceTrade[]>();
+    for (const line of lines) {
+      const values = parseCsvLine(line);
+      const row = Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
+      const direction = row.direction === "BEAR" ? "BEAR" : "BULL";
+      const references = Object.fromEntries(headers.filter((header) => header.startsWith("references.")).map((header) => [header.slice("references.".length), reportNumber(row[header])]));
+      const trade: ThreeMonthEvidenceTrade = {
+        symbol: row.symbol,
+        direction,
+        signalDate: row.signalDate,
+        signalOpen: reportNumber(row.signalOpen),
+        signalClose: reportNumber(row.signalClose),
+        mandatoryGates: row.mandatoryGates ? row.mandatoryGates.split("|") : [],
+        historyPass: row.historyPass ? row.historyPass.split("|") : [],
+        references,
+        causalEntryDate: row.causalEntryDate || null,
+        causalEntryOpen: reportNumber(row.causalEntryOpen),
+        causalReturn1: reportNumber(row["causal.return1"]),
+        causalReturn5: reportNumber(row["causal.return5"]),
+        causalReturn15: reportNumber(row["causal.return15"]),
+        causalDrawdown15: reportNumber(row["causal.drawdown15"]),
+      };
+      const stockTrades = tradesBySymbol.get(trade.symbol) ?? [];
+      stockTrades.push(trade);
+      tradesBySymbol.set(trade.symbol, stockTrades);
+    }
+    const stocks = [...tradesBySymbol.entries()].map(([symbol, trades]) => ({
+      symbol,
+      totalSignals: trades.length,
+      bull: directionSummary(trades, "BULL"),
+      bear: directionSummary(trades, "BEAR"),
+    })).sort((left, right) => right.totalSignals - left.totalSignals || left.symbol.localeCompare(right.symbol));
+    return { reportId: report.id, tradesBySymbol, stocks };
+  })().catch((error) => { threeMonthEvidenceCache = null; threeMonthEvidenceCacheId = null; throw error; });
+  return threeMonthEvidenceCache;
+}
+
+export const threeMonthEvidenceTestExports = { parseCsvLine, directionSummary };
+
 type ScenarioSeed = {
   key: string;
   universeMode: "single_stock" | "nifty_100";
@@ -755,6 +880,23 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
     }));
     res.setHeader("Cache-Control", "private, max-age=60");
     return res.json({ id: report.id, summary, files });
+  });
+
+  app.get("/v1/backtesting/reports/three-month/evidence", async (req, res, next) => {
+    try {
+      const report = await latestThreeMonthReport();
+      if (!report) return res.status(404).json({ code: "THREE_MONTH_REPORT_NOT_FOUND", message: "No generated 3Month report is mounted." });
+      const evidence = await loadThreeMonthEvidence(report);
+      const reportSummary = JSON.parse(await fs.readFile(path.join(report.directory, "summary.json"), "utf8")) as Record<string, unknown>;
+      const rawSymbol = typeof req.query.symbol === "string" ? req.query.symbol.trim().toUpperCase() : "";
+      res.setHeader("Cache-Control", "private, max-age=60");
+      if (!rawSymbol) return res.json({ reportId: report.id, report: reportSummary, stocks: evidence.stocks });
+      if (!/^[A-Z0-9&._-]{1,32}$/.test(rawSymbol)) return res.status(400).json({ code: "INVALID_SYMBOL", message: "Invalid stock symbol." });
+      const trades = evidence.tradesBySymbol.get(rawSymbol);
+      if (!trades) return res.status(404).json({ code: "THREE_MONTH_STOCK_NOT_FOUND", message: `No 3Month report evidence for ${rawSymbol}.` });
+      const stock = evidence.stocks.find((item) => item.symbol === rawSymbol)!;
+      return res.json({ reportId: report.id, stock, trades });
+    } catch (error) { return next(error); }
   });
 
   app.get("/v1/backtesting/reports/three-month/files/:name", async (req, res) => {

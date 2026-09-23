@@ -978,3 +978,17 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
 - Marker shapes/colours, volume confirmation, speech, established signals,
   exports and order restrictions remain unchanged.
 - Evidence: `docs/trading-analytics/SCALPER_V2_TENTATIVE_PANE_ROUTING_20260923.md`.
+
+## 2026-09-23 3Month stock-wise page evidence
+
+- `/strategy/three-month` retains the current-session Bull/Bear screener,
+  completed/forming policy, exact live arithmetic, Stock 360 links and CSV.
+- An additive historical section presents the already-generated report's
+  overall results, all 500 stock summaries and on-demand per-stock trade rows.
+- Selected-stock evidence retains causal and look-ahead entry labels, all six
+  Month/Week/Day equations, M−1/M−2/M−3 open-close values and the ANY-1 OR
+  state. Missing outcomes remain unavailable.
+- The UI consumes the mounted report CSV through a cached read-only endpoint;
+  strategy calculations, report files, live screening and order permissions
+  are unchanged.
+- Evidence: `docs/THREE_MONTH_BULL_BEAR_BACKTEST_20260922.md`.

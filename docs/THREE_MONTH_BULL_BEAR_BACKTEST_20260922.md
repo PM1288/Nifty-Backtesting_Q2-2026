@@ -161,6 +161,26 @@ The generated PDF is 73,077,959 bytes and the CSV is 8,113,744 bytes. The
 stock-table visual sample is:
 `/home/novius2/NIFTY50/evidence/three-month-report-period-evidence-20260923/page-003-stock-trades.png`.
 
+## 3Month Strategy page
+
+The same historical evidence is available directly on `/strategy/three-month`
+below the independent live screener:
+
+- the four-row overall Bull/Bear, look-ahead/causal summary remains visible;
+- a scrollable stock-wise matrix shows Bull and Bear counts, average 1D/5D/15D,
+  maximum/minimum 15D and worst 15D drawdown for all 500 stocks;
+- selecting a stock fetches only that stock's historical rows and exposes the
+  signal date, signal-day look-ahead open, next-day causal entry and causal
+  outcomes;
+- every selected-stock row shows exact Month/Week/Day equations, M−1/M−2/M−3
+  open-close values, their individual pass states and the ANY-1 OR result.
+
+The read-only endpoint
+`/v1/backtesting/reports/three-month/evidence` caches the mounted CSV after its
+first parse. The summary response does not send all 15,042 trade rows to the
+browser; `?symbol=...` returns details on demand. This is presentation of the
+existing report calculation, not a second strategy implementation.
+
 ## Rerun
 
 ```bash

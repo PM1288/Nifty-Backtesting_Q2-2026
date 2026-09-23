@@ -2910,6 +2910,42 @@ export type ThreeMonthStrategyResponse = {
   rows: ThreeMonthStrategyRow[];
 };
 
+export type ThreeMonthReportDirectionSummary = {
+  direction: ThreeMonthDirection;
+  count: number;
+  average1: number | null;
+  average5: number | null;
+  average15: number | null;
+  maximum15: number | null;
+  minimum15: number | null;
+  drawdown15: number | null;
+};
+export type ThreeMonthReportStockSummary = {
+  symbol: string;
+  totalSignals: number;
+  bull: ThreeMonthReportDirectionSummary;
+  bear: ThreeMonthReportDirectionSummary;
+};
+export type ThreeMonthReportTrade = {
+  symbol: string;
+  direction: ThreeMonthDirection;
+  signalDate: string;
+  signalOpen: number | null;
+  signalClose: number | null;
+  mandatoryGates: string[];
+  historyPass: string[];
+  references: Record<string, number | null>;
+  causalEntryDate: string | null;
+  causalEntryOpen: number | null;
+  causalReturn1: number | null;
+  causalReturn5: number | null;
+  causalReturn15: number | null;
+  causalDrawdown15: number | null;
+};
+export type ThreeMonthReportEvidenceResponse =
+  | { reportId: string; report: { evaluationStart?: string; dataEnd?: string; symbols?: number; signals?: number; summary?: Array<ThreeMonthReportDirectionSummary & { basis: "requested" | "causal" }> }; stocks: ThreeMonthReportStockSummary[] }
+  | { reportId: string; stock: ThreeMonthReportStockSummary; trades: ThreeMonthReportTrade[] };
+
 export function directionFromChangePct(changePct: number): Direction {
   if (changePct > 0) return "up";
   if (changePct < 0) return "down";

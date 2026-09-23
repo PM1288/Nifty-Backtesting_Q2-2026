@@ -10,7 +10,7 @@ const daily = {
   today_open: 116, today_close: 120, previous_day_open: 115,
 };
 
-test("3Month strategy requires all ten bullish gates and any one bearish prior month", () => {
+test("3Month strategy scores ten bullish gates plus one prior-month OR group", () => {
   const result = buildThreeMonthEvaluation(daily, {
     hourCurrent: { open: 118, close: 121, startedAt: null, complete: true, index: 4 },
     hourPrevious: { open: 117, close: 118, startedAt: null, complete: true, index: 3 },
@@ -19,6 +19,9 @@ test("3Month strategy requires all ten bullish gates and any one bearish prior m
   });
   assert.equal(result.qualification, "QUALIFIED");
   assert.equal(result.passedGateCount, 10);
+  assert.equal(result.scoredConditionCount, 11);
+  assert.equal(result.availableConditionCount, 11);
+  assert.equal(result.totalConditionCount, 11);
   assert.equal(result.weaknessState, "PASS");
   assert.equal(result.weaknessMonths.filter((item) => item.state === "PASS").length, 1);
 });
@@ -26,11 +29,30 @@ test("3Month strategy requires all ten bullish gates and any one bearish prior m
 test("all three bullish historical months reject while missing evidence remains incomplete", () => {
   const allGreen = buildThreeMonthEvaluation({ ...daily, previous_month_close: 111 });
   assert.equal(allGreen.weaknessState, "FAIL");
+  assert.equal(allGreen.scoredConditionCount, 6);
+  assert.equal(allGreen.availableConditionCount, 7);
   assert.equal(allGreen.qualification, "REJECTED");
   assert.ok(allGreen.gates.slice(6).every((item) => item.state === "SKIPPED"));
   const missing = buildThreeMonthEvaluation({ ...daily, previous_month_open: null, previous_month_close: null, two_months_ago_open: null, two_months_ago_close: null, three_months_ago_open: null, three_months_ago_close: null });
   assert.equal(missing.weaknessState, "UNAVAILABLE");
+  assert.equal(missing.scoredConditionCount, 5);
+  assert.equal(missing.availableConditionCount, 5);
   assert.equal(missing.qualification, "INCOMPLETE");
+});
+
+test("one passing historical month resolves the OR group as one point despite another missing month", () => {
+  const result = buildThreeMonthEvaluation({
+    ...daily,
+    previous_month_open: 110,
+    previous_month_close: 105,
+    two_months_ago_open: null,
+    two_months_ago_close: null,
+  });
+  assert.equal(result.weaknessState, "PASS");
+  assert.equal(result.scoredConditionCount, 7);
+  assert.equal(result.availableConditionCount, 7);
+  assert.equal(result.totalConditionCount, 11);
+  assert.equal(result.weaknessMonths.filter((item) => item.state === "PASS").length, 1);
 });
 
 test("forming mode labels intraday evidence without changing the formula", () => {
@@ -71,6 +93,7 @@ test("bear strategy is the exact inverse with any one prior green month", () => 
   }, "completed", "BEAR");
   assert.equal(result.qualification, "QUALIFIED");
   assert.equal(result.passedGateCount, 10);
+  assert.equal(result.scoredConditionCount, 11);
   assert.equal(result.weaknessState, "PASS");
   assert.ok(result.gates.every((item) => item.operator === "<"));
   assert.ok(result.weaknessMonths.every((item) => item.operator === ">"));

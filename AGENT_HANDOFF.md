@@ -6462,3 +6462,22 @@ or outcomes were deleted.
   `/home/novius2/NIFTY50/evidence/scalper-v2-entry-arrows-20260923/`.
   Rollback image:
   `trading-stack-n50-dashboard:before-scalper-v2-entry-arrows-20260923`.
+
+## 2026-09-23 — Home 3Month M-3/M-2/M-1 OR-group scoring
+
+- The Home Bull and Bear screeners now show `M-3 OR M-2 OR M-1` together,
+  before the current Month/Week/Day/1H/15m columns.
+- The three historical comparisons contribute exactly one point. The visible
+  score is now out of 11: ten mandatory current timeframe comparisons plus one
+  historical reversal group. Multiple passing history months do not inflate
+  the score.
+- Bull retains `prior close < open`; Bear retains the exact inverse `prior
+  close > open`. A passing comparison resolves the OR group even if another
+  month is unavailable; otherwise incomplete history remains unavailable.
+- Additive API fields expose grouped passed, available and total condition
+  counts while legacy raw gate counts remain intact. The full 3Month page and
+  CSV use the same score/order; shortlist qualification and execution controls
+  are unchanged.
+- Unit, typecheck, build, canonical-gate, authenticated browser and deployment
+  evidence are recorded in
+  `docs/strategy/THREE_MONTH_HOME_OR_SCORE_20260923.md`.

@@ -109,14 +109,23 @@ export function buildThreeMonthEvaluation(
   const hasUnavailable = gates.some((item) => item.state === "UNAVAILABLE" || item.state === "SKIPPED") || weaknessState === "UNAVAILABLE";
   const qualification = !hasFail && !hasUnavailable && gates.every((item) => item.state === "PASS") && weaknessState === "PASS"
     ? "QUALIFIED" : hasFail ? "REJECTED" : "INCOMPLETE";
+  const passedGateCount = gates.filter((item) => item.state === "PASS").length;
+  const availableGateCount = gates.filter((item) => item.state === "PASS" || item.state === "FAIL").length;
+  // The three prior-month comparisons are one OR condition, not three score points.
+  // A PASS resolves the group even when another historical month is unavailable;
+  // otherwise the group is only available once all three comparisons can fail.
+  const historyGroupAvailable = weaknessState === "PASS" || weaknessState === "FAIL";
   return {
     direction,
     gates,
     weaknessMonths,
     weaknessState,
     qualification,
-    passedGateCount: gates.filter((item) => item.state === "PASS").length,
-    availableGateCount: gates.filter((item) => item.state === "PASS" || item.state === "FAIL").length,
+    passedGateCount,
+    availableGateCount,
+    scoredConditionCount: passedGateCount + (weaknessState === "PASS" ? 1 : 0),
+    availableConditionCount: availableGateCount + (historyGroupAvailable ? 1 : 0),
+    totalConditionCount: gates.length + 1,
   } as const;
 }
 
@@ -243,11 +252,12 @@ export async function getThreeMonthStrategy(prisma: Pick<PrismaClient, "$queryRa
     return {
       symbol: row.symbol, companyName: row.company_name, sector: row.sector, sessionDate: isoOrNull(row.session_date)?.slice(0, 10) ?? String(row.session_date ?? ""), observedAt: isoOrNull(row.observed_at),
       qualification: evaluation.qualification, passedGateCount: evaluation.passedGateCount, availableGateCount: evaluation.availableGateCount,
+      scoredConditionCount: evaluation.scoredConditionCount, availableConditionCount: evaluation.availableConditionCount, totalConditionCount: evaluation.totalConditionCount,
       gates: evaluation.gates, weaknessMonths: evaluation.weaknessMonths, weaknessState: evaluation.weaknessState,
       bull: evaluation, bear,
       intraday: { hour: hour.current ?? null, previousHour: hour.previous ?? null, fifteen: fifteen.current ?? null, previousFifteen: fifteen.previous ?? null },
     };
-  }).sort((a, b) => (a.qualification === "QUALIFIED" ? -1 : b.qualification === "QUALIFIED" ? 1 : 0) || b.passedGateCount - a.passedGateCount || a.symbol.localeCompare(b.symbol));
+  }).sort((a, b) => (a.qualification === "QUALIFIED" ? -1 : b.qualification === "QUALIFIED" ? 1 : 0) || b.scoredConditionCount - a.scoredConditionCount || a.symbol.localeCompare(b.symbol));
   return {
     generatedAt: new Date().toISOString(), strategyVersion: "three_month_recovery_v1", scope: "CURRENT_NIFTY_500", intradayMode: mode,
     sessionDate: rows[0]?.sessionDate || null,

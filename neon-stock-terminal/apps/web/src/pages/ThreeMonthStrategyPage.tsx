@@ -11,8 +11,10 @@ const SHORT_LABELS = ["C {op} O", "C {op} previous O", "C {op} O", "C {op} previ
 function evaluation(row: ThreeMonthStrategyRow, direction: ThreeMonthDirection): ThreeMonthEvaluation {
   if (direction === "BULL" && row.bull) return row.bull;
   if (direction === "BEAR" && row.bear) return row.bear;
-  return { direction, qualification: row.qualification, passedGateCount: row.passedGateCount, availableGateCount: row.availableGateCount, gates: row.gates, weaknessMonths: row.weaknessMonths, weaknessState: row.weaknessState };
+  return { direction, qualification: row.qualification, passedGateCount: row.passedGateCount, availableGateCount: row.availableGateCount, scoredConditionCount: row.scoredConditionCount, availableConditionCount: row.availableConditionCount, totalConditionCount: row.totalConditionCount, gates: row.gates, weaknessMonths: row.weaknessMonths, weaknessState: row.weaknessState };
 }
+
+const historyNewestLast = (result: ThreeMonthEvaluation) => [...result.weaknessMonths].reverse();
 
 function stateGlyph(state: ThreeMonthGateState) {
   if (state === "PASS") return "✓";
@@ -32,13 +34,13 @@ function arithmetic(gate: ThreeMonthGate) {
   return `${gate.label}: ${left} ${gate.operator} ${right} · ${gate.state}${gate.forming ? " · forming/current period" : ""}`;
 }
 function downloadCsv(rows: ThreeMonthStrategyRow[], mode: ThreeMonthIntradayMode, direction: ThreeMonthDirection) {
-  const header = ["symbol", "company", "sector", "session_date", "direction", "intraday_mode", "qualification", "passed", "available", "history_any_one_state", ...SHORT_LABELS.flatMap((_, index) => [`gate_${index + 1}_state`, `gate_${index + 1}_left`, `gate_${index + 1}_right`]), "M1_state", "M2_state", "M3_state"];
+  const header = ["symbol", "company", "sector", "session_date", "direction", "intraday_mode", "qualification", "score_passed", "score_available", "score_total", "mandatory_gates_passed", "history_or_group_state", ...SHORT_LABELS.flatMap((_, index) => [`gate_${index + 1}_state`, `gate_${index + 1}_left`, `gate_${index + 1}_right`]), "M3_state", "M2_state", "M1_state"];
   const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
   const lines = rows.map((row) => {
     const result = evaluation(row, direction);
-    return [row.symbol, row.companyName, row.sector, row.sessionDate, direction, mode, result.qualification, result.passedGateCount, result.availableGateCount, result.weaknessState,
+    return [row.symbol, row.companyName, row.sector, row.sessionDate, direction, mode, result.qualification, result.scoredConditionCount, result.availableConditionCount, result.totalConditionCount, result.passedGateCount, result.weaknessState,
       ...result.gates.flatMap((gate) => [gate.state, gate.left, gate.right]),
-      ...result.weaknessMonths.map((gate) => gate.state),
+      ...historyNewestLast(result).map((gate) => gate.state),
     ].map(quote).join(",");
   });
   const blob = new Blob([[header.map(quote).join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
@@ -87,17 +89,17 @@ export function ThreeMonthStrategyPage() {
       {query.isLoading ? <div className={styles.state}>Loading NIFTY 500 evidence…</div> : null}
       {query.isError ? <div className={`${styles.state} ${styles.error}`}>The strategy evidence could not be loaded. Missing values were not replaced with zero.</div> : null}
       {!query.isLoading && !query.isError ? <div className={styles.viewport}>
-        <table><thead><tr><th rowSpan={2} className={styles.sticky}>Stock</th><th rowSpan={2}>Result</th><th rowSpan={2}>Score</th>{GATE_GROUPS.map((group) => <th colSpan={2} key={group}>{group}</th>)}<th colSpan={3}>Previous {direction === "BULL" ? "weakness" : "strength"} (ANY 1)</th></tr><tr>{SHORT_LABELS.map((label, index) => <th key={index}>{label.replace("{op}", direction === "BULL" ? ">" : "<")}</th>)}<th>M−1</th><th>M−2</th><th>M−3</th></tr></thead>
-          <tbody>{visible.map((row) => { const result = evaluation(row, direction); const rowDetails = `${row.symbol} · ${row.companyName || "Company unavailable"} · ${row.sector || "Sector unavailable"} · ${result.qualification} · ${result.passedGateCount}/${result.availableGateCount} ${direction.toLowerCase()} gates · click for exact arithmetic`; return <tr key={row.symbol} onClick={() => setSelected(row.symbol)} className={selected === row.symbol ? styles.selected : undefined} title={rowDetails} aria-label={rowDetails}>
+        <table><thead><tr><th rowSpan={2} className={styles.sticky}>Stock</th><th rowSpan={2}>Result</th><th rowSpan={2}>Score</th><th colSpan={3}>Previous {direction === "BULL" ? "weakness" : "strength"} · one OR group</th>{GATE_GROUPS.map((group) => <th colSpan={2} key={group}>{group}</th>)}</tr><tr><th>M−3</th><th>M−2</th><th>M−1</th>{SHORT_LABELS.map((label, index) => <th key={index}>{label.replace("{op}", direction === "BULL" ? ">" : "<")}</th>)}</tr></thead>
+          <tbody>{visible.map((row) => { const result = evaluation(row, direction); const rowDetails = `${row.symbol} · ${row.companyName || "Company unavailable"} · ${row.sector || "Sector unavailable"} · ${result.qualification} · ${result.scoredConditionCount}/${result.totalConditionCount} scored conditions · click for exact arithmetic`; return <tr key={row.symbol} onClick={() => setSelected(row.symbol)} className={selected === row.symbol ? styles.selected : undefined} title={rowDetails} aria-label={rowDetails}>
             <td className={styles.sticky}><Link to={`/analytics/stock/${encodeURIComponent(row.symbol)}`} onClick={(event) => event.stopPropagation()} title={`${row.companyName || row.symbol} · ${row.sector || "Sector unavailable"}`} aria-label={`${row.symbol}: ${row.companyName || "company unavailable"}, ${row.sector || "sector unavailable"}. Open Stock 360`}>{row.symbol}</Link></td>
-            <td><span className={`${styles.result} ${styles[result.qualification.toLowerCase()]}`}>{result.qualification}</span></td><td className={styles.score}>{result.passedGateCount}/{result.availableGateCount}</td>
+            <td><span className={`${styles.result} ${styles[result.qualification.toLowerCase()]}`}>{result.qualification}</span></td><td className={styles.score} title={`${result.availableConditionCount}/${result.totalConditionCount} conditions available`}>{result.scoredConditionCount}/{result.totalConditionCount}</td>
+            {historyNewestLast(result).map((gate) => <td key={`${row.symbol}-${gate.id}`} className={`${styles.gate} ${gateClass(gate.state)}`} title={arithmetic(gate)}><b>{stateGlyph(gate.state)}</b></td>)}
             {result.gates.map((gate) => <td key={`${row.symbol}-${gate.id}`} className={`${styles.gate} ${gateClass(gate.state)}`} title={arithmetic(gate)}><b>{stateGlyph(gate.state)}</b>{gate.forming ? <sup>F</sup> : null}</td>)}
-            {result.weaknessMonths.map((gate) => <td key={`${row.symbol}-${gate.id}`} className={`${styles.gate} ${gateClass(gate.state)}`} title={arithmetic(gate)}><b>{stateGlyph(gate.state)}</b></td>)}
           </tr>; })}</tbody></table>
         {!visible.length ? <div className={styles.state}>No stocks match these filters.</div> : null}
       </div> : null}
     </section>
 
-    {selectedRow && selectedResult ? <aside className={styles.drawer} aria-label={`${selectedRow.symbol} ${direction} strategy arithmetic`}><button className={styles.close} onClick={() => setSelected(null)} aria-label="Close details">×</button><h2>{selectedRow.symbol} · {direction}</h2><p>{selectedRow.companyName} · {selectedRow.sector || "Sector unavailable"}</p><div className={styles.drawerSummary}><strong>{selectedResult.qualification}</strong><span>{selectedResult.passedGateCount}/{selectedResult.availableGateCount} {direction.toLowerCase()} gates</span></div><h3>Exact gate arithmetic</h3><ol>{selectedResult.gates.map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}{gate.forming ? " · forming" : ""}</span></li>)}</ol><h3>Historical {direction === "BULL" ? "weakness" : "strength"} (one must pass)</h3><ul>{selectedResult.weaknessMonths.map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}</span></li>)}</ul><p className={styles.disclosure}>This is a screening result, not an entry, exit, stop, target or position-size recommendation.</p></aside> : null}
+    {selectedRow && selectedResult ? <aside className={styles.drawer} aria-label={`${selectedRow.symbol} ${direction} strategy arithmetic`}><button className={styles.close} onClick={() => setSelected(null)} aria-label="Close details">×</button><h2>{selectedRow.symbol} · {direction}</h2><p>{selectedRow.companyName} · {selectedRow.sector || "Sector unavailable"}</p><div className={styles.drawerSummary}><strong>{selectedResult.qualification}</strong><span>{selectedResult.scoredConditionCount}/{selectedResult.totalConditionCount} scored conditions</span></div><h3>Historical {direction === "BULL" ? "weakness" : "strength"} · M−3 OR M−2 OR M−1 · one point</h3><ul>{historyNewestLast(selectedResult).map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}</span></li>)}</ul><h3>Mandatory M/W/D/1H/15m arithmetic</h3><ol>{selectedResult.gates.map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}{gate.forming ? " · forming" : ""}</span></li>)}</ol><p className={styles.disclosure}>This is a screening result, not an entry, exit, stop, target or position-size recommendation.</p></aside> : null}
   </main>;
 }

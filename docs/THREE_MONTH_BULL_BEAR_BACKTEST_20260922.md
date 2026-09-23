@@ -30,7 +30,10 @@ The existing bullish top-level API fields remain backward compatible. Additive
 ## UI
 
 - Home exposes a dense Bull/Bear board with Month, Week, Day, grouped
-  M-1/M-2/M-3 OR ticks, 1H and 15m evidence.
+  M-3/M-2/M-1 OR ticks, 1H and 15m evidence. The historical OR group is one
+  scored condition, so the live screen score is out of 11: ten mandatory
+  comparisons plus one historical reversal group. Passing two or three prior
+  months never awards more than one point.
 - Clicking a symbol opens exact arithmetic; qualification requires all ten
   mandatory gates plus the grouped OR condition.
 - The 3Month page has a Bull/Bear selector and downloads the selected

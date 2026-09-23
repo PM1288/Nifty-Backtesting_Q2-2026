@@ -2873,6 +2873,9 @@ export type ThreeMonthEvaluation = {
   qualification: "QUALIFIED" | "REJECTED" | "INCOMPLETE";
   passedGateCount: number;
   availableGateCount: number;
+  scoredConditionCount: number;
+  availableConditionCount: number;
+  totalConditionCount: number;
   gates: ThreeMonthGate[];
   weaknessMonths: ThreeMonthGate[];
   weaknessState: ThreeMonthGateState;
@@ -2886,6 +2889,9 @@ export type ThreeMonthStrategyRow = {
   qualification: "QUALIFIED" | "REJECTED" | "INCOMPLETE";
   passedGateCount: number;
   availableGateCount: number;
+  scoredConditionCount: number;
+  availableConditionCount: number;
+  totalConditionCount: number;
   gates: ThreeMonthGate[];
   weaknessMonths: ThreeMonthGate[];
   weaknessState: ThreeMonthGateState;

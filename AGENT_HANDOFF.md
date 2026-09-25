@@ -12,9 +12,14 @@
   an order or executed trade. Replay views do not send.
 - No synthetic WhatsApp message was broadcast. API tests validate acceptance,
   deduplication, stale rejection, and direction/volume guards; Python formatter
-  fixture verifies snapshot time and non-execution wording. Production delivery
-  remains dependent on a real qualifying signal and the existing scheduler,
-  token, and WhatsApp connectivity.
+  fixture verifies snapshot time and non-execution wording. Web tests **283/283**,
+  API tests **274/274** (new route **2/2**), both typechecks/builds, Python
+  compile, Compose config and canonical gate passed. Production anonymous POST
+  is rejected with 401; outbox drain checked clean with zero queued rows. The
+  scheduler and dashboard are healthy with zero restarts; WA is enabled, token
+  mounted and group matches OIIS. Code `1580791` was merged/pushed to master
+  `6af2812`; deployed image hashes and remaining live-delivery caveat are in
+  the evidence report. A real end-to-end delivery awaits a genuine fresh setup.
 - Evidence: `docs/trading-analytics/SCALPER_V2_TENTATIVE_WHATSAPP_ALERT_20260925.md`.
 
 ## 2026-09-23 — Home and Scalper V2 stable hydration repair

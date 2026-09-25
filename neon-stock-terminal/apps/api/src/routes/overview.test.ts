@@ -19,28 +19,36 @@ const homeMw5Payload = () => ({
     currentHourOpen: 109, previousHourOpen: 108, currentHourStartedAt: "2026-09-25T05:30:00.000Z",
     current15mOpen: 110, previous15mOpen: 109, current15mStartedAt: "2026-09-25T05:45:00.000Z",
     current5mOpen: 111, previous5mOpen: 110,
+    v20VolumeMultiple: 1.2,
     current5mStartedAt: "2026-09-25T05:50:00.000Z", previous5mStartedAt: "2026-09-25T05:45:00.000Z",
     observedAt: "2026-09-25T05:54:15.000Z",
   }],
 }) as unknown as Parameters<typeof buildHomeMw5Alerts>[0];
 
-test("Home MW5 notification requires every M-1/M-2 through 5m gate and includes exact green evidence", () => {
+test("Home MW5 notification requires both monthly gates, all intraday price gates, and V20 above 1x", () => {
   const result = buildHomeMw5Alerts(homeMw5Payload(), new Date("2026-09-25T05:54:45.000Z"));
   assert.equal(result.length, 1);
   assert.equal(result[0].direction, "BULL");
   assert.equal(result[0].route, "M-2");
   assert.equal(result[0].payload.gates instanceof Array, true);
   assert.equal((result[0].payload.gates as Array<{ passed: boolean }>).every((gate) => gate.passed), true);
+  assert.equal((result[0].payload.gates as Array<{ id: string }>).some((gate) => gate.id === "V20"), true);
   assert.equal(result[0].barStartedAt, "2026-09-25T05:50:00.000Z");
 });
 
-test("Home MW5 notification falls back to the qualified M-1 route and suppresses incomplete/stale snapshots", () => {
-  const m1Only = homeMw5Payload();
-  m1Only.rows[0].twoMonthsAgoClose = 105;
-  const result = buildHomeMw5Alerts(m1Only, new Date("2026-09-25T05:54:45.000Z"));
-  assert.equal(result.length, 1);
-  assert.equal(result[0].route, "M-1");
-  assert.equal((result[0].payload.gates as Array<{ id: string }>).some((gate) => gate.id === "M-2"), false);
+test("Home MW5 requires M-2 and V20 > 1x; intraday volume is not a gate", () => {
+  const m2Fail = homeMw5Payload();
+  m2Fail.rows[0].twoMonthsAgoClose = 105;
+  assert.equal(buildHomeMw5Alerts(m2Fail, new Date("2026-09-25T05:54:45.000Z")).length, 0);
+  const atOne = homeMw5Payload();
+  atOne.rows[0].v20VolumeMultiple = 1;
+  assert.equal(buildHomeMw5Alerts(atOne, new Date("2026-09-25T05:54:45.000Z")).length, 0);
+  const missingV20 = homeMw5Payload();
+  missingV20.rows[0].v20VolumeMultiple = null;
+  assert.equal(buildHomeMw5Alerts(missingV20, new Date("2026-09-25T05:54:45.000Z")).length, 0);
+  const lowIntraday = homeMw5Payload();
+  lowIntraday.rows[0].intradayVolumeMultiple = 0.1;
+  assert.equal(buildHomeMw5Alerts(lowIntraday, new Date("2026-09-25T05:54:45.000Z")).length, 1);
 
   const incomplete = homeMw5Payload();
   incomplete.rows[0].previous15mOpen = null;
@@ -134,6 +142,8 @@ test("home scalper progression preserves period references, zero and missingness
       previous_5m_started_at: "2026-09-11T05:45:00Z",
       history_through: "2026-09-11",
       observed_at: "2026-09-11T03:15:00Z",
+      current_volume: null,
+      average_volume_20: null,
     }],
   } as never);
 
@@ -176,6 +186,7 @@ test("home scalper progression preserves period references, zero and missingness
     previous5mStartedAt: "2026-09-11T05:45:00.000Z",
     historyThrough: "2026-09-11T00:00:00.000Z",
     observedAt: "2026-09-11T03:15:00.000Z",
+    v20VolumeMultiple: null,
     conditions: [
       { code: "M2_RED", label: "Two months ago close < open", left: null, operator: "<", right: 90, state: "UNAVAILABLE" },
       { code: "M1_GREEN", label: "Previous-month close > previous-month open", left: 0, operator: ">", right: 100, state: "FAIL" },

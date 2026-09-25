@@ -157,6 +157,7 @@ export type ScalperProgressionRow = {
   current15mVolume?: number | null;
   average15mVolume15?: number | null;
   intradayVolumeMultiple?: number | null;
+  v20VolumeMultiple?: number | null;
   current5mOpen?: number | null;
   previous5mOpen?: number | null;
   current5mStartedAt?: string | null;

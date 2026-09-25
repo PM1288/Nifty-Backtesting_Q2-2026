@@ -123,6 +123,7 @@ export type ScalperProgressionRow = {
   current15mVolume: number | null;
   average15mVolume15: number | null;
   intradayVolumeMultiple: number | null;
+  v20VolumeMultiple: number | null;
   current5mOpen: number | null;
   previous5mOpen: number | null;
   current5mStartedAt: string | null;
@@ -1334,6 +1335,8 @@ export async function getScalperProgression(prisma: PrismaClient) {
     previous_5m_started_at: Date | string | null;
     history_through: Date | string | null;
     observed_at: Date | string | null;
+    current_volume: number | string | null;
+    average_volume_20: number | string | null;
   }>>(Prisma.sql`
     WITH clock AS (
       SELECT
@@ -1502,6 +1505,25 @@ export async function getScalperProgression(prisma: PrismaClient) {
       FROM canonical d
       CROSS JOIN clock c
       GROUP BY d.symbol
+    ),
+    daily_volume_ranked AS (
+      SELECT u.symbol, b.volume::double precision AS volume,
+        ROW_NUMBER() OVER (PARTITION BY u.symbol ORDER BY b.trade_date DESC) AS recency
+      FROM universe u
+      CROSS JOIN clock c
+      JOIN LATERAL (
+        SELECT trade_date, volume
+        FROM bars_1d
+        WHERE exchange = 'NSE' AND symbol_token = u.symbol_token AND trade_date < c.today
+        ORDER BY trade_date DESC
+        LIMIT 20
+      ) b ON TRUE
+    ),
+    daily_volume_values AS (
+      SELECT symbol, AVG(volume) AS average_volume_20
+      FROM daily_volume_ranked
+      WHERE recency <= 20
+      GROUP BY symbol
     ),
     stage_candidates AS (
       SELECT
@@ -1684,11 +1706,14 @@ export async function getScalperProgression(prisma: PrismaClient) {
       intraday.current_5m_started_at,
       intraday.previous_5m_started_at,
       refs.history_through,
-      st.last_seen_ts AS observed_at
+      st.last_seen_ts AS observed_at,
+      st.last_volume::double precision AS current_volume,
+      daily_volume.average_volume_20
     FROM universe u
     LEFT JOIN instrument_state st ON st.exchange = 'NSE' AND st.symbol_token = u.symbol_token
     LEFT JOIN reference_values refs ON refs.symbol = u.symbol
     LEFT JOIN intraday_values intraday ON intraday.symbol = u.symbol
+    LEFT JOIN daily_volume_values daily_volume ON daily_volume.symbol = u.symbol
     ORDER BY u.symbol
   `);
   const data: ScalperProgressionRow[] = rows.map((row) => {
@@ -1724,6 +1749,7 @@ export async function getScalperProgression(prisma: PrismaClient) {
       current15mVolume: nullableNumber(row.current_15m_volume),
       average15mVolume15: nullableNumber(row.average_15m_volume_15),
       intradayVolumeMultiple: projectedIntervalVolumeMultiple(row.current_15m_volume, row.average_15m_volume_15, row.current_15m_started_at),
+      v20VolumeMultiple: projectedFullDayVolumeMultiple(row.current_volume, row.average_volume_20, row.observed_at),
       current5mOpen: nullableNumber(row.current_5m_open),
       previous5mOpen: nullableNumber(row.previous_5m_open),
       current5mStartedAt: row.current_5m_started_at == null ? null : toIso(row.current_5m_started_at),
@@ -1762,7 +1788,7 @@ type HomeMw5Alert = {
   barStartedAt: string;
   symbol: string;
   direction: "BULL" | "BEAR";
-  route: "M-1" | "M-2";
+  route: "M-2";
   payload: Record<string, unknown>;
 };
 
@@ -1807,17 +1833,21 @@ export function buildHomeMw5Alerts(payload: ScalperProgressionPayload, now = new
         { id: "5m", label: "Current 5-minute open " + (direction === "BULL" ? ">" : "<") + " previous 5-minute open", left: row.current5mOpen ?? null, right: row.previous5mOpen ?? null },
       ];
       const states = gates.map((gate) => compare(gate.left, gate.right));
-      const m1Complete = states[0] === true && states.slice(2).every((state) => state === true);
-      const m2Complete = m1Complete && states[1] === true;
-      if (!m1Complete) continue;
-      const route = m2Complete ? "M-2" : "M-1";
+      // Both monthly gates and every later price gate are mandatory. Intraday
+      // bucket volume is display-only; only projected V20 > 1x qualifies.
+      if (!states.every((state) => state === true) || row.v20VolumeMultiple == null || row.v20VolumeMultiple <= 1) continue;
+      const route = "M-2" as const;
       const eventKey = createHash("sha256").update([
         "HOME_MW5_V1", payload.sessionDate, row.symbol, direction, new Date(current5m).toISOString(),
       ].join("|"), "utf8").digest("hex");
       const snapshotTime = new Date(detectedAt).toISOString();
-      const evidence = gates.filter((gate) => gate.id !== "M-2" || route === "M-2").map((gate) => ({
-        ...gate, passed: compare(gate.left, gate.right),
+      const evidence = gates.map((gate) => ({
+        ...gate, operator: direction === "BULL" ? ">" : "<", passed: compare(gate.left, gate.right),
       }));
+      evidence.push({
+        id: "V20", label: "Projected full-day volume / prior 20-session average", left: row.v20VolumeMultiple,
+        operator: ">", right: 1, passed: true,
+      });
       eligible.push({
         eventKey, tradeDate: payload.sessionDate, snapshotTime, barStartedAt: new Date(current5m).toISOString(),
         symbol: row.symbol, direction, route,

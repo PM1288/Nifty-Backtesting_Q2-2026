@@ -1,5 +1,17 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-25 — Home MWHD alert gates and Motilal delivery diagnosis
+
+- Home MWHD alert eligibility now requires both M−1 and M−2, W0, W−1, D0,
+  1H, 15m and 5m comparisons, plus projected full-day volume >1.0× the prior
+  20-session daily-volume average. Missing V20 blocks. Intraday 15m volume is
+  not an alert criterion.
+- Production outbox showed Motilal Oswal candidates with all eight recorded
+  price checks passing, but delivery attempts returned HTTP 403. Existing
+  events did not store V20, so they cannot prove the new volume gate. Gateway
+  authorization remains unresolved; no delivery is claimed.
+- Evidence and release status: `docs/trading-analytics/HOME_MWHD_5M_WHATSAPP_ALERT_20260925.md`.
+
 ## 2026-09-25 — Scalper V2 tentative CE/PE WhatsApp references
 
 - Live Scalper V2 now posts fresh, completed five-minute three-instrument EMA9

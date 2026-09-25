@@ -4,11 +4,12 @@
 
 - The server evaluates the existing Home MWHD rows from every refreshed
   screener snapshot, not only visible/top-ranked rows. A notification is queued
-  only when the M−1 route and every W0/W−1/D0/1H/15m/5m comparison is strictly
-  green; M−2 is reported when its stricter monthly check also passes and retains
-  M−1 sufficiency. Bull and exact-inverse Bear are evaluated independently.
-- Events include the symbol, direction, selected route, detection time, exact
-  five-minute candle start, current value, and every passing equation. Delivery
+  only when both M−1 and M−2, W0/W−1/D0/1H/15m/5m price comparisons pass and
+  projected full-day volume is strictly above 1.0× the prior 20-session daily
+  average. Missing V20 blocks; 15-minute intraday volume is informational only.
+  Bull and exact-inverse Bear price comparisons are evaluated independently.
+- Events include the symbol, direction, detection time, exact five-minute
+  candle start, current value, all price gates and V20 evidence. Delivery
   uses the existing Scalper/OIIS WhatsApp gateway configuration and durable
   retry worker. Idempotency is once per symbol/direction/five-minute candle.
   Stale, incomplete, outside-session, or unavailable evidence is never alerted.

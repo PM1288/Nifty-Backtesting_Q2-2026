@@ -5,7 +5,9 @@
 The existing server-refreshed Home progression snapshot is the alert source.
 During the active NSE session, every fresh snapshot is evaluated for all rows
 in the current stock F&O universe (not just the top-ten view). A candidate
-queues only when all mandatory comparisons are strictly true:
+queues only when all eight mandatory price comparisons are strictly true and
+projected full-day volume is strictly above 1.0× the prior 20-session daily
+volume average:
 
 - M−1 sufficiency: current-month open versus previous-month close.
 - W0, W−1 and D0: current value versus current-week open, previous-week open
@@ -13,18 +15,17 @@ queues only when all mandatory comparisons are strictly true:
 - 1H, 15m and 5m: current-period open versus the immediately previous period
   open.
 
-The M−2 route also requires the M−1 gate and adds current-month open versus
-two-months-ago close. If both routes pass, the notification is labelled M−2;
-otherwise a complete M−1 route is labelled M−1. Bull and exact-inverse Bear
-are tested independently. Missing gates are not treated as green.
+Both monthly gates are mandatory; there is no M−1-only fallback. The projected
+15-minute bucket volume is informational and does not gate alerts. Bull and
+exact-inverse Bear price comparisons are tested independently, while V20 must
+exceed 1.0× for either direction. Missing gates or V20 block alerting.
 
 ## Notification and dedupe
 
 The durable outbox key is deterministic for trade date, symbol, direction and
 five-minute candle start. A new qualifying candle can produce one event;
 repeat cache refreshes cannot repeat that event. Payloads include the detection
-timestamp, candle start, current value, selected route, and the exact arithmetic
-for every passing gate.
+timestamp, candle start, current value, exact price-gate arithmetic, and V20.
 
 The existing Scalper/OIIS WhatsApp gateway configuration and scheduler are
 used. The message describes a screener qualification only. It does not create
@@ -65,6 +66,13 @@ contiguous.
 - Scheduler image sha256:e68d5884dfaaee70985fc9c93cf6ce2de4d60ffa4d1c67300b94e611ca36f8ff
   is running with zero restarts; its notifier module imports successfully.
   Intraday API health returned HTTP 200.
-- The outbox currently contains no events (release was outside NSE hours).
-  No synthetic WhatsApp message was sent, so gateway delivery of this new event
-  type remains unverified until a real live qualification occurs.
+- Production diagnostic on 25 Sep 2026 found four Motilal Oswal (`MOTILALOFS`)
+  candidates from 14:03–15:28 IST under the earlier gate logic. All eight
+  recorded price comparisons passed, but those events did not capture V20 and
+  cannot establish the new volume gate. Delivery returned HTTP 403 (three
+  terminal `DEAD`, latest observed event `RETRY`). The immediate non-delivery
+  cause is gateway rejection, not an intraday-volume gate. Gateway authorization
+  remains unresolved; no successful WhatsApp delivery is claimed.
+- The production completed-session volume snapshot observed at 15:01 IST was
+  759,330 vs prior-20-session average 815,437 (0.93×). This is not a point-in-
+  time V20 value for the earlier candidate timestamps.

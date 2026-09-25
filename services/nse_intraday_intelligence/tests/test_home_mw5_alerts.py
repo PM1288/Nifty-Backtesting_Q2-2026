@@ -17,6 +17,7 @@ class HomeMw5AlertTests(unittest.TestCase):
                 "gates": [
                     {"id": "M-1", "label": "Month open > previous close", "left": 100, "operator": ">", "right": 95, "passed": True},
                     {"id": "M-2", "label": "Month open > two-month close", "left": 100, "operator": ">", "right": 90, "passed": True},
+                    {"id": "V20", "label": "Projected full-day volume / prior 20-session average", "left": 1.2, "operator": ">", "right": 1, "passed": True},
                     {"id": "5m", "label": "Current 5m open > previous 5m open", "left": 111, "operator": ">", "right": 110, "passed": True},
                 ],
             },
@@ -27,4 +28,5 @@ class HomeMw5AlertTests(unittest.TestCase):
         self.assertIn("Route: M-2", message)
         self.assertIn("M-1 · Month open > previous close: 100.00 > 95.00", message)
         self.assertIn("5m · Current 5m open > previous 5m open: 111.00 > 110.00", message)
+        self.assertIn("V20 · Projected full-day volume / prior 20-session average: 1.20 > 1.00", message)
         self.assertIn("not an order, trade or execution", message)

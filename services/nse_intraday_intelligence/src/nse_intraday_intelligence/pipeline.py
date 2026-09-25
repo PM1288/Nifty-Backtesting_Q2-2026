@@ -2422,8 +2422,11 @@ def run_job_key(job_key: str, trigger_type: str = "manual", **kwargs) -> dict:
             _step(run_id, 1, "scalper_entries", "running", "Evaluating paired F&O underlying and option EMA9 entries", kwargs)
             from .scalper_v2_tentative_alerts import deliver_scalper_v2_tentative_alerts
             tentative_alerts = deliver_scalper_v2_tentative_alerts()
+            from .home_mw5_alerts import deliver_home_mw5_alerts
+            home_mw5_alerts = deliver_home_mw5_alerts()
             result = evaluate_scalper_entries(kwargs.get("trade_date"))
             result["tentative_v2_whatsapp"] = tentative_alerts
+            result["home_mw5_whatsapp"] = home_mw5_alerts
         else:
             raise RuntimeError(f"Unknown job_key={job_key}")
         _step(run_id, 1, "complete", "success", "Job completed", result)

@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { createHash } from "node:crypto";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { marketDayIso, marketDayKeyUtc, marketDayStartUtc } from "../lib/time";
 import { getStoredSnapshot, materializeSnapshot, serveSnapshotRoute, type SnapshotDefinition } from "../lib/dashboardSnapshots";
@@ -1753,6 +1754,110 @@ type ScalperProgressionCache = {
   expiresAt: number;
   pending: Promise<ScalperProgressionPayload> | null;
 };
+
+type HomeMw5Alert = {
+  eventKey: string;
+  tradeDate: string;
+  snapshotTime: string;
+  barStartedAt: string;
+  symbol: string;
+  direction: "BULL" | "BEAR";
+  route: "M-1" | "M-2";
+  payload: Record<string, unknown>;
+};
+
+function istClock(date: Date): { day: string; minutes: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "00";
+  return {
+    day: part("year") + "-" + part("month") + "-" + part("day"),
+    minutes: Number(part("hour")) * 60 + Number(part("minute")),
+  };
+}
+
+/** Return only exact, complete Home MWHD candidates from this live snapshot. */
+export function buildHomeMw5Alerts(payload: ScalperProgressionPayload, now = new Date()): HomeMw5Alert[] {
+  const clock = istClock(now);
+  if (payload.sessionDate !== clock.day || clock.minutes < 9 * 60 + 15 || clock.minutes >= 15 * 60 + 30) return [];
+  const detectedAt = Date.parse(payload.generatedAt);
+  if (!Number.isFinite(detectedAt) || detectedAt > now.getTime() || now.getTime() - detectedAt > 120_000) return [];
+  const eligible: HomeMw5Alert[] = [];
+  for (const row of payload.rows) {
+    const observedAt = row.observedAt == null ? NaN : Date.parse(row.observedAt);
+    const current5m = row.current5mStartedAt == null ? NaN : Date.parse(row.current5mStartedAt);
+    const previous5m = row.previous5mStartedAt == null ? NaN : Date.parse(row.previous5mStartedAt);
+    if (!Number.isFinite(observedAt) || observedAt > now.getTime() || now.getTime() - observedAt > 120_000
+      || !Number.isFinite(current5m) || current5m > now.getTime() || now.getTime() - current5m >= 5 * 60_000
+      || !Number.isFinite(previous5m) || current5m - previous5m !== 5 * 60_000) continue;
+    for (const direction of ["BULL", "BEAR"] as const) {
+      const compare = (left: number | null | undefined, right: number | null | undefined) =>
+        left == null || right == null || !Number.isFinite(left) || !Number.isFinite(right) || left <= 0 || right <= 0
+          ? null : direction === "BULL" ? left > right : left < right;
+      const gates = [
+        { id: "M-1", label: "Current month open " + (direction === "BULL" ? ">" : "<") + " previous month close", left: row.currentMonthOpen, right: row.previousMonthClose },
+        { id: "M-2", label: "Current month open " + (direction === "BULL" ? ">" : "<") + " two-months-ago close", left: row.currentMonthOpen, right: row.twoMonthsAgoClose },
+        { id: "W0", label: "Latest value " + (direction === "BULL" ? ">" : "<") + " current week open", left: row.currentValue, right: row.currentWeekOpen },
+        { id: "W-1", label: "Latest value " + (direction === "BULL" ? ">" : "<") + " previous week open", left: row.currentValue, right: row.previousWeekOpen },
+        { id: "D0", label: "Latest value " + (direction === "BULL" ? ">" : "<") + " today open", left: row.currentValue, right: row.todayOpen },
+        { id: "1H", label: "Current hour open " + (direction === "BULL" ? ">" : "<") + " previous hour open", left: row.currentHourOpen ?? null, right: row.previousHourOpen ?? null },
+        { id: "15m", label: "Current 15-minute open " + (direction === "BULL" ? ">" : "<") + " previous 15-minute open", left: row.current15mOpen ?? null, right: row.previous15mOpen ?? null },
+        { id: "5m", label: "Current 5-minute open " + (direction === "BULL" ? ">" : "<") + " previous 5-minute open", left: row.current5mOpen ?? null, right: row.previous5mOpen ?? null },
+      ];
+      const states = gates.map((gate) => compare(gate.left, gate.right));
+      const m1Complete = states[0] === true && states.slice(2).every((state) => state === true);
+      const m2Complete = m1Complete && states[1] === true;
+      if (!m1Complete) continue;
+      const route = m2Complete ? "M-2" : "M-1";
+      const eventKey = createHash("sha256").update([
+        "HOME_MW5_V1", payload.sessionDate, row.symbol, direction, new Date(current5m).toISOString(),
+      ].join("|"), "utf8").digest("hex");
+      const snapshotTime = new Date(detectedAt).toISOString();
+      const evidence = gates.filter((gate) => gate.id !== "M-2" || route === "M-2").map((gate) => ({
+        ...gate, passed: compare(gate.left, gate.right),
+      }));
+      eligible.push({
+        eventKey, tradeDate: payload.sessionDate, snapshotTime, barStartedAt: new Date(current5m).toISOString(),
+        symbol: row.symbol, direction, route,
+        payload: {
+          schema: "home-mw5-qualification.v1", eventType: "home.mw5.qualified.v1",
+          symbol: row.symbol, direction, route, tradeDate: payload.sessionDate,
+          detectedAt: snapshotTime, fiveMinuteBarStartedAt: new Date(current5m).toISOString(),
+          observedAt: row.observedAt, currentValue: row.currentValue,
+          gates: evidence, statement: "Screener qualification only; not an order, trade or execution.",
+        },
+      });
+    }
+  }
+  return eligible;
+}
+
+async function enqueueHomeMw5Alerts(prisma: PrismaClient, payload: ScalperProgressionPayload) {
+  const alerts = buildHomeMw5Alerts(payload);
+  if (!alerts.length) return;
+  const values: unknown[] = [];
+  const tuples = alerts.map((alert) => {
+    const offset = values.length;
+    values.push(alert.eventKey, alert.tradeDate, alert.snapshotTime, alert.barStartedAt,
+      alert.symbol, alert.direction, alert.route, JSON.stringify(alert.payload));
+    const bind = (index: number) => "$" + (offset + index);
+    return "(" + [
+      bind(1), bind(2) + "::date", bind(3) + "::timestamptz",
+      bind(4) + "::timestamptz", bind(5), bind(6), bind(7), bind(8) + "::jsonb",
+    ].join(",") + ")";
+  });
+  const sql = "INSERT INTO nse_ops.home_mw5_qualification_outbox " +
+    "(event_key,trade_date,snapshot_time,five_minute_bar_started_at,symbol,direction,route,payload) " +
+    "SELECT input.event_key,input.trade_date,input.snapshot_time,input.five_minute_bar_started_at,input.symbol,input.direction,input.route,input.payload " +
+    "FROM (VALUES " + tuples.join(",") + ") AS input(event_key,trade_date,snapshot_time,five_minute_bar_started_at,symbol,direction,route,payload) " +
+    "WHERE input.snapshot_time BETWEEN now() - interval '2 minutes' AND now() " +
+    "AND (input.snapshot_time AT TIME ZONE 'Asia/Kolkata')::date=(now() AT TIME ZONE 'Asia/Kolkata')::date " +
+    "ON CONFLICT(event_key) DO NOTHING";
+  await prisma.$executeRawUnsafe(sql, ...values);
+}
+
 const scalperProgressionCaches = new WeakMap<PrismaClient, ScalperProgressionCache>();
 const scalperProgressionWarmers = new WeakSet<PrismaClient>();
 // The deepest 5-minute gate consumes one-minute observations. Keep the shared
@@ -1770,9 +1875,15 @@ function getCachedScalperProgression(prisma: PrismaClient): Promise<ScalperProgr
   const refresh = () => {
     if (cache!.pending) return cache!.pending;
     cache!.pending = getScalperProgression(prisma)
-      .then((payload) => {
+      .then(async (payload) => {
         cache!.payload = payload;
         cache!.expiresAt = Date.now() + SCALPER_PROGRESSION_CACHE_MS;
+        try {
+          await enqueueHomeMw5Alerts(prisma, payload);
+        } catch (error) {
+          // Alert queue failures must not take down the read-only Home screener.
+          console.error("Home MW5 qualification alert enqueue failed", error instanceof Error ? error.message : "unknown error");
+        }
         return payload;
       })
       .finally(() => { cache!.pending = null; });

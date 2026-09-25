@@ -1,10 +1,68 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildHeaderStockTickerTape, buildScalperScreenerSpreadsheet, getScalperProgression, projectedFullDayVolumeMultiple, projectedIntervalVolumeMultiple, SCALPER_PROGRESSION_CACHE_MS } from "./overview.js";
+import { buildHeaderStockTickerTape, buildHomeMw5Alerts, buildScalperScreenerSpreadsheet, getScalperProgression, projectedFullDayVolumeMultiple, projectedIntervalVolumeMultiple, SCALPER_PROGRESSION_CACHE_MS } from "./overview.js";
 
 test("shared progression snapshot refreshes every thirty seconds", () => {
   assert.equal(SCALPER_PROGRESSION_CACHE_MS, 30_000);
+});
+
+const homeMw5Payload = () => ({
+  generatedAt: "2026-09-25T05:54:30.000Z",
+  sessionDate: "2026-09-25",
+  scope: "CURRENT_NSE_STOCK_FNO_UNIVERSE" as const,
+  basis: "test fixture",
+  rows: [{
+    symbol: "TEST", companyName: "Test", sector: "Test", currentValue: 110,
+    currentMonthOpen: 100, previousMonthClose: 95, twoMonthsAgoClose: 90,
+    currentWeekOpen: 105, previousWeekOpen: 101, todayOpen: 103,
+    currentHourOpen: 109, previousHourOpen: 108, currentHourStartedAt: "2026-09-25T05:30:00.000Z",
+    current15mOpen: 110, previous15mOpen: 109, current15mStartedAt: "2026-09-25T05:45:00.000Z",
+    current5mOpen: 111, previous5mOpen: 110,
+    current5mStartedAt: "2026-09-25T05:50:00.000Z", previous5mStartedAt: "2026-09-25T05:45:00.000Z",
+    observedAt: "2026-09-25T05:54:15.000Z",
+  }],
+}) as unknown as Parameters<typeof buildHomeMw5Alerts>[0];
+
+test("Home MW5 notification requires every M-1/M-2 through 5m gate and includes exact green evidence", () => {
+  const result = buildHomeMw5Alerts(homeMw5Payload(), new Date("2026-09-25T05:54:45.000Z"));
+  assert.equal(result.length, 1);
+  assert.equal(result[0].direction, "BULL");
+  assert.equal(result[0].route, "M-2");
+  assert.equal(result[0].payload.gates instanceof Array, true);
+  assert.equal((result[0].payload.gates as Array<{ passed: boolean }>).every((gate) => gate.passed), true);
+  assert.equal(result[0].barStartedAt, "2026-09-25T05:50:00.000Z");
+});
+
+test("Home MW5 notification falls back to the qualified M-1 route and suppresses incomplete/stale snapshots", () => {
+  const m1Only = homeMw5Payload();
+  m1Only.rows[0].twoMonthsAgoClose = 105;
+  const result = buildHomeMw5Alerts(m1Only, new Date("2026-09-25T05:54:45.000Z"));
+  assert.equal(result.length, 1);
+  assert.equal(result[0].route, "M-1");
+  assert.equal((result[0].payload.gates as Array<{ id: string }>).some((gate) => gate.id === "M-2"), false);
+
+  const incomplete = homeMw5Payload();
+  incomplete.rows[0].previous15mOpen = null;
+  assert.equal(buildHomeMw5Alerts(incomplete, new Date("2026-09-25T05:54:45.000Z")).length, 0);
+  assert.equal(buildHomeMw5Alerts(homeMw5Payload(), new Date("2026-09-25T06:20:00.000Z")).length, 0);
+});
+
+test("Home MW5 evaluates the inverse Bear gates and rejects zero-valued price evidence", () => {
+  const bearish = homeMw5Payload();
+  Object.assign(bearish.rows[0], {
+    currentMonthOpen: 90, previousMonthClose: 100, twoMonthsAgoClose: 95,
+    currentValue: 80, currentWeekOpen: 85, previousWeekOpen: 82, todayOpen: 83,
+    currentHourOpen: 79, previousHourOpen: 80, current15mOpen: 78, previous15mOpen: 79,
+    current5mOpen: 77, previous5mOpen: 78,
+  });
+  const result = buildHomeMw5Alerts(bearish, new Date("2026-09-25T05:54:45.000Z"));
+  assert.equal(result.length, 1);
+  assert.equal(result[0].direction, "BEAR");
+
+  const zero = homeMw5Payload();
+  zero.rows[0].previousMonthClose = 0;
+  assert.equal(buildHomeMw5Alerts(zero, new Date("2026-09-25T05:54:45.000Z")).length, 0);
 });
 
 test("projected volume compares an as-of session pace with the prior 20-day daily SMA", () => {

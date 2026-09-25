@@ -1,5 +1,22 @@
 # UI feature preservation manifest — 25 August 2026
 
+## 2026-09-25 Home MWHD five-minute qualification WhatsApp alerts
+
+- The server evaluates the existing Home MWHD rows from every refreshed
+  screener snapshot, not only visible/top-ranked rows. A notification is queued
+  only when the M−1 route and every W0/W−1/D0/1H/15m/5m comparison is strictly
+  green; M−2 is reported when its stricter monthly check also passes and retains
+  M−1 sufficiency. Bull and exact-inverse Bear are evaluated independently.
+- Events include the symbol, direction, selected route, detection time, exact
+  five-minute candle start, current value, and every passing equation. Delivery
+  uses the existing Scalper/OIIS WhatsApp gateway configuration and durable
+  retry worker. Idempotency is once per symbol/direction/five-minute candle.
+  Stale, incomplete, outside-session, or unavailable evidence is never alerted.
+- Messages are screener qualifications only, not orders or executed trades.
+  Existing OIIS and Scalper V2 alerts, strategy calculations, homepage ranking,
+  data collection, and order permissions are unchanged.
+- Evidence: docs/trading-analytics/HOME_MWHD_5M_WHATSAPP_ALERT_20260925.md.
+
 ## 2026-09-25 Scalper V2 tentative CE/PE WhatsApp references
 
 - Live, exact completed-5m three-instrument EMA9 references from the selected

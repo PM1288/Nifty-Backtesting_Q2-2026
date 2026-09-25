@@ -6788,3 +6788,24 @@ Released from master commit `bfca019` on 2026-09-23. Required web/API test, type
   end-to-end duplicate test was possible without OISS source rows. No records
   were deleted or reprocessed. Details:
   `docs/oiis-live/OISS_DAILY_ALERT_DEDUPE_20260925.md`.
+
+# 2026-09-25 — Home MWHD 5-minute qualification WhatsApp alert
+
+- Additive alert event from the server's 30-second refreshed Home MWHD
+  progression snapshot, covering all stock rows rather than only displayed
+  ranks. Requires a complete M−1 route plus green W0/W−1/D0/1H/15m/5m gates;
+  M−2 additionally requires M−1 and its own monthly check. Bull/Bear are
+  separately checked using the existing strict comparison directions.
+- Events include all arithmetic, latest value, detection time, exact 5-minute
+  candle start and chosen M−1/M−2 route. Durable idempotency is per trade
+  date/symbol/direction/5-minute candle. Delivery is added to the current
+  scalper-entry scheduler and uses the configured existing WhatsApp gateway.
+- Migration: db/sql/063_home_mw5_qualification_alert_outbox.sql.
+- API 277/277 tests, API typecheck/build, Web 283/283 tests, Web typecheck/build,
+  Python scheduler-image unittest 1/1, both affected container builds,
+  canonical repository gate and diff whitespace check passed. Production
+  scheduler inspection confirmed notification enablement, mounted gateway
+  token readability and configured destination without printing secrets.
+- Deployment and additive migration remain pending until this feature branch is
+  pushed and merged to master; no live or synthetic WhatsApp message was sent.
+- Details: docs/trading-analytics/HOME_MWHD_5M_WHATSAPP_ALERT_20260925.md.

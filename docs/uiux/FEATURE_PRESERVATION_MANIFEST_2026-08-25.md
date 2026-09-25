@@ -211,11 +211,14 @@ orders, chart zoom, cursor, drawings and measurements are unchanged. Evidence:
 
 2026-09-20 OIIS/OISS consolidated stock research delivery: newly discovered
 daily stock candidates use one final-only Tailscale research request and create
-one durable WhatsApp outbox message per `(trade_date, symbol)`. Claude, Qwen and
-DeepSeek are invoked and reconciled inside the trusted consolidated API; the
-worker no longer sends three provider-specific messages. Existing candidate
-selection, daily idempotency, immutable inputs, historical provider evidence,
-WhatsApp retry audit and paper/order boundaries remain unchanged. Evidence:
+one durable WhatsApp outbox message per `(trade_date, symbol)`. OISS selection
+is now limited to the first selected candidate per stock/day and guarded by a
+partial database uniqueness rule, so later scans cannot enqueue another review
+or alert for that stock/day. Claude, Qwen and DeepSeek are invoked and
+reconciled inside the trusted consolidated API; the worker no longer sends
+three provider-specific messages. Existing candidate selection, daily
+idempotency, immutable inputs, historical provider evidence, WhatsApp retry
+audit and paper/order boundaries remain unchanged. Evidence:
 `docs/oiis-live/AI_STOCK_RESEARCH_CONSOLIDATED_WEBHOOK_20260920.md`.
 
 2026-09-20 compact Scalper V2 OI hover repair: the three narrow strike-side

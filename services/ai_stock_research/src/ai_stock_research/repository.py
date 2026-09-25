@@ -80,7 +80,8 @@ class Repository:
             (start_date, list(OFFICIAL_OIIS_SLOTS)),
         ).fetchall()
         oiss = conn.execute(
-            """SELECT 'OISS' source_strategy,r.run_id source_run_id,c.candidate_id source_candidate_id,
+            """SELECT DISTINCT ON (r.run_date,upper(c.symbol))
+              'OISS' source_strategy,r.run_id source_run_id,c.candidate_id source_candidate_id,
               ('SCAN_'||r.scan_sequence::text) source_slot,'NEW_ACTIONABLE_SELECTION' trigger_kind,
               coalesce(r.completed_at,r.scan_timestamp) source_observed_at,r.run_date trade_date,
               oc.signal_date,c.symbol,c.company_name,oc.instrument_token,c.direction,
@@ -91,10 +92,35 @@ class Repository:
               FROM oiss.run r JOIN oiss.candidate c ON c.run_id=r.run_id
               LEFT JOIN oiis_live.daily_candidate oc ON oc.candidate_id=c.source_oiis_candidate_id
               WHERE r.status='COMPLETED' AND r.run_date>=%s AND c.selected=true
-              ORDER BY r.run_date,r.scan_timestamp,c.rank NULLS LAST,c.symbol""",
+                AND NOT EXISTS (
+                  SELECT 1 FROM ai_stock_research.evaluation e
+                  JOIN ai_stock_research.evaluation_source es USING (evaluation_id)
+                  WHERE e.trade_date=r.run_date AND upper(e.symbol)=upper(c.symbol)
+                    AND es.source_strategy='OISS'
+                )
+              ORDER BY r.run_date,upper(c.symbol),coalesce(r.scan_timestamp,r.completed_at),
+                c.rank NULLS LAST,c.candidate_id""",
             (start_date,),
         ).fetchall()
         return list(oiis) + list(oiss)
+
+    @staticmethod
+    def _one_oiss_source_per_stock_day(
+        sources: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Fail closed against multiple OISS scans for one daily stock key."""
+        seen: set[tuple[date, str]] = set()
+        result: list[dict[str, Any]] = []
+        for source in sources:
+            if source["source_strategy"] != "OISS":
+                result.append(source)
+                continue
+            key = (source["trade_date"], str(source["symbol"]).strip().upper())
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append(source)
+        return result
 
     def _history(self, conn: Any, token: str | None, through: date) -> dict[str, list[Any]]:
         if not token:
@@ -128,7 +154,10 @@ class Repository:
         new_sources = 0
         insufficient = 0
         with self.pool.connection() as conn:
-            for source in self._source_rows(conn, start_date):
+            sources = self._one_oiss_source_per_stock_day(
+                self._source_rows(conn, start_date)
+            )
+            for source in sources:
                 symbol = str(source["symbol"]).upper()
                 evaluation = conn.execute(
                     "SELECT evaluation_id FROM ai_stock_research.evaluation WHERE trade_date=%s AND symbol=%s",
@@ -215,7 +244,7 @@ class Repository:
                     """INSERT INTO ai_stock_research.evaluation_source(
                       evaluation_id,source_strategy,source_run_id,source_candidate_id,source_slot,
                       trigger_kind,source_observed_at)
-                      VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(source_strategy,source_candidate_id) DO NOTHING
+                      VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING
                       RETURNING evaluation_id""",
                     (
                         evaluation_id,

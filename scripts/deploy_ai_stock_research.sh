@@ -18,6 +18,11 @@ docker compose "${COMPOSE_ARGS[@]}" exec -T postgres \
   sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' \
   < "${ROOT_DIR}/db/sql/056_ai_stock_research.sql"
 
+echo "Applying OISS once-per-stock/day source gate..."
+docker compose "${COMPOSE_ARGS[@]}" exec -T postgres \
+  sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' \
+  < "${ROOT_DIR}/db/sql/061_ai_stock_research_oiss_daily_source_gate.sql"
+
 echo "Building AI stock research service..."
 docker compose "${COMPOSE_ARGS[@]}" build ai-stock-research
 

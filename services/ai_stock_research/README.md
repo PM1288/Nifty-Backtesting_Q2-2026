@@ -33,6 +33,9 @@ to WhatsApp. JSON transport remains parseable but must satisfy the V5 fields.
   OISS scheduler.
 - `(trade_date, symbol)` is the evaluation identity, so a symbol is evaluated
   only once per day even if it appears in later scans or both strategies.
+- OISS uses the first selected scan candidate per symbol/day; the database also
+  enforces at most one OISS source row per daily evaluation. Later OISS scans
+  cannot create another review request or WhatsApp message for that stock/day.
 - Every stock has one idempotent `CONSOLIDATED` result row.
 - Only a `SUCCEEDED` consolidated row can create one delivery-outbox row. Exceptions,
   retries, logs and stack traces are never transformed into WhatsApp messages.
@@ -106,6 +109,10 @@ The direct gateway is shared with Paper Trading at
 `https://wweb.noviusrailtech.com/webhook/send`. A Cloudflare `530` is an upstream
 gateway/tunnel outage, not a successful delivery. It remains in the retry audit
 and never becomes a WhatsApp error message.
+
+The OISS daily-source uniqueness guard is installed by
+`db/sql/061_ai_stock_research_oiss_daily_source_gate.sql` and is applied by the
+service deployment script.
 
 ## Tests
 

@@ -73,6 +73,17 @@ contiguous.
   terminal `DEAD`, latest observed event `RETRY`). The immediate non-delivery
   cause is gateway rejection, not an intraday-volume gate. Gateway authorization
   remains unresolved; no successful WhatsApp delivery is claimed.
-- The production completed-session volume snapshot observed at 15:01 IST was
-  759,330 vs prior-20-session average 815,437 (0.93×). This is not a point-in-
-  time V20 value for the earlier candidate timestamps.
+- The nearest live Motilal volume observation (15:01:53 IST) was 759,330 shares
+  versus an 815,437-share prior-20-session average: raw volume was 0.93× at
+  that partial-session point, corresponding to projected V20 1.0067×. This
+  suggests it was just over the threshold by 15:01, but is not an exact V20
+  reading at the earlier alert timestamps.
+- Correction deployed from commit `173a609` on pushed `master`. API tests
+  277/277, web tests 283/283, API/web typechecks and builds, and the canonical
+  repository gate passed. Targeted scheduler-container message-format smoke
+  passed; local Python unittest discovery could not run because host Python
+  lacks `psycopg`. Production dashboard is healthy with zero restarts and the
+  routed `/n50/` page/entry asset verified. Four pre-change Motilal events now
+  show terminal `DEAD` status with HTTP 403; the new V20 gate has not yet been
+  observed on a live session after deployment. Gateway authorization remains
+  an external blocker to actual WhatsApp delivery.

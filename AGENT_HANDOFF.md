@@ -10,7 +10,13 @@
   price checks passing, but delivery attempts returned HTTP 403. Existing
   events did not store V20, so they cannot prove the new volume gate. Gateway
   authorization remains unresolved; no delivery is claimed.
-- Evidence and release status: `docs/trading-analytics/HOME_MWHD_5M_WHATSAPP_ALERT_20260925.md`.
+- Closest live volume evidence at 15:01:53 IST projects V20 at 1.0067× (just
+  over threshold), but is not an exact 14:58 observation. Commit `173a609` is
+  pushed to master and deployed; dashboard healthy, route verified. API 277/277
+  tests, web 283/283, both typechecks/builds and preservation gate passed.
+  Host Python unittest was blocked by missing `psycopg`; scheduler-container
+  formatter smoke passed. Gateway authorization remains unresolved.
+- Evidence: `docs/trading-analytics/HOME_MWHD_5M_WHATSAPP_ALERT_20260925.md`.
 
 ## 2026-09-25 — Scalper V2 tentative CE/PE WhatsApp references
 

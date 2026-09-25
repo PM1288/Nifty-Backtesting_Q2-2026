@@ -1,5 +1,19 @@
 # UI feature preservation manifest — 25 August 2026
 
+## 2026-09-25 Scalper V2 tentative CE/PE WhatsApp references
+
+- Live, exact completed-5m three-instrument EMA9 references from the selected
+  underlying and independent exact CE/PE pair are sent through the authenticated
+  dashboard API to a durable idempotent outbox. The scheduler sends fresh
+  events to the configured `WA_MYSELF_CHAT_ID` used by OIIS; duplicate refreshes
+  are suppressed and stale events are not delivered.
+- Messages include the snapshot candle time (IST), exact instrument values,
+  EMA9 and both option volume confirmations, and explicitly state that this is
+  a tentative reference—not an order, trade, fill, target or exit. Replay and
+  historical views do not enqueue alerts. Rule calculations, OIIS alerts,
+  V1/V2 chart features, data collection and order permissions remain unchanged.
+- Evidence: `docs/trading-analytics/SCALPER_V2_TENTATIVE_WHATSAPP_ALERT_20260925.md`.
+
 2026-09-23 3Month live 5-minute confirmation: the Home Bull/Bear selector and
 the full 3Month evidence table add one compact 5m group backed by two real,
 mandatory session-anchored comparisons: current 5m close versus its open and

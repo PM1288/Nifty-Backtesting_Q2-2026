@@ -3,7 +3,7 @@ import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import type { EChartsOption } from "echarts";
-import { getJson } from "../lib/api";
+import { getJson, postScalperV2TentativeAlert } from "../lib/api";
 import { SCALPER_V2_OPTION_HISTORY_REFRESH_MS, SCALPER_V2_PRICE_REFRESH_MS } from "../lib/liveCadence";
 import { evidenceCsv } from "../lib/tradingAnalyticsExport";
 import { MwhdRankBadge } from "../features/mwhd/MwhdRankBadge";
@@ -434,6 +434,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const indicators = useMemo(() => scalperIndicators(rawUnderlying?.bars ?? []), [rawUnderlying]);
   const signals = useMemo(() => scalperPairedBody70Signals(panes, interval), [panes, interval]);
   const potentialEmaSignals = useMemo(() => scalperV2EmaAlignmentSignals(panes, interval), [panes, interval]);
+  const tentativeAlertRequests = useRef(new Set<string>());
   const potentialEmaAvailability = useMemo(() => scalperV2EmaAlignmentAvailability(panes, interval), [panes, interval]);
   const potentialEmaEvaluation = useMemo(() => scalperV2EmaEvaluation(rawPanes, interval), [rawPanes, interval]);
   const measurement = useMemo(() => points.length === 2 ? measurePanes(measurementContext?.panes ?? panes, points[0], points[1], Number(quantity)) : null, [measurementContext, panes, points, quantity]);
@@ -540,6 +541,65 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
     });
     window.localStorage.setItem(storageKey, JSON.stringify([...known].slice(-100)));
   }, [interval, potentialEmaSignals, replayAsOf, symbol, tradingDay]);
+  useEffect(() => {
+    if (typeof window === "undefined" || replayAsOf || interval !== 5 || tradingDay !== istDay(new Date().toISOString())) return;
+    const now = Date.now();
+    const recent = potentialEmaSignals.filter((signal) => {
+      const age = now - Date.parse(signal.setupTime);
+      return age >= 0 && age <= 10 * 60_000;
+    });
+    if (!recent.length) return;
+    let sent: string[] = [];
+    try {
+      const stored: unknown = JSON.parse(window.localStorage.getItem("n50.scalper-v2-ema-reference-whatsapp") ?? "[]");
+      sent = Array.isArray(stored) ? stored.filter((value): value is string => typeof value === "string") : [];
+    } catch { sent = []; }
+    const known = new Set(sent);
+    const panesByInstrument = { UNDERLYING: underlying, CE: call, PE: put };
+    for (const signal of recent) {
+      if (known.has(signal.id) || tentativeAlertRequests.current.has(signal.id)) continue;
+      const legs = signal.legs.map((leg) => {
+        const pane = panesByInstrument[leg.instrument];
+        const bar = pane?.bars.find((candidate) => candidate.closed === true && String(candidate.end) === signal.setupTime);
+        const close = numeric(bar?.close);
+        const ema9 = numeric(bar?.ema9);
+        if (close == null || ema9 == null) return null;
+        return {
+          instrument: leg.instrument,
+          symbol: leg.symbol,
+          targetSide: leg.targetSide,
+          crossTime: leg.crossTime,
+          close,
+          ema9,
+          volume: leg.volume,
+          volumeEma20: leg.volumeEma20,
+          volumeToEmaRatio: leg.volumeToEmaRatio,
+          volumeConfirmed: leg.volumeConfirmed,
+        };
+      });
+      if (legs.some((leg) => leg == null) || !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) continue;
+      tentativeAlertRequests.current.add(signal.id);
+      void postScalperV2TentativeAlert({
+        rule: signal.rule,
+        state: signal.state,
+        direction: signal.direction,
+        intervalMinutes: signal.intervalMinutes,
+        setupTime: signal.setupTime,
+        underlyingSymbol: symbol,
+        expiry,
+        legs,
+      }, signal.id).then(() => {
+        known.add(signal.id);
+        window.localStorage.setItem("n50.scalper-v2-ema-reference-whatsapp", JSON.stringify([...known].slice(-200)));
+      }).catch((error: unknown) => {
+        // The durable server outbox is authoritative; retry on the next live refresh.
+        if (error instanceof Error && /API (400|409):/.test(error.message)) {
+          known.add(signal.id);
+          window.localStorage.setItem("n50.scalper-v2-ema-reference-whatsapp", JSON.stringify([...known].slice(-200)));
+        }
+      }).finally(() => tentativeAlertRequests.current.delete(signal.id));
+    }
+  }, [call, expiry, interval, potentialEmaSignals, put, replayAsOf, symbol, tradingDay, underlying]);
   const sessionTimes = useMemo(() => (underlying?.bars ?? []).flatMap((bar) => {
     const value = intervalBarChartTime(bar);
     return value == null ? [] : [Number(value) * 1000];

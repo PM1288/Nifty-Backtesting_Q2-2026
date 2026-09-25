@@ -96,7 +96,7 @@ export function registerRoutes(
   registerRollingWindow(app, prisma);
   registerLongOptions(app, prisma);
   registerNiftyWeeklyOptions(app, prisma);
-  registerTradingAnalytics(app, prisma);
+  registerTradingAnalytics(app, prisma, authRuntime);
   registerNiftyContext(app, prisma);
   registerNseIntelligence(app, prisma);
   registerDataHealth(app, prisma);

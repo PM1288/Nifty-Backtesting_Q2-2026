@@ -16,6 +16,7 @@ from .pipeline import (
     sync_raw_minute,
 )
 from .scalper_signals import evaluate_scalper_entries
+from .scalper_v2_tentative_alerts import deliver_scalper_v2_tentative_alerts
 from .sql_loader import install_sql
 
 
@@ -78,7 +79,9 @@ def main() -> None:
         backfill_history(days=args.days, index_code=args.index_code)
         return
     if args.job == "scalper-entries":
-        print(json.dumps(evaluate_scalper_entries(trade_date=trade_date), default=str))
+        tentative = deliver_scalper_v2_tentative_alerts()
+        evaluation = evaluate_scalper_entries(trade_date=trade_date)
+        print(json.dumps({"tentative_v2_whatsapp": tentative, "scalper_entry_evaluation": evaluation}, default=str))
         return
 
 

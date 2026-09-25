@@ -116,6 +116,8 @@ log "additional: append-only market predictor research ledger"
 run_compose exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 < "${ROOT_DIR}/db/sql/059_market_predictor.sql"
 log "additional: derived Scalper OI history repair table"
 run_compose exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 < "${ROOT_DIR}/db/sql/060_scalper_oi_history.sql"
+log "additional: Scalper V2 tentative WhatsApp alert outbox"
+run_compose exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 < "${ROOT_DIR}/db/sql/062_scalper_v2_tentative_alert_outbox.sql"
 run_compose build n50-dashboard
 run_compose run --rm --entrypoint node n50-dashboard apps/api/dist/scripts/bootstrapDatabase.js
 

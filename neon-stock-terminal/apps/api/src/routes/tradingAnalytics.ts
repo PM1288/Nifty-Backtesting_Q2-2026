@@ -2,6 +2,7 @@ import type { Express, RequestHandler, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import type { RequestAuthenticator } from "../auth/guard";
 import { loadSmartApiNifty } from "../services/tradingAnalyticsSmartApi";
 import { periodCandles } from "../services/tradingAnalyticsPeriods";
 import { resistanceViews } from "../services/tradingAnalyticsResistance";
@@ -614,7 +615,95 @@ export async function loadTradingAnalytics(
       .digest("hex"),
   };
 }
-export function registerTradingAnalytics(app: Express, prisma: PrismaClient) {
+const tentativeAlertLegSchema = z.object({
+  instrument: z.enum(["UNDERLYING", "CE", "PE"]),
+  symbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/),
+  targetSide: z.enum(["ABOVE", "BELOW"]),
+  crossTime: z.string().datetime({ offset: true }),
+  close: z.number().finite().positive(),
+  ema9: z.number().finite().positive(),
+  volume: z.number().finite().nonnegative().nullable(),
+  volumeEma20: z.number().finite().positive().nullable(),
+  volumeToEmaRatio: z.number().finite().nonnegative().nullable(),
+  volumeConfirmed: z.boolean().nullable(),
+}).strict();
+
+const tentativeAlertSchema = z.object({
+  rule: z.literal("SCALPER_V2_THREE_INSTRUMENT_EMA_ALIGNMENT_VOLUME_V2"),
+  state: z.literal("POTENTIAL_ENTRY_REFERENCE"),
+  direction: z.enum(["CALL", "PUT"]),
+  intervalMinutes: z.literal(5),
+  setupTime: z.string().datetime({ offset: true }),
+  underlyingSymbol: z.string().regex(/^[A-Z0-9&_.-]{1,40}$/),
+  expiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  legs: z.array(tentativeAlertLegSchema).length(3),
+}).strict();
+
+export function registerTradingAnalytics(app: Express, prisma: PrismaClient, auth?: RequestAuthenticator) {
+  app.post("/v1/trading-analytics/scalper-v2/tentative-alert", async (req, res) => {
+    if (!auth) return res.status(503).json({ error: { code: "TENTATIVE_ALERT_AUTH_UNAVAILABLE" } });
+    try {
+      const session = await auth.getSession(req);
+      if (!session) return res.status(401).json({ error: { code: "AUTH_REQUIRED" } });
+      auth.requireCsrf(req, session);
+      const parsed = tentativeAlertSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_TENTATIVE_ALERT", message: parsed.error.issues[0]?.message } });
+      const value = parsed.data;
+      const byInstrument = new Map(value.legs.map((leg) => [leg.instrument, leg]));
+      const underlying = byInstrument.get("UNDERLYING");
+      const ce = byInstrument.get("CE");
+      const pe = byInstrument.get("PE");
+      if (!underlying || !ce || !pe || !ce.symbol.endsWith("CE") || !pe.symbol.endsWith("PE")
+        || ce.volumeConfirmed !== true || pe.volumeConfirmed !== true
+        || ce.volume == null || ce.volumeEma20 == null || pe.volume == null || pe.volumeEma20 == null
+        || ce.volume < ce.volumeEma20 * 0.95 || pe.volume < pe.volumeEma20 * 0.95
+        || (ce.volumeToEmaRatio ?? 0) < 0.95 || (pe.volumeToEmaRatio ?? 0) < 0.95) {
+        return res.status(400).json({ error: { code: "TENTATIVE_ALERT_EVIDENCE_INCOMPLETE" } });
+      }
+      const expectedSides = value.direction === "CALL"
+        ? { UNDERLYING: "ABOVE", CE: "ABOVE", PE: "BELOW" }
+        : { UNDERLYING: "BELOW", CE: "BELOW", PE: "ABOVE" };
+      if (value.legs.some((leg) => leg.targetSide !== expectedSides[leg.instrument]))
+        return res.status(400).json({ error: { code: "TENTATIVE_ALERT_DIRECTION_MISMATCH" } });
+      if (value.legs.some((leg) => leg.targetSide === "ABOVE" ? leg.close <= leg.ema9 : leg.close >= leg.ema9))
+        return res.status(400).json({ error: { code: "TENTATIVE_ALERT_EMA_EVIDENCE_MISMATCH" } });
+      const setupMs = Date.parse(value.setupTime);
+      const crossMs = value.legs.map((leg) => Date.parse(leg.crossTime));
+      if (setupMs > Date.now() || Date.now() - setupMs > 10 * 60_000 || crossMs.some((time) => time > setupMs || setupMs - time > 5 * 60_000))
+        return res.status(409).json({ error: { code: "TENTATIVE_ALERT_STALE" } });
+
+      const eventKey = createHash("sha256").update([
+        value.rule, value.underlyingSymbol, value.expiry, value.direction,
+        ce.symbol, pe.symbol, value.setupTime,
+      ].join("|"), "utf8").digest("hex");
+      const rows = await prisma.$queryRawUnsafe<Array<{ eventKey: string }>>(`
+        INSERT INTO nse_ops.scalper_v2_tentative_alert_outbox(
+          event_key,trade_date,snapshot_time,underlying_symbol,expiry,direction,ce_symbol,pe_symbol,
+          payload,created_by
+        )
+        SELECT $1,(now() AT TIME ZONE 'Asia/Kolkata')::date,$2::timestamptz,$3,$4::date,$5,$6,$7,$8::jsonb,$9
+        WHERE $2::timestamptz >= now() - interval '10 minutes'
+          AND $2::timestamptz <= now()
+          AND ($2::timestamptz AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date
+        ON CONFLICT(event_key) DO NOTHING
+        RETURNING event_key AS "eventKey"`,
+      eventKey, value.setupTime, value.underlyingSymbol, value.expiry, value.direction, ce.symbol, pe.symbol,
+      JSON.stringify(value), session.user.uid);
+      if (!rows.length) {
+        const existing = await prisma.$queryRawUnsafe<Array<{ eventKey: string }>>(
+          "SELECT event_key AS \"eventKey\" FROM nse_ops.scalper_v2_tentative_alert_outbox WHERE event_key=$1 AND trade_date=(now() AT TIME ZONE 'Asia/Kolkata')::date",
+          eventKey,
+        );
+        if (existing.length) return res.json({ accepted: true, duplicate: true, eventKey });
+        return res.status(409).json({ error: { code: "TENTATIVE_ALERT_NOT_CURRENT_SESSION" } });
+      }
+      return res.status(202).json({ accepted: true, duplicate: false, eventKey });
+    } catch (error) {
+      const status = Number((error as { status?: unknown })?.status);
+      if (status === 403) return res.status(403).json({ error: { code: "CSRF_REQUIRED" } });
+      return res.status(503).json({ error: { code: "TENTATIVE_ALERT_QUEUE_UNAVAILABLE" } });
+    }
+  });
   app.get("/v1/trading-analytics/scalper-log", async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });

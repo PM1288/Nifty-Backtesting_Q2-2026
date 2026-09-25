@@ -1,5 +1,22 @@
 # Agent Handoff — Phase 1 Data Foundation
 
+## 2026-09-25 — Scalper V2 tentative CE/PE WhatsApp references
+
+- Live Scalper V2 now posts fresh, completed five-minute three-instrument EMA9
+  tentative references to an authenticated API; the API validates direction,
+  CE/PE identities, volume confirmation, current IST date and event freshness.
+- An additive outbox uses a server-derived event key, bounded retry and stale
+  suppression. The existing `scalper-entries` scheduler sends through the
+  current WhatsApp gateway/token and configured `WA_MYSELF_CHAT_ID` used for
+  OIIS. Alert includes setup snapshot time in IST and explicitly says it is not
+  an order or executed trade. Replay views do not send.
+- No synthetic WhatsApp message was broadcast. API tests validate acceptance,
+  deduplication, stale rejection, and direction/volume guards; Python formatter
+  fixture verifies snapshot time and non-execution wording. Production delivery
+  remains dependent on a real qualifying signal and the existing scheduler,
+  token, and WhatsApp connectivity.
+- Evidence: `docs/trading-analytics/SCALPER_V2_TENTATIVE_WHATSAPP_ALERT_20260925.md`.
+
 ## 2026-09-23 — Home and Scalper V2 stable hydration repair
 
 - Removed automatic build-version reloads from active workspaces. A new release

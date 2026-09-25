@@ -466,6 +466,17 @@ export function cancelBacktestingLabRun(
   );
 }
 
+export function postScalperV2TentativeAlert(
+  payload: Record<string, unknown>,
+  idempotencyKey: string,
+): Promise<{ accepted: boolean; duplicate: boolean; eventKey: string }> {
+  return mutateBacktestingLab<{ accepted: boolean; duplicate: boolean; eventKey: string }>(
+    "/v1/trading-analytics/scalper-v2/tentative-alert",
+    payload,
+    idempotencyKey,
+  );
+}
+
 export function getBacktestingLabCsvUrl(runId: string): string {
   return `${API_BASE_URL}${resolveApiPath(`/v1/backtesting/lab/runs/${encodeURIComponent(runId)}/trades.csv`)}`;
 }

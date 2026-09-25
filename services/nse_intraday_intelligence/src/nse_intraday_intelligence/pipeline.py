@@ -2420,7 +2420,10 @@ def run_job_key(job_key: str, trigger_type: str = "manual", **kwargs) -> dict:
             result = backfill_history(int(kwargs.get("days") or 90), kwargs.get("index_code"))
         elif job_key == "scalper_entry_evaluate":
             _step(run_id, 1, "scalper_entries", "running", "Evaluating paired F&O underlying and option EMA9 entries", kwargs)
+            from .scalper_v2_tentative_alerts import deliver_scalper_v2_tentative_alerts
+            tentative_alerts = deliver_scalper_v2_tentative_alerts()
             result = evaluate_scalper_entries(kwargs.get("trade_date"))
+            result["tentative_v2_whatsapp"] = tentative_alerts
         else:
             raise RuntimeError(f"Unknown job_key={job_key}")
         _step(run_id, 1, "complete", "success", "Job completed", result)

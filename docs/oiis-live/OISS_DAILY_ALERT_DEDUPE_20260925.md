@@ -22,15 +22,19 @@ or paper/live order permissions.
 ## Validation and observed production state
 
 - Production read-only audit on 2026-09-25 found no stock/day with multiple
-  OISS source rows. The gate is preventative; it does not delete or rewrite
-  historical records.
-- For 2026-09-25, the audited daily consolidated provider rows had one attempt
-  apiece and status `DEAD` with `HTTPStatusError`; this indicates the research
-  endpoint was rejecting/failing requests at that time. It is separate from
-  duplicate alert behavior. No conclusion about an OISS WhatsApp message was
-  drawn from those OIIS-only records.
-- Focused service tests, lint, container build and canonical source gate are
-  recorded in `AGENT_HANDOFF.md` after release.
+  OISS source rows; in fact, the production source table currently contains
+  OIIS rows only because the OISS scheduler is disabled. The gate is therefore
+  preventative and its live OISS path remains unexercised; it does not delete
+  or rewrite historical records.
+- On 2026-09-25 the 28 daily consolidated provider rows were `DEAD` after one
+  attempt each with `HTTPStatusError`. The endpoint `/health` returned HTTP 200
+  after deployment, but that health response does not prove a successful
+  `/query/final` review or WhatsApp delivery. This is separate from duplicate
+  alert behavior; no successful OISS delivery was inferred.
+- Focused service tests: 23/23; Ruff: PASS; service container build: PASS;
+  canonical source gate: PASS; live migration/index verification: PASS; worker
+  health: `healthy`, zero restarts. Release SHA and remaining limitations are
+  recorded in `AGENT_HANDOFF.md`.
 
 ## Files
 

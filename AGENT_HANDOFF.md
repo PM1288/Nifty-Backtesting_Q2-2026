@@ -6742,3 +6742,27 @@ Released from master commit `280596c` on 2026-09-23. Focused positioning tests p
 Scalper V2's active chart workstation is now a continuous canvas rather than a set of rounded cards: outer view padding and card shadows/radii are removed, adjacent panes are separated only by a one-pixel divider, the drawing gutter and lower analytical strip align directly with the chart grid, and the command/context bar directly joins the parent Scalper header. Chart/side headers, command controls and native Lightweight Charts text are compacted to reclaim plot and timestamp space without changing chart data, controls, cursor linkage, ranges, drawing hit targets, OI calculations or strategy behavior. The parent rule applies only to the Scalper route; unrelated analytics routes remain unchanged.
 
 Released from master commit `bfca019` on 2026-09-23. Required web/API test, typecheck, build and canonical-repository gate completed successfully. Authenticated production Playwright rerun passed 24/24 (the earlier run had one scheduled-refresh overlap during the hover timing window, not a hover-triggered request). The release geometry improved to underlying body 838.31×616px, CE/PE bodies 658.69×295.5px, and 26px native time scales. Evidence: `/home/novius2/NIFTY50/evidence/scalper-v2-connected-canvas-20260923/production-rerun/`.
+
+## 2026-09-25 — OISS once-per-stock/day review and alert gate
+
+- OISS discovery selects only the earliest completed selected scan candidate
+  per `(trade_date, normalized_symbol)`, skips dates/symbols already recorded
+  as OISS sources, and applies a second in-process dedupe guard. PostgreSQL now
+  has a partial unique index enforcing one OISS source per daily evaluation;
+  source inserts are conflict-safe under concurrent discovery. Existing
+  evaluation/provider/outbox uniqueness and WhatsApp idempotency remain intact.
+- Focused AI research suite: 23/23 passed; Ruff passed; service Docker build
+  passed; canonical repository gate and `git diff --check` passed.
+- Deployed pushed `master` commit `97346f9` through
+  `scripts/deploy_ai_stock_research.sh`. Additive migration
+  `061_ai_stock_research_oiss_daily_source_gate.sql` applied. Only the
+  `ai-stock-research` service was recreated; live validation reports healthy,
+  zero restarts, provider `/health` HTTP 200, and the new index present. The
+  production DB has zero duplicate OISS stock/day rows (and currently has no
+  OISS source rows because that scheduler is disabled).
+- Live limitation: 28 consolidated provider evaluations for 2026-09-25 were
+  `DEAD` after one attempt with `HTTPStatusError`; `/health` is healthy but
+  this does not validate `/query/final` or WhatsApp delivery. No live OISS
+  end-to-end duplicate test was possible without OISS source rows. No records
+  were deleted or reprocessed. Details:
+  `docs/oiis-live/OISS_DAILY_ALERT_DEDUPE_20260925.md`.

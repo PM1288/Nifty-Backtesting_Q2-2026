@@ -6806,6 +6806,15 @@ Released from master commit `bfca019` on 2026-09-23. Required web/API test, type
   canonical repository gate and diff whitespace check passed. Production
   scheduler inspection confirmed notification enablement, mounted gateway
   token readability and configured destination without printing secrets.
-- Deployment and additive migration remain pending until this feature branch is
-  pushed and merged to master; no live or synthetic WhatsApp message was sent.
+- Pushed/fast-forwarded master commit 8c38193. Migration 063 applied
+  transactionally. Dashboard image
+  sha256:d3c85504735ede164f1e0cf95ea8af24d5b2ea3571f6b17c78e627fc7c074c98
+  is healthy (0 restarts); release route and fingerprinted asset verified.
+  Scheduler image
+  sha256:e68d5884dfaaee70985fc9c93cf6ce2de4d60ffa4d1c67300b94e611ca36f8ff
+  is running (0 restarts), notifier import succeeds, and intraday API health
+  returned HTTP 200. The WhatsApp worker is enabled with mounted token and
+  configured destination (values not printed). Outbox is empty because release
+  was outside NSE hours; no synthetic message was sent, so real gateway
+  delivery awaits a live qualification.
 - Details: docs/trading-analytics/HOME_MWHD_5M_WHATSAPP_ALERT_20260925.md.

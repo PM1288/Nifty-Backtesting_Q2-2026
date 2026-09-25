@@ -57,5 +57,14 @@ contiguous.
 - Production scheduler inspection confirms WhatsApp notifications are enabled,
   its mounted gateway token is readable, and a destination is configured. The
   secret value and destination are intentionally not printed.
-- Database migration and deployment remain pending release. No synthetic or
-  production WhatsApp message has been sent.
+- Released from pushed master commit 8c38193. Migration
+  db/sql/063_home_mw5_qualification_alert_outbox.sql applied transactionally.
+- Dashboard image sha256:d3c85504735ede164f1e0cf95ea8af24d5b2ea3571f6b17c78e627fc7c074c98
+  is healthy, has zero restarts, and the release script verified the routed
+  Trading Analytics page and its fingerprinted entry asset.
+- Scheduler image sha256:e68d5884dfaaee70985fc9c93cf6ce2de4d60ffa4d1c67300b94e611ca36f8ff
+  is running with zero restarts; its notifier module imports successfully.
+  Intraday API health returned HTTP 200.
+- The outbox currently contains no events (release was outside NSE hours).
+  No synthetic WhatsApp message was sent, so gateway delivery of this new event
+  type remains unverified until a real live qualification occurs.

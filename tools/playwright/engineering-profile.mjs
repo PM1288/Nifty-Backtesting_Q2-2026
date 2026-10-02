@@ -13,8 +13,9 @@ try {
  const auth=await context.request.post(base+'/auth/session/dev-login',{data:{identifier:'admin',password:process.env.PLAYWRIGHT_ADMIN_PASSWORD}});
  if(auth.status()!==200)throw new Error('Login failed: '+auth.status());
  for(const route of ['/', '/strategy/trading-analytics?view=scalper_v2&interval=5', '/strategy/rolling-monthly', '/paper-trading', '/institutional/nse-intelligence/reports', '/analytics/system/data-health']){
-  const page=await context.newPage(); const errors=[]; const consoleErrors=[]; const failedRequests=[];
+  const page=await context.newPage(); const errors=[]; const consoleErrors=[]; const failedRequests=[]; const httpErrors=[];
   page.on("console",m=>{if(m.type()==="error")consoleErrors.push(m.text().slice(0,500));});
+  page.on("response",r=>{if(r.status()>=400)httpErrors.push({path:new URL(r.url()).pathname,status:r.status()});});
   page.on("requestfailed",r=>failedRequests.push({path:new URL(r.url()).pathname,error:r.failure()?.errorText}));
   page.on('pageerror',err=>errors.push(err.message));
   await page.addInitScript(()=>{window.__profile={lcp:0,cls:0,longTasks:0}; for(const type of ['largest-contentful-paint','layout-shift','longtask']){try{new PerformanceObserver(list=>{for(const e of list.getEntries()){if(type==='largest-contentful-paint')window.__profile.lcp=e.startTime;if(type==='layout-shift'&&!e.hadRecentInput)window.__profile.cls+=e.value;if(type==='longtask')window.__profile.longTasks+=e.duration;}}).observe({type,buffered:true});}catch{}}});
@@ -25,7 +26,7 @@ try {
   const name=route.replace(/[^a-z0-9]+/gi,'_')||'home';
   await page.screenshot({path:path.join(out,name+'.png'),timeout:60000});
   const accessibility=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']).analyze();
-  results.push({route,errors,consoleErrors,failedRequests,...metrics,accessibility:accessibility.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))}); await page.close();
+  results.push({route,errors,consoleErrors,failedRequests,httpErrors,...metrics,accessibility:accessibility.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))}); await page.close();
  }
  await context.close();
 }finally{await browser.close();await fs.writeFile(path.join(out,'profile.json'),JSON.stringify(results,null,2));}

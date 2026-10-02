@@ -58,7 +58,7 @@ let ensuredTablePromise: Promise<void> | null = null;
 let ensuredTableMode: "verify" | "apply" | null = null;
 let redisClient: RedisClientType | null = null;
 let redisConnectPromise: Promise<void> | null = null;
-let redisUnavailable = false;
+let redisRetryAt = 0;
 const inflightRefreshes = new Map<string, Promise<StoredSnapshot<unknown>>>();
 const refreshAdmission = new WorkAdmission(1, 16, 10_000);
 
@@ -137,13 +137,14 @@ function normalizeBuildResult<T>(
 
 async function ensureRedis(): Promise<RedisClientType | null> {
   const redisUrl = process.env.REDIS_URL?.trim();
-  if (!redisUrl || redisUnavailable) return null;
-  if (redisClient?.isOpen) return redisClient;
+  if (!redisUrl) return null;
+  if (redisClient?.isReady) return redisClient;
+  if (Date.now() < redisRetryAt) return null;
 
   if (!redisClient) {
-    redisClient = createClient({ url: redisUrl });
+    redisClient = createClient({ url: redisUrl, disableOfflineQueue: true, socket: { connectTimeout: 1000, reconnectStrategy: false } });
     redisClient.on("error", (err) => {
-      redisUnavailable = true;
+      redisRetryAt = Date.now() + 5000;
       // eslint-disable-next-line no-console
       console.warn(JSON.stringify({
         ts: nowIso(),
@@ -159,7 +160,8 @@ async function ensureRedis(): Promise<RedisClientType | null> {
       .connect()
       .then(() => undefined)
       .catch((err) => {
-        redisUnavailable = true;
+        redisRetryAt = Date.now() + 5000;
+        if (redisClient?.isOpen) redisClient.destroy();
         redisClient = null;
         throw err;
       })
@@ -173,7 +175,7 @@ async function ensureRedis(): Promise<RedisClientType | null> {
   } catch {
     return null;
   }
-  return redisUnavailable ? null : redisClient;
+  return redisClient?.isReady ? redisClient : null;
 }
 
 type DashboardInfrastructureMode = "verify" | "apply";
@@ -248,12 +250,12 @@ export async function ensureDashboardSnapshotInfrastructure(
 async function readSnapshotFromRedis<T>(definitionKey: string, snapshotDate: string): Promise<StoredSnapshot<T> | null> {
   const redis = await ensureRedis();
   if (!redis) return null;
-  const raw = await redis.get(redisKey(definitionKey, snapshotDate));
+  const raw = await redis.withCommandOptions({ timeout: 1000 }).get(redisKey(definitionKey, snapshotDate)).catch(() => null);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as StoredSnapshot<T>;
   } catch {
-    await redis.del(redisKey(definitionKey, snapshotDate)).catch(() => undefined);
+    await redis.withCommandOptions({ timeout: 1000 }).del(redisKey(definitionKey, snapshotDate)).catch(() => undefined);
     return null;
   }
 }
@@ -261,7 +263,7 @@ async function readSnapshotFromRedis<T>(definitionKey: string, snapshotDate: str
 async function writeSnapshotToRedis<T>(record: StoredSnapshot<T>, ttlSeconds: number) {
   const redis = await ensureRedis();
   if (!redis) return;
-  await redis.set(redisKey(record.snapshotKey, record.snapshotDate), JSON.stringify(record), {
+  await redis.withCommandOptions({ timeout: 1000 }).set(redisKey(record.snapshotKey, record.snapshotDate), JSON.stringify(record), {
     EX: Math.max(30, ttlSeconds)
   });
 }

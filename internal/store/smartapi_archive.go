@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"trading-stack/internal/instruments"
 )
@@ -146,6 +148,10 @@ func (s *Store) InsertMarketTicks(ctx context.Context, rows []MarketTick) error 
 		s.logQuery("copy_market_ticks", start, len(rows), nil)
 		return nil
 	} else {
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+			return err
+		}
 		// A reconnect can replay an already archived event. Fall back to the
 		// idempotent insert path so a duplicate never loses the rest of the batch.
 		s.logQuery("copy_market_ticks_fallback", start, len(rows), err)

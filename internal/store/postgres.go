@@ -1477,36 +1477,38 @@ func (s *Store) UpsertInstrumentStates(ctx context.Context, states []InstrumentS
 		return nil
 	}
 	q := fmt.Sprintf(`
-    INSERT INTO %s.instrument_state
+    INSERT INTO %s.instrument_state AS current_state
       (exchange, symbol_token, last_seen_ts, last_price, last_source, last_bid, last_ask, last_bid_qty, last_ask_qty, last_trade_qty, last_open, last_high, last_low, last_close, last_volume, last_oi, last_oi_change_pct, total_buy_qty, total_sell_qty, avg_price, net_change, percent_change, upper_circuit, lower_circuit, week52_high, week52_low)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
     ON CONFLICT (exchange, symbol_token) DO UPDATE
       SET last_seen_ts = EXCLUDED.last_seen_ts,
-          last_price = EXCLUDED.last_price,
-          last_source = EXCLUDED.last_source,
-          last_bid = COALESCE(EXCLUDED.last_bid, %s.instrument_state.last_bid),
-          last_ask = COALESCE(EXCLUDED.last_ask, %s.instrument_state.last_ask),
-          last_bid_qty = COALESCE(EXCLUDED.last_bid_qty, %s.instrument_state.last_bid_qty),
-          last_ask_qty = COALESCE(EXCLUDED.last_ask_qty, %s.instrument_state.last_ask_qty),
-          last_trade_qty = COALESCE(EXCLUDED.last_trade_qty, %s.instrument_state.last_trade_qty),
-          last_open = COALESCE(EXCLUDED.last_open, %s.instrument_state.last_open),
-          last_high = COALESCE(EXCLUDED.last_high, %s.instrument_state.last_high),
-          last_low = COALESCE(EXCLUDED.last_low, %s.instrument_state.last_low),
-          last_close = COALESCE(EXCLUDED.last_close, %s.instrument_state.last_close),
-          last_volume = COALESCE(EXCLUDED.last_volume, %s.instrument_state.last_volume),
-          last_oi = COALESCE(EXCLUDED.last_oi, %s.instrument_state.last_oi),
-          last_oi_change_pct = COALESCE(EXCLUDED.last_oi_change_pct, %s.instrument_state.last_oi_change_pct),
-          total_buy_qty = COALESCE(EXCLUDED.total_buy_qty, %s.instrument_state.total_buy_qty),
-          total_sell_qty = COALESCE(EXCLUDED.total_sell_qty, %s.instrument_state.total_sell_qty),
-          avg_price = COALESCE(EXCLUDED.avg_price, %s.instrument_state.avg_price),
-          net_change = COALESCE(EXCLUDED.net_change, %s.instrument_state.net_change),
-          percent_change = COALESCE(EXCLUDED.percent_change, %s.instrument_state.percent_change),
-          upper_circuit = COALESCE(EXCLUDED.upper_circuit, %s.instrument_state.upper_circuit),
-          lower_circuit = COALESCE(EXCLUDED.lower_circuit, %s.instrument_state.lower_circuit),
-          week52_high = COALESCE(EXCLUDED.week52_high, %s.instrument_state.week52_high),
-          week52_low = COALESCE(EXCLUDED.week52_low, %s.instrument_state.week52_low),
+          last_price = COALESCE(EXCLUDED.last_price, current_state.last_price),
+          last_source = COALESCE(EXCLUDED.last_source, current_state.last_source),
+          last_bid = COALESCE(EXCLUDED.last_bid, current_state.last_bid),
+          last_ask = COALESCE(EXCLUDED.last_ask, current_state.last_ask),
+          last_bid_qty = COALESCE(EXCLUDED.last_bid_qty, current_state.last_bid_qty),
+          last_ask_qty = COALESCE(EXCLUDED.last_ask_qty, current_state.last_ask_qty),
+          last_trade_qty = COALESCE(EXCLUDED.last_trade_qty, current_state.last_trade_qty),
+          last_open = COALESCE(EXCLUDED.last_open, current_state.last_open),
+          last_high = COALESCE(EXCLUDED.last_high, current_state.last_high),
+          last_low = COALESCE(EXCLUDED.last_low, current_state.last_low),
+          last_close = COALESCE(EXCLUDED.last_close, current_state.last_close),
+          last_volume = COALESCE(EXCLUDED.last_volume, current_state.last_volume),
+          last_oi = COALESCE(EXCLUDED.last_oi, current_state.last_oi),
+          last_oi_change_pct = COALESCE(EXCLUDED.last_oi_change_pct, current_state.last_oi_change_pct),
+          total_buy_qty = COALESCE(EXCLUDED.total_buy_qty, current_state.total_buy_qty),
+          total_sell_qty = COALESCE(EXCLUDED.total_sell_qty, current_state.total_sell_qty),
+          avg_price = COALESCE(EXCLUDED.avg_price, current_state.avg_price),
+          net_change = COALESCE(EXCLUDED.net_change, current_state.net_change),
+          percent_change = COALESCE(EXCLUDED.percent_change, current_state.percent_change),
+          upper_circuit = COALESCE(EXCLUDED.upper_circuit, current_state.upper_circuit),
+          lower_circuit = COALESCE(EXCLUDED.lower_circuit, current_state.lower_circuit),
+          week52_high = COALESCE(EXCLUDED.week52_high, current_state.week52_high),
+          week52_low = COALESCE(EXCLUDED.week52_low, current_state.week52_low),
           updated_at = now()
-  `, quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema), quoteIdent(s.Schema))
+    WHERE EXCLUDED.last_seen_ts >= current_state.last_seen_ts
+       OR (current_state.last_source = 'rest_quote' AND EXCLUDED.last_source = 'rest_quote_exchange')
+  `, quoteIdent(s.Schema))
 	batch := &pgx.Batch{}
 	for _, state := range states {
 		batch.Queue(q,
@@ -1818,4 +1820,12 @@ func nullableString(value string) *string {
 		return nil
 	}
 	return &value
+}
+
+// MarketSessionAt reads the explicit exchange calendar; unknown dates fail closed.
+func (s *Store) MarketSessionAt(ctx context.Context, now time.Time, loc *time.Location) (bool, error) {
+	var open bool
+	err := s.Pool.QueryRow(ctx, fmt.Sprintf(`SELECT is_trading_day AND $2 >= market_open_ts AND $2 <= market_close_ts
+		FROM %s.trading_calendar WHERE trade_date = $1::date`, quoteIdent(s.Schema)), now.In(loc).Format("2006-01-02"), now).Scan(&open)
+	return open, err
 }

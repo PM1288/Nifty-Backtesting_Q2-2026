@@ -86,8 +86,15 @@ func (m *WSManager) Run(ctx context.Context, source SubscriptionSource, out chan
 					select {
 					case updates[i] <- next:
 					default:
-						<-updates[i]
-						updates[i] <- next
+						select {
+						case <-updates[i]:
+						default:
+						}
+						select {
+						case updates[i] <- next:
+						case <-egCtx.Done():
+							return egCtx.Err()
+						}
 					}
 				}
 			}
@@ -128,7 +135,9 @@ func runShard(ctx context.Context, streamer *Streamer, initial []store.Subscript
 			if logger != nil {
 				logger.Warn("ws_connect_failed", "err", err)
 			}
-			time.Sleep(backoff)
+			if err := waitReconnect(ctx, backoff); err != nil {
+				return err
+			}
 			backoff = minDuration(maxBackoff, backoff*2)
 			continue
 		}
@@ -141,6 +150,9 @@ func runShard(ctx context.Context, streamer *Streamer, initial []store.Subscript
 			}
 			_ = conn.Close()
 			streamer.connected.Store(false)
+			if err := waitReconnect(ctx, backoff); err != nil {
+				return err
+			}
 			continue
 		}
 		state.connSubs = map[string]store.Subscription{}
@@ -148,16 +160,19 @@ func runShard(ctx context.Context, streamer *Streamer, initial []store.Subscript
 			state.connSubs[subKey(sub)] = sub
 		}
 
+		readCtx, stopRead := context.WithCancel(ctx)
 		readErr := make(chan error, 1)
-		go func() { readErr <- streamer.readLoop(ctx, conn, out) }()
+		go func() { readErr <- streamer.readLoop(readCtx, conn, out) }()
 
 		for {
 			select {
 			case <-ctx.Done():
+				stopRead()
 				_ = conn.Close()
 				streamer.connected.Store(false)
 				return ctx.Err()
 			case err := <-readErr:
+				stopRead()
 				streamer.connected.Store(false)
 				_ = conn.Close()
 				if err != nil && logger != nil && err != context.Canceled {
@@ -173,10 +188,20 @@ func runShard(ctx context.Context, streamer *Streamer, initial []store.Subscript
 				state.desired = next
 				add, remove := diffSubs(state.connSubs, next)
 				if len(remove) > 0 {
-					_ = streamer.unsubscribeAll(conn, remove)
+					if err := streamer.unsubscribeAll(conn, remove); err != nil {
+						stopRead()
+						_ = conn.Close()
+						<-readErr
+						goto Reconnect
+					}
 				}
 				if len(add) > 0 {
-					_ = streamer.subscribeAll(conn, add)
+					if err := streamer.subscribeAll(conn, add); err != nil {
+						stopRead()
+						_ = conn.Close()
+						<-readErr
+						goto Reconnect
+					}
 				}
 				state.connSubs = map[string]store.Subscription{}
 				for _, sub := range next {
@@ -185,6 +210,10 @@ func runShard(ctx context.Context, streamer *Streamer, initial []store.Subscript
 			}
 		}
 	Reconnect:
+		streamer.connected.Store(false)
+		if err := waitReconnect(ctx, backoff); err != nil {
+			return err
+		}
 		continue
 	}
 }

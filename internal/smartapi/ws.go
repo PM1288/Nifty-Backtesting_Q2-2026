@@ -84,7 +84,9 @@ func (s *Streamer) Run(ctx context.Context, subs []store.Subscription, out chan<
 		conn, err := s.connect(ctx)
 		if err != nil {
 			s.logWarn("ws_connect_failed", "err", err)
-			time.Sleep(backoff)
+			if err := waitReconnect(ctx, backoff); err != nil {
+				return err
+			}
 			backoff = minDuration(maxBackoff, backoff*2)
 			continue
 		}
@@ -124,7 +126,7 @@ func (s *Streamer) connect(ctx context.Context) (*websocket.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := s.connectOnce(tokens)
+	conn, err := s.connectOnce(ctx, tokens)
 	if err == nil || !IsAuthError(err) {
 		return conn, err
 	}
@@ -135,10 +137,10 @@ func (s *Streamer) connect(ctx context.Context) (*websocket.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.connectOnce(tokens)
+	return s.connectOnce(ctx, tokens)
 }
 
-func (s *Streamer) connectOnce(tokens AuthTokens) (*websocket.Conn, error) {
+func (s *Streamer) connectOnce(ctx context.Context, tokens AuthTokens) (*websocket.Conn, error) {
 	auth := strings.TrimSpace(tokens.AccessToken)
 	wsHost := ""
 	if parsed, err := url.Parse(s.cfg.WSURL); err == nil {
@@ -178,7 +180,7 @@ func (s *Streamer) connectOnce(tokens AuthTokens) (*websocket.Conn, error) {
 			ServerName:         serverName,
 		}
 	}
-	conn, resp, err := dialer.Dial(s.cfg.WSURL, header)
+	conn, resp, err := dialer.DialContext(ctx, s.cfg.WSURL, header)
 	if err != nil {
 		if resp != nil {
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
@@ -197,7 +199,7 @@ func (s *Streamer) connectOnce(tokens AuthTokens) (*websocket.Conn, error) {
 		}
 		if auth != "" && !strings.HasPrefix(strings.ToLower(auth), "bearer ") {
 			header["Authorization"] = []string{"Bearer " + auth}
-			conn, resp, err = dialer.Dial(s.cfg.WSURL, header)
+			conn, resp, err = dialer.DialContext(ctx, s.cfg.WSURL, header)
 			if err != nil {
 				if resp != nil {
 					body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
@@ -288,6 +290,7 @@ func (s *Streamer) sendSubscription(conn *websocket.Conn, subs []store.Subscript
 			},
 		}
 		s.writeMu.Lock()
+		_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		err := conn.WriteJSON(req)
 		s.writeMu.Unlock()
 		if err != nil {
@@ -298,6 +301,11 @@ func (s *Streamer) sendSubscription(conn *websocket.Conn, subs []store.Subscript
 }
 
 func (s *Streamer) readLoop(ctx context.Context, conn *websocket.Conn, out chan<- Tick) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	// End both blocked reads and the heartbeat goroutine on every reconnect.
+	stopClose := context.AfterFunc(ctx, func() { _ = conn.Close() })
+	defer stopClose()
 	pingTicker := time.NewTicker(10 * time.Second)
 	defer pingTicker.Stop()
 	pingErr := make(chan error, 1)
@@ -355,7 +363,11 @@ func (s *Streamer) readLoop(ctx context.Context, conn *websocket.Conn, out chan<
 			}
 			tick.ConnectionID = s.connectionID
 			s.lastTickNs.Store(time.Now().UnixNano())
-			out <- tick
+			select {
+			case out <- tick:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}
 	}
 }
@@ -602,5 +614,19 @@ func (s *Streamer) logWarn(msg string, args ...any) {
 func (s *Streamer) logDebug(msg string, args ...any) {
 	if s.logger != nil {
 		s.logger.Debug(msg, args...)
+	}
+}
+
+func waitReconnect(ctx context.Context, delay time.Duration) error {
+	if delay < time.Second {
+		delay = time.Second
+	}
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
 	}
 }

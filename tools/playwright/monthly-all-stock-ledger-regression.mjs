@@ -29,6 +29,9 @@ try {
 
   await page.goto(`${baseUrl}/strategy/monthly`, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor();
+  if (process.env.PLAYWRIGHT_PREVIEW_MONTHLY_INSPECTOR === "1") {
+    await page.addStyleTag({ content: 'aside[aria-label$=" strategy evidence"] { top: var(--app-header-height, 56px); height: calc(100dvh - var(--app-header-height, 56px)); }' });
+  }
   const absolute = await page.evaluate(async (url) => {
     const response = await fetch(url, { credentials: "include" });
     return { status: response.status, payload: await response.json() };
@@ -39,7 +42,7 @@ try {
   check("absolute rejected evidence", absolute.payload.evaluations.some((row) => row.selection_status === "REJECTED" && row.rejection_reasons?.length), "no rejected row with reasons");
 
   await page.getByLabel("Selection").selectOption("REJECTED");
-  await page.getByLabel("Entry method").selectOption("MONTHLY_CLOSURE");
+  await page.getByRole("combobox", { name: /^Entry method/ }).selectOption("MONTHLY_CLOSURE");
   await page.waitForFunction(() => {
     const select = Array.from(document.querySelectorAll("label")).find((label) => label.textContent?.includes("Failure reason"))?.querySelector("select");
     return Boolean(select && select.options.length > 1);
@@ -50,7 +53,7 @@ try {
   await page.locator("tbody tr").first().click();
   await page.getByRole("heading", { name: "Why it was not selected" }).waitFor();
   await page.screenshot({ path: path.join(outputDir, "monthly-rejected-with-reasons.png"), fullPage: true });
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Close inspector", exact: true }).click();
 
   await page.goto(`${baseUrl}/strategy/rolling-monthly`, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await page.getByRole("heading", { name: "Rolling Strategy", exact: true }).waitFor();

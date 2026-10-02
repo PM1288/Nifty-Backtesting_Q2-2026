@@ -6836,3 +6836,16 @@ Released from master commit `bfca019` on 2026-09-23. Required web/API test, type
   was outside NSE hours; no synthetic message was sent, so real gateway
   delivery awaits a live qualification.
 - Details: docs/trading-analytics/HOME_MWHD_5M_WHATSAPP_ALERT_20260925.md.
+
+## 2026-10-02 — Real-time ingestion, freshness and dashboard performance
+
+Canonical branch `perf/realtime-ingestion-20261002`: repaired failed-state retention,
+source timestamp ordering, holiday readiness, broker socket cancellation/reconnects,
+bounded bar/archive retries, shared serial dashboard streams, batched browser updates,
+and Redis recovery. Home MWHD query comparison returned the same 210 rows/checksum
+in 1.344s versus 10.453s. Added concurrent active-universe read indexes (064).
+Collector state flush is one second; PostgreSQL running limits aligned to committed
+2 CPU/2 GiB without restart. Historical source facts and strategy/order rules retained.
+See `docs/trading-analytics/REALTIME_INGESTION_REVIEW_20261002.md` for evidence,
+commands, limits and rollback. Holiday validation does not establish live-session
+throughput. Production release evidence follows after gates and deployment.

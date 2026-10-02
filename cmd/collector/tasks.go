@@ -382,9 +382,9 @@ func runQuoteSnapshotsLoop(ctx context.Context, cfg *config.Config, provider sma
 								stateCache.Update(store.InstrumentState{
 									Exchange:      quote.Exchange,
 									SymbolToken:   quote.SymbolToken,
-									LastSeen:      ts,
+									LastSeen:      quoteObservedAt(quote),
 									LastPrice:     quote.LTP,
-									LastSource:    "rest_quote",
+									LastSource:    "rest_quote_exchange",
 									LastBid:       quote.Bid,
 									LastAsk:       quote.Ask,
 									LastBidQty:    quote.BidQty,
@@ -1658,4 +1658,16 @@ func isRetryableErr(err error) bool {
 		return true
 	}
 	return strings.Contains(msg, " 500") || strings.Contains(msg, " 502") || strings.Contains(msg, " 503") || strings.Contains(msg, " 504")
+}
+
+// Receipt time is not exchange freshness (especially on holidays and after close).
+// An untimestamped quote is still archived, but cannot refresh instrument_state.
+func quoteObservedAt(quote smartapi.Quote) time.Time {
+	if quote.ExchFeedTime != nil && !quote.ExchFeedTime.IsZero() {
+		return *quote.ExchFeedTime
+	}
+	if quote.ExchTradeTime != nil && !quote.ExchTradeTime.IsZero() {
+		return *quote.ExchTradeTime
+	}
+	return time.Time{}
 }

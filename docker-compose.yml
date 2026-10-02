@@ -37,6 +37,7 @@ services:
       - .env
       - .env.collector.runtime
     environment:
+      INSTRUMENT_STATE_FLUSH_SECONDS: "1"
       POSTGRES_MAX_CONNS: "3"
       POSTGRES_MIN_CONNS: "0"
       POSTGRES_MAX_CONN_IDLE_SECONDS: "10"

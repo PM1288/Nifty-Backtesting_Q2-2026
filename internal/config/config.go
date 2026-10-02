@@ -1874,6 +1874,11 @@ func applyDefaults(cfg *Config) {
 }
 
 func applyEnvOverrides(cfg *Config) {
+	if v := os.Getenv("INSTRUMENT_STATE_FLUSH_SECONDS"); v != "" {
+		if seconds, err := strconv.Atoi(v); err == nil && seconds >= 1 && seconds <= 60 {
+			cfg.Metrics.StateFlushSeconds = seconds
+		}
+	}
 	if v := os.Getenv("SMARTAPI_API_KEY"); v != "" {
 		cfg.SmartAPI.APIKey = v
 	}

@@ -274,16 +274,25 @@ func main() {
 	})
 
 	eg.Go(func() error {
+		defer func() {
+			defer close(barCh)
+			drainCtx, cancel := context.WithTimeout(context.WithoutCancel(egCtx), 4*time.Second)
+			defer cancel()
+			for _, bar := range agg.FlushDue(time.Now()) {
+				select {
+				case barCh <- bar:
+				case <-drainCtx.Done():
+					logger.Warn("bar_shutdown_enqueue_timeout")
+					return
+				}
+			}
+		}()
 		flushTicker := time.NewTicker(time.Duration(cfg.Runtime.FlushSeconds) * time.Second)
 		defer flushTicker.Stop()
 
 		for {
 			select {
 			case <-egCtx.Done():
-				bars := agg.FlushDue(time.Now())
-				for _, bar := range bars {
-					barCh <- bar
-				}
 				return egCtx.Err()
 			case tick := <-tickCh:
 				tickTracker.Mark(tick.Exchange, tick.Token, tick.Timestamp)
@@ -380,66 +389,32 @@ func main() {
 					Timestamp: tick.Timestamp,
 				})
 				for _, bar := range bars {
-					barCh <- bar
+					select {
+					case barCh <- bar:
+					case <-egCtx.Done():
+						return egCtx.Err()
+					}
 				}
 			case <-flushTicker.C:
 				bars := agg.FlushDue(time.Now())
 				for _, bar := range bars {
-					barCh <- bar
+					select {
+					case barCh <- bar:
+					case <-egCtx.Done():
+						return egCtx.Err()
+					}
 				}
 			}
 		}
 	})
 
 	eg.Go(func() error {
-		buffer := make([]store.Bar, 0, 256)
-		ticker := time.NewTicker(2 * time.Second)
-		defer ticker.Stop()
-
-		flush := func() error {
-			if len(buffer) == 0 {
-				return nil
+		return runBarWriter(egCtx, barCh, func(writeCtx context.Context, bars []store.Bar) error {
+			if err := st.UpsertBars(writeCtx, bars); err != nil {
+				return err
 			}
-			var lastErr error
-			for attempt := 1; attempt <= 3; attempt++ {
-				if err := st.UpsertBars(egCtx, buffer); err != nil {
-					lastErr = err
-				} else if err := st.UpsertWatermarks(egCtx, buffer); err != nil {
-					lastErr = err
-				} else {
-					buffer = buffer[:0]
-					return nil
-				}
-				if logger != nil {
-					logger.Warn("bar_flush_retry", "attempt", attempt, "bars", len(buffer), "err", lastErr)
-				}
-				select {
-				case <-egCtx.Done():
-					return egCtx.Err()
-				case <-time.After(time.Duration(attempt) * time.Second):
-				}
-			}
-			return lastErr
-		}
-
-		for {
-			select {
-			case <-egCtx.Done():
-				_ = flush()
-				return egCtx.Err()
-			case bar := <-barCh:
-				buffer = append(buffer, bar)
-				if len(buffer) >= 200 {
-					if err := flush(); err != nil && logger != nil {
-						logger.Warn("bar_flush_failed", "bars", len(buffer), "err", err)
-					}
-				}
-			case <-ticker.C:
-				if err := flush(); err != nil && logger != nil {
-					logger.Warn("bar_flush_failed", "bars", len(buffer), "err", err)
-				}
-			}
-		}
+			return st.UpsertWatermarks(writeCtx, bars)
+		}, logger)
 	})
 
 	eg.Go(func() error {

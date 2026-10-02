@@ -1,4 +1,5 @@
 import type http from "http";
+import { latestRead } from "./latestRead";
 import type { Duplex } from "stream";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { WebSocketServer, type WebSocket } from "ws";
@@ -76,17 +77,27 @@ function rejectUpgrade(socket: Duplex, status: number, code: string, message: st
 }
 
 export function attachStreamServer(server: http.Server, prisma: PrismaClient, authenticateUpgrade?: UpgradeAuthenticator) {
+  const readUniverse = latestRead(() => prisma.$queryRaw<StackUniverseRow[]>(Prisma.sql`
+    SELECT iu.symbol_token, iu.tradingsymbol,
+      UPPER(REGEXP_REPLACE(TRIM(iu.tradingsymbol), '-EQ$', '')) AS symbol
+    FROM instrument_universe iu WHERE iu.exchange = 'NSE'
+      AND iu.active_to IS NULL AND COALESCE(TRIM(iu.tradingsymbol), '') <> ''
+  `), 60_000);
+  const readStates = latestRead(() => prisma.$queryRaw<StackStateRow[]>(Prisma.sql`
+    SELECT symbol_token, last_price, last_close, net_change, percent_change, last_seen_ts
+    FROM instrument_state WHERE exchange = 'NSE'
+  `), 500);
   const onConnection = async (ws: WebSocket, req: http.IncomingMessage) => {
     const url = new URL(req.url ?? "", "http://localhost");
 
     const symbolsParam = url.searchParams.get("symbols") ?? "";
-    const symbols = symbolsParam
+    const symbols = [...new Set(symbolsParam
       .split(",")
       .map((s) => s.trim().toUpperCase())
-      .filter(Boolean);
+      .filter(Boolean))];
 
-    if (!symbols.length) {
-      ws.send(JSON.stringify({ error: { code: "NO_SYMBOLS", message: "Provide ?symbols=" } }));
+    if (!symbols.length || symbols.length > 500) {
+      if (ws.readyState === 1) ws.send(JSON.stringify({ error: { code: "NO_SYMBOLS", message: "Provide between 1 and 500 symbols" } }));
       ws.close();
       return;
     }
@@ -97,21 +108,33 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
 
     ws.on("close", () => {
       closed = true;
-      if (timer) clearInterval(timer);
+      if (timer) clearTimeout(timer);
       timer = null;
     });
 
+    ws.on("error", () => ws.terminate());
+    const sent = new Map<string, string>();
+    function sendQuote(quote: LiveQuote) {
+      if (closed || ws.readyState !== 1) return;
+      // A stalled tab must not accumulate an unbounded outbound queue.
+      if (ws.bufferedAmount > 256 * 1024) { ws.terminate(); return; }
+      const signature = JSON.stringify(quote);
+      if (sent.get(quote.symbol) === signature) return;
+      sent.set(quote.symbol, signature);
+      ws.send(JSON.stringify({ ...quote, sequence: ++sequence }));
+    }
+    function schedule(tick: () => Promise<void>) {
+      if (closed) return;
+      timer = setTimeout(() => {
+        void tick().then(() => schedule(tick)).catch(() => {
+          // Reconnect explicitly instead of silently remaining CONNECTED with no feed.
+          if (!closed) ws.close(1013, "Market data temporarily unavailable");
+        });
+      }, 1000);
+    }
+
     async function startTradingStackMode() {
-      const rows = await prisma.$queryRaw<StackUniverseRow[]>(Prisma.sql`
-        SELECT
-          iu.symbol_token,
-          iu.tradingsymbol,
-          UPPER(REGEXP_REPLACE(TRIM(iu.tradingsymbol), '-EQ$', '')) AS symbol
-        FROM instrument_universe iu
-        WHERE iu.exchange = 'NSE'
-          AND iu.active_to IS NULL
-          AND COALESCE(TRIM(iu.tradingsymbol), '') <> ''
-      `);
+      const rows = await readUniverse();
 
       const tokenBySymbol = new Map<string, string>();
       for (const row of rows) {
@@ -132,7 +155,7 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
       }
 
       if (!tracked.length) {
-        ws.send(JSON.stringify({ error: { code: "UNKNOWN_SYMBOLS", message: "No symbols found" } }));
+        if (ws.readyState === 1) ws.send(JSON.stringify({ error: { code: "UNKNOWN_SYMBOLS", message: "No symbols found" } }));
         ws.close();
         return;
       }
@@ -146,37 +169,28 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
       const tokens = [...tokenToSymbols.keys()];
 
       const tick = async () => {
-        sequence += 1;
-        const stateRows = await prisma.$queryRaw<StackStateRow[]>(Prisma.sql`
-          SELECT symbol_token, last_price, last_close, net_change, percent_change, last_seen_ts
-          FROM instrument_state
-          WHERE exchange = 'NSE'
-            AND symbol_token IN (${Prisma.join(tokens)})
-        `);
+        const stateRows = await readStates();
 
         const stateByToken = new Map(stateRows.map((r) => [r.symbol_token, r]));
 
         for (const token of tokens) {
           const row = stateByToken.get(token);
-          if (!row) continue;
+          if (!row || row.last_price == null || !row.last_seen_ts || !Number.isFinite(new Date(row.last_seen_ts).getTime())) continue;
           const outboundSymbols = tokenToSymbols.get(token) ?? [];
           const payloadBase = {
-            price: toNumber(row.last_price ?? row.last_close ?? 0),
+            price: toNumber(row.last_price),
             change: toNumber(row.net_change ?? 0),
             changePct: toNumber(row.percent_change ?? 0),
             timestamp: toIso(row.last_seen_ts)
           };
           for (const symbol of outboundSymbols) {
-            const payload: LiveQuote = { symbol, ...payloadBase, sequence };
-            if (!closed) ws.send(JSON.stringify(payload));
+            sendQuote({ symbol, ...payloadBase });
           }
         }
       };
 
       await tick();
-      timer = setInterval(() => {
-        tick().catch(() => undefined);
-      }, 2000);
+      schedule(tick);
     }
 
     async function startSeedFallbackMode() {
@@ -184,7 +198,7 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
       const stockIds = stocks.map((s) => s.id);
 
       if (!stockIds.length) {
-        ws.send(JSON.stringify({ error: { code: "UNKNOWN_SYMBOLS", message: "No symbols found" } }));
+        if (ws.readyState === 1) ws.send(JSON.stringify({ error: { code: "UNKNOWN_SYMBOLS", message: "No symbols found" } }));
         ws.close();
         return;
       }
@@ -219,7 +233,6 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
       const prevCloseById = new Map([...dailyById.values()].map((d) => [d.stockId, toNumber(d.prevClose)]));
 
       const tick = async () => {
-        sequence += 1;
         const latestTs = await prisma.intradayBar.groupBy({
           by: ["stockId"],
           where: { stockId: { in: stockIds }, ts: { gte: dayStart } },
@@ -230,7 +243,6 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
         const bars = ors.length ? await prisma.intradayBar.findMany({ where: { OR: ors } }) : [];
         const byId = new Map(bars.map((b) => [b.stockId, b]));
 
-        const nowIso = new Date().toISOString();
         for (const st of stocks) {
           const bar = byId.get(st.id);
           if (!bar) continue;
@@ -244,40 +256,53 @@ export function attachStreamServer(server: http.Server, prisma: PrismaClient, au
             price: last,
             change,
             changePct,
-            timestamp: nowIso,
-            sequence
+            timestamp: toIso(bar.ts)
           };
-          if (!closed) ws.send(JSON.stringify(payload));
+          sendQuote(payload);
         }
       };
 
       await tick();
-      timer = setInterval(() => {
-        tick().catch(() => undefined);
-      }, 2000);
+      schedule(tick);
     }
 
     try {
       await startTradingStackMode();
     } catch (err) {
       if (!isMissingRelationError(err)) {
-        ws.send(JSON.stringify({ error: { code: "STREAM_FAILED", message: "Unable to start stream" } }));
+        if (ws.readyState === 1) ws.send(JSON.stringify({ error: { code: "STREAM_FAILED", message: "Unable to start stream" } }));
         ws.close();
         return;
       }
       try {
         await startSeedFallbackMode();
       } catch {
-        ws.send(JSON.stringify({ error: { code: "STREAM_FAILED", message: "Unable to start stream" } }));
+        if (ws.readyState === 1) ws.send(JSON.stringify({ error: { code: "STREAM_FAILED", message: "Unable to start stream" } }));
         ws.close();
       }
     }
   };
 
   const streamPaths = new Set(["/v1/stream", "/api/n50/v1/stream", "/api/n50-stage/v1/stream"] as const);
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
+  const alive = new WeakSet<WebSocket>();
+  const heartbeat = setInterval(() => {
+    for (const ws of wss.clients) {
+      if (!alive.has(ws)) { ws.terminate(); continue; }
+      alive.delete(ws);
+      ws.ping();
+    }
+  }, 30_000);
+  heartbeat.unref();
+  server.on("close", () => {
+    clearInterval(heartbeat);
+    for (const ws of wss.clients) ws.terminate();
+    wss.close();
+  });
 
   wss.on("connection", (ws, req) => {
+    alive.add(ws);
+    ws.on("pong", () => alive.add(ws));
     void onConnection(ws, req);
   });
 

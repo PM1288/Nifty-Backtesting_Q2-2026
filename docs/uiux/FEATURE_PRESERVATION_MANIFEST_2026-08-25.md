@@ -1,5 +1,19 @@
 # UI feature preservation manifest — 25 August 2026
 
+## 2026-10-02 Real-time feed resilience and freshness
+
+- Existing stock/index quote components and header feed-quality display receive
+  shared, serial, changed-value stream updates with original source timestamps.
+  Browser rendering is batched; temporary session/network failures reconnect.
+- Failed collector state writes are retained, stale prices cannot overwrite newer
+  ones, REST exchange timestamps are authoritative, and readiness honors the
+  persisted exchange calendar. Home MWHD session lookup preserves exact results
+  while avoiding full minute-history scans.
+- Existing routes, Scalper chart update cadence, drawings, strategy calculations,
+  paper alerts, browser speech, exports, authentication and trading permissions
+  are preserved. No additional order or notification flow is introduced.
+- Evidence: `docs/trading-analytics/REALTIME_INGESTION_REVIEW_20261002.md`.
+
 ## 2026-09-25 Home MWHD five-minute qualification WhatsApp alerts
 
 - The server evaluates the existing Home MWHD rows from every refreshed

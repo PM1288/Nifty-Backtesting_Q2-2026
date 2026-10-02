@@ -1375,20 +1375,19 @@ export async function getScalperProgression(prisma: PrismaClient) {
       LEFT JOIN instrument_profiles ip ON ip.symbol = f.symbol
     ),
     intraday_session AS (
-      SELECT candidate_day::date AS trade_date
-      FROM clock c
-      CROSS JOIN LATERAL generate_series(c.today, c.today - 7, INTERVAL '-1 day') candidate_day
-      WHERE EXTRACT(ISODOW FROM candidate_day) BETWEEN 1 AND 5
-        AND EXISTS (
-          SELECT 1
-          FROM bars_1m b
-          WHERE b.exchange = 'NSE'
-            AND b.ts >= (candidate_day::date + TIME '09:15') AT TIME ZONE 'Asia/Kolkata'
-            AND b.ts < (candidate_day::date + TIME '15:31') AT TIME ZONE 'Asia/Kolkata'
-            AND b.open IS NOT NULL
-          LIMIT 1
-        )
-      ORDER BY candidate_day DESC
+      -- Seek the latest eligible observation directly. The former EXISTS
+      -- against generate_series was flattened into a multi-million-row scan.
+      SELECT (b.ts AT TIME ZONE 'Asia/Kolkata')::date AS trade_date
+      FROM bars_1m b
+      CROSS JOIN clock c
+      WHERE b.exchange = 'NSE'
+        AND b.ts >= ((c.today - 7)::timestamp AT TIME ZONE 'Asia/Kolkata')
+        AND b.ts < c.tomorrow_start
+        AND EXTRACT(ISODOW FROM b.ts AT TIME ZONE 'Asia/Kolkata') BETWEEN 1 AND 5
+        AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time >= TIME '09:15'
+        AND (b.ts AT TIME ZONE 'Asia/Kolkata')::time < TIME '15:31'
+        AND b.open IS NOT NULL
+      ORDER BY b.ts DESC
       LIMIT 1
     ),
     history_sources AS (

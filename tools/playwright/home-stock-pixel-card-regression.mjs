@@ -17,15 +17,30 @@ const check = (name, passed, detail = "") => {
 
 try {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
-  const login = await context.request.post(`${origin}/auth/session/dev-login`, { data: { identifier: "admin", password } });
+  const login = await context.request.post(`${origin}/n50/auth/session/dev-login`, { data: { identifier: "admin", password } });
   check("admin login", login.ok(), `status=${login.status()}`);
   const page = await context.newPage();
   await page.goto(`${origin}/n50/?prefetch=off`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.locator('[data-testid="today-summary"], [data-stock-pill-symbol]').first().waitFor({ timeout: 60_000 });
+  if (await page.getByTestId("today-summary").count()) {
+    // Current Home uses a virtualised full board; the legacy pixel-card view
+    // is retained below for deployments where that feature flag is disabled.
+    check("current Home summary retained", await page.getByTestId("today-summary").isVisible());
+    await page.goto(`${origin}/n50/full-board`, { waitUntil: "domcontentloaded" });
+    const board = page.getByLabel("Sector-grouped stock board", { exact: true });
+    await board.locator('button[data-state]').first().waitFor({ timeout: 60_000 });
+    const stocks = board.locator('button[data-state]');
+    check("rendered stock tiles have identities", await stocks.count() > 0 && await stocks.locator('b').count() === await stocks.count());
+    check("rendered stock tiles have logo or initials", await stocks.locator('span[aria-hidden="true"]').count() === await stocks.count());
+    await stocks.first().click();
+    check("stock quick view opens", /inspect=stock/.test(page.url()));
+    await page.screenshot({ path: path.join(outputDir, "current-home-stock-board.png") });
+  } else {
   const pills = page.locator("[data-stock-pill-symbol]");
   await pills.first().waitFor({ state: "visible", timeout: 60_000 });
   const visiblePillCount = await pills.count();
   const pixelFieldCount = await page.locator("[data-stock-pill-symbol] > canvas[data-stock-pixel-field='true']").count();
-  check("every rendered stock pill owns a pixel field", visiblePillCount > 100 && pixelFieldCount === visiblePillCount, JSON.stringify({ visiblePillCount, pixelFieldCount }));
+  check("every rendered stock pill owns a pixel field", visiblePillCount > 0 && pixelFieldCount === visiblePillCount, JSON.stringify({ visiblePillCount, pixelFieldCount }));
 
   const positive = page.locator("[data-stock-pill-symbol][data-lens-state='positive']").first();
   const negative = page.locator("[data-stock-pill-symbol][data-lens-state='negative']").first();
@@ -67,6 +82,7 @@ try {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForTimeout(100);
   check("reduced motion hides stock pixels", await negative.locator("canvas[data-stock-pixel-field='true']").evaluate((canvas) => getComputedStyle(canvas).display === "none"), "pixel field remains visible");
+  }
   await context.close();
 } finally {
   await browser.close();

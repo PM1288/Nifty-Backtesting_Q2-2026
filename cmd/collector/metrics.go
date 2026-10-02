@@ -35,7 +35,9 @@ func (c *instrumentStateCache) Update(state store.InstrumentState) {
 	c.mu.Lock()
 	if existing, ok := c.entries[key]; ok {
 		if state.LastSeen.Before(existing.LastSeen) {
-			state.LastSeen = existing.LastSeen
+			// Keep the newest observation authoritative; older REST replies must
+			// not acquire a fresh timestamp and overwrite a newer websocket price.
+			state, existing = existing, state
 		}
 		if state.LastPrice == nil {
 			state.LastPrice = existing.LastPrice
@@ -108,23 +110,30 @@ func runInstrumentStateFlush(ctx context.Context, cfg *config.Config, st *store.
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	flush := func() {
+	flush := func(writeCtx context.Context) {
 		states := cache.Flush()
 		if len(states) == 0 {
 			return
 		}
-		if err := st.UpsertInstrumentStates(ctx, states); err != nil && logger != nil {
-			logger.Warn("instrument_state_flush_failed", "err", err)
+		writeCtx, cancel := context.WithTimeout(writeCtx, 3*time.Second)
+		defer cancel()
+		if err := st.UpsertInstrumentStates(writeCtx, states); err != nil {
+			for _, state := range states {
+				cache.Update(state)
+			}
+			if logger != nil {
+				logger.Warn("instrument_state_flush_failed", "rows", len(states), "err", err)
+			}
 		}
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			flush()
+			flush(context.WithoutCancel(ctx))
 			return ctx.Err()
 		case <-ticker.C:
-			flush()
+			flush(ctx)
 		}
 	}
 }

@@ -712,16 +712,38 @@ export function useLiveQuotesWithStatus(symbols: string[], enabled = true): Live
     let reconnectAttempts = 0;
     let previousSequence: number | undefined;
     let recoveringFromGap = false;
+    let publishTimer: number | null = null;
+    let pendingQuotes: Record<string, LiveQuote> = {};
+    const latestTime = new Map<string, number>();
+    const sessionAbort = new AbortController();
+    const retry = () => {
+      if (cancelled || reconnectTimer != null) return;
+      reconnectAttempts += 1;
+      setTransport("RECONNECTING");
+      const delay = Math.min(30_000, 1_000 * (2 ** Math.min(reconnectAttempts - 1, 5)));
+      reconnectTimer = window.setTimeout(() => {
+        reconnectTimer = null;
+        void connect();
+      }, delay);
+    };
 
     const connect = async () => {
       setTransport(reconnectAttempts > 0 ? "RECONNECTING" : "DISCONNECTED");
       const sessionResp = await fetch(`${API_BASE_URL}/auth/session`, {
         credentials: "include",
-        headers: { Accept: "application/json" }
+        headers: { Accept: "application/json" },
+        signal: sessionAbort.signal
       }).catch(() => null);
-      if (!sessionResp?.ok || cancelled) return;
+      if (cancelled) return;
+      if (!sessionResp?.ok) {
+        if (sessionResp?.status === 401 || sessionResp?.status === 403) setTransport("DISCONNECTED");
+        else retry();
+        return;
+      }
       const session = (await sessionResp.json().catch(() => null)) as { authenticated?: boolean } | null;
-      if (!session?.authenticated || cancelled) return;
+      if (cancelled) return;
+      if (!session) { retry(); return; }
+      if (!session.authenticated) { setTransport("DISCONNECTED"); return; }
 
       const wsBase = getWsBaseUrl();
       const url = `${wsBase}/v1/stream?symbols=${encodeURIComponent(key)}`;
@@ -747,28 +769,35 @@ export function useLiveQuotesWithStatus(symbols: string[], enabled = true): Live
             }
             if (previousSequence == null || incomingSequence >= previousSequence) {
               previousSequence = incomingSequence;
-              setSequence(incomingSequence);
+
             }
           }
           const live = normalizeIncoming(parsed);
-          if (!live) return;
+          if (!live || cancelled) return;
+          const observedAt = Date.parse(live.timestamp);
+          if (!Number.isFinite(observedAt) || observedAt < (latestTime.get(live.symbol) ?? -Infinity)) return;
+          latestTime.set(live.symbol, observedAt);
           if (recoveringFromGap) {
             recoveringFromGap = false;
             setGapDetected(false);
           }
-          setLastReceivedAt(new Date().toISOString());
-          setQuotes((prev) => ({ ...prev, [live.symbol]: live }));
+          pendingQuotes[live.symbol] = live;
+          if (publishTimer == null) {
+            publishTimer = window.setTimeout(() => {
+              publishTimer = null;
+              if (cancelled) return;
+              const batch = pendingQuotes;
+              pendingQuotes = {};
+              setLastReceivedAt(new Date().toISOString());
+              setSequence(previousSequence);
+              setQuotes((prev) => ({ ...prev, ...batch }));
+            }, 100);
+          }
         } catch {
           // Ignore malformed messages.
         }
       };
-      ws.onclose = () => {
-        if (cancelled) return;
-        reconnectAttempts += 1;
-        setTransport("RECONNECTING");
-        const delay = Math.min(30_000, 1_000 * (2 ** Math.min(reconnectAttempts - 1, 5)));
-        reconnectTimer = window.setTimeout(() => { void connect(); }, delay);
-      };
+      ws.onclose = retry;
       ws.onerror = () => ws?.close();
     };
 
@@ -776,6 +805,8 @@ export function useLiveQuotesWithStatus(symbols: string[], enabled = true): Live
 
     return () => {
       cancelled = true;
+      sessionAbort.abort();
+      if (publishTimer != null) window.clearTimeout(publishTimer);
       if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
       ws?.close();
       setTransport("DISCONNECTED");

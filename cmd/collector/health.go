@@ -88,19 +88,13 @@ func startHealthServer(ctx context.Context, addr string, st *store.Store, ticks 
 		lastTick := ticks.LastTickAt()
 		age := -1.0
 		now := time.Now().In(defaultLoc(loc))
-		marketOpen := !outsideMarketHours(now, tradingStart, tradingEnd, loc)
+		marketOpen, calendarErr := st.MarketSessionAt(dbCtx, now, defaultLoc(loc))
 		if !lastTick.IsZero() {
 			age = now.Sub(lastTick.In(defaultLoc(loc))).Seconds()
-		} else if !marketOpen {
-			// Outside hours and no tick yet: treat last expected close as end of window.
-			_, end, err := tradingWindow(now, tradingStart, tradingEnd, loc)
-			if err == nil {
-				age = now.Sub(end).Seconds()
-				lastTick = end
-			}
+
 		}
 		wsConnected := marketOpen && age >= 0 && age <= 60
-		ok := dbErr == nil && (!marketOpen || wsConnected)
+		ok := dbErr == nil && calendarErr == nil && (!marketOpen || wsConnected)
 		status := "ok"
 		if !ok {
 			status = "degraded"
@@ -113,6 +107,9 @@ func startHealthServer(ctx context.Context, addr string, st *store.Store, ticks 
 			"subscriptions_count":   subsCount.Load(),
 			"market_open":           marketOpen,
 			"expected_close":        tradingEnd,
+		}
+		if calendarErr != nil {
+			resp["calendar_error"] = "Trading calendar unavailable for this date"
 		}
 		if dbErr != nil {
 			resp["db_error"] = dbErr.Error()

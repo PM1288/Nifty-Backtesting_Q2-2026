@@ -142,3 +142,6 @@ run_compose build nse-reco-api
 run_compose run --rm --entrypoint sh nse-reco-api -lc 'python scripts/install_sql.py --database-url "$DATABASE_URL"'
 
 log "migration flow complete"
+
+log "Live universe read indexes (concurrent, additive)"
+run_compose exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 < "${ROOT_DIR}/db/sql/064_active_universe_read_indexes.sql"

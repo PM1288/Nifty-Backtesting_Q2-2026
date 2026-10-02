@@ -197,6 +197,7 @@ retention:
 metrics:
   enable: true
   rollup_interval_seconds: 60
+  # Production Compose overrides this via INSTRUMENT_STATE_FLUSH_SECONDS=1.
   state_flush_seconds: 5
   enable_api_request_log: true
   sla:

@@ -6845,10 +6845,10 @@ bounded bar/archive retries, shared serial dashboard streams, batched browser up
 and Redis recovery. Home MWHD query comparison returned the same 210 rows/checksum
 in 1.344s versus 10.453s. Added concurrent active-universe read indexes (064).
 Collector state flush is one second; PostgreSQL running limits aligned to committed
-2 CPU/2 GiB without restart. Historical source facts and strategy/order rules retained.
+2 CPU/2 GiB initially without restart; a later controlled database restart restored the committed 80-connection limit. Historical source facts and strategy/order rules retained.
 See `docs/trading-analytics/REALTIME_INGESTION_REVIEW_20261002.md` for evidence,
 commands, limits and rollback. Holiday validation does not establish live-session
-throughput. Production release evidence follows after gates and deployment.
+throughput. Production release completed; final evidence is in the linked review.
 
 Follow-up on 2026-10-02: live review found NSE's trading-day-only trigger delayed
 prior-session reports over holidays, and Monthly computations held read snapshots
@@ -6857,3 +6857,16 @@ previous verified source session, deduplicates completed source sessions, expose
 notification suppression for the one-off catch-up, and commits loaded analytical
 inputs before CPU evaluation. NSE 12/12 and Rolling 29/29 tests pass. Migration 064
 repairs only its own invalid concurrent indexes and uses a bounded longer lock wait.
+
+
+Final 2026-10-02 release: pushed master c9bb42f (collector/dashboard) and 25f6d16
+(NSE/Monthly). All changed services and PostgreSQL healthy; migration 064 indexes
+valid. PostgreSQL retained its exact image and data volume, with 80 connections
+and 2 CPU/2 GiB. Dependent workers reconnected/restarted automatically during the
+controlled database restart. Catch-up loaded 16 reports / 177,488 rows and archived
+32 reports for 1 October; 15 external reports returned 404. Outbox stayed at 35,
+and a repeat scheduler tick returned SOURCE_ALREADY_PROCESSED. Final authenticated
+browser suite passed including Home 5/5 and real 70-second Scalper polling. Full
+Go race, API 280, web 283, NSE 12, Rolling 29 checks passed. Open-session tick latency
+remains unmeasured (exchange holiday); sampled raw ticks remain bounded/best effort.
+Evidence and exact release/rollback commands are in the review document above.

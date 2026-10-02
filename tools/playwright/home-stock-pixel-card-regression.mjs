@@ -30,8 +30,10 @@ try {
     const board = page.getByLabel("Sector-grouped stock board", { exact: true });
     await board.locator('button[data-state]').first().waitFor({ timeout: 60_000 });
     const stocks = board.locator('button[data-state]');
-    check("rendered stock tiles have identities", await stocks.count() > 0 && await stocks.locator('b').count() === await stocks.count());
-    check("rendered stock tiles have logo or initials", await stocks.locator('span[aria-hidden="true"]').count() === await stocks.count());
+    // Inspect each virtualised tile in one snapshot; logo fallback initials
+    // also use <b>, so only the visible identity span identifies the symbol.
+    check("rendered stock tiles have identities", await stocks.evaluateAll(nodes => nodes.length > 0 && nodes.every(node => Boolean(node.querySelector(':scope > span:not([aria-hidden]) > b')?.textContent?.trim()))));
+    check("rendered stock tiles have logo or initials", await stocks.evaluateAll(nodes => nodes.length > 0 && nodes.every(node => Boolean(node.querySelector(':scope > span[aria-hidden="true"] img, :scope > span[aria-hidden="true"] b')))));
     await stocks.first().click();
     check("stock quick view opens", /inspect=stock/.test(page.url()));
     await page.screenshot({ path: path.join(outputDir, "current-home-stock-board.png") });

@@ -156,51 +156,7 @@ func runMarketTickArchive(ctx context.Context, st *store.Store, input <-chan sto
 	if batchSize < 1 {
 		batchSize = 1000
 	}
-	buffer := make([]store.MarketTick, 0, batchSize)
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	flush := func(writeCtx context.Context) {
-		if len(buffer) == 0 {
-			return
-		}
-		writeCtx, cancel := context.WithTimeout(writeCtx, 3*time.Second)
-		defer cancel()
-		if err := st.InsertMarketTicks(writeCtx, buffer); err != nil {
-			if logger != nil {
-				logger.Warn("market_tick_archive_flush_failed", "rows", len(buffer), "err", err)
-			}
-			return
-		}
-		clear(buffer)
-		buffer = buffer[:0]
-	}
-	for {
-		// Backpressure at one batch; the bounded upstream channel reports drops.
-		// Do not grow memory and issue one failing DB call per incoming tick.
-		next := input
-		if len(buffer) >= batchSize {
-			next = nil
-		}
-		select {
-		case <-ctx.Done():
-			flush(context.WithoutCancel(ctx))
-			if logger != nil && (len(buffer) > 0 || len(input) > 0) {
-				logger.Warn("market_tick_archive_shutdown_pending", "rows", len(buffer)+len(input))
-			}
-			return ctx.Err()
-		case row, ok := <-next:
-			if !ok {
-				flush(context.WithoutCancel(ctx))
-				return nil
-			}
-			buffer = append(buffer, row)
-			if len(buffer) >= batchSize {
-				flush(ctx)
-			}
-		case <-ticker.C:
-			flush(ctx)
-		}
-	}
+	return runBoundedBatchWriter(ctx, input, st.InsertMarketTicks, logger, "market_tick_archive", batchSize, time.Second)
 }
 
 func runWebsocketHealthArchive(ctx context.Context, cfg *config.Config, st *store.Store, tracker *wsHealthTracker, subs *atomic.Int64, logger *slog.Logger) error {

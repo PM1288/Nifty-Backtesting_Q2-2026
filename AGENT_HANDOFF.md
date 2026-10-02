@@ -6870,3 +6870,13 @@ browser suite passed including Home 5/5 and real 70-second Scalper polling. Full
 Go race, API 280, web 283, NSE 12, Rolling 29 checks passed. Open-session tick latency
 remains unmeasured (exchange holiday); sampled raw ticks remain bounded/best effort.
 Evidence and exact release/rollback commands are in the review document above.
+
+## 2026-10-02 — Follow-up collector shutdown upgrade
+
+Branch `fix/realtime-shutdown-20261002` closes the sampled tick producer channel
+and shares a bounded/retrying writer between bars and ticks. Pending archive rows
+now drain across batches during a five-second shutdown window; deadline expiry
+logs unresolved rows and returns failure. Full Go race suite, canonical gate and
+diff check passed. Only collector runtime code changes; existing dashboard and
+strategy behavior retained. Release commands, limits and rollback:
+`docs/trading-analytics/REALTIME_REDEPLOY_20261002.md`.

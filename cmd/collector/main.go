@@ -275,6 +275,9 @@ func main() {
 
 	eg.Go(func() error {
 		defer func() {
+			if tickArchiveCh != nil {
+				close(tickArchiveCh)
+			}
 			defer close(barCh)
 			drainCtx, cancel := context.WithTimeout(context.WithoutCancel(egCtx), 4*time.Second)
 			defer cancel()

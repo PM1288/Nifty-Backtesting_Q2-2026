@@ -35,7 +35,7 @@ export function PaperTradeAnalyzer({trades,onSelect,loading,asOf}:{trades:PaperR
   const exportReport=()=>save('paper-analyzer.json',JSON.stringify({asOf,basis,basisLabel:basisNames[basis],filters:{strategy,direction,search,from,to},parameter,group,stats,groups,correlations,exclusions,method:'Descriptive selected paper-equity legs; no causal or predictive validation. Closed net/open gross/hypothetical EOD never pooled.',trades:rows.map(r=>({id:r.id,symbol:r.symbol,outcome:r.outcome,pnl:r.pnl,excluded:r.excluded,parameters:r.parameters,source:r.raw}))},null,2),'application/json');
   if (!asOf) return <section className={styles.analyzer} data-testid="paper-trade-analyzer" data-state={loading ? 'loading' : 'unavailable'}>
     <h2>Paper trade analysis</h2>
-    <p role="status">{loading ? 'Waiting for the complete canonical ledger.' : 'Complete canonical ledger unavailable. Use the workspace read retry.'} No outcome count, empty-result conclusion or export is published until a complete snapshot is available. No paper action is repeated.</p>
+    <p role="status">{loading ? 'Loading trades…' : 'Trades could not be loaded. Try again.'}</p>
   </section>;
   return <section className={styles.analyzer} data-testid="paper-trade-analyzer" data-state="available">
     <header className={styles.heading}><div><small>PAPER TRADE ANALYSIS</small><h2>What is helping—and what is not?</h2><p>Compare recorded outcomes, parameter distributions and associations. Analysis only; no strategy or order changes.</p></div><div className={styles.controls}><button onClick={()=>save(`paper-analyzer-${basis}.csv`,analyzerCsv(rows,basis,asOf),'text/csv;charset=utf-8')}>Export CSV</button><button onClick={exportReport}>Export analysis JSON</button></div></header>

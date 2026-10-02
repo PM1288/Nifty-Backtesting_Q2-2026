@@ -23,7 +23,7 @@ const workspaceRoutes = [
   ["Markets", "/analytics"],
   ["Stocks", "/analytics/stock/RELIANCE"],
   ["Strategy", "/strategy/oiis-live"],
-  ["Paper Trading", "/paper-trading"],
+  ["Paper trading", "/paper-trading"],
   ["Derivatives", "/options/intelligence"],
   ["Data & Operations", "/analytics/system/quality"]
 ];
@@ -93,7 +93,7 @@ try {
         await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
         await page.getByRole("navigation", { name: viewport.width <= 720 ? "Mobile workspace navigation" : "Workspace navigation", exact: true }).waitFor({ timeout: 30_000 });
         const active = page.locator('nav a[aria-current="page"]');
-        record(viewport, `${label} active route`, await active.filter({ hasText: label === "Paper Trading" && viewport.width <= 720 ? "Paper" : label }).count() >= 1, await active.allTextContents().then((values) => values.join(", ")));
+        record(viewport, `${label} active route`, await active.filter({ hasText: label === "Paper trading" && viewport.width <= 720 ? "Paper" : label }).count() >= 1, await active.allTextContents().then((values) => values.join(", ")));
         record(viewport, `${label} route fits`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
       }
     }

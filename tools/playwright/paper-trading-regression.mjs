@@ -46,7 +46,7 @@ try {
 
   const response = await page.goto(`${appBase}/paper-trading?prefetch=off`, { waitUntil: "networkidle", timeout: 60_000 });
   check("route response", Boolean(response?.ok()), `status=${response?.status()}`);
-  await page.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
   check("paper identity", await page.getByText("PAPER PORTFOLIO · EXECUTION AND OBSERVATION", { exact: true }).count() === 1, "PAPER portfolio identity missing");
   check("maturity evidence", await page.getByText("EVIDENCE MATURITY", { exact: true }).count() === 1, "maturity banner missing");
   check("no numeric quality dial", await page.getByText("QUALITY", { exact: true }).count() === 0, "immature quality dial remains visible");
@@ -111,7 +111,7 @@ try {
   }
   check("admin comment stored", await tradeDrawer.getByText(durableComment, { exact: true }).count() === 1, "saved comment not shown");
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
   await matrixSearch.fill("LTM");
   await page.locator("#trades tbody tr").first().click();
   await tradeDrawer.waitFor();
@@ -164,21 +164,21 @@ try {
   const responsive = await context.newPage();
   await responsive.setViewportSize({ width: 768, height: 1024 });
   await responsive.goto(`${appBase}/paper-trading?prefetch=off`, { waitUntil: "networkidle", timeout: 60_000 });
-  await responsive.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await responsive.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
   check("responsive overflow", await responsive.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), "768px document overflows");
   await responsive.screenshot({ path: path.join(outputDir, "paper-command-center-768x1024.png"), fullPage: true });
 
   const laptop = await context.newPage();
   await laptop.setViewportSize({ width: 1366, height: 768 });
   await laptop.goto(`${appBase}/paper-trading?prefetch=off`, { waitUntil: "networkidle", timeout: 60_000 });
-  await laptop.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await laptop.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
   check("laptop overflow", await laptop.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), "1366px document overflows");
   await laptop.screenshot({ path: path.join(outputDir, "paper-command-center-1366x768.png"), fullPage: true });
 
   const mobile = await context.newPage();
   await mobile.setViewportSize({ width: 390, height: 844 });
   await mobile.goto(`${appBase}/paper-trading?prefetch=off`, { waitUntil: "networkidle", timeout: 60_000 });
-  await mobile.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await mobile.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
   check("mobile trade cards", await mobile.locator("#trades button").filter({ hasText: "Open complete trade evidence" }).count() >= 2, "mobile trade cards missing");
   check("mobile desktop table hidden", await mobile.locator("#trades table").evaluate((node) => getComputedStyle(node.closest('div')).display === "none"), "desktop matrix remains visible on mobile");
   check("mobile overflow", await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), "390px document overflows");
@@ -195,7 +195,7 @@ try {
   const compactMobile = await context.newPage();
   await compactMobile.setViewportSize({ width: 360, height: 800 });
   await compactMobile.goto(`${appBase}/paper-trading?prefetch=off`, { waitUntil: "networkidle", timeout: 60_000 });
-  await compactMobile.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await compactMobile.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
   check("compact mobile overflow", await compactMobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), "360px document overflows");
   await compactMobile.screenshot({ path: path.join(outputDir, "paper-command-center-360x800.png"), fullPage: true });
 

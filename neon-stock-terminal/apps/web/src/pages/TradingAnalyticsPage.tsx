@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import {
   createContext,
   lazy,
@@ -469,7 +470,7 @@ export function TradingAnalyticsPage() {
         aria-label="Trading Analytics workspace"
       >
         <header className={styles.toolbar}>
-          {!isScalperPopout && <>{!isScalperView && <><h1>Trading Analytics</h1>
+          {!isScalperPopout && <>{!isScalperView && <><h1>Trading analytics</h1>
           <span>READ-ONLY · Research</span>
           <Link to="/strategy/nifty-options">NIFTY strategy</Link>
           <button onClick={() => setDrawer("health")} title="Data health">Health</button>
@@ -609,7 +610,7 @@ export function TradingAnalyticsPage() {
         {activeQuery.error && (
           <section role="alert" className={styles.warning}>
             Could not refresh evidence.{" "}
-            {activeQuery.error instanceof Error ? activeQuery.error.message : "Request failed"}{" "}
+            {userFacingError(activeQuery.error)}{" "}
             <button onClick={() => void activeQuery.refetch()}>Retry</button>
           </section>
         )}
@@ -761,7 +762,7 @@ export function TradingAnalyticsPage() {
                 <p>
                   Provider-day ΔOI and participant positions are different data.
                   No missing ΔOI is inferred as zero. Raw bid/ask depth and all
-                  source fields remain in Full evidence JSON and this tab’s CSV.
+                  source fields remain in Export details (JSON) and this tab’s CSV.
                 </p>
               </>
             )}
@@ -1073,7 +1074,7 @@ export function TradingAnalyticsPage() {
                   research remains available.
                 </p>
                 <Link to="/analytics/leadership">
-                  Select stock in canonical stock research
+                  Select stock
                 </Link>
               </section>
             )}

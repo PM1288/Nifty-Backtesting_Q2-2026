@@ -223,7 +223,7 @@ export function PredictorPage() {
     );
   };
   return (
-    <main className={styles.page} data-testid="predictor-dashboard">
+    <section className={styles.page} data-testid="predictor-dashboard">
       <header className={styles.header}>
         <div>
           <small>MEASURE FIRST · TRUST ONLY WITH EVIDENCE</small>
@@ -320,12 +320,12 @@ export function PredictorPage() {
                   ? "Not yet run"
                   : stale
                     ? "Heartbeat delayed"
-                    : "Worker reporting"}
+                    : "Forecast status"}
               </strong>
               <small>
                 {data.status
                   ? `${time(data.status.updated_at)} IST · ${data.status.payload.state.replaceAll("_", " ").toLowerCase()}`
-                  : "Awaiting worker"}
+                  : "Awaiting forecast"}
               </small>
             </article>
           </div>
@@ -389,11 +389,7 @@ export function PredictorPage() {
                 <div className={styles.empty}>
                   <h3>No forward forecasts for this session yet</h3>
                   <p>
-                    The worker captures fresh morning bars between 09:30 and
-                    10:00 IST. NIFTY is always considered; stocks must be
-                    selected/recommended by OIIS and pass the matching bullish
-                    or bearish MWD route. Late or missing inputs are skipped,
-                    not backdated.
+                    Forecasts use observations from 09:30–10:00 IST. Eligible stocks must pass OIIS and MWD conditions. Late or missing observations are excluded.
                   </p>
                   <button onClick={() => setTab("Historical lab")}>
                     View NIFTY historical model tests
@@ -711,7 +707,7 @@ export function PredictorPage() {
                 separate; missing gates remain unavailable.
               </p>
               <h3>
-                Latest worker eligibility · {data.status?.payload.day ?? "—"}
+                Latest eligibility · {data.status?.payload.day ?? "—"}
               </h3>
               <p>
                 {data.status?.payload.candidateCount ?? 0} OIIS candidates
@@ -814,6 +810,6 @@ export function PredictorPage() {
           <pre>{JSON.stringify(detail, null, 2)}</pre>
         </aside>
       )}
-    </main>
+    </section>
   );
 }

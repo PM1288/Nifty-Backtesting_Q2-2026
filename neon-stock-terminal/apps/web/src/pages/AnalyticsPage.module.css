@@ -2346,3 +2346,22 @@
   gap: 8px;
   margin: 0 0 8px;
 }
+
+/* Shared reading hierarchy: reserve uppercase for instrument symbols, not prose. */
+.page .muted,
+.page .date,
+.page .sectionIntro,
+.page .panelTitle { text-transform:none; letter-spacing:normal; }
+.page .panelTitle { font-size:14px; font-weight:650; }
+.page .table { font-family:var(--font-ui); }
+.page .table th { text-transform:none; letter-spacing:normal; }
+.pageIdentity { padding:8px 0; border:0; border-radius:0; background:transparent; }
+.marketDetails { margin-top:8px; }
+.marketDetails > summary { cursor:pointer; color:var(--text-secondary); font-weight:600; }
+.marketDetails[open] { display:grid; gap:16px; }
+.marketDetails .signalItem { border:0; border-radius:0; border-bottom:1px solid var(--border-subtle); background:transparent; padding:8px 0; }
+.directory { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:0 24px; }
+.directory a { padding:12px 0; border-bottom:1px solid var(--border-subtle); color:var(--accent-blue); }
+.directory a:hover { text-decoration:underline; }
+
+.heroMeta .metricCard { border: 0; box-shadow: none; background: transparent; padding: 8px 0; }

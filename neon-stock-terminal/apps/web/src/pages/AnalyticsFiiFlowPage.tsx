@@ -282,17 +282,17 @@ function buildCharts(payload: AnalyticsFiiFlowResponse, tr: (value: string) => s
       subtitle: tr("See which participant bucket is genuinely leaning long, hedged, or structurally opposed."),
       option: buildLongShortMatrixOption(payload.charts.clientLongShortMatrix),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("The latest official open-interest split for each participant type across long share, short share, and net positioning.")],
-        [tr("2. Why traders or analysts care about it."), tr("It shows who is actually leaning versus hedging, and whether the market is aligned or internally opposed.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is matrix columns for long percent, short percent, and net percent. Y-axis is participant type. Values are percentages of each participant’s own total OI.")],
-        [tr("4. What a bullish reading looks like."), tr("FIIs are constructively net long, clients are not wildly overextended, and DIIs are not carrying the entire opposite side alone.")],
-        [tr("5. What a bearish reading looks like."), tr("FIIs are materially net short or flattening while clients stay aggressively long into overhead risk.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Most buckets sit near balance and the opposing sides roughly cancel each other out.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Expiry hedging, rollover inventory, and the daily report lag can all make a matrix look directional when it is mostly maintenance positioning.")],
-        [tr("8. What todays reading says."), tr(`Latest official reading for ${latestTradeDateLabel} shows FII net at ${ratioPct(latestFii?.oiNetPct, 2, true)}, Client net at ${ratioPct(latestClient?.oiNetPct, 2, true)}, and DII net at ${ratioPct(latestDii?.oiNetPct, 2, true)}, so the regime is opposed rather than cleanly aligned.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: start by asking whether FIIs and clients agree, then check whether DIIs and pros are absorbing the other side.")]])
+        [tr("Definition"), tr("The latest official open-interest split for each participant type across long share, short share, and net positioning.")],
+        [tr("Context"), tr("It shows who is actually leaning versus hedging, and whether the market is aligned or internally opposed.")],
+        [tr("Axes and units"), tr("X-axis is matrix columns for long percent, short percent, and net percent. Y-axis is participant type. Values are percentages of each participant’s own total OI.")],
+        [tr("Bullish"), tr("FIIs are constructively net long, clients are not wildly overextended, and DIIs are not carrying the entire opposite side alone.")],
+        [tr("Bearish"), tr("FIIs are materially net short or flattening while clients stay aggressively long into overhead risk.")],
+        [tr("Neutral"), tr("Most buckets sit near balance and the opposing sides roughly cancel each other out.")],
+        [tr("Limitations"), tr("Expiry hedging, rollover inventory, and the daily report lag can all make a matrix look directional when it is mostly maintenance positioning.")],
+        [tr("Current reading"), tr(`Latest official reading for ${latestTradeDateLabel} shows FII net at ${ratioPct(latestFii?.oiNetPct, 2, true)}, Client net at ${ratioPct(latestClient?.oiNetPct, 2, true)}, and DII net at ${ratioPct(latestDii?.oiNetPct, 2, true)}, so the regime is opposed rather than cleanly aligned.`)],
+        [tr("Confirmation"), tr(confirmText)],
+        [tr("Contradictions"), tr(contradictText)],
+        [tr("Interpretation"), tr("How to read: start by asking whether FIIs and clients agree, then check whether DIIs and pros are absorbing the other side.")]])
     },
     {
       id: "spread",
@@ -300,17 +300,17 @@ function buildCharts(payload: AnalyticsFiiFlowResponse, tr: (value: string) => s
       subtitle: tr("The spread matters more than either line by itself when you want to see who is pressing risk."),
       option: buildSpreadOption(payload.charts.fiiVsClientSpread),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("The historical gap between FII net positioning and client net positioning, with both lines shown explicitly.")],
-        [tr("2. Why traders or analysts care about it."), tr("A wide spread often means institutional and retail-style participants are reading risk very differently.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is report date. Y-axis is net positioning percentage. The spread bar is also shown in percentage terms.")],
-        [tr("4. What a bullish reading looks like."), tr("FIIs stay stronger than clients and the spread widens for the right reasons, not because clients are panicking out.")],
-        [tr("5. What a bearish reading looks like."), tr("Clients chase longs while FII conviction lags or deteriorates, leaving a negative institutional-vs-client confirmation gap.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("FII and client positioning move in a narrow band without clear leadership from either side.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Client extremes can persist far longer than expected, so a wide spread is context, not a timing trigger.")],
-        [tr("8. What todays reading says."), tr(`Latest official spread is ${ratioPct((latestFii?.oiNetPct ?? 0) - (latestClient?.oiNetPct ?? 0), 2, true)}, which says clients are leaning harder than FIIs even though FIIs are still mildly net long.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`The largest divergence card also shows ${payload.divergences[0]?.title ?? "the same participant split"}, reinforcing that the disagreement is structural, not cosmetic.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: the spread tells you who is leaning harder, but not whether price will immediately reward that lean.")]])
+        [tr("Definition"), tr("The historical gap between FII net positioning and client net positioning, with both lines shown explicitly.")],
+        [tr("Context"), tr("A wide spread often means institutional and retail-style participants are reading risk very differently.")],
+        [tr("Axes and units"), tr("X-axis is report date. Y-axis is net positioning percentage. The spread bar is also shown in percentage terms.")],
+        [tr("Bullish"), tr("FIIs stay stronger than clients and the spread widens for the right reasons, not because clients are panicking out.")],
+        [tr("Bearish"), tr("Clients chase longs while FII conviction lags or deteriorates, leaving a negative institutional-vs-client confirmation gap.")],
+        [tr("Neutral"), tr("FII and client positioning move in a narrow band without clear leadership from either side.")],
+        [tr("Limitations"), tr("Client extremes can persist far longer than expected, so a wide spread is context, not a timing trigger.")],
+        [tr("Current reading"), tr(`Latest official spread is ${ratioPct((latestFii?.oiNetPct ?? 0) - (latestClient?.oiNetPct ?? 0), 2, true)}, which says clients are leaning harder than FIIs even though FIIs are still mildly net long.`)],
+        [tr("Confirmation"), tr(`The largest divergence card also shows ${payload.divergences[0]?.title ?? "the same participant split"}, reinforcing that the disagreement is structural, not cosmetic.`)],
+        [tr("Contradictions"), tr(contradictText)],
+        [tr("Interpretation"), tr("How to read: the spread tells you who is leaning harder, but not whether price will immediately reward that lean.")]])
     },
     {
       id: "product",
@@ -318,17 +318,17 @@ function buildCharts(payload: AnalyticsFiiFlowResponse, tr: (value: string) => s
       subtitle: tr("Product mix reveals whether the latest FII flow is concentrated in index risk, stock risk, or both."),
       option: buildProductOption(payload.charts.productValueByProduct),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Latest official FII derivatives statistics by product, showing buy value, sell value, and open-interest value.")],
-        [tr("2. Why traders or analysts care about it."), tr("It helps distinguish index-risk pressure from stock-futures accumulation and prevents one product from being mistaken for the whole regime.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is derivative product. Y-axis is rupee value in crore.")],
-        [tr("4. What a bullish reading looks like."), tr("Index and stock products both show constructive buy-side value or at least balanced selling with rising supportive OI context.")],
-        [tr("5. What a bearish reading looks like."), tr("Index products show clear net selling while the structure elsewhere offers no offsetting support.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Buy and sell values are close, or stock-futures strength offsets index-futures weakness.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Rollovers can look directional, and product value on one day can describe repositioning rather than fresh conviction.")],
-        [tr("8. What todays reading says."), tr(`Latest official product imbalance is biggest in ${clean(strongestProduct?.product)} at ${num(strongestProduct?.netValueCr, 2)} crore net, while index futures remain net-sold and stock futures are relatively firmer.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`The matrix still shows FIIs as mildly net long in OI terms, so one day of product value pressure does not automatically overturn the broader positioning snapshot.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: ask which product is driving the imbalance, then decide whether that product usually matters for the move you care about.")]])
+        [tr("Definition"), tr("Latest official FII derivatives statistics by product, showing buy value, sell value, and open-interest value.")],
+        [tr("Context"), tr("It helps distinguish index-risk pressure from stock-futures accumulation and prevents one product from being mistaken for the whole regime.")],
+        [tr("Axes and units"), tr("X-axis is derivative product. Y-axis is rupee value in crore.")],
+        [tr("Bullish"), tr("Index and stock products both show constructive buy-side value or at least balanced selling with rising supportive OI context.")],
+        [tr("Bearish"), tr("Index products show clear net selling while the structure elsewhere offers no offsetting support.")],
+        [tr("Neutral"), tr("Buy and sell values are close, or stock-futures strength offsets index-futures weakness.")],
+        [tr("Limitations"), tr("Rollovers can look directional, and product value on one day can describe repositioning rather than fresh conviction.")],
+        [tr("Current reading"), tr(`Latest official product imbalance is biggest in ${clean(strongestProduct?.product)} at ${num(strongestProduct?.netValueCr, 2)} crore net, while index futures remain net-sold and stock futures are relatively firmer.`)],
+        [tr("Confirmation"), tr(confirmText)],
+        [tr("Contradictions"), tr(`The matrix still shows FIIs as mildly net long in OI terms, so one day of product value pressure does not automatically overturn the broader positioning snapshot.`)],
+        [tr("Interpretation"), tr("How to read: ask which product is driving the imbalance, then decide whether that product usually matters for the move you care about.")]])
     },
     {
       id: "percentile",
@@ -336,17 +336,17 @@ function buildCharts(payload: AnalyticsFiiFlowResponse, tr: (value: string) => s
       subtitle: tr("This is the expectancy chart: useful for context, dangerous for overfitting."),
       option: buildPercentileOption(payload.charts.positioningPercentile),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Each historical FII positioning percentile against the next-session Nifty return that followed it.")],
-        [tr("2. Why traders or analysts care about it."), tr("It translates raw positioning into historical context and shows whether extreme percentiles have actually carried expectancy.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is FII positioning percentile from 0% to 100%. Y-axis is next-session Nifty return in percent.")],
-        [tr("4. What a bullish reading looks like."), tr("Higher percentiles cluster with positive next-session returns and the sample size is large enough to trust the relationship.")],
-        [tr("5. What a bearish reading looks like."), tr("Extreme percentiles are followed by weak or negative next-session returns, showing a stretched regime rather than support.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Returns are scattered across all percentiles, which means percentile context is descriptive but not predictive.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Small sample windows, regime drift, and using next-session outcomes as if they were same-day signals can all create false confidence.")],
-        [tr("8. What todays reading says."), tr(`Latest official FII percentile is ${ratioPct(latestFii?.oiPercentile, 2)} within a ${num(payload.diagnostics.sampleSize, 0)}-observation sample, which is too ordinary and too short to claim edge by itself.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`The percentile buckets also show mixed average next-session returns, so the dataset itself confirms that this is a context layer, not a trigger layer.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`If you looked only at the latest FII OI matrix, you might think mild net-long positioning is enough, but the scatter says the forward-return payoff has been unstable.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: percentile tells you how unusual the positioning is; it does not tell you that price must react immediately.")]])
+        [tr("Definition"), tr("Each historical FII positioning percentile against the next-session Nifty return that followed it.")],
+        [tr("Context"), tr("It translates raw positioning into historical context and shows whether extreme percentiles have actually carried expectancy.")],
+        [tr("Axes and units"), tr("X-axis is FII positioning percentile from 0% to 100%. Y-axis is next-session Nifty return in percent.")],
+        [tr("Bullish"), tr("Higher percentiles cluster with positive next-session returns and the sample size is large enough to trust the relationship.")],
+        [tr("Bearish"), tr("Extreme percentiles are followed by weak or negative next-session returns, showing a stretched regime rather than support.")],
+        [tr("Neutral"), tr("Returns are scattered across all percentiles, which means percentile context is descriptive but not predictive.")],
+        [tr("Limitations"), tr("Small sample windows, regime drift, and using next-session outcomes as if they were same-day signals can all create false confidence.")],
+        [tr("Current reading"), tr(`Latest official FII percentile is ${ratioPct(latestFii?.oiPercentile, 2)} within a ${num(payload.diagnostics.sampleSize, 0)}-observation sample, which is too ordinary and too short to claim edge by itself.`)],
+        [tr("Confirmation"), tr(`The percentile buckets also show mixed average next-session returns, so the dataset itself confirms that this is a context layer, not a trigger layer.`)],
+        [tr("Contradictions"), tr(`If you looked only at the latest FII OI matrix, you might think mild net-long positioning is enough, but the scatter says the forward-return payoff has been unstable.`)],
+        [tr("Interpretation"), tr("How to read: percentile tells you how unusual the positioning is; it does not tell you that price must react immediately.")]])
     },
     {
       id: "overlay",
@@ -354,17 +354,17 @@ function buildCharts(payload: AnalyticsFiiFlowResponse, tr: (value: string) => s
       subtitle: tr("Use this to compare flow regime and price regime, not to force causality."),
       option: buildRegimeOverlayOption(payload.charts.regimeOverlay),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("FII positioning percentile over time, overlaid with same-session Nifty daily return.")],
-        [tr("2. Why traders or analysts care about it."), tr("It shows whether price and institutional context are confirming one another or quietly diverging.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is report date. Left Y-axis is FII percentile. Right Y-axis is same-session Nifty return in percent.")],
-        [tr("4. What a bullish reading looks like."), tr("FII percentile rises into constructive territory while Nifty returns also improve, creating confirmation rather than conflict.")],
-        [tr("5. What a bearish reading looks like."), tr("FII percentile deteriorates while the index weakens or rallies without institutional confirmation.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("The percentile moves around without a stable relationship to index returns.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Same-day association can look persuasive even when next-session predictive value is weak; this chart does not prove causation.")],
-        [tr("8. What todays reading says."), tr(`Latest official regime is ${clean(payload.summary?.regimeLabel)} with Nifty same-day return at ${pct(payload.marketContext?.niftyReturnPct, 2, true)}, which is more context alignment than outright signal quality.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(payload.summary?.reportLagNote ?? "The page explicitly treats participant data as daily context rather than live flow.")],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`The next-session scatter remains mixed, so any same-day visual confirmation still fails the timing-signal test.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: use the overlay to ask whether flow and price agree, then check the percentile chart to see whether that agreement has paid off historically.")]])
+        [tr("Definition"), tr("FII positioning percentile over time, overlaid with same-session Nifty daily return.")],
+        [tr("Context"), tr("It shows whether price and institutional context are confirming one another or quietly diverging.")],
+        [tr("Axes and units"), tr("X-axis is report date. Left Y-axis is FII percentile. Right Y-axis is same-session Nifty return in percent.")],
+        [tr("Bullish"), tr("FII percentile rises into constructive territory while Nifty returns also improve, creating confirmation rather than conflict.")],
+        [tr("Bearish"), tr("FII percentile deteriorates while the index weakens or rallies without institutional confirmation.")],
+        [tr("Neutral"), tr("The percentile moves around without a stable relationship to index returns.")],
+        [tr("Limitations"), tr("Same-day association can look persuasive even when next-session predictive value is weak; this chart does not prove causation.")],
+        [tr("Current reading"), tr(`Latest official regime is ${clean(payload.summary?.regimeLabel)} with Nifty same-day return at ${pct(payload.marketContext?.niftyReturnPct, 2, true)}, which is more context alignment than outright signal quality.`)],
+        [tr("Confirmation"), tr(payload.summary?.reportLagNote ?? "The page explicitly treats participant data as daily context rather than live flow.")],
+        [tr("Contradictions"), tr(`The next-session scatter remains mixed, so any same-day visual confirmation still fails the timing-signal test.`)],
+        [tr("Interpretation"), tr("How to read: use the overlay to ask whether flow and price agree, then check the percentile chart to see whether that agreement has paid off historically.")]])
     },
     {
       id: "change",
@@ -372,17 +372,17 @@ function buildCharts(payload: AnalyticsFiiFlowResponse, tr: (value: string) => s
       subtitle: tr("The shift matters because reversals in positioning often matter more than static levels."),
       option: buildChangeOption(payload.charts.dayOverDayPositioningChange),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Day-over-day change in participant net positioning, measured in percentage-point shifts.")],
-        [tr("2. Why traders or analysts care about it."), tr("A stable extreme is different from a fresh reversal, so the daily change can reveal whether conviction is building, fading, or just churning.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is report date. Y-axis is change in net positioning percentage points.")],
-        [tr("4. What a bullish reading looks like."), tr("FIIs add net long exposure while opposing buckets do not aggressively offset the shift.")],
-        [tr("5. What a bearish reading looks like."), tr("FIIs flatten or sell while client or prop positioning absorbs the other side in a way that leaves institutions less committed.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Daily changes are small, choppy, or cancelled out across participant groups.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Expiry distortions and short sample history can make a one-day shift look much more meaningful than it really is.")],
-        [tr("8. What todays reading says."), tr(`Latest report shows the largest day-over-day shift in ${latestChangeLead?.clientType ?? "—"} at ${num(latestChangeLead?.dayChangePctPoints, 2)} percentage points, which says the change is noticeable but still inside a noisy daily context series.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Static OI still leaves FIIs mildly net long, so one daily change does not automatically imply regime reversal.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: compare today’s change with the existing level, because a shift only matters if it changes the regime you were already in.")]])
+        [tr("Definition"), tr("Day-over-day change in participant net positioning, measured in percentage-point shifts.")],
+        [tr("Context"), tr("A stable extreme is different from a fresh reversal, so the daily change can reveal whether conviction is building, fading, or just churning.")],
+        [tr("Axes and units"), tr("X-axis is report date. Y-axis is change in net positioning percentage points.")],
+        [tr("Bullish"), tr("FIIs add net long exposure while opposing buckets do not aggressively offset the shift.")],
+        [tr("Bearish"), tr("FIIs flatten or sell while client or prop positioning absorbs the other side in a way that leaves institutions less committed.")],
+        [tr("Neutral"), tr("Daily changes are small, choppy, or cancelled out across participant groups.")],
+        [tr("Limitations"), tr("Expiry distortions and short sample history can make a one-day shift look much more meaningful than it really is.")],
+        [tr("Current reading"), tr(`Latest report shows the largest day-over-day shift in ${latestChangeLead?.clientType ?? "—"} at ${num(latestChangeLead?.dayChangePctPoints, 2)} percentage points, which says the change is noticeable but still inside a noisy daily context series.`)],
+        [tr("Confirmation"), tr(confirmText)],
+        [tr("Contradictions"), tr(`Static OI still leaves FIIs mildly net long, so one daily change does not automatically imply regime reversal.`)],
+        [tr("Interpretation"), tr("How to read: compare today’s change with the existing level, because a shift only matters if it changes the regime you were already in.")]])
     }
   ];
 }
@@ -451,14 +451,12 @@ export function AnalyticsFiiFlowPage() {
       />
       <section className={styles.pageHeading}>
         <span className={styles.eyebrow}>{tr("Markets · Institutional context")}</span>
-        <h1>{tr("FII / DII & Participant Flow")}</h1>
+        <h1>{tr("FII / DII & Participant flow")}</h1>
         <p>{tr("Track official cash-market buying and selling trends, derivatives positioning, source freshness, and missing report dates without presenting post-close reports as live intraday flow.")}</p>
       </section>
       <AnalyticsHeader
-        title="FII / DII & Participant Flow"
+        title="FII / DII & Participant flow"
         meta={`${tr("Cash data")} ${payload.latestCashTradeDate ? formatDateIST(payload.latestCashTradeDate) : "—"} · ${tr("Detailed participant data")} ${payload.latestTradeDate ? formatDateIST(payload.latestTradeDate) : "—"}`}
-        subtitle={tr("Read FII, client, DII, and prop positioning as daily institutional context. This page is for framing risk and next-session bias, not for triggering exact intraday entries.")}
-        learningPrompt={tr("This page answers one question: does the institutional backdrop support, contradict, stretch, or neutralize the next-session tape?")}
         sectionTabs={[...INSTITUTIONAL_SECTION_TABS]}
       />
 

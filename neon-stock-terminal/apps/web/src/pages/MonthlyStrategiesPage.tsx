@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useLocation } from "react-router-dom";
@@ -747,7 +748,7 @@ function Inspector({
     if (!needsDetail) return;
     const controller = new AbortController();
     void fetchAbsoluteMonthlyEvaluation(row.id, controller.signal).then(setDetail).catch((error: unknown) => {
-      if (!controller.signal.aborted) setDetailError(error instanceof Error ? error.message : "Unable to load condition evidence.");
+      if (!controller.signal.aborted) setDetailError(userFacingError(error, "Condition details could not be loaded. Try again."));
     });
     return () => controller.abort();
   }, [needsDetail, row.id]);
@@ -834,7 +835,7 @@ function Inspector({
             ))}
           </ul>
         ) : (
-          <p>No structured condition trace was persisted for this row.</p>
+          <p>Condition details are unavailable for this row.</p>
         )}
       </section>
       {row.entryMethod === "ROLLING_5_30_60" ? (
@@ -1124,11 +1125,11 @@ export function MonthlyStrategyPage() {
     [comparisonPopulation],
   );
   return (
-    <main className={styles.page}>
+    <section className={styles.page}>
       <header className={styles.hero}>
         <div>
           <span>INDEPENDENT CASH-EQUITY RESEARCH · NOT OIIS</span>
-          <h1>Monthly Strategy</h1>
+          <h1>Monthly strategy</h1>
           <p>
             {comparisonMode
               ? "Compare Monthly Close and Monthly Open selections by stock and calendar month, with both shared and strategy-only candidates visible."
@@ -1145,7 +1146,7 @@ export function MonthlyStrategyPage() {
       {error || evaluationsQuery.error ? (
         <div className={styles.error} role="alert">
           <b>Some monthly evidence is unavailable</b>
-          <span>{[error, evaluationsQuery.error?.message].filter(Boolean).join(" · ")}</span>
+          <span>{userFacingError(evaluationsQuery.error ?? error)}</span>
         </div>
       ) : null}
       {loadingSources > 0 ? (
@@ -1370,7 +1371,7 @@ export function MonthlyStrategyPage() {
       {selected ? (
         <Inspector key={selected.id} row={selected} onClose={() => setSelected(null)} />
       ) : null}
-    </main>
+    </section>
   );
 }
 
@@ -1508,13 +1509,13 @@ export function RollingWindowStrategyPage() {
   );
   const summary = payload?.summary ?? {};
   return (
-    <main className={styles.page}>
+    <section className={styles.page}>
       <header className={styles.hero}>
         <div>
           <span>
             INDEPENDENT ROLLING RESEARCH · 5 / 30 / 60 EXCHANGE SESSIONS
           </span>
-          <h1>Rolling Strategy</h1>
+          <h1>Rolling strategy</h1>
           <p>
             Calendar-independent signal transitions built from trailing
             60-session, 30-session, 10-session and 5-session comparisons, with
@@ -1535,7 +1536,7 @@ export function RollingWindowStrategyPage() {
               ? "Complete rolling history could not be refreshed"
               : "Rolling evidence unavailable"}
           </b>
-          <span>{error}</span>
+          <span>{userFacingError(error)}</span>
         </div>
       ) : null}
       {!payload ? (
@@ -1588,7 +1589,7 @@ export function RollingWindowStrategyPage() {
               </select>
             </label>
             <span>{payload.universeRule}</span>
-            <span>{payload.refreshCadence}</span>
+            <span>{payload.refreshCadence.replace("Persisted by the strategy worker every 15 minutes; values advance with the latest ingested EOD session", "Updated every 15 minutes using the latest available closing prices")}</span>
             <StockUniverseFilterBar
               compact
               profiles={profiles.payload?.records ?? []}
@@ -1641,7 +1642,7 @@ export function RollingWindowStrategyPage() {
       {selected ? (
         <Inspector key={selected.id} row={selected} onClose={() => setSelected(null)} />
       ) : null}
-    </main>
+    </section>
   );
 }
 

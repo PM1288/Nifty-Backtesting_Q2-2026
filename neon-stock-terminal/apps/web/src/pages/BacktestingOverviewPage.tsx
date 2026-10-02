@@ -45,8 +45,7 @@ export function BacktestingOverviewPage() {
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
-        title={tr("Backtesting Overview")}
-        subtitle={tr("Use this as the landing page for historical strategy evidence built from daily market data.")}
+        title={tr("Backtesting")}
         testRunAt={data.generatedAt}
         meta={`Data through ${formatDateIST(data.marketDate)} • ${data.snapshotAgeLabel}`}
       />
@@ -94,7 +93,6 @@ export function BacktestingOverviewPage() {
       <SectionDivider
         eyebrow={tr("Risk")}
         title={tr("Path and drawdown")}
-        subtitle={tr("A final number hides the journey. These charts show when value changed and how deep the portfolio fell from a prior peak.")}
       />
 
       <section className={styles.grid2}>
@@ -121,7 +119,6 @@ export function BacktestingOverviewPage() {
       <SectionDivider
         eyebrow={tr("Coverage")}
         title={tr("Snapshot scope")}
-        subtitle={tr("Use these counts to understand the breadth and freshness of the evidence before opening a strategy or audit run.")}
       />
       <section className={styles.systemHealthRow}>
         <KpiCard label={tr("Last market date")} value={formatDateIST(data.marketDate)} />

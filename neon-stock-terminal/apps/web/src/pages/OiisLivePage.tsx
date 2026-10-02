@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuthGate } from "../auth/AuthGateProvider";
@@ -349,7 +350,7 @@ export function OiisLivePage() {
     [
       "OFactor ≥ 74",
       integer(funnel, "ofactor_pass"),
-      "Canonical opportunity permission passed",
+      "Trade conditions met",
     ],
     [
       "XFactor ≥ 76",
@@ -716,7 +717,7 @@ export function OiisLivePage() {
         </div>
       </header>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && <div className={styles.error}>{userFacingError(error)}</div>}
 
       <div
         className={styles.viewTabs}
@@ -1348,7 +1349,7 @@ export function OiisLivePage() {
             title="Continue this strategy investigation"
             items={[
               { id: "stock", title: "Stock 360", detail: "Inspect a candidate's price, levels, indicators and signal evidence.", to: "/analytics/indicators?strategy=oiis-live&source=oiis-live" },
-              { id: "paper", title: "Paper Trading", detail: "Review authorised paper observations and their target chronology.", to: "/paper-trading?source=oiis-live" },
+              { id: "paper", title: "Paper trading", detail: "Review authorised paper observations and their target chronology.", to: "/paper-trading?source=oiis-live" },
               { id: "history", title: "Historical outcomes", detail: "Compare OIIS evidence across completed backtest runs.", to: "/backtesting/results?strategy=oiis-live&source=oiis-live" },
               { id: "quality", title: "Data quality", detail: "Inspect stale, incomplete or blocked inputs affecting this run.", to: "/analytics/system/quality?source=oiis-live" },
             ]}
@@ -1358,7 +1359,7 @@ export function OiisLivePage() {
             sections={[
               {
                 id: "read",
-                title: "How to read this page",
+                title: "Methodology",
                 content: <p>The decision hero is authoritative. Near misses are evidence for investigation, not authorised entries. Tier and failure counts can overlap.</p>,
               },
               {
@@ -1377,7 +1378,7 @@ export function OiisLivePage() {
                 ),
               },
               { id: "definitions", title: "Definitions", content: <p>OFactor measures opportunity, XFactor measures execution quality, and DQ records data completeness. A rejection means do not enter under this strategy now; it does not forecast that the stock must fall.</p> },
-              { id: "sources", title: "Data sources and freshness", content: <p>Candidate evidence comes from the persisted OIIS run and canonical market-data tables. The live-services panel shows the latest source timestamps.</p> },
+              { id: "sources", title: "Data sources and freshness", content: <p>OIIS results and source timestamps are shown below.</p> },
               { id: "limitations", title: "Limitations and assumptions", content: <p>Counts are non-additive because one candidate may fail multiple gates. Missing or stale inputs downgrade the decision instead of being converted to zero.</p> },
               { id: "version", title: "Formula and model version", content: <p>Run {String(latestRun.run_id ?? "—")} · formula {value(latestRun, "formula_version")}.</p> },
             ]}

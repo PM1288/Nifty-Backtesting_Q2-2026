@@ -217,17 +217,17 @@ function buildCharts(payload: AnalyticsOptionsStructureResponse, tr: (value: str
       subtitle: tr("Use PCR as context only after wall location and migration are clear."),
       option: buildPcrOption(payload.pcrByExpiry),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Put-call ratio across expiries using persisted OI snapshots.")],
-        [tr("2. Why traders or analysts care about it."), tr("It helps frame whether positioning is skewed toward puts or calls, but only as secondary context.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is expiry date. Y-axis is PCR ratio, which is a unitless proportion of put OI to call OI.")],
-        [tr("4. What a bullish reading looks like."), tr("A mildly supportive PCR that sits with put support below spot and rising walls under price.")],
-        [tr("5. What a bearish reading looks like."), tr("A weak PCR combined with call walls pressing down and spot unable to clear structure.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("PCR is mixed across expiries or jumps around too much to describe usable positioning.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Front-expiry PCR can be distorted by rolls, hedges, and stale far-OTM strikes, so PCR in isolation is often misleading.")],
-        [tr("8. What todays reading says."), tr(`Front-expiry PCR is ${pct(pcrLead?.pcr, 2)} as a ratio reading, but the recent trail is noisy enough that this chart is contextual rather than directional.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirm)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradict)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: PCR can support a structural read, but it cannot replace wall analysis or spot behavior.")]
+        [tr("Definition"), tr("Put-call ratio across expiries using persisted OI snapshots.")],
+        [tr("Context"), tr("It helps frame whether positioning is skewed toward puts or calls, but only as secondary context.")],
+        [tr("Axes and units"), tr("X-axis is expiry date. Y-axis is PCR ratio, which is a unitless proportion of put OI to call OI.")],
+        [tr("Bullish"), tr("A mildly supportive PCR that sits with put support below spot and rising walls under price.")],
+        [tr("Bearish"), tr("A weak PCR combined with call walls pressing down and spot unable to clear structure.")],
+        [tr("Neutral"), tr("PCR is mixed across expiries or jumps around too much to describe usable positioning.")],
+        [tr("Limitations"), tr("Front-expiry PCR can be distorted by rolls, hedges, and stale far-OTM strikes, so PCR in isolation is often misleading.")],
+        [tr("Current reading"), tr(`Front-expiry PCR is ${pct(pcrLead?.pcr, 2)} as a ratio reading, but the recent trail is noisy enough that this chart is contextual rather than directional.`)],
+        [tr("Confirmation"), tr(confirm)],
+        [tr("Contradictions"), tr(contradict)],
+        [tr("Interpretation"), tr("How to read: PCR can support a structural read, but it cannot replace wall analysis or spot behavior.")]
       ])
     },
     {
@@ -236,17 +236,17 @@ function buildCharts(payload: AnalyticsOptionsStructureResponse, tr: (value: str
       subtitle: tr("The best live chart for seeing where the market is actually stacked."),
       option: buildOiHeatmapOption(payload.strikeLadder),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Call and put open interest at each strike around spot.")],
-        [tr("2. Why traders or analysts care about it."), tr("This is the clearest view of nearby call walls, put walls, and where spot is likely to encounter friction.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is option side. Y-axis is strike. Cell intensity is open interest in contracts.")],
-        [tr("4. What a bullish reading looks like."), tr("Spot sits above a durable put shelf and nearby call OI starts thinning or shifting higher.")],
-        [tr("5. What a bearish reading looks like."), tr("Call OI stays stacked just above spot while put support erodes below.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Spot is trapped between nearby call and put walls of similar strength.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Static OI can reflect hedging inventory rather than conviction, especially around weekly expiry or roll periods.")],
-        [tr("8. What todays reading says."), tr(`Nearest call supply is around ${callWall?.strike ?? "—"} and nearest put support is around ${putWall?.strike ?? "—"}, so spot is still fighting nearby structure rather than moving in clean air.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirm)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradict)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: start with the nearest walls around spot, then ask whether those walls are migrating or simply sitting still.")]
+        [tr("Definition"), tr("Call and put open interest at each strike around spot.")],
+        [tr("Context"), tr("This is the clearest view of nearby call walls, put walls, and where spot is likely to encounter friction.")],
+        [tr("Axes and units"), tr("X-axis is option side. Y-axis is strike. Cell intensity is open interest in contracts.")],
+        [tr("Bullish"), tr("Spot sits above a durable put shelf and nearby call OI starts thinning or shifting higher.")],
+        [tr("Bearish"), tr("Call OI stays stacked just above spot while put support erodes below.")],
+        [tr("Neutral"), tr("Spot is trapped between nearby call and put walls of similar strength.")],
+        [tr("Limitations"), tr("Static OI can reflect hedging inventory rather than conviction, especially around weekly expiry or roll periods.")],
+        [tr("Current reading"), tr(`Nearest call supply is around ${callWall?.strike ?? "—"} and nearest put support is around ${putWall?.strike ?? "—"}, so spot is still fighting nearby structure rather than moving in clean air.`)],
+        [tr("Confirmation"), tr(confirm)],
+        [tr("Contradictions"), tr(contradict)],
+        [tr("Interpretation"), tr("How to read: start with the nearest walls around spot, then ask whether those walls are migrating or simply sitting still.")]
       ])
     },
     {
@@ -255,17 +255,17 @@ function buildCharts(payload: AnalyticsOptionsStructureResponse, tr: (value: str
       subtitle: tr("Useful only as a reference anchor, never as destiny."),
       option: buildMaxPainOption(payload.maxPainDrift, spot),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Tracked max pain levels by expiry versus the corresponding spot reference.")],
-        [tr("2. Why traders or analysts care about it."), tr("It shows where option writers may be most comfortable, but it is only a background anchor.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is expiry sequence. Y-axis is strike or spot level in index points.")],
-        [tr("4. What a bullish reading looks like."), tr("Spot holds above the stale anchor and nearby put structure keeps migrating upward.")],
-        [tr("5. What a bearish reading looks like."), tr("Spot drifts back toward a lower anchor while call resistance stays overhead.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Max pain sits near spot but without fresh updates, so it only describes an old equilibrium.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Stale max pain data and the common mistake of treating max pain as a tradable target can both mislead badly.")],
-        [tr("8. What todays reading says."), tr(`Latest persisted max pain sits near ${maxPainLead?.maxPainStrike ?? "—"}, but it is stale by ${num(maxPainLead?.staleDays, 0)} days and should be treated as a reference anchor only.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(summary?.maxPainContext ?? "The summary already flags max pain as a secondary anchor.")],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradict)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: max pain is a map pin, not a forecast.")]
+        [tr("Definition"), tr("Tracked max pain levels by expiry versus the corresponding spot reference.")],
+        [tr("Context"), tr("It shows where option writers may be most comfortable, but it is only a background anchor.")],
+        [tr("Axes and units"), tr("X-axis is expiry sequence. Y-axis is strike or spot level in index points.")],
+        [tr("Bullish"), tr("Spot holds above the stale anchor and nearby put structure keeps migrating upward.")],
+        [tr("Bearish"), tr("Spot drifts back toward a lower anchor while call resistance stays overhead.")],
+        [tr("Neutral"), tr("Max pain sits near spot but without fresh updates, so it only describes an old equilibrium.")],
+        [tr("Limitations"), tr("Stale max pain data and the common mistake of treating max pain as a tradable target can both mislead badly.")],
+        [tr("Current reading"), tr(`Latest persisted max pain sits near ${maxPainLead?.maxPainStrike ?? "—"}, but it is stale by ${num(maxPainLead?.staleDays, 0)} days and should be treated as a reference anchor only.`)],
+        [tr("Confirmation"), tr(summary?.maxPainContext ?? "The summary already flags max pain as a secondary anchor.")],
+        [tr("Contradictions"), tr(contradict)],
+        [tr("Interpretation"), tr("How to read: max pain is a map pin, not a forecast.")]
       ])
     },
     {
@@ -274,17 +274,17 @@ function buildCharts(payload: AnalyticsOptionsStructureResponse, tr: (value: str
       subtitle: tr("IV helps only when you know whether expansion is supporting the move or warning of exhaustion."),
       option: buildTermStructureOption(payload.termStructure),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("ATM implied volatility by expiry and the current skew reference for the active expiry.")],
-        [tr("2. Why traders or analysts care about it."), tr("IV expansion can validate a real move, while unstable or collapsing IV can signal exhaustion or event-risk repricing.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is expiry. Y-axis is implied volatility in percent, with skew shown as an IV spread.")],
-        [tr("4. What a bullish reading looks like."), tr("Spot pushes through structure while IV expands in a controlled way and skew does not show panic put demand.")],
-        [tr("5. What a bearish reading looks like."), tr("IV spikes mainly through downside demand while spot fails at call resistance.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("ATM IV is elevated but skew and spot do not agree on direction.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("IV can compress after events, and incomplete persisted Greeks history can make skew look cleaner than it really is.")],
-        [tr("8. What todays reading says."), tr(`Active expiry ATM IV is around ${pct(termLead?.atmIv != null ? termLead.atmIv / 100 : null, 2)} in percentage terms, but skew history is incomplete, so IV is informative without being decisive.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(summary?.equilibriumContext ?? "The structure read still depends more on live walls than on stale secondary series.")],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradict)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: IV supports a move when it expands with structure confirmation, and warns of exhaustion when it expands against fading spot progress.")]
+        [tr("Definition"), tr("ATM implied volatility by expiry and the current skew reference for the active expiry.")],
+        [tr("Context"), tr("IV expansion can validate a real move, while unstable or collapsing IV can signal exhaustion or event-risk repricing.")],
+        [tr("Axes and units"), tr("X-axis is expiry. Y-axis is implied volatility in percent, with skew shown as an IV spread.")],
+        [tr("Bullish"), tr("Spot pushes through structure while IV expands in a controlled way and skew does not show panic put demand.")],
+        [tr("Bearish"), tr("IV spikes mainly through downside demand while spot fails at call resistance.")],
+        [tr("Neutral"), tr("ATM IV is elevated but skew and spot do not agree on direction.")],
+        [tr("Limitations"), tr("IV can compress after events, and incomplete persisted Greeks history can make skew look cleaner than it really is.")],
+        [tr("Current reading"), tr(`Active expiry ATM IV is around ${pct(termLead?.atmIv != null ? termLead.atmIv / 100 : null, 2)} in percentage terms, but skew history is incomplete, so IV is informative without being decisive.`)],
+        [tr("Confirmation"), tr(summary?.equilibriumContext ?? "The structure read still depends more on live walls than on stale secondary series.")],
+        [tr("Contradictions"), tr(contradict)],
+        [tr("Interpretation"), tr("How to read: IV supports a move when it expands with structure confirmation, and warns of exhaustion when it expands against fading spot progress.")]
       ])
     },
     {
@@ -293,17 +293,17 @@ function buildCharts(payload: AnalyticsOptionsStructureResponse, tr: (value: str
       subtitle: tr("Migration matters more than static OI because structure that moves is structure that is being repriced."),
       option: buildWallMigrationOption(payload.wallMigration),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Recent movement in the dominant call and put walls versus spot.")],
-        [tr("2. Why traders or analysts care about it."), tr("Wall migration separates genuine structural shifts from static inventory that only looks important.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is snapshot time. Y-axis is strike or spot level in index points.")],
-        [tr("4. What a bullish reading looks like."), tr("Call walls shift higher or weaken while put walls rise under spot.")],
-        [tr("5. What a bearish reading looks like."), tr("Call walls stay pinned overhead or drift lower while put walls drop away beneath spot.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Walls stay mostly fixed and spot oscillates between them.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Rollover activity can look directional even when it is just inventory transfer between strikes or expiries.")],
-        [tr("8. What todays reading says."), tr(`Recent migration still shows call structure near ${callMigr?.strike ?? "—"} and put structure near ${putMigr?.strike ?? "—"}, so the tape still looks pinned-to-fighting rather than broken free.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirm)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradict)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: walls that migrate with spot support continuation; walls that do not migrate are usually where continuation stalls.")]
+        [tr("Definition"), tr("Recent movement in the dominant call and put walls versus spot.")],
+        [tr("Context"), tr("Wall migration separates genuine structural shifts from static inventory that only looks important.")],
+        [tr("Axes and units"), tr("X-axis is snapshot time. Y-axis is strike or spot level in index points.")],
+        [tr("Bullish"), tr("Call walls shift higher or weaken while put walls rise under spot.")],
+        [tr("Bearish"), tr("Call walls stay pinned overhead or drift lower while put walls drop away beneath spot.")],
+        [tr("Neutral"), tr("Walls stay mostly fixed and spot oscillates between them.")],
+        [tr("Limitations"), tr("Rollover activity can look directional even when it is just inventory transfer between strikes or expiries.")],
+        [tr("Current reading"), tr(`Recent migration still shows call structure near ${callMigr?.strike ?? "—"} and put structure near ${putMigr?.strike ?? "—"}, so the tape still looks pinned-to-fighting rather than broken free.`)],
+        [tr("Confirmation"), tr(confirm)],
+        [tr("Contradictions"), tr(contradict)],
+        [tr("Interpretation"), tr("How to read: walls that migrate with spot support continuation; walls that do not migrate are usually where continuation stalls.")]
       ])
     },
     {
@@ -312,17 +312,17 @@ function buildCharts(payload: AnalyticsOptionsStructureResponse, tr: (value: str
       subtitle: tr("Concentration shows where hedging flows are most likely to matter around spot."),
       option: buildGammaDeltaOption(payload.gammaDeltaConcentration),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Strike-level gamma and delta concentration around the active chain.")],
-        [tr("2. Why traders or analysts care about it."), tr("Concentration highlights where dealer hedging pressure can reinforce pinning, accelerate a breakout, or amplify reversals.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is strike. Y-axis is normalized concentration from persisted gamma and delta exposure fields.")],
-        [tr("4. What a bullish reading looks like."), tr("Positive concentration supports spot above nearby put support and weakens the practical effect of call walls.")],
-        [tr("5. What a bearish reading looks like."), tr("Concentration builds around overhead strikes and spot cannot clear them.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Concentration is split around ATM, creating pinning rather than trend extension.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Incomplete Greeks history and one-sided persisted series can make concentration look cleaner than the actual live dealer book.")],
-        [tr("8. What todays reading says."), tr(`The biggest concentration sits near ${gammaLead?.strike ?? "—"}, which keeps hedging pressure close to spot and supports the pinned/fighting structure read.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirm)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(contradict)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: concentration near spot usually means pin risk; concentration that starts shifting away from spot can open room for expansion.")]
+        [tr("Definition"), tr("Strike-level gamma and delta concentration around the active chain.")],
+        [tr("Context"), tr("Concentration highlights where dealer hedging pressure can reinforce pinning, accelerate a breakout, or amplify reversals.")],
+        [tr("Axes and units"), tr("X-axis is strike. Y-axis is normalized concentration from persisted gamma and delta exposure fields.")],
+        [tr("Bullish"), tr("Positive concentration supports spot above nearby put support and weakens the practical effect of call walls.")],
+        [tr("Bearish"), tr("Concentration builds around overhead strikes and spot cannot clear them.")],
+        [tr("Neutral"), tr("Concentration is split around ATM, creating pinning rather than trend extension.")],
+        [tr("Limitations"), tr("Incomplete Greeks history and one-sided persisted series can make concentration look cleaner than the actual live dealer book.")],
+        [tr("Current reading"), tr(`The biggest concentration sits near ${gammaLead?.strike ?? "—"}, which keeps hedging pressure close to spot and supports the pinned/fighting structure read.`)],
+        [tr("Confirmation"), tr(confirm)],
+        [tr("Contradictions"), tr(contradict)],
+        [tr("Interpretation"), tr("How to read: concentration near spot usually means pin risk; concentration that starts shifting away from spot can open room for expansion.")]
       ])
     }
   ];
@@ -373,10 +373,8 @@ export function AnalyticsOptionsStructurePage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title="Options Structure"
+        title="Options structure"
         meta={`${tr("Expiry")} ${latestSnapshot.expiryDate ? formatDateIST(latestSnapshot.expiryDate) : "—"} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}
-        subtitle={tr("Read nearby call walls, put walls, IV, max-pain context, and wall migration before deciding whether spot is pinned, breaking out, or only making noise around expiry structure.")}
-        learningPrompt={tr("This page teaches the difference between static option inventory and structure that is actually shifting with spot.")}
         sectionTabs={[...OPTIONS_SECTION_TABS]}
       />
 
@@ -467,9 +465,9 @@ export function AnalyticsOptionsStructurePage() {
       </section>
 
       <PageIntroAccordion
-        label={tr("How to use this page")}
+        label={tr("Methodology")}
         title={tr("Read options structure in order: walls, migration, IV, then secondary context like PCR and max pain.")}
-        body={tr("This dashboard is intentionally conservative. It teaches whether structure confirms spot, contradicts it, or is too noisy to trust for a directional call.")}
+        body={tr("Options positioning can support or contradict price direction; inconclusive data is flagged.")}
         items={[tr("Do not present PCR as a standalone trade signal."), tr("Do not treat max pain as destiny."), tr("Wall migration matters more than static OI."), tr("If the structure is contradictory, the correct answer is reduced conviction, not forced certainty.")]}
         widgetId="analytics_options_structure_help"
       />

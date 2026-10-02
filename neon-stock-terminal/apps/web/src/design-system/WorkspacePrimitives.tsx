@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { AlertTriangle, ChevronRight, CircleSlash2, Database, LoaderCircle, X } from "lucide-react";
 import { qualitySummary, qualityTone, type ModuleQualityState, type QualityTone } from "./quality";
@@ -67,7 +68,7 @@ export function CompactEmptyState({ kind, title, detail, lastSuccessfulAt, actio
 }
 
 export function ErrorState({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) {
-  return <section className={styles.compactState} data-kind="ERROR" role="alert"><AlertTriangle aria-hidden="true" /><div><span className={styles.stateKind}>ERROR</span><h2>{title}</h2><p>{detail}</p></div>{action ? <div className={styles.stateAction}>{action}</div> : null}</section>;
+  return <section className={styles.compactState} data-kind="ERROR" role="alert"><AlertTriangle aria-hidden="true" /><div><h2>{title}</h2><p>{userFacingError(detail)}</p></div>{action ? <div className={styles.stateAction}>{action}</div> : null}</section>;
 }
 
 export function LoadingSkeleton({ label = "Loading workspace", rows = 3 }: { label?: string; rows?: number }) {

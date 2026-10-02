@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AlertCircle, CheckCircle2, MessageSquareText } from "lucide-react";
@@ -86,7 +87,7 @@ export function FeedbackPage() {
       })
       .catch((err) => {
         if (!active) return;
-        setError(err instanceof Error ? err.message : tr("Feedback is unavailable right now."));
+        setError(tr(userFacingError(err, "Feedback is unavailable right now. Try again.")));
       })
       .finally(() => {
         if (!active) return;
@@ -208,8 +209,6 @@ export function FeedbackPage() {
             ? t("feedback.openedFrom", "Opened from {{source}}", { source: sourceDescriptor })
             : tr("Signed-in feedback channel")
         }
-        subtitle={tr("Use this page for product feedback, data issues, usability gaps, or ideas worth improving. Keep it concrete and tell us what you expected to see.")}
-        learningPrompt={tr("The best notes say what happened, where you saw it, and what a better result would look like.")}
         action={
           <ButtonLink to={sourcePath || "/"} variant="secondary">
             {tr("Back to dashboard")}

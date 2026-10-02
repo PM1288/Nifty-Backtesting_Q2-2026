@@ -216,9 +216,7 @@ export function WillSurfacePage() {
       <AnalyticsHeader
         title={tr("WILLR Heatmap")}
         meta={`${tr("Rows")} ${formatNumber(payload.rows.length, { maximumFractionDigits: 0 })} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}
-        subtitle={tr("WILLR map. Use this to scan which names are near the hot or cold ends of their short-term range.")}
         sectionTabs={[...SIGNAL_SECTION_TABS]}
-        learningPrompt={tr("This page answers one question: which names are sitting near the top or bottom of their recent range right now?")}
       />
 
       <section className={styles.infoBar}>

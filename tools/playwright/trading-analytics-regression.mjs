@@ -45,7 +45,7 @@ try {
       waitUntil: "domcontentloaded",
     });
     await page
-      .getByRole("heading", { name: "Trading Analytics", exact: true })
+      .getByRole("heading", { name: "Trading analytics", exact: true })
       .waitFor();
     await page
       .getByRole("button", { name: "Full evidence JSON" })

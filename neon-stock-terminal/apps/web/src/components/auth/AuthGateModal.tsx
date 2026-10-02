@@ -152,7 +152,7 @@ export function AuthGateModal() {
         location.pathname === "/will-surface" ||
         location.pathname === "/change-heatmap"
       ) {
-        return tr("Indicator surface stays open for 1 minute for guests. Create your account to continue.");
+        return tr("Guest access lasts one minute. Sign in to continue.");
       }
       return tr("Detailed pages stay open for 30 seconds for guests. Create your account to continue.");
     }

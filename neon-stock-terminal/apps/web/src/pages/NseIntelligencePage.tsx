@@ -77,7 +77,7 @@ function Reports({ data }: { data: Awaited<ReturnType<typeof fetchNseIntelligenc
   const issueCount = health.reports.filter((row) => !["LOADED", "REUSED", "SKIPPED"].includes(row.status)).length;
   const exportDate = data.ingestion?.sourceTradeDate ?? data.tradeDate ?? "no-data";
   return <section className={styles.reportPage} data-testid="nse-report-download-health">
-    <div className={styles.sectionHeading}><div><span>Official NSE India files</span><h2>NSE India report download health</h2><p>Download, parsing and scheduler evidence from the canonical NSE ingestor. A successful request is not treated as proof that every report is available.</p></div>
+    <div className={styles.sectionHeading}><div><span>Official NSE India files</span><h2>NSE India report download health</h2><p>Availability and processing status by report.</p></div>
       <div className={styles.exportActions}>
         <button type="button" onClick={() => downloadText(`nse-report-health-${exportDate}.csv`, nseReportHealthCsv(data), "text/csv;charset=utf-8")}><Download />CSV evidence</button>
         <button type="button" onClick={() => downloadText(`nse-report-health-${exportDate}.json`, nseReportHealthJson(data), "application/json;charset=utf-8")}><Download />JSON evidence</button>
@@ -135,15 +135,15 @@ export function NseIntelligencePage() {
   const data = query.data;
   const movers = useMemo(() => ({ gainers: data?.movers.filter((row) => row.direction === "GAINER").slice(0, 5) ?? [], losers: data?.movers.filter((row) => row.direction === "LOSER").sort((a, b) => Number(a.changePct) - Number(b.changePct)).slice(0, 5) ?? [] }), [data?.movers]);
 
-  if (query.isLoading) return <main className={styles.page}><LoadingSkeleton label="Loading NSE Intelligence" rows={5} /></main>;
-  if (query.isError || !data) return <main className={styles.page}><ErrorState title="NSE Intelligence is unavailable" detail={query.error instanceof Error ? query.error.message : "The canonical NSE data service could not be read."} action={<button type="button" onClick={() => query.refetch()}>Retry</button>} /></main>;
+  if (query.isLoading) return <section className={styles.page}><LoadingSkeleton label="Loading NSE Intelligence" rows={5} /></section>;
+  if (query.isError || !data) return <section className={styles.page}><ErrorState title="NSE Intelligence is unavailable" detail={query.error instanceof Error ? query.error.message : "NSE reports are unavailable. Try again."} action={<button type="button" onClick={() => query.refetch()}>Retry</button>} /></section>;
 
   const market = data.market;
   const declineShare = market?.securities ? 100 * market.decliners / market.securities : null;
   const heroState = data.quality.readiness === "READY" ? "APPROVED" : data.quality.readiness === "NO_DATA" ? "INCOMPLETE" : "BLOCKED";
   const heroTitle = !market ? "Official cash-market intelligence is unavailable" : market.decliners > market.advancers ? "Official breadth was negative; core cash data is usable with ancillary gaps" : "Official breadth was positive; verify ancillary report gaps before deeper analysis";
 
-  return <main className={styles.page}>
+  return <section className={styles.page}>
     <header className={styles.pageHeader}>
       <div><span>Data &amp; Operations / Nifty Reports</span><h1>NSE Intelligence</h1><p>Daily official bhavcopy evidence, normalized events and ingestion health—without synthetic widgets.</p></div>
       <button type="button" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className={query.isFetching ? styles.spinning : ""} />Refresh</button>
@@ -176,5 +176,5 @@ export function NseIntelligencePage() {
       </section>
       {data.unavailableModules.length ? <section className={styles.limitations}><AlertTriangle /><div><h2>Unavailable analysis is intentionally hidden</h2>{data.unavailableModules.map((row) => <p key={row.module}><strong>{row.module}:</strong> {row.reason}</p>)}</div></section> : null}
     </>}
-  </main>;
+  </section>;
 }

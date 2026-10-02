@@ -76,7 +76,7 @@ try {
 
       await primary.getByRole("button", { name: /Strategy/ }).click();
       const strategy = page.getByRole("menu", { name: "Strategy workspaces" });
-      for (const name of ["OIIS Lab", "OISS v1.202608", "Trendlyne Summary", "Monthly Strategy", "Rolling Strategy", "Long Options", "NIFTY Options", "Trading Analytics"]) {
+      for (const name of ["OIIS Lab", "OISS v1.202608", "Trendlyne summary", "Monthly strategy", "Rolling strategy", "Long options", "NIFTY Options", "Trading analytics"]) {
         check(viewport, `Strategy retains ${name}`, await strategy.getByRole("menuitem", { name: new RegExp(name.replaceAll(".", "\\.")) }).isVisible());
       }
       const stack = await strategy.evaluate((menu) => {
@@ -102,7 +102,7 @@ try {
       const drawer = page.getByRole("dialog", { name: "Application navigation" });
       check(viewport, "responsive drawer opens", await drawer.isVisible());
       check(viewport, "drawer locks body", await page.evaluate(() => document.body.style.overflow === "hidden"));
-      for (const label of ["Today", "Markets", "Strategy", "Paper Trading", "More"]) check(viewport, `drawer ${label}`, await drawer.getByText(label, { exact: true }).first().isVisible());
+      for (const label of ["Today", "Markets", "Strategy", "Paper trading", "More"]) check(viewport, `drawer ${label}`, await drawer.getByText(label, { exact: true }).first().isVisible());
       await page.keyboard.press("Escape");
       await drawer.waitFor({ state: "detached" });
       await page.waitForTimeout(50);

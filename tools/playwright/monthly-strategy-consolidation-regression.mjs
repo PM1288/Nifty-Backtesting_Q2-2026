@@ -28,7 +28,7 @@ try {
     const failures = [];
     page.on("response", (response) => { if (response.status() >= 400 && /\/n50\/(v1|auth)\//.test(response.url())) failures.push(`${response.status()} ${response.url()}`); });
     await page.goto(`${origin}/n50/strategy/monthly`, { waitUntil: "networkidle", timeout: 120_000 });
-    await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "Monthly strategy", exact: true }).waitFor();
     check(`${viewport.name} three-method filter`, await page.getByLabel("Entry method").locator("option").count() === 4, "method options missing");
     check(`${viewport.name} unified ledger`, await page.getByRole("heading", { name: "All monthly entry methods in one table" }).count() === 1, "ledger missing");
     check(`${viewport.name} rows`, await page.locator("tbody tr").count() > 0, "no rows");
@@ -43,7 +43,7 @@ try {
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}-monthly.png`), fullPage: true });
 
     await page.goto(`${origin}/n50/strategy/rolling-monthly`, { waitUntil: "networkidle", timeout: 120_000 });
-    await page.getByRole("heading", { name: "Rolling Strategy", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "Rolling strategy", exact: true }).waitFor();
     check(`${viewport.name} rolling rows`, await page.locator("tbody tr").count() > 0, "rolling rows missing");
     check(`${viewport.name} independent label`, await page.getByText("INDEPENDENT ROLLING RESEARCH", { exact: false }).count() === 1, "boundary missing");
     check(`${viewport.name} rolling no overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), "body overflow");
@@ -59,7 +59,7 @@ try {
   const auditFailures = [];
   page.on("response", (response) => { if (response.status() >= 400 && /\/n50\/(v1|auth)\//.test(response.url())) auditFailures.push(`${response.status()} ${response.url()}`); });
   await page.goto(`${origin}/n50/strategy/monthly`, { waitUntil: "networkidle", timeout: 120_000 });
-  await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor({ timeout: 120_000 });
+  await page.getByRole("heading", { name: "Monthly strategy", exact: true }).waitFor({ timeout: 120_000 });
   await page.locator("label").filter({ hasText: /^Entry method/ }).locator("select").selectOption("MONTHLY_CLOSURE");
   await page.locator("label").filter({ hasText: /^Year/ }).locator("select").selectOption("2026");
   await page.locator("label").filter({ hasText: /^Month/ }).locator("select").selectOption("08");

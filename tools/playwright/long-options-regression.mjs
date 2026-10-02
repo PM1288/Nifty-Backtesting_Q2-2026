@@ -56,7 +56,7 @@ try {
       await strategyLink.hover();
       const menu = page.getByRole("menu", { name: "Strategy dashboards" });
       await menu.waitFor();
-      check(viewport.name, "Long Options strategy menu entry", await menu.getByText("Long Options", { exact: true }).count() === 1, "menu entry missing");
+      check(viewport.name, "Long Options strategy menu entry", await menu.getByText("Long options", { exact: true }).count() === 1, "menu entry missing");
     }
 
     await page.screenshot({ path: path.join(outputDir, `${viewport.name}.png`), fullPage: true });

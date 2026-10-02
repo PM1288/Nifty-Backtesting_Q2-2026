@@ -83,11 +83,11 @@ export function ScalperDashboardPage() {
     setConditionFilters({ M2_RED: "ALL", M1_GREEN: "ALL", D0_OPEN_ABOVE_W0_OPEN: "ALL", D0_OPEN_ABOVE_W1_OPEN: "ALL", D0_OPEN_ABOVE_D1_OPEN: "ALL" });
   };
 
-  return <main className={styles.page} data-testid="scalper-dashboard">
+  return <section className={styles.page} data-testid="scalper-dashboard">
     <section className={styles.hero}>
       <div>
         <span className={styles.eyebrow}>STRATEGY · CURRENT-MONTH FILTER</span>
-        <h1>Scalper Dashboard</h1>
+        <h1>Scalper dashboard</h1>
         <p>All recorded current NSE stock F&amp;O symbols with daily, weekly and monthly open/close anchors. Read-only screening evidence; missing source history remains unavailable.</p>
       </div>
       <nav className={styles.heroLinks} aria-label="Related strategy views">
@@ -155,5 +155,5 @@ export function ScalperDashboardPage() {
         {filteredRows.length === 0 ? <div className={styles.state}>No stocks match the selected filters.</div> : null}
       </div> : null}
     </section>
-  </main>;
+  </section>;
 }

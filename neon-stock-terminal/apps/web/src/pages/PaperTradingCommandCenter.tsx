@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import {
   useEffect,
   useMemo,
@@ -457,15 +458,15 @@ export function PaperTradingCommandCenter() {
     return (
       <div className={styles.state}>
         <strong>Paper evaluation unavailable</strong>
-        <span>{query.error}</span>
-        <button type="button" onClick={query.reload}>Retry paper observations</button>
+        <span>{userFacingError(query.error)}</span>
+        <button type="button" onClick={query.reload}>Try again</button>
       </div>
     );
   if (!query.data)
     return (
       <div className={styles.state}>
         <span>{query.loadingSlow ? "Paper observations are taking longer than expected…" : "Loading durable PAPER observations…"}</span>
-        {query.loadingSlow ? <small>The page is waiting for the canonical ledger; no paper action is being repeated.</small> : null}
+        {query.loadingSlow ? <small>Loading paper trades…</small> : null}
       </div>
     );
 
@@ -589,18 +590,17 @@ export function PaperTradingCommandCenter() {
         <p>{trades.filter((trade) => trade.evidence_audit?.status === "DATA_INVALID").length} trades have invalid price evidence. {trades.filter((trade) => trade.evidence_audit?.issues?.includes("LEGACY_HORIZON_REQUIRES_SESSION_RECONCILIATION")).length} trades have stored horizons requiring exchange-session reconciliation. Raw records are preserved; these outcomes are not certified.</p>
         <p>Research candidates: fresh-trigger qualification, one active position per issuer, matched 30/60-minute windows, alternative targets, execution-cost stress and finite-capital replay. These are unvalidated comparisons, not changes to the active strategy. Model profit reserves are not a statement of tax liability.</p>
         <button type="button" onClick={query.reload}>Refresh paper values</button>
-        <small data-testid="paper-refresh-time">Last successful refresh: {query.refreshedAt ? time(query.refreshedAt) : "Waiting for complete ledger"}. Fast trade rows load before path simulations; complete evidence refreshes after each request plus 60 seconds and when returning to this tab. No paper order is submitted by refresh.</small>
+        <small data-testid="paper-refresh-time">Last successful refresh: {query.refreshedAt ? time(query.refreshedAt) : "Waiting for complete ledger"}</small>
       </details>
 
       {query.detailsLoading ? (
         <section className={styles.hydrationNotice} role="status">
-          <strong>Portfolio summary ready</strong>
-          <span>Loading complete trade paths, targets, quality evidence and simulations. Each read is bounded to 60 seconds; the last complete snapshot remains visible during refresh.</span>
+          <span>Loading trade details…</span>
         </section>
       ) : query.detailError || query.error ? (
         <section className={styles.hydrationNotice} data-error="true" role="alert">
           <strong>Summary remains available</strong>
-          <span>{query.detailError ?? query.error}</span>
+          <span>{userFacingError(query.detailError ?? query.error)}</span>
           <button type="button" onClick={query.reload}>Retry detailed evidence</button>
         </section>
       ) : null}
@@ -708,7 +708,7 @@ export function PaperTradingCommandCenter() {
       ) : (
         <>
           {workbenchContext.section === "overview" ? <div id="overview" className={styles.workbenchSection}>
-            <header className={styles.workbenchSectionHeader}><span>OVERVIEW</span><h2>What is happening now?</h2><p>Execution accounting, path evidence, simulations and trust state remain in separate lanes.</p></header>
+            <header className={styles.workbenchSectionHeader}><h2>Portfolio</h2></header>
           <section className={styles.sessionNotice}>
             <i />
             <strong>Market observation status</strong>
@@ -945,7 +945,7 @@ export function PaperTradingCommandCenter() {
           },
           {
             id: "quality",
-            title: "Data Quality",
+            title: "Data quality",
             detail: `${number(summary.open_data_incidents)} current paper-data incidents`,
             to: "/analytics/system/quality?source=paper-trading",
           },
@@ -955,7 +955,7 @@ export function PaperTradingCommandCenter() {
         sections={[
           {
             id: "read",
-            title: "How to read this page",
+            title: "Methodology",
             content: (
               <p>
                 Actual execution economics and analytical observation are
@@ -1328,7 +1328,7 @@ function TradeQualityGuide({
     trades.find((trade) => String(trade.trade_group_id) === selectedId) ??
     trades[0];
   return (
-    <main className={styles.qualityGuide}>
+    <section className={styles.qualityGuide}>
       <section className={styles.qualityHero}>
         <span>VERSIONED TRADE-QUALITY POLICY · {policy?.version ?? "—"}</span>
         <h2>A good result is not automatically a good trade.</h2>
@@ -1384,7 +1384,7 @@ function TradeQualityGuide({
           ["03", "Make drawdown first-class", "MAE, drawdown-budget use and time under water must be visible beside return."],
           ["04", "Never leak the future", "MFE, MAE and future returns are outcome labels, never live-entry features."],
           ["05", "Risk failures override profit", "Undefined risk, oversizing, stop, margin or settlement failures classify BAD_RISK."],
-          ["06", "Reconstruct before judging", "Use the originating candidate snapshot, canonical market history, fills and observation path; expose every fallback and its timestamp."],
+          ["06", "Reconstruct before judging", "Signal, price history, fills and observation times."],
         ].map(([index, title, copy]) => (
           <article key={index}><b>{index}</b><div><h3>{title}</h3><p>{copy}</p></div></article>
         ))}
@@ -1446,7 +1446,7 @@ function TradeQualityGuide({
           </table>
         </div> : <div className={styles.qualityEmpty}><b>No matching trades</b><span>Change the period, quality filter or search term.</span></div>}
       </section>
-    </main>
+    </section>
   );
 }
 
@@ -1510,7 +1510,7 @@ function TradeQualityEvaluator({
       let response = await send();
       if (response.status === 403) { await refreshCsrfToken(); response = await send(); }
       if (!response.ok) throw new Error(`Quality review API ${response.status}: ${await response.text()}`);
-      setMessage("Review saved. The canonical score will refresh from server evidence.");
+      setMessage("Review saved.");
       onSaved();
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : String(reason));
@@ -2009,7 +2009,7 @@ function PaperParallelEvidencePlot({ trades, onSelect }: { trades: AnyRow[]; onS
             </svg>
           </div>
         </div>
-        <footer><b>Line colour: {colourDefinition.label}</b><span>Grey segments indicate missing evidence, never zero.</span><span>Hover/focus to inspect; click a stock line to open the canonical trade drawer.</span></footer>
+        <footer><b>Line colour: {colourDefinition.label}</b><span>Grey segments indicate missing evidence, never zero.</span><span>Select a stock for trade details.</span></footer>
         <details className={styles.parallelData}><summary>Open and download the {rows.length}-row HiPlot data table</summary><div><table><thead><tr><th>Stock</th><th>Strategy</th>{paperParallelAxes.map((axis) => <th key={axis.id}>{axis.shortLabel}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.id} onClick={() => onSelect(row.trade as AnyRow)}><td><StockIdentity symbol={row.symbol} profile={profiles.bySymbol.get(row.symbol)} compact /></td><td>{row.strategy}</td>{paperParallelAxes.map((axis) => <td key={axis.id}>{parallelValueLabel(row.values[axis.id], axis.unit)}</td>)}</tr>)}</tbody></table></div></details>
       </>}
     </section>
@@ -2378,7 +2378,7 @@ function PaperDataQualityPanel({ data, trades }: { data: AnyRow; trades: AnyRow[
   const developing = trades.filter((trade) => number(trade.sessions_observed) < 30);
   const validQuantities = trades.filter((trade) => number(trade.opened_quantity) > 0 && number(trade.average_entry_price) > 0);
   return <section className={styles.dataQualityWorkbench} aria-label="Paper data quality">
-    <header><div><span>DATA QUALITY</span><h3>Canonical paper evidence trust matrix</h3><p>Fresh transport, source completeness and analytical maturity are separate states.</p></div><a href="/n50/analytics/system/quality?source=paper-trading">Open affected data issues</a></header>
+    <header><div><span>DATA QUALITY</span><h3>Paper trade data quality</h3><p>Fresh transport, source completeness and analytical maturity are separate states.</p></div><a href="/n50/analytics/system/quality?source=paper-trading">Open affected data issues</a></header>
     <div>
       <article><span>Workspace transport</span><strong>CONNECTED</strong><small>Response evaluated {time(data.asOf)} IST</small></article>
       <article data-state={missingMarks.length ? "warning" : "ok"}><span>Latest carry marks</span><strong>{trades.length - missingMarks.length} / {trades.length}</strong><small>{missingMarks.length ? `${missingMarks.length} missing or unavailable` : "All trade marks available"}</small></article>
@@ -3307,7 +3307,7 @@ function TradeDrawer({
           </div>
         ) : detail.error ? (
           <div className={styles.drawerLoading}>
-            Trade evidence is temporarily unavailable: {detail.error}
+            Trade details could not be loaded. Try again.
           </div>
         ) : (
           <div className={styles.drawerBody}>
@@ -3583,7 +3583,7 @@ function DrawerCalculationTrace({ detail }: { detail: AnyRow }) {
     { definition: PAPER_METRIC_DEFINITIONS.captureEfficiency, value: trade.capture_efficiency_pct },
     { definition: PAPER_METRIC_DEFINITIONS.qualityScore, value: trade.quality_score },
   ];
-  return <section className={styles.drawerTrace}><header><h3>Calculation trace</h3><p>Canonical fields, formula ownership and basis metadata for this trade. Missing is never replaced with zero.</p></header>{traces.map(({ definition, value }) => <details key={definition.id}><summary><span>{definition.label}<small>{definition.accountingClass.replace("_", " ")} · {definition.timeBasis}</small></span><strong>{value == null ? "— missing" : definition.unit === "INR" ? money(value) : definition.unit === "PERCENT" ? percent(value) : String(value)}</strong></summary><dl><dt>Formula</dt><dd>{definition.formula ?? "Direct source value"}</dd><dt>Source</dt><dd>{definition.dataSource}</dd><dt>Source fields</dt><dd>{definition.sourceFields.join(", ")}</dd><dt>Capital basis</dt><dd>{definition.capitalBasis}</dd><dt>Cost basis</dt><dd>{definition.costBasis}</dd><dt>Policy</dt><dd>{definition.policyVersion ?? detail.evidence?.calculation_version ?? "Source-defined"}</dd></dl></details>)}</section>;
+  return <section className={styles.drawerTrace}><header><h3>Calculation trace</h3><p>Formulas and sources for this trade. Missing values are shown as unavailable.</p></header>{traces.map(({ definition, value }) => <details key={definition.id}><summary><span>{definition.label}<small>{definition.accountingClass.replace("_", " ")} · {definition.timeBasis}</small></span><strong>{value == null ? "— missing" : definition.unit === "INR" ? money(value) : definition.unit === "PERCENT" ? percent(value) : String(value)}</strong></summary><dl><dt>Formula</dt><dd>{definition.formula ?? "Direct source value"}</dd><dt>Source</dt><dd>{definition.dataSource}</dd><dt>Source fields</dt><dd>{definition.sourceFields.join(", ")}</dd><dt>Capital basis</dt><dd>{definition.capitalBasis}</dd><dt>Cost basis</dt><dd>{definition.costBasis}</dd><dt>Policy</dt><dd>{definition.policyVersion ?? detail.evidence?.calculation_version ?? "Source-defined"}</dd></dl></details>)}</section>;
 }
 function DrawerComments({
   detail,

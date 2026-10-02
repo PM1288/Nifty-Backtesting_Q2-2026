@@ -33,7 +33,7 @@ function MenuItems({ items, pathname, onNavigate, twoColumns = false }: { items:
         {item.section && item.section !== previousSection ? <span className={styles.sectionLabel}>{item.section}</span> : null}
         <Link role="menuitem" to={item.path} data-active={itemActive(item, pathname) ? "true" : "false"} onClick={() => onNavigate(item)}>
           <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
-          <span><strong>{item.label}</strong><small>{item.description}</small></span>
+          <span><strong>{item.label}</strong></span>
         </Link>
       </div>;
     })}
@@ -174,7 +174,7 @@ export function ResponsiveWorkspaceNavigation({
         <button ref={(node) => { if (node) menuTriggers.current.strategy = node; }} type="button" className={styles.primaryLink} data-active={strategyActive ? "true" : "false"} aria-haspopup="menu" aria-expanded={openMenu === "strategy"} aria-controls="strategy-global-menu" onClick={() => toggleMenu("strategy")} onKeyDown={(event) => enterMenu(event, "strategy")}><StrategyIcon size={18} aria-hidden="true" /><span>Strategy</span><ChevronDown size={14} data-open={openMenu === "strategy"} aria-hidden="true" /></button>
         {openMenu === "strategy" ? <section id="strategy-global-menu" data-menu-panel="strategy" className={`${styles.dropdown} ${styles.strategyDropdown}`} role="menu" aria-label="Strategy workspaces" onKeyDown={navigateMenu}><span className={styles.dropdownEyebrow}>STRATEGY WORKSPACES</span><MenuItems items={STRATEGY_HEADER_ROUTES} pathname={pathname} twoColumns onNavigate={(item) => record(item, "desktop_header")} /><Link className={styles.menuFooter} role="menuitem" to="/strategy/oiis-live" onClick={() => closeMenus(false)}>View all strategies →</Link></section> : null}
       </div>
-      <Link to={paper.path} className={styles.primaryLink} data-active={paperActive ? "true" : "false"} aria-current={paperActive ? "page" : undefined} onClick={() => record({ path: paper.path, label: paper.label }, "desktop_header")}><PaperIcon size={18} aria-hidden="true" /><span className={styles.paperLong}>Paper Trading</span><span className={styles.paperShort}>Paper</span></Link>
+      <Link to={paper.path} className={styles.primaryLink} data-active={paperActive ? "true" : "false"} aria-current={paperActive ? "page" : undefined} onClick={() => record({ path: paper.path, label: paper.label }, "desktop_header")}><PaperIcon size={18} aria-hidden="true" /><span className={styles.paperLong}>Paper trading</span><span className={styles.paperShort}>Paper</span></Link>
       <Link to="/predictor" className={styles.primaryLink} data-active={pathname.startsWith("/predictor") ? "true" : "false"} aria-current={pathname.startsWith("/predictor") ? "page" : undefined} onClick={() => record({path:"/predictor",label:"Predictor"},"desktop_header")}><span>Predictor</span></Link>
       <Link to="/backtesting/reports" className={styles.primaryLink} data-active={reportsActive ? "true" : "false"} aria-current={reportsActive ? "page" : undefined} onClick={() => record({ path: "/backtesting/reports", label: "Backtest Reports" }, "desktop_header")}><span>Reports</span></Link>
     </nav>
@@ -197,7 +197,7 @@ export function ResponsiveWorkspaceNavigation({
           const items = id === "markets" ? MARKETS_MENU_ROUTES : STRATEGY_HEADER_ROUTES;
           return <section className={styles.mobileGroup} key={id}><button type="button" aria-expanded={expandedMobile === id} onClick={() => setExpandedMobile((value) => value === id ? null : id)}><span>{id === "markets" ? "Markets" : "Strategy"}</span><ChevronDown size={16} data-open={expandedMobile === id} /></button>{expandedMobile === id ? <MenuItems items={items} pathname={pathname} onNavigate={(item) => record(item, "mobile_sheet")} /> : null}</section>;
         })}
-        <Link className={styles.mobileDirect} data-active={paperActive ? "true" : "false"} to="/paper-trading" onClick={() => record({ path: "/paper-trading", label: "Paper Trading" }, "mobile_sheet")}><PaperIcon size={20} />Paper Trading</Link>
+        <Link className={styles.mobileDirect} data-active={paperActive ? "true" : "false"} to="/paper-trading" onClick={() => record({ path: "/paper-trading", label: "Paper trading" }, "mobile_sheet")}><PaperIcon size={20} />Paper trading</Link>
         <section className={styles.mobileGroup}><button type="button" aria-expanded={expandedMobile === "more"} onClick={() => setExpandedMobile((value) => value === "more" ? null : "more")}><span>More</span><ChevronDown size={16} data-open={expandedMobile === "more"} /></button>{expandedMobile === "more" ? <MenuItems items={moreRoutes} pathname={pathname} onNavigate={(item) => record(item, "mobile_sheet")} /> : null}</section>
       </aside>
     </div>, document.body) : null}

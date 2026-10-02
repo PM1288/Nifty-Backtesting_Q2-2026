@@ -31,8 +31,8 @@ export function BacktestingPortfolioResultsPage() {
     queries: [{ name: `backtesting-strategy:rsi30_willr80_closegtprev_tp125:${scenarioKey ?? "default"}`, isLoading: detail.isLoading, isError: !!detail.error }]
   });
 
-  if (!authReady || detail.isLoading) return <LoadingSkeletonCard title={tr("Portfolio Results")} lines={5} />;
-  if (detail.error || !detail.data) return <ErrorState title={tr("Portfolio Results are unavailable")} body={tr("The strategy result snapshot could not be loaded.")} />;
+  if (!authReady || detail.isLoading) return <LoadingSkeletonCard title={tr("Portfolio results")} lines={5} />;
+  if (detail.error || !detail.data) return <ErrorState title={tr("Portfolio results are unavailable")} body={tr("The strategy result snapshot could not be loaded.")} />;
 
   if (!scenario) return <ErrorState title={tr("Scenario unavailable")} body={tr("The selected portfolio scenario could not be resolved.")} />;
   const exitReasons = Object.values(
@@ -57,8 +57,7 @@ export function BacktestingPortfolioResultsPage() {
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
-        title={tr("Portfolio Results")}
-        subtitle={tr("Portfolio-level outcomes across the selected universe and capital bucket.")}
+        title={tr("Portfolio results")}
         testRunAt={detail.data.generatedAt}
         meta={t("literals.Scenario {{label}}", "Scenario {{label}}", { label: tr(scenario.label) })}
       />
@@ -80,7 +79,7 @@ export function BacktestingPortfolioResultsPage() {
           <div className={styles.chartHeader}>
             <div>
               <h3 className={styles.panelTitle}>{tr("Equity vs FD")}</h3>
-              <div className={styles.chartCaption}>{tr("What this chart shows: the scenario equity curve against the NIFTY 50 price benchmark over the same period.")}</div>
+              <div className={styles.chartCaption}>{tr("the scenario equity curve against the NIFTY 50 price benchmark over the same period.")}</div>
             </div>
           </div>
           <BacktestingLineChart points={scenario.equityCurve} benchmark />
@@ -101,7 +100,7 @@ export function BacktestingPortfolioResultsPage() {
           <div className={styles.chartHeader}>
             <div>
               <h3 className={styles.panelTitle}>{tr("Exit reason breakdown")}</h3>
-              <div className={styles.chartCaption}>{tr("Use this before the raw trades table so you can see how the scenario is actually resolving.")}</div>
+
             </div>
           </div>
           <BacktestingHorizontalBarChart items={exitReasons} xAxisName={tr("Closed Trades")} valueFormatter="number" />

@@ -1,3 +1,16 @@
+## 2026-10-02 — Production UI cleanup
+
+Canonical branch: `ui/production-copy-cleanup-20261002`, based on `c75b0a7`.
+Scope is frontend presentation only. Report: `docs/uiux/PRODUCTION_UI_CLEANUP_20261002.md`.
+Web 291 / API 289 tests pass; builds, typechecks and canonical gate pass.
+Preservation: canonical 9, monthly/rolling 14, paper notifier 17, Home 5,
+Paper Workbench reconciliation + six viewports, Scalper V2 70-second refresh,
+keyboard 4 and UI copy/error checks 4 pass against the canonical preview with live APIs.
+Deploy only dashboard from pushed master. Retain the prior dashboard image under
+`ui-cleanup-rollback-20261002:n50-dashboard`. Final public capture evidence and
+release verification are recorded in the UI report after deployment.
+Existing untracked OIIS reports and report generator belong to the user; left intact.
+
 # Agent Handoff — Phase 1 Data Foundation
 
 ## 2026-09-25 — Home MWHD alert gates and Motilal delivery diagnosis

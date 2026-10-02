@@ -18,9 +18,7 @@ import { ResponsiveWorkspaceNavigation } from "./ResponsiveWorkspaceNavigation";
 import { resolveWorkspaceRoute } from "./workspaceRoutes";
 import { routeCommandItems } from "../../interaction/routeCatalog";
 import { NavigationStateManager } from "../../interaction/NavigationStateManager";
-import { MarketGradientWaves } from "../visual/MarketGradientWaves";
 import { MarketTargetCursor } from "../visual/MarketTargetCursor";
-import { MarketRsiParticles } from "../visual/MarketRsiParticles";
 import { pctClass } from "../utils/pctClass";
 import { PaperTradeNotifier } from "./PaperTradeNotifier";
 import { paperVoiceEnabledByDefault } from "./paperTradeNotifications";
@@ -31,13 +29,13 @@ type WorkspaceLink = { label: string; to: string; match?: (pathname: string) => 
 
 function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   if (workspace === "markets") return [
-    { label: "Market Story", to: "/analytics", match: (path) => path === "/analytics" },
+    { label: "Market overview", to: "/analytics", match: (path) => path === "/analytics" },
     { label: "Regime", to: "/analytics/regime" },
     { label: "Leadership", to: "/analytics/leadership" },
     { label: "Risk", to: "/analytics/risk" },
     { label: "Breadth", to: "/market/nifty-500" },
     { label: "Heatmaps", to: "/heatmap/change", match: (path) => path.startsWith("/heatmap/") },
-    { label: "Advanced Flows", to: "/analytics/flows" }
+    { label: "Flow history", to: "/analytics/flows" }
   ];
   if (workspace === "stocks") return [
     { label: "Indicator Explorer", to: "/analytics/indicators" },
@@ -49,14 +47,14 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   if (workspace === "backtesting-reports") return [
     { label: "Reports", to: "/backtesting/reports" },
     { label: "Backtest Overview", to: "/backtesting" },
-    { label: "Strategy Definition", to: "/backtesting/strategies" },
-    { label: "Run Monitor", to: "/backtesting/runs" },
+    { label: "Strategy definition", to: "/backtesting/strategies" },
+    { label: "Run history", to: "/backtesting/runs" },
   ];
   if (workspace === "oiis-lab") return [
-    { label: "Live Selection", to: "/strategy/oiis-live", match: (path) => path === "/strategy/oiis-live" },
+    { label: "Live selection", to: "/strategy/oiis-live", match: (path) => path === "/strategy/oiis-live" },
     { label: "OISS v1.202608", to: "/strategy/oiss-v1-202608", match: (path) => path.startsWith("/strategy/oiss-v1-202608") },
-    { label: "Strategy Definition", to: "/backtesting/strategies" },
-    { label: "Backtest Builder", to: "/backtesting/lab" },
+    { label: "Strategy definition", to: "/backtesting/strategies" },
+    { label: "Backtest builder", to: "/backtesting/lab" },
     { label: "Results", to: "/backtesting/results" },
     { label: "Compare", to: "/backtesting/compare" },
     {
@@ -72,7 +70,7 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   ];
   if (workspace === "monthly-strategy") return [
     { label: "3Month Strategy", to: "/strategy/three-month" },
-    { label: "Scalper Dashboard", to: "/strategy/scalper-dashboard" },
+    { label: "Scalper dashboard", to: "/strategy/scalper-dashboard" },
     { label: "All entry methods", to: "/strategy/monthly" },
     { label: "Close vs Open", to: "/strategy/monthly?compare=close-open" },
     { label: "Expiry", to: "/strategy/monthly?entryMethod=EXPIRY" },
@@ -83,13 +81,13 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
   ];
   if (workspace === "three-month-strategy") return [
     { label: "3Month Strategy", to: "/strategy/three-month" },
-    { label: "Monthly Strategy", to: "/strategy/monthly" },
-    { label: "Scalper Dashboard", to: "/strategy/scalper-dashboard" },
+    { label: "Monthly strategy", to: "/strategy/monthly" },
+    { label: "Scalper dashboard", to: "/strategy/scalper-dashboard" },
     { label: "Stock 360", to: "/analytics/stock/RELIANCE" }
   ];
   if (workspace === "scalper-dashboard") return [
     { label: "Current-month screener", to: "/strategy/scalper-dashboard" },
-    { label: "Monthly Strategy", to: "/strategy/monthly" },
+    { label: "Monthly strategy", to: "/strategy/monthly" },
     { label: "Monthly Open", to: "/strategy/monthly?entryMethod=MONTHLY_OPEN" },
     { label: "Close vs Open", to: "/strategy/monthly?compare=close-open" },
   ];
@@ -113,18 +111,18 @@ function workspaceLinks(workspace: string, isAdmin: boolean): WorkspaceLink[] {
     { label: "Options Overview", to: "/options/intelligence", match: (path) => path === "/options/intelligence" },
     { label: "Structure", to: "/options/structure" },
     { label: "Volatility Signals", to: "/options/volatility-signals" },
-    { label: "Futures Volatility", to: "/futures/volatility" },
+    { label: "Futures volatility", to: "/futures/volatility" },
     { label: "Futures", to: "/futures" },
     { label: "Advanced Data", to: "/options/snapshot" }
   ];
   if (workspace === "data-operations") {
     const links: WorkspaceLink[] = [
-      { label: "Daily Data Health", to: "/analytics/system/data-health" },
-      { label: "Trust & Data Quality", to: "/analytics/system/quality" },
-      { label: "Run Monitor", to: "/backtesting/runs" },
+      { label: "Daily data health", to: "/analytics/system/data-health" },
+      { label: "Trust & Data quality", to: "/analytics/system/quality" },
+      { label: "Run history", to: "/backtesting/runs" },
       { label: "Report Ingestion", to: "/institutional/reports" },
       { label: "NSE Intelligence", to: "/institutional/nse-intelligence", match: (path) => path.startsWith("/institutional/nse-intelligence") },
-      { label: "Sources & Provenance", to: "/analytics/system/map" }
+      { label: "Workspace directory", to: "/analytics/system/map" }
     ];
     if (isAdmin) links.push({ label: "Administration", to: "/control-plane" });
     return links;
@@ -153,7 +151,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     live.NIFTY50?.price ??
     overview.data?.indices?.nifty50?.last ??
     null;
-  const niftyRsi = overview.data?.indices?.nifty50?.rsi ?? null;
   const workspaceRoute = resolveWorkspaceRoute(location.pathname);
   const scalperPopout = location.pathname === "/strategy/trading-analytics"
     && new URLSearchParams(location.search).get("popout") === "scalper_v2";
@@ -265,8 +262,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     >
       <a className={styles.skipLink} href="#main-content">{tr("Skip to content")}</a>
       <NavigationStateManager />
-      <MarketGradientWaves changePct={niftyChangePct} rsi={niftyRsi} />
-      <MarketRsiParticles rsi={niftyRsi} />
       <div className={styles.chrome}>
         <MarketTargetCursor changePct={niftyChangePct} />
         <header className={styles.header}>

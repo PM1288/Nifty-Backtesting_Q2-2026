@@ -105,11 +105,11 @@ export function ThreeMonthStrategyPage() {
   const reportOverview = reportQuery.data && "stocks" in reportQuery.data ? reportQuery.data : null;
   const reportDetail = reportDetailQuery.data && "trades" in reportDetailQuery.data ? reportDetailQuery.data : null;
 
-  return <main className={styles.page} data-testid="three-month-strategy">
+  return <section className={styles.page} data-testid="three-month-strategy">
     <section className={styles.hero}>
       <div><span className={styles.eyebrow}>NIFTY 500 · READ-ONLY SCREEN</span><h1>3Month Strategy</h1><p>BULL: recent monthly weakness followed by simultaneous strength. BEAR: the exact inverse—recent monthly strength followed by simultaneous weakness.</p></div>
       <div className={styles.actions}>
-        <Link to="/strategy/monthly">Monthly Strategy</Link>
+        <Link to="/strategy/monthly">Monthly strategy</Link>
         <button type="button" onClick={() => downloadCsv(visible, mode, direction)} disabled={!visible.length}>Download CSV</button>
       </div>
     </section>
@@ -160,5 +160,5 @@ export function ThreeMonthStrategyPage() {
     </section>
 
     {selectedRow && selectedResult ? <aside className={styles.drawer} aria-label={`${selectedRow.symbol} ${direction} strategy arithmetic`}><button className={styles.close} onClick={() => setSelected(null)} aria-label="Close details">×</button><h2>{selectedRow.symbol} · {direction}</h2><p>{selectedRow.companyName} · {selectedRow.sector || "Sector unavailable"}</p><div className={styles.drawerSummary}><strong>{selectedResult.qualification}</strong><span>{selectedResult.scoredConditionCount}/{selectedResult.totalConditionCount} scored conditions</span></div><h3>Historical {direction === "BULL" ? "weakness" : "strength"} · M−3 OR M−2 OR M−1 · one point</h3><ul>{historyNewestLast(selectedResult).map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}</span></li>)}</ul><h3>Mandatory M/W/D/1H/15m/5m arithmetic</h3><ol>{selectedResult.gates.map((gate) => <li key={gate.id} className={gateClass(gate.state)}><b>{stateGlyph(gate.state)} {gate.label}</b><span>{gate.left == null ? "—" : gate.left.toFixed(2)} {gate.operator} {gate.right == null ? "—" : gate.right.toFixed(2)}{gate.forming ? " · forming" : ""}</span></li>)}</ol><p className={styles.disclosure}>This is a screening result, not an entry, exit, stop, target or position-size recommendation.</p></aside> : null}
-  </main>;
+  </section>;
 }

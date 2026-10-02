@@ -174,7 +174,7 @@ export default function TradeQualityResearch() {
         <h2>SHAP chart status</h2>
         <b>Not calculated yet — evidence gate is still locked</b>
         <p>{eligibleRows} complete labelled trades of {requiredRows || "the required"} minimum are available. A genuine SHAP waterfall will appear automatically after chronological training has both outcome classes.</p>
-        <p>Trade outcomes and input coverage remain visible below. No placeholder contribution, probability or synthetic feature importance is being shown as SHAP.</p>
+        <p>Feature attribution is unavailable. Trade outcomes and input coverage are shown below.</p>
       </div>
       <div className={styles.shapGateChart} role="img" aria-label={`SHAP unavailable: ${eligibleRows} of ${requiredRows} complete labelled trades`}>
         <span style={{ width: `${Math.min(100, requiredRows > 0 ? eligibleRows / requiredRows * 100 : 0)}%` }} />

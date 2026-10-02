@@ -192,7 +192,7 @@ export function AnalyticsStockPage() {
             <div className={styles.mwdLevelHead}><span>Level</span><span>Value</span><span>Bias</span></div>
             {mwdModel.levels.map((level) => <button key={level.id} type="button" role="listitem" data-selected={selectedMwdLevel === level.id ? "true" : "false"} data-bias={level.bias.toLowerCase()} onClick={() => setSelectedMwdLevel((current) => current === level.id ? null : level.id)} title={level.basis}><span><i style={{ background: level.color }} />{compactLevelLabel(level)}</span><strong>{level.value == null ? "—" : fmtPrice(level.value)}</strong><em>{level.bias === "UP" ? "▲" : level.bias === "DOWN" ? "▼" : "—"}</em></button>)}
           </div>
-        </div> : <DataState kind="empty" title="Intraday history unavailable" body="No canonical intraday OHLCV bars were returned." />}
+        </div> : <DataState kind="empty" title="Intraday history unavailable" body="No intraday prices available." />}
       </ChartCard>
 
       <ChartCard title="Daily price, volume, traded value and delivery" subtitle="Completed daily observations. Traded value uses exchange turnover when present and close × volume only as a labelled fallback; missing delivery remains missing.">
@@ -220,7 +220,7 @@ export function AnalyticsStockPage() {
         <DataTable title="Published strategy fit" subtitle="Existing backtesting snapshots; not a live recommendation." rows={relatedStrategyRows} emptyTitle={strategyCompare.isLoading ? "Loading strategy evidence" : "No related strategy evidence"} emptyBody="No published fit row exists for this symbol under the current lens." columns={[{ key: "strategy", header: "Strategy", cell: (row) => row.displayName }, { key: "winRate", header: "Win rate", align: "right", cell: (row) => fmtPct(row.winRatePct) }, { key: "avgReturn", header: "Avg return", align: "right", cell: (row) => fmtPct(row.avgReturnPct) }, { key: "netPnl", header: "Net P&L", align: "right", cell: (row) => formatCurrencyINR(row.totalNetPnl, true) }]} />
       </section> : null}
 
-      <RelatedJourney items={[{ id: "oiis", title: "OIIS evidence", detail: `${symbol} selection and gates`, to: `/strategy/oiis-live?symbol=${encodeURIComponent(symbol)}&source=stock-360`, actionLabel: "Open evidence" }, { id: "paper", title: "Paper Trading", detail: `Preview ${symbol}`, to: `/paper-trading?action=add&symbol=${encodeURIComponent(symbol)}&source=stock-360`, actionLabel: "Preview" }, { id: "history", title: "Historical evidence", detail: "Strategy results", to: `/backtesting/stocks?symbol=${encodeURIComponent(symbol)}&source=stock-360` }, { id: "options", title: "Options", detail: `${symbol} chain`, to: `/options/intelligence?symbol=${encodeURIComponent(symbol)}&source=stock-360` }]} />
+      <RelatedJourney items={[{ id: "oiis", title: "OIIS evidence", detail: `${symbol} selection and gates`, to: `/strategy/oiis-live?symbol=${encodeURIComponent(symbol)}&source=stock-360`, actionLabel: "Open evidence" }, { id: "paper", title: "Paper trading", detail: `Preview ${symbol}`, to: `/paper-trading?action=add&symbol=${encodeURIComponent(symbol)}&source=stock-360`, actionLabel: "Preview" }, { id: "history", title: "Historical evidence", detail: "Strategy results", to: `/backtesting/stocks?symbol=${encodeURIComponent(symbol)}&source=stock-360` }, { id: "options", title: "Options", detail: `${symbol} chain`, to: `/options/intelligence?symbol=${encodeURIComponent(symbol)}&source=stock-360` }]} />
     </div>
   );
 }

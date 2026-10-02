@@ -53,14 +53,14 @@ export type WorkspaceRouteDefinition = {
 export const STRATEGY_MENU_ROUTES = [
   {
     id: "nifty-context",
-    label: "NIFTY Model Research",
+    label: "NIFTY model research",
     description: "Hourly direction, range and SHAP evidence in shadow research",
     path: "/strategy/nifty-context",
     icon: FlaskConical,
   },
   {
     id: "trendlyne-summary",
-    label: "Trendlyne Summary",
+    label: "Trendlyne summary",
     description: "Six-month analyst recommendation outcomes and research-house track records",
     path: "/strategy/trendlyne-summary",
     icon: LibraryBig,
@@ -81,7 +81,7 @@ export const STRATEGY_MENU_ROUTES = [
   },
   {
     id: "monthly-strategy",
-    label: "Monthly Strategy",
+    label: "Monthly strategy",
     description: "Monthly Close, Monthly Open, expiry and first-session entries",
     path: "/strategy/monthly",
     icon: CalendarRange,
@@ -95,28 +95,28 @@ export const STRATEGY_MENU_ROUTES = [
   },
   {
     id: "scalper-dashboard",
-    label: "Scalper Dashboard",
+    label: "Scalper dashboard",
     description: "Current-month stock screener with daily, weekly and monthly anchors",
     path: "/strategy/scalper-dashboard",
     icon: BarChart3,
   },
   {
     id: "futures-volatility",
-    label: "Futures Volatility",
+    label: "Futures volatility",
     description: "NSE FOVOLT daily futures-volatility screen and historical evaluation",
     path: "/futures/volatility",
     icon: Activity,
   },
   {
     id: "rolling-monthly",
-    label: "Rolling Strategy",
+    label: "Rolling strategy",
     description: "Independent 5/30/60-session signal research",
     path: "/strategy/rolling-monthly",
     icon: CalendarRange,
   },
   {
     id: "long-options",
-    label: "Long Options",
+    label: "Long options",
     description: "Independent long-premium derivatives router",
     path: "/strategy/long-options",
     icon: BarChart3,
@@ -130,7 +130,7 @@ export const STRATEGY_MENU_ROUTES = [
   },
   {
     id: "trading-analytics",
-    label: "Trading Analytics",
+    label: "Trading analytics",
     description: "Institutional morning brief, NIFTY option evidence and EMA research",
     path: "/strategy/trading-analytics",
     icon: BarChart3,
@@ -186,10 +186,10 @@ export const STRATEGY_HEADER_ROUTES: readonly HeaderNavigationItem[] = strategyH
 }));
 
 export const MORE_MENU_ROUTES: readonly HeaderNavigationItem[] = [
-  { id: "daily-data-health", label: "Daily Data Health", description: "Daily downloads, symbol freshness and collection coverage", path: "/analytics/system/data-health", icon: Database },
+  { id: "daily-data-health", label: "Daily data health", description: "Daily downloads, symbol freshness and collection coverage", path: "/analytics/system/data-health", icon: Database },
   { id: "data-operations", label: "Data & Operations", description: "Data feeds, universe, data quality and system controls", path: "/analytics/system/quality", icon: Database },
   { id: "system-health", label: "System Health", description: "Sources, services, runtime status and provenance", path: "/analytics/system/map", icon: Activity },
-  { id: "run-monitor", label: "Run Monitor", description: "Active, completed and failed processing runs", path: "/backtesting/runs", icon: FileClock },
+  { id: "run-monitor", label: "Run history", description: "Active, completed and failed processing runs", path: "/backtesting/runs", icon: FileClock },
   { id: "nse-intelligence", label: "NSE Intelligence", description: "Official reports, market activity and ingestion health", path: "/institutional/nse-intelligence", icon: Network },
   { id: "nse-report-health", label: "NSE Report Health", description: "Per-file NSE India download, load and scheduler evidence", path: "/institutional/nse-intelligence/reports", icon: FileCheck2 },
   { id: "administration", label: "Administration", description: "Authorised database and system controls", path: "/control-plane", icon: ShieldCheck, adminOnly: true },
@@ -285,7 +285,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "trendlyne-summary",
-    label: "Trendlyne Summary",
+    label: "Trendlyne summary",
     compactLabel: "Trendlyne",
     description: "Analyst recommendations, targets and 5D/30D evidence",
     path: "/strategy/trendlyne-summary",
@@ -297,7 +297,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "monthly-strategy",
-    label: "Monthly Strategy",
+    label: "Monthly strategy",
     compactLabel: "Monthly",
     description: "Unified Monthly Close, Monthly Open, expiry and first-session evidence",
     path: "/strategy/monthly",
@@ -321,7 +321,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "scalper-dashboard",
-    label: "Scalper Dashboard",
+    label: "Scalper dashboard",
     compactLabel: "Scalper",
     description: "Current-month daily, weekly and monthly stock filter",
     path: "/strategy/scalper-dashboard",
@@ -333,7 +333,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "rolling-monthly",
-    label: "Rolling Strategy",
+    label: "Rolling strategy",
     compactLabel: "Rolling",
     description: "Independent 5/30/60-session research",
     path: "/strategy/rolling-monthly",
@@ -345,7 +345,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "long-options",
-    label: "Long Options",
+    label: "Long options",
     compactLabel: "Options",
     description: "Independent long-premium derivatives research",
     path: "/strategy/long-options",
@@ -369,8 +369,8 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "trading-analytics",
-    label: "Trading Analytics",
-    compactLabel: "Trading Analytics",
+    label: "Trading analytics",
+    compactLabel: "Trading analytics",
     description: "Read-only institutional and NIFTY evidence",
     path: "/strategy/trading-analytics",
     icon: BarChart3,
@@ -381,7 +381,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "nifty-context",
-    label: "NIFTY Model Research",
+    label: "NIFTY model research",
     compactLabel: "Model Research",
     description: "Isolated hourly NIFTY direction, range and explainability research",
     path: "/strategy/nifty-context",
@@ -393,7 +393,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "futures-volatility",
-    label: "Futures Volatility",
+    label: "Futures volatility",
     compactLabel: "FOVOLT",
     description: "NSE FOVOLT screen and historical evaluation",
     path: "/futures/volatility",
@@ -405,7 +405,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRouteDefinition[] = [
   },
   {
     id: "paper-trading",
-    label: "Paper Trading",
+    label: "Paper trading",
     compactLabel: "Paper",
     description: "Positions and outcomes",
     path: "/paper-trading",

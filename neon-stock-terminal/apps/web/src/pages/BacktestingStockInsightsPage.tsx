@@ -37,7 +37,7 @@ export function BacktestingStockInsightsPage() {
     setSearchParams(next, { replace: true });
   };
 
-  if (!authReady || compare.isLoading) return <LoadingSkeletonCard title={tr("Stock Insights")} lines={6} />;
+  if (!authReady || compare.isLoading) return <LoadingSkeletonCard title={tr("Stock insights")} lines={6} />;
   if (compare.error || !compare.data) return <ErrorState title={tr("Stock Insights are unavailable")} body={tr("The stock-suitability snapshot could not be loaded.")} />;
 
   const rows = compare.data.stockSuitability
@@ -52,8 +52,7 @@ export function BacktestingStockInsightsPage() {
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
-        title={tr("Stock Insights")}
-        subtitle={tr("This page compares stock suitability across all three strategy archetypes, so you can see where each style tends to fit or fail.")}
+        title={tr("Stock insights")}
         testRunAt={compare.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(compare.data.asOfDate) })}
       />
@@ -76,7 +75,7 @@ export function BacktestingStockInsightsPage() {
           <div className={styles.chartHeader}>
             <div>
               <h3 className={styles.panelTitle}>{tr("Top outcome bars")}</h3>
-              <div className={styles.chartCaption}>{tr("What this chart shows: the strongest stock-strategy combinations by total net P&L.")}</div>
+              <div className={styles.chartCaption}>{tr("the strongest stock-strategy combinations by total net P&L.")}</div>
             </div>
           </div>
           <BacktestingHorizontalBarChart
@@ -131,7 +130,6 @@ export function BacktestingStockInsightsPage() {
 
       <DataTable
         title={tr("Cross-strategy stock suitability")}
-        subtitle={tr("Sort this to find names that consistently suit one archetype over another.")}
         rows={rows}
         maxHeight={480}
         columns={[

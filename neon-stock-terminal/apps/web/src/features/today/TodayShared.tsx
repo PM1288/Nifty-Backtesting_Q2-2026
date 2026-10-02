@@ -52,7 +52,7 @@ export function MarketSummaryStrip({ model, compact = false }: { model: TodayMod
       <span className={styles.sparkUnavailable}>Intraday path —</span>
     </article>)}
     <article className={styles.indexCard}><header><strong>BREADTH</strong><Info size={12} aria-hidden="true" /></header><b>{model.breadth.advancing} / {model.breadth.declining} / {model.breadth.neutral}</b><BreadthBar breadth={model.breadth} /><span>Advance / decline / unchanged</span></article>
-    <article className={styles.indexCard}><header><strong>MARKET REGIME</strong><Info size={12} aria-hidden="true" /></header><b>Not classified</b><span>Canonical regime is not supplied by the Today snapshot.</span></article>
+    <article className={styles.indexCard}><header><strong>MARKET REGIME</strong><Info size={12} aria-hidden="true" /></header><b>Not classified</b><span>Market regime unavailable.</span></article>
   </section>;
 }
 

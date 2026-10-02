@@ -216,9 +216,7 @@ export function ChangeHeatmapPage() {
       <AnalyticsHeader
         title="% Change Heatmap"
         meta={`${tr("Rows")} ${formatNumber(payload.rows.length, { maximumFractionDigits: 0 })} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}
-        subtitle={tr("Read sector pressure and broad participation before you drill into individual stocks.")}
         sectionTabs={[...MARKET_SECTION_TABS]}
-        learningPrompt={tr("This page answers one question: where is strength or weakness concentrated right now, and is it broad enough to matter?")}
       />
 
       <section className={styles.metricGrid}>
@@ -331,12 +329,12 @@ export function ChangeHeatmapPage() {
             </div>
             <div className={styles.detailSparkWrap}>
               <HeatmapTrend values={detailEntry.values} />
-              <div className={styles.detailSparkCaption}>{tr("Intraday change path for the selected row. Use this with Market Story before treating a sharp move as durable.")}</div>
+              <div className={styles.detailSparkCaption}>{tr("Intraday change path for the selected row. Use this with Market regime before treating a sharp move as durable.")}</div>
             </div>
             <div className={styles.detailLinks}>
               <Link to={`/analytics/stock/${encodeURIComponent(detailEntry.row.symbol)}`} className={styles.detailLink}>{tr("Open stock detail")}</Link>
               <Link to="/analytics/signal/rsi" className={styles.detailLink}>{tr("Check RSI map")}</Link>
-              <Link to="/analytics/regime" className={styles.detailLink}>{tr("Recheck Market Story")}</Link>
+              <Link to="/analytics/regime" className={styles.detailLink}>{tr("Recheck Market regime")}</Link>
             </div>
           </section>
         ) : null}
@@ -350,7 +348,7 @@ export function ChangeHeatmapPage() {
       </ChartCard>
 
       <PageIntroAccordion
-        label={tr("How to read this heatmap")}
+        label={tr("Methodology heatmap")}
         title={tr("Scan the map first, then use the chips and legend to explain what you saw.")}
         body={tr("Use the average change first, then the range, then the top and bottom rows. This view teaches whether the move is broad, narrow, or heavily concentrated.")}
         widgetId="heatmap_change_help"

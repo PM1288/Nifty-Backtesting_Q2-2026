@@ -3,13 +3,10 @@ import { useAuthGate } from "../auth/AuthGateProvider";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import {
   DataTable,
-  DensityBadge,
   EmptyState,
   ErrorState,
-  InterpretationCard,
   KpiCard,
-  LoadingState,
-  SectionDivider
+  LoadingState
 } from "../components/ui/DashboardPrimitives";
 import { formatDateTime, formatNumber, fmtDecimal, fmtPct, fmtPrice } from "../lib/format";
 import { useDashboardSection, useWatchlist, useWatchlistHistory } from "../lib/hooks";
@@ -81,44 +78,17 @@ export function AnalyticsFlowsPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title={tr("Signals Archive")}
+        title={tr("Signal history")}
         meta={`${tr("Trade date")} ${section.data.trade_date} • ${tr("Refreshed")} ${section.data.generated_at ? formatDateTime(section.data.generated_at, { includeTime: true }) : "—"}`}
-        subtitle={tr("Review recent signal history and compare it with the live watchlist in one place.")}
         sectionTabs={[...SIGNAL_SECTION_TABS]}
-        learningPrompt={tr("Use this page after the main signals view when you want a deeper historical read of the same signal families.")}
-        learningPoints={[
-          tr("Start with the guided signals view, then use this page for the fuller historical list."),
-          tr("Compare the live watchlist with recent history instead of reading either list in isolation."),
-          tr("Advanced mode keeps more rows visible so you can review detail faster.")
-        ]}
-      />
 
-      <SectionDivider
-        eyebrow="Signals"
-        title={tr("Use the archive after the guided review")}
-        subtitle={tr("This page keeps the fuller signal history available once you already understand the main signal story.")}
       />
 
       <section className={styles.metricGrid}>
         <KpiCard label={tr("Archive rows")} value={formatNumber(archiveRows.length, { maximumFractionDigits: 0 })} meta={tr("Recent archived signal entries.")} />
         <KpiCard label={tr("Live watchlist")} value={formatNumber(watchRows.length, { maximumFractionDigits: 0 })} meta={tr("Current names still expressing the flow family.")} />
         <KpiCard label={tr("History rows")} value={formatNumber(historyRows.length, { maximumFractionDigits: 0 })} meta={tr("Recent archived watchlist entries for comparison.")} />
-        <KpiCard label={tr("Mode")} value={mode === "advanced" ? tr("Advanced") : tr("Beginner")} meta={tr("Use this page after the main Signals page when you need more detail.")} />
-      </section>
 
-      <section className={styles.summaryGrid}>
-        <DensityBadge
-          label={tr("Dense view")}
-          detail={tr("This view keeps more rows visible and less guidance on screen, so it works best once you already know the signal context.")}
-        />
-        <InterpretationCard
-          title={tr("What this archive is for")}
-          items={[
-            tr("Review older event-flow names without mixing them into the beginner-first signal page."),
-            tr("Compare the live watchlist with recent history to see whether the current tape is repeating or drifting."),
-            tr("Use this page as a reference surface, not as the first page you open.")
-          ]}
-        />
       </section>
 
       <section className={styles.grid2}>
@@ -199,7 +169,6 @@ export function AnalyticsFlowsPage() {
 
       <DataTable
         title={tr("Recent watchlist history")}
-        subtitle={tr("Use this to compare the live archive with what recently appeared in the same family.")}
         maxHeight={460}
         rows={historyRows}
         columns={[

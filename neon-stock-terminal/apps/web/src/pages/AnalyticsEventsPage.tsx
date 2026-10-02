@@ -204,8 +204,6 @@ export function AnalyticsEventsPage() {
       <AnalyticsHeader
         title="Event Calendar"
         meta={`${tr("Latest run")} ${payload.latestRunId ?? "—"} • ${tr("Updated")} ${formatDateIST(payload.latestLoadedAt, { includeTime: true })}`}
-        subtitle={tr("Read scheduled company events as a calendar first, then inspect the raw list to see which symbols are clustering around the same dates.")}
-        learningPrompt={tr("This page answers one question: when is event pressure concentrated, and which names are contributing to that cluster?")}
         sectionTabs={[...CATALYSTS_SECTION_TABS]}
       />
 
@@ -349,13 +347,13 @@ export function AnalyticsEventsPage() {
       />
 
       <PageIntroAccordion
-        label={tr("How to use this page")}
+        label={tr("Methodology")}
         title={tr("Read the calendar first, then confirm the contributing rows in the event list.")}
         body={tr("The heatmap helps you see where event pressure is clustering. The list underneath tells you whether that cluster comes from one heavyweight symbol, a broad wave of meetings, or repeated updates on a smaller set of names.")}
         widgetId="analytics_events_help"
         items={[
           tr("A busy day does not automatically mean broad market risk. Check how many symbols, not just how many rows, are involved."),
-          tr("Event-calendar rows are schedule-oriented. Use Market Story and the stock page before treating a meeting date as a directional signal."),
+          tr("Event-calendar rows are schedule-oriented. Use Market regime and the stock page before treating a meeting date as a directional signal."),
           tr("If a symbol has an attachment, inspect it directly. The dashboard only shows the registry row, not the attachment contents.")
         ]}
       />

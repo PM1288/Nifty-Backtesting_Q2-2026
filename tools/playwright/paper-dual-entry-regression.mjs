@@ -34,7 +34,7 @@ try {
     timeout: 60_000,
   });
   if (!response?.ok()) throw new Error(`paper route failed: ${response?.status()}`);
-  await page.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
 
   const header = await page.locator("#trades thead").innerText();
   if (!header.includes("ENTRY STRATEGY")) throw new Error("entry strategy column is missing");
@@ -81,7 +81,7 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Paper trading", exact: true }).waitFor();
   if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)) {
     throw new Error("mobile document has horizontal overflow");
   }

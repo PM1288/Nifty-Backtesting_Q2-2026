@@ -67,7 +67,7 @@ try {
       await page.keyboard.press("Escape");
     } else {
       await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-      await page.getByRole("heading", { name: "Paper Trading" }).waitFor({ timeout: 30_000 });
+      await page.getByRole("heading", { name: "Paper trading" }).waitFor({ timeout: 30_000 });
       await page.locator("body").click({ position: { x: 2, y: 2 } });
       await page.keyboard.press("a");
       const paperDialog = page.getByRole("heading", { name: "Add analytical paper trade" });

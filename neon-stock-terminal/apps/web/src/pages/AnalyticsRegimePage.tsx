@@ -133,13 +133,8 @@ export function AnalyticsRegimePage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title={mode === "beginner" ? tr("Market Story") : tr("Regime & Breadth")}
+        title={mode === "beginner" ? tr("Market regime") : tr("Regime & Breadth")}
         meta={`${tr("Selected session")} ${selectedSession} • ${tr("Snapshot generated")} ${regime.data.generated_at ? formatDateTime(regime.data.generated_at, { includeTime: true }) : "—"} • Header ticker is separate latest context`}
-        subtitle={
-          mode === "beginner"
-            ? tr("Understand whether the market is healthy, narrow, or unstable before you pick a stock.")
-            : tr("Use breadth and breakout balance to decide whether the current tape deserves continuation risk.")
-        }
         sectionTabs={[...MARKET_SECTION_TABS]}
       />
 
@@ -306,12 +301,12 @@ export function AnalyticsRegimePage() {
         <Link to="/analytics/setups" className={styles.nextCard}>
           <span className={styles.promptLabel}>{tr("Broad / constructive tape")}</span>
           <strong>{tr("Go to Setups")}</strong>
-          <span className={styles.muted}>{tr("Use this when participation and breakout balance are strong enough to support stock selection.")}</span>
+
         </Link>
         <Link to="/analytics/risk" className={styles.nextCard}>
           <span className={styles.promptLabel}>{tr("Fragile / distorted tape")}</span>
           <strong>{tr("Go to Risk")}</strong>
-          <span className={styles.muted}>{tr("Use this when event load and anomaly count are high enough to question the move.")}</span>
+
         </Link>
       </section>
 
@@ -400,12 +395,12 @@ export function AnalyticsRegimePage() {
       </section>
 
       <PageIntroAccordion
-        label="How to use this page"
+        label="Methodology"
           title={mode === "beginner" ? tr("Read left to right: regime, participation, breakout balance, then leadership.") : tr("Use regime first, explanations second.")}
         body={
           mode === "beginner"
-            ? tr("This page explains what the tape is doing before you choose names.")
-            : tr("This page tells you whether the current tape deserves continuation risk before you open stock-level detail.")
+            ? tr("Market direction and breadth")
+            : tr("Confirm direction with breadth and participation.")
         }
         items={[
           tr("Participation tells you whether the average stock agrees with the headline index."),

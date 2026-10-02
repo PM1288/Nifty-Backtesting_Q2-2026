@@ -110,82 +110,82 @@ function chartReadings(payload: AnalyticsLeadershipResponse, tr: (value: string)
   const continuationSupported = market?.continuationBias ?? "requires stock-by-stock confirmation";
   return [
     { id: "residual-volume", title: tr("Residual return vs volume-curve surprise"), subtitle: tr("Prefer names where residual return is strong and the volume structure is supportive, not theatrical."), option: scatterOption("Volume-curve surprise", "Residual return 60m %", ranking, (row) => row.volumeCurveSurprise, (row) => row.residualReturn60mPct), rubric: makeRubric([
-      [tr("1. What this chart is measuring."), tr("Residual return versus volume-curve surprise for each stock, separating true alpha from simple beta participation.")],
-      [tr("2. Why traders or analysts care about it."), tr("Residual return shows whether a stock is outperforming the market; volume surprise shows whether that move has structural participation.")],
-      [tr("3. What the axes mean and what units are used."), tr("X-axis is volume-curve surprise as a score. Y-axis is residual 60-minute return in percent.")],
-      [tr("4. What a bullish reading looks like."), tr("Upper-right stocks with strong residual return and healthy volume structure.")],
-      [tr("5. What a bearish reading looks like."), tr("Lower-left names with weak residual return and flat volume structure.")],
-      [tr("6. What a neutral or indecisive reading looks like."), tr("Names clustered near zero residual or modest volume surprise without separation.")],
-      [tr("7. What can fool the reader or produce a false signal."), tr("One-candle news spikes and illiquid prints can create fake upper-right readings.")],
-      [tr("8. What todays reading says."), tr(`${leaders?.symbol ?? "The top leader"} is leading with ${pct(leaders?.residualReturn60mPct, 2, true)} residual return and ${formatNumber(leaders?.volumeCurveSurprise ?? 0, { maximumFractionDigits: 0 })} volume surprise, while ${avoid?.symbol ?? "the top avoid"} looks loud without clean alpha.`)],
-      [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`${leaders?.symbol ?? "The lead name"} also scores well on VWAP hold and RS persistence, and ${bestSector?.sectorName ?? "the best sector"} confirms it at sector level.`)],
-      [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Market context is ${continuationSupported}, which means even good alpha names still face index-level chop risk.`)],
-      [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: prefer the names in the upper-right only if their VWAP hold and persistence also confirm the move.")]
+      [tr("Definition"), tr("Residual return versus volume-curve surprise for each stock, separating true alpha from simple beta participation.")],
+      [tr("Context"), tr("Residual return shows whether a stock is outperforming the market; volume surprise shows whether that move has structural participation.")],
+      [tr("Axes and units"), tr("X-axis is volume-curve surprise as a score. Y-axis is residual 60-minute return in percent.")],
+      [tr("Bullish"), tr("Upper-right stocks with strong residual return and healthy volume structure.")],
+      [tr("Bearish"), tr("Lower-left names with weak residual return and flat volume structure.")],
+      [tr("Neutral"), tr("Names clustered near zero residual or modest volume surprise without separation.")],
+      [tr("Limitations"), tr("One-candle news spikes and illiquid prints can create fake upper-right readings.")],
+      [tr("Current reading"), tr(`${leaders?.symbol ?? "The top leader"} is leading with ${pct(leaders?.residualReturn60mPct, 2, true)} residual return and ${formatNumber(leaders?.volumeCurveSurprise ?? 0, { maximumFractionDigits: 0 })} volume surprise, while ${avoid?.symbol ?? "the top avoid"} looks loud without clean alpha.`)],
+      [tr("Confirmation"), tr(`${leaders?.symbol ?? "The lead name"} also scores well on VWAP hold and RS persistence, and ${bestSector?.sectorName ?? "the best sector"} confirms it at sector level.`)],
+      [tr("Contradictions"), tr(`Market context is ${continuationSupported}, which means even good alpha names still face index-level chop risk.`)],
+      [tr("Interpretation"), tr("How to read: prefer the names in the upper-right only if their VWAP hold and persistence also confirm the move.")]
     ]) },
     { id: "vwap-persistence", title: tr("VWAP-hold quality vs RS persistence"), subtitle: tr("This is the cleanest leader test: can the stock hold structure while its relative strength persists?"), option: scatterOption("VWAP-hold quality", "RS persistence", ranking, (row) => row.vwapHoldQualityScore, (row) => row.rsPersistenceScore), rubric: makeRubric([
-      [tr("1. What this chart is measuring."), tr("Each stock’s VWAP-hold quality against relative-strength persistence.")],
-      [tr("2. Why traders or analysts care about it."), tr("A real leader tends to hold VWAP and keep outperforming, rather than flash briefly and fade.")],
-      [tr("3. What the axes mean and what units are used."), tr("Both axes are internal quality scores on a 0-100 style scale.")],
-      [tr("4. What a bullish reading looks like."), tr("Upper-right names holding VWAP while relative strength persists.")],
-      [tr("5. What a bearish reading looks like."), tr("Lower-left names failing VWAP and losing persistence.")],
-      [tr("6. What a neutral or indecisive reading looks like."), tr("Middle-cluster names that are acceptable but not dominant.")],
-      [tr("7. What can fool the reader or produce a false signal."), tr("Sector-wide squeezes can make persistence look better than the stock’s own edge.")],
-      [tr("8. What todays reading says."), tr(`${leaders?.symbol ?? "The top leader"} is a real leader because VWAP and persistence are aligned, while ${avoid?.symbol ?? "the top avoid"} shows the opposite structure.`)],
-      [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Continuation score and leadership score both back the upper-right cluster, not just absolute return.`)],
-      [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`${weakSector?.sectorName ?? "The weakest sector"} shows poor sector-level follow-through, so single-stock persistence can still fail if the group rolls over.`)],
-      [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: a leader is not just green; it stays above VWAP while its relative strength keeps compounding.")]
+      [tr("Definition"), tr("Each stock’s VWAP-hold quality against relative-strength persistence.")],
+      [tr("Context"), tr("A real leader tends to hold VWAP and keep outperforming, rather than flash briefly and fade.")],
+      [tr("Axes and units"), tr("Both axes are internal quality scores on a 0-100 style scale.")],
+      [tr("Bullish"), tr("Upper-right names holding VWAP while relative strength persists.")],
+      [tr("Bearish"), tr("Lower-left names failing VWAP and losing persistence.")],
+      [tr("Neutral"), tr("Middle-cluster names that are acceptable but not dominant.")],
+      [tr("Limitations"), tr("Sector-wide squeezes can make persistence look better than the stock’s own edge.")],
+      [tr("Current reading"), tr(`${leaders?.symbol ?? "The top leader"} is a real leader because VWAP and persistence are aligned, while ${avoid?.symbol ?? "the top avoid"} shows the opposite structure.`)],
+      [tr("Confirmation"), tr(`Continuation score and leadership score both back the upper-right cluster, not just absolute return.`)],
+      [tr("Contradictions"), tr(`${weakSector?.sectorName ?? "The weakest sector"} shows poor sector-level follow-through, so single-stock persistence can still fail if the group rolls over.`)],
+      [tr("Interpretation"), tr("How to read: a leader is not just green; it stays above VWAP while its relative strength keeps compounding.")]
     ]) },
     { id: "cont-reversal", title: tr("Continuation score vs reversal score"), subtitle: tr("This shows whether the tape is rewarding continuation or only creating fade and reversal setups."), option: scatterOption("Continuation score", "Reversal score", ranking, (row) => row.continuationScore, (row) => row.reversalScore), rubric: makeRubric([
-      [tr("1. What this chart is measuring."), tr("Each stock’s continuation score plotted against its reversal score.")],
-      [tr("2. Why traders or analysts care about it."), tr("It helps separate breakout continuation candidates from mean-reversion traps.")],
-      [tr("3. What the axes mean and what units are used."), tr("Both axes are internal scores; higher values mean stronger continuation or stronger reversal pressure.")],
-      [tr("4. What a bullish reading looks like."), tr("Names with high continuation and low reversal pressure.")],
-      [tr("5. What a bearish reading looks like."), tr("Names with low continuation and high reversal pressure.")],
-      [tr("6. What a neutral or indecisive reading looks like."), tr("Names near the middle where neither side dominates.")],
-      [tr("7. What can fool the reader or produce a false signal."), tr("Late-day squeezes can briefly lift continuation scores without improving underlying persistence.")],
-      [tr("8. What todays reading says."), tr(`Today still supports stock-by-stock continuation rather than broad continuation. ${leaders?.symbol ?? "The top leader"} sits in the continuation-friendly quadrant, while reversal names remain tactical only.`)],
-      [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`The market-state note says ${continuationSupported}, which supports selective continuation and penalizes beta passengers.`)],
-      [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`High-volatility market state means reversal pressure can still overwhelm continuation if breadth or participation slips.`)],
-      [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: take continuation setups only when continuation is high and reversal pressure stays clearly lower.")]
+      [tr("Definition"), tr("Each stock’s continuation score plotted against its reversal score.")],
+      [tr("Context"), tr("It helps separate breakout continuation candidates from mean-reversion traps.")],
+      [tr("Axes and units"), tr("Both axes are internal scores; higher values mean stronger continuation or stronger reversal pressure.")],
+      [tr("Bullish"), tr("Names with high continuation and low reversal pressure.")],
+      [tr("Bearish"), tr("Names with low continuation and high reversal pressure.")],
+      [tr("Neutral"), tr("Names near the middle where neither side dominates.")],
+      [tr("Limitations"), tr("Late-day squeezes can briefly lift continuation scores without improving underlying persistence.")],
+      [tr("Current reading"), tr(`Today still supports stock-by-stock continuation rather than broad continuation. ${leaders?.symbol ?? "The top leader"} sits in the continuation-friendly quadrant, while reversal names remain tactical only.`)],
+      [tr("Confirmation"), tr(`The market-state note says ${continuationSupported}, which supports selective continuation and penalizes beta passengers.`)],
+      [tr("Contradictions"), tr(`High-volatility market state means reversal pressure can still overwhelm continuation if breadth or participation slips.`)],
+      [tr("Interpretation"), tr("How to read: take continuation setups only when continuation is high and reversal pressure stays clearly lower.")]
     ]) },
     { id: "sector-heatmap", title: tr("Sector strength heatmap"), subtitle: tr("Sector confirmation matters because a leader inside a weak sector has less room to keep trending."), option: buildSectorHeatmap(payload.sectorStrength.slice(0, 8)), rubric: makeRubric([
-      [tr("1. What this chart is measuring."), tr("Sector-level averages for leadership, residual strength, continuation, VWAP quality, and reversal pressure.")],
-      [tr("2. Why traders or analysts care about it."), tr("A stock leader inside a confirming sector is usually stronger than an isolated name in a weak group.")],
-      [tr("3. What the axes mean and what units are used."), tr("X-axis is sector. Y-axis is sector metric. Cell color is normalized strength on a 0-100 style scale.")],
-      [tr("4. What a bullish reading looks like."), tr("Warm cells across leadership, residual, continuation, and VWAP in the same sector.")],
-      [tr("5. What a bearish reading looks like."), tr("Cool cells across those same metrics or hot reversal cells with weak leadership.")],
-      [tr("6. What a neutral or indecisive reading looks like."), tr("Mixed colors where no sector owns multiple strength metrics.")],
-      [tr("7. What can fool the reader or produce a false signal."), tr("A single heavyweight can distort the whole sector if the group has too few active names.")],
-      [tr("8. What todays reading says."), tr(`${bestSector?.sectorName ?? "The leading sector"} is the strongest confirming pocket, while ${weakSector?.sectorName ?? "the weakest sector"} is where leadership is least trustworthy.`)],
-      [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Top leaders are clustering in the stronger sectors instead of appearing as isolated one-stock spikes.`)],
-      [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`When a stock’s beta-follow score is still high, sector strength can mask the difference between true alpha and a beta passenger.`)],
-      [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: sector confirmation is the difference between a leader with tailwind and a leader swimming alone.")]
+      [tr("Definition"), tr("Sector-level averages for leadership, residual strength, continuation, VWAP quality, and reversal pressure.")],
+      [tr("Context"), tr("A stock leader inside a confirming sector is usually stronger than an isolated name in a weak group.")],
+      [tr("Axes and units"), tr("X-axis is sector. Y-axis is sector metric. Cell color is normalized strength on a 0-100 style scale.")],
+      [tr("Bullish"), tr("Warm cells across leadership, residual, continuation, and VWAP in the same sector.")],
+      [tr("Bearish"), tr("Cool cells across those same metrics or hot reversal cells with weak leadership.")],
+      [tr("Neutral"), tr("Mixed colors where no sector owns multiple strength metrics.")],
+      [tr("Limitations"), tr("A single heavyweight can distort the whole sector if the group has too few active names.")],
+      [tr("Current reading"), tr(`${bestSector?.sectorName ?? "The leading sector"} is the strongest confirming pocket, while ${weakSector?.sectorName ?? "the weakest sector"} is where leadership is least trustworthy.`)],
+      [tr("Confirmation"), tr(`Top leaders are clustering in the stronger sectors instead of appearing as isolated one-stock spikes.`)],
+      [tr("Contradictions"), tr(`When a stock’s beta-follow score is still high, sector strength can mask the difference between true alpha and a beta passenger.`)],
+      [tr("Interpretation"), tr("How to read: sector confirmation is the difference between a leader with tailwind and a leader swimming alone.")]
     ]) },
     { id: "catch-up", title: tr("Catch-up candidates"), subtitle: tr("These are names with improving structure that have not yet fully converted into top-tier leadership."), option: buildCatchUpOption(catchUps), rubric: makeRubric([
-      [tr("1. What this chart is measuring."), tr("The strongest catch-up scores among names that are not already top leaders.")],
-      [tr("2. Why traders or analysts care about it."), tr("Catch-up names often offer cleaner pullback or delayed-breakout entries than crowded leaders.")],
-      [tr("3. What the axes mean and what units are used."), tr("Y-axis is stock symbol. X-axis is catch-up score on the internal 0-100 style scale.")],
-      [tr("4. What a bullish reading looks like."), tr("High catch-up score with decent VWAP quality and controlled beta-follow.")],
-      [tr("5. What a bearish reading looks like."), tr("High catch-up score but weak VWAP structure or elevated spike/noise penalties.")],
-      [tr("6. What a neutral or indecisive reading looks like."), tr("Scores in the middle without clear confirmation from persistence or continuation.")],
-      [tr("7. What can fool the reader or produce a false signal."), tr("Names can look like catch-up candidates when they are only bouncing after weakness.")],
-      [tr("8. What todays reading says."), tr(`The catch-up board is useful today because market state favors selective stock picking more than broad continuation.`)],
-      [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Catch-up names are more credible when sector strength is improving and reversal pressure stays contained.`)],
-      [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`If the market state slips back into broader chop, catch-up names can fail before the leaders do.`)],
-      [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: a catch-up candidate is not late if its VWAP and persistence are still improving.")]
+      [tr("Definition"), tr("The strongest catch-up scores among names that are not already top leaders.")],
+      [tr("Context"), tr("Catch-up names often offer cleaner pullback or delayed-breakout entries than crowded leaders.")],
+      [tr("Axes and units"), tr("Y-axis is stock symbol. X-axis is catch-up score on the internal 0-100 style scale.")],
+      [tr("Bullish"), tr("High catch-up score with decent VWAP quality and controlled beta-follow.")],
+      [tr("Bearish"), tr("High catch-up score but weak VWAP structure or elevated spike/noise penalties.")],
+      [tr("Neutral"), tr("Scores in the middle without clear confirmation from persistence or continuation.")],
+      [tr("Limitations"), tr("Names can look like catch-up candidates when they are only bouncing after weakness.")],
+      [tr("Current reading"), tr(`The catch-up board is useful today because market state favors selective stock picking more than broad continuation.`)],
+      [tr("Confirmation"), tr(`Catch-up names are more credible when sector strength is improving and reversal pressure stays contained.`)],
+      [tr("Contradictions"), tr(`If the market state slips back into broader chop, catch-up names can fail before the leaders do.`)],
+      [tr("Interpretation"), tr("How to read: a catch-up candidate is not late if its VWAP and persistence are still improving.")]
     ]) },
     { id: "ranking", title: tr("Leader / follower / avoid ranking board"), subtitle: tr("This combines residual, structure, continuation, beta-follow, and spike penalties into one teaching-first board."), option: buildRankingOption(ranking), rubric: makeRubric([
-      [tr("1. What this chart is measuring."), tr("The highest leadership scores across leaders, followers, catch-up names, reversals, and avoids.")],
-      [tr("2. Why traders or analysts care about it."), tr("It turns a noisy stock list into a ranked view of names worth stalking versus names to fade or ignore.")],
-      [tr("3. What the axes mean and what units are used."), tr("Y-axis is stock and category rank. X-axis is composite leadership score on a 0-100 scale.")],
-      [tr("4. What a bullish reading looks like."), tr("True leaders dominate the board and followers are orderly rather than noisy.")],
-      [tr("5. What a bearish reading looks like."), tr("Avoid/noisy names crowd the board or the top scores are still mostly beta passengers.")],
-      [tr("6. What a neutral or indecisive reading looks like."), tr("Scores bunch together and categories do not separate cleanly.")],
-      [tr("7. What can fool the reader or produce a false signal."), tr("Composite ranks can hide a critical flaw if you ignore the reason list for each stock.")],
-      [tr("8. What todays reading says."), tr(`Today's board has ${formatNumber(payload.summary?.trueLeaderCount ?? 0, { maximumFractionDigits: 0 })} true leaders and ${formatNumber(payload.summary?.avoidCount ?? 0, { maximumFractionDigits: 0 })} avoid/noisy names, so the opportunity set exists but is selective.`)],
-      [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Market state is ${payload.summary?.dominantState ?? "mixed"} and the sector heatmap still shows a few confirming pockets for continuation.`)],
-      [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Weak weighted participation at market level means even a strong board still needs selective execution rather than broad risk-on exposure.`)],
-      [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: read the rank first, then ask whether the stock is a true leader or only a beta passenger hiding inside a green tape.")]
+      [tr("Definition"), tr("The highest leadership scores across leaders, followers, catch-up names, reversals, and avoids.")],
+      [tr("Context"), tr("It turns a noisy stock list into a ranked view of names worth stalking versus names to fade or ignore.")],
+      [tr("Axes and units"), tr("Y-axis is stock and category rank. X-axis is composite leadership score on a 0-100 scale.")],
+      [tr("Bullish"), tr("True leaders dominate the board and followers are orderly rather than noisy.")],
+      [tr("Bearish"), tr("Avoid/noisy names crowd the board or the top scores are still mostly beta passengers.")],
+      [tr("Neutral"), tr("Scores bunch together and categories do not separate cleanly.")],
+      [tr("Limitations"), tr("Composite ranks can hide a critical flaw if you ignore the reason list for each stock.")],
+      [tr("Current reading"), tr(`Today's board has ${formatNumber(payload.summary?.trueLeaderCount ?? 0, { maximumFractionDigits: 0 })} true leaders and ${formatNumber(payload.summary?.avoidCount ?? 0, { maximumFractionDigits: 0 })} avoid/noisy names, so the opportunity set exists but is selective.`)],
+      [tr("Confirmation"), tr(`Market state is ${payload.summary?.dominantState ?? "mixed"} and the sector heatmap still shows a few confirming pockets for continuation.`)],
+      [tr("Contradictions"), tr(`Weak weighted participation at market level means even a strong board still needs selective execution rather than broad risk-on exposure.`)],
+      [tr("Interpretation"), tr("How to read: read the rank first, then ask whether the stock is a true leader or only a beta passenger hiding inside a green tape.")]
     ]) }
   ];
 }
@@ -234,7 +234,7 @@ export function AnalyticsLeadershipPage() {
 
   return (
     <div className={styles.page}>
-      <AnalyticsHeader title="Stock Leadership" meta={`${tr("Trade date")} ${payload.tradeDate ? formatDateIST(payload.tradeDate) : "—"} • ${tr("Updated")} ${payload.coverage.asOf ? formatDateIST(payload.coverage.asOf, { includeTime: true }) : "—"}`} subtitle={tr("Separate true alpha from index-beta passengers by reading residual strength, VWAP quality, persistence, and sector confirmation together.")} learningPrompt={tr("This page answers one question: which stocks are real leaders, which are just following the tape, and which names should be avoided?")} sectionTabs={[...STOCKS_SECTION_TABS]} />
+      <AnalyticsHeader title="Stock leadership" meta={`${tr("Trade date")} ${payload.tradeDate ? formatDateIST(payload.tradeDate) : "—"} • ${tr("Updated")} ${payload.coverage.asOf ? formatDateIST(payload.coverage.asOf, { includeTime: true }) : "—"}`} sectionTabs={[...STOCKS_SECTION_TABS]} />
 
       <section className={styles.metricGrid}>
         <KpiCard label={tr("A. Leadership summary")} value={summary.marketSupportNote} tone={toneFromCategory("true leader")} meta={tr("Residual strength is weighted more than raw return so beta passengers do not dominate the board.")} />
@@ -295,7 +295,7 @@ export function AnalyticsLeadershipPage() {
         ]}
       />
 
-      <PageIntroAccordion label={tr("How to use this page")} title={tr("Start with market support, then read residual, VWAP, persistence, and sector confirmation before you chase any name.")} body={tr("This page is designed to teach the difference between a true leader and a beta passenger. Read every chart as a cross-check, not as a standalone trigger.")} items={[tr("Prefer residual strength over raw return."), tr("Reward persistence and VWAP hold more than one fast candle."), tr("Penalize names that look good only because the sector or index is dragging them.")]} widgetId="analytics_stock_leadership_help" />
+      <PageIntroAccordion label={tr("Methodology")} title={tr("Start with market support, then read residual, VWAP, persistence, and sector confirmation before you chase any name.")} body={tr("Leadership is measured relative to the index and sector.")} items={[tr("Prefer residual strength over raw return."), tr("Reward persistence and VWAP hold more than one fast candle."), tr("Penalize names that look good only because the sector or index is dragging them.")]} widgetId="analytics_stock_leadership_help" />
 
       <div className={styles.takeaway}><strong>{tr("Leadership takeaway:")}</strong> {tr("today supports selective stock continuation only in names whose residual return, VWAP hold, persistence, and sector confirmation all line up; broad green beta alone is not enough.")}</div>
     </div>

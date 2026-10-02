@@ -121,11 +121,6 @@ export function AnalyticsRiskPage() {
       <AnalyticsHeader
         title={tr(mode === "beginner" ? "Anomalies" : "Signals / Anomalies")}
         meta={`${tr("Trade date")} ${risk.data.trade_date} • ${tr("Refreshed")} ${risk.data.generated_at ? formatDateTime(risk.data.generated_at, { includeTime: true }) : "—"}`}
-        subtitle={
-          mode === "beginner"
-            ? tr("Spot unusual moves, news-like reactions, and warning signs before you trust a stock move.")
-            : tr("Decide whether the tape deserves trust, a fade, or a stand-down.")
-        }
         sectionTabs={[...SIGNAL_SECTION_TABS]}
       />
 
@@ -265,7 +260,7 @@ export function AnalyticsRiskPage() {
       </section>
 
       <PageIntroAccordion
-        label={tr("How to use this page")}
+        label={tr("Methodology")}
         title={tr(mode === "beginner" ? "Read caution load first, then inspect the tables and watchlists." : "Use this as a trust filter, not a signal generator.")}
         body={
           mode === "beginner"
@@ -284,12 +279,12 @@ export function AnalyticsRiskPage() {
         <Link to="/analytics/setups" className={styles.nextCard}>
           <span className={styles.promptLabel}>{tr("Go back one step")}</span>
           <strong>{tr("Return to Setups")}</strong>
-          <span className={styles.muted}>{tr("Use this if risk looks contained and you want to select cleaner names.")}</span>
+
         </Link>
         <Link to="/analytics/learn" className={styles.nextCard}>
           <span className={styles.promptLabel}>{tr("Research path")}</span>
           <strong>{tr("Open Learn")}</strong>
-          <span className={styles.muted}>{tr("Use this to see which signal families historically followed through and which ones degraded.")}</span>
+
         </Link>
       </section>
     </div>

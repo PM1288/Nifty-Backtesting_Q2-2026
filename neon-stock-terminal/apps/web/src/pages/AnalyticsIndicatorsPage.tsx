@@ -64,7 +64,6 @@ import { useDeferredBusyState } from "../lib/useDeferredBusyState";
 import {
   AnalyticsHeader,
   LEARNING_SECTION_TABS,
-  useAnalyticsExperienceMode
 } from "./AnalyticsChrome";
 import styles from "./AnalyticsPage.module.css";
 
@@ -84,7 +83,6 @@ function relatedSurfaceHref(slug: string) {
 export function AnalyticsIndicatorsPage() {
   const { t, tr, translateText } = useI18n();
   const { authReady } = useAuthGate();
-  const { mode } = useAnalyticsExperienceMode();
   const { slug: routeSlug } = useParams();
   const navigate = useNavigate();
   const slug = (routeSlug ?? DEFAULT_INDICATOR_SLUG).toLowerCase();
@@ -194,11 +192,6 @@ export function AnalyticsIndicatorsPage() {
       <AnalyticsHeader
         title={t("{{name}} explained", `${data.displayName} explained`, { name: data.displayName })}
         meta={`${tr("Snapshot")} ${formatMeta(data.freshness.snapshotGeneratedAt)}`}
-        subtitle={
-          mode === "beginner"
-            ? tr("Start with the plain-language read, then use the evidence and strategy sections to see what the indicator has historically meant.")
-            : tr("Use one page to review the explanation, thresholds, historical evidence, and strategy outcomes for this indicator.")
-        }
         sectionTabs={[...LEARNING_SECTION_TABS]}
       />
 
@@ -551,7 +544,7 @@ export function AnalyticsIndicatorsPage() {
         >
           <span className={styles.promptLabel}>{tr("Capital behavior")}</span>
           <strong>{tr("Open Simulator")}</strong>
-          <span className={styles.muted}>{tr("Use this after the indicator meaning is clear and you want a scenario-level risk read.")}</span>
+
         </Link>
       </section>
 

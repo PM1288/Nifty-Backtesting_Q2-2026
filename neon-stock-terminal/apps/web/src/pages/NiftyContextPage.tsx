@@ -250,11 +250,11 @@ export default function NiftyContextPage() {
     <section
       className={styles.page}
       data-testid="nifty-model-research"
-      aria-label="NIFTY Model Research"
+      aria-label="NIFTY model research"
     >
       <header>
         <div>
-          <h1>NIFTY Model Research</h1>
+          <h1>NIFTY model research</h1>
           <span>Shadow research · hourly NIFTY context and MANEESH trade quality</span>
         </div>
         <Link to="/strategy/trading-analytics?view=scalper_v2">

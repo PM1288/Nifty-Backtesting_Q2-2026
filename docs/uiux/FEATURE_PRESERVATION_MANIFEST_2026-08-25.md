@@ -1,5 +1,16 @@
 # UI feature preservation manifest — 25 August 2026
 
+## 2026-10-02 Production UI copy and hierarchy
+
+- Simplified headings, navigation, research instructions and loading/error copy.
+  Removed prompt residue and decorative shell animation. Existing routes, ticker,
+  target cursor, font preference, paper alerts, exports and source details remain.
+- Market details are expandable with explicit source dates; values, unavailable
+  markers, trade restrictions and accounting formulas are unchanged.
+- Shared pages use one main landmark; route directory honors administrator access.
+- Evidence and release procedure: `docs/uiux/PRODUCTION_UI_CLEANUP_20261002.md`.
+
+
 ## 2026-10-02 Real-time feed resilience and freshness
 
 - Existing stock/index quote components and header feed-quality display receive

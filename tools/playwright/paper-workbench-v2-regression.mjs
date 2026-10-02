@@ -45,7 +45,7 @@ try {
   page.on("console", (message) => { if (message.type() === "error" && !ignored.test(message.text())) consoleErrors.push(message.text()); });
   const route = await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
   if (!route?.ok()) throw new Error(`paper route failed: ${route?.status()}`);
-  await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).waitFor({ timeout: 120_000 });
+  await page.getByRole("heading", { name: "Paper trading" }).waitFor({ timeout: 120_000 });
 
   const sectionNav = page.getByRole("navigation", { name: "Paper Trading workbench sections" });
   if (await sectionNav.getByRole("button").count() !== 8) throw new Error("expected eight workbench sections");
@@ -90,7 +90,7 @@ try {
     await sectionNav.getByRole("button", { name: new RegExp(expected.replace("&", "&")) }).click();
     await page.waitForTimeout(100);
   }
-  await page.getByRole("heading", { name: "Canonical paper evidence trust matrix" }).waitFor();
+  await page.getByRole("heading", { name: "Paper trade data quality" }).waitFor();
 
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export view" }).click();
@@ -106,9 +106,9 @@ try {
   for (const viewport of [{ width: 1920, height: 1080 }, { width: 1600, height: 900 }, { width: 1440, height: 900 }, { width: 1366, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
-    await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).waitFor({ timeout: 120_000 });
+    await page.getByRole("heading", { name: "Paper trading" }).waitFor({ timeout: 120_000 });
     if (viewport.width <= 1100) {
-      const headerFits = await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).evaluate((heading) => {
+      const headerFits = await page.getByRole("heading", { name: "Paper trading" }).evaluate((heading) => {
         const title = heading.getBoundingClientRect();
         const facts = heading.closest("header").children[1].getBoundingClientRect();
         return title.left >= 0 && title.right <= innerWidth && facts.top >= title.bottom;

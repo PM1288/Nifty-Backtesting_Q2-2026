@@ -18,7 +18,7 @@ export function BacktestingDailySummaryPage() {
     queries: [{ name: "backtesting-daily-summary", isLoading: summary.isLoading, isError: !!summary.error }]
   });
 
-  if (!authReady || summary.isLoading) return <LoadingSkeletonCard title={tr("Daily Summary")} lines={5} />;
+  if (!authReady || summary.isLoading) return <LoadingSkeletonCard title={tr("Daily summary")} lines={5} />;
   if (summary.error || !summary.data) return <ErrorState title={tr("Daily Summary is unavailable")} body={tr("The latest backtesting daily snapshot could not be loaded.")} />;
 
   const skippedReasonRows = Object.values(
@@ -36,8 +36,7 @@ export function BacktestingDailySummaryPage() {
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
-        title={tr("Daily Summary")}
-        subtitle={tr("This is the latest day-level read after the snapshot updates: entries, exits, open positions, skipped signals, and deployment.")}
+        title={tr("Daily summary")}
         testRunAt={summary.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(summary.data.asOfDate) })}
       />

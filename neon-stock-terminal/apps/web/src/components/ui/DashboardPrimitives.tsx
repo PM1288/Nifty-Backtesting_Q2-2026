@@ -1,3 +1,4 @@
+import { userFacingError } from "../../lib/userFacingError";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { trackApiErrorShown, trackEmptyStateViewed, trackNavClick, trackWidgetExpanded } from "../../analytics/events";
@@ -198,7 +199,7 @@ export function SectionTabs({
         const active = isSectionTabActive(item, location.pathname);
         const body = (
           <>
-            {item.badge ? <span className={styles.sectionTabBadge}>{tr(item.badge)}</span> : null}
+
             <span>{tr(item.label)}</span>
           </>
         );
@@ -255,7 +256,7 @@ export function SectionTabs({
 }
 
 export function PageIntroAccordion({
-  label = "How to use this page",
+  label = "Methodology",
   title,
   body,
   items,
@@ -379,9 +380,9 @@ export function DataState({
 
   return (
     <section className={styles.statePanel} data-kind={kind} role={kind === "error" ? "alert" : "status"}>
-      <span className={styles.stateEyebrow}>{eyebrow}</span>
-      <h1 className={styles.stateTitle}>{tr(title)}</h1>
-      <p className={styles.stateBody}>{tr(body)}</p>
+      {kind === "delayed" || kind === "partial" ? <span className={styles.stateEyebrow}>{eyebrow}</span> : null}
+      <h1 className={styles.stateTitle}>{kind === "loading" ? t("ui.loading", "Loading…") : tr(title)}</h1>
+      {kind !== "loading" ? <p className={styles.stateBody}>{tr(kind === "error" ? userFacingError(body) : body)}</p> : null}
       {action}
     </section>
   );
@@ -660,7 +661,7 @@ export function DataTable<T>({
   const [sortState, setSortState] = useState<{ columnKey: string; direction: "asc" | "desc" } | null>(null);
   const { t, tr, locale } = useI18n();
   const resolvedEmptyTitle = emptyTitle ?? t("ui.noRowsAvailable", "No rows available");
-  const resolvedEmptyBody = emptyBody ?? t("ui.tableNoData", "Nothing matches this view right now.");
+  const resolvedEmptyBody = emptyBody ?? t("ui.tableNoData", "No results");
   const resolvedFilterPlaceholder = filterPlaceholder ?? t("ui.filterRows", "Filter rows");
 
   const filteredRows = useMemo(() => {

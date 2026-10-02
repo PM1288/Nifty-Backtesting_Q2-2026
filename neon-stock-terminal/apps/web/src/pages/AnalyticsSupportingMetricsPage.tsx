@@ -251,7 +251,7 @@ export function AnalyticsSupportingMetricsPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title={tr("Supporting Metrics")}
+        title={tr("Supporting metrics")}
         meta={`Gateway ${payload.gateway.service} ${payload.gateway.version} • Refreshed ${formatTimestamp(payload.gateway.generatedAt)}`}
         subtitle={tr("Delayed and end-of-day global context for commodities, FX, bullion, and major indices before you read the local tape.")}
         sectionTabs={[...MARKET_SECTION_TABS]}
@@ -321,7 +321,7 @@ export function AnalyticsSupportingMetricsPage() {
           <div className={styles.chartHeader}>
             <div>
               <h2 className={styles.panelTitle}>{tr("Major global indices")}</h2>
-              <p className={styles.chartCaption}>{tr("What this chart shows: the daily percentage move across the global index basket used as supporting context.")}</p>
+              <p className={styles.chartCaption}>{tr("the daily percentage move across the global index basket used as supporting context.")}</p>
             </div>
           </div>
           <EChartSurface ariaLabel={tr("Major global indices change chart")} className={styles.chartSurface} option={indexChartOption} />
@@ -331,7 +331,7 @@ export function AnalyticsSupportingMetricsPage() {
           <div className={styles.chartHeader}>
             <div>
               <h2 className={styles.panelTitle}>{tr("Macro basket move")}</h2>
-              <p className={styles.chartCaption}>{tr("Use this to compare commodities, bullion, FX, and Gift Nifty without reading the tables first.")}</p>
+
             </div>
           </div>
           <EChartSurface ariaLabel={tr("Macro basket change chart")} className={styles.chartSurface} option={macroChartOption} />
@@ -429,7 +429,7 @@ export function AnalyticsSupportingMetricsPage() {
           <PageIntroAccordion
             label={tr("Source notes")}
             title={tr("Quality notes stay collapsed by default in Beginner mode.")}
-            body={tr("Use these notes when you need to understand fallback mechanics or source-specific caveats. They should not displace the main macro read.")}
+            body={tr("Sources and limitations")}
             defaultOpen={mode === "advanced"}
             widgetId="supporting_metrics_source_notes"
             items={
@@ -446,7 +446,7 @@ export function AnalyticsSupportingMetricsPage() {
             <div className={styles.signalItem}>
               <div>
                 <div className={styles.strong}>{tr("Overnight risk sentiment")}</div>
-                <div className={styles.muted}>{tr("Use this to decide whether global tone is broadly supportive, negative, or mixed before the Indian session.")}</div>
+
               </div>
               <div className={styles.smallStat} data-tone={overnightSentiment === "Negative" ? "red" : overnightSentiment === "Positive" ? "green" : "white"}>{tr(overnightSentiment)}</div>
             </div>
@@ -467,16 +467,16 @@ export function AnalyticsSupportingMetricsPage() {
             <div className={styles.signalItem}>
               <div>
                 <div className={styles.strong}>{tr("System trust details")}</div>
-                <div className={styles.muted}>{tr("Gateway errors, stale runs, and data-quality warnings now belong on the Trust Board instead of in the main market workflow.")}</div>
+                <div className={styles.muted}>{tr("Gateway errors, stale runs, and data-quality warnings now belong on the Data quality instead of in the main market workflow.")}</div>
               </div>
-              <div className={styles.smallStat}>{tr("Trust Board")}</div>
+              <div className={styles.smallStat}>{tr("Data quality")}</div>
             </div>
           </div>
         </div>
       </section>
 
       <section className={styles.panel}>
-        <h2 className={styles.panelTitle}>{tr("How to use this page")}</h2>
+        <h2 className={styles.panelTitle}>{tr("Methodology")}</h2>
         <div className={styles.signalGrid}>
           <div className={styles.signalItem}>
             <div>

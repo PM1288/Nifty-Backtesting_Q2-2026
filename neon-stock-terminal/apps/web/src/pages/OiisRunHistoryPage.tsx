@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchOiisRunHistory, type OiisRunHistory } from "../lib/api";
@@ -55,11 +56,11 @@ export function OiisRunHistoryPage() {
 
     <section className={styles.policy}>
       <div><span>Schedule</span><strong>{data?.scheduleIst.join(" · ") ?? "09:30–15:00"} IST</strong></div>
-      <div><span>Quality rule</span><strong>{data?.qualityFormula ?? "OFactor + XFactor + Data Quality"} &gt; {data?.thresholdExclusive ?? 185}</strong></div>
+      <div><span>Quality rule</span><strong>{data?.qualityFormula ?? "OFactor + XFactor + Data quality"} &gt; {data?.thresholdExclusive ?? 185}</strong></div>
       <div><span>Action</span><strong>Top qualifying candidate · one paper trade per symbol/day</strong></div>
     </section>
 
-    {error && <div className={styles.error}>{error}</div>}
+    {error && <div className={styles.error}>{userFacingError(error)}</div>}
 
     <div className={styles.toolbar}>
       <strong>{runs.length} completed runs</strong>

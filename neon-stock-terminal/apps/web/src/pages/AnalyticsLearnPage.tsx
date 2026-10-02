@@ -28,7 +28,6 @@ import {
   num,
   text,
   toneFromNumber,
-  useAnalyticsExperienceMode
 } from "./AnalyticsChrome";
 import styles from "./AnalyticsPage.module.css";
 
@@ -152,7 +151,6 @@ function buildEvidenceScatterOption(rows: DashboardRow[], tr: (value: string) =>
 
 export function AnalyticsLearnPage() {
   const { authReady } = useAuthGate();
-  const { mode } = useAnalyticsExperienceMode();
   const { tr } = useI18n();
   const learner = useDashboardSection("historical-learner", authReady);
   const regime = useDashboardSection("regime-breadth", authReady);
@@ -272,13 +270,7 @@ export function AnalyticsLearnPage() {
       <AnalyticsHeader
         title={tr("Learning")}
         meta={`${tr("Trade date")} ${learner.data.trade_date ?? regime.data.trade_date ?? "—"} • ${tr("Refreshed")} ${learner.data.generated_at ? formatDateTime(learner.data.generated_at, { includeTime: true }) : "—"}`}
-        subtitle={
-          mode === "beginner"
-            ? tr("Use history to see which ideas tend to work, not to predict certainty.")
-            : tr("Use history to calibrate confidence, sample size, and follow-through.")
-        }
         sectionTabs={[...LEARNING_SECTION_TABS]}
-        learningPrompt={tr("Read current regime first, then sample size, then the forward-return matrix. Use this page to learn what deserves attention next, not to turn history into certainty.")}
         learningPoints={[
           tr("Sample size matters more than a single attractive historical figure."),
           tr("History is context, not a promise."),
@@ -289,7 +281,6 @@ export function AnalyticsLearnPage() {
       <SectionDivider
         eyebrow={tr("Learning")}
         title={tr("Strategy lab")}
-        subtitle={tr("This page should answer one question immediately: which historical signal families are most relevant to today’s tape?")}
       />
 
       <section className={styles.metricGrid}>
@@ -330,7 +321,7 @@ export function AnalyticsLearnPage() {
 
       <section className={styles.summaryGrid}>
         <InterpretationCard
-          title={tr("How to use this page")}
+          title={tr("Methodology")}
           items={[
             tr("Sample size should dominate your confidence more than a flashy forward return."),
             tr("Use the signal matrix to learn which setup families hold up across multiple observations."),
@@ -459,7 +450,7 @@ export function AnalyticsLearnPage() {
       <section ref={historyRequirementsRef} data-analytics-section="history_requirements" className={styles.grid2}>
         <div className={styles.panel}>
           <h2 className={styles.panelTitle}>{tr("History requirements")}</h2>
-          <p className={styles.sectionIntro}>{tr("Use this checklist before you let a historical pattern influence the next decision.")}</p>
+
           <div className={styles.signalGrid}>
             <div className={styles.signalItem}>
               <div>

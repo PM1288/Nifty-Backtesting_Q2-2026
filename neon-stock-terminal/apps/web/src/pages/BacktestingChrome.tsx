@@ -79,7 +79,7 @@ export function BacktestingHeader({
   testRunAt
 }: {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   meta?: string;
   testRunAt?: string;
 }) {
@@ -91,10 +91,9 @@ export function BacktestingHeader({
   return (
     <AnalyticsHeader
       title={tr(title)}
-      subtitle={tr(subtitle)}
+      subtitle={subtitle ? tr(subtitle) : undefined}
       meta={combinedMeta || undefined}
       sectionTabs={[...BACKTESTING_SECTION_TABS]}
-      learningPrompt={tr("Backtesting here means reviewing historical daily-data evidence with fixed rules and assumptions.")}
     />
   );
 }

@@ -7,7 +7,7 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
     if (!this.state.failed) return this.props.children;
-    return <ErrorState title="This view could not load" body="Your workspace is still available. Reload this view or choose another page."
+    return <ErrorState title="Page unavailable" body="Try again or open another page."
       action={<Button onClick={() => window.location.reload()}>Reload view</Button>} />;
   }
 }

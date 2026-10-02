@@ -23,7 +23,7 @@ try {
   const failures = [];
   page.on("response", (response) => { if (response.status() >= 400 && /\/n50\/(v1|auth)\//.test(response.url())) failures.push(`${response.status()} ${response.url()}`); });
   await page.goto(`${origin}/n50/strategy/monthly`, { waitUntil: "domcontentloaded", timeout: 120_000 });
-  await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor({ timeout: 120_000 });
+  await page.getByRole("heading", { name: "Monthly strategy", exact: true }).waitFor({ timeout: 120_000 });
   await page.locator("label").filter({ hasText: /^Entry method/ }).locator("select").selectOption("MONTHLY_CLOSURE");
   await page.locator("label").filter({ hasText: /^Year/ }).locator("select").selectOption("2026");
   await page.locator("label").filter({ hasText: /^Month/ }).locator("select").selectOption("08");

@@ -35,7 +35,7 @@ export function BacktestingRegimeAnalysisPage() {
     setSearchParams(next, { replace: true });
   };
 
-  if (!authReady || compare.isLoading) return <LoadingSkeletonCard title={tr("Regime Analysis")} lines={6} />;
+  if (!authReady || compare.isLoading) return <LoadingSkeletonCard title={tr("Regime analysis")} lines={6} />;
   if (compare.error || !compare.data) return <ErrorState title={tr("Regime Analysis is unavailable")} body={tr("The regime comparison snapshot could not be loaded.")} />;
 
   const regimeCompare = compare.data.regimeCompare.filter((row) => row.capitalMode === capitalMode && row.universeMode === universeMode);
@@ -46,7 +46,7 @@ export function BacktestingRegimeAnalysisPage() {
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
-        title={tr("Regime Analysis")}
+        title={tr("Regime analysis")}
         subtitle={tr("Entry-date regimes use NIFTY 50 trend/return plus India VIX level and change. Shock: |NIFTY daily return| ≥1.75% or VIX jump ≥15%; Volatile: VIX at/above its trailing 75th percentile; otherwise Rising, Falling, or Neutral from 20/50-day trend.")}
         testRunAt={compare.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(compare.data.asOfDate) })}
@@ -70,7 +70,7 @@ export function BacktestingRegimeAnalysisPage() {
           <div className={styles.chartHeader}>
             <div>
               <h3 className={styles.panelTitle}>{tr("Regime win-rate bars")}</h3>
-              <div className={styles.chartCaption}>{tr("What this chart shows: each row is one strategy-regime pair under the same scenario lens.")}</div>
+              <div className={styles.chartCaption}>{tr("each row is one strategy-regime pair under the same scenario lens.")}</div>
             </div>
           </div>
           <BacktestingGroupedBarChart
@@ -106,7 +106,6 @@ export function BacktestingRegimeAnalysisPage() {
 
       <DataTable
         title={tr("Regime breakdown by strategy")}
-        subtitle={tr("Use this table to compare win rate, average return, hold time, and charge load by regime across the three archetypes.")}
         rows={flattened}
         maxHeight={460}
         columns={[

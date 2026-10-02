@@ -33,7 +33,7 @@ try {
   });
 
   await page.goto(`${baseUrl}/strategy/monthly`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-  await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Monthly strategy", exact: true }).waitFor();
   if (process.env.PLAYWRIGHT_PREVIEW_MONTHLY_INSPECTOR === "1") {
     await page.addStyleTag({ content: 'aside[aria-label$=" strategy evidence"] { top: var(--app-header-height, 56px); height: calc(100dvh - var(--app-header-height, 56px)); }' });
   }
@@ -65,7 +65,7 @@ try {
   await page.getByRole("button", { name: "Close inspector", exact: true }).click();
 
   await page.goto(`${baseUrl}/strategy/rolling-monthly`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-  await page.getByRole("heading", { name: "Rolling Strategy", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Rolling strategy", exact: true }).waitFor();
   const rolling = await page.evaluate(async (url) => {
     const response = await fetch(url, { credentials: "include" });
     return { status: response.status, payload: await response.json() };

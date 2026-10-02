@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { DataTable, ErrorState, InterpretationCard, KpiCard, LoadingTableCard, SectionDivider } from "../components/ui/DashboardPrimitives";
+import { DataTable, ErrorState, KpiCard, LoadingTableCard, SectionDivider } from "../components/ui/DashboardPrimitives";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
@@ -25,11 +25,11 @@ export function BacktestingStrategyLibraryPage() {
   });
 
   if (!authReady || strategies.isLoading || compare.isLoading) {
-    return <LoadingTableCard title={tr("Strategy Leaderboard")} rows={6} />;
+    return <LoadingTableCard title={tr("Strategy leaderboard")} rows={6} />;
   }
 
   if (strategies.error || compare.error || !strategies.data || !compare.data) {
-    return <ErrorState title={tr("The Strategy Leaderboard is unavailable")} body={tr("The strategy registry snapshot could not be loaded.")} />;
+    return <ErrorState title={tr("The Strategy leaderboard is unavailable")} body={tr("The strategy registry snapshot could not be loaded.")} />;
   }
 
   const leaderboardLens = { universeMode: "nifty_100", capitalMode: "capital_16l" } as const;
@@ -69,8 +69,7 @@ export function BacktestingStrategyLibraryPage() {
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
-        title={tr("Strategy Leaderboard")}
-        subtitle={tr("This ranks the published strategy set under one explicit comparison lens so you can decide what to inspect next without mistaking the library for arbitrary browser-side code.")}
+        title={tr("Strategy leaderboard")}
         testRunAt={strategies.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(strategies.data.asOfDate) })}
       />
@@ -78,7 +77,7 @@ export function BacktestingStrategyLibraryPage() {
       <SectionDivider
         eyebrow={tr("Backtesting")}
         title={tr("Published strategy leaderboard")}
-        subtitle={tr("The ranking below uses the published Nifty 100 • ₹16L / ₹2L ticket / max 8 comparison lens so every strategy is judged on the same current snapshot instead of on mixed scenarios.")}
+        subtitle={tr("NIFTY 100 · ₹16 lakh capital · ₹2 lakh per position · Maximum 8 positions")}
       />
 
       <section className={styles.systemHealthRow}>
@@ -105,43 +104,8 @@ export function BacktestingStrategyLibraryPage() {
         />
       </section>
 
-      <section className={styles.summaryGrid}>
-        <div className={styles.panel}>
-          <h2 className={styles.panelTitle}>{tr("How to read the leaderboard")}</h2>
-          <div className={styles.signalGrid}>
-            <div className={styles.signalItem}>
-              <div>
-                <div className={styles.strong}>{tr("Current lens")}</div>
-                <div className={styles.muted}>{tr("Nifty 100 universe with ₹16 lakh starting cash, ₹2 lakh tickets, and at most 8 simultaneous positions.")}</div>
-              </div>
-            </div>
-            <div className={styles.signalItem}>
-              <div>
-                <div className={styles.strong}>{tr("What ranks it")}</div>
-                <div className={styles.muted}>{tr("Rows are ordered by published total return first. Use win rate, drawdown, and best regime as the credibility checks, not as decoration.")}</div>
-              </div>
-            </div>
-            <div className={styles.signalItem}>
-              <div>
-                <div className={styles.strong}>{tr("What to do next")}</div>
-                <div className={styles.muted}>{tr("Open strategy detail for the top candidates, then step back to Compare if two strategies look close for the current tape.")}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <InterpretationCard
-          title={tr("What this page is good for")}
-          items={[
-            tr("Shortlisting strategy families before reading detail."),
-            tr("Seeing which archetype currently looks strongest under one shared lens."),
-            tr("Checking whether return leadership still survives the drawdown and regime-fit filters.")
-          ]}
-        />
-      </section>
-
       <DataTable
         title={tr("Ranked strategies")}
-        subtitle={tr("This is versioned metadata plus the current published comparison lens, not arbitrary code from the browser.")}
         rows={leaderboardRows}
         maxHeight={460}
         columns={[
@@ -226,13 +190,13 @@ export function BacktestingStrategyLibraryPage() {
       <section className={styles.nextSteps}>
         <Link to="/backtesting/compare" className={styles.nextCard}>
           <span className={styles.promptLabel}>{tr("Compare the field")}</span>
-          <strong>{tr("Open Compare Strategies")}</strong>
-          <span className={styles.muted}>{tr("Use this when two leaderboard rows look close and you want to compare equity path, drawdown, regime fit, and stock suitability side by side.")}</span>
+          <strong>{tr("Open Compare strategies")}</strong>
+
         </Link>
         <Link to="/analytics/system/map" className={styles.nextCard}>
           <span className={styles.promptLabel}>{tr("Navigate the product")}</span>
-          <strong>{tr("Open the System Map")}</strong>
-          <span className={styles.muted}>{tr("Use this when you want to understand where strategy evidence sits relative to market context, stock reports, options, and trust.")}</span>
+          <strong>{tr("Open the Workspace directory")}</strong>
+
         </Link>
       </section>
     </div>

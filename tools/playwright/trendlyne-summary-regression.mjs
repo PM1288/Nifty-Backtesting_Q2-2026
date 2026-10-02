@@ -30,7 +30,7 @@ try {
   });
 
   await page.goto(`${baseUrl}/strategy/trendlyne-summary`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-  await page.getByRole("heading", { name: "Trendlyne Summary", exact: true }).waitFor({ timeout: 60_000 });
+  await page.getByRole("heading", { name: "Trendlyne summary", exact: true }).waitFor({ timeout: 60_000 });
   await page.getByText(/visible \/ .* reports/).waitFor({ timeout: 60_000 });
   await page.getByRole("link", { name: /Strategy/ }).first().hover();
   const strategyMenuItem = page.getByRole("menuitem", { name: /Trendlyne Summary/ });

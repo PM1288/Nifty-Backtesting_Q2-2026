@@ -79,23 +79,23 @@ export const SECTION_META: Record<
 
 export const MARKET_SECTION_TABS = [
   {
-    label: "Market Hub",
+    label: "Market overview",
     to: "/analytics",
     end: true,
     badge: "Hub"
   },
   {
-    label: "Market State",
+    label: "Market state",
     to: "/analytics/market-state",
     badge: "State"
   },
   {
-    label: "Market Story",
+    label: "Market regime",
     to: "/analytics/regime",
     badge: "Story"
   },
   {
-    label: "Supporting Metrics",
+    label: "Supporting metrics",
     to: "/analytics/supporting-metrics",
     badge: "Macro"
   },
@@ -109,12 +109,12 @@ export const MARKET_SECTION_TABS = [
 
 export const CATALYSTS_SECTION_TABS = [
   {
-    label: "Event Context",
+    label: "Event context",
     to: "/catalysts/context",
     badge: "Ctx"
   },
   {
-    label: "Events Calendar",
+    label: "Events",
     to: "/catalysts/events",
     badge: "Cal"
   }
@@ -122,12 +122,12 @@ export const CATALYSTS_SECTION_TABS = [
 
 export const INSTITUTIONAL_SECTION_TABS = [
   {
-    label: "Participant Flow",
+    label: "Participant flow",
     to: "/institutional/flow",
     badge: "Flow"
   },
   {
-    label: "FII Reports",
+    label: "FII reports",
     to: "/institutional/reports",
     badge: "Files"
   }
@@ -135,17 +135,17 @@ export const INSTITUTIONAL_SECTION_TABS = [
 
 export const STOCKS_SECTION_TABS = [
   {
-    label: "Stock Leadership",
+    label: "Stock leadership",
     to: "/analytics/leadership",
     badge: "Lead"
   },
   {
-    label: "Daily Setups",
+    label: "Daily setups",
     to: "/analytics/daily-setups",
     badge: "Set"
   },
   {
-    label: "Stock Detail",
+    label: "Stock details",
     to: "/analytics/stock/RELIANCE",
     badge: "Name",
     activeMatch: (pathname: string) => pathname.startsWith("/analytics/stock/")
@@ -154,12 +154,12 @@ export const STOCKS_SECTION_TABS = [
 
 export const OPTIONS_SECTION_TABS = [
   {
-    label: "Options Structure",
+    label: "Options structure",
     to: "/options/structure",
     badge: "Struct"
   },
   {
-    label: "Option Snapshot",
+    label: "Option snapshot",
     to: "/options/snapshot",
     badge: "Chain"
   }
@@ -177,7 +177,7 @@ export const STRATEGY_SECTION_TABS = [
     badge: "Eval"
   },
   {
-    label: "Backtesting Overview",
+    label: "Backtesting",
     to: "/backtesting",
     badge: "BT"
   },
@@ -238,7 +238,7 @@ export const LEARNING_SECTION_TABS = [
 
 export const SYSTEM_SECTION_TABS = [
   {
-    label: "System Map",
+    label: "Workspace directory",
     to: "/analytics/system/map",
     badge: "Flow",
     activeMatch: (pathname: string) => pathname.startsWith("/analytics/system/map")
@@ -333,7 +333,7 @@ export function useAnalyticsExperienceMode() {
 
 type AnalyticsHeaderProps = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   meta?: string;
   learningPrompt?: string;
   action?: ReactNode;
@@ -353,7 +353,7 @@ export function AnalyticsHeader({
   title, subtitle, meta, action, learningPrompt, learningPoints, learningDefaultOpen
 }: AnalyticsHeaderProps) {
   return <header className={styles.pageIdentity}>
-    <div><h1>{title}</h1><p>{subtitle}</p>{meta && <p data-testid="analytics-snapshot-context">{meta}</p>}</div>
+    <div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}{meta && <p data-testid="analytics-snapshot-context">{meta}</p>}</div>
     {action && <div className={styles.compactPageActions}>{action}</div>}
     {learningPoints?.length ? <details open={learningDefaultOpen}>
       <summary>{learningPrompt ?? 'Method and limitations'}</summary>

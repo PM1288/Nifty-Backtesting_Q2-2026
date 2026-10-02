@@ -150,7 +150,6 @@ export function BacktestingStrategyDetailPage() {
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
         title={`${tr(detail.data.strategy.displayName)} • v${detail.data.version.versionNumber}`}
-        subtitle={tr("This page explains the logic, assumptions, and latest evidence for the selected strategy version.")}
         testRunAt={detail.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(detail.data.asOfDate) })}
       />
@@ -301,7 +300,7 @@ export function BacktestingStrategyDetailPage() {
           <div className={styles.chartHeader}>
             <div>
               <h3 className={styles.panelTitle}>{tr("Equity vs benchmark")}</h3>
-              <div className={styles.chartCaption}>{tr("What this chart shows: strategy curve against the FD line for the selected scenario.")}</div>
+              <div className={styles.chartCaption}>{tr("strategy curve against the FD line for the selected scenario.")}</div>
             </div>
           </div>
           <BacktestingLineChart points={scenario.equityCurve} benchmark />
@@ -405,7 +404,6 @@ export function BacktestingStrategyDetailPage() {
       <section ref={recentTradesRef} data-analytics-section="backtesting_detail_recent_trades">
         <DataTable
           title={tr("Recent sample trades")}
-          subtitle={tr("Use these as quick sanity checks before drilling into the full portfolio tables.")}
           rows={scenario.trades.slice(0, 3)}
           maxHeight={220}
           columns={[

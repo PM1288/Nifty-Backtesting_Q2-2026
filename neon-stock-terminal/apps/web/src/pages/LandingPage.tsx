@@ -439,7 +439,7 @@ export function LandingPage() {
   }
 
   if (!q.data || !mergedIndices) {
-    return <ErrorState title={tr("The market canvas is unavailable")} detail={tr("The canonical overview snapshot could not be loaded. Existing values are not presented as current; retry after the data service recovers.")} />;
+    return <ErrorState title={tr("The market canvas is unavailable")} detail={tr("Market data is unavailable. Try again.")} />;
   }
 
   const allStocks = mergedSectors.flatMap((sec) => sec.stocks).sort((a, b) => b.changePct - a.changePct);
@@ -974,7 +974,7 @@ export function LandingPage() {
                   navigate("/analytics");
                 }}
               >
-                <span className={styles.storyEyebrow}>{tr("Market Hub")}</span>
+                <span className={styles.storyEyebrow}>{tr("Market overview")}</span>
                 <h2 className={styles.storyTitle}>{tr("Understand the current market picture.")}</h2>
                 <p className={styles.storyText}>{tr("Open this when you want the headline regime, breadth, and routing decisions in one place.")}</p>
               </button>
@@ -992,9 +992,9 @@ export function LandingPage() {
                   navigate("/analytics/regime");
                 }}
               >
-                <span className={styles.storyEyebrow}>{tr("Market Story")}</span>
+                <span className={styles.storyEyebrow}>{tr("Market regime")}</span>
                 <h2 className={styles.storyTitle}>{tr("Check whether the move is broad enough to trust.")}</h2>
-                <p className={styles.storyText}>{tr("Use this when you need to separate healthy participation from narrow or unstable leadership.")}</p>
+
               </button>
               <button
                 type="button"
@@ -1030,7 +1030,7 @@ export function LandingPage() {
               >
                 <span className={styles.storyEyebrow}>{tr("Strategy Lab")}</span>
                 <h2 className={styles.storyTitle}>{tr("Check whether history supports the signal family.")}</h2>
-                <p className={styles.storyText}>{tr("Use this before the simulator when you want historical evidence, not just the live tape.")}</p>
+
               </button>
             </div>
           </div>

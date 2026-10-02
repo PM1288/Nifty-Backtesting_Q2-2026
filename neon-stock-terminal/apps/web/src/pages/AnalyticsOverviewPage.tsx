@@ -1,3 +1,4 @@
+import { formatMarketSnapshot } from "../lib/marketSnapshotCopy";
 import { useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useWorkspaceEngagement, useWorkspaceSectionViews } from "../analytics/useWorkspaceAnalytics";
@@ -5,7 +6,7 @@ import { trackTableRowSelected } from "../analytics/events";
 import type { AnalyticsParams } from "../analytics/types";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useAuthGate } from "../auth/AuthGateProvider";
-import { DataState, DataTable, PageIntroAccordion } from "../components/ui/DashboardPrimitives";
+import { DataState, DataTable } from "../components/ui/DashboardPrimitives";
 import { useI18n } from "../i18n/LocaleProvider";
 import { formatDateTime, formatNumber, formatUiValue, fmtDecimal, fmtPct, fmtPrice } from "../lib/format";
 import { useDeferredBusyState } from "../lib/useDeferredBusyState";
@@ -68,7 +69,7 @@ function buildMarketStory(
 
   return {
     tone,
-    title: t("overview.marketStoryTitle", "Today's Market Story: {{tone}}", { tone: tr(tone) }),
+    title: t("overview.marketStoryTitle", "Today's Market regime: {{tone}}", { tone: tr(tone) }),
     body: t(
       "overview.marketStoryBody",
       "{{read}} The live regime model currently reads {{regime}}, and {{leadSector}} is one of the visible leadership pockets.",
@@ -225,28 +226,27 @@ export function AnalyticsOverviewPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title={tr("Market Hub")}
+        title={tr("Market overview")}
         meta={`${tr("Trade date")} ${summary.data.trade_date} • ${tr("Refreshed")} ${formatDateTime(summary.data.generated_at, { includeTime: true })}`}
-        subtitle={tr("Start with the market tone, then move into market story, heatmaps, signals, or stock selection without changing shells.")}
         sectionTabs={[...MARKET_SECTION_TABS]}
       />
 
       <section className={styles.panel}>
-        <div className={styles.eyebrow}>{tr("Market dossier")}</div>
-        <pre className={styles.dossierPre}>{brief.decoratedHeader.join("\n")}</pre>
 
         <div>
           <h2 className={styles.panelTitle}>{tr("Market headline")}</h2>
+          <p className={styles.date}>{brief.sessionReference.label} · {formatDateTime(brief.asOf, { includeTime: true })} · {brief.sessionReference.marketStatus}</p>
           <p className={styles.sectionIntro}>{tr(brief.marketHeadline)}</p>
           <p className={styles.muted}>{tr(brief.marketBias)}</p>
         </div>
 
+        <details className={styles.marketDetails}><summary>{tr("Market details")}</summary>
         <div>
           <h3 className={styles.panelTitle}>{tr("Key conclusions")}</h3>
           <div className={styles.signalGrid}>
             {brief.keyConclusions.map((item) => (
               <div key={item} className={styles.signalItem}>
-                <div className={styles.muted}>{tr(item)}</div>
+                <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
               </div>
             ))}
           </div>
@@ -258,7 +258,7 @@ export function AnalyticsOverviewPage() {
             <div className={styles.signalGrid}>
               {brief.indexSnapshot.map((item) => (
                 <div key={item} className={styles.signalItem}>
-                  <div className={styles.muted}>{tr(item)}</div>
+                  <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                 </div>
               ))}
             </div>
@@ -268,7 +268,7 @@ export function AnalyticsOverviewPage() {
             <div className={styles.signalGrid}>
               {brief.optionsSnapshot.map((item) => (
                 <div key={item} className={styles.signalItem}>
-                  <div className={styles.muted}>{tr(item)}</div>
+                  <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                 </div>
               ))}
             </div>
@@ -281,7 +281,7 @@ export function AnalyticsOverviewPage() {
             <div className={styles.signalGrid}>
               {brief.fiiSnapshot.map((item) => (
                 <div key={item} className={styles.signalItem}>
-                  <div className={styles.muted}>{tr(item)}</div>
+                  <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                 </div>
               ))}
             </div>
@@ -291,7 +291,7 @@ export function AnalyticsOverviewPage() {
             <div className={styles.signalGrid}>
               {brief.sectorSnapshot.map((item) => (
                 <div key={item} className={styles.signalItem}>
-                  <div className={styles.muted}>{tr(item)}</div>
+                  <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                 </div>
               ))}
             </div>
@@ -333,7 +333,7 @@ export function AnalyticsOverviewPage() {
               <div className={styles.signalGrid}>
                 {brief.fullStockSnapshot.topLeaders.map((item) => (
                   <div key={item} className={styles.signalItem}>
-                    <div className={styles.muted}>{tr(item)}</div>
+                    <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                   </div>
                 ))}
               </div>
@@ -343,7 +343,7 @@ export function AnalyticsOverviewPage() {
               <div className={styles.signalGrid}>
                 {brief.fullStockSnapshot.topWeakest.map((item) => (
                   <div key={item} className={styles.signalItem}>
-                    <div className={styles.muted}>{tr(item)}</div>
+                    <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                   </div>
                 ))}
               </div>
@@ -355,7 +355,7 @@ export function AnalyticsOverviewPage() {
               <div className={styles.signalGrid}>
                 {brief.fullStockSnapshot.continuationCandidates.map((item) => (
                   <div key={item} className={styles.signalItem}>
-                    <div className={styles.muted}>{tr(item)}</div>
+                    <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                   </div>
                 ))}
               </div>
@@ -365,7 +365,7 @@ export function AnalyticsOverviewPage() {
               <div className={styles.signalGrid}>
                 {brief.fullStockSnapshot.reversalCandidates.map((item) => (
                   <div key={item} className={styles.signalItem}>
-                    <div className={styles.muted}>{tr(item)}</div>
+                    <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                   </div>
                 ))}
               </div>
@@ -380,7 +380,7 @@ export function AnalyticsOverviewPage() {
               <h4 className={styles.panelTitle}>{tr("Continuation")}</h4>
               <div className={styles.signalGrid}>
                 {brief.bestEntries.continuation.map((item) => (
-                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(item)}</div></div>
+                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div></div>
                 ))}
               </div>
             </div>
@@ -388,7 +388,7 @@ export function AnalyticsOverviewPage() {
               <h4 className={styles.panelTitle}>{tr("Pullback")}</h4>
               <div className={styles.signalGrid}>
                 {brief.bestEntries.pullback.map((item) => (
-                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(item)}</div></div>
+                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div></div>
                 ))}
               </div>
             </div>
@@ -398,7 +398,7 @@ export function AnalyticsOverviewPage() {
               <h4 className={styles.panelTitle}>{tr("Reversal")}</h4>
               <div className={styles.signalGrid}>
                 {brief.bestEntries.reversal.map((item) => (
-                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(item)}</div></div>
+                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div></div>
                 ))}
               </div>
             </div>
@@ -406,7 +406,7 @@ export function AnalyticsOverviewPage() {
               <h4 className={styles.panelTitle}>{tr("Avoid")}</h4>
               <div className={styles.signalGrid}>
                 {brief.bestEntries.avoid.map((item) => (
-                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(item)}</div></div>
+                  <div key={item} className={styles.signalItem}><div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div></div>
                 ))}
               </div>
             </div>
@@ -419,7 +419,7 @@ export function AnalyticsOverviewPage() {
             <div className={styles.signalGrid}>
               {brief.riskFlags.map((item) => (
                 <div key={item} className={styles.signalItem}>
-                  <div className={styles.muted}>{tr(item)}</div>
+                  <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                 </div>
               ))}
             </div>
@@ -429,7 +429,7 @@ export function AnalyticsOverviewPage() {
             <div className={styles.signalGrid}>
               {brief.nextAlerts.map((item) => (
                 <div key={item} className={styles.signalItem}>
-                  <div className={styles.muted}>{tr(item)}</div>
+                  <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
                 </div>
               ))}
             </div>
@@ -441,7 +441,7 @@ export function AnalyticsOverviewPage() {
           <div className={styles.signalGrid}>
             {brief.howToReadToday.map((item) => (
               <div key={item} className={styles.signalItem}>
-                <div className={styles.muted}>{tr(item)}</div>
+                <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
               </div>
             ))}
           </div>
@@ -452,7 +452,7 @@ export function AnalyticsOverviewPage() {
           <div className={styles.signalGrid}>
             {brief.dataQuality.map((item) => (
               <div key={item} className={styles.signalItem}>
-                <div className={styles.muted}>{tr(item)}</div>
+                <div className={styles.muted}>{tr(formatMarketSnapshot(item))}</div>
               </div>
             ))}
           </div>
@@ -486,21 +486,12 @@ export function AnalyticsOverviewPage() {
           </div>
         </div>
 
-        <div>
-          <h3 className={styles.panelTitle}>{tr("LLM brief")}</h3>
-          <p className={styles.sectionIntro}>{brief.llm_brief}</p>
-        </div>
-
-        <div>
-          <h3 className={styles.panelTitle}>{tr("Machine facts")}</h3>
-          <pre className={styles.dossierPre}>{brief.machineFacts.join("\n")}</pre>
-          <p className={styles.muted}>{brief.rootRouteTakeaway}</p>
-        </div>
+        </details>
       </section>
 
       <section ref={heroRef} data-analytics-section="market_hub_hero" className={styles.heroGrid}>
         <div className={styles.heroCard}>
-          <div className={styles.eyebrow}>{tr("Current market conclusion")}</div>
+          <div className={styles.eyebrow}>{tr("Market summary")} · {summary.data.trade_date}</div>
           <div className={styles.heroValue} data-tone={hero.accent_token}>{fmtPrice(num(hero.last_value))}</div>
           <div className={styles.heroMeta}>
             <div className={styles.metricCard}>
@@ -512,33 +503,22 @@ export function AnalyticsOverviewPage() {
               <div className={styles.metricValue} data-tone={confidence === "High" ? hero.accent_token : "white"}>{confidence}</div>
             </div>
           </div>
-          <p className={styles.sectionIntro}>
-            {t(
-              "overview.currentMarketConclusionNarrative",
-              "{{regime}} with {{confidence}} confidence. {{index}} is at {{value}}, so use the cards on this page to decide whether to continue into story, signals, or strategy evidence.",
-              {
-                regime: regimeLabel,
-                confidence: confidence.toLowerCase(),
-                index: hero.index_name,
-                value: fmtPrice(num(hero.last_value))
-              }
-            )}
-          </p>
+
         </div>
 
         <div className={styles.metricGrid}>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>{tr("Participation")}</div>
             <div className={styles.metricValue}>{signedPct(regimeMetrics["positive_ratio"])}</div>
-            <div className={styles.metricHint}>{formatNumber(num(regimeMetrics["advancers"]), { maximumFractionDigits: 0 })} {tr("up")} / {formatNumber(num(regimeMetrics["decliners"]), { maximumFractionDigits: 0 })} {tr("down")}. {tr("This shows how broad the move really is.")}</div>
+            <div className={styles.metricHint}>{formatNumber(num(regimeMetrics["advancers"]), { maximumFractionDigits: 0 })} {tr("up")} / {formatNumber(num(regimeMetrics["decliners"]), { maximumFractionDigits: 0 })} {tr("down")}</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricLabel}>{tr("Breadth Return")}</div>
+            <div className={styles.metricLabel}>{tr("Average stock return")}</div>
             <div className={styles.metricValue} data-tone={num(regimeMetrics["avg_daily_return"]) > 0 ? "green" : num(regimeMetrics["avg_daily_return"]) < 0 ? "red" : "white"}>{signedPct(regimeMetrics["avg_daily_return"])}</div>
-            <div className={styles.metricHint}>{tr("Median")} {signedPct(regimeMetrics["median_daily_return"])}. {tr("This is the average stock, not just the headline index.")}</div>
+            <div className={styles.metricHint}>{tr("Median")} {signedPct(regimeMetrics["median_daily_return"])}</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricLabel}>{tr("Turnover")}</div>
+            <div className={styles.metricLabel}>{tr("Turnover (₹ lakh)")}</div>
             <div className={styles.metricValue}>{formatNumber(num(regimeMetrics["total_turnover_lacs"]), { maximumFractionDigits: 0 })}</div>
             <div className={styles.metricHint}>{formatNumber(num(regimeMetrics["securities_count"]), { maximumFractionDigits: 0 })} {tr("securities")}</div>
           </div>
@@ -567,13 +547,13 @@ export function AnalyticsOverviewPage() {
         </div>
 
         <div ref={routingRef} data-analytics-section="market_hub_routing" className={styles.panel}>
-          <h2 className={styles.panelTitle}>{tr(mode === "beginner" ? "Where this page routes you next" : "Routing cards")}</h2>
+          <h2 className={styles.panelTitle}>{tr("Related views")}</h2>
           <div className={styles.signalGrid}>
             {(mode === "beginner"
               ? [
-                  { title: tr("Market Story"), summary_text: tr("Use this next if you need to know whether the current move is broad enough to trust.") },
-                  { title: tr("Signals & Heatmaps"), summary_text: tr("Use this next if the tape is clear and you want stock-level strength, weakness, or oscillator extremes.") },
-                  { title: tr("Strategy Lab"), summary_text: tr("Use this next if you want historical evidence before moving into the simulator.") }
+                  { title: tr("Market regime"), to: "/analytics/regime" },
+                  { title: tr("Heatmaps"), to: "/heatmap/change" },
+                  { title: tr("Strategy research"), to: "/analytics/learn" }
                 ]
               : asArray(summary.data.summary_cards)
             ).map((item, index) => {
@@ -584,8 +564,9 @@ export function AnalyticsOverviewPage() {
               return (
                 <div key={stableKey || `summary-card-${index}`} className={styles.signalItem}>
                   <div>
+                    {mode === "beginner" ? <Link to={text(row["to"])}>{tr(text(row["title"]))}</Link> : <>
                     <div className={styles.strong}>{tr(text(row["title"]))}</div>
-                    <div className={styles.muted}>{localizeDynamicMarketText(text(row["summary_text"]), tr, formatNumber)}</div>
+                    <div className={styles.muted}>{localizeDynamicMarketText(text(row["summary_text"]), tr, formatNumber)}</div></>}
                   </div>
                   {mode === "beginner" ? null : (
                     <>
@@ -698,7 +679,6 @@ export function AnalyticsOverviewPage() {
         <section ref={strategyPreviewRef} data-analytics-section="market_hub_strategy_preview">
           <DataTable
             title={tr(mode === "beginner" ? "Strategy Lab Preview" : "Historical Learner")}
-            subtitle={tr("Use this preview to decide whether to continue into the learning workspace.")}
             maxHeight={420}
             rows={historicalRows.slice(0, 14) as Array<Record<string, unknown>>}
             columns={[
@@ -739,22 +719,11 @@ export function AnalyticsOverviewPage() {
         </section>
       </section>
 
-      <PageIntroAccordion
-        label={tr("How to use this page")}
-        title={tr(mode === "beginner" ? "Read the headline tape first, then drill into the next workspace." : "Use the summary cards as routing, not as final answers.")}
-        body={tr("Use this page as the headline market read. Confirm the broad tape first, then use the sidebar or section tabs to move into the page that matches your next question.")}
-        items={[
-          tr("Read the market story before you open a stock-specific page."),
-          tr("Use the summary cards as routing hints, not as substitute navigation."),
-          tr("When breadth and breakout balance disagree, slow down before trusting continuation.")
-        ]}
-        defaultOpen={mode === "beginner"}
-      />
+
 
       {mode === "advanced" ? (
         <DataTable
           title={tr("Available Watchlists")}
-          subtitle={tr("Full catalog view for the current session. Shared table chrome keeps longer lists readable without breaking the shell.")}
           maxHeight={460}
           rows={watchlists.data.items as Array<Record<string, unknown>>}
           columns={[

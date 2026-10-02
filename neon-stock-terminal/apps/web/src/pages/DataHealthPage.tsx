@@ -35,8 +35,8 @@ export function DataHealthPage() {
   const observed = data?.instruments.filter(row => good(row.state)).length ?? 0;
   const latest = data?.days.find(day => day.attempted);
   const safePage = Math.min(page, Math.max(0, Math.ceil(rows.length / 50) - 1));
-  return <main className={styles.page} data-testid="data-health-dashboard">
-    <header className={styles.header}><div><small>DATA & OPERATIONS</small><h1>Daily Data Health</h1><p>Downloads → retained files → parsed data → symbol observations</p></div><div className={styles.actions}><button onClick={() => void query.refetch()} disabled={query.isFetching}>{query.isFetching ? "Refreshing…" : "Refresh"}</button><button onClick={exportData} disabled={!data}>Export evidence</button><Link to="/institutional/nse-intelligence/reports">File details</Link><Link to="/analytics/system/quality">Data quality</Link></div></header>
+  return <section className={styles.page} data-testid="data-health-dashboard">
+    <header className={styles.header}><div><small>DATA & OPERATIONS</small><h1>Daily data health</h1><p>Downloads → retained files → parsed data → symbol observations</p></div><div className={styles.actions}><button onClick={() => void query.refetch()} disabled={query.isFetching}>{query.isFetching ? "Refreshing…" : "Refresh"}</button><button onClick={exportData} disabled={!data}>Export evidence</button><Link to="/institutional/nse-intelligence/reports">File details</Link><Link to="/analytics/system/quality">Data quality</Link></div></header>
     {query.isError && <p role="alert" className={styles.error}>Refresh failed. {data ? "Showing the previous snapshot below; it is not a live health confirmation." : "Collection health is unavailable."}</p>}
     {!data ? <p role="status">{query.isPending ? "Loading collection evidence…" : "No evidence available."}</p> : <>
       <p className={styles.caption}>Snapshot {time(data.generatedAt)} IST · {data.marketOpen ? "Market session open" : "Outside recorded session hours"} · Reference session {data.session?.trade_date ?? "Unavailable"} · Refresh every 60 seconds</p>
@@ -57,5 +57,5 @@ export function DataHealthPage() {
       </section>
       <section><h2>Broker request health <small>Last 24 hours</small></h2><div className={styles.table} tabIndex={0} role="region" aria-label="Data health table"><table><thead><tr><th>Request group</th><th>Requests</th><th>Failed</th><th>Throttled</th><th>Average latency</th><th>Last request · IST</th></tr></thead><tbody>{data.requests.map(row => <tr key={row.name}><td>{row.name}</td><td>{row.requests}</td><td className={row.failed ? styles.warning : ""}>{row.failed}</td><td>{row.throttled}</td><td>{row.latency_ms} ms</td><td>{time(row.last_at)}</td></tr>)}</tbody></table></div>{!data.requests.length && <p>No requests recorded in this window; this does not certify a healthy feed.</p>}</section>
     </>}
-  </main>;
+  </section>;
 }

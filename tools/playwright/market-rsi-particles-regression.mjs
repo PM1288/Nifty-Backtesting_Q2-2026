@@ -50,7 +50,7 @@ try {
   check("particles render and move", Boolean(first && second && first.pixels > 100 && second.pixels > 100 && first.signature !== second.signature), JSON.stringify({ first, second }));
   await page.screenshot({ path: path.join(outputDir, "home-rsi-particles-1366x768.png") });
 
-  await page.getByRole("link", { name: "Paper Trading", exact: true }).click();
+  await page.getByRole("link", { name: "Paper trading", exact: true }).click();
   await page.waitForURL(/\/n50\/paper-trading/);
   check("shared background survives dashboard navigation", await particles.count() === 1 && await particles.getAttribute("data-particle-count") === "400", "particle canvas was lost after navigation");
   await page.screenshot({ path: path.join(outputDir, "paper-dashboard-rsi-particles-1366x768.png") });

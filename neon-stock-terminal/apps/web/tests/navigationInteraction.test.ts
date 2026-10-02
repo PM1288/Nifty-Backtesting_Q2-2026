@@ -68,18 +68,18 @@ test("top Strategy workspace groups independent strategy dashboards without merg
   const strategy = WORKSPACE_ROUTES.find((route) => route.id === "oiis-lab");
   assert.equal(strategy?.label, "Strategy");
   assert.deepEqual(STRATEGY_MENU_ROUTES.map((route) => route.label), [
-    "NIFTY Model Research",
-    "Trendlyne Summary",
+    "NIFTY model research",
+    "Trendlyne summary",
     "OIIS Lab",
     "OISS v1.202608",
-    "Monthly Strategy",
+    "Monthly strategy",
     "3Month Strategy",
-    "Scalper Dashboard",
-    "Futures Volatility",
-    "Rolling Strategy",
-    "Long Options",
+    "Scalper dashboard",
+    "Futures volatility",
+    "Rolling strategy",
+    "Long options",
     "NIFTY Options",
-    "Trading Analytics",
+    "Trading analytics",
   ]);
   assert.equal(resolveWorkspaceRoute("/strategy/oiis-live").id, "oiis-lab");
   assert.equal(resolveWorkspaceRoute("/strategy/oiss-v1-202608").id, "oiis-lab");
@@ -106,16 +106,16 @@ test("single-line command header keeps the Option 4 taxonomy in one central conf
   assert.deepEqual(STRATEGY_HEADER_ROUTES.map((route) => route.label), [
     "OIIS Lab",
     "OISS v1.202608",
-    "Trendlyne Summary",
-    "Monthly Strategy",
+    "Trendlyne summary",
+    "Monthly strategy",
     "3Month Strategy",
-    "Scalper Dashboard",
-    "Rolling Strategy",
-    "NIFTY Model Research",
-    "Long Options",
+    "Scalper dashboard",
+    "Rolling strategy",
+    "NIFTY model research",
+    "Long options",
     "NIFTY Options",
-    "Trading Analytics",
-    "Futures Volatility",
+    "Trading analytics",
+    "Futures volatility",
   ]);
   assert.equal(STRATEGY_HEADER_ROUTES[0]?.section, "LIVE & CURRENT");
   assert.equal(STRATEGY_HEADER_ROUTES[2]?.section, "RESEARCH");

@@ -1188,16 +1188,6 @@ export function AnalyticsSimulatorPage() {
     <div className={styles.page}>
       <AnalyticsHeader
         title={tr("Simulator")}
-        subtitle={
-          experienceMode === "beginner"
-            ? tr("Test one-year dip-buy ideas, compare them with FD and savings carry, and learn what the strategy is actually asking you to tolerate.")
-            : tr("Model dip-buy allocation, compare it with FD carry, and inspect charges lot by lot.")
-        }
-        learningPrompt={
-          experienceMode === "beginner"
-            ? tr("Start with NIFTY 50 or a large-cap stock, keep the one-year window, then compare strategy value against FD and savings carry before trusting the trade idea.")
-            : tr("This simulator uses one year of day-wise data. Dips are triggered from close-to-previous-close returns, and target exits are validated using the later daily high.")
-        }
       />
 
       <section ref={scenarioSelectorRef} data-analytics-section="scenario_selector" className={styles.panel}>
@@ -1304,7 +1294,7 @@ export function AnalyticsSimulatorPage() {
         <section className={styles.panel}>
           <h2 className={styles.panelTitle}>{tr("Preloading 1Y Baseline")}</h2>
           <p className={styles.sectionIntro}>
-            {tr("Preparing the one-year baseline view. Use the selector above to switch scenarios; each view uses the same one-year window for quick comparison.")}
+            {tr("Loading one-year results…")}
           </p>
         </section>
       ) : (

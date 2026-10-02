@@ -251,7 +251,7 @@ function IndicatorChartFrame({
       action={action}
       footer={
         <div className={styles.helperBox}>
-          <strong>{tr("What this chart shows")}</strong>
+
           <span>{tr(helperText)}</span>
         </div>
       }
@@ -259,12 +259,12 @@ function IndicatorChartFrame({
       {isLoading ? (
         <div className={styles.chartState}>
           <strong>{tr("Loading chart")}</strong>
-          <span>{tr("Preparing the indicator evidence.")}</span>
+
         </div>
       ) : isEmpty ? (
         <div className={styles.chartState}>
           <strong>{tr("No chart data available")}</strong>
-          <span>{tr("There is not enough data to render this chart right now.")}</span>
+
         </div>
       ) : (
         <>
@@ -392,14 +392,14 @@ export function ThresholdGuideTable({ bands }: { bands: IndicatorThresholdBand[]
   return (
     <DataTable
       title={tr("Threshold guide")}
-      subtitle={tr("Use the same thresholds everywhere so the page teaches one stable language.")}
+      subtitle={tr("Thresholds")}
       rows={bands}
       columns={[
         { key: "label", header: tr("Band"), cell: (row) => tr(row.label) },
         { key: "range", header: tr("Range"), cell: (row) => tr(row.rangeLabel), align: "center" },
         { key: "meaning", header: tr("Interpretation"), cell: (row) => tr(row.interpretation) }
       ]}
-      emptyTitle={tr("No threshold bands configured")}
+      emptyTitle={tr("Thresholds unavailable")}
       emptyBody={tr("Add threshold metadata in the indicator registry to populate this guide.")}
       tableName="indicator-threshold-guide"
     />

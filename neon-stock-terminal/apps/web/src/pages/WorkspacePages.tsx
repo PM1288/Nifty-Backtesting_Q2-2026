@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuthGate } from "../auth/AuthGateProvider";
@@ -32,7 +33,7 @@ function useWorkspaceData(path: string) {
 function Page({ eyebrow, title, description, data, error, children }: { eyebrow: string; title: string; description: string; data: Payload | null; error: string | null; children: ReactNode }) {
   return <section className={styles.page} data-clarity-region={`workspace_${eyebrow.toLowerCase().replaceAll(" ", "_")}`}>
     <header><h1>{title}</h1><p>{description}</p></header>
-    {error ? <div className={styles.error}>{error}</div> : data ? children : <div className={styles.empty}>Loading verified workspace data…</div>}
+    {error ? <div className={styles.error}>{userFacingError(error)}</div> : data ? children : <div className={styles.empty}>Loading…</div>}
   </section>;
 }
 
@@ -202,7 +203,7 @@ export function AdminPage() {
 function AdminContent() {
   const query = useWorkspaceData("/v1/workspace/control-plane");
   const collector = query.data?.collector ?? {};
-  return <Page eyebrow="Administration" title="Database and platform control plane" description="Restricted operational evidence for the local administrator. Normal Firebase accounts cannot access this endpoint." {...query}>
+  return <Page eyebrow="Administration" title="Administration" description="Administrator access only." {...query}>
     <OperationalBar environment="ADMIN" asOf={query.data?.asOf} state={query.data ? "CONNECTED" : "CHECKING"} detail={query.data?.database?.database_name ?? "Database identity pending"} />
     <div className={styles.metrics}><Metric label="Database" value={query.data?.database?.database_name ?? "—"} /><Metric label="Database size" value={query.data?.database?.database_size ?? "—"} /><Metric label="Connections" value={n(query.data?.activity?.connections)} /><Metric label="Active queries" value={n(query.data?.activity?.active_connections)} /></div>
     <Panel title="SmartAPI collector status">

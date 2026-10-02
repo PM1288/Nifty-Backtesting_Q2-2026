@@ -1072,3 +1072,7 @@
     padding: 11px;
   }
 }
+
+/* Sentence case and shared typography for table copy. */
+.dataTable thead th { text-transform: none; letter-spacing: normal; }
+.dataTable td { font-family: var(--font-sans); }

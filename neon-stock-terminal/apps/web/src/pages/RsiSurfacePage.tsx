@@ -216,9 +216,7 @@ export function RsiSurfacePage() {
       <AnalyticsHeader
         title={tr("RSI Heatmap")}
         meta={`${tr("Rows")} ${formatNumber(payload.rows.length, { maximumFractionDigits: 0 })} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}
-        subtitle={tr("RSI map. Use this as a momentum scan inside the Signals workspace, not as a standalone trade engine.")}
         sectionTabs={[...SIGNAL_SECTION_TABS]}
-        learningPrompt={tr("This page answers one question: which names are stretched, washed out, or balanced on RSI right now?")}
       />
 
       <section className={styles.summaryGrid}>

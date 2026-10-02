@@ -199,17 +199,17 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
       subtitle: tr("High score matters only when the positive components still dominate after penalty drag."),
       option: buildScoreDecompositionOption(payload.charts.scoreDecomposition),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Per-stock score components: signal quality, regime fit, historical edge, penalty drag, and final score.")],
-        [tr("2. Why traders or analysts care about it."), tr("It shows whether the model likes a name because of real edge or because one raw component is drowning out hidden risk.")],
-        [tr("3. What the axes mean and what units are used."), tr("Y-axis is stock symbol. X-axis is internal score points on a 0-100 style scale, with penalties plotted as negative drag.")],
-        [tr("4. What a bullish reading looks like."), tr("Positive components stay broad and penalty drag is small, so final score remains high for the right reasons.")],
-        [tr("5. What a bearish reading looks like."), tr("Final score looks attractive at first glance but risk and anomaly drag eat most of the gross signal.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Stocks cluster in the middle and the positive and negative components are too balanced to support conviction.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("High score can be mistaken for high certainty when it may only reflect one strong factor inside an overfit regime.")],
-        [tr("8. What todays reading says."), tr(`The strongest current setup is ${leadSetup?.symbol ?? "—"} with final score ${num(leadSetup?.finalScore, 1)}, but the page still shows its penalty layer because score is not the same thing as certainty.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(cautionLead ? `${cautionLead.symbol} carries elevated penalties despite score strength, which is exactly why the decomposition matters.` : contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: trust the score only after you inspect how much of it survives the penalty layer.")]
+        [tr("Definition"), tr("Per-stock score components: signal quality, regime fit, historical edge, penalty drag, and final score.")],
+        [tr("Context"), tr("It shows whether the model likes a name because of real edge or because one raw component is drowning out hidden risk.")],
+        [tr("Axes and units"), tr("Y-axis is stock symbol. X-axis is internal score points on a 0-100 style scale, with penalties plotted as negative drag.")],
+        [tr("Bullish"), tr("Positive components stay broad and penalty drag is small, so final score remains high for the right reasons.")],
+        [tr("Bearish"), tr("Final score looks attractive at first glance but risk and anomaly drag eat most of the gross signal.")],
+        [tr("Neutral"), tr("Stocks cluster in the middle and the positive and negative components are too balanced to support conviction.")],
+        [tr("Limitations"), tr("High score can be mistaken for high certainty when it may only reflect one strong factor inside an overfit regime.")],
+        [tr("Current reading"), tr(`The strongest current setup is ${leadSetup?.symbol ?? "—"} with final score ${num(leadSetup?.finalScore, 1)}, but the page still shows its penalty layer because score is not the same thing as certainty.`)],
+        [tr("Confirmation"), tr(confirmText)],
+        [tr("Contradictions"), tr(cautionLead ? `${cautionLead.symbol} carries elevated penalties despite score strength, which is exactly why the decomposition matters.` : contradictText)],
+        [tr("Interpretation"), tr("How to read: trust the score only after you inspect how much of it survives the penalty layer.")]
       ])
     },
     {
@@ -218,17 +218,17 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
       subtitle: tr("The best action bucket is the one that still holds edge after costs, not the one with the prettiest label."),
       option: buildForwardReturnOption(payload.charts.forwardReturnByActionDirection),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Historical forward returns and hit-rate for each action and direction bucket.")],
-        [tr("2. Why traders or analysts care about it."), tr("It links what the model says now with what similar actions historically delivered after the signal fired.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is action plus direction. Left Y-axis is average forward return in percent. Right Y-axis is 30-minute hit-rate in percent.")],
-        [tr("4. What a bullish reading looks like."), tr("Buy-style actions show positive forward returns across horizons with stable hit-rate, not just one isolated window.")],
-        [tr("5. What a bearish reading looks like."), tr("The action bucket has weak or negative realized outcomes, especially once you move beyond the first horizon.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Different horizons disagree or hit-rate is only marginally above coin-flip.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Overlapping signals, unmodeled slippage, and holding-period mismatch can all make a bucket look stronger than it really trades.")],
-        [tr("8. What todays reading says."), tr(`Best 30-minute bucket right now is ${bestAction?.label ?? "—"} at ${pct(bestAction?.avgRet30mPct, 2, true)}, while the weakest is ${worstAction?.label ?? "—"} at ${pct(worstAction?.avgRet30mPct, 2, true)}.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(topFamily ? `${topFamily.signalFamily} also leads the family table, so the action read is not standing alone.` : confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(summary?.costNote ?? contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: compare the action label with realized returns by horizon, not with the model’s confidence wording.")]
+        [tr("Definition"), tr("Historical forward returns and hit-rate for each action and direction bucket.")],
+        [tr("Context"), tr("It links what the model says now with what similar actions historically delivered after the signal fired.")],
+        [tr("Axes and units"), tr("X-axis is action plus direction. Left Y-axis is average forward return in percent. Right Y-axis is 30-minute hit-rate in percent.")],
+        [tr("Bullish"), tr("Buy-style actions show positive forward returns across horizons with stable hit-rate, not just one isolated window.")],
+        [tr("Bearish"), tr("The action bucket has weak or negative realized outcomes, especially once you move beyond the first horizon.")],
+        [tr("Neutral"), tr("Different horizons disagree or hit-rate is only marginally above coin-flip.")],
+        [tr("Limitations"), tr("Overlapping signals, unmodeled slippage, and holding-period mismatch can all make a bucket look stronger than it really trades.")],
+        [tr("Current reading"), tr(`Best 30-minute bucket right now is ${bestAction?.label ?? "—"} at ${pct(bestAction?.avgRet30mPct, 2, true)}, while the weakest is ${worstAction?.label ?? "—"} at ${pct(worstAction?.avgRet30mPct, 2, true)}.`)],
+        [tr("Confirmation"), tr(topFamily ? `${topFamily.signalFamily} also leads the family table, so the action read is not standing alone.` : confirmText)],
+        [tr("Contradictions"), tr(summary?.costNote ?? contradictText)],
+        [tr("Interpretation"), tr("How to read: compare the action label with realized returns by horizon, not with the model’s confidence wording.")]
       ])
     },
     {
@@ -237,17 +237,17 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
       subtitle: tr("Signal presence is cheap; signal quality is what survives sample size and regime filters."),
       option: buildHitRateOption(payload.charts.hitRateBySignalFamily),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Historical hit-rate, sample size, and current-regime context for each signal family.")],
-        [tr("2. Why traders or analysts care about it."), tr("It shows which signal families actually carry edge and which ones only appear often without paying well.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is signal family. Left Y-axis is hit-rate in percent. Right Y-axis is sample size count.")],
-        [tr("4. What a bullish reading looks like."), tr("A signal family has healthy hit-rate, positive returns, and enough observations to matter in the current regime.")],
-        [tr("5. What a bearish reading looks like."), tr("The family appears often but carries weak hit-rate or thin regime-specific sample support.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Hit-rate is respectable but regime support is thin or average returns are too small to survive costs.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Large sample size can hide regime drift, and small sample size can falsely flatter a niche family.")],
-        [tr("8. What todays reading says."), tr(`Top family is ${topFamily?.signalFamily ?? "—"} with hit-rate ${pct(topFamily?.hitRatePct, 1, false)} on ${num(topFamily?.sampleCount, 0)} observations; the real question is whether that still holds in the current regime.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(topFamily && topFamily.regimeSampleCount < 25 ? `${topFamily.signalFamily} looks good overall, but only ${num(topFamily.regimeSampleCount, 0)} regime-specific observations support it right now.` : contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: a frequent signal is not automatically a good signal; demand hit-rate, expectancy, and regime sample depth together.")]
+        [tr("Definition"), tr("Historical hit-rate, sample size, and current-regime context for each signal family.")],
+        [tr("Context"), tr("It shows which signal families actually carry edge and which ones only appear often without paying well.")],
+        [tr("Axes and units"), tr("X-axis is signal family. Left Y-axis is hit-rate in percent. Right Y-axis is sample size count.")],
+        [tr("Bullish"), tr("A signal family has healthy hit-rate, positive returns, and enough observations to matter in the current regime.")],
+        [tr("Bearish"), tr("The family appears often but carries weak hit-rate or thin regime-specific sample support.")],
+        [tr("Neutral"), tr("Hit-rate is respectable but regime support is thin or average returns are too small to survive costs.")],
+        [tr("Limitations"), tr("Large sample size can hide regime drift, and small sample size can falsely flatter a niche family.")],
+        [tr("Current reading"), tr(`Top family is ${topFamily?.signalFamily ?? "—"} with hit-rate ${pct(topFamily?.hitRatePct, 1, false)} on ${num(topFamily?.sampleCount, 0)} observations; the real question is whether that still holds in the current regime.`)],
+        [tr("Confirmation"), tr(confirmText)],
+        [tr("Contradictions"), tr(topFamily && topFamily.regimeSampleCount < 25 ? `${topFamily.signalFamily} looks good overall, but only ${num(topFamily.regimeSampleCount, 0)} regime-specific observations support it right now.` : contradictText)],
+        [tr("Interpretation"), tr("How to read: a frequent signal is not automatically a good signal; demand hit-rate, expectancy, and regime sample depth together.")]
       ])
     },
     {
@@ -256,17 +256,17 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
       subtitle: tr("A backtest becomes useful only when you compare its path, not just its terminal return."),
       option: buildEquityOption(payload.charts.equityCurveVsBenchmark),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Published strategy equity curve against its benchmark curve over time.")],
-        [tr("2. Why traders or analysts care about it."), tr("It shows whether the strategy’s edge is persistent or only a short burst that happened to end well.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is date. Y-axis is portfolio value in rupees.")],
-        [tr("4. What a bullish reading looks like."), tr("Strategy equity compounds above benchmark with tolerable volatility and manageable drawdowns.")],
-        [tr("5. What a bearish reading looks like."), tr("Strategy equity lags benchmark for long stretches or only wins by taking unstable risk.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Equity and benchmark hug each other closely, leaving little dependable excess after costs.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Backtests can hide leakage, reuse overlapping signals, or understate slippage, so the curve is evidence, not proof.")],
-        [tr("8. What todays reading says."), tr(`Reference strategy is ${payload.referenceStrategy?.displayName ?? "—"}, ending near ${cur(latestEquity?.strategyValue, true)} versus benchmark ${cur(latestEquity?.benchmarkValue ?? null, true)}.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(payload.referenceStrategy ? `${payload.referenceStrategy.displayName} still shows ${pct(payload.referenceStrategy.totalReturnPct, 2, true)} total return with ${pct(payload.referenceStrategy.winRatePct, 1, false)} win-rate.` : confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(summary?.costNote ?? contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: the smoother path usually teaches more than the highest final point.")]
+        [tr("Definition"), tr("Published strategy equity curve against its benchmark curve over time.")],
+        [tr("Context"), tr("It shows whether the strategy’s edge is persistent or only a short burst that happened to end well.")],
+        [tr("Axes and units"), tr("X-axis is date. Y-axis is portfolio value in rupees.")],
+        [tr("Bullish"), tr("Strategy equity compounds above benchmark with tolerable volatility and manageable drawdowns.")],
+        [tr("Bearish"), tr("Strategy equity lags benchmark for long stretches or only wins by taking unstable risk.")],
+        [tr("Neutral"), tr("Equity and benchmark hug each other closely, leaving little dependable excess after costs.")],
+        [tr("Limitations"), tr("Backtests can hide leakage, reuse overlapping signals, or understate slippage, so the curve is evidence, not proof.")],
+        [tr("Current reading"), tr(`Reference strategy is ${payload.referenceStrategy?.displayName ?? "—"}, ending near ${cur(latestEquity?.strategyValue, true)} versus benchmark ${cur(latestEquity?.benchmarkValue ?? null, true)}.`)],
+        [tr("Confirmation"), tr(payload.referenceStrategy ? `${payload.referenceStrategy.displayName} still shows ${pct(payload.referenceStrategy.totalReturnPct, 2, true)} total return with ${pct(payload.referenceStrategy.winRatePct, 1, false)} win-rate.` : confirmText)],
+        [tr("Contradictions"), tr(summary?.costNote ?? contradictText)],
+        [tr("Interpretation"), tr("How to read: the smoother path usually teaches more than the highest final point.")]
       ])
     },
     {
@@ -275,17 +275,17 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
       subtitle: tr("This is the chart that keeps a good-looking model honest."),
       option: buildDrawdownOption(payload.charts.drawdownCurve),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Percentage drawdown from the equity curve’s prior peak.")],
-        [tr("2. Why traders or analysts care about it."), tr("Drawdown tells you how much pain the strategy demanded while trying to earn its edge.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is date. Y-axis is drawdown in percent below the prior peak.")],
-        [tr("4. What a bullish reading looks like."), tr("Drawdowns stay shallow and recover quickly relative to the benchmark opportunity set.")],
-        [tr("5. What a bearish reading looks like."), tr("Drawdowns deepen, persist, or cluster around the same regimes where the strategy is supposed to have edge.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Drawdown is moderate but not clearly better or worse than what the return profile would justify.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("A short backtest or a conveniently chosen start date can hide how ugly the downside looked in harsher regimes.")],
-        [tr("8. What todays reading says."), tr(`Worst drawdown in the published reference path is ${pct(ddLead, 2, true)}, so confidence should be tied to tolerance for that path, not just to the latest score.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(strongestRegime ? `${clean(strongestRegime.regime)} is where the model historically paid best, which helps explain how recovery episodes happen.` : confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(weakestRegime ? `${clean(weakestRegime.regime)} is where the model historically struggled, so regime dependence can re-open drawdown even when current scores look healthy.` : contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: if you would not sit through the drawdown, you do not really own the strategy.")]
+        [tr("Definition"), tr("Percentage drawdown from the equity curve’s prior peak.")],
+        [tr("Context"), tr("Drawdown tells you how much pain the strategy demanded while trying to earn its edge.")],
+        [tr("Axes and units"), tr("X-axis is date. Y-axis is drawdown in percent below the prior peak.")],
+        [tr("Bullish"), tr("Drawdowns stay shallow and recover quickly relative to the benchmark opportunity set.")],
+        [tr("Bearish"), tr("Drawdowns deepen, persist, or cluster around the same regimes where the strategy is supposed to have edge.")],
+        [tr("Neutral"), tr("Drawdown is moderate but not clearly better or worse than what the return profile would justify.")],
+        [tr("Limitations"), tr("A short backtest or a conveniently chosen start date can hide how ugly the downside looked in harsher regimes.")],
+        [tr("Current reading"), tr(`Worst drawdown in the published reference path is ${pct(ddLead, 2, true)}, so confidence should be tied to tolerance for that path, not just to the latest score.`)],
+        [tr("Confirmation"), tr(strongestRegime ? `${clean(strongestRegime.regime)} is where the model historically paid best, which helps explain how recovery episodes happen.` : confirmText)],
+        [tr("Contradictions"), tr(weakestRegime ? `${clean(weakestRegime.regime)} is where the model historically struggled, so regime dependence can re-open drawdown even when current scores look healthy.` : contradictText)],
+        [tr("Interpretation"), tr("How to read: if you would not sit through the drawdown, you do not really own the strategy.")]
       ])
     },
     {
@@ -294,17 +294,17 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
       subtitle: tr("This is where you check whether the model actually earns its keep in the regime it claims to fit."),
       option: buildRegimeOption(payload.charts.performanceByRegime),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Historical strategy performance split by regime, including return, hit-rate, hold profile, and charges.")],
-        [tr("2. Why traders or analysts care about it."), tr("A strategy can work well overall and still fail exactly when today’s regime shows up.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is regime. Left Y-axis is average return in percent. Secondary values include hit-rate percent and charge totals in rupees.")],
-        [tr("4. What a bullish reading looks like."), tr("Current regime is one of the strategy’s historically constructive buckets with enough trade count to trust the edge.")],
-        [tr("5. What a bearish reading looks like."), tr("Current regime is historically weak or charge-heavy, even if the raw model score today looks attractive.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Regime results are mixed or too close together to support strong adaptation claims.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Regime labeling can drift over time, and small regime buckets can make a strategy look smarter than it really is.")],
-        [tr("8. What todays reading says."), tr(`Best historical regime is ${clean(strongestRegime?.regime)} at ${pct(strongestRegime?.avgReturnPct, 2, true)}, while weakest is ${clean(weakestRegime?.regime)} at ${pct(weakestRegime?.avgReturnPct, 2, true)}.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(weakestRegime ? `The contradiction is regime fragility: when the environment slips toward ${clean(weakestRegime.regime)}, historical edge degrades quickly.` : contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: backtest quality improves when the current regime is one where the strategy has already paid after costs.")]
+        [tr("Definition"), tr("Historical strategy performance split by regime, including return, hit-rate, hold profile, and charges.")],
+        [tr("Context"), tr("A strategy can work well overall and still fail exactly when today’s regime shows up.")],
+        [tr("Axes and units"), tr("X-axis is regime. Left Y-axis is average return in percent. Secondary values include hit-rate percent and charge totals in rupees.")],
+        [tr("Bullish"), tr("Current regime is one of the strategy’s historically constructive buckets with enough trade count to trust the edge.")],
+        [tr("Bearish"), tr("Current regime is historically weak or charge-heavy, even if the raw model score today looks attractive.")],
+        [tr("Neutral"), tr("Regime results are mixed or too close together to support strong adaptation claims.")],
+        [tr("Limitations"), tr("Regime labeling can drift over time, and small regime buckets can make a strategy look smarter than it really is.")],
+        [tr("Current reading"), tr(`Best historical regime is ${clean(strongestRegime?.regime)} at ${pct(strongestRegime?.avgReturnPct, 2, true)}, while weakest is ${clean(weakestRegime?.regime)} at ${pct(weakestRegime?.avgReturnPct, 2, true)}.`)],
+        [tr("Confirmation"), tr(confirmText)],
+        [tr("Contradictions"), tr(weakestRegime ? `The contradiction is regime fragility: when the environment slips toward ${clean(weakestRegime.regime)}, historical edge degrades quickly.` : contradictText)],
+        [tr("Interpretation"), tr("How to read: backtest quality improves when the current regime is one where the strategy has already paid after costs.")]
       ])
     },
     {
@@ -313,17 +313,17 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
       subtitle: tr("Concentration risk shows up here long before it shows up in a marketing summary."),
       option: buildSectorOption(payload.charts.sectorContribution),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Sector-level contribution to published strategy PnL and average return.")],
-        [tr("2. Why traders or analysts care about it."), tr("It shows whether the strategy is broadly useful or quietly dependent on a few sectors doing the heavy lifting.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is sector. Left Y-axis is net PnL in rupees. Right Y-axis is average return in percent.")],
-        [tr("4. What a bullish reading looks like."), tr("Contribution is spread across several sectors, reducing dependence on one pocket of the market.")],
-        [tr("5. What a bearish reading looks like."), tr("One sector dominates gains while other sectors lag or lose money, increasing fragility if leadership rotates.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Sector contributions are modest and mixed, so concentration risk is limited but edge is also not obvious.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Sector contribution can be distorted by stock count, benchmark composition, and one exceptional theme period that does not repeat.")],
-        [tr("8. What todays reading says."), tr(`Top sector contribution is ${topSector?.sectorName ?? "—"} at ${cur(topSector?.totalNetPnl, true)}, while the weakest visible sector is ${worstSector?.sectorName ?? "—"} at ${cur(worstSector?.totalNetPnl, true)}.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(summary?.concentrationRisk ?? confirmText)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(topSector && worstSector && topSector.sectorName !== worstSector.sectorName ? `Sector dispersion cuts both ways: some sectors carry the curve, but ${worstSector.sectorName} shows the model is not uniformly strong.` : contradictText)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: sector contribution tells you whether the strategy has breadth or is simply surfing one favorable theme.")]
+        [tr("Definition"), tr("Sector-level contribution to published strategy PnL and average return.")],
+        [tr("Context"), tr("It shows whether the strategy is broadly useful or quietly dependent on a few sectors doing the heavy lifting.")],
+        [tr("Axes and units"), tr("X-axis is sector. Left Y-axis is net PnL in rupees. Right Y-axis is average return in percent.")],
+        [tr("Bullish"), tr("Contribution is spread across several sectors, reducing dependence on one pocket of the market.")],
+        [tr("Bearish"), tr("One sector dominates gains while other sectors lag or lose money, increasing fragility if leadership rotates.")],
+        [tr("Neutral"), tr("Sector contributions are modest and mixed, so concentration risk is limited but edge is also not obvious.")],
+        [tr("Limitations"), tr("Sector contribution can be distorted by stock count, benchmark composition, and one exceptional theme period that does not repeat.")],
+        [tr("Current reading"), tr(`Top sector contribution is ${topSector?.sectorName ?? "—"} at ${cur(topSector?.totalNetPnl, true)}, while the weakest visible sector is ${worstSector?.sectorName ?? "—"} at ${cur(worstSector?.totalNetPnl, true)}.`)],
+        [tr("Confirmation"), tr(summary?.concentrationRisk ?? confirmText)],
+        [tr("Contradictions"), tr(topSector && worstSector && topSector.sectorName !== worstSector.sectorName ? `Sector dispersion cuts both ways: some sectors carry the curve, but ${worstSector.sectorName} shows the model is not uniformly strong.` : contradictText)],
+        [tr("Interpretation"), tr("How to read: sector contribution tells you whether the strategy has breadth or is simply surfing one favorable theme.")]
       ])
     }
   ];
@@ -395,8 +395,6 @@ export function AnalyticsStrategyEvaluationPage() {
       <AnalyticsHeader
         title="Strategy Evaluation"
         meta={`${tr("As of")} ${payload.asOfDate ? formatDateIST(payload.asOfDate) : "—"} • ${tr("Updated")} ${formatDateIST(payload.generatedAt, { includeTime: true })}`}
-        subtitle={tr("Separate raw score, confidence, regime fit, penalties, and realized expectancy before trusting any recommendation. This page is educational by design: it explains why the model works, where it fails, and what the backtest path actually demanded.")}
-        learningPrompt={tr("This page teaches the difference between a high score, a high-confidence setup, and a historically supported setup after costs.")}
         sectionTabs={[...STRATEGY_SECTION_TABS]}
       />
 
@@ -474,9 +472,9 @@ export function AnalyticsStrategyEvaluationPage() {
       </section>
 
       <PageIntroAccordion
-        label={tr("How to use this page")}
+        label={tr("Methodology")}
         title={tr("Read the model in this order: score components, penalties, regime fit, realized expectancy, then backtest path and cost sensitivity.")}
-        body={tr("This page is deliberately anti-promotional. It explains when the recommendation engine deserves attention, when it deserves skepticism, and why a high score alone is never enough.")}
+        body={tr("A high score alone does not establish a profitable setup.")}
         items={[
           tr("Always separate score, confidence, and realized expectancy."),
           tr("Costs and slippage can turn a gross edge into a weak net edge."),

@@ -14,7 +14,7 @@ try {
   if (!login.ok()) throw new Error(`admin login failed: ${login.status()}`);
   const page = await context.newPage();
   await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
-  await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).waitFor({ timeout: 120_000 });
+  await page.getByRole("heading", { name: "Paper trading" }).waitFor({ timeout: 120_000 });
   const structural = await page.evaluate(() => {
     const ids = [...document.querySelectorAll("[id]")].map((element) => element.id);
     const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
@@ -38,7 +38,7 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: "domcontentloaded", timeout: 120_000 });
-  await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).waitFor({ timeout: 120_000 });
+  await page.getByRole("heading", { name: "Paper trading" }).waitFor({ timeout: 120_000 });
   const mobileOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
   if (mobileOverflow) throw new Error("390px mobile body overflow");
   await page.screenshot({ path: path.join(outputDir, "paper-workbench-v2-reduced-motion-390x844.png"), fullPage: true });

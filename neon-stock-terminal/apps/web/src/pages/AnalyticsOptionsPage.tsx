@@ -761,14 +761,8 @@ export function AnalyticsOptionsPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title={tr("Option Snapshot")}
-        subtitle={tr("Keep the option ladder inside the same learning shell. Start with expiry context, then read equilibrium, ATM combo, and strike detail without leaving the current workflow.")}
+        title={tr("Option snapshot")}
         meta={`${tr("Trade date")} ${formatDateIST(payload.tradeDate)}`}
-        learningPrompt={
-          mode === "beginner"
-            ? tr("Read the expiry card and dominance first, then move to equilibrium and ATM combo. Use the ladder only after the charts tell you where option pressure is leaning.")
-            : tr("Use the equilibrium and combo tabs first, then inspect IV, OI, and the strike ladder to confirm whether the move is positioning-driven or just premium noise.")
-        }
         sectionTabs={[...OPTIONS_SECTION_TABS]}
       />
 
@@ -1139,7 +1133,7 @@ export function AnalyticsOptionsPage() {
               { metric: tr("Trade date"), value: formatDateIST(payload.tradeDate), raw: payload.tradeDate, note: tr("Session used for the current option view") },
               { metric: tr("Current ATM strike"), value: formatPoints(payload.expiryContext.currentAtmStrike, 0), raw: payload.expiryContext.currentAtmStrike ?? 0, note: tr("Nearest listed strike to current spot, lower strike chosen on ties") },
               { metric: tr("Spot-to-ATM distance"), value: formatSignedPoints(payload.expiryContext.spotToAtmDistance), raw: payload.expiryContext.spotToAtmDistance ?? 0, note: tr("Difference between current spot and ATM strike in points") },
-              { metric: tr("Timestamp drift"), value: `${formatPoints(payload.diagnostics.timestampDriftSeconds, 0)}s`, raw: payload.diagnostics.timestampDriftSeconds, note: tr("Current implementation uses aligned snapshot rows; non-zero drift indicates future timestamp reconciliation work") },
+              { metric: tr("Timestamp drift"), value: `${formatPoints(payload.diagnostics.timestampDriftSeconds, 0)}s`, raw: payload.diagnostics.timestampDriftSeconds, note: tr("Time difference between the selected observations.") },
               { metric: tr("Available strikes"), value: formatNumberIN(payload.diagnostics.strikeCount), raw: payload.diagnostics.strikeCount, note: tr("Distinct strikes available in the latest stored snapshot window") },
               { metric: tr("Strike window"), value: `${payload.strikeWindow.strikes[0]} to ${payload.strikeWindow.strikes[payload.strikeWindow.strikes.length - 1]}`, raw: payload.diagnostics.strikeWindowSize, note: tr("Actual listed strikes used in the analytics basket") }
             ]}
@@ -1164,7 +1158,7 @@ export function AnalyticsOptionsPage() {
           }}
         >
           <span className={styles.promptLabel}>{tr("Context next")}</span>
-          <strong>{tr("Open Market Story")}</strong>
+          <strong>{tr("Open Market regime")}</strong>
           <span className={styles.muted}>{tr("Use the market-structure page to confirm whether option pressure is reinforcing the tape or fighting it.")}</span>
         </Link>
         <Link

@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useEffect, useMemo, useState } from "react";
 import type { EChartsOption } from "echarts";
 import { EChartSurface } from "../components/visual/EChartSurface";
@@ -160,7 +161,7 @@ export function OptionsIntelligencePage() {
       </div>
     </header>
 
-    {error && <div className={styles.error}>Live data error: {error}</div>}
+    {error && <div className={styles.error}>{userFacingError(error)}</div>}
 
     <section className={styles.pulse}>
       <div className={styles.pulseLead}>
@@ -177,7 +178,6 @@ export function OptionsIntelligencePage() {
         <small>Decision: {ist(summary?.liveRun?.decision_as_of)}</small>
         <small>Latest chain: {ist(summary?.chainHealth?.snapshot_ts)}</small>
         <small>{summary?.chainHealth?.fresh_contracts ?? 0} fresh · {summary?.chainHealth?.two_sided_contracts ?? 0} / {summary?.chainHealth?.contract_count ?? 0} two-sided contracts</small>
-        {!chainWatchHealthy && <small>Collector retries are bounded and use cached SmartAPI data; no extra broker request loop.</small>}
       </div>
     </section>
 

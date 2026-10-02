@@ -120,25 +120,25 @@ export function LongOptionsPage() {
 
   if (loading)
     return (
-      <main className={styles.page}>
+      <section className={styles.page}>
         <LoadingSkeleton label="Loading Long Options strategy" rows={7} />
-      </main>
+      </section>
     );
   if (error)
     return (
-      <main className={styles.page}>
+      <section className={styles.page}>
         <ErrorState title="Long Options could not be loaded" detail={error} />
-      </main>
+      </section>
     );
   if (!data)
     return (
-      <main className={styles.page}>
+      <section className={styles.page}>
         <CompactEmptyState
           kind="NO_DATA"
           title="No Long Options evidence"
           detail="No current derivatives evaluation is available."
         />
-      </main>
+      </section>
     );
 
   const ready = data.summary.readyStructures;
@@ -156,7 +156,7 @@ export function LongOptionsPage() {
     )[0];
 
   return (
-    <main className={styles.page}>
+    <section className={styles.page}>
       <PageHeader
         breadcrumb={
           <>
@@ -182,7 +182,7 @@ export function LongOptionsPage() {
           freshness: qualityState === "READY" ? "CURRENT" : "STALE",
           readiness: qualityState as "READY" | "INCOMPLETE" | "DEGRADED",
           dataThrough: data.evidenceRun?.decision_as_of,
-          source: "SmartAPI canonical PostgreSQL estate",
+          source: "SmartAPI",
           message:
             "Opening SELL is prohibited. No live-order endpoint is connected.",
         }}
@@ -460,7 +460,7 @@ export function LongOptionsPage() {
           },
           {
             id: "quality",
-            title: "Data Quality",
+            title: "Data quality",
             detail: "Investigate stale or incomplete option evidence",
             to: "/analytics/system/quality",
             status: qualityState,
@@ -472,7 +472,7 @@ export function LongOptionsPage() {
         sections={[
           {
             id: "read",
-            title: "How to read this page",
+            title: "Methodology",
             content: (
               <p>
                 READY means every configured data, ranking, live-confirmation,
@@ -617,6 +617,6 @@ export function LongOptionsPage() {
           </aside>
         </div>
       ) : null}
-    </main>
+    </section>
   );
 }

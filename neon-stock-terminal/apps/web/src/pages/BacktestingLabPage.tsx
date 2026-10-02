@@ -165,7 +165,6 @@ export function BacktestingLabPage() {
     <div className={`${analyticsStyles.page} ${analyticsStyles.backtestingPage} ${styles.lab}`}>
       <BacktestingHeader
         title="Test Strategy"
-        subtitle="Change only governed levels, queue a bounded historical replay, and compare execution economics with every diagnostic ladder level. This workspace has no broker authority."
         meta={`${catalogue.data.environment} • ${catalogue.data.engineVersion}`}
       />
 

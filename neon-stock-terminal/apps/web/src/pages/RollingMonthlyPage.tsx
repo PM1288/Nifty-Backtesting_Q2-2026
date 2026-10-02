@@ -441,28 +441,28 @@ export function RollingMonthlyPage() {
 
   if (loading)
     return (
-      <main className={styles.page}>
+      <section className={styles.page}>
         <LoadingSkeleton label="Loading Rolling Monthly strategy" rows={6} />
-      </main>
+      </section>
     );
   if (error)
     return (
-      <main className={styles.page}>
+      <section className={styles.page}>
         <ErrorState
           title="Rolling Monthly data could not be loaded"
           detail={error}
         />
-      </main>
+      </section>
     );
   if (!data || !run)
     return (
-      <main className={styles.page}>
+      <section className={styles.page}>
         <CompactEmptyState
           kind="NO_DATA"
           title="No completed Rolling Monthly run"
-          detail="The isolated runner has not published a completed canonical-data run yet."
+          detail="No completed results yet."
         />
-      </main>
+      </section>
     );
 
   const qualityValid = run.quality_status === "VALID";
@@ -649,7 +649,7 @@ export function RollingMonthlyPage() {
   };
 
   return (
-    <main className={styles.page}>
+    <section className={styles.page}>
       <ModuleStatusStrip
         environment="REPLAY"
         quality={{
@@ -658,7 +658,7 @@ export function RollingMonthlyPage() {
           freshness: qualityValid ? "CURRENT" : "DELAYED",
           readiness: qualityValid ? "READY" : "DEGRADED",
           dataThrough: run.data_as_of ?? undefined,
-          source: "Canonical bars_1d + active NFO universe",
+          source: "Daily prices · active F&O stocks",
           message: `${run.nifty50_coverage}/50 NIFTY breadth coverage`,
         }}
         context={
@@ -680,7 +680,7 @@ export function RollingMonthlyPage() {
         context="Bullish LONG and bearish SHORT candidates from completed monthly, point-in-time weekly and daily evidence. This is independent from OIIS."
         quality={
           <SourceFreshness
-            source="Canonical bars_1d + active NFO universe"
+            source="Daily prices · active F&O stocks"
             asOf={run.data_as_of}
             state="Research only"
           />
@@ -781,7 +781,7 @@ export function RollingMonthlyPage() {
             <MetricTile
               label="F&O universe"
               value={run.universe_size}
-              scope="Canonical active stock underlyings"
+              scope="Eligible stocks"
               definition="Unique NFO FUTSTK/OPTSTK underlyings evaluated."
             />
             <MetricTile
@@ -1990,7 +1990,7 @@ export function RollingMonthlyPage() {
           },
           {
             id: "quality",
-            title: "Data Quality",
+            title: "Data quality",
             detail: `${run.nifty50_coverage}/50 breadth coverage · ${run.quality_status}`,
             to: "/analytics/system/quality?source=rolling-monthly",
           },
@@ -2000,7 +2000,7 @@ export function RollingMonthlyPage() {
         sections={[
           {
             id: "read",
-            title: "How to read this page",
+            title: "Methodology",
             content: (
               <p>
                 High and Medium bands are governed candidates. Low rows are
@@ -2063,6 +2063,6 @@ export function RollingMonthlyPage() {
           },
         ]}
       />
-    </main>
+    </section>
   );
 }

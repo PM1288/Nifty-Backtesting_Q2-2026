@@ -49,7 +49,7 @@ try {
     }
   }
   if (!route?.ok()) throw new Error(`Paper route failed: ${route?.status()}`);
-  await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).waitFor({ timeout: 120_000 });
+  await page.getByRole("heading", { name: "Paper trading" }).waitFor({ timeout: 120_000 });
   const meaningfulMs = Number((performance.now() - routeStarted).toFixed(1));
   await page.getByRole("heading", { name: "What is happening now?" }).waitFor({ timeout: 120_000 });
   const routeToTradeRowsMs = Number((performance.now() - routeStarted).toFixed(1));

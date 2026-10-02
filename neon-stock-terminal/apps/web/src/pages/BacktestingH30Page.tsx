@@ -1,3 +1,4 @@
+import { userFacingError } from "../lib/userFacingError";
 import { useEffect, useState } from "react";
 import { BacktestingHeader } from "./BacktestingChrome";
 import styles from "./BacktestingH30Page.module.css";
@@ -20,9 +21,9 @@ export function BacktestingH30Page() {
   }).then(setData).catch((reason) => setError(String(reason.message ?? reason))); }, []);
   const summary = data?.ranking.summary ?? {};
   return <div className={styles.page}>
-    <BacktestingHeader title="30-session opportunity" subtitle="How far each entry travelled using official daily closes, independent of execution exits." testRunAt={data?.generatedAt} />
+    <BacktestingHeader title="30-session opportunity" testRunAt={data?.generatedAt} />
     <section className={styles.warning}><strong>Hindsight opportunity — not realised P&L</strong><span>The scan always observes D0 through D+29. Crossing 0.3%, 0.5%, 0.7%, 1%, 2% or 5% never stops this evaluation or releases capital.</span></section>
-    {error && <section className={styles.error}>{error}</section>}
+    {error && <section className={styles.error}>{userFacingError(error)}</section>}
     {!data && !error && <section className={styles.loading}>Loading the latest H30 evidence…</section>}
     {data && <>
       <section className={styles.identity}><div><span>Run</span><strong>{data.runId}</strong></div><div><span>Strategy version</span><strong>{data.strategyVersionId}</strong></div><div><span>Rank status</span><strong>{data.status}</strong></div></section>

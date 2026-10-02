@@ -42,7 +42,7 @@ try {
   const primary = page.getByRole("navigation", { name: "Workspace navigation", exact: true });
   await primary.waitFor();
   record("seven primary workspaces", await primary.getByRole("link").count() === 7, "expected seven decision-led workspaces");
-  for (const label of ["Today", "Markets", "Stocks", "OIIS Lab", "Paper Trading", "Derivatives", "Data & Operations"]) {
+  for (const label of ["Today", "Markets", "Stocks", "OIIS Lab", "Paper trading", "Derivatives", "Data & Operations"]) {
     record(`workspace ${label}`, await primary.getByRole("link", { name: new RegExp(`^${label}\\b`) }).count() === 1, `${label} missing`);
   }
   record("today ticker", await page.locator('[data-clarity-region="top_ticker"]').count() === 1, "ticker should be visible on Today");

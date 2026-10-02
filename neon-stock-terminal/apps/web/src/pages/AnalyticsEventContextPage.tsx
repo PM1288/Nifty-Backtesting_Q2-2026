@@ -300,65 +300,65 @@ function buildCharts(
       option: buildHeatmapOption(payload),
       rubric: rubric([
         [
-          tr("1. What this chart is measuring."),
+          tr("Definition"),
           tr(
             "The count of persisted catalyst rows by calendar date across event schedules, announcements, results, deals, and corporate actions."
           )
         ],
         [
-          tr("2. Why traders or analysts care about it."),
+          tr("Context"),
           tr(
             "It helps you see when the information load is actually dense enough to change watchlists and sector risk."
           )
         ],
         [
-          tr("3. What the axes mean and what units are used."),
+          tr("Axes and units"),
           tr("The calendar cells are dates. The unit is event count per day, not price movement or importance.")
         ],
         [
-          tr("4. What a bullish reading looks like."),
+          tr("Bullish"),
           tr(
             "A dense event cluster is only bullish if the cluster contains informative catalysts and price or volume confirm the move after the event."
           )
         ],
         [
-          tr("5. What a bearish reading looks like."),
+          tr("Bearish"),
           tr(
             "A dense negative catalyst window with weak tape and poor follow-through is bearish because event risk is compounding."
           )
         ],
         [
-          tr("6. What a neutral or indecisive reading looks like."),
+          tr("Neutral"),
           tr(
             "A busy calendar full of low-information meetings, filings, or duplicate notices is neutral because event count is high but signal quality is low."
           )
         ],
         [
-          tr("7. What can fool the reader or produce a false signal."),
+          tr("Limitations"),
           tr(
             "Duplicate announcements, schedule updates, and ex-date versus announcement-date confusion can all inflate density without adding new information."
           )
         ],
         [
-          tr("8. What todays reading says."),
+          tr("Current reading"),
           tr(
             `The current cluster is led by ${topUpcoming?.symbol ?? "—"} ahead and ${topRecent?.symbol ?? "—"} behind, with ${num(payload.summary.upcomingCount, 0)} upcoming and ${num(payload.summary.recentCount, 0)} recent catalysts in the active watch window.`
           )
         ],
         [
-          tr("9. What confirms this reading elsewhere on the dashboard."),
+          tr("Confirmation"),
           tr(
             `The sector overlay also shows ${topSector?.sectorName ?? "the top sector"} carrying the heaviest catalyst concentration, so the density is not purely random.`
           )
         ],
         [
-          tr("10. What contradicts this reading elsewhere on the dashboard."),
+          tr("Contradictions"),
           tr(
             "The trust rule still says to trust price over timing, so a busy date cluster without price follow-through contradicts any attempt to turn density into causation."
           )
         ],
         [
-          tr('11. One short teaching note beginning with "How to read:".'),
+          tr('Interpretation'),
           tr("How to read: count tells you when attention should rise, but only catalyst quality and follow-through tell you whether the date matters.")
         ]
       ])
@@ -370,49 +370,49 @@ function buildCharts(
       option: buildScheduleOption(payload),
       rubric: rubric([
         [
-          tr("1. What this chart is measuring."),
+          tr("Definition"),
           tr("The count of scheduled board meetings, result windows, and schedule-type calendar items by date.")
         ],
         [
-          tr("2. Why traders or analysts care about it."),
+          tr("Context"),
           tr("It shows where overnight information risk is stacking up so position sizing and watchlists can adjust.")
         ],
         [
-          tr("3. What the axes mean and what units are used."),
+          tr("Axes and units"),
           tr("X-axis is date. Y-axis is the number of scheduled event rows on that date.")
         ],
         [
-          tr("4. What a bullish reading looks like."),
+          tr("Bullish"),
           tr("A bullish reading is not the count itself; it is when strong price and volume confirmation appear around a result-heavy date.")
         ],
         [
-          tr("5. What a bearish reading looks like."),
+          tr("Bearish"),
           tr("A bearish reading appears when crowded result windows meet weak tape, because bad reactions can spill across names or sectors.")
         ],
         [
-          tr("6. What a neutral or indecisive reading looks like."),
+          tr("Neutral"),
           tr("A date with many meetings but no confirmed follow-through is neutral because scheduling alone does not reveal directional outcome.")
         ],
         [
-          tr("7. What can fool the reader or produce a false signal."),
+          tr("Limitations"),
           tr("Board meeting date, result publication time, and effective market reaction often differ, so timing mismatches can mislead the user.")
         ],
         [
-          tr("8. What todays reading says."),
+          tr("Current reading"),
           tr(
             `The schedule is front-loaded around ${topUpcoming?.eventDate ? formatDateIST(topUpcoming.eventDate) : "the nearest cluster"}, which means the next sessions should be treated as catalyst windows rather than quiet baseline tape.`
           )
         ],
         [
-          tr("9. What confirms this reading elsewhere on the dashboard."),
+          tr("Confirmation"),
           tr("Upcoming catalyst cards show these dates tied to named symbols, so the schedule is backed by actual watchlist items instead of abstract counts.")
         ],
         [
-          tr("10. What contradicts this reading elsewhere on the dashboard."),
+          tr("Contradictions"),
           tr("If recent catalysts already failed to move price, the same schedule density can become noise rather than tradable information.")
         ],
         [
-          tr('11. One short teaching note beginning with "How to read:".'),
+          tr('Interpretation'),
           tr("How to read: use this chart to know when risk clusters, then use price action to decide whether that risk is paying off.")
         ]
       ])
@@ -424,49 +424,49 @@ function buildCharts(
       option: buildCorporateTimelineOption(payload),
       rubric: rubric([
         [
-          tr("1. What this chart is measuring."),
+          tr("Definition"),
           tr("Recent corporate-action rows plotted by date and symbol with the stored timing tag attached.")
         ],
         [
-          tr("2. Why traders or analysts care about it."),
+          tr("Context"),
           tr("Adjusted-price mechanics, dividend gaps, and split or bonus dates can distort setup readings if timing fields are mixed together.")
         ],
         [
-          tr("3. What the axes mean and what units are used."),
+          tr("Axes and units"),
           tr("X-axis is corporate-action date. Y-axis is symbol. Each point is one stored action row.")
         ],
         [
-          tr("4. What a bullish reading looks like."),
+          tr("Bullish"),
           tr("Bullish comes from price and liquidity response after the action-related window, not from the action row by itself.")
         ],
         [
-          tr("5. What a bearish reading looks like."),
+          tr("Bearish"),
           tr("Bearish appears when traders misread mechanical price adjustments as real weakness or when the event exposes weak sponsorship.")
         ],
         [
-          tr("6. What a neutral or indecisive reading looks like."),
+          tr("Neutral"),
           tr("Most corporate-action rows are neutral until post-event price behavior proves otherwise.")
         ],
         [
-          tr("7. What can fool the reader or produce a false signal."),
+          tr("Limitations"),
           tr("Adjusted-price errors and ex-date versus announcement-date confusion are the biggest false-signal sources here.")
         ],
         [
-          tr("8. What todays reading says."),
+          tr("Current reading"),
           tr(
             `The latest corporate-action tape is dominated by ${payload.charts.corporateActionTimeline[0]?.symbol ?? "—"}, and the page explicitly tags whether the row is an ex-date, record date, or announcement date.`
           )
         ],
         [
-          tr("9. What confirms this reading elsewhere on the dashboard."),
+          tr("Confirmation"),
           tr("Recent catalyst cards repeat the same action rows with tradeability notes, so the timeline is supported by the narrative watchlist layer.")
         ],
         [
-          tr("10. What contradicts this reading elsewhere on the dashboard."),
+          tr("Contradictions"),
           tr("The context rule still warns that timing alone is not causation, so any price move without broader confirmation should be treated as mechanical first.")
         ],
         [
-          tr('11. One short teaching note beginning with "How to read:".'),
+          tr('Interpretation'),
           tr("How to read: before you judge price, confirm which date field the row represents and whether the chart is showing information or mechanics.")
         ]
       ])
@@ -478,49 +478,49 @@ function buildCharts(
       option: buildDealSectorOption(payload),
       rubric: rubric([
         [
-          tr("1. What this chart is measuring."),
+          tr("Definition"),
           tr("Recent bulk and block deal value aggregated by sector in crore rupees.")
         ],
         [
-          tr("2. Why traders or analysts care about it."),
+          tr("Context"),
           tr("It shows where large negotiated activity is concentrating so traders can decide whether the print is likely informational or just mechanically large.")
         ],
         [
-          tr("3. What the axes mean and what units are used."),
+          tr("Axes and units"),
           tr("X-axis is sector. Y-axis is trade value in crore rupees, split between bulk and block categories.")
         ],
         [
-          tr("4. What a bullish reading looks like."),
+          tr("Bullish"),
           tr("Bullish is when a sector receives large prints and the same sector also shows healthy price behavior and follow-through.")
         ],
         [
-          tr("5. What a bearish reading looks like."),
+          tr("Bearish"),
           tr("Bearish is when outsized deal value appears in weak sectors and price still fails to stabilize afterward.")
         ],
         [
-          tr("6. What a neutral or indecisive reading looks like."),
+          tr("Neutral"),
           tr("Neutral is when the print is large but the sector shows no supporting movement, making the deal look more logistical than informational.")
         ],
         [
-          tr("7. What can fool the reader or produce a false signal."),
+          tr("Limitations"),
           tr("Block deals can be mechanically large and still say little about conviction, especially if they are off-market transfers or one-off ownership reshuffles.")
         ],
         [
-          tr("8. What todays reading says."),
+          tr("Current reading"),
           tr(
             `The heaviest deal pocket is ${payload.charts.blockBulkDealValueBySector[0]?.sectorName ?? "—"} at ${num(payload.charts.blockBulkDealValueBySector[0]?.totalValueCr, 2)} crore total, which is meaningful enough for a watchlist but not enough for causation by itself.`
           )
         ],
         [
-          tr("9. What confirms this reading elsewhere on the dashboard."),
+          tr("Confirmation"),
           tr("The sector-cluster list and recent-catalyst cards repeat the same sectors and names, so the value cluster is supported by broader event context.")
         ],
         [
-          tr("10. What contradicts this reading elsewhere on the dashboard."),
+          tr("Contradictions"),
           tr("The page still warns that large prints can be mechanically large but not informationally important, so value alone cannot overrule weak price behavior.")
         ],
         [
-          tr('11. One short teaching note beginning with "How to read:".'),
+          tr('Interpretation'),
           tr("How to read: a big print tells you where to look, not what to believe.")
         ]
       ])
@@ -532,49 +532,49 @@ function buildCharts(
       option: buildDensityOption(payload),
       rubric: rubric([
         [
-          tr("1. What this chart is measuring."),
+          tr("Definition"),
           tr("Daily event density against the average stored forward 5-day return for that day’s signal set.")
         ],
         [
-          tr("2. Why traders or analysts care about it."),
+          tr("Context"),
           tr("It helps separate the presence of many catalysts from whether those catalysts historically translated into useful follow-through.")
         ],
         [
-          tr("3. What the axes mean and what units are used."),
+          tr("Axes and units"),
           tr("X-axis is trade date. Left Y-axis is event count. Right Y-axis is average forward 5-day return in percent.")
         ],
         [
-          tr("4. What a bullish reading looks like."),
+          tr("Bullish"),
           tr("Bullish is when higher-quality event clusters are followed by positive forward returns often enough to create expectancy, not just noise.")
         ],
         [
-          tr("5. What a bearish reading looks like."),
+          tr("Bearish"),
           tr("Bearish is when dense event days repeatedly fail to produce positive follow-through, showing that catalysts are crowding risk rather than improving expectancy.")
         ],
         [
-          tr("6. What a neutral or indecisive reading looks like."),
+          tr("Neutral"),
           tr("Neutral is when forward returns stay mixed even as event counts rise and fall.")
         ],
         [
-          tr("7. What can fool the reader or produce a false signal."),
+          tr("Limitations"),
           tr("Lookahead leakage, small samples, and regime drift can all make event-density statistics look cleaner than they really are.")
         ],
         [
-          tr("8. What todays reading says."),
+          tr("Current reading"),
           tr(
             `The latest density sample shows ${num(densityTail?.eventCount, 0)} events with an average stored 5-day forward return of ${fracPct(densityTail?.avgForwardReturn5d, 2, true)}, which is context for expectancy rather than a live setup.`
           )
         ],
         [
-          tr("9. What confirms this reading elsewhere on the dashboard."),
+          tr("Confirmation"),
           tr("The trust rule and data-quality flags both reinforce that signal presence and signal quality must be separated before you trust the history.")
         ],
         [
-          tr("10. What contradicts this reading elsewhere on the dashboard."),
+          tr("Contradictions"),
           tr("A strong current catalyst list can still contradict weak historical density expectancy if the present tape is confirming more strongly than the old sample average.")
         ],
         [
-          tr('11. One short teaching note beginning with "How to read:".'),
+          tr('Interpretation'),
           tr("How to read: ask whether many events have actually paid off before you treat a busy calendar as edge.")
         ]
       ])
@@ -586,49 +586,49 @@ function buildCharts(
       option: buildOverlayOption(payload),
       rubric: rubric([
         [
-          tr("1. What this chart is measuring."),
+          tr("Definition"),
           tr("Sector-level event clustering compared with sector-level deal value, read against the current institutional backdrop tag.")
         ],
         [
-          tr("2. Why traders or analysts care about it."),
+          tr("Context"),
           tr("It shows whether the most catalyst-heavy sectors are also carrying enough capital attention to matter for next-session watchlists.")
         ],
         [
-          tr("3. What the axes mean and what units are used."),
+          tr("Axes and units"),
           tr("X-axis is sector. Left Y-axis is event count. Right Y-axis is recent deal value in crore rupees.")
         ],
         [
-          tr("4. What a bullish reading looks like."),
+          tr("Bullish"),
           tr("Bullish is when a sector has meaningful event clustering, supportive deal context, and the broader institutional backdrop is not fighting the move.")
         ],
         [
-          tr("5. What a bearish reading looks like."),
+          tr("Bearish"),
           tr("Bearish is when clustering piles into sectors that are also facing contrarian or stretched participant context, raising the odds of disappointment.")
         ],
         [
-          tr("6. What a neutral or indecisive reading looks like."),
+          tr("Neutral"),
           tr("Neutral is when sectors cluster on events but neither deal value nor institutional backdrop add much confirmation.")
         ],
         [
-          tr("7. What can fool the reader or produce a false signal."),
+          tr("Limitations"),
           tr("Sector overlays can look convincing even when the participant data is one day old and the deals are mechanically large, so timing mismatch matters.")
         ],
         [
-          tr("8. What todays reading says."),
+          tr("Current reading"),
           tr(
             `The top overlay sector is ${topSector?.sectorName ?? "—"} with ${num(topSector?.eventCount, 0)} catalysts and ${num(topSector?.dealValueCr, 2)} crore of deal context, while the institutional backdrop is currently tagged ${clean(payload.summary.institutionalBackdrop)}.`
           )
         ],
         [
-          tr("9. What confirms this reading elsewhere on the dashboard."),
+          tr("Confirmation"),
           tr("The catalyst lists and deal-sector chart point to the same sectors, so the overlay is confirmed by both event and transaction context.")
         ],
         [
-          tr("10. What contradicts this reading elsewhere on the dashboard."),
+          tr("Contradictions"),
           tr("If the participant backdrop is contrarian or stretched, it directly contradicts any attempt to treat sector clustering as easy continuation.")
         ],
         [
-          tr('11. One short teaching note beginning with "How to read:".'),
+          tr('Interpretation'),
           tr("How to read: use the overlay to decide whether a sector’s catalyst load deserves attention, not to assume the sector must move.")
         ]
       ])
@@ -722,10 +722,8 @@ export function AnalyticsEventContextPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title="Event Context"
+        title="Event context"
         meta={`${tr("Latest trade date")} ${payload.latestTradeDate ? formatDateIST(payload.latestTradeDate) : "—"}`}
-        subtitle={tr("Merge announcements, results, corporate actions, bulk and block deals, and institutional overlays into watchlists instead of hype.")}
-        learningPrompt={tr("This page answers one question: which catalysts matter now, and which ones are only noise unless price proves otherwise?")}
         sectionTabs={[...CATALYSTS_SECTION_TABS]}
       />
 

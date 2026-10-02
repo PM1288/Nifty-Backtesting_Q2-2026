@@ -136,10 +136,8 @@ export function AnalyticsFiiReportsPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title="FII Reports"
+        title="FII reports"
         meta={`${tr("Output root")} ${runsQuery.data.output_dir}`}
-        subtitle={tr("Browse the live FII service runs, inspect what was downloaded, and confirm missing archive dates before any downstream processing is added.")}
-        learningPrompt={tr("This page is file-backed. It shows what the service downloaded and parsed, not a Postgres projection.")}
         sectionTabs={[...INSTITUTIONAL_SECTION_TABS]}
       />
 
@@ -245,7 +243,7 @@ export function AnalyticsFiiReportsPage() {
 
                 {detailQuery.data.kind === "daily" ? (
                   <div className={styles.caption}>
-                    {tr("Daily pulls store one manifest.json with one entry per report type. Use this to confirm raw and parsed file paths for the most recent trade date.")}
+                    {tr("Latest report files and processing status.")}
                   </div>
                 ) : (
                   <div className={styles.caption}>

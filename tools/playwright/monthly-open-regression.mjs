@@ -43,7 +43,7 @@ try {
       waitUntil: "networkidle",
       timeout: 120_000,
     });
-    await page.getByRole("heading", { name: "Monthly Strategy", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "Monthly strategy", exact: true }).waitFor();
     check(`${viewport.name} Monthly Close tab`, await page.getByRole("link", { name: "Monthly Close", exact: true }).count() === 1);
     check(`${viewport.name} Monthly Open tab`, await page.getByRole("link", { name: "Monthly Open", exact: true }).count() === 1);
     const method = page.locator("label", { hasText: "Entry method" }).locator("select");

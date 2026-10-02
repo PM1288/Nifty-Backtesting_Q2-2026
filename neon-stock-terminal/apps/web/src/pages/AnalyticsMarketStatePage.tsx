@@ -191,17 +191,17 @@ function chartReadings(payload: AnalyticsMarketStateResponse, tr: (value: string
       subtitle: tr("Price can be carried by weight; breadth shows whether the tape is truly broad."),
       option: buildIndexBreadthOption(minuteSeries),
       rubric: makeRubric([
-        [tr("1. What this chart is measuring."), tr("The intraday Nifty 50 path versus the percentage of names above prior close.")],
-        [tr("2. Why traders or analysts care about it."), tr("It separates index strength from broad market strength.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is IST session time. Left Y-axis is index points. Right Y-axis is breadth-up in percent.")],
-        [tr("4. What a bullish reading looks like."), tr("Price and breadth rise together, with breadth staying above about 60%.")],
-        [tr("5. What a bearish reading looks like."), tr("Price trends lower while breadth stays weak and cannot repair.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Breadth sits around 50% while price mean-reverts instead of trending.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Opening-auction noise, stale constituent coverage, and cap-weight distortion.")],
-        [tr("8. What todays reading says."), tr(`Breadth-up closed at ${pct(session.breadthUpPct, 1)} while the state snapshot closed ${pct(session.changePct, 2, true)} and the official close printed ${pct(officialIndexChange, 2, true)}. That says the tape repaired internally, but not decisively.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Breadth above VWAP ${pct(session.breadthAboveVwapPct, 1)} and close-location ${pct(session.closeLocationPct, 1)} confirm the late repair.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Weighted participation ${pct(session.weightedParticipationPct, 1)} and India VIX ${pct(vixChange, 2, true)} contradict a clean bullish breadth expansion.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: trust price more when breadth confirms it, and trust breadth more when it improves before price does.")]
+        [tr("Definition"), tr("The intraday Nifty 50 path versus the percentage of names above prior close.")],
+        [tr("Context"), tr("It separates index strength from broad market strength.")],
+        [tr("Axes and units"), tr("X-axis is IST session time. Left Y-axis is index points. Right Y-axis is breadth-up in percent.")],
+        [tr("Bullish"), tr("Price and breadth rise together, with breadth staying above about 60%.")],
+        [tr("Bearish"), tr("Price trends lower while breadth stays weak and cannot repair.")],
+        [tr("Neutral"), tr("Breadth sits around 50% while price mean-reverts instead of trending.")],
+        [tr("Limitations"), tr("Opening-auction noise, stale constituent coverage, and cap-weight distortion.")],
+        [tr("Current reading"), tr(`Breadth-up closed at ${pct(session.breadthUpPct, 1)} while the state snapshot closed ${pct(session.changePct, 2, true)} and the official close printed ${pct(officialIndexChange, 2, true)}. That says the tape repaired internally, but not decisively.`)],
+        [tr("Confirmation"), tr(`Breadth above VWAP ${pct(session.breadthAboveVwapPct, 1)} and close-location ${pct(session.closeLocationPct, 1)} confirm the late repair.`)],
+        [tr("Contradictions"), tr(`Weighted participation ${pct(session.weightedParticipationPct, 1)} and India VIX ${pct(vixChange, 2, true)} contradict a clean bullish breadth expansion.`)],
+        [tr("Interpretation"), tr("How to read: trust price more when breadth confirms it, and trust breadth more when it improves before price does.")]
       ])
     },
     {
@@ -210,17 +210,17 @@ function chartReadings(payload: AnalyticsMarketStateResponse, tr: (value: string
       subtitle: tr("Many names can look healthy without the heavyweights actually carrying the index."),
       option: buildBreadthWeightOption(minuteSeries),
       rubric: makeRubric([
-        [tr("1. What this chart is measuring."), tr("The share of names above session VWAP versus the weighted participation of index constituents.")],
-        [tr("2. Why traders or analysts care about it."), tr("It tells you whether breadth health is real index support or only a lighter-stock repair.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is IST time. Y-axis is percent for both lines.")],
-        [tr("4. What a bullish reading looks like."), tr("Both lines above about 60%, with weighted participation confirming breadth.")],
-        [tr("5. What a bearish reading looks like."), tr("Both lines stay below about 40%, especially if weight leads lower.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("One line improves while the other stays stuck, leaving the move mixed.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Early-session VWAP gaps, expiry flows, and rebalance days.")],
-        [tr("8. What todays reading says."), tr(`Breadth above VWAP ended ${pct(session.breadthAboveVwapPct, 1)} while weighted participation ended ${pct(session.weightedParticipationPct, 1)}. More names repaired than heavyweights confirmed.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Top-10 concentration stayed low at ${pct(session.top10ConcentrationPct, 1)}, so the repair was dispersed rather than carried by a few names.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Close-location ${pct(session.closeLocationPct, 1)} was strong enough that you would normally expect better weight confirmation.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: breadth above VWAP tells you how many names are okay; weighted participation tells you whether the index can act on it.")]
+        [tr("Definition"), tr("The share of names above session VWAP versus the weighted participation of index constituents.")],
+        [tr("Context"), tr("It tells you whether breadth health is real index support or only a lighter-stock repair.")],
+        [tr("Axes and units"), tr("X-axis is IST time. Y-axis is percent for both lines.")],
+        [tr("Bullish"), tr("Both lines above about 60%, with weighted participation confirming breadth.")],
+        [tr("Bearish"), tr("Both lines stay below about 40%, especially if weight leads lower.")],
+        [tr("Neutral"), tr("One line improves while the other stays stuck, leaving the move mixed.")],
+        [tr("Limitations"), tr("Early-session VWAP gaps, expiry flows, and rebalance days.")],
+        [tr("Current reading"), tr(`Breadth above VWAP ended ${pct(session.breadthAboveVwapPct, 1)} while weighted participation ended ${pct(session.weightedParticipationPct, 1)}. More names repaired than heavyweights confirmed.`)],
+        [tr("Confirmation"), tr(`Top-10 concentration stayed low at ${pct(session.top10ConcentrationPct, 1)}, so the repair was dispersed rather than carried by a few names.`)],
+        [tr("Contradictions"), tr(`Close-location ${pct(session.closeLocationPct, 1)} was strong enough that you would normally expect better weight confirmation.`)],
+        [tr("Interpretation"), tr("How to read: breadth above VWAP tells you how many names are okay; weighted participation tells you whether the index can act on it.")]
       ])
     },
     {
@@ -229,17 +229,17 @@ function chartReadings(payload: AnalyticsMarketStateResponse, tr: (value: string
       subtitle: tr("Low concentration with weak return is churn; high concentration with a strong index is narrow leadership."),
       option: buildConcentrationOption(minuteSeries),
       rubric: makeRubric([
-        [tr("1. What this chart is measuring."), tr("Index return versus the share of contribution coming from the top ten names.")],
-        [tr("2. Why traders or analysts care about it."), tr("It reveals whether a move is broad or is being carried by a few heavyweights.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is IST time. Left Y-axis is return percent. Right Y-axis is top-10 concentration percent.")],
-        [tr("4. What a bullish reading looks like."), tr("Return improves without a concentration spike, meaning the move is broad.")],
-        [tr("5. What a bearish reading looks like."), tr("Concentration rises while return stays weak, meaning even leadership is not enough.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Concentration stays middling while return hovers around flat.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Rebalances, expiry, and one-off earnings shocks in heavyweights.")],
-        [tr("8. What todays reading says."), tr(`The day finished with concentration ${pct(session.top10ConcentrationPct, 1)} and intraday return ${pct(session.changePct, 2, true)}. That is dispersed churn, not a narrow-leadership rescue.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Breadth-up recovered to ${pct(session.breadthUpPct, 1)}, which fits dispersed movement instead of a few names dragging the index.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Weighted participation ${pct(session.weightedParticipationPct, 1)} still lagged, so heavyweights were not fully aligned even though concentration stayed low.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: low concentration is only bullish when price and participation improve with it.")]
+        [tr("Definition"), tr("Index return versus the share of contribution coming from the top ten names.")],
+        [tr("Context"), tr("It reveals whether a move is broad or is being carried by a few heavyweights.")],
+        [tr("Axes and units"), tr("X-axis is IST time. Left Y-axis is return percent. Right Y-axis is top-10 concentration percent.")],
+        [tr("Bullish"), tr("Return improves without a concentration spike, meaning the move is broad.")],
+        [tr("Bearish"), tr("Concentration rises while return stays weak, meaning even leadership is not enough.")],
+        [tr("Neutral"), tr("Concentration stays middling while return hovers around flat.")],
+        [tr("Limitations"), tr("Rebalances, expiry, and one-off earnings shocks in heavyweights.")],
+        [tr("Current reading"), tr(`The day finished with concentration ${pct(session.top10ConcentrationPct, 1)} and intraday return ${pct(session.changePct, 2, true)}. That is dispersed churn, not a narrow-leadership rescue.`)],
+        [tr("Confirmation"), tr(`Breadth-up recovered to ${pct(session.breadthUpPct, 1)}, which fits dispersed movement instead of a few names dragging the index.`)],
+        [tr("Contradictions"), tr(`Weighted participation ${pct(session.weightedParticipationPct, 1)} still lagged, so heavyweights were not fully aligned even though concentration stayed low.`)],
+        [tr("Interpretation"), tr("How to read: low concentration is only bullish when price and participation improve with it.")]
       ])
     },
     {
@@ -248,17 +248,17 @@ function chartReadings(payload: AnalyticsMarketStateResponse, tr: (value: string
       subtitle: tr("The path matters: stable trend, failed open, noisy repair, or repeated sign flips."),
       option: buildStateTimelineOption(minuteSeries),
       rubric: makeRubric([
-        [tr("1. What this chart is measuring."), tr("The dominant intraday state label minute by minute.")],
-        [tr("2. Why traders or analysts care about it."), tr("A strong close reached through stable acceptance is more trustworthy than one reached through repeated flips.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is IST time. Y-axis is categorical session state labels.")],
-        [tr("4. What a bullish reading looks like."), tr("One constructive state dominates most of the session with few regime flips.")],
-        [tr("5. What a bearish reading looks like."), tr("Weak states dominate and every repair attempt is rejected quickly.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("The state flips around and ends without stable directional acceptance.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Overweighting the final few minutes and ignoring the unstable path into them.")],
-        [tr("8. What todays reading says."), tr(`The day opened stressed, spent most of the session repairing, and closed near the high, but still kept enough instability for the dominant read to remain ${payload.verdict?.dominantState ?? "balanced / indecisive"}.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Session range ${pct(session.sessionRangePct, 2)}, gap filled ${session.gapFilled ? "yes" : "no"}, and failed open ${session.failedOpen ? "yes" : "no"} confirm the unstable repair.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Close-location ${pct(session.closeLocationPct, 1)} and breadth above VWAP ${pct(session.breadthAboveVwapPct, 1)} are stronger than you would expect from a fully indecisive close.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: judge the route into the close, not only the close itself.")]
+        [tr("Definition"), tr("The dominant intraday state label minute by minute.")],
+        [tr("Context"), tr("A strong close reached through stable acceptance is more trustworthy than one reached through repeated flips.")],
+        [tr("Axes and units"), tr("X-axis is IST time. Y-axis is categorical session state labels.")],
+        [tr("Bullish"), tr("One constructive state dominates most of the session with few regime flips.")],
+        [tr("Bearish"), tr("Weak states dominate and every repair attempt is rejected quickly.")],
+        [tr("Neutral"), tr("The state flips around and ends without stable directional acceptance.")],
+        [tr("Limitations"), tr("Overweighting the final few minutes and ignoring the unstable path into them.")],
+        [tr("Current reading"), tr(`The day opened stressed, spent most of the session repairing, and closed near the high, but still kept enough instability for the dominant read to remain ${payload.verdict?.dominantState ?? "balanced / indecisive"}.`)],
+        [tr("Confirmation"), tr(`Session range ${pct(session.sessionRangePct, 2)}, gap filled ${session.gapFilled ? "yes" : "no"}, and failed open ${session.failedOpen ? "yes" : "no"} confirm the unstable repair.`)],
+        [tr("Contradictions"), tr(`Close-location ${pct(session.closeLocationPct, 1)} and breadth above VWAP ${pct(session.breadthAboveVwapPct, 1)} are stronger than you would expect from a fully indecisive close.`)],
+        [tr("Interpretation"), tr("How to read: judge the route into the close, not only the close itself.")]
       ])
     },
     {
@@ -267,17 +267,17 @@ function chartReadings(payload: AnalyticsMarketStateResponse, tr: (value: string
       subtitle: tr("A repaired gap can still be only repair if follow-through and participation do not confirm it."),
       option: buildGapCloseOption(session, payload.analogs),
       rubric: makeRubric([
-        [tr("1. What this chart is measuring."), tr("Opening gap percent versus close-location percent within the day’s range.")],
-        [tr("2. Why traders or analysts care about it."), tr("It tells you whether the open was accepted or rejected by the close.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is gap percent vs previous close. Y-axis is close-location percent, where 100% is the day high.")],
-        [tr("4. What a bullish reading looks like."), tr("A negative gap repaired into a high-range close, or a positive gap that holds high.")],
-        [tr("5. What a bearish reading looks like."), tr("A positive gap that fails low, or a negative gap that expands lower and closes near the low.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("A filled gap with a mid-range close.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Short-covering gap fills that look bullish intraday but lack follow-through.")],
-        [tr("8. What todays reading says."), tr(`Today's point is ${pct(session.gapPct, 2, true)} gap and ${pct(session.closeLocationPct, 1)} close-location. That is a negative-gap repair ending in the high-close quadrant.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`Gap filled ${session.gapFilled ? "yes" : "no"} and breadth-up ${pct(session.breadthUpPct, 1)} both confirm that the opening weakness was rejected.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`Exact-state follow-through ${pct(exactStats?.nextDayFollowthroughPct, 1)} and average next-day move ${pct(exactStats?.avgNextDayChangePct, 2, true)} contradict treating the repair as automatic continuation.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: a repaired gap is informative, but participation and next-day follow-through decide whether it matters.")]
+        [tr("Definition"), tr("Opening gap percent versus close-location percent within the day’s range.")],
+        [tr("Context"), tr("It tells you whether the open was accepted or rejected by the close.")],
+        [tr("Axes and units"), tr("X-axis is gap percent vs previous close. Y-axis is close-location percent, where 100% is the day high.")],
+        [tr("Bullish"), tr("A negative gap repaired into a high-range close, or a positive gap that holds high.")],
+        [tr("Bearish"), tr("A positive gap that fails low, or a negative gap that expands lower and closes near the low.")],
+        [tr("Neutral"), tr("A filled gap with a mid-range close.")],
+        [tr("Limitations"), tr("Short-covering gap fills that look bullish intraday but lack follow-through.")],
+        [tr("Current reading"), tr(`Today's point is ${pct(session.gapPct, 2, true)} gap and ${pct(session.closeLocationPct, 1)} close-location. That is a negative-gap repair ending in the high-close quadrant.`)],
+        [tr("Confirmation"), tr(`Gap filled ${session.gapFilled ? "yes" : "no"} and breadth-up ${pct(session.breadthUpPct, 1)} both confirm that the opening weakness was rejected.`)],
+        [tr("Contradictions"), tr(`Exact-state follow-through ${pct(exactStats?.nextDayFollowthroughPct, 1)} and average next-day move ${pct(exactStats?.avgNextDayChangePct, 2, true)} contradict treating the repair as automatic continuation.`)],
+        [tr("Interpretation"), tr("How to read: a repaired gap is informative, but participation and next-day follow-through decide whether it matters.")]
       ])
     },
     {
@@ -286,17 +286,17 @@ function chartReadings(payload: AnalyticsMarketStateResponse, tr: (value: string
       subtitle: tr("Exact-state history keeps the current label honest before you chase continuation."),
       option: buildFollowThroughOption(payload.stateStats, session.primaryState),
       rubric: makeRubric([
-        [tr("1. What this chart is measuring."), tr("The stored next-session follow-through rate for each market state.")],
-        [tr("2. Why traders or analysts care about it."), tr("It turns a label into a base-rate question: continuation, fade, or reduced conviction.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is state label. Y-axis is next-session follow-through in percent.")],
-        [tr("4. What a bullish reading looks like."), tr("The current state has a positive next-session base rate and a meaningfully high follow-through percent.")],
-        [tr("5. What a bearish reading looks like."), tr("The current state has weak follow-through and negative average next-day change.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("The sample is too small or too mixed to carry much predictive weight.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Tiny samples and over-reliance on exact labels instead of the broader state family.")],
-        [tr("8. What todays reading says."), tr(`The exact state ${session.primaryState ?? "balanced"} has ${formatNumber(exactStats?.sessionCount ?? 0, { maximumFractionDigits: 0 })} sessions, ${pct(exactStats?.nextDayFollowthroughPct, 1)} follow-through, and ${pct(exactStats?.avgNextDayChangePct, 2, true)} average next-day move. That keeps the base rate cautious.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`India VIX ${pct(vixChange, 2, true)} and failed open ${session.failedOpen ? "yes" : "no"} both confirm a fade-first reading.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`The top family analog ${analogLabel(analogs[0])} and close-location ${pct(session.closeLocationPct, 1)} both argue the late repair still deserves respect.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: use exact-state history first, then widen to same-family analogs when the exact sample is thin.")]
+        [tr("Definition"), tr("The stored next-session follow-through rate for each market state.")],
+        [tr("Context"), tr("It turns a label into a base-rate question: continuation, fade, or reduced conviction.")],
+        [tr("Axes and units"), tr("X-axis is state label. Y-axis is next-session follow-through in percent.")],
+        [tr("Bullish"), tr("The current state has a positive next-session base rate and a meaningfully high follow-through percent.")],
+        [tr("Bearish"), tr("The current state has weak follow-through and negative average next-day change.")],
+        [tr("Neutral"), tr("The sample is too small or too mixed to carry much predictive weight.")],
+        [tr("Limitations"), tr("Tiny samples and over-reliance on exact labels instead of the broader state family.")],
+        [tr("Current reading"), tr(`The exact state ${session.primaryState ?? "balanced"} has ${formatNumber(exactStats?.sessionCount ?? 0, { maximumFractionDigits: 0 })} sessions, ${pct(exactStats?.nextDayFollowthroughPct, 1)} follow-through, and ${pct(exactStats?.avgNextDayChangePct, 2, true)} average next-day move. That keeps the base rate cautious.`)],
+        [tr("Confirmation"), tr(`India VIX ${pct(vixChange, 2, true)} and failed open ${session.failedOpen ? "yes" : "no"} both confirm a fade-first reading.`)],
+        [tr("Contradictions"), tr(`The top family analog ${analogLabel(analogs[0])} and close-location ${pct(session.closeLocationPct, 1)} both argue the late repair still deserves respect.`)],
+        [tr("Interpretation"), tr("How to read: use exact-state history first, then widen to same-family analogs when the exact sample is thin.")]
       ])
     }
   ];
@@ -427,10 +427,8 @@ export function AnalyticsMarketStatePage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title="Market State"
+        title="Market state"
         meta={`${tr("Trade date")} ${session.tradeDate ? formatDateIST(session.tradeDate) : "—"} • ${tr("Updated")} ${session.generatedAt ? formatDateIST(session.generatedAt, { includeTime: true }) : "—"}`}
-        subtitle={tr("Classify the session first, then separate breadth, participation, and concentration before trusting the index move.")}
-        learningPrompt={tr("This page answers one question: was today a broad trend, a narrow leadership push, a failed open, or just volatile chop with a strong close?")}
         sectionTabs={[...MARKET_SECTION_TABS]}
       />
 
@@ -658,9 +656,9 @@ export function AnalyticsMarketStatePage() {
       </section>
 
       <PageIntroAccordion
-        label={tr("How to use this page")}
+        label={tr("Methodology")}
         title={tr("Read breadth, participation, and concentration separately before trusting the index move.")}
-        body={tr("This page is intentionally redundant: the verdict tells you the headline state, the six charts test it from different angles, and the confirmation/contradiction sections stop you from over-reading one strong metric in isolation.")}
+        body={tr("Compare breadth, participation and concentration before assessing the session.")}
         items={[
           tr("Do not confuse an index rebound with a broad-market rebound. Weighted participation and breadth-above-VWAP must be read separately."),
           tr("A strong close after a weak open is not automatically bullish. Use follow-through history and India VIX context before you chase it."),

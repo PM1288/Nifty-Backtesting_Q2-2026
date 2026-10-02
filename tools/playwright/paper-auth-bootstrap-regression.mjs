@@ -44,7 +44,7 @@ try {
   });
 
   await page.goto(`${origin}/n50/paper-trading?prefetch=off`, { waitUntil: "networkidle", timeout: 60_000 });
-  await page.getByRole("heading", { name: "Paper Trading", exact: true }).waitFor({ timeout: 90_000 });
+  await page.getByRole("heading", { name: "Paper trading", exact: true }).waitFor({ timeout: 90_000 });
   check("paper request waits for session bootstrap", earlyPaperRequests === 0, `earlyRequests=${earlyPaperRequests}`);
   check("paper endpoint succeeds", paperResponses.length === 1 && paperResponses[0] === 200, JSON.stringify(paperResponses));
   check("no persistent 401 state", await page.getByText("Paper evaluation unavailable", { exact: true }).count() === 0, "error state rendered");

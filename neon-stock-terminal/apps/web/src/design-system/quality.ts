@@ -97,11 +97,11 @@ export function buildMarketQuoteQuality(input: {
     receiveTime: input.receiveTimestamp,
     dataThrough: input.quoteTimestamp ?? input.snapshotTimestamp,
     ageMs,
-    source: input.quoteTimestamp ? "Canonical quote stream" : fallbackAvailable ? "Overview snapshot" : undefined,
+    source: input.quoteTimestamp ? "Live prices" : fallbackAvailable ? "Overview snapshot" : undefined,
     sequence: input.sequence,
     gapDetected: input.gapDetected,
     message: input.gapDetected
-      ? "A stream sequence gap was detected; the canonical snapshot is being restored."
+      ? "Reconnecting. Prices may be delayed."
       : ageMs != null && ageMs > 120_000
         ? "Transport and quote freshness are reported separately. This quote is not current."
         : undefined

@@ -18,7 +18,7 @@ const DEFINITIONS: readonly ShortcutDefinition[] = [
   { id: "commands", keys: ["Ctrl/Cmd", "K"], scope: "global", label: "Search and commands", description: "Find dashboards, stocks, strategies, trades, runs and help." },
   { id: "page-search", keys: ["/"], scope: "global", label: "Focus page search", description: "Focus the current page's search or filter control." },
   { id: "go-today", keys: ["G", "T"], scope: "global", label: "Go to Today", description: "Open the live market canvas." },
-  { id: "go-markets", keys: ["G", "M"], scope: "global", label: "Go to Markets", description: "Open Market Story." },
+  { id: "go-markets", keys: ["G", "M"], scope: "global", label: "Go to Markets", description: "Open Market regime." },
   { id: "go-stocks", keys: ["G", "S"], scope: "global", label: "Go to Stocks", description: "Open Stock 360." },
   { id: "go-oiis", keys: ["G", "O"], scope: "global", label: "Go to OIIS Lab", description: "Open live selection." },
   { id: "go-paper", keys: ["G", "P"], scope: "global", label: "Go to Paper Trading", description: "Open the PAPER portfolio." },

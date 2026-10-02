@@ -336,11 +336,11 @@ export function TrendlyneSummaryPage() {
   );
   const summary = data?.summary ?? {};
   return (
-    <main className={styles.page}>
+    <section className={styles.page}>
       <header className={styles.hero}>
         <div>
           <span>THIRD-PARTY RESEARCH EVIDENCE · TRAILING SIX MONTHS</span>
-          <h1>Trendlyne Summary</h1>
+          <h1>Trendlyne summary</h1>
           <p>
             Track when recommendations opened, who issued them, target
             chronology and direction-normalised 5D and 30D reward versus pain.
@@ -707,6 +707,6 @@ export function TrendlyneSummaryPage() {
           profile={profiles.bySymbol.get(String(selected.symbol))}
         />
       ) : null}
-    </main>
+    </section>
   );
 }

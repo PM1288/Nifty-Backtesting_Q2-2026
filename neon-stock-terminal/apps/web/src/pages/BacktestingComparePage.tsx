@@ -56,14 +56,13 @@ export function BacktestingComparePage() {
     setSearchParams(next, { replace: true });
   };
 
-  if (!authReady || compare.isLoading) return <LoadingSkeletonCard title={tr("Compare Strategies")} lines={6} />;
-  if (compare.error || !compare.data) return <ErrorState title={tr("Compare Strategies is unavailable")} body={tr("The comparison snapshot could not be loaded.")} />;
+  if (!authReady || compare.isLoading) return <LoadingSkeletonCard title={tr("Compare strategies")} lines={6} />;
+  if (compare.error || !compare.data) return <ErrorState title={tr("Compare strategies is unavailable")} body={tr("The comparison snapshot could not be loaded.")} />;
 
   return (
     <div className={`${styles.page} ${styles.backtestingPage}`}>
       <BacktestingHeader
-        title={tr("Compare Strategies")}
-        subtitle={tr("These three strategies are intentionally different archetypes. Use this page to see which style worked where, not just which one made more money.")}
+        title={tr("Compare strategies")}
         testRunAt={compare.data.generatedAt}
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(compare.data.asOfDate) })}
       />
@@ -125,7 +124,7 @@ export function BacktestingComparePage() {
           <div className={styles.chartHeader}>
             <div>
               <h3 className={styles.panelTitle}>{tr("Normalized equity curves")}</h3>
-              <div className={styles.chartCaption}>{tr("What this chart shows: each strategy rebased to 100 so relative path and durability are easier to compare.")}</div>
+              <div className={styles.chartCaption}>{tr("each strategy rebased to 100 so relative path and durability are easier to compare.")}</div>
             </div>
           </div>
           <BacktestingMultiLineChart
@@ -269,7 +268,6 @@ export function BacktestingComparePage() {
 
       <DataTable
         title={tr("Regime comparison")}
-        subtitle={tr("This shows which archetype tends to fit which market condition under the selected capital lens.")}
         rows={regimeCompare.flatMap((row) => row.regimes.map((regime) => ({ strategy: tr(row.displayName), archetype: row.archetype, capitalMode: row.capitalMode, ...regime })))}
         maxHeight={420}
         columns={[

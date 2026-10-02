@@ -224,7 +224,7 @@ function buildChartReadings(payload: AnalyticsQualityResponse, tr: (value: strin
     .slice()
     .sort((left, right) => ((left.expectedCount ?? 0) - (left.actualCount ?? 0)) - ((right.expectedCount ?? 0) - (right.actualCount ?? 0)))[0] ?? null;
   const missingLedger = missingDateRows.find((row) => !row.present) ?? null;
-  const safeConfirm = safeModules[0] ?? "Options Structure";
+  const safeConfirm = safeModules[0] ?? "Options structure";
   const contradiction = hiddenModules[0] ?? downgradedModules[0] ?? "another module";
 
   return [
@@ -234,17 +234,17 @@ function buildChartReadings(payload: AnalyticsQualityResponse, tr: (value: strin
       subtitle: tr("The first chart answers whether the source moved recently, not whether the table merely contains old rows."),
       option: buildFreshnessOption(payload),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Per-source business-day lag and recent-row production across the core ingestion feeds.")],
-        [tr("2. Why traders or analysts care about it."), tr("A chart built on stale source dates can look complete while quietly describing an older market.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is source. Left Y-axis is lag in business sessions. Right Y-axis is recent rows loaded over the recent lookback.")],
-        [tr("4. What a bullish reading looks like."), tr("Most sources show zero-session lag and still produce recent rows.")],
-        [tr("5. What a bearish reading looks like."), tr("Multiple sources are two or more sessions behind or stale-but-nonempty.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Most sources are only one session behind, with enough rows to keep context but not enough for full trust.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Non-empty tables and recent load timestamps can hide the fact that the source-date itself did not advance.")],
-        [tr("8. What todays reading says."), tr(`${freshnessLead?.label ?? "One source"} is the weakest freshness link right now, with ${num(freshnessLead?.lagSessions, 0)} session lag and ${num(freshnessLead?.recentRows, 0)} recent rows.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`${safeConfirm} remains trustable, so the freshness problem is not universal across every module.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`${contradiction} is being downgraded or hidden, which proves freshness weakness is still active somewhere else on the platform.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: trust source-date freshness before you trust row counts or pretty recent load times.")]
+        [tr("Definition"), tr("Per-source business-day lag and recent-row production across the core ingestion feeds.")],
+        [tr("Context"), tr("A chart built on stale source dates can look complete while quietly describing an older market.")],
+        [tr("Axes and units"), tr("X-axis is source. Left Y-axis is lag in business sessions. Right Y-axis is recent rows loaded over the recent lookback.")],
+        [tr("Bullish"), tr("Most sources show zero-session lag and still produce recent rows.")],
+        [tr("Bearish"), tr("Multiple sources are two or more sessions behind or stale-but-nonempty.")],
+        [tr("Neutral"), tr("Most sources are only one session behind, with enough rows to keep context but not enough for full trust.")],
+        [tr("Limitations"), tr("Non-empty tables and recent load timestamps can hide the fact that the source-date itself did not advance.")],
+        [tr("Current reading"), tr(`${freshnessLead?.label ?? "One source"} is the weakest freshness link right now, with ${num(freshnessLead?.lagSessions, 0)} session lag and ${num(freshnessLead?.recentRows, 0)} recent rows.`)],
+        [tr("Confirmation"), tr(`${safeConfirm} remains trustable, so the freshness problem is not universal across every module.`)],
+        [tr("Contradictions"), tr(`${contradiction} is being downgraded or hidden, which proves freshness weakness is still active somewhere else on the platform.`)],
+        [tr("Interpretation"), tr("How to read: trust source-date freshness before you trust row counts or pretty recent load times.")]
       ])
     },
     {
@@ -253,17 +253,17 @@ function buildChartReadings(payload: AnalyticsQualityResponse, tr: (value: strin
       subtitle: tr("Coverage tells you whether a module saw the expected universe, not whether it generated an opinion."),
       option: buildCoverageOption(payload),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Expected-versus-actual constituent coverage for each analytical module.")],
-        [tr("2. Why traders or analysts care about it."), tr("Coverage gaps can create false breadth, false leadership, and false confidence even when the chart still renders.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is module. Y-axis is coverage ratio as a percent of expected instruments.")],
-        [tr("4. What a bullish reading looks like."), tr("Coverage stays near full expected universe, especially for state, leadership, and setup modules.")],
-        [tr("5. What a bearish reading looks like."), tr("Coverage breaks materially below full universe or drops to zero for critical modules.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Coverage is usable but not complete, which means conclusions should be framed as tentative.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("A module can still rank names or states when half the expected instruments are absent.")],
-        [tr("8. What todays reading says."), tr(`${worstCoverage?.label ?? "One module"} has the weakest usable coverage right now at ${pct(worstCoverage?.coverageRatio, 0, false)}.`)],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`${safeConfirm} is listed as safe, so complete coverage still exists in at least one family.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`${contradiction} is suppressed, showing that coverage and freshness are not uniformly healthy.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: a module with weak coverage can still publish numbers, but those numbers should lose authority immediately.")]
+        [tr("Definition"), tr("Expected-versus-actual constituent coverage for each analytical module.")],
+        [tr("Context"), tr("Coverage gaps can create false breadth, false leadership, and false confidence even when the chart still renders.")],
+        [tr("Axes and units"), tr("X-axis is module. Y-axis is coverage ratio as a percent of expected instruments.")],
+        [tr("Bullish"), tr("Coverage stays near full expected universe, especially for state, leadership, and setup modules.")],
+        [tr("Bearish"), tr("Coverage breaks materially below full universe or drops to zero for critical modules.")],
+        [tr("Neutral"), tr("Coverage is usable but not complete, which means conclusions should be framed as tentative.")],
+        [tr("Limitations"), tr("A module can still rank names or states when half the expected instruments are absent.")],
+        [tr("Current reading"), tr(`${worstCoverage?.label ?? "One module"} has the weakest usable coverage right now at ${pct(worstCoverage?.coverageRatio, 0, false)}.`)],
+        [tr("Confirmation"), tr(`${safeConfirm} is listed as safe, so complete coverage still exists in at least one family.`)],
+        [tr("Contradictions"), tr(`${contradiction} is suppressed, showing that coverage and freshness are not uniformly healthy.`)],
+        [tr("Interpretation"), tr("How to read: a module with weak coverage can still publish numbers, but those numbers should lose authority immediately.")]
       ])
     },
     {
@@ -272,17 +272,17 @@ function buildChartReadings(payload: AnalyticsQualityResponse, tr: (value: strin
       subtitle: tr("This chart isolates partial intraday sessions that can quietly distort state and stock-level charts."),
       option: buildMissingBarHeatmapOption(payload),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Which symbols finished the latest intraday session with fewer minute bars than the session maximum.")],
-        [tr("2. Why traders or analysts care about it."), tr("Missing bars can make a stock look cleaner, weaker, or more stable than it really was.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is trade date. Y-axis is symbol. Cell color shows missing-bar count in bars.")],
-        [tr("4. What a bullish reading looks like."), tr("Few or no symbols have missing bars on the latest session.")],
-        [tr("5. What a bearish reading looks like."), tr("Several symbols end the session with meaningful missing-bar gaps.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Only a handful of symbols are short by one bar, so the distortion is narrow but real.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("A chart can still look current even when the last one or two bars are missing for exactly the stocks you care about.")],
-        [tr("8. What todays reading says."), tr(biggestMissingBar ? `${biggestMissingBar.symbol} is the worst visible case with ${num(biggestMissingBar.missingBars, 0)} missing bars on ${biggestMissingBar.tradeDate}.` : "No missing-bar rows are currently flagged in the latest sample.")],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`${moduleRows.find((item) => item.moduleKey === "market-state")?.label ?? "Market State"} is downgraded when minute coverage is partial, so the suppression logic agrees with this chart.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`${safeConfirm} may still be safe because not every module depends on full minute-bar completeness.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: missing bars are not just an ops defect; they directly change the shape of market-state and leadership stories.")]
+        [tr("Definition"), tr("Which symbols finished the latest intraday session with fewer minute bars than the session maximum.")],
+        [tr("Context"), tr("Missing bars can make a stock look cleaner, weaker, or more stable than it really was.")],
+        [tr("Axes and units"), tr("X-axis is trade date. Y-axis is symbol. Cell color shows missing-bar count in bars.")],
+        [tr("Bullish"), tr("Few or no symbols have missing bars on the latest session.")],
+        [tr("Bearish"), tr("Several symbols end the session with meaningful missing-bar gaps.")],
+        [tr("Neutral"), tr("Only a handful of symbols are short by one bar, so the distortion is narrow but real.")],
+        [tr("Limitations"), tr("A chart can still look current even when the last one or two bars are missing for exactly the stocks you care about.")],
+        [tr("Current reading"), tr(biggestMissingBar ? `${biggestMissingBar.symbol} is the worst visible case with ${num(biggestMissingBar.missingBars, 0)} missing bars on ${biggestMissingBar.tradeDate}.` : "No missing-bar rows are currently flagged in the latest sample.")],
+        [tr("Confirmation"), tr(`${moduleRows.find((item) => item.moduleKey === "market-state")?.label ?? "Market state"} is downgraded when minute coverage is partial, so the suppression logic agrees with this chart.`)],
+        [tr("Contradictions"), tr(`${safeConfirm} may still be safe because not every module depends on full minute-bar completeness.`)],
+        [tr("Interpretation"), tr("How to read: missing bars are not just an ops defect; they directly change the shape of market-state and leadership stories.")]
       ])
     },
     {
@@ -291,17 +291,17 @@ function buildChartReadings(payload: AnalyticsQualityResponse, tr: (value: strin
       subtitle: tr("Healthy data systems do not just load data; they keep loading it consistently without silent breakage."),
       option: buildFailedJobsOption(payload),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Recent non-success job counts grouped by day and job name.")],
-        [tr("2. Why traders or analysts care about it."), tr("A delayed or failed pipeline can leave old market views on screen while appearing operationally alive.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is job date. Y-axis is count of failed or non-success job runs.")],
-        [tr("4. What a bullish reading looks like."), tr("The timeline stays empty or sparse, with failures isolated and quickly resolved.")],
-        [tr("5. What a bearish reading looks like."), tr("Repeated failures cluster in the same module family or continue across several sessions.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("There are occasional failures, but not enough to prove broad breakage on their own.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("A green health check can hide the fact that one downstream job is repeatedly failing while upstream jobs still succeed.")],
-        [tr("8. What todays reading says."), tr(failedJob ? `${clean(failedJob.jobName)} shows recent non-success runs on ${failedJob.jobDate}, so job health is not a clean slate.` : "The current 30-day failure timeline is empty, which is the cleanest possible operational read.")],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr("Latest quality checks and pipeline audit are shown below, so the job timeline is not the only health signal.")],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`${safeConfirm} may still be current even when another job family is unstable, so failures are not always platform-wide.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: a failed-jobs spike matters most when it lines up with a module you are about to trust.")]
+        [tr("Definition"), tr("Recent non-success job counts grouped by day and job name.")],
+        [tr("Context"), tr("A delayed or failed pipeline can leave old market views on screen while appearing operationally alive.")],
+        [tr("Axes and units"), tr("X-axis is job date. Y-axis is count of failed or non-success job runs.")],
+        [tr("Bullish"), tr("The timeline stays empty or sparse, with failures isolated and quickly resolved.")],
+        [tr("Bearish"), tr("Repeated failures cluster in the same module family or continue across several sessions.")],
+        [tr("Neutral"), tr("There are occasional failures, but not enough to prove broad breakage on their own.")],
+        [tr("Limitations"), tr("A green health check can hide the fact that one downstream job is repeatedly failing while upstream jobs still succeed.")],
+        [tr("Current reading"), tr(failedJob ? `${clean(failedJob.jobName)} shows recent non-success runs on ${failedJob.jobDate}, so job health is not a clean slate.` : "The current 30-day failure timeline is empty, which is the cleanest possible operational read.")],
+        [tr("Confirmation"), tr("Latest quality checks and pipeline audit are shown below, so the job timeline is not the only health signal.")],
+        [tr("Contradictions"), tr(`${safeConfirm} may still be current even when another job family is unstable, so failures are not always platform-wide.`)],
+        [tr("Interpretation"), tr("How to read: a failed-jobs spike matters most when it lines up with a module you are about to trust.")]
       ])
     },
     {
@@ -310,17 +310,17 @@ function buildChartReadings(payload: AnalyticsQualityResponse, tr: (value: strin
       subtitle: tr("This chart checks whether the platform saw the universe it claims to analyze."),
       option: buildExpectedVsSeenOption(payload),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Expected instrument counts against the actual seen counts for the core universe-driven modules.")],
-        [tr("2. Why traders or analysts care about it."), tr("Instrument mismatch between live and EOD universes can quietly break breadth, setups, and recommendations.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is module. Y-axis is instrument count.")],
-        [tr("4. What a bullish reading looks like."), tr("Actual seen instruments closely match the expected universe count.")],
-        [tr("5. What a bearish reading looks like."), tr("Actual counts lag meaningfully behind expected counts, especially in daily or intraday stock modules.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("Counts are only modestly short, which supports cautious but not blind trust.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("A model can still emit scores even when the live universe and the EOD universe are out of sync.")],
-        [tr("8. What todays reading says."), tr(mostIncomplete ? `${mostIncomplete.label} shows the largest expected-versus-seen gap right now at ${num(mostIncomplete.actualCount, 0)} seen against ${num(mostIncomplete.expectedCount, 0)} expected.` : "No instrument-count mismatch is visible in the current sample.")],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`${payload.summary.hiddenModuleCount} modules are already being hidden or suppressed, so the platform is reacting to these mismatches rather than ignoring them.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`${safeConfirm} demonstrates that some modules still maintain acceptable instrument alignment.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: if expected and seen instruments diverge, trust the count mismatch before you trust the derived analytics.")]
+        [tr("Definition"), tr("Expected instrument counts against the actual seen counts for the core universe-driven modules.")],
+        [tr("Context"), tr("Instrument mismatch between live and EOD universes can quietly break breadth, setups, and recommendations.")],
+        [tr("Axes and units"), tr("X-axis is module. Y-axis is instrument count.")],
+        [tr("Bullish"), tr("Actual seen instruments closely match the expected universe count.")],
+        [tr("Bearish"), tr("Actual counts lag meaningfully behind expected counts, especially in daily or intraday stock modules.")],
+        [tr("Neutral"), tr("Counts are only modestly short, which supports cautious but not blind trust.")],
+        [tr("Limitations"), tr("A model can still emit scores even when the live universe and the EOD universe are out of sync.")],
+        [tr("Current reading"), tr(mostIncomplete ? `${mostIncomplete.label} shows the largest expected-versus-seen gap right now at ${num(mostIncomplete.actualCount, 0)} seen against ${num(mostIncomplete.expectedCount, 0)} expected.` : "No instrument-count mismatch is visible in the current sample.")],
+        [tr("Confirmation"), tr(`${payload.summary.hiddenModuleCount} modules are already being hidden or suppressed, so the platform is reacting to these mismatches rather than ignoring them.`)],
+        [tr("Contradictions"), tr(`${safeConfirm} demonstrates that some modules still maintain acceptable instrument alignment.`)],
+        [tr("Interpretation"), tr("How to read: if expected and seen instruments diverge, trust the count mismatch before you trust the derived analytics.")]
       ])
     },
     {
@@ -329,17 +329,17 @@ function buildChartReadings(payload: AnalyticsQualityResponse, tr: (value: strin
       subtitle: tr("The ledger makes data gaps explicit so stale modules cannot pass as normal just because an older date still exists."),
       option: buildMissingDateLedgerOption(payload),
       rubric: rubric([
-        [tr("1. What this chart is measuring."), tr("Module-by-date presence across recent business sessions, marking which analytical families were present or missing.")],
-        [tr("2. Why traders or analysts care about it."), tr("A recent missing date is often more important than a long history of older data.")],
-        [tr("3. What the axes mean and what units are used."), tr("X-axis is trade date. Y-axis is analytical module. Cell state is binary: present or missing.")],
-        [tr("4. What a bullish reading looks like."), tr("Recent business dates show mostly present cells across the modules you depend on.")],
-        [tr("5. What a bearish reading looks like."), tr("Recent expected dates contain several missing cells, especially in the same family you are about to interpret.")],
-        [tr("6. What a neutral or indecisive reading looks like."), tr("A few modules are missing on a few dates, but the gaps are not broad enough to suppress the entire platform.")],
-        [tr("7. What can fool the reader or produce a false signal."), tr("Users often see an older last-available date and assume continuity, even when yesterday is missing entirely.")],
-        [tr("8. What todays reading says."), tr(missingLedger ? `${missingLedger.label} is explicitly missing on ${missingLedger.tradeDate}: ${missingLedger.reason}` : "The recent ledger is fully present, which is the strongest possible freshness confirmation.")],
-        [tr("9. What confirms this reading elsewhere on the dashboard."), tr(`${payload.summary.schemaBoundaryRisk} is already called out separately, so missing-date risk is being treated as part of trust, not hidden in ops logs.`)],
-        [tr("10. What contradicts this reading elsewhere on the dashboard."), tr(`${safeConfirm} remains safe, which means the platform still has usable modules even with some recent ledger gaps.`)],
-        [tr("11. One short teaching note beginning with \"How to read:\"."), tr("How to read: when a recent date is missing, downgrade the conclusion first and investigate the cause second.")]
+        [tr("Definition"), tr("Module-by-date presence across recent business sessions, marking which analytical families were present or missing.")],
+        [tr("Context"), tr("A recent missing date is often more important than a long history of older data.")],
+        [tr("Axes and units"), tr("X-axis is trade date. Y-axis is analytical module. Cell state is binary: present or missing.")],
+        [tr("Bullish"), tr("Recent business dates show mostly present cells across the modules you depend on.")],
+        [tr("Bearish"), tr("Recent expected dates contain several missing cells, especially in the same family you are about to interpret.")],
+        [tr("Neutral"), tr("A few modules are missing on a few dates, but the gaps are not broad enough to suppress the entire platform.")],
+        [tr("Limitations"), tr("Users often see an older last-available date and assume continuity, even when yesterday is missing entirely.")],
+        [tr("Current reading"), tr(missingLedger ? `${missingLedger.label} is explicitly missing on ${missingLedger.tradeDate}: ${missingLedger.reason}` : "The recent ledger is fully present, which is the strongest possible freshness confirmation.")],
+        [tr("Confirmation"), tr(`${payload.summary.schemaBoundaryRisk} is already called out separately, so missing-date risk is being treated as part of trust, not hidden in ops logs.`)],
+        [tr("Contradictions"), tr(`${safeConfirm} remains safe, which means the platform still has usable modules even with some recent ledger gaps.`)],
+        [tr("Interpretation"), tr("How to read: when a recent date is missing, downgrade the conclusion first and investigate the cause second.")]
       ])
     }
   ];
@@ -399,7 +399,7 @@ export function AnalyticsQualityPage() {
       <DataState
         kind="error"
         title={tr("The quality and freshness dashboard is unavailable")}
-        body={tr("The platform could not build the trust-first payload needed to suppress stale analytical modules.")}
+        body={tr("Data quality is unavailable. Try again.")}
       />
     );
   }
@@ -417,8 +417,6 @@ export function AnalyticsQualityPage() {
       <AnalyticsHeader
         title="Quality & Freshness"
         meta={`${tr("Expected trade date")} ${payload.expectedTradeDate ?? "—"} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}
-        subtitle={tr("Trust comes before interpretation. This page tells you which analytical modules are genuinely current, which ones need downgrade labels, and which ones should be hidden entirely.")}
-        learningPrompt={tr("No analysis should be consumed before this page answers whether the source is fresh, the universe is complete, and the schema boundary is still safe.")}
         sectionTabs={[...SYSTEM_SECTION_TABS]}
       />
 
@@ -437,7 +435,7 @@ export function AnalyticsQualityPage() {
           <p className={styles.smallPrint}>{tr("This is a trust gate, not a decorative ops page. Hidden modules should not be interpreted as if they were current.")}</p>
         </article>
         <article className={styles.noteCard}>
-          <span className={styles.eyebrow}>{tr("Schema boundary risk")}</span>
+          <span className={styles.eyebrow}>{tr("Report format compatibility")}</span>
           <p className={styles.sectionText}>{payload.schemaBoundary.message}</p>
           <div className={styles.metricChipRow}>
             <span className={styles.metricChip}>{tr("Latest pre")} {payload.schemaBoundary.latestPreDate ?? "—"}</span>
@@ -516,7 +514,7 @@ export function AnalyticsQualityPage() {
       <PageIntroAccordion
         label={tr("Why this matters")}
         title={tr("Freshness, coverage, and schema compatibility are part of the analysis, not separate from it.")}
-        body={tr("This page exists so the platform can suppress stale or partial modules before the user builds conviction from them.")}
+        body={tr("Stale and incomplete data is flagged.")}
         items={[
           tr("Never trust a non-empty table just because it is non-empty."),
           tr("Expected-versus-seen instrument checks matter as much as chart styling."),

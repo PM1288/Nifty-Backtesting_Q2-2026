@@ -107,6 +107,14 @@ try {
     await page.setViewportSize(viewport);
     await page.goto(`${baseUrl}/paper-trading`, { waitUntil: "domcontentloaded", timeout: 120_000 });
     await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).waitFor({ timeout: 120_000 });
+    if (viewport.width <= 1100) {
+      const headerFits = await page.getByRole("heading", { name: "Paper Trading Evidence Workbench" }).evaluate((heading) => {
+        const title = heading.getBoundingClientRect();
+        const facts = heading.closest("header").children[1].getBoundingClientRect();
+        return title.left >= 0 && title.right <= innerWidth && facts.top >= title.bottom;
+      });
+      if (!headerFits) throw new Error(`${viewport.width}: Paper header title overlaps facts or is clipped`);
+    }
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     if (overflow) throw new Error(`${viewport.width}x${viewport.height}: body overflow`);
     const file = `paper-workbench-v2-${viewport.width}x${viewport.height}.png`;
@@ -117,6 +125,16 @@ try {
   const evidence = { status: "PASS", asOf: payload.asOf, tradeCount: trades.length, reconciliation: { realisedNet: realised, openUnrealisedGross: open, higherTargetImpliesLowerTarget: true, inclusiveHorizonRule: true }, screenshots, exportPath };
   await fs.writeFile(path.join(outputDir, "regression-results.json"), JSON.stringify(evidence, null, 2));
   console.log(JSON.stringify(evidence, null, 2));
+} catch (error) {
+  for (const [index, page] of browser.contexts().flatMap((context) => context.pages()).entries()) {
+    await page.screenshot({ path: path.join(outputDir, `failure-${index}.png`), timeout: 10_000 }).catch(() => {});
+    await fs.writeFile(path.join(outputDir, `failure-${index}.json`), JSON.stringify({
+      path: new URL(page.url()).pathname,
+      title: await page.title(),
+      text: (await page.locator("body").innerText()).slice(0, 3000),
+    }, null, 2));
+  }
+  throw error;
 } finally {
   await browser.close();
 }

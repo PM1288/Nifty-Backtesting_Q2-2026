@@ -117,3 +117,18 @@
 :global([data-ui-compact-v5="true"]) .workbenchMetric > footer small { font-size:8.5px; }
 :global([data-ui-compact-v5="true"]) .accountingBadge { margin-top:2px; padding:1px 4px; font-size:8px; }
 :global([data-ui-compact-v5="true"]) .definitionPopover > summary { width:20px; height:20px; }
+
+/* Compact desktop density must not override the responsive stacking rules. */
+@media (max-width: 1100px) {
+  :global([data-ui-compact-v5="true"]) .workbenchHeader { flex-direction:column; align-items:stretch; gap:8px; padding:10px; }
+  :global([data-ui-compact-v5="true"]) .workbenchHeader > div:first-child { flex-wrap:wrap; }
+  :global([data-ui-compact-v5="true"]) .workbenchHeader h1 { white-space:normal; }
+  :global([data-ui-compact-v5="true"]) .headerFacts { flex-wrap:wrap; }
+  :global([data-ui-compact-v5="true"]) .headerFacts small { max-width:100%; }
+  :global([data-ui-compact-v5="true"]) .headerActions { margin-left:0; flex-wrap:wrap; }
+}
+@media (max-width: 720px) {
+  :global([data-ui-compact-v5="true"]) .subnav,
+  :global([data-ui-compact-v5="true"]) .contextBar { position:relative; top:auto; }
+  :global([data-ui-compact-v5="true"]) .headerActions button { min-height:36px; height:auto; }
+}

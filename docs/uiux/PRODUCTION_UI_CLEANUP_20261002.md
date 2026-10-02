@@ -141,7 +141,7 @@ Expanded public scans found 52 affected nodes across six screen/viewport finding
 small Home sector targets and low-contrast stock identity / paper tab metadata.
 The six-route profile also caught a non-focusable Scalper loading region.
 These were corrected with minimum target sizes, existing readable text colors
-and keyboard access. The 16-scan preview rerun has zero violations.
+and keyboard access. The preview rerun was clean. A subsequent public run caught five more Home risk-list targets after live data arrived; those now also meet the minimum target size. The final 16 public scans have zero violations.
 
 H30 historical chart endpoints return HTTP 404 at both supported URL prefixes.
 The UI now shows `Chart unavailable` with a meaningful chart caption instead of
@@ -157,3 +157,64 @@ The source sweep also removed the remaining self-referential indicator/heatmap
 introductions, database retry explanation and duplicate leaderboard heading.
 Methodology disclosures accept an optional introduction, so warnings and formula
 notes do not need filler prose. Source regression checks cover those exact remnants.
+
+
+## Final release receipt
+
+- Application commit: `65274892198d838ad942232665af39ad853b7639`, pushed to the
+  working branch and master before deployment.
+- Production: https://n50.nifty50today.co.in/n50
+- Entry asset: `index-CrD9StIe.js` (public version endpoint and routed asset verified).
+- Container: `trading-stack-novius2-n50-dashboard-1`, healthy, zero restarts.
+- Image: `sha256:17558638295d0444e36a4ea44df1d2f723101e39efbe50070c657e77d28fda79`.
+- Dashboard only redeployed; unrelated services and user research files preserved.
+- Last visual correction simplified Stock mix and legacy selection headings,
+  translated connection status into product language, and wrapped noncompact stock
+  filters on mobile without changing filter values or behavior.
+
+### Before and after
+
+| Check | Before | After |
+| --- | --- | --- |
+| Duplicate main landmarks | 21 route variants affected | One main on all 71 captured route/views |
+| Market overview initial visible words | 7,211 | 471; detailed observations available in disclosures |
+| Web regression tests | 286 passing | 291 passing |
+| API regression tests | 289 passing | 289 passing; backend unchanged |
+| Public accessibility scans | Contrast, keyboard and target-size findings | 16 scans, zero violations |
+| Frontend lint | 227 errors, 65 warnings | 226 errors, 65 warnings; existing debt retained visibly |
+
+The text count is a hierarchy/noise measurement, not a latency benchmark. No
+backend speedup or financial change is claimed in this UI-only release.
+
+### Verification results
+
+- Web tests: **291 pass**; API tests: **289 pass**.
+- Web/API typechecks and builds: **pass**; final dashboard production build: **pass**.
+- Canonical repository gate and `git diff --check`: **pass**.
+- Public full route audit: **71 route/view combinations × two viewport sizes**,
+  no page exceptions, no page-width overflow, one main landmark each (`after/`).
+- Final changed-copy captures: **8 routes × two viewport sizes**, same checks pass
+  (`release-copy/`); the slower legacy route also passed loaded desktop/mobile
+  review after 65 seconds (`release-legacy-settled/`).
+- Final release browser tests (`browser-accepted/`): **16 accessibility scans**,
+  **6 copy/error/keyboard disclosure checks**, **9 canonical workflow checks** pass.
+- Earlier release preservation suites: monthly/rolling ledger **14**, paper notifier
+  **17**, Home cards **5**, keyboard **4**, ambient-background **6** pass; Paper
+  Workbench six viewports, inspector/filter/export/financial reconciliation and
+  Scalper V2 70-second live-refresh checks pass.
+- Six-route public profile (`browser-final/`): no page exceptions, console errors
+  or accessibility violations on those sampled pages. H30 missing-resource failures
+  are separately documented above; this is not a claim that all remote assets exist.
+- Final evidence: `deploy-final.txt`, `release-receipt.json`, `browser-accepted/`,
+  `release-copy/`, `release-legacy-settled/`, `lint-final.txt`.
+
+### Remaining limitations
+
+1. Archived H30 chart files are absent server-side. The unavailable state is fixed;
+   restoring those files requires a separate data/runtime repair.
+2. Repository-wide lint is not clean; the remaining 226 errors / 65 warnings are
+   documented rather than suppressed or mixed into this UI-only change.
+3. Revised long-form translations use English fallback pending reviewed translations.
+4. Browser coverage includes major routes, responsive states and the listed critical
+   interactions; it is not exhaustive coverage of every role, locale or data condition.
+   Retained research, stale-data, execution and accounting warnings are intentional.

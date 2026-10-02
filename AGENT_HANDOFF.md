@@ -1,14 +1,18 @@
-## 2026-10-02 — Production UI cleanup
+## 2026-10-02 — Production UI cleanup deployed
 
-Canonical branch: `ui/production-copy-cleanup-20261002`, based on `c75b0a7`.
-Scope is frontend presentation only. Report: `docs/uiux/PRODUCTION_UI_CLEANUP_20261002.md`.
+Branch: `ui/production-copy-cleanup-20261002`, based on `c75b0a7`.
+Application release: `6527489`, pushed to master and deployed dashboard-only.
+Public asset: `index-CrD9StIe.js`; container healthy, zero restarts.
+Scope: UI presentation/copy only; trading calculations and execution rules unchanged.
+Report: `docs/uiux/PRODUCTION_UI_CLEANUP_20261002.md`.
 Web 291 / API 289 tests pass; builds, typechecks and canonical gate pass.
-Preservation: canonical 9, monthly/rolling 14, paper notifier 17, Home 5,
-Paper Workbench reconciliation + six viewports, Scalper V2 70-second refresh,
-keyboard 4 and UI copy/error checks 4 pass against the canonical preview with live APIs.
-Deploy only dashboard from pushed master. Retain the prior dashboard image under
-`ui-cleanup-rollback-20261002:n50-dashboard`. Final public capture evidence and
-release verification are recorded in the UI report after deployment.
+Public audit: 71 route/views at desktop/mobile; zero page exceptions/overflow,
+one main landmark each. Final public accessibility 16, UI copy/error 6, canonical 9 pass.
+Additional ledger, paper, Home, refresh and keyboard preservation evidence is in report.
+Rollback image: `ui-cleanup-rollback-20261002:n50-dashboard`.
+Remaining: archived H30 chart files unavailable, existing lint debt (226 errors/65
+warnings), English fallback for revised long translations. No warnings suppressed.
+Evidence: `/home/novius2/NIFTY50/evidence/ui-cleanup-20261002/`.
 Existing untracked OIIS reports and report generator belong to the user; left intact.
 
 # Agent Handoff — Phase 1 Data Foundation

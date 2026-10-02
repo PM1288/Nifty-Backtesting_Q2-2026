@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import {
   fetchAbsoluteFirstSessionDashboard,
   fetchAbsoluteMonthlyDashboard,
+  fetchAbsoluteMonthlyEvaluations,
+  fetchAbsoluteMonthlyEvaluation,
   fetchRollingMonthlyDashboard,
   fetchRollingWindowDashboard,
 } from "../lib/api";
@@ -735,9 +738,23 @@ function Inspector({
   row: EvidenceRow;
   onClose: () => void;
 }) {
-  const conditions = Array.isArray(row.raw.conditions)
-    ? row.raw.conditions
-    : Object.entries(row.raw.conditions ?? {}).map(([label, pass]) => ({
+  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const [detailError, setDetailError] = useState("");
+  const needsDetail = row.raw.details_loaded === false;
+  useEffect(() => {
+    setDetail(null);
+    setDetailError("");
+    if (!needsDetail) return;
+    const controller = new AbortController();
+    void fetchAbsoluteMonthlyEvaluation(row.id, controller.signal).then(setDetail).catch((error: unknown) => {
+      if (!controller.signal.aborted) setDetailError(error instanceof Error ? error.message : "Unable to load condition evidence.");
+    });
+    return () => controller.abort();
+  }, [needsDetail, row.id]);
+  const raw = detail ?? row.raw;
+  const conditions = Array.isArray(raw.conditions)
+    ? raw.conditions
+    : Object.entries(raw.conditions ?? {}).map(([label, pass]) => ({
         label,
         pass,
       }));
@@ -784,7 +801,9 @@ function Inspector({
       </div>
       <section>
         <h3>Entry conditions</h3>
-        {entryConditions.length ? (
+        {needsDetail && !detail ? (
+          <p role={detailError ? "alert" : "status"}>{detailError || "Loading condition evidence…"}</p>
+        ) : entryConditions.length ? (
           <ul className={styles.conditions}>
             {entryConditions.map((condition: any, index: number) => (
               <li
@@ -919,7 +938,16 @@ export function MonthlyStrategyPage() {
   const [month, setMonth] = useState("ALL");
   const [ema, setEma] = useState("ALL");
   const [selection, setSelection] = useState("SELECTED");
-  const [evaluationsLoading, setEvaluationsLoading] = useState(false);
+  const evaluationsQuery = useQuery({
+    queryKey: ["absolute-monthly-evaluations"],
+    queryFn: ({ signal }) => fetchAbsoluteMonthlyEvaluations(signal),
+    enabled: selection !== "SELECTED",
+    staleTime: 60_000,
+    gcTime: 300_000,
+    retry: 1,
+  });
+  const evaluationsLoading = evaluationsQuery.isFetching;
+  const closureEvaluations = evaluationsQuery.data?.evaluations ?? data.closureEvaluations;
   const [failureReason, setFailureReason] = useState("ALL");
   const [comparisonMembership, setComparisonMembership] =
     useState<MonthlyStrategyMembership | "ALL">("ALL");
@@ -968,7 +996,7 @@ export function MonthlyStrategyPage() {
           undefined,
           false,
         );
-        apply({ closure: closure.candidates, closureEvaluations: [] });
+        apply({ closure: closure.candidates });
       } catch (reason) {
         fail(reason);
       }
@@ -1017,38 +1045,6 @@ export function MonthlyStrategyPage() {
       active = false;
     };
   }, []);
-  useEffect(() => {
-    if (
-      selection === "SELECTED" ||
-      data.closureEvaluations.length > 0 ||
-      evaluationsLoading
-    )
-      return;
-    let active = true;
-    setEvaluationsLoading(true);
-    fetchAbsoluteMonthlyDashboard(undefined, undefined, true)
-      .then((closure) => {
-        if (active)
-          setData((current) => ({
-            ...current,
-            closureEvaluations: closure.evaluations ?? [],
-          }));
-      })
-      .catch((reason) => {
-        if (active)
-          setError((current) =>
-            [current, reason instanceof Error ? reason.message : String(reason)]
-              .filter(Boolean)
-              .join(" · "),
-          );
-      })
-      .finally(() => {
-        if (active) setEvaluationsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [data.closureEvaluations.length, selection]);
   const allRows = useMemo(
     () =>
       normalized(
@@ -1056,9 +1052,9 @@ export function MonthlyStrategyPage() {
         data.closure,
         data.open,
         data.first,
-        data.closureEvaluations,
+        closureEvaluations,
       ),
-    [data],
+    [data, closureEvaluations],
   );
   const years = useMemo(
     () =>
@@ -1146,10 +1142,10 @@ export function MonthlyStrategyPage() {
           <Link to="/strategy/rolling-monthly">Rolling 5/30/60</Link>
         </nav>
       </header>
-      {error ? (
-        <div className={styles.error}>
+      {error || evaluationsQuery.error ? (
+        <div className={styles.error} role="alert">
           <b>Some monthly evidence is unavailable</b>
-          <span>{error}</span>
+          <span>{[error, evaluationsQuery.error?.message].filter(Boolean).join(" · ")}</span>
         </div>
       ) : null}
       {loadingSources > 0 ? (
@@ -1372,7 +1368,7 @@ export function MonthlyStrategyPage() {
       </>
       )}
       {selected ? (
-        <Inspector row={selected} onClose={() => setSelected(null)} />
+        <Inspector key={selected.id} row={selected} onClose={() => setSelected(null)} />
       ) : null}
     </main>
   );
@@ -1643,7 +1639,7 @@ export function RollingWindowStrategyPage() {
         </>
       )}
       {selected ? (
-        <Inspector row={selected} onClose={() => setSelected(null)} />
+        <Inspector key={selected.id} row={selected} onClose={() => setSelected(null)} />
       ) : null}
     </main>
   );

@@ -7,7 +7,8 @@ const out=process.env.PLAYWRIGHT_OUTPUT_DIR;
 if(!out||!process.env.PLAYWRIGHT_ADMIN_PASSWORD)throw new Error('Protected credentials and output directory required');
 await fs.mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
-const result={delayedChunks:0,mainVisibleMs:0,errors:[]};
+const result={delayedChunks:0,mainVisibleMs:0,errors:[],responses:[]};
+let inspectedPage;
 try {
  const context=await browser.newContext({viewport:{width:1440,height:900}});
  const login=await context.request.post(base+'/auth/session/dev-login',{data:{identifier:'admin',password:process.env.PLAYWRIGHT_ADMIN_PASSWORD}});
@@ -16,7 +17,7 @@ try {
  // main renders: restoring a valid server session must not depend on the SDK.
  const pending=[];
  await context.route('**/assets/index.esm-*.js',async route=>{result.delayedChunks++;pending.push(route);});
- const page=await context.newPage();page.on('pageerror',e=>result.errors.push(e.message));
+ const page=await context.newPage();inspectedPage=page;page.on('response',r=>result.responses.push({path:new URL(r.url()).pathname,status:r.status()}));page.on('pageerror',e=>result.errors.push(e.message));
  const start=performance.now();await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.locator('main').waitFor({timeout:8000});
  result.mainVisibleMs=Math.round(performance.now()-start);
@@ -27,5 +28,5 @@ try {
  assert.deepEqual(result.errors,[]);
  await page.screenshot({path:path.join(out,'restored.png')});
  await context.close();
-}finally{await browser.close();await fs.writeFile(path.join(out,'result.json'),JSON.stringify(result,null,2));}
+}finally{if(inspectedPage&&!inspectedPage.isClosed()){await inspectedPage.screenshot({path:path.join(out,'diagnostic.png')});result.pageText=(await inspectedPage.locator('body').innerText()).slice(0,300);}await browser.close();await fs.writeFile(path.join(out,'result.json'),JSON.stringify(result,null,2));}
 console.log(JSON.stringify(result));

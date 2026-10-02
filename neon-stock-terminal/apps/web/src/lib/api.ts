@@ -911,6 +911,14 @@ export function fetchAbsoluteMonthlyDashboard(
   return getJson<AbsoluteMonthlyDashboard>(`/v1/rolling-monthly/absolute-months${suffix}`);
 }
 
+export function fetchAbsoluteMonthlyEvaluations(signal?: AbortSignal) {
+  return getJson<{ evaluations: Array<Record<string, unknown>> }>("/v1/rolling-monthly/absolute-evaluations", signal);
+}
+
+export function fetchAbsoluteMonthlyEvaluation(id: string, signal?: AbortSignal) {
+  return getJson<Record<string, unknown>>(`/v1/rolling-monthly/absolute-evaluations/${encodeURIComponent(id)}`, signal);
+}
+
 export function fetchAbsoluteMonthlyChart(candidateId: string) {
   return getJson<AbsoluteMonthlyChart>(
     `/v1/rolling-monthly/absolute-month-candidates/${encodeURIComponent(candidateId)}/chart`,

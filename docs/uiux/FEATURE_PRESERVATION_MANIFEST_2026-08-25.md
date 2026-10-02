@@ -1083,3 +1083,9 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
 - Corrected scalper pressed-state semantics, named keyboard-scroll regions and small contrast-token defects without redesigning the workspace.
 - Retained live WebSocket/source-age/reconnect behavior; removed unrelated navigation prefetch and eagerly loaded Firebase/landing code.
 - Evidence and release procedure: `docs/ENGINEERING_REMEDIATION_20261002.md`.
+
+### Verification follow-ups
+
+- Monthly all-stock populations and rejection reasons remain complete. Heavy condition traces are fetched when opening the evidence inspector; the original full API/export contract remains available.
+- Existing server sessions restore before Firebase downloads; required authentication still traps keyboard focus and cannot be dismissed with Escape.
+- Paper overview observed favourable value now uses its correct INR definition and currency precision. The separate per-trade thirty-session MFE percentage definition is preserved.

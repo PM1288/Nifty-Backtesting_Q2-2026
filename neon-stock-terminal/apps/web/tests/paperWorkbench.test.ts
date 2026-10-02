@@ -17,6 +17,9 @@ test("paper accounting registry distinguishes every required accounting class", 
   assert.equal(paperMetricById("intraday_max_profit")?.unit, "INR");
   assert.equal(paperMetricById("intraday_max_profit")?.precision, 2);
   assert.equal(paperMetricById("mfe_30d")?.unit, "PERCENT");
+  assert.equal(paperMetricById("observed_favourable_value")?.unit, "INR");
+  assert.equal(paperMetricById("observed_favourable_value")?.precision, 2);
+  assert.deepEqual(paperMetricById("observed_favourable_value")?.sourceFields, ["analytical_upside"]);
 });
 
 test("zero remains a real paper value while absent values remain missing", () => {

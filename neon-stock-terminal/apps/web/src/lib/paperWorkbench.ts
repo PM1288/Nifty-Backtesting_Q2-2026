@@ -41,6 +41,17 @@ export interface PaperMetricDefinition {
 const metric = (definition: PaperMetricDefinition) => definition;
 
 export const PAPER_METRIC_DEFINITIONS = {
+  observedFavourableValue: metric({
+    id: "observed_favourable_value", label: "Observed favourable value",
+    description: "Aggregate favourable observed path value across the displayed trades.",
+    plainLanguageMeaning: "Sum of each trade's best observed move scaled by its captured entry notional; this is not booked profit.",
+    formula: "SUM(max(0, entry_notional × mfe_30d_pct / 100))",
+    sourceFields: ["analytical_upside"], unit: "INR", precision: 2,
+    accountingClass: "OBSERVED", timeBasis: "Inclusive D0–D30 exchange sessions",
+    capitalBasis: "Captured entry notional for each trade", costBasis: "GROSS",
+    dataSource: "paper workspace projection",
+    caveats: ["Independent path maxima are not a simultaneously executable portfolio exit."],
+  }),
   bookedRealisedNet: metric({ id: "booked_realised_net", label: "Booked realised net", description: "Net execution profit or loss posted for governed exits.", plainLanguageMeaning: "Money already booked by closed paper fills after the modelled costs and tax provision.", formula: "SUM(position.realised_pnl)", sourceFields: ["realised_net_pnl", "summary.realised_pnl"], unit: "INR", precision: 2, accountingClass: "BOOKED", timeBasis: "Governed execution close", capitalBasis: "Captured execution quantity", costBasis: "NET", dataSource: "paper_trading.positions", policyVersion: "POSITION_AWARE_V2" }),
   realisedGross: metric({ id: "realised_gross", label: "Realised gross", description: "Booked execution result before costs and tax provision.", plainLanguageMeaning: "Closed-fill profit or loss before deductions.", formula: "SUM(pnl_ledger.amount WHERE entry_kind = REALISED_GROSS)", sourceFields: ["realised_gross_pnl"], unit: "INR", precision: 2, accountingClass: "BOOKED", timeBasis: "Governed execution close", capitalBasis: "Captured execution quantity", costBasis: "GROSS", dataSource: "paper_trading.pnl_ledger" }),
   openUnrealisedGross: metric({ id: "open_unrealised_gross", label: "Open unrealised gross", description: "Current gross mark-to-market for execution quantity that remains open.", plainLanguageMeaning: "What still-open paper positions would gain or lose at the latest accepted mark, before exit costs.", formula: "SUM(position.unrealised_pnl)", sourceFields: ["open_unrealised_gross_pnl", "summary.unrealised_pnl"], unit: "INR", precision: 2, accountingClass: "OPEN_ACTUAL", timeBasis: "Latest accepted market mark", capitalBasis: "Remaining execution quantity", costBasis: "GROSS", eligibilityRule: "remaining_quantity > 0 and a valid mark exists", dataSource: "paper_trading.positions" }),

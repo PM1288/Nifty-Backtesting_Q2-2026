@@ -41,7 +41,9 @@ try {
     `evaluations=${absolute.payload.evaluations?.length}`);
   check("absolute rejected evidence", absolute.payload.evaluations.some((row) => row.selection_status === "REJECTED" && row.rejection_reasons?.length), "no rejected row with reasons");
 
+  const summaryResponse = page.waitForResponse(response => response.url().includes("/v1/rolling-monthly/absolute-evaluations") && !/absolute-evaluations\//.test(response.url()));
   await page.getByLabel("Selection").selectOption("REJECTED");
+  check("compact rejection ledger API", (await summaryResponse).status() === 200);
   await page.getByRole("combobox", { name: /^Entry method/ }).selectOption("MONTHLY_CLOSURE");
   await page.waitForFunction(() => {
     const select = Array.from(document.querySelectorAll("label")).find((label) => label.textContent?.includes("Failure reason"))?.querySelector("select");
@@ -50,7 +52,9 @@ try {
   check("absolute reason filter", await page.getByLabel("Failure reason").locator("option").count() > 1, "reason options missing");
   await page.locator("tbody tr").first().waitFor();
   check("absolute rejected rows visible", await page.locator("tbody tr").count() > 0);
+  const evidenceResponse = page.waitForResponse(response => /absolute-evaluations\/[a-f0-9-]+/.test(response.url()));
   await page.locator("tbody tr").first().click();
+  check("full condition evidence loads on demand", (await evidenceResponse).status() === 200);
   await page.getByRole("heading", { name: "Why it was not selected" }).waitFor();
   await page.screenshot({ path: path.join(outputDir, "monthly-rejected-with-reasons.png"), fullPage: true });
   await page.getByRole("button", { name: "Close inspector", exact: true }).click();

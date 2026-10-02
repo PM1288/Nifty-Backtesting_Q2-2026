@@ -1074,3 +1074,12 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
 - Desktop and mobile containment checks prevent the outlook from overflowing
   its header slot. Morning View calculations, reports and navigation are
   unchanged.
+
+## 2026-10-02 Engineering remediation
+
+- Existing routes, financial calculations, strategy fields, stock identity, paper permissions and alerts remain authoritative.
+- Added authenticated streaming for legacy NSE read/export paths; callers use the existing secure session.
+- Added route error recovery, shared request deadlines/cancellation, keyboard skip link and modal focus restoration.
+- Corrected scalper pressed-state semantics, named keyboard-scroll regions and small contrast-token defects without redesigning the workspace.
+- Retained live WebSocket/source-age/reconnect behavior; removed unrelated navigation prefetch and eagerly loaded Firebase/landing code.
+- Evidence and release procedure: `docs/ENGINEERING_REMEDIATION_20261002.md`.

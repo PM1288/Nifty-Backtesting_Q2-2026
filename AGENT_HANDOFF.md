@@ -6888,3 +6888,7 @@ canonical preservation 9/9 passed after deployment. First realtime screenshot
 attempt timed out waiting for fonts; functional checks passed and the full rerun
 passed. Only collector recreated; DB/dashboard/NSE remain healthy. Evidence:
 `/home/novius2/NIFTY50/evidence/realtime-redeploy-20261002`.
+
+## 2026-10-02 Stack engineering remediation
+
+Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`; release only after pushed master. See `docs/ENGINEERING_REMEDIATION_20261002.md` for architecture, prioritized findings, exact validation/release procedure and limitations. Evidence: `/home/novius2/NIFTY50/evidence/engineering-20261002`. Authenticated NSE streaming, bounded caches/queues/subprocesses, request deadlines, UI accessibility/lazy loading, dependency and image security updates implemented. Preserve all unrelated untracked OIIS reports/tools. Final deployment evidence follows in the report.

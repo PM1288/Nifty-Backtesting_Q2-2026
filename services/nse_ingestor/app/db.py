@@ -192,6 +192,14 @@ def is_trading_day(conn: psycopg.Connection, job_date) -> bool:
     return bool(row[0])
 
 
+def has_completed_daily_source(conn: psycopg.Connection, source_trade_date) -> bool:
+    return conn.execute(
+        """SELECT 1 FROM nse.daily_job_run
+           WHERE source_trade_date=%s AND status IN ('SUCCESS','PARTIAL')
+           LIMIT 1""", (source_trade_date,),
+    ).fetchone() is not None
+
+
 def claim_daily_job(conn: psycopg.Connection, job_date, source_trade_date, scheduled_for) -> int | None:
     row = conn.execute(
         '''

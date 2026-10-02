@@ -20,7 +20,7 @@ def parse_clock(value: str) -> time:
     return time(hour, minute)
 
 
-def tick(now: datetime | None = None) -> str:
+def tick(now: datetime | None = None, *, notify: bool = True) -> str:
     settings = get_settings()
     tz = ZoneInfo(settings.timezone)
     current = now.astimezone(tz) if now else datetime.now(tz)
@@ -29,18 +29,20 @@ def tick(now: datetime | None = None) -> str:
 
     conn = db.connect(settings.database_url)
     try:
-        if not db.is_trading_day(conn, current.date()):
-            return "NOT_TRADING_DAY"
         locked = conn.execute("SELECT pg_try_advisory_lock(%s)", (SCHEDULER_LOCK,)).fetchone()[0]
         if not locked:
             return "LOCK_BUSY"
         try:
+            # EOD reports belong to the previous exchange session, even when
+            # today is a holiday/weekend. Dedupe by source session under the lock.
             source_date = db.resolve_previous_trading_day(conn, current.date())
+            if db.has_completed_daily_source(conn, source_date):
+                return "SOURCE_ALREADY_PROCESSED"
             scheduled_for = datetime.combine(current.date(), parse_clock(settings.schedule_time), tzinfo=tz)
             job_id = db.claim_daily_job(conn, current.date(), source_date, scheduled_for)
             if job_id is None:
                 return "ALREADY_CLAIMED"
-            execute_daily(conn, settings, load_report_catalog(settings.report_catalog_path), job_id, current.date(), source_date)
+            execute_daily(conn, settings, load_report_catalog(settings.report_catalog_path), job_id, current.date(), source_date, notify=notify)
             return "EXECUTED"
         finally:
             conn.execute("SELECT pg_advisory_unlock(%s)", (SCHEDULER_LOCK,))

@@ -36,14 +36,14 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def execute_daily(conn, settings, report_catalog, job_id: int | None, job_date, source_date) -> dict:
+def execute_daily(conn, settings, report_catalog, job_id: int | None, job_date, source_date, *, notify: bool = True) -> dict:
     run_id = create_ingest_run(conn, "daily", backfill_start=source_date, backfill_end=source_date)
     ing = Ingestor(conn, settings, report_catalog)
     try:
         metrics = ing.daily(run_id, source_date)
         status = "failed" if metrics["errors"] else ("partial" if metrics["missing_count"] else "success")
         finish_ingest_run(conn, run_id, status, metrics)
-        if metrics["missing_count"]:
+        if metrics["missing_count"] and notify:
             dedupe_key, payload = build_missing_files_event(job_date, source_date, run_id, metrics)
             from .db import enqueue_notification
             metrics["notification_enqueued"] = enqueue_notification(

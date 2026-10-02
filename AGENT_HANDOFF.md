@@ -6849,3 +6849,11 @@ Collector state flush is one second; PostgreSQL running limits aligned to commit
 See `docs/trading-analytics/REALTIME_INGESTION_REVIEW_20261002.md` for evidence,
 commands, limits and rollback. Holiday validation does not establish live-session
 throughput. Production release evidence follows after gates and deployment.
+
+Follow-up on 2026-10-02: live review found NSE's trading-day-only trigger delayed
+prior-session reports over holidays, and Monthly computations held read snapshots
+open for minutes. `fix/report-catchup-20261002` runs the report scheduler by the
+previous verified source session, deduplicates completed source sessions, exposes
+notification suppression for the one-off catch-up, and commits loaded analytical
+inputs before CPU evaluation. NSE 12/12 and Rolling 29/29 tests pass. Migration 064
+repairs only its own invalid concurrent indexes and uses a bounded longer lock wait.

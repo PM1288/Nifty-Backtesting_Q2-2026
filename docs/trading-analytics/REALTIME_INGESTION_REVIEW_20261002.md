@@ -65,7 +65,7 @@ docker exec -e N50_STORE_INTEGRATION=1 trading-stack-novius2-postgres-1 \
   /tmp/n50-store-realtime.test -test.run TestRealtimeStatePersistence -test.v
 ```
 
-NSE report downloads already use pooled HTTP connections, explicit connect/read timeouts, paced candidate requests, validated report signatures, size limits, checksums, and atomic staging. The three download-integrity tests passed in the existing NSE image with networking disabled. No bulk reingestion or external notification was triggered. Live DB inspection found the latest report source date was 2026-09-30 (14 loaded, 31 archived, 18 unavailable). The existing 07:55 scheduler runs on trading days only, so 1 October reports wait through the holiday/weekend for the next scheduled run. This separate EOD schedule is not a streaming source; unavailable reports are not counted as loaded.
+NSE report downloads already use pooled HTTP connections, explicit connect/read timeouts, paced candidate requests, validated report signatures, size limits, checksums, and atomic staging. The three download-integrity tests passed in the existing NSE image with networking disabled. No bulk reingestion or external notification was triggered. Live DB inspection found the latest report source date was 2026-09-30 (14 loaded, 31 archived, 18 unavailable). The old 07:55 scheduler skipped holidays, postponing 1 October reports. The follow-up repair runs against the previous verified source session on any calendar day and suppresses already processed source sessions under its existing advisory lock. A maintenance `tick(notify=False)` catches up without enqueuing external notifications. Unavailable reports are never counted as loaded; explicit manual daily ingestion remains available to retry them.
 
 Authenticated browser commands require `PLAYWRIGHT_ADMIN_PASSWORD` supplied through a protected process environment. Do not put it into commands, files or logs. Set `PLAYWRIGHT_BASE_URL=https://n50.nifty50today.co.in/n50` and `PLAYWRIGHT_ORIGIN=https://n50.nifty50today.co.in`.
 
@@ -99,7 +99,7 @@ bash scripts/deploy_n50_dashboard.sh
 curl --fail --silent http://127.0.0.1:18080/readyz
 ```
 
-For image rollback, retag each `before-realtime-20261002` image to its current Compose image tag and recreate **only** that service with `--no-deps --no-build`. Record the actual image tags in release evidence. The additional indexes can remain during rollback; they do not change data. If index removal is necessary, use `DROP INDEX CONCURRENTLY public.instrument_universe_live_equity_idx` and `DROP INDEX CONCURRENTLY public.instrument_universe_live_derivative_idx` outside a transaction. A failed concurrent build must be checked for `indisvalid=false` before retrying (IF NOT EXISTS alone does not repair invalid indexes).
+For image rollback, retag each `before-realtime-20261002` image to its current Compose image tag and recreate **only** that service with `--no-deps --no-build`. Record the actual image tags in release evidence. The additional indexes can remain during rollback; they do not change data. If index removal is necessary, use `DROP INDEX CONCURRENTLY public.instrument_universe_live_equity_idx` and `DROP INDEX CONCURRENTLY public.instrument_universe_live_derivative_idx` outside a transaction. The migration checks `indisvalid` and rebuilds only its own invalid indexes before retrying. It now allows a bounded 60-second lock wait because concurrent validation also waits for old read snapshots.
 
 The runtime resource adjustment can be reversed without restarting:
 
@@ -122,3 +122,27 @@ check used `PLAYWRIGHT_PREVIEW_MONTHLY_INSPECTOR=1` to preview the candidate dra
 CSS before deployment; it must be rerun without that flag after release. One repeat
 was needed because Docker's disposable Redis networking change caused a browser
 `ERR_NETWORK_CHANGED`; the final repeat passed without filtering that error.
+
+## Follow-up: holiday catch-up and analytical transactions
+
+The first two index attempts timed out while a monthly strategy connection was
+idle in a transaction during CPU evaluation. No source rows were changed. The
+follow-up releases fully materialized read snapshots before monthly/open/first-session/
+rolling-window evaluations and expiry-history CPU work. Persistence still uses its
+existing transaction; calculation inputs and strategy mathematics are unchanged.
+
+- NSE full unittest suite: **12 passed**, including holiday catch-up, source-session
+  deduplication and explicit suppression of notification enqueueing.
+- Rolling Monthly complete pytest suite: **29 passed**, including a regression
+  asserting that read transactions end before the long calculation starts.
+- Collector/dashboard deployed from pushed `c9bb42f`, both healthy, zero restarts.
+- `/readyz`: `status=ok`, `market_open=false`, `subscriptions_count=3000`.
+- Live state rows are transitioning from legacy receipt timestamps to verified
+  `rest_quote_exchange` timestamps on ordinary broker responses; old inactive
+  instruments are not rewritten or relabelled as fresh.
+
+The catch-up run is executed once from the pushed source before replacing the
+scheduler, using `from app.scheduler import tick; print(tick(notify=False))` in a
+one-off `nse_ingestor` container. It claims the durable daily job, so the new scheduler
+will not re-run the same source on startup. Existing notification delivery is neither
+invoked by the maintenance run nor reconfigured.

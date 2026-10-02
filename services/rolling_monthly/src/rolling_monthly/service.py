@@ -389,6 +389,7 @@ def execute_expiry_history(database_url: str, months: int = 6, config_path: str 
         # The canonical daily frame is immutable during one backfill. Loading it
         # once avoids repeating the same multi-source query for every month.
         preloaded_inputs = prepare_run_inputs(conn)
+        conn.commit()
         for scheduled in reversed(expiries):
             run, candidates = build_run(conn, config, config_hash, scheduled, preloaded_inputs)
             run_id = persist(conn, run, candidates, config, config_hash, update_heartbeat=False)
@@ -555,6 +556,9 @@ def execute_absolute_months(database_url: str, months: int = 36) -> dict[str, An
     first_month = last_month - max(0, months - 1)
     with psycopg.connect(database_url) as conn:
         frame, universe, sectors, sessions, source_end = _absolute_month_frame(conn, first_month.start_time.date())
+        # Inputs are fully materialized. Release the read snapshot before CPU
+        # work so vacuum and concurrent indexes need not wait for the backtest.
+        conn.commit()
         result = evaluate_absolute_months(
             frame, universe, sectors, sessions, str(first_month), str(last_month), source_end
         )
@@ -578,6 +582,9 @@ def execute_absolute_open_months(database_url: str, months: int = 36) -> dict[st
     first_month = last_month - max(0, months - 1)
     with psycopg.connect(database_url) as conn:
         frame, universe, sectors, sessions, source_end = _absolute_month_frame(conn, first_month.start_time.date())
+        # Inputs are fully materialized. Release the read snapshot before CPU
+        # work so vacuum and concurrent indexes need not wait for the backtest.
+        conn.commit()
         result = evaluate_absolute_open_months(
             frame, universe, sectors, sessions, str(first_month), str(last_month), source_end
         )
@@ -651,6 +658,9 @@ def execute_absolute_first_sessions(database_url: str, months: int = 36) -> dict
     first_month = last_month - max(0, months - 1)
     with psycopg.connect(database_url) as conn:
         frame, universe, sectors, sessions, source_end = _absolute_month_frame(conn, first_month.start_time.date())
+        # Inputs are fully materialized. Release the read snapshot before CPU
+        # work so vacuum and concurrent indexes need not wait for the backtest.
+        conn.commit()
         result = evaluate_absolute_first_sessions(
             frame, universe, sectors, sessions, str(first_month), str(last_month), source_end
         )
@@ -672,6 +682,7 @@ def execute_rolling_windows(database_url: str, years: int = 3) -> dict[str, Any]
     start = (pd.Timestamp(datetime.now(timezone.utc).date()) - pd.DateOffset(years=years, months=3)).date()
     with psycopg.connect(database_url) as conn:
         frame, universe, _sectors, _sessions, source_end = _absolute_month_frame(conn, start)
+        conn.commit()
         result = evaluate_rolling_windows(frame, universe, source_end, years)
         conn.execute("DELETE FROM rolling_monthly.rolling_window_candidate WHERE strategy_version=%s", (ROLLING_WINDOW_VERSION,))
         columns = [

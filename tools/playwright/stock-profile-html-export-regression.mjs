@@ -18,7 +18,7 @@ page.on("response", (response) => { if (response.status() >= 400 && response.url
 await page.goto(`${base}/paper-trading?section=factor-analysis`, { waitUntil: "domcontentloaded", timeout: 90_000 });
 await page.getByRole("button", { name: "Download interactive HTML" }).waitFor({ timeout: 90_000 });
 if (await page.getByLabel("Stock classification filters").count() !== 1) throw new Error("Paper stock filters missing");
-if (await page.getByText("Where this evidence is concentrated", { exact: true }).count() !== 1) throw new Error("Paper distribution missing");
+if (await page.getByText("Stock mix", { exact: true }).count() !== 1) throw new Error("Paper distribution missing");
 await page.screenshot({ path: path.join(output, "paper-factor-profile-filters-1920x1080.png"), fullPage: true });
 const downloadPromise = page.waitForEvent("download");
 await page.getByRole("button", { name: "Download interactive HTML" }).click();

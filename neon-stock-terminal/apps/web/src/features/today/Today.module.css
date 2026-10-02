@@ -155,3 +155,6 @@
 /* Keep dense rows usable by pointer and touch. */
 .sectorTable > button, .matrixTable > button { min-height: 24px; height: auto; }
 @media (pointer: coarse) { .sectorTable > button, .matrixTable > button { min-height: 36px; } }
+
+.riskStrip button { min-height: 24px; min-width: 24px; }
+@media (pointer: coarse) { .riskStrip button { min-height: 36px; } }

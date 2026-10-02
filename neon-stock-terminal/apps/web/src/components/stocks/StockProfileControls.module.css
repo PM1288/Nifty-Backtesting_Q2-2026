@@ -12,3 +12,11 @@
 .coverageDetails > div { position:absolute; z-index:40; top:calc(100% + 4px); right:0; display:grid; grid-template-columns:repeat(2,minmax(110px,1fr)); gap:4px; width:270px; padding:7px; border:1px solid #c5d2e2; border-radius:7px; background:#fff; box-shadow:0 10px 25px rgba(24,49,82,.16); }
 .coverageDetails span { color:#52627a; font-size:10.5px; white-space:nowrap; }
 .coverageDetails b { color:#17335d; font-variant-numeric:tabular-nums; }
+
+@media (max-width: 600px) {
+  .stickyFilters:not([data-compact="true"]) { position: static; flex-wrap: wrap; overflow: visible; }
+  .stickyFilters:not([data-compact="true"]) > strong { flex-basis: 100%; }
+  .stickyFilters:not([data-compact="true"]) label { flex: 1 1 140px; min-width: 0; }
+  .stickyFilters:not([data-compact="true"]) select { width: 100%; min-width: 0; }
+  .distribution header { flex-direction: column; gap: 4px; }
+}

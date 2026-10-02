@@ -36,7 +36,7 @@ export function qualityTone(state: ModuleQualityState): QualityTone {
 }
 
 export function qualitySummary(state: ModuleQualityState): string {
-  const transport = state.transport === "CONNECTED" ? "Transport connected" : state.transport === "RECONNECTING" ? "Transport reconnecting" : "Transport disconnected";
+  const transport = state.transport === "CONNECTED" ? "Connected" : state.transport === "RECONNECTING" ? "Reconnecting" : "Disconnected";
   const freshness = state.freshness === "CURRENT"
     ? state.ageMs == null ? "Data current" : `Data ${formatAge(state.ageMs)} old`
     : state.freshness === "DELAYED" ? "Data delayed"

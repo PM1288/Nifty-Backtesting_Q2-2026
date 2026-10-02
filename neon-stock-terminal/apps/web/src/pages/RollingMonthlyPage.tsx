@@ -676,7 +676,7 @@ export function RollingMonthlyPage() {
             Monthly
           </>
         }
-        title="Rolling Monthly"
+        title="Rolling monthly"
         context="Bullish LONG and bearish SHORT candidates from completed monthly, point-in-time weekly and daily evidence. This is independent from OIIS."
         quality={
           <SourceFreshness
@@ -808,7 +808,6 @@ export function RollingMonthlyPage() {
           <section className={styles.panel}>
             <div className={styles.sectionTitle}>
               <div>
-                <span>Current selection</span>
                 <h2>
                   {qualified.length
                     ? "Qualified candidates"
@@ -821,7 +820,7 @@ export function RollingMonthlyPage() {
                 </p>
               </div>
               <small>
-                Scores rank within a band; Boolean gate logic is authoritative.
+                Scores rank stocks within each band. All entry criteria must pass.
               </small>
             </div>
             {nearest.length ? (

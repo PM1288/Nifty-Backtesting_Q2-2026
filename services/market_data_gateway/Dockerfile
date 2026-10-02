@@ -9,7 +9,7 @@ WORKDIR /app
 RUN python -m venv "${VIRTUAL_ENV}"
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -U pip && pip install -r requirements.txt
+    pip install -U pip 'setuptools>=83.0.0' && pip install -r requirements.txt
 
 FROM python:3.11-slim AS runtime
 

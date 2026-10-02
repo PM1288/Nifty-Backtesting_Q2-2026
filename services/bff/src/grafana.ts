@@ -6,6 +6,8 @@ const TOKEN = process.env.GRAFANA_TOKEN;
 
 const client = axios.create({
     baseURL: BASE_URL,
+    timeout: 15_000,
+    maxRedirects: 0,
     headers: {
         Authorization: `Bearer ${TOKEN}`,
         'Content-Type': 'application/json',
@@ -14,7 +16,7 @@ const client = axios.create({
 });
 
 export const searchDashboards = async (query: string = '', folderIds?: string) => {
-    const params: any = {
+    const params: Record<string, string> = {
         query,
         type: 'dash-db'
     };
@@ -26,7 +28,7 @@ export const searchDashboards = async (query: string = '', folderIds?: string) =
 };
 
 export const getDashboard = async (uid: string) => {
-    const res = await client.get(`/api/dashboards/uid/${uid}`);
+    const res = await client.get(`/api/dashboards/uid/${encodeURIComponent(uid)}`);
     return res.data;
 };
 

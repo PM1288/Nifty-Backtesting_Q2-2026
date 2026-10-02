@@ -1,13 +1,14 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install --omit=dev
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY src ./src
 
 ENV NODE_ENV=production
 EXPOSE 18183
 
-CMD ["npm", "start"]
+USER node
+CMD ["node", "src/server.js"]

@@ -2,7 +2,8 @@ FROM python:3.12-slim AS builder
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1
 WORKDIR /build
 COPY pyproject.toml requirements.lock ./
-RUN python -m venv /venv && /venv/bin/pip install --no-cache-dir -r requirements.lock
+RUN python -m venv /venv && /venv/bin/pip install --no-cache-dir --upgrade pip \
+    && /venv/bin/pip install --no-cache-dir -r requirements.lock
 COPY src ./src
 RUN /venv/bin/pip install --no-cache-dir .
 

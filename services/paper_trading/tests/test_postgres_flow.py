@@ -143,7 +143,7 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
                 )
     monitor = Monitor(db, settings, "pytest-monitor")
     result = monitor.once()
-    assert result == {"fills": 1, "bars": 1, "stale": 0, "recovered": 0}
+    assert result == {"fills": 1, "bars": 1, "stale": 0, "recovered": 0, "open_marks": 0}
     with db.connection() as conn:
         statuses = conn.execute(
             "SELECT status,count(*) n FROM paper_trading.target_tracks GROUP BY status"

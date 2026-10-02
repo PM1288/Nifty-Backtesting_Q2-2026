@@ -1,6 +1,9 @@
-requests>=2.32.0
+requests>=2.33.0,<3
 pandas>=2.2.3
 psycopg[binary]>=3.2.6
 lxml>=5.3.0
 html5lib>=1.1
 beautifulsoup4>=4.13.0
+
+# Security floor for HTTP decompression and redirect fixes.
+urllib3>=2.8.0,<3

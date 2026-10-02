@@ -10,7 +10,7 @@ WORKDIR /app
 # Install Python dependencies
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir --upgrade pip \
+RUN pip install --no-cache-dir --upgrade pip 'setuptools>=83.0.0' \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code

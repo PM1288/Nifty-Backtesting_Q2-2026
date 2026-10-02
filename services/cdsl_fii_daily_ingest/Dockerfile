@@ -10,7 +10,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip 'setuptools>=83.0.0' && pip install -r requirements.txt
 
 COPY app ./app
 COPY scripts ./scripts

@@ -1,12 +1,16 @@
 """Run only against isolated retention_fixture PostgreSQL, never production."""
 import os
 import unittest
+from unittest.mock import patch
 from urllib.parse import urlparse
 from nse_intraday_intelligence.retention import cleanup, MINUTE_TABLES
 from nse_intraday_intelligence.db import get_conn
 
 class RetentionFixture(unittest.TestCase):
-    def test_gate_and_idempotency(self):
+    # Archival has separate tests. This fixture exercises the SQL deletion gate
+    # after that prerequisite has completed, against a disposable database only.
+    @patch("nse_intraday_intelligence.retention.archive_recent_sessions", return_value={"state": "COMPLETED"})
+    def test_gate_and_idempotency(self, _archive):
         self.assertEqual(urlparse(os.environ['PG_DSN']).path, '/retention_fixture')
         with get_conn() as conn:
             conn.execute('CREATE SCHEMA nse_intraday')

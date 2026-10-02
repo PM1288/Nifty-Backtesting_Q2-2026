@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import socket
-import subprocess
 import uuid
 from dataclasses import dataclass
 
 from .db import execute
+from .command_process import execute_command
 from .logging_utils import get_logger
 from .utils import now_utc
 
@@ -19,10 +19,6 @@ class CommandResult:
     stdout_tail: str
     stderr_tail: str
     duration_ms: int
-
-
-def _tail(text: str, limit: int = 8000) -> str:
-    return text[-limit:] if len(text) > limit else text
 
 
 def run_logged_command(job_key: str, command_text: str, trigger_type: str, timeout_sec: int) -> CommandResult:
@@ -43,61 +39,22 @@ def run_logged_command(job_key: str, command_text: str, trigger_type: str, timeo
     )
     started = now_utc()
     try:
-        proc = subprocess.run(
-            command_text,
-            shell=True,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout_sec,
-        )
-        finished = now_utc()
-        duration_ms = int((finished - started).total_seconds() * 1000)
-        status = "success" if proc.returncode == 0 else "failed"
-        stdout_tail = _tail(proc.stdout or "")
-        stderr_tail = _tail(proc.stderr or "")
-        execute(
-            """
-            update nse_ops.job_run
-            set status = %(status)s,
-                finished_at = now(),
-                duration_ms = %(duration_ms)s,
-                exit_code = %(exit_code)s,
-                stdout_tail = %(stdout_tail)s,
-                stderr_tail = %(stderr_tail)s
-            where run_id = %(run_id)s
-            """,
-            {
-                "run_id": run_id,
-                "status": status,
-                "duration_ms": duration_ms,
-                "exit_code": proc.returncode,
-                "stdout_tail": stdout_tail,
-                "stderr_tail": stderr_tail,
-            },
-        )
-        return CommandResult(run_id=run_id, exit_code=proc.returncode, stdout_tail=stdout_tail, stderr_tail=stderr_tail, duration_ms=duration_ms)
-    except subprocess.TimeoutExpired as exc:
-        finished = now_utc()
-        duration_ms = int((finished - started).total_seconds() * 1000)
-        stderr_tail = _tail((exc.stderr or "") + "\nTIMEOUT")
-        stdout_tail = _tail(exc.stdout or "")
-        execute(
-            """
-            update nse_ops.job_run
-            set status = 'timeout',
-                finished_at = now(),
-                duration_ms = %(duration_ms)s,
-                exit_code = -1,
-                stdout_tail = %(stdout_tail)s,
-                stderr_tail = %(stderr_tail)s
-            where run_id = %(run_id)s
-            """,
-            {
-                "run_id": run_id,
-                "duration_ms": duration_ms,
-                "stdout_tail": stdout_tail,
-                "stderr_tail": stderr_tail,
-            },
-        )
-        return CommandResult(run_id=run_id, exit_code=-1, stdout_tail=stdout_tail, stderr_tail=stderr_tail, duration_ms=duration_ms)
+        exit_code, stdout_tail, stderr_tail = execute_command(command_text, timeout_sec)
+    except OSError as exc:
+        # Record a failed run even when the operating system cannot start a child.
+        # Avoid persisting command arguments or environment values in exception text.
+        exit_code, stdout_tail, stderr_tail = 127, "", f"Process could not start (errno={exc.errno})"
+    duration_ms = int((now_utc() - started).total_seconds() * 1000)
+    status = "timeout" if exit_code == -1 else "success" if exit_code == 0 else "failed"
+    execute(
+        """
+        update nse_ops.job_run
+        set status = %(status)s, finished_at = now(), duration_ms = %(duration_ms)s,
+            exit_code = %(exit_code)s, stdout_tail = %(stdout_tail)s, stderr_tail = %(stderr_tail)s
+        where run_id = %(run_id)s
+        """,
+        {"run_id": run_id, "status": status, "duration_ms": duration_ms,
+         "exit_code": exit_code, "stdout_tail": stdout_tail, "stderr_tail": stderr_tail},
+    )
+    return CommandResult(run_id=run_id, exit_code=exit_code, stdout_tail=stdout_tail,
+                         stderr_tail=stderr_tail, duration_ms=duration_ms)

@@ -1,17 +1,16 @@
-FROM node:18-alpine
-
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
-
-COPY package.json ./
-# If package-lock exists copy it, but we are just starting so it might not
-# COPY package-lock.json ./
-
-RUN npm install
-
-COPY . .
-
-RUN npm run build
-
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build && npm prune --omit=dev --omit=optional
+FROM node:22-bookworm-slim
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/package.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+USER node
 EXPOSE 8080
-
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]

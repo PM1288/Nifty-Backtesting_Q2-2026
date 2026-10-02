@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import * as grafana from './grafana';
 import Redis from 'ioredis';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 // Type augmentation
 declare module 'fastify' {
@@ -18,6 +19,8 @@ const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET;
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const N8N_WEBHOOK_SECRET = process.env.N8N_WEBHOOK_SECRET;
+const LOGIN_USERNAME = process.env.BFF_LOGIN_USERNAME;
+const LOGIN_PASSWORD = process.env.BFF_LOGIN_PASSWORD;
 
 if (!JWT_SECRET) {
     throw new Error('JWT_SECRET is required.');
@@ -26,9 +29,14 @@ if (!JWT_SECRET) {
 if (!N8N_WEBHOOK_SECRET) {
     throw new Error('N8N_WEBHOOK_SECRET is required.');
 }
+if (!LOGIN_USERNAME || !LOGIN_PASSWORD || LOGIN_PASSWORD.length < 32) {
+    throw new Error('BFF_LOGIN_USERNAME and a BFF_LOGIN_PASSWORD of at least 32 characters are required.');
+}
+const loginDigest = createHash('sha256').update(`${LOGIN_USERNAME}\0${LOGIN_PASSWORD}`).digest();
 
 // Redis
-const redis = new Redis(REDIS_URL);
+const redis = new Redis(REDIS_URL, { enableOfflineQueue: false, maxRetriesPerRequest: 1, commandTimeout: 3000 });
+redis.on('error', () => fastify.log.warn('Redis cache unavailable'));
 
 // Plugins
 fastify.register(cors);
@@ -55,11 +63,14 @@ fastify.register(async (api, opts) => {
 
     // Auth Login
     api.post('/auth/login', async (req: any, reply) => {
-        // Mock Login: In real world, validate against a DB or LDAP
-        const { username, password } = req.body;
-        if (username === 'admin' && password === 'admin') { // Simple mock
-            const token = api.jwt.sign({ user: username });
-            return { accessToken: token, refreshToken: 'mock_refresh_token' };
+        const { username, password } = req.body ?? {};
+        if (typeof username !== 'string' || typeof password !== 'string') {
+            return reply.code(400).send({ error: 'Username and password are required' });
+        }
+        const digest = createHash('sha256').update(`${username}\0${password}`).digest();
+        if (timingSafeEqual(digest, loginDigest)) {
+            const token = api.jwt.sign({ user: username }, { expiresIn: '1h' });
+            return { accessToken: token, expiresIn: 3600 };
         }
         reply.code(401).send({ error: 'Invalid credentials' });
     });
@@ -71,8 +82,8 @@ fastify.register(async (api, opts) => {
             const data = await grafana.searchDashboards(query, folderUIDs);
             return data;
         } catch (e: any) {
-            req.log.error({ msg: "Request failed", err: e.message, response: e.response?.data, status: e.response?.status });
-            reply.code(500).send({ error: e.message, details: e.response?.data });
+            req.log.error({ msg: "Upstream request failed", status: e.response?.status });
+            reply.code(502).send({ error: "Upstream service is unavailable" });
         }
     });
 
@@ -85,8 +96,8 @@ fastify.register(async (api, opts) => {
             // For MVP, returning raw dashboard model + simplified one
             return dashboard;
         } catch (e: any) {
-            req.log.error({ msg: "Request failed", err: e.message, response: e.response?.data, status: e.response?.status });
-            reply.code(500).send({ error: e.message, details: e.response?.data });
+            req.log.error({ msg: "Upstream request failed", status: e.response?.status });
+            reply.code(502).send({ error: "Upstream service is unavailable" });
         }
     });
 
@@ -108,8 +119,8 @@ fastify.register(async (api, opts) => {
 
             return data;
         } catch (e: any) {
-            req.log.error({ msg: "Request failed", err: e.message, response: e.response?.data, status: e.response?.status });
-            reply.code(500).send({ error: e.message, details: e.response?.data });
+            req.log.error({ msg: "Upstream request failed", status: e.response?.status });
+            reply.code(502).send({ error: "Upstream service is unavailable" });
         }
     });
 

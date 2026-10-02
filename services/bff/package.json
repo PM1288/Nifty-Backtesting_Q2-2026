@@ -9,17 +9,26 @@
     "dev": "ts-node src/index.ts"
   },
   "dependencies": {
-    "fastify": "^4.24.3",
-    "@fastify/cors": "^8.4.1",
-    "@fastify/jwt": "^7.2.3",
+    "fastify": "^5.8.5",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/jwt": "^10.0.0",
     "axios": "^1.6.2",
     "ioredis": "^5.3.2",
-    "firebase-admin": "^11.11.1",
+    "firebase-admin": "14.5.0",
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "typescript": "^5.3.2",
     "@types/node": "^20.10.0",
     "ts-node": "^10.9.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.5",
+    "gaxios": {
+      "uuid": "11.1.1"
+    }
   }
 }

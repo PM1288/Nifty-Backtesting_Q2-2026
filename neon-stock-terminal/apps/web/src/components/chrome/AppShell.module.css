@@ -66,7 +66,7 @@
   --border-accent-strong: rgba(154, 105, 0, 0.48);
   --text-1: #10233f;
   --text-2: #334763;
-  --text-3: #62728a;
+  --text-3: #526078;
   --text-4: #7a889c;
   --shadow-1: 0 8px 28px rgba(25, 51, 81, 0.08);
   --shadow-2: 0 14px 40px rgba(25, 51, 81, 0.14);
@@ -357,3 +357,6 @@
 @media (max-width: 390px) {
   .brandMark { max-width: 44px; font-size: 11.5px; }
 }
+
+.skipLink { position: fixed; top: 8px; left: 8px; z-index: 10000; padding: 10px 16px; background: var(--color-surface, white); color: var(--color-text, #10233f); border: 2px solid currentColor; border-radius: 6px; transform: translateY(-180%); }
+.skipLink:focus { transform: translateY(0); }

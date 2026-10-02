@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM golang:1.22-alpine AS build
+FROM golang:1.26.8-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go build -o /out/maxpain ./cmd/maxpain && \
     go build -o /out/rsiwillr ./cmd/rsiwillr
 
-FROM alpine:3.20
+FROM alpine:3.23
 RUN apk add --no-cache ca-certificates tzdata
 RUN adduser -D -g '' appuser
 WORKDIR /app

@@ -1,21 +1,33 @@
 {
   "name": "neon-stock-terminal",
   "private": true,
-  "packageManager": "pnpm@9.12.0",
+  "packageManager": "npm@10.9.9",
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -n API,WEB -c auto \"corepack pnpm --filter @app/api dev\" \"corepack pnpm --filter @app/web dev\"",
-    "build": "corepack pnpm --filter @app/api build && corepack pnpm --filter @app/web build",
-    "lint": "corepack pnpm --filter @app/api lint && corepack pnpm --filter @app/web lint",
+    "dev": "concurrently -n API,WEB -c auto \"npm run dev --workspace=@app/api\" \"npm run dev --workspace=@app/web\"",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "format": "prettier -w .",
-    "typecheck": "corepack pnpm --filter @app/api typecheck && corepack pnpm --filter @app/web typecheck",
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "utm:generate": "node scripts/generate-utm.mjs",
-    "guard:camera": "node scripts/check-no-camera.mjs"
+    "guard:camera": "node scripts/check-no-camera.mjs",
+    "test": "npm test --workspaces --if-present",
+    "audit": "npm audit"
   },
   "devDependencies": {
     "concurrently": "^9.0.0",
     "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=22 <23",
+    "npm": ">=10"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.5",
+    "gaxios": {
+      "uuid": "11.1.1"
+    }
   }
 }

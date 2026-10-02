@@ -7,7 +7,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -51,7 +51,7 @@ services:
       - ./docs/source/ind_niftylargemidcap250list.csv:/app/nifty250_constituents.csv:ro
       - ./state:/app/state
     ports:
-      - "${COLLECTOR_PORT:-8080}:8080"
+      - "${COLLECTOR_BIND_ADDRESS:-127.0.0.1}:${COLLECTOR_PORT:-8080}:8080"
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
     restart: unless-stopped
@@ -470,8 +470,8 @@ services:
 
   nse-orchestrator:
     build:
-      context: .
-      dockerfile: ./services/nse_orchestration_exports/docker/Dockerfile
+      context: ./services
+      dockerfile: ./nse_orchestration_exports/docker/Dockerfile
     env_file: .env
     environment:
       TZ: Asia/Kolkata
@@ -506,8 +506,8 @@ services:
 
   nse-export-api:
     build:
-      context: .
-      dockerfile: ./services/nse_orchestration_exports/docker/Dockerfile
+      context: ./services
+      dockerfile: ./nse_orchestration_exports/docker/Dockerfile
     env_file: .env
     environment:
       TZ: Asia/Kolkata
@@ -592,7 +592,7 @@ services:
     volumes:
       - ./services/nse_intraday_intelligence/runtime/exports:/var/lib/nse/intraday_exports
     ports:
-      - "8092:8092"
+      - "127.0.0.1:8092:8092"
     restart: unless-stopped
     logging:
       driver: json-file
@@ -1193,7 +1193,7 @@ services:
     volumes:
       - nse_fii_reports_data:/app/data
     ports:
-      - "8001:8000"
+      - "127.0.0.1:8001:8000"
     restart: unless-stopped
     logging:
       driver: json-file

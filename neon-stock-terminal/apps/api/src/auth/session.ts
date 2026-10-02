@@ -61,7 +61,7 @@ function appendSetCookie(res: Response, cookie: string) {
   res.setHeader("Set-Cookie", [String(existing), cookie]);
 }
 
-function parseCookies(headerValue: string | string[] | undefined): Map<string, string> {
+export function parseCookies(headerValue: string | string[] | undefined): Map<string, string> {
   const map = new Map<string, string>();
   if (!headerValue) return map;
   const raw = Array.isArray(headerValue) ? headerValue.join(";") : headerValue;
@@ -73,7 +73,12 @@ function parseCookies(headerValue: string | string[] | undefined): Map<string, s
     const name = trimmed.slice(0, idx).trim();
     const value = trimmed.slice(idx + 1).trim();
     if (!name) continue;
-    map.set(name, decodeURIComponent(value));
+    try {
+      map.set(name, decodeURIComponent(value));
+    } catch {
+      // A malformed unrelated cookie must not turn every request into a 500.
+      continue;
+    }
   }
   return map;
 }

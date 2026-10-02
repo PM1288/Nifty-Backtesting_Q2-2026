@@ -37,8 +37,8 @@ neon-stock-terminal/
 
 ## Prerequisites
 
-- Node.js **>= 20**
-- pnpm **>= 9** (recommended)
+- Node.js **22 LTS**
+- npm **>= 10** (canonical lockfile: `package-lock.json`)
 - Docker (optional but recommended for local Postgres)
 
 ---
@@ -65,21 +65,21 @@ cp apps/web/.env.example apps/web/.env
 ### 3) Install deps
 
 ```bash
-pnpm install
+npm ci
 ```
 
 ### 4) Generate Prisma client + migrate + seed
 
 ```bash
-pnpm --filter @app/api prisma:generate
-pnpm --filter @app/api prisma:migrate
-pnpm --filter @app/api db:seed
+npm run --workspace=@app/api prisma:generate
+npm run --workspace=@app/api prisma:migrate
+npm run --workspace=@app/api db:seed
 ```
 
 ### 5) Run web + api
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 - Web: http://localhost:5173
@@ -150,3 +150,28 @@ If you want to swap effects, do it inside:
 ## License
 
 Internal / proprietary by default. Add a license if you intend to open-source.
+
+
+## Engineering validation
+
+Use Node 22 and npm 10+ (matching Docker). `package-lock.json` is the only
+JavaScript lockfile; the obsolete pnpm lockfile has been removed. Run `npm ci`,
+`npm run typecheck`, `npm test`, `npm run build`, `npm audit`, and `npm run lint`.
+ESLint uses `apps/api/eslint.config.mjs`; generated Storybook output is excluded.
+Existing source lint debt remains reported by `npm run lint`; no unsafe-type or
+React Hooks checks are disabled. The CI checks builds, types, tests and advisories.
+
+The root `scripts/verify/engineering-check.sh` runs the complete local sequence,
+including lint (which exits nonzero while existing debt remains). Go builds use
+1.26.8 and `govulncheck` 1.8.0. Python runtime audits must use the actual installed
+package inventory as well as requirements, since transitive versions vary.
+
+API reads use `src/lib/httpClient.ts`: include credentials, abort stale work,
+apply a deadline, validate JSON content type, and expose sanitized HTTP errors.
+React Query owns response caching. Prefetch only data a destination consumes.
+Routes are protected by the shared API session guard, including proxied exports.
+The private data proxy streams with backpressure and cancels disconnected clients.
+
+`useModalFocus` handles keyboard containment/restoration for dialogs. Route errors
+use `RouteErrorBoundary` and the existing `ErrorState` primitive, preserving shell
+navigation. Browser checks are required for changes to shared UI or route loading.

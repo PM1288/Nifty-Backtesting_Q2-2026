@@ -1,8 +1,9 @@
+import { RouteErrorBoundary } from "./components/ui/RouteErrorBoundary";
 import { Suspense, lazy } from "react";
 import { Route, Routes, Navigate, useParams } from "react-router-dom";
 import { AppShell } from "./components/chrome/AppShell";
 import { useI18n } from "./i18n/LocaleProvider";
-import { LandingPage } from "./pages/LandingPage";
+const LandingPage = lazy(async () => ({ default: (await import("./pages/LandingPage")).LandingPage }));
 import { NotFoundPage } from "./pages/NotFoundPage";
 import {
   preloadAnalyticsIndicatorsPage,
@@ -11,17 +12,14 @@ import {
   preloadAnalyticsLearnPage,
   preloadAnalyticsLeadershipPage,
   preloadAnalyticsFiiFlowPage,
-  preloadAnalyticsMarketStatePage,
   preloadAnalyticsOptionsPage,
   preloadAnalyticsOptionsStructurePage,
-  preloadAnalyticsStrategyEvaluationPage,
   preloadAnalyticsEventsPage,
   preloadAnalyticsFiiReportsPage,
   preloadAnalyticsOverviewPage,
   preloadAnalyticsQualityPage,
   preloadAnalyticsSystemMapPage,
   preloadAnalyticsRegimePage,
-  preloadAnalyticsSupportingMetricsPage,
   preloadAnalyticsSimulatorPage,
   preloadBacktestingComparePage,
   preloadBacktestingDailySummaryPage,
@@ -54,11 +52,9 @@ const AnalyticsLeadershipPage = lazy(async () => ({ default: (await preloadAnaly
 const AnalyticsSetupsPage = lazy(async () => ({ default: (await preloadAnalyticsDailySetupsPage()).AnalyticsSetupsPage }));
 const AnalyticsEventContextPage = lazy(async () => ({ default: (await preloadAnalyticsEventContextPage()).AnalyticsEventContextPage }));
 const AnalyticsFiiFlowPage = lazy(async () => ({ default: (await preloadAnalyticsFiiFlowPage()).AnalyticsFiiFlowPage }));
-const AnalyticsMarketStatePage = lazy(async () => ({ default: (await preloadAnalyticsMarketStatePage()).AnalyticsMarketStatePage }));
 const AnalyticsEventsPage = lazy(async () => ({ default: (await preloadAnalyticsEventsPage()).AnalyticsEventsPage }));
 const AnalyticsFiiReportsPage = lazy(async () => ({ default: (await preloadAnalyticsFiiReportsPage()).AnalyticsFiiReportsPage }));
 const AnalyticsFlowsPage = lazy(async () => ({ default: (await import("./pages/AnalyticsFlowsPage")).AnalyticsFlowsPage }));
-const AnalyticsSupportingMetricsPage = lazy(async () => ({ default: (await preloadAnalyticsSupportingMetricsPage()).AnalyticsSupportingMetricsPage }));
 const AnalyticsQualityPage = lazy(async () => ({ default: (await preloadAnalyticsQualityPage()).AnalyticsQualityPage }));
 const DataHealthPage = lazy(async () => ({ default: (await import("./pages/DataHealthPage")).DataHealthPage }));
 const PredictorPage = lazy(async () => ({ default: (await import("./pages/PredictorPage")).PredictorPage }));
@@ -71,7 +67,6 @@ const AnalyticsIndicatorsPage = lazy(async () => ({ default: (await preloadAnaly
 const AnalyticsStockPage = lazy(async () => ({ default: (await import("./pages/AnalyticsStockPage")).AnalyticsStockPage }));
 const AnalyticsOptionsStructurePage = lazy(async () => ({ default: (await preloadAnalyticsOptionsStructurePage()).AnalyticsOptionsStructurePage }));
 const AnalyticsOptionsPage = lazy(async () => ({ default: (await preloadAnalyticsOptionsPage()).AnalyticsOptionsPage }));
-const AnalyticsStrategyEvaluationPage = lazy(async () => ({ default: (await preloadAnalyticsStrategyEvaluationPage()).AnalyticsStrategyEvaluationPage }));
 const FeedbackPage = lazy(async () => ({ default: (await import("./pages/FeedbackPage")).FeedbackPage }));
 const BacktestingOverviewPage = lazy(async () => ({ default: (await preloadBacktestingOverviewPage()).BacktestingOverviewPage }));
 const BacktestingLabPage = lazy(async () => ({ default: (await preloadBacktestingLabPage()).BacktestingLabPage }));
@@ -112,7 +107,7 @@ const todayRevampEnabled = import.meta.env.VITE_TODAY_SUMMARY_DETAIL_V1 === "tru
 
 function RouteFallback() {
   const { t } = useI18n();
-  return <div className={styles.routeFallback}>{t("ui.loadingDashboard", "Preparing your workspace…")}</div>;
+  return <div role="status" aria-live="polite" aria-busy="true" className={styles.routeFallback}>{t("ui.loadingDashboard", "Preparing your workspace…")}</div>;
 }
 
 function LegacyStockRedirect() {
@@ -125,6 +120,7 @@ export default function App() {
   return (
     <ShortcutProvider>
       <AppShell>
+        <RouteErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={todayRevampEnabled ? <TodaySummaryPage /> : <LandingPage />} />
@@ -235,6 +231,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>
+        </RouteErrorBoundary>
       </AppShell>
     </ShortcutProvider>
   );

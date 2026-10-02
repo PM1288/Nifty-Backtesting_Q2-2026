@@ -27,9 +27,6 @@ if (typeof window !== "undefined") {
   applyFontMode(readFontMode());
   analytics.init();
   startAppVersionGuard();
-  window.addEventListener("contextmenu", (event) => {
-    event.preventDefault();
-  });
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

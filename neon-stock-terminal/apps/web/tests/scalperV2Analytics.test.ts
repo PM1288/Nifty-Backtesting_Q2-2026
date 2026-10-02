@@ -33,7 +33,7 @@ test("Scalper V2 compact side charts retain bounded hover evidence without chang
   const compact = scalperV2CompactSideOption(expanded);
   assert.notEqual(compact, expanded);
   assert.equal((compact.tooltip as Record<string, unknown>).show, true);
-  assert.equal((compact.tooltip as Record<string, unknown>).triggerOn, "mousemove|click");
+  assert.equal((compact.tooltip as Record<string, unknown>).triggerOn, "mousemove|click|mousewheel");
   assert.equal((compact.tooltip as Record<string, unknown>).confine, true);
   assert.deepEqual((compact.tooltip as Record<string, unknown>).padding, [2, 4]);
   assert.notEqual((expanded.tooltip as Record<string, unknown>).show, false);

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { BoundedCache } from "../lib/boundedCache";
 import type { IncomingMessage } from "http";
 import type { Request, RequestHandler, Response } from "express";
 import { SessionStore, type SessionRecord, type SessionStoreHealth, type SessionUser } from "./session";
@@ -23,7 +25,7 @@ type RequestLikeForLog = {
   ip?: string;
 };
 
-const tokenCache = new Map<string, CachedAuth>();
+const tokenCache = new BoundedCache<CachedAuth>(1024);
 
 export class RequestAuthError extends Error {
   status: number;
@@ -69,7 +71,8 @@ function firstNonEmpty(...values: Array<string | undefined | null>): string | nu
 
 async function verifyFirebaseToken(apiKey: string, token: string): Promise<SessionUser> {
   const now = Date.now();
-  const cached = tokenCache.get(token);
+  const cacheKey = createHash("sha256").update(token).digest("hex");
+  const cached = tokenCache.get(cacheKey);
   if (cached && cached.expiresAt > now + 10_000) {
     return cached.user;
   }
@@ -79,10 +82,16 @@ async function verifyFirebaseToken(apiKey: string, token: string): Promise<Sessi
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token })
+      body: JSON.stringify({ idToken: token }),
+      signal: AbortSignal.timeout(5_000)
     }
-  );
+  ).catch(() => {
+    throw new RequestAuthError(503, "AUTH_UNAVAILABLE", "Authentication service is temporarily unavailable.");
+  });
 
+  if (resp.status >= 500 || resp.status === 429) {
+    throw new RequestAuthError(503, "AUTH_UNAVAILABLE", "Authentication service is temporarily unavailable.");
+  }
   if (!resp.ok) {
     throw new RequestAuthError(401, "INVALID_TOKEN", "Authentication token is invalid.");
   }
@@ -102,7 +111,7 @@ async function verifyFirebaseToken(apiKey: string, token: string): Promise<Sessi
 
   const jwtExpiry = parseJwtExpiryMs(token);
   const cacheUntil = Math.max(now + 5_000, Math.min(jwtExpiry, now + 5 * 60_000));
-  tokenCache.set(token, { user: authUser, expiresAt: cacheUntil });
+  tokenCache.set(cacheKey, { user: authUser, expiresAt: cacheUntil }, cacheUntil);
   return authUser;
 }
 

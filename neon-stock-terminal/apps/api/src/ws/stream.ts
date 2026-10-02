@@ -48,9 +48,10 @@ type UpgradeAuthenticator = (req: http.IncomingMessage, url: URL) => Promise<Aut
 
 function getAuthErrorDetails(err: unknown): { status: number; code: string; message: string } {
   if (err && typeof err === "object") {
-    const maybeStatus = Number((err as any).status);
-    const maybeCode = (err as any).code;
-    const maybeMessage = (err as any).message;
+    const detail = err as Record<string, unknown>;
+    const maybeStatus = Number(detail.status);
+    const maybeCode = detail.code;
+    const maybeMessage = detail.message;
     if (Number.isFinite(maybeStatus) && maybeStatus >= 400 && maybeStatus < 600) {
       return {
         status: maybeStatus,

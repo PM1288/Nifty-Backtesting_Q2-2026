@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { registerDataProxy } from "./lib/dataProxy";
 import http from "http";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
@@ -124,14 +125,13 @@ const APP_CONTENT_SECURITY_POLICY = {
       "https://firebase.googleapis.com",
       "https://firebaseinstallations.googleapis.com",
       "https://www.google-analytics.com",
+      "https://www.google.com",
       "https://analytics.google.com",
       "https://www.google.co.in",
       "https://www.googletagmanager.com",
       "https://www.clarity.ms",
       "https://scripts.clarity.ms",
-      "https://d.clarity.ms",
-      "https://h.clarity.ms",
-      "https://t.clarity.ms",
+      "https://*.clarity.ms",
       "https://cloudflareinsights.com",
       "https://c.bing.com",
       "https://dc.services.visualstudio.com",
@@ -267,7 +267,9 @@ async function main() {
       const upstreamResponse = await fetch(upstreamUrl, {
         method: req.method,
         headers: proxyHeaders,
-        body
+        body,
+        signal: AbortSignal.timeout(15_000),
+        redirect: "error"
       });
       applyProxiedHeaders(res, upstreamResponse.headers);
       res.status(upstreamResponse.status);
@@ -290,52 +292,7 @@ async function main() {
     }
   });
 
-  app.use(async (req, res, next) => {
-    const isGetLike = req.method === "GET" || req.method === "HEAD";
-    if (!isGetLike) return next();
-
-    const targetBaseUrl = req.path.startsWith("/api/v1/intraday/")
-      ? intradayApiBaseUrl
-      : (
-          req.path.startsWith("/api/v1/dashboard/") ||
-          req.path.startsWith("/api/v1/watchlists") ||
-          req.path.startsWith("/api/v1/ops/") ||
-          req.path.startsWith("/api/v1/exports/")
-        )
-        ? exportApiBaseUrl
-        : null;
-
-    if (!targetBaseUrl) return next();
-
-    try {
-      const upstreamUrl = `${targetBaseUrl}${req.originalUrl}`;
-      const upstreamResponse = await fetch(upstreamUrl, {
-        method: req.method,
-        headers: {
-          Accept: req.get("accept") ?? "application/json",
-          "User-Agent": req.get("user-agent") ?? "n50-dashboard-proxy"
-        }
-      });
-      applyProxiedHeaders(res, upstreamResponse.headers);
-      res.status(upstreamResponse.status);
-
-      if (req.method === "HEAD") {
-        res.end();
-        return;
-      }
-
-      const buffer = Buffer.from(await upstreamResponse.arrayBuffer());
-      res.send(buffer);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Failed to proxy dashboard data request", {
-        path: req.originalUrl,
-        targetBaseUrl,
-        error
-      });
-      next(error);
-    }
-  });
+  registerDataProxy(app, auth.middleware, exportApiBaseUrl, intradayApiBaseUrl);
 
   await ensureDatabasePerformanceArtifacts(prisma);
   registerRoutes(app, prisma, auth.middleware, auth, paperPrisma);

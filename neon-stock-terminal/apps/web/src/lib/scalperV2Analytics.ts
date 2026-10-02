@@ -17,7 +17,7 @@ const PUT_BORDER = "#1d4ed8";
 const compactTooltip = (tooltip: EChartsOption["tooltip"]): EChartsOption["tooltip"] => ({
   ...(tooltip && typeof tooltip === "object" ? tooltip : {}),
   show: true,
-  triggerOn: "mousemove|click",
+  triggerOn: "mousemove|click|mousewheel",
   alwaysShowContent: false,
   confine: true,
   enterable: false,
@@ -91,7 +91,7 @@ export function scalperV2ExpandedOption(option: EChartsOption): EChartsOption {
     tooltip: {
       ...(option.tooltip && typeof option.tooltip === "object" ? option.tooltip : {}),
       show: true,
-      triggerOn: "mousemove|click",
+      triggerOn: "mousemove|click|mousewheel",
       confine: true,
       padding: [8, 10],
       textStyle: {

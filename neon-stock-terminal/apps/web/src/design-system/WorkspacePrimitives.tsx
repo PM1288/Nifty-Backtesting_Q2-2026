@@ -27,7 +27,7 @@ export function DataQualityBadge({ quality, compact = false, operationalLabel = 
   const label = operationalLabel
     ? operationalQualityLabel(tone)
     : compact ? quality.readiness.replaceAll("_", " ") : qualitySummary(quality);
-  return <span className={styles.qualityBadge} data-tone={tone} title={`${label}: ${quality.message}`} aria-label={iconOnly ? `${label}: ${quality.message}` : undefined}>
+  return <span role={iconOnly ? "img" : undefined} className={styles.qualityBadge} data-tone={tone} title={`${label}: ${quality.message}`} aria-label={iconOnly ? `${label}: ${quality.message}` : undefined}>
     <span className={styles.stateMark} aria-hidden="true">{tone === "positive" ? "✓" : tone === "negative" ? "!" : tone === "warning" ? "△" : "—"}</span>
     {iconOnly ? null : label}
   </span>;

@@ -1,3 +1,4 @@
+import { readJson, HttpError } from "./httpClient";
 import type {
   AnalyticsBoardBriefResponse,
   AnalyticsDashboardResponse,
@@ -165,125 +166,31 @@ function resolveApiPath(path: string): string {
   return path.startsWith("/api/v1/") ? path.replace("/api/v1/", "/v1/") : path;
 }
 
-export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const startedAt =
-    typeof performance !== "undefined" ? performance.now() : Date.now();
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-  };
-  const resolvedPath = resolveApiPath(path);
-
+async function readApiJson<T>(url: string, path: string, signal?: AbortSignal): Promise<T> {
+  const startedAt = performance.now();
   try {
-    const res = await fetch(`${API_BASE_URL}${resolvedPath}`, {
-      headers,
-      credentials: "include",
-      signal,
-    });
-    const durationMs = Math.round(
-      (typeof performance !== "undefined" ? performance.now() : Date.now()) -
-        startedAt,
-    );
-    if (!res.ok) {
-      if (
-        (res.status === 401 || res.status === 403) &&
-        typeof window !== "undefined"
-      ) {
-        window.dispatchEvent(
-          new CustomEvent("n50:auth-required", {
-            detail: { status: res.status, path },
-          }),
-        );
-      }
-      const text = await res.text();
-      void trackAnalyticsError({
-        type: "api_error",
-        severity: "warning",
-        path: resolvedPath,
-        http_status: res.status,
-        duration_ms: durationMs,
-        message: text.slice(0, 240),
-      });
-      throw new Error(`API ${res.status}: ${text}`);
-    }
-    if (durationMs >= 1200) {
-      void trackAnalyticsError({
-        type: "slow_api_request",
-        severity: "info",
-        path: resolvedPath,
-        duration_ms: durationMs,
-        http_status: res.status,
-      });
-    }
-    return (await res.json()) as T;
+    return await readJson<T>(url, signal);
   } catch (error) {
-    // Switching instruments/views cancels obsolete reads; it is not a source
-    // outage and must not generate an error alert or telemetry write.
     if (signal?.aborted) throw error;
-    void trackAnalyticsError({
-      type: "api_request_failed",
-      severity: "error",
-      path: resolvedPath,
-      duration_ms: Math.round(
-        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
-          startedAt,
-      ),
-      message: error instanceof Error ? error.message : String(error),
-    });
+    if (error instanceof HttpError && (error.status === 401 || error.status === 403)) {
+      window.dispatchEvent(new CustomEvent("n50:auth-required", { detail: { status: error.status, path } }));
+    }
+    // One event per failure, with sanitized errors rather than upstream payloads.
+    void trackAnalyticsError({ type: "api_request_failed", severity: "warning", path,
+      duration_ms: Math.round(performance.now() - startedAt),
+      http_status: error instanceof HttpError ? error.status : undefined,
+      message: error instanceof Error ? error.message : "Data request failed." });
     throw error;
   }
 }
 
-async function getRootJson<T>(path: string): Promise<T> {
-  const startedAt =
-    typeof performance !== "undefined" ? performance.now() : Date.now();
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-  };
+export function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const resolvedPath = resolveApiPath(path);
+  return readApiJson<T>(`${API_BASE_URL}${resolvedPath}`, resolvedPath, signal);
+}
 
-  try {
-    const res = await fetch(path, {
-      headers,
-      credentials: "include",
-    });
-    const durationMs = Math.round(
-      (typeof performance !== "undefined" ? performance.now() : Date.now()) -
-        startedAt,
-    );
-    if (!res.ok) {
-      const text = await res.text();
-      void trackAnalyticsError({
-        type: "api_error",
-        severity: "warning",
-        path,
-        http_status: res.status,
-        duration_ms: durationMs,
-        message: text.slice(0, 240),
-      });
-      throw new Error(`API ${res.status}: ${text}`);
-    }
-    if (durationMs >= 1200) {
-      void trackAnalyticsError({
-        type: "slow_api_request",
-        severity: "info",
-        path,
-        duration_ms: durationMs,
-        http_status: res.status,
-      });
-    }
-    return (await res.json()) as T;
-  } catch (error) {
-    void trackAnalyticsError({
-      type: "api_request_failed",
-      severity: "error",
-      path,
-      duration_ms: Math.round(
-        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
-          startedAt,
-      ),
-      message: error instanceof Error ? error.message : String(error),
-    });
-    throw error;
-  }
+function getRootJson<T>(path: string): Promise<T> {
+  return readApiJson<T>(path, path);
 }
 
 export type BacktestingLabParameterSpec = {

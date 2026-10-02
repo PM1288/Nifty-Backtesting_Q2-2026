@@ -150,6 +150,10 @@ export function getPublicMacroBriefSlug(): string | null {
 export function validateApiRuntimeEnv(): void {
   const missing: string[] = [];
 
+  if (isProductionEnv() && !isAuthRequired()) {
+    missing.push("AUTH_REQUIRED=1 in production");
+  }
+
   if (isAuthRequired() && !getFirebaseWebApiKey() && !isDevLocalAuthEnabled()) {
     missing.push("FIREBASE_WEB_API_KEY (or FIREBASE_API_KEY) when AUTH_REQUIRED=1");
   }

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  validateApiRuntimeEnv,
   allowApiRuntimePerformanceDdl,
   allowDevelopmentInMemoryRateLimitStore,
   allowDevelopmentInMemorySessionStore,
@@ -165,4 +166,10 @@ test("public macro brief slug falls back to the default random slug", () =>
 test("public macro brief slug reads from runtime environment", () =>
   withEnv({ N50_PUBLIC_MACRO_BRIEF_SLUG: "paragmore-custom-macro-slug" }, () => {
     assert.equal(getPublicMacroBriefSlug(), "paragmore-custom-macro-slug");
+  }));
+
+
+test("production cannot silently disable authentication", () =>
+  withEnv({ NODE_ENV: "production", AUTH_REQUIRED: "0" }, () => {
+    assert.throws(() => validateApiRuntimeEnv(), /AUTH_REQUIRED=1 in production/);
   }));

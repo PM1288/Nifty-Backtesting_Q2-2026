@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useModalFocus } from "../../lib/useModalFocus";
+import { useState } from "react";
 import { trackWidgetExpanded } from "../../analytics/events";
 import { useI18n } from "../../i18n/LocaleProvider";
 import styles from "./FooterDisclaimer.module.css";
@@ -6,6 +7,7 @@ import styles from "./FooterDisclaimer.module.css";
 export function FooterDisclaimer() {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
+  const modalRef = useModalFocus(open, () => setOpen(false));
 
   const openDisclaimer = () => {
     void trackWidgetExpanded({
@@ -15,14 +17,6 @@ export function FooterDisclaimer() {
     setOpen(true);
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
 
   return (
     <>
@@ -46,7 +40,7 @@ export function FooterDisclaimer() {
         <div className={styles.modalLayer} role="presentation">
           <button type="button" className={styles.backdrop} aria-label={t("ui.close", "Close")} onClick={() => setOpen(false)} />
 
-          <section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="education-disclaimer-title">
+          <div ref={modalRef} tabIndex={-1} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="education-disclaimer-title">
             <div className={styles.modalHeader}>
               <div className={styles.modalCopy}>
                 <span className={styles.warning}>{t("disclaimer.modalEyebrow", "Education only")}</span>
@@ -94,7 +88,7 @@ export function FooterDisclaimer() {
                 </section>
               </div>
             </div>
-          </section>
+          </div>
         </div>
       ) : null}
     </>

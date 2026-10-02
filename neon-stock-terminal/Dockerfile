@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM node:22-bookworm AS deps
+FROM node:22-trixie AS deps
 
 WORKDIR /app
 
@@ -51,10 +51,18 @@ RUN npm run prisma:generate --workspace=@app/api \
   && npm run build --workspace=@app/web \
   && rm -rf apps/api/web-dist \
   && mkdir -p apps/api/web-dist \
-  && cp -r apps/web/dist/. apps/api/web-dist/ \
-  && npm prune --omit=dev --workspaces --include-workspace-root
+  && cp -r apps/web/dist/. apps/api/web-dist/
 
-FROM node:22-bookworm-slim AS runtime
+# A fresh API-only install avoids retaining frontend dependencies from the builder.
+FROM node:22-trixie-slim AS production-deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/package.json
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --omit=optional --workspace=@app/api --include-workspace-root --no-audit --no-fund \
+    && mkdir -p apps/api/node_modules
+
+FROM node:22-trixie-slim AS runtime
 
 WORKDIR /app
 
@@ -62,19 +70,25 @@ ENV NODE_ENV=production
 ENV PORT=18184
 ENV SERVE_CLIENT=1
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     ca-certificates \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
-COPY apps/web/package.json apps/web/package.json
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=production-deps /app/node_modules ./node_modules
+COPY --from=production-deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/apps/api/web-dist ./apps/api/web-dist
+
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
+USER node
 
 EXPOSE 18184
 

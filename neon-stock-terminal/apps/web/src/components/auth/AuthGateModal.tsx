@@ -1,5 +1,6 @@
+import { useModalFocus } from "../../lib/useModalFocus";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { FirebaseError } from "firebase/app";
+import { isFirebaseError } from "../../lib/firebaseError";
 import { useLocation } from "react-router-dom";
 import { useI18n } from "../../i18n/LocaleProvider";
 import { useAuthGate } from "../../auth/AuthGateProvider";
@@ -30,7 +31,7 @@ function writeVerificationCooldownUntil(timestamp: number) {
 }
 
 function getAuthErrorMessage(error: unknown, mode: Mode, tr: (value: string) => string, context: ErrorContext = "auth") {
-  if (!(error instanceof FirebaseError)) {
+  if (!(isFirebaseError(error))) {
     return error instanceof Error ? error.message : tr("Authentication failed. Please try again.");
   }
 
@@ -67,7 +68,7 @@ function getAuthErrorMessage(error: unknown, mode: Mode, tr: (value: string) => 
 }
 
 function getAuthErrorCode(error: unknown) {
-  if (error instanceof FirebaseError) return error.code;
+  if (isFirebaseError(error)) return error.code;
   if (error instanceof Error) return error.name || "Error";
   return "unknown";
 }
@@ -94,6 +95,7 @@ export function AuthGateModal() {
     refreshVerificationStatus,
     trackAction
   } = useAuthGate();
+  const modalRef = useModalFocus(gateVisible, canDismissGate ? dismissGate : undefined);
   const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -253,7 +255,7 @@ export function AuthGateModal() {
   if (!gateVisible) return null;
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="auth-gate-title" data-clarity-mask="true">
+    <div ref={modalRef} tabIndex={-1} className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="auth-gate-title" data-clarity-mask="true">
       <div className={styles.modal} data-clarity-mask="true">
         <h2 id="auth-gate-title" className={styles.title}>
           {heading}

@@ -246,7 +246,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (scalperPopout) {
     return <div className={styles.popoutShell} data-ui-generation="trading-v2" data-scalper-popout="true">
       <NavigationStateManager />
-      <main className={styles.popoutMain}>{children}</main>
+      <a className={styles.skipLink} href="#main-content">{tr("Skip to content")}</a>
+      <main id="main-content" tabIndex={-1} className={styles.popoutMain}>{children}</main>
       <PaperTradeNotifier enabled={sessionEnabled} audible={paperVoiceEnabled} />
       <AuthGateModal />
     </div>;
@@ -262,6 +263,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       data-admin-shell={isAdminRoute ? "true" : "false"}
       data-presentation-mode={presentationMode ? "true" : "false"}
     >
+      <a className={styles.skipLink} href="#main-content">{tr("Skip to content")}</a>
       <NavigationStateManager />
       <MarketGradientWaves changePct={niftyChangePct} rsi={niftyRsi} />
       <MarketRsiParticles rsi={niftyRsi} />
@@ -349,7 +351,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 })}
               </nav>
             ) : null}
-            <main className={styles.main}>{children}</main>
+            <main id="main-content" tabIndex={-1} className={styles.main}>{children}</main>
           </div>
         </div>
       </div>

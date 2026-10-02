@@ -8,3 +8,6 @@ docs
 .env
 .env.*
 coverage
+
+**/storybook-static
+**/coverage

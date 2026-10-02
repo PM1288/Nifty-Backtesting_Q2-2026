@@ -43,13 +43,16 @@ export function resolveRedisStoreMode({
 }
 
 function defaultClientFactory(url: string): RedisClientType {
-  return createClient({
+  const client: RedisClientType = createClient({
     url,
+    disableOfflineQueue: true,
+    commandsQueueMaxLength: 256,
     socket: {
       connectTimeout: 5_000,
       reconnectStrategy: false
     }
   });
+  return client.withCommandOptions({ timeout: 3_000 });
 }
 
 export class RedisBackedStoreDependency {

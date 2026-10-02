@@ -677,7 +677,8 @@ function createRoutePrefetchTasks(pathname: string, tokenVersion: number, queryC
     ];
   }
 
-  return coreTasks;
+  // Unrelated workspaces do not consume the generic dashboard summary.
+  return [];
 }
 
 export function useDashboardPrefetch(enabled: boolean) {

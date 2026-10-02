@@ -28,12 +28,6 @@ export default defineConfig({
             return "vendor-echarts";
           }
           if (normalizedId.includes("/node_modules/zrender/")) return "vendor-zrender";
-          if (
-            normalizedId.includes("/node_modules/firebase/") ||
-            normalizedId.includes("/node_modules/@firebase/")
-          ) {
-            return "vendor-firebase";
-          }
           if (normalizedId.includes("/node_modules/@tanstack/react-query/")) return "vendor-query";
           return undefined;
         }

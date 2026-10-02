@@ -54,7 +54,10 @@ x-nse-fii-reports-image: &nse_fii_reports_image
 
 services:
   postgres:
-    image: postgres:16
+    image: trading-stack-postgres:16-hardened
+    build:
+      context: ..
+      dockerfile: docker/security/postgres.Dockerfile
     ports:
       - "100.86.108.108:5432:5432"
     env_file:
@@ -85,7 +88,10 @@ services:
           memory: 1g
 
   redis:
-    image: redis:alpine
+    image: trading-stack-redis:alpine-hardened
+    build:
+      context: ..
+      dockerfile: docker/security/redis.Dockerfile
     restart: unless-stopped
     volumes:
       - redis_data:/data

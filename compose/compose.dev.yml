@@ -595,7 +595,10 @@ services:
           memory: 256m
 
   nginx:
-    image: nginx:alpine
+    image: trading-stack-nginx:alpine-hardened
+    build:
+      context: ..
+      dockerfile: docker/security/nginx.Dockerfile
     depends_on:
       - watchlist
       - rsi-willr-monitor

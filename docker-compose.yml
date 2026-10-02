@@ -1,6 +1,9 @@
 services:
   postgres:
-    image: postgres:16
+    image: trading-stack-postgres:16-hardened
+    build:
+      context: .
+      dockerfile: docker/security/postgres.Dockerfile
     env_file: .env
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -162,7 +165,10 @@ services:
           memory: 256m
 
   redis:
-    image: redis:alpine
+    image: trading-stack-redis:alpine-hardened
+    build:
+      context: .
+      dockerfile: docker/security/redis.Dockerfile
     restart: unless-stopped
     volumes:
       - redis_data:/data
@@ -1207,7 +1213,10 @@ services:
           memory: 384m
 
   nginx:
-    image: nginx:alpine
+    image: trading-stack-nginx:alpine-hardened
+    build:
+      context: .
+      dockerfile: docker/security/nginx.Dockerfile
     depends_on:
       - watchlist
       - rsi-willr-monitor

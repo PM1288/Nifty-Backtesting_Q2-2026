@@ -14,3 +14,6 @@ try {
  await context.close();
 }finally{await browser.close();await fs.writeFile(path.join(out,'results.json'),JSON.stringify(results,null,2));}
 console.log(JSON.stringify(results));
+if (results.length !== 6 || results.some(result => result.status !== 200 || result.error)) {
+ throw new Error('An authenticated API probe failed; inspect results.json');
+}

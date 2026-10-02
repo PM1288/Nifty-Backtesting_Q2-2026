@@ -19,17 +19,22 @@ try {
  await skip.focus(); await page.keyboard.press('Enter');
  assert.equal(await page.evaluate(()=>document.activeElement?.id),'main-content');
  checks.push('skip link focuses main content');
- const trigger=page.getByRole('contentinfo').getByRole('button').first();
- await trigger.click();
+ await page.getByRole('button',{name:/open user menu/}).click();
+ await page.getByRole('menuitem',{name:'Sign out',exact:true}).click();
  const dialog=page.getByRole('dialog');await dialog.waitFor();
  for(const key of ['Tab','Tab','Tab','Tab','Tab','Shift+Tab','Shift+Tab','Shift+Tab','Shift+Tab','Shift+Tab']){
   await page.keyboard.press(key);
   assert.ok(await dialog.evaluate(el=>el.contains(document.activeElement)));
  }
  checks.push('forward and reverse tab remain inside modal');
- await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
- assert.ok(await trigger.evaluate(el=>el===document.activeElement));
- checks.push('escape closes modal and restores trigger focus');
+ await page.keyboard.press('Escape');assert.ok(await dialog.isVisible());
+ checks.push('escape cannot bypass required authentication');
+ await dialog.getByLabel(/Email or admin username/i).fill('admin');
+ await dialog.getByLabel('Password',{exact:true}).fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD);
+ await dialog.getByRole('button',{name:'Log In',exact:true}).last().click();
+ await dialog.waitFor({state:'hidden',timeout:30000});
+ await page.locator('main').waitFor();
+ checks.push('UI login restores authenticated workspace');
  await context.close();
 }finally{await browser.close();await fs.writeFile(path.join(out,'checks.json'),JSON.stringify(checks,null,2));}
 console.log(JSON.stringify({checks:checks.length}));

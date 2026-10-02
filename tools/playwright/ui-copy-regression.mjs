@@ -35,6 +35,11 @@ try {
   assert.ok(await page.getByRole('link',{name:'Paper trading',exact:true}).count()>0);
   checks.push('Directory links and contained layout '+viewport.width);
  }
+ await page.goto(base+'/backtesting/h30');
+ await page.getByRole('heading',{name:'Entry observations'}).waitFor({timeout:60000});
+ await page.waitForFunction(()=>[...document.querySelectorAll('figure img')].every(img=>img.complete&&img.naturalWidth>0));
+ assert.doesNotMatch(await page.locator('main').innerText(),/strategy_oiis_cash_daily_research_v1_0[12]/);
+ checks.push('Historical charts render or show a concise unavailable state');
  await page.route('**/v1/options-intelligence/summary',route=>route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({error:'SQL private diagnostic marker'})}));
  await page.goto(base+'/options/intelligence');await page.getByText('We couldn’t load this data. Try again.',{exact:true}).waitFor({timeout:60000});
  assert.doesNotMatch(await page.locator('main').innerText(),/SQL private diagnostic|API 500/);

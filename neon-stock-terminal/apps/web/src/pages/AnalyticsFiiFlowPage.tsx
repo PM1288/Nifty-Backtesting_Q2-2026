@@ -449,11 +449,6 @@ export function AnalyticsFiiFlowPage() {
             : "All displayed institutional source families are within their configured publication cadence."
         }}
       />
-      <section className={styles.pageHeading}>
-        <span className={styles.eyebrow}>{tr("Markets · Institutional context")}</span>
-        <h1>{tr("FII / DII & Participant flow")}</h1>
-        <p>{tr("Track official cash-market buying and selling trends, derivatives positioning, source freshness, and missing report dates without presenting post-close reports as live intraday flow.")}</p>
-      </section>
       <AnalyticsHeader
         title="FII / DII & Participant flow"
         meta={`${tr("Cash data")} ${payload.latestCashTradeDate ? formatDateIST(payload.latestCashTradeDate) : "—"} · ${tr("Detailed participant data")} ${payload.latestTradeDate ? formatDateIST(payload.latestTradeDate) : "—"}`}

@@ -1136,7 +1136,7 @@ export function TradingAnalyticsScalperV2({ symbol, label, asOf, expiry, strikes
   const cursorVolumeRow = exactAt(volumeSeries?.bars ?? [], inspectionTime);
   const cursorNetOi = callProfile?.currentOi != null && putProfile?.currentOi != null ? putProfile.currentOi - callProfile.currentOi : null;
 
-  if (!active.data) return <section className={css.loadingWorkspace} role="status" aria-busy={active.isLoading} data-testid="scalper-v2-loading">
+  if (!active.data) return <section className={css.loadingWorkspace} tabIndex={0} aria-label="Loading Scalper V2" role="status" aria-busy={active.isLoading} data-testid="scalper-v2-loading">
     <header><strong>{symbol}</strong><span>{active.isLoading ? `Loading ${label} ${interval}m market data…` : "Exact chart context unavailable."}</span></header>
     <div className={css.loadingWorkspaceGrid} aria-hidden="true">
       <i className={css.loadingUnderlying} />

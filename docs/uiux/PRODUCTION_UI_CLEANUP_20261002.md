@@ -134,3 +134,21 @@ Detailed chart interpretations now use native disclosure controls on six analyti
 screens. Definitions and limitations remain accessible without eleven explanatory
 blocks competing with each chart. Primary freshness and trading warnings remain
 visible outside these disclosures.
+
+## Accessibility and unavailable historical charts
+
+Expanded public scans found 52 affected nodes across six screen/viewport findings:
+small Home sector targets and low-contrast stock identity / paper tab metadata.
+The six-route profile also caught a non-focusable Scalper loading region.
+These were corrected with minimum target sizes, existing readable text colors
+and keyboard access. The 16-scan preview rerun has zero violations.
+
+H30 historical chart endpoints return HTTP 404 at both supported URL prefixes.
+The UI now shows `Chart unavailable` with a meaningful chart caption instead of
+a broken image and internal artifact name. Published numerical observations and
+research limitations remain visible. Restoring those archived chart files is a
+separate data/runtime task; no replacement chart or synthetic data was invented.
+
+The final institutional review removed a duplicate flow heading, a prototype
+subtitle and filesystem paths from the ordinary report header/browser. Report
+dates, availability counts, download controls and administrator diagnostics remain.

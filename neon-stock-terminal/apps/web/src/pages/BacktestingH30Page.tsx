@@ -12,6 +12,16 @@ type Result = {
 
 const fmt = (value: unknown) => typeof value === "number" ? value.toLocaleString("en-IN", { maximumFractionDigits: 2 }) : String(value ?? "—");
 
+
+function HistoricalChart({ chart }: { chart: Result["charts"][number] }) {
+  const [unavailable, setUnavailable] = useState(false);
+  const title = chart.chartId.includes("intramonth") ? "Within-month opportunity distribution"
+    : chart.chartId.includes("swing_month") ? "Rolling-month opportunity distribution" : "Opportunity distribution";
+  return <figure>{unavailable ? <p role="status">Chart unavailable</p>
+    : <img src={chart.url} alt={title} onError={() => setUnavailable(true)} />}
+    <figcaption>{title}</figcaption></figure>;
+}
+
 export function BacktestingH30Page() {
   const [data, setData] = useState<Result | null>(null);
   const [error, setError] = useState("");
@@ -36,7 +46,7 @@ export function BacktestingH30Page() {
         <article><span>Diagnostic score</span><strong>{fmt(data.diagnosticScore)}</strong></article>
       </section>
       <section className={styles.blockers}><h2>Ranking governance</h2><p>Final score: <strong>{fmt(data.finalScore)}</strong>. Diagnostic scores remain visible even when publication gates block ranking.</p><div>{data.blockers.map((value) => <span key={value}>{value.replaceAll("_", " ")}</span>)}</div></section>
-      <section className={styles.charts}>{data.charts.filter((chart) => chart.format === "png").map((chart) => <figure key={chart.chartId}><img src={chart.url} alt={chart.chartId} /><figcaption>{chart.chartId.replaceAll("_", " ")}</figcaption></figure>)}</section>
+      <section className={styles.charts}>{data.charts.filter((chart) => chart.format === "png").map((chart) => <HistoricalChart key={chart.chartId} chart={chart} />)}</section>
       <section className={styles.table}><h2>Entry observations</h2><div><table><thead><tr><th>Stock</th><th>Entry</th><th>Coverage</th><th>Sessions</th><th>Max close</th><th>Day of max</th><th>After-tax opportunity</th><th>Drawdown before max</th></tr></thead><tbody>{data.observations.map((row, index) => <tr key={`${row.symbol}-${row.entryDate}-${index}`}><td>{fmt(row.symbol)}</td><td>{fmt(row.entryDate).slice(0,10)}</td><td>{fmt(row.coverageStatus)}</td><td>{fmt(row.sessionsObserved)}</td><td>{fmt(row.maxClosePrice)}</td><td>D+{fmt(row.sessionsToMax)}</td><td>{fmt(row.afterTaxUpsidePct)}%</td><td>{fmt(row.maeBeforeMaxPct)}%</td></tr>)}</tbody></table></div></section>
     </>}
   </div>;

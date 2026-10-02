@@ -2365,3 +2365,5 @@
 .directory a:hover { text-decoration:underline; }
 
 .heroMeta .metricCard { border: 0; box-shadow: none; background: transparent; padding: 8px 0; }
+
+.stock360AsOf { color: var(--text-secondary, #526175); }

@@ -132,3 +132,5 @@
   :global([data-ui-compact-v5="true"]) .contextBar { position:relative; top:auto; }
   :global([data-ui-compact-v5="true"]) .headerActions button { min-height:36px; height:auto; }
 }
+
+.subnav button[data-active="false"] small { color: #42536c; }

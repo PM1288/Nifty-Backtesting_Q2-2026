@@ -137,7 +137,7 @@ export function AnalyticsFiiReportsPage() {
     <div className={styles.page}>
       <AnalyticsHeader
         title="FII reports"
-        meta={`${tr("Output root")} ${runsQuery.data.output_dir}`}
+
         sectionTabs={[...INSTITUTIONAL_SECTION_TABS]}
       />
 
@@ -166,17 +166,8 @@ export function AnalyticsFiiReportsPage() {
 
       <ChartCard
         title={tr("Run browser")}
-        subtitle={tr("Choose a run to inspect its manifest, file paths, and missing archive entries without leaving the dashboard.")}
-        footer={
-          detailRun ? (
-            <div className={styles.pathGrid}>
-              <span><strong>{tr("Output")}: </strong><code>{detailRun.output_dir}</code></span>
-              <span><strong>{tr("Manifest")}: </strong><code>{detailRun.manifest_path}</code></span>
-              {detailRun.summary_path ? <span><strong>{tr("Summary")}: </strong><code>{detailRun.summary_path}</code></span> : null}
-              {detailRun.missing_path ? <span><strong>{tr("Missing")}: </strong><code>{detailRun.missing_path}</code></span> : null}
-            </div>
-          ) : null
-        }
+
+
       >
         <div className={styles.browserLayout}>
           <section className={styles.runRail}>

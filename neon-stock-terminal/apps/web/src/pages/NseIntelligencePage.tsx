@@ -145,7 +145,7 @@ export function NseIntelligencePage() {
 
   return <section className={styles.page}>
     <header className={styles.pageHeader}>
-      <div><span>Data &amp; Operations / Nifty Reports</span><h1>NSE Intelligence</h1><p>Daily official bhavcopy evidence, normalized events and ingestion health—without synthetic widgets.</p></div>
+      <div><span>Data &amp; Operations / Nifty Reports</span><h1>NSE Intelligence</h1></div>
       <button type="button" onClick={() => query.refetch()} disabled={query.isFetching}><RefreshCw className={query.isFetching ? styles.spinning : ""} />Refresh</button>
     </header>
     <nav className={styles.viewNav} aria-label="NSE Intelligence views">{views.map((view) => <Link key={view.key} to={view.to} aria-current={active === view.key ? "page" : undefined}>{view.label}</Link>)}</nav>
@@ -163,7 +163,7 @@ export function NseIntelligencePage() {
       <div className={styles.sectionHeading}><div><span>Normalized official records</span><h2>Deals &amp; Events</h2><p>Only ingested records are shown. Unavailable bulk, block, short-selling and surveillance feeds are not rendered as zero.</p></div></div>
       {data.events.length ? <div className={styles.eventList}>{data.events.map((event, index) => <article key={`${event.reportDate}-${event.eventType}-${index}`}><time>{date(event.reportDate)}</time><div><strong>{event.symbol || event.eventType.replaceAll("_", " ")}</strong><p>{event.headline || event.detail}</p><small>{event.sourceFile || "Normalized NSE report"}</small></div></article>)}</div> : <CompactEmptyState kind="NO_DATA" title="No normalized events available" detail="No event record was returned for the current source window." />}
     </section> : <>
-      <DecisionHero eyebrow={`Official EOD · ${date(data.tradeDate)}`} title={heroTitle} state={heroState} reasons={<p>{market ? `${number(market.decliners)} decliners versus ${number(market.advancers)} advancers across ${number(market.securities)} EQ-series securities.` : "The official cash bhavcopy is missing."}</p>} evidence={<span>{data.quality.allAvailableInputs}/{data.quality.allExpectedInputs} enabled reports loaded · Feature version {data.featureVersion}</span>} action={<Link to="/institutional/nse-intelligence/reports">Why degraded?</Link>} />
+      <DecisionHero eyebrow={`Official EOD · ${date(data.tradeDate)}`} title={heroTitle} state={heroState} reasons={<p>{market ? `${number(market.decliners)} decliners versus ${number(market.advancers)} advancers across ${number(market.securities)} EQ-series securities.` : "The official cash bhavcopy is missing."}</p>} evidence={<span>{data.quality.allAvailableInputs}/{data.quality.allExpectedInputs} reports loaded</span>} action={<Link to="/institutional/nse-intelligence/reports">Why degraded?</Link>} />
       <ExecutiveKpiStrip>
         <MetricTile label="Advancers" value={number(market?.advancers)} scope={`of ${number(market?.securities)} securities`} tone="positive" />
         <MetricTile label="Decliners" value={number(market?.decliners)} scope={declineShare == null ? "Coverage unavailable" : `${number(declineShare, 2)}% of universe`} tone="negative" />

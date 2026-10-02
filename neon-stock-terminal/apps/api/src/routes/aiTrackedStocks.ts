@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -75,7 +76,7 @@ export function trackedStocksPayload(
 }
 
 export function registerAiTrackedStockRoutes(app: Express, prisma: PrismaClient) {
-  app.get("/v1/workspace/paper-trading/tracked-stocks", async (req, res, next) => {
+  app.get("/v1/workspace/paper-trading/tracked-stocks", asyncRoute(async (req, res, next) => {
     try {
       const requested = typeof req.query.date === "string" ? req.query.date : "";
       const requestedDate = /^\d{4}-\d{2}-\d{2}$/.test(requested)
@@ -150,5 +151,5 @@ export function registerAiTrackedStockRoutes(app: Express, prisma: PrismaClient)
     } catch (error) {
       next(error);
     }
-  });
+  }));
 }

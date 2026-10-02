@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { serveSnapshotRoute } from "../lib/dashboardSnapshots";
@@ -237,12 +238,12 @@ export async function getSupportingMetricsSnapshot() {
 }
 
 export function registerSupportingMetrics(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/supporting-metrics", async (req, res) =>
+  app.get("/v1/analytics/supporting-metrics", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "analytics-supporting-metrics",
       cacheControl: "private, max-age=90, stale-while-revalidate=180",
       freshnessMs: 90_000,
       build: getSupportingMetricsSnapshot
-    })
+    }))
   );
 }

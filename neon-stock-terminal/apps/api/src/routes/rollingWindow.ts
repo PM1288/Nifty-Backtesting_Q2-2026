@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -15,7 +16,7 @@ function finite(value: unknown): number | null {
 }
 
 export function registerRollingWindow(app: Express, prisma: PrismaClient) {
-  app.get("/v1/rolling-strategy/dashboard", async (req, res) => {
+  app.get("/v1/rolling-strategy/dashboard", asyncRoute(async (req, res) => {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
     const historyLimitText = clean(req.query.historyLimit, 4);
@@ -103,5 +104,5 @@ export function registerRollingWindow(app: Express, prisma: PrismaClient) {
         "Rolling evidence is data-through the latest successfully ingested daily session; the UI does not silently substitute a live mark.",
       ],
     });
-  });
+  }));
 }

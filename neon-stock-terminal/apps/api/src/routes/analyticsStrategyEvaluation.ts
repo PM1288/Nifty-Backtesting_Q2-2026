@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { loadPublishedBacktestingCompare } from "../lib/backtestingPublished";
@@ -558,7 +559,7 @@ export async function getAnalyticsStrategyEvaluation(prisma: PrismaClient) {
 }
 
 export function registerAnalyticsStrategyEvaluation(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/strategy-evaluation", async (_req, res) => {
+  app.get("/v1/analytics/strategy-evaluation", asyncRoute(async (_req, res) => {
     try {
       const payload = await getAnalyticsStrategyEvaluation(prisma);
       res.setHeader("Cache-Control", "private, max-age=300, stale-while-revalidate=300");
@@ -572,5 +573,5 @@ export function registerAnalyticsStrategyEvaluation(app: Express, prisma: Prisma
         }
       });
     }
-  });
+  }));
 }

@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express, RequestHandler, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
@@ -640,7 +641,7 @@ const tentativeAlertSchema = z.object({
 }).strict();
 
 export function registerTradingAnalytics(app: Express, prisma: PrismaClient, auth?: RequestAuthenticator) {
-  app.post("/v1/trading-analytics/scalper-v2/tentative-alert", async (req, res) => {
+  app.post("/v1/trading-analytics/scalper-v2/tentative-alert", asyncRoute(async (req, res) => {
     if (!auth) return res.status(503).json({ error: { code: "TENTATIVE_ALERT_AUTH_UNAVAILABLE" } });
     try {
       const session = await auth.getSession(req);
@@ -703,8 +704,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
       if (status === 403) return res.status(403).json({ error: { code: "CSRF_REQUIRED" } });
       return res.status(503).json({ error: { code: "TENTATIVE_ALERT_QUEUE_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/trading-analytics/scalper-log", async (req, res) => {
+  }));
+  app.get("/v1/trading-analytics/scalper-log", asyncRoute(async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = z.object({
@@ -754,8 +755,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
     } catch {
       return res.status(503).json({ error: { code: "SCALPER_LOG_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/trading-analytics/scalper-context", liveJsonSingleflight(15_000), async (req, res) => {
+  }));
+  app.get("/v1/trading-analytics/scalper-context", liveJsonSingleflight(15_000), asyncRoute(async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = querySchema.pick({ symbol: true, asOf: true, expiry: true }).safeParse(req.query);
@@ -814,8 +815,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
     } catch {
       return res.status(503).json({ error: { code: "SCALPER_CONTEXT_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/trading-analytics/underlying-universe", async (req, res) => {
+  }));
+  app.get("/v1/trading-analytics/underlying-universe", asyncRoute(async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = querySchema.pick({ asOf: true }).safeParse(req.query);
@@ -833,8 +834,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
     } catch {
       return res.status(503).json({ error: { code: "UNDERLYING_UNIVERSE_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/trading-analytics/option-price-history", liveJsonSingleflight(30_000), async (req, res) => {
+  }));
+  app.get("/v1/trading-analytics/option-price-history", liveJsonSingleflight(30_000), asyncRoute(async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = z.object({
@@ -953,8 +954,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
     } catch {
       return res.status(503).json({ error: { code: "OPTION_PRICE_HISTORY_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/trading-analytics/charts", liveJsonSingleflight(15_000), async (req, res) => {
+  }));
+  app.get("/v1/trading-analytics/charts", liveJsonSingleflight(15_000), asyncRoute(async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const q = z
@@ -1211,8 +1212,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
         .status(503)
         .json({ error: { code: "CHART_SOURCE_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/trading-analytics/morning-summary", async (_req, res) => {
+  }));
+  app.get("/v1/trading-analytics/morning-summary", asyncRoute(async (_req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false") return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const asOf = new Date().toISOString();
     try {
@@ -1222,8 +1223,8 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
     } catch {
       return res.status(503).json({ error: { code: "MORNING_SUMMARY_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/trading-analytics", async (req, res) => {
+  }));
+  app.get("/v1/trading-analytics", asyncRoute(async (req, res) => {
     if (process.env.TRADING_ANALYTICS_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     const parsed = querySchema.safeParse(req.query);
@@ -1260,5 +1261,5 @@ export function registerTradingAnalytics(app: Express, prisma: PrismaClient, aut
         },
       });
     }
-  });
+  }));
 }

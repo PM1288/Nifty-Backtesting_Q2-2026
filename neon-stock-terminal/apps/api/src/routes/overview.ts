@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { createHash } from "node:crypto";
 import { Prisma, type PrismaClient } from "@prisma/client";
@@ -2038,7 +2039,7 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
     initialWarm.unref();
     refreshTimer.unref();
   }
-  app.get("/v1/overview/header", async (_req, res, next) => {
+  app.get("/v1/overview/header", asyncRoute(async (_req, res, next) => {
     try {
       const payload = await getHeaderMarketSummary(prisma);
       res.setHeader("Cache-Control", "private, max-age=5, stale-while-revalidate=30");
@@ -2046,11 +2047,11 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
     } catch (error) {
       return next(error);
     }
-  });
+  }));
 
-  app.get("/v1/overview", async (req, res) => serveSnapshotRoute(req, res, prisma, OVERVIEW_SNAPSHOT_DEFINITION));
+  app.get("/v1/overview", asyncRoute(async (req, res) => serveSnapshotRoute(req, res, prisma, OVERVIEW_SNAPSHOT_DEFINITION)));
 
-  app.get("/v1/overview/scalper-progression", async (_req, res, next) => {
+  app.get("/v1/overview/scalper-progression", asyncRoute(async (_req, res, next) => {
     try {
       const payload = await getCachedScalperProgression(prisma);
       res.setHeader("Cache-Control", "private, max-age=5, stale-while-revalidate=15");
@@ -2058,9 +2059,9 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
     } catch (error) {
       return next(error);
     }
-  });
+  }));
 
-  app.get("/v1/overview/scalper-progression/export", async (_req, res, next) => {
+  app.get("/v1/overview/scalper-progression/export", asyncRoute(async (_req, res, next) => {
     try {
       const payload = await getScalperProgression(prisma);
       const filename = `scalper-dashboard-${payload.sessionDate}.xls`;
@@ -2071,9 +2072,9 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
     } catch (error) {
       return next(error);
     }
-  });
+  }));
 
-  app.get("/v1/leaderboard", async (req, res) => {
+  app.get("/v1/leaderboard", asyncRoute(async (req, res) => {
     const limit = Number(req.query.limit ?? 20);
     try {
       const payload = await getLeaderboard(prisma, limit);
@@ -2092,5 +2093,5 @@ export function registerOverview(app: Express, prisma: PrismaClient) {
         }
       });
     }
-  });
+  }));
 }

@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express, Request, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { materializeAllSnapshots, materializeSnapshotKeys, SNAPSHOT_DEFINITIONS } from "../lib/snapshotRegistry";
@@ -14,7 +15,7 @@ function readRefreshToken(req: Request) {
 }
 
 export function registerInternalRoutes(app: Express, prisma: PrismaClient) {
-  app.post("/internal/snapshots/refresh", internalRefreshRateLimiter, async (req: Request, res: Response) => {
+  app.post("/internal/snapshots/refresh", internalRefreshRateLimiter, asyncRoute(async (req: Request, res: Response) => {
     const expectedToken = (process.env.SNAPSHOT_REFRESH_TOKEN ?? "").trim();
     if (!expectedToken) {
       return res.status(503).json({
@@ -63,5 +64,5 @@ export function registerInternalRoutes(app: Express, prisma: PrismaClient) {
         }
       });
     }
-  });
+  }));
 }

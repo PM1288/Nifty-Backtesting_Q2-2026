@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -65,7 +66,7 @@ async function loadStrategySnapshot(prisma: PrismaClient, slug: string, scenario
 }
 
 export function registerIndicatorStrategySnapshots(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/indicators/:slug/strategies/:scenarioId", async (req, res) => {
+  app.get("/v1/analytics/indicators/:slug/strategies/:scenarioId", asyncRoute(async (req, res) => {
     const slug = String(req.params.slug ?? "").trim().toLowerCase();
     const scenarioId = String(req.params.scenarioId ?? "").trim().toLowerCase();
     if (!slug || !scenarioId) {
@@ -110,5 +111,5 @@ export function registerIndicatorStrategySnapshots(app: Express, prisma: PrismaC
         }
       });
     }
-  });
+  }));
 }

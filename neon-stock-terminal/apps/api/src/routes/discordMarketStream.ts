@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
@@ -55,12 +56,12 @@ export function registerDiscordMarketStream(
   prisma: PrismaClient,
   service: DiscordMarketStreamService = buildService(prisma)
 ) {
-  app.get("/v1/discord-stream/health", async (_req, res) => {
+  app.get("/v1/discord-stream/health", asyncRoute(async (_req, res) => {
     const payload = await service.getHealth();
     return res.json(payload);
-  });
+  }));
 
-  app.get("/v1/discord-stream/recent", async (req, res) => {
+  app.get("/v1/discord-stream/recent", asyncRoute(async (req, res) => {
     const parsed = recentQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -73,9 +74,9 @@ export function registerDiscordMarketStream(
 
     const payload = await service.getRecent(parsed.data.limit);
     return res.json(payload);
-  });
+  }));
 
-  app.post("/v1/discord-stream/preview", async (req, res) => {
+  app.post("/v1/discord-stream/preview", asyncRoute(async (req, res) => {
     const parsed = dispatchSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -88,9 +89,9 @@ export function registerDiscordMarketStream(
 
     const payload = await service.preview(parsed.data.target);
     return res.json(payload);
-  });
+  }));
 
-  app.post("/v1/discord-stream/test", async (req, res) => {
+  app.post("/v1/discord-stream/test", asyncRoute(async (req, res) => {
     const parsed = dispatchSchema.safeParse({ ...(req.body ?? {}), target: "test" });
     if (!parsed.success) {
       return res.status(400).json({
@@ -103,9 +104,9 @@ export function registerDiscordMarketStream(
 
     const payload = await service.dispatch(parsed.data);
     return res.status(payload.status === "failed" ? 502 : 200).json(payload);
-  });
+  }));
 
-  app.post("/v1/discord-stream/dispatch", async (req, res) => {
+  app.post("/v1/discord-stream/dispatch", asyncRoute(async (req, res) => {
     const parsed = dispatchSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -118,5 +119,5 @@ export function registerDiscordMarketStream(
 
     const payload = await service.dispatch(parsed.data);
     return res.status(payload.status === "failed" ? 502 : 200).json(payload);
-  });
+  }));
 }

@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -119,7 +120,7 @@ async function loadIndicatorSnapshot(prisma: PrismaClient, slug: string) {
 }
 
 export function registerIndicatorEducation(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/indicators/:slug", async (req, res) => {
+  app.get("/v1/analytics/indicators/:slug", asyncRoute(async (req, res) => {
     const slug = String(req.params.slug ?? "").trim().toLowerCase();
     if (!slug) {
       return res.status(404).json({
@@ -156,5 +157,5 @@ export function registerIndicatorEducation(app: Express, prisma: PrismaClient) {
         }
       });
     }
-  });
+  }));
 }

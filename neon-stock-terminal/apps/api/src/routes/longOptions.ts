@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -263,20 +264,20 @@ async function loadLongOptions(prisma: PrismaClient) {
 }
 
 export function registerLongOptions(app: Express, prisma: PrismaClient) {
-  app.get("/v1/long-options/summary", async (_req, res, next) => {
+  app.get("/v1/long-options/summary", asyncRoute(async (_req, res, next) => {
     try {
       res.json(await loadLongOptions(prisma));
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/long-options/candidates", async (_req, res, next) => {
+  app.get("/v1/long-options/candidates", asyncRoute(async (_req, res, next) => {
     try {
       const payload = await loadLongOptions(prisma);
       res.json({ generatedAt: payload.generatedAt, evidenceRun: payload.evidenceRun, candidates: payload.candidates });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/long-options/candidates/:symbol", async (req, res, next) => {
+  app.get("/v1/long-options/candidates/:symbol", asyncRoute(async (req, res, next) => {
     try {
       const symbol = String(req.params.symbol ?? "").trim().toUpperCase();
       if (!/^[A-Z0-9&-]{1,32}$/.test(symbol)) return res.status(400).json({ error: { code: "INVALID_SYMBOL", message: "Invalid F&O underlying." } });
@@ -286,5 +287,5 @@ export function registerLongOptions(app: Express, prisma: PrismaClient) {
       if (!candidates.length && !directionalShadow.length) return res.status(404).json({ error: { code: "LONG_OPTIONS_CANDIDATE_NOT_FOUND", message: "No long-options evaluation exists for this symbol in the latest evidence run." } });
       res.json({ strategyFamily: payload.strategyFamily, generatedAt: payload.generatedAt, evidenceRun: payload.evidenceRun, policy: payload.policy, candidates, directionalShadow, provenance: payload.provenance });
     } catch (error) { next(error); }
-  });
+  }));
 }

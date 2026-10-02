@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -65,7 +66,7 @@ export async function readDataHealth(prisma: PrismaClient) {
 export function registerDataHealth(app: Express, prisma: PrismaClient) {
   let cached: Awaited<ReturnType<typeof readDataHealth>> | undefined;
   let pending: ReturnType<typeof readDataHealth> | undefined;
-  app.get("/v1/data-health", async (_req, res) => {
+  app.get("/v1/data-health", asyncRoute(async (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     try {
       if (!cached || Date.now() - Date.parse(cached.generatedAt) > 30_000) {
@@ -74,5 +75,5 @@ export function registerDataHealth(app: Express, prisma: PrismaClient) {
       }
       res.json(cached);
     } catch { res.status(503).json({ error: "Collection health unavailable. No healthy status can be confirmed." }); }
-  });
+  }));
 }

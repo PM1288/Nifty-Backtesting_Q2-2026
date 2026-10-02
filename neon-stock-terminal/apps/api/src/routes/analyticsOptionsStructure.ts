@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 
@@ -656,7 +657,7 @@ export async function getAnalyticsOptionsStructure(prisma: PrismaClient) {
 }
 
 export function registerAnalyticsOptionsStructure(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/options-structure", async (_req, res) => {
+  app.get("/v1/analytics/options-structure", asyncRoute(async (_req, res) => {
     try {
       const payload = await getAnalyticsOptionsStructure(prisma);
       res.setHeader("Cache-Control", "private, max-age=120, stale-while-revalidate=120");
@@ -669,5 +670,5 @@ export function registerAnalyticsOptionsStructure(app: Express, prisma: PrismaCl
         }
       });
     }
-  });
+  }));
 }

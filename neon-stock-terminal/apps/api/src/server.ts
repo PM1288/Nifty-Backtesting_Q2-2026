@@ -1,3 +1,4 @@
+import { asyncRoute } from "./lib/asyncRoute";
 import "dotenv/config";
 import { registerDataProxy } from "./lib/dataProxy";
 import http from "http";
@@ -248,7 +249,7 @@ async function main() {
   const intradayApiBaseUrl = (process.env.INTRADAY_API_BASE_URL ?? "http://nse-intraday-api:8092").replace(/\/+$/, "");
   const matomoProxyBaseUrl = (process.env.MATOMO_PROXY_BASE_URL ?? "http://matomo:80").replace(/\/+$/, "");
 
-  app.use(async (req, res, next) => {
+  app.use(asyncRoute(async (req, res, next) => {
     const isSupportedMethod = req.method === "GET" || req.method === "HEAD" || req.method === "POST";
     if (!isSupportedMethod || !req.path.startsWith("/matomo/")) return next();
 
@@ -290,7 +291,7 @@ async function main() {
       });
       next(error);
     }
-  });
+  }));
 
   registerDataProxy(app, auth.middleware, exportApiBaseUrl, intradayApiBaseUrl);
 

@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { estimateTradingCharges } from "./longOptions";
@@ -375,16 +376,16 @@ async function loadNiftyOptions(prisma: PrismaClient) {
 }
 
 export function registerNiftyWeeklyOptions(app: Express, prisma: PrismaClient) {
-  app.get("/v1/nifty-weekly-options/summary", async (_req, res, next) => {
+  app.get("/v1/nifty-weekly-options/summary", asyncRoute(async (_req, res, next) => {
     try {
       const registry = await resolveExpiryRegistry(prisma);
       res.json(await loadNiftyExpiry(prisma, "W0", registry));
     } catch (error) { next(error); }
-  });
-  app.get("/v1/nifty-options/summary", async (_req, res, next) => {
+  }));
+  app.get("/v1/nifty-options/summary", asyncRoute(async (_req, res, next) => {
     try { res.json(await loadNiftyOptions(prisma)); } catch (error) { next(error); }
-  });
-  app.get("/v1/nifty-options/expiries", async (_req, res, next) => {
+  }));
+  app.get("/v1/nifty-options/expiries", asyncRoute(async (_req, res, next) => {
     try { res.json(await resolveExpiryRegistry(prisma)); } catch (error) { next(error); }
-  });
+  }));
 }

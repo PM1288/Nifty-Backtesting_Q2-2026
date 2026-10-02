@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { DateTime } from 'luxon';
 import { Prisma, type PrismaClient } from "@prisma/client";
@@ -2851,43 +2852,43 @@ export function registerAnalytics(app: Express, prisma: PrismaClient) {
     scheduleSimulatorPrewarm(1);
   }
 
-  app.get("/v1/analytics/dashboard", async (req, res) =>
+  app.get("/v1/analytics/dashboard", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "analytics-dashboard",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getAnalyticsDashboard
-    })
+    }))
   );
 
-  app.get("/v1/analytics/flows", async (req, res) =>
+  app.get("/v1/analytics/flows", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "analytics-flows",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getAnalyticsFlows
-    })
+    }))
   );
 
-  app.get("/v1/analytics/quality", async (req, res) =>
+  app.get("/v1/analytics/quality", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "analytics-quality",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getAnalyticsQuality
-    })
+    }))
   );
 
-  app.get("/v1/analytics/board-brief", async (req, res) =>
+  app.get("/v1/analytics/board-brief", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: ANALYTICS_BOARD_BRIEF_SNAPSHOT_KEY,
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getAnalyticsBoardBrief
-    })
+    }))
   );
 
-  app.get("/paragmore/:slug", async (req, res) => {
+  app.get("/paragmore/:slug", asyncRoute(async (req, res) => {
     const expectedSlug = getPublicBoardBriefSlug();
     if (!expectedSlug || req.params.slug !== expectedSlug) {
       return res.status(404).type("text/plain; charset=utf-8").send("Not found");
@@ -2931,9 +2932,9 @@ export function registerAnalytics(app: Express, prisma: PrismaClient) {
       );
       return res.status(500).type("text/plain; charset=utf-8").send("Board brief unavailable");
     }
-  });
+  }));
 
-  app.get("/paragmore-market/:slug", async (req, res) => {
+  app.get("/paragmore-market/:slug", asyncRoute(async (req, res) => {
     const expectedSlug = getPublicMacroBriefSlug();
     if (!expectedSlug || req.params.slug !== expectedSlug) {
       return res.status(404).type("text/plain; charset=utf-8").send("Not found");
@@ -2973,18 +2974,18 @@ export function registerAnalytics(app: Express, prisma: PrismaClient) {
       );
       return res.status(500).type("text/plain; charset=utf-8").send("Supporting metrics brief unavailable");
     }
-  });
+  }));
 
-  app.get("/v1/analytics/simulator/universe", async (req, res) =>
+  app.get("/v1/analytics/simulator/universe", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "analytics-simulator-universe",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getAnalyticsSimulatorUniverseSnapshot
-    })
+    }))
   );
 
-  app.get("/v1/analytics/simulator", async (req, res) => {
+  app.get("/v1/analytics/simulator", asyncRoute(async (req, res) => {
     const startedAt = Date.now();
     const params = buildSimulatorRequestParams(req.query as Record<string, unknown>);
     const symbol = params.symbol;
@@ -3014,5 +3015,5 @@ export function registerAnalytics(app: Express, prisma: PrismaClient) {
       });
       return res.status(failure.status).json(failure.body);
     }
-  });
+  }));
 }

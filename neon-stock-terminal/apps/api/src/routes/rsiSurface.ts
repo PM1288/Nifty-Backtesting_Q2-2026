@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -439,7 +440,7 @@ export async function buildRsiSurfacePayload(prisma: PrismaClient): Promise<Surf
 }
 
 export function registerRsiSurface(app: Express, prisma: PrismaClient) {
-  app.get("/v1/rsi-surface", async (req, res) =>
+  app.get("/v1/rsi-surface", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "heatmap-rsi",
       cacheControl: "private, max-age=60, stale-while-revalidate=300",
@@ -461,6 +462,6 @@ export function registerRsiSurface(app: Express, prisma: PrismaClient) {
         };
         return payload;
       }
-    })
+    }))
   );
 }

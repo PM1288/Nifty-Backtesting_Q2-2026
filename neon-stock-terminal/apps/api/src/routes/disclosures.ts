@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { z } from "zod";
 import {
@@ -53,23 +54,23 @@ export function registerDisclosures(
   app: Express,
   client: DisclosuresClient = createDisclosuresClient()
 ) {
-  app.get("/v1/disclosures/health", async (_req, res) => {
+  app.get("/v1/disclosures/health", asyncRoute(async (_req, res) => {
     try {
       return res.json(await client.getHealth());
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("DISCLOSURES_HEALTH_FAILED", error));
     }
-  });
+  }));
 
-  app.get("/v1/disclosures/latest-run", async (_req, res) => {
+  app.get("/v1/disclosures/latest-run", asyncRoute(async (_req, res) => {
     try {
       return res.json(await client.getLatestRun());
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("DISCLOSURES_LATEST_RUN_FAILED", error));
     }
-  });
+  }));
 
-  app.post("/v1/disclosures/run", async (req, res) => {
+  app.post("/v1/disclosures/run", asyncRoute(async (req, res) => {
     const parsed = runRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -85,9 +86,9 @@ export function registerDisclosures(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("DISCLOSURES_RUN_FAILED", error));
     }
-  });
+  }));
 
-  app.post("/v1/disclosures/load", async (req, res) => {
+  app.post("/v1/disclosures/load", asyncRoute(async (req, res) => {
     const parsed = loadRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -103,5 +104,5 @@ export function registerDisclosures(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("DISCLOSURES_LOAD_FAILED", error));
     }
-  });
+  }));
 }

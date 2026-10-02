@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -447,7 +448,7 @@ export async function buildWillSurfacePayload(prisma: PrismaClient): Promise<Sur
 }
 
 export function registerWillSurface(app: Express, prisma: PrismaClient) {
-  app.get("/v1/will-surface", async (req, res) =>
+  app.get("/v1/will-surface", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "heatmap-will",
       cacheControl: "private, max-age=60, stale-while-revalidate=300",
@@ -469,6 +470,6 @@ export function registerWillSurface(app: Express, prisma: PrismaClient) {
         };
         return payload;
       }
-    })
+    }))
   );
 }

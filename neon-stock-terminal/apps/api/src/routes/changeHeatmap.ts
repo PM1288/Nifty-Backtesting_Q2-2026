@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -393,7 +394,7 @@ export async function buildChangeHeatmapPayload(prisma: PrismaClient): Promise<S
 }
 
 export function registerChangeHeatmap(app: Express, prisma: PrismaClient) {
-  app.get("/v1/change-heatmap", async (req, res) =>
+  app.get("/v1/change-heatmap", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "heatmap-change",
       cacheControl: "private, max-age=60, stale-while-revalidate=300",
@@ -415,6 +416,6 @@ export function registerChangeHeatmap(app: Express, prisma: PrismaClient) {
         };
         return payload;
       }
-    })
+    }))
   );
 }

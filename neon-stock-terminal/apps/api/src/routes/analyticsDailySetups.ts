@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 
@@ -760,7 +761,7 @@ export async function getAnalyticsDailySetups(prisma: PrismaClient) {
 }
 
 export function registerAnalyticsDailySetups(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/daily-setups", async (_req, res) => {
+  app.get("/v1/analytics/daily-setups", asyncRoute(async (_req, res) => {
     try {
       const payload = await getAnalyticsDailySetups(prisma);
       res.setHeader("Cache-Control", "private, max-age=300, stale-while-revalidate=300");
@@ -773,5 +774,5 @@ export function registerAnalyticsDailySetups(app: Express, prisma: PrismaClient)
         }
       });
     }
-  });
+  }));
 }

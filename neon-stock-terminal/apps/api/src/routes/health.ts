@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express, Request, Response } from "express";
 import type { PrismaClient } from "@prisma/client";
 import type { RequestAuthenticator } from "../auth/guard";
@@ -43,10 +44,10 @@ export function registerHealth(app: Express, prisma: PrismaClient, auth: Request
     }
   };
 
-  app.get("/health", async (_req, res) => sendHealth(res));
-  app.get("/ready", async (_req, res) => sendHealth(res));
+  app.get("/health", asyncRoute(async (_req, res) => sendHealth(res)));
+  app.get("/ready", asyncRoute(async (_req, res) => sendHealth(res)));
 
-  app.get("/health/details", async (req: Request, res: Response) => {
+  app.get("/health/details", asyncRoute(async (req: Request, res: Response) => {
     const session = await auth.getSession(req);
     if (!session || session.user.role !== "admin") {
       return res.status(403).json({ error: { code: "ADMIN_REQUIRED", message: "Administrator access required." } });
@@ -67,5 +68,5 @@ export function registerHealth(app: Express, prisma: PrismaClient, auth: Request
     } catch (error) {
       return res.status(503).json({ error: { code: "HEALTH_DIAGNOSTICS_FAILED", message: error instanceof Error ? error.message : "Diagnostics failed." } });
     }
-  });
+  }));
 }

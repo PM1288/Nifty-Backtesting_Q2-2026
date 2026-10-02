@@ -1,8 +1,9 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
 export function registerTrendlyneSummary(app: Express, prisma: PrismaClient) {
-  app.get("/v1/trendlyne-summary/dashboard", async (_req, res) => {
+  app.get("/v1/trendlyne-summary/dashboard", asyncRoute(async (_req, res) => {
     const [summary, rows, houses, stocks, monthly, runs] = await Promise.all([
       prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
         SELECT count(*)::int AS reports,
@@ -83,5 +84,5 @@ export function registerTrendlyneSummary(app: Express, prisma: PrismaClient) {
         "Daily OHLC cannot prove intraday ordering; target hits use the first qualifying daily bar.",
       ],
     });
-  });
+  }));
 }

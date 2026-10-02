@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 
@@ -185,7 +186,7 @@ export async function getAnalyticsEvents(prisma: PrismaClient) {
 }
 
 export function registerAnalyticsEvents(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/events", async (_req, res) => {
+  app.get("/v1/analytics/events", asyncRoute(async (_req, res) => {
     try {
       const payload = await getAnalyticsEvents(prisma);
       res.setHeader("Cache-Control", "private, max-age=300, stale-while-revalidate=300");
@@ -198,5 +199,5 @@ export function registerAnalyticsEvents(app: Express, prisma: PrismaClient) {
         }
       });
     }
-  });
+  }));
 }

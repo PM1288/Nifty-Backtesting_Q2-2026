@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
@@ -126,7 +127,7 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
     next();
   });
 
-  app.get("/auth/session", async (req, res) => {
+  app.get("/auth/session", asyncRoute(async (req, res) => {
     const session = await auth.getSession(req);
     if (!session) {
       return res.json({ authenticated: false, user: null, csrfToken: null });
@@ -136,17 +137,17 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
       user: session.user,
       csrfToken: session.csrfToken
     });
-  });
+  }));
 
-  app.get("/auth/csrf", async (req, res) => {
+  app.get("/auth/csrf", asyncRoute(async (req, res) => {
     const session = await auth.getSession(req);
     if (!session) {
       return res.status(401).json({ error: { code: "AUTH_REQUIRED", message: "Active session required." } });
     }
     return res.json({ csrfToken: session.csrfToken });
-  });
+  }));
 
-  app.post("/auth/session/login", authLoginRateLimiter, async (req, res) => {
+  app.post("/auth/session/login", authLoginRateLimiter, asyncRoute(async (req, res) => {
     const idToken = typeof req.body?.idToken === "string" ? req.body.idToken : "";
     try {
       const result = await auth.loginWithIdToken(req, res, idToken);
@@ -165,9 +166,9 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
       }
       return res.status(401).json({ error: { code: "AUTH_FAILED", message: "Authentication failed." } });
     }
-  });
+  }));
 
-  app.post("/auth/session/dev-login", authLoginRateLimiter, async (req, res) => {
+  app.post("/auth/session/dev-login", authLoginRateLimiter, asyncRoute(async (req, res) => {
     if (!isDevLocalAuthEnabled()) {
       return res.status(404).json({ error: { code: "DEV_AUTH_DISABLED", message: "Dev local auth is disabled." } });
     }
@@ -215,9 +216,9 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
       }
       return res.status(401).json({ error: { code: "AUTH_FAILED", message: "Authentication failed." } });
     }
-  });
+  }));
 
-  app.post("/auth/session/logout", async (req, res) => {
+  app.post("/auth/session/logout", asyncRoute(async (req, res) => {
     try {
       const session = await auth.getSession(req);
       if (session) {
@@ -235,9 +236,9 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
       }
       return res.status(403).json({ error: { code: "CSRF_INVALID", message: "Logout failed." } });
     }
-  });
+  }));
 
-  app.post("/auth/profile/signup", authSignupRateLimiter, async (req, res) => {
+  app.post("/auth/profile/signup", authSignupRateLimiter, asyncRoute(async (req, res) => {
     await ensureStoreReady;
     const parsed = signupProfileSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
@@ -353,5 +354,5 @@ export function registerAuthRoutes(app: Express, prisma: PrismaClient, auth: Req
       }
       return res.status(500).json({ error: { code: "SIGNUP_PROFILE_FAILED", message: "Unable to save signup profile." } });
     }
-  });
+  }));
 }

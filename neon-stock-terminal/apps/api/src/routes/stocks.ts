@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { z } from "zod";
@@ -448,7 +449,7 @@ async function getSeedSchemaStock(prisma: PrismaClient, symbolRaw: string, range
 }
 
 export function registerStocks(app: Express, prisma: PrismaClient) {
-  app.get("/v1/stocks/:symbol", async (req, res) => {
+  app.get("/v1/stocks/:symbol", asyncRoute(async (req, res) => {
     const parsed = paramsSchema.safeParse(req.params);
     if (!parsed.success) {
       return res.status(400).json({ error: { code: "BAD_PARAMS", message: "Invalid symbol" } });
@@ -479,5 +480,5 @@ export function registerStocks(app: Express, prisma: PrismaClient) {
       return res.status(404).json({ error: { code: "NOT_FOUND", message: "Symbol not found" } });
     }
     return res.json(fallback);
-  });
+  }));
 }

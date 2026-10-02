@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { z } from "zod";
 import {
@@ -67,23 +68,23 @@ export function registerFiiReports(
   app: Express,
   client: FiiReportsClient = createFiiReportsClient()
 ) {
-  app.get("/v1/fii-reports/health", async (_req, res) => {
+  app.get("/v1/fii-reports/health", asyncRoute(async (_req, res) => {
     try {
       return res.json(await client.getHealth());
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FII_REPORTS_HEALTH_FAILED", error));
     }
-  });
+  }));
 
-  app.get("/v1/fii-reports/latest-run", async (_req, res) => {
+  app.get("/v1/fii-reports/latest-run", asyncRoute(async (_req, res) => {
     try {
       return res.json(await client.getLatestRun());
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FII_REPORTS_LATEST_RUN_FAILED", error));
     }
-  });
+  }));
 
-  app.get("/v1/fii-reports/runs", async (req, res) => {
+  app.get("/v1/fii-reports/runs", asyncRoute(async (req, res) => {
     const limitValue = typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 20;
     const limit = Number.isFinite(limitValue) ? Math.max(1, Math.min(limitValue, 100)) : 20;
 
@@ -92,9 +93,9 @@ export function registerFiiReports(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FII_REPORTS_RUNS_FAILED", error));
     }
-  });
+  }));
 
-  app.get("/v1/fii-reports/runs/:kind/:runId", async (req, res) => {
+  app.get("/v1/fii-reports/runs/:kind/:runId", asyncRoute(async (req, res) => {
     const kind = req.params.kind;
     if (kind !== "daily" && kind !== "backfill") {
       return res.status(400).json({
@@ -110,9 +111,9 @@ export function registerFiiReports(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FII_REPORTS_RUN_DETAIL_FAILED", error));
     }
-  });
+  }));
 
-  app.post("/v1/fii-reports/latest", async (req, res) => {
+  app.post("/v1/fii-reports/latest", asyncRoute(async (req, res) => {
     const parsed = latestRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -128,9 +129,9 @@ export function registerFiiReports(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FII_REPORTS_LATEST_FAILED", error));
     }
-  });
+  }));
 
-  app.post("/v1/fii-reports/fovolt/latest", async (req, res) => {
+  app.post("/v1/fii-reports/fovolt/latest", asyncRoute(async (req, res) => {
     const parsed = latestRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -145,9 +146,9 @@ export function registerFiiReports(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FOVOLT_LATEST_FAILED", error));
     }
-  });
+  }));
 
-  app.post("/v1/fii-reports/fovolt/backfill", async (req, res) => {
+  app.post("/v1/fii-reports/fovolt/backfill", asyncRoute(async (req, res) => {
     const parsed = backfillRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -162,9 +163,9 @@ export function registerFiiReports(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FOVOLT_BACKFILL_FAILED", error));
     }
-  });
+  }));
 
-  app.post("/v1/fii-reports/backfill", async (req, res) => {
+  app.post("/v1/fii-reports/backfill", asyncRoute(async (req, res) => {
     const parsed = backfillRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -180,9 +181,9 @@ export function registerFiiReports(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FII_REPORTS_BACKFILL_FAILED", error));
     }
-  });
+  }));
 
-  app.post("/v1/fii-reports/load", async (req, res) => {
+  app.post("/v1/fii-reports/load", asyncRoute(async (req, res) => {
     const parsed = loadRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return res.status(400).json({
@@ -198,5 +199,5 @@ export function registerFiiReports(
     } catch (error) {
       return res.status(statusFromProxyError(error)).json(proxyErrorPayload("FII_REPORTS_LOAD_FAILED", error));
     }
-  });
+  }));
 }

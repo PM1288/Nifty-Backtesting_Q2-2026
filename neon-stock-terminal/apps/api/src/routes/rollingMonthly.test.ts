@@ -188,3 +188,23 @@ test("absolute first-session export and filter validation are deterministic", as
     assert.equal(count(), 0);
   });
 });
+
+test("monthly summary ledger preserves every row and exposes evidence separately", async () =>
+  withServer([[{ evaluation_id: "33333333-3333-4333-8333-333333333333", symbol: "PAYTM", selection_status: "REJECTED", rejection_reasons: ["M2_RED"], details_loaded: false }]], async (baseUrl, count) => {
+    const response = await fetch(`${baseUrl}/v1/rolling-monthly/absolute-evaluations`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(count(), 1);
+    assert.deepEqual(payload, { evaluations: [{ evaluation_id: "33333333-3333-4333-8333-333333333333", symbol: "PAYTM", selection_status: "REJECTED", rejection_reasons: ["M2_RED"], details_loaded: false }] });
+    assert.equal(response.headers.get("cache-control"), "no-store");
+  }));
+
+test("monthly evidence lookup validates identifiers and returns full persisted conditions", async () =>
+  withServer([[{ evaluation_id: "33333333-3333-4333-8333-333333333333", conditions: [{ code: "M2_RED", pass: false }] }], []], async (baseUrl, count) => {
+    assert.equal((await fetch(`${baseUrl}/v1/rolling-monthly/absolute-evaluations/not-a-uuid`)).status, 400);
+    assert.equal((await fetch(`${baseUrl}/v1/rolling-monthly/absolute-evaluations?year=bad`)).status, 400);
+    assert.equal(count(), 0);
+    const response = await fetch(`${baseUrl}/v1/rolling-monthly/absolute-evaluations/33333333-3333-4333-8333-333333333333`);
+    assert.deepEqual(await response.json(), { evaluation_id: "33333333-3333-4333-8333-333333333333", conditions: [{ code: "M2_RED", pass: false }] });
+    assert.equal((await fetch(`${baseUrl}/v1/rolling-monthly/absolute-evaluations/44444444-4444-4444-8444-444444444444`)).status, 404);
+  }));

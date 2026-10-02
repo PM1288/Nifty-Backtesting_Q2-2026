@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -34,7 +35,7 @@ function spreadsheetXml(
 }
 
 export function registerOissV1(app: Express, prisma: PrismaClient) {
-  app.get("/v1/oiss-v1/runs", async (_req, res) => {
+  app.get("/v1/oiss-v1/runs", asyncRoute(async (_req, res) => {
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT run_id,run_date,scan_timestamp,scan_sequence,market_stage,trading_mode,data_quality_grade,
          data_quality_score,overall_confidence,status,runtime_metrics,sections->'summary' summary,
@@ -42,9 +43,9 @@ export function registerOissV1(app: Express, prisma: PrismaClient) {
        FROM oiss.run ORDER BY scan_timestamp DESC LIMIT 250`,
     );
     res.json({ strategyId: "OISS_V1_202608", frameworkVersion: "OISS-1.202608", runs: rows });
-  });
+  }));
 
-  app.get("/v1/oiss-v1/dashboard", async (req, res) => {
+  app.get("/v1/oiss-v1/dashboard", asyncRoute(async (req, res) => {
     const requested = typeof req.query.runId === "string" ? req.query.runId : "";
     if (requested && !UUID.test(requested)) return res.status(400).json({ error: "runId must be a UUID" });
     const runRows = await prisma.$queryRawUnsafe<Array<Record<string, any>>>(
@@ -75,9 +76,9 @@ export function registerOissV1(app: Express, prisma: PrismaClient) {
         WHERE c.run_id=$1::uuid ORDER BY c.rank`, run.run_id),
     ]);
     res.json({ strategy: { id: "OISS_V1_202608", displayName: "OISS v1.202608", frameworkVersion: "OISS-1.202608" }, run, sectors, radar, changes, outcomes, priorRuns, paper, comparison });
-  });
+  }));
 
-  app.get("/v1/oiss-v1/export", async (req, res) => {
+  app.get("/v1/oiss-v1/export", asyncRoute(async (req, res) => {
     const runId = typeof req.query.runId === "string" ? req.query.runId : "";
     const format = typeof req.query.format === "string" ? req.query.format.toLowerCase() : "json";
     if (!UUID.test(runId)) return res.status(400).json({ error: "runId must be a UUID" });
@@ -115,5 +116,5 @@ export function registerOissV1(app: Express, prisma: PrismaClient) {
     if (format !== "json") return res.status(400).json({ error: "format must be csv, xls, xlsx, or json" });
     res.setHeader("Content-Disposition", `attachment; filename=OISS_${runId}.json`);
     return res.json({ schemaVersion: "1.0", exportedAt: new Date().toISOString(), run: run[0], sectors, candidates, changes, outcomes });
-  });
+  }));
 }

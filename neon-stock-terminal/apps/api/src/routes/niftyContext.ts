@@ -1,8 +1,9 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
 export function registerNiftyContext(app: Express, prisma: PrismaClient) {
-  app.get("/v1/nifty-context/trade-quality", async (req, res) => {
+  app.get("/v1/nifty-context/trade-quality", asyncRoute(async (req, res) => {
     if (process.env.NIFTY_CONTEXT_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     if (req.query.run != null && !/^[a-f0-9]{64}$/.test(String(req.query.run)))
@@ -31,8 +32,8 @@ export function registerNiftyContext(app: Express, prisma: PrismaClient) {
         errorType: error instanceof Error ? error.name : "Unknown" }));
       return res.status(503).json({ error: { code: "TRADE_QUALITY_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/nifty-context/trade-quality/export/:run", async (req, res) => {
+  }));
+  app.get("/v1/nifty-context/trade-quality/export/:run", asyncRoute(async (req, res) => {
     if (process.env.NIFTY_CONTEXT_ENABLED === "false") return res.status(404).end();
     if (!/^[a-f0-9]{64}$/.test(req.params.run)) return res.status(400).end();
     try {
@@ -51,8 +52,8 @@ export function registerNiftyContext(app: Express, prisma: PrismaClient) {
     } catch {
       return res.status(503).json({ error: { code: "EXPORT_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/nifty-context", async (req, res) => {
+  }));
+  app.get("/v1/nifty-context", asyncRoute(async (req, res) => {
     if (process.env.NIFTY_CONTEXT_ENABLED === "false")
       return res.status(404).json({ error: { code: "MODULE_DISABLED" } });
     if (req.query.run != null && !/^[a-f0-9]{64}$/.test(String(req.query.run)))
@@ -107,8 +108,8 @@ export function registerNiftyContext(app: Express, prisma: PrismaClient) {
         .status(503)
         .json({ error: { code: "RESEARCH_DATA_UNAVAILABLE" } });
     }
-  });
-  app.get("/v1/nifty-context/export/:run", async (req, res) => {
+  }));
+  app.get("/v1/nifty-context/export/:run", asyncRoute(async (req, res) => {
     if (process.env.NIFTY_CONTEXT_ENABLED === "false")
       return res.status(404).end();
     if (!/^[a-f0-9]{64}$/.test(req.params.run)) return res.status(400).end();
@@ -140,5 +141,5 @@ export function registerNiftyContext(app: Express, prisma: PrismaClient) {
     } catch {
       return res.status(503).json({ error: { code: "EXPORT_UNAVAILABLE" } });
     }
-  });
+  }));
 }

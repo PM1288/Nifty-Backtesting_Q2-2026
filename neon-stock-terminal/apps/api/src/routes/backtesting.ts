@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import path from "node:path";
@@ -870,7 +871,7 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
     return { root, directory, id: reportDirectories[0].name };
   };
 
-  app.get("/v1/backtesting/reports/three-month/latest", async (_req, res) => {
+  app.get("/v1/backtesting/reports/three-month/latest", asyncRoute(async (_req, res) => {
     const report = await latestThreeMonthReport();
     if (!report) return res.status(404).json({ code: "THREE_MONTH_REPORT_NOT_FOUND", message: "No generated 3Month report is mounted." });
     const summary = JSON.parse(await fs.readFile(path.join(report.directory, "summary.json"), "utf8")) as Record<string, unknown>;
@@ -880,9 +881,9 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
     }));
     res.setHeader("Cache-Control", "private, max-age=60");
     return res.json({ id: report.id, summary, files });
-  });
+  }));
 
-  app.get("/v1/backtesting/reports/three-month/evidence", async (req, res, next) => {
+  app.get("/v1/backtesting/reports/three-month/evidence", asyncRoute(async (req, res, next) => {
     try {
       const report = await latestThreeMonthReport();
       if (!report) return res.status(404).json({ code: "THREE_MONTH_REPORT_NOT_FOUND", message: "No generated 3Month report is mounted." });
@@ -897,9 +898,9 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       const stock = evidence.stocks.find((item) => item.symbol === rawSymbol)!;
       return res.json({ reportId: report.id, stock, trades });
     } catch (error) { return next(error); }
-  });
+  }));
 
-  app.get("/v1/backtesting/reports/three-month/files/:name", async (req, res) => {
+  app.get("/v1/backtesting/reports/three-month/files/:name", asyncRoute(async (req, res) => {
     const allowed = new Set(["three_month_backtest_report.pdf", "three_month_trades.csv", "README.md"]);
     if (!allowed.has(req.params.name)) return res.status(404).json({ code: "REPORT_FILE_NOT_FOUND" });
     const report = await latestThreeMonthReport();
@@ -907,9 +908,9 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
     const candidate = path.resolve(report.directory, req.params.name);
     if (!candidate.startsWith(`${report.directory}${path.sep}`)) return res.status(404).json({ code: "REPORT_FILE_NOT_FOUND" });
     return res.download(candidate, req.params.name);
-  });
+  }));
 
-  app.get("/v1/backtesting/h30/latest", async (req, res) => {
+  app.get("/v1/backtesting/h30/latest", asyncRoute(async (req, res) => {
     const requestedRun = typeof req.query.runId === "string" ? req.query.runId : null;
     const runRows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT r.run_id::text AS "runId",r.strategy_version_id AS "strategyVersionId",r.status,
@@ -931,9 +932,9 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       WHERE run_id=$1::uuid AND format IN ('png','svg') ORDER BY chart_id,format`, run.runId);
     res.setHeader("Cache-Control", "private, max-age=60");
     return res.json({ ...run, observations, charts: charts.map((row) => ({ ...row, url: `/v1/backtesting/h30/artifacts/${encodeURIComponent(String(row.chartId))}?runId=${run.runId}` })) });
-  });
+  }));
 
-  app.get("/v1/backtesting/h30/artifacts/:chartId", async (req, res) => {
+  app.get("/v1/backtesting/h30/artifacts/:chartId", asyncRoute(async (req, res) => {
     const runId = typeof req.query.runId === "string" ? req.query.runId : null;
     if (!runId) return res.status(400).json({ code: "RUN_ID_REQUIRED" });
     const rows = await prisma.$queryRawUnsafe<Array<{ artifactPath: string }>>(`
@@ -957,36 +958,36 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       }
     }
     return res.sendFile(artifactPath);
-  });
+  }));
 
-  app.get("/v1/backtesting/overview", async (req, res) =>
+  app.get("/v1/backtesting/overview", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "backtesting-overview",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getBacktestingOverview
-    })
+    }))
   );
 
-  app.get("/v1/backtesting/strategies", async (req, res) =>
+  app.get("/v1/backtesting/strategies", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "backtesting-strategies",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getBacktestingStrategies
-    })
+    }))
   );
 
-  app.get("/v1/backtesting/strategies/:strategyId", async (req, res) =>
+  app.get("/v1/backtesting/strategies/:strategyId", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: `backtesting-strategy-${req.params.strategyId}-${typeof req.query.scenario === "string" ? req.query.scenario : "default"}`,
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: (db) => getBacktestingStrategyDetail(db, req.params.strategyId, typeof req.query.scenario === "string" ? req.query.scenario : undefined)
-    })
+    }))
   );
 
-  app.get("/v1/backtesting/strategies/:strategyId/summary", async (req, res) => {
+  app.get("/v1/backtesting/strategies/:strategyId/summary", asyncRoute(async (req, res) => {
     const scenarioKey = typeof req.query.scenario === "string" ? req.query.scenario : undefined;
     const detail = await getBacktestingStrategyDetail(prisma, req.params.strategyId, scenarioKey);
     const scenario = detail.scenarios[scenarioKey ?? detail.defaultScenarioKey] ?? detail.scenarios[detail.defaultScenarioKey] ?? Object.values(detail.scenarios)[0];
@@ -997,9 +998,9 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       version: detail.version,
       scenario
     });
-  });
+  }));
 
-  app.get("/v1/backtesting/strategies/:strategyId/equity", async (req, res) => {
+  app.get("/v1/backtesting/strategies/:strategyId/equity", asyncRoute(async (req, res) => {
     const scenarioKey = typeof req.query.scenario === "string" ? req.query.scenario : undefined;
     const detail = await getBacktestingStrategyDetail(prisma, req.params.strategyId, scenarioKey);
     const scenario = detail.scenarios[scenarioKey ?? detail.defaultScenarioKey] ?? detail.scenarios[detail.defaultScenarioKey] ?? Object.values(detail.scenarios)[0];
@@ -1010,9 +1011,9 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       scenarioKey: scenario.scenarioKey,
       points: scenario.equityCurve
     });
-  });
+  }));
 
-  app.get("/v1/backtesting/strategies/:strategyId/drawdown", async (req, res) => {
+  app.get("/v1/backtesting/strategies/:strategyId/drawdown", asyncRoute(async (req, res) => {
     const scenarioKey = typeof req.query.scenario === "string" ? req.query.scenario : undefined;
     const detail = await getBacktestingStrategyDetail(prisma, req.params.strategyId, scenarioKey);
     const scenario = detail.scenarios[scenarioKey ?? detail.defaultScenarioKey] ?? detail.scenarios[detail.defaultScenarioKey] ?? Object.values(detail.scenarios)[0];
@@ -1023,16 +1024,16 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       scenarioKey: scenario.scenarioKey,
       points: scenario.drawdownCurve
     });
-  });
+  }));
 
-  app.get("/v1/backtesting/strategies/:strategyId/open-positions", async (req, res) => {
+  app.get("/v1/backtesting/strategies/:strategyId/open-positions", asyncRoute(async (req, res) => {
     const scenarioKey = typeof req.query.scenario === "string" ? req.query.scenario : undefined;
     const detail = await getBacktestingStrategyDetail(prisma, req.params.strategyId, scenarioKey);
     const scenario = detail.scenarios[scenarioKey ?? detail.defaultScenarioKey] ?? detail.scenarios[detail.defaultScenarioKey] ?? Object.values(detail.scenarios)[0];
     return res.json({ items: scenario.openPositions, scenarioKey: scenario.scenarioKey, generatedAt: detail.generatedAt });
-  });
+  }));
 
-  app.get("/v1/backtesting/strategies/:strategyId/trades", async (req, res) => {
+  app.get("/v1/backtesting/strategies/:strategyId/trades", asyncRoute(async (req, res) => {
     const scenarioKey = typeof req.query.scenario === "string" ? req.query.scenario : undefined;
     const detail = await getBacktestingStrategyDetail(prisma, req.params.strategyId, scenarioKey);
     const scenario = detail.scenarios[scenarioKey ?? detail.defaultScenarioKey] ?? detail.scenarios[detail.defaultScenarioKey] ?? Object.values(detail.scenarios)[0];
@@ -1042,46 +1043,46 @@ export function registerBacktesting(app: Express, prisma: PrismaClient) {
       scenarioKey: scenario.scenarioKey,
       generatedAt: detail.generatedAt
     });
-  });
+  }));
 
-  app.get("/v1/backtesting/strategies/:strategyId/stocks", async (req, res) => {
+  app.get("/v1/backtesting/strategies/:strategyId/stocks", asyncRoute(async (req, res) => {
     const scenarioKey = typeof req.query.scenario === "string" ? req.query.scenario : undefined;
     const detail = await getBacktestingStrategyDetail(prisma, req.params.strategyId, scenarioKey);
     const scenario = detail.scenarios[scenarioKey ?? detail.defaultScenarioKey] ?? detail.scenarios[detail.defaultScenarioKey] ?? Object.values(detail.scenarios)[0];
     return res.json({ items: scenario.stockBreakdown, scenarioKey: scenario.scenarioKey, generatedAt: detail.generatedAt });
-  });
+  }));
 
-  app.get("/v1/backtesting/strategies/:strategyId/regimes", async (req, res) => {
+  app.get("/v1/backtesting/strategies/:strategyId/regimes", asyncRoute(async (req, res) => {
     const scenarioKey = typeof req.query.scenario === "string" ? req.query.scenario : undefined;
     const detail = await getBacktestingStrategyDetail(prisma, req.params.strategyId, scenarioKey);
     const scenario = detail.scenarios[scenarioKey ?? detail.defaultScenarioKey] ?? detail.scenarios[detail.defaultScenarioKey] ?? Object.values(detail.scenarios)[0];
     return res.json({ items: scenario.regimeBreakdown, scenarioKey: scenario.scenarioKey, generatedAt: detail.generatedAt });
-  });
+  }));
 
-  app.get("/v1/backtesting/daily-summary", async (req, res) =>
+  app.get("/v1/backtesting/daily-summary", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "backtesting-daily-summary",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getBacktestingDailySummary
-    })
+    }))
   );
 
-  app.get("/v1/backtesting/compare", async (req, res) =>
+  app.get("/v1/backtesting/compare", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "backtesting-compare",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getBacktestingCompare
-    })
+    }))
   );
 
-  app.get("/v1/backtesting/runs", async (req, res) =>
+  app.get("/v1/backtesting/runs", asyncRoute(async (req, res) =>
     serveSnapshotRoute(req, res, prisma, {
       key: "backtesting-runs",
       cacheControl: "private, max-age=300, stale-while-revalidate=300",
       freshnessMs: 5 * 60_000,
       build: getBacktestingRuns
-    })
+    }))
   );
 }

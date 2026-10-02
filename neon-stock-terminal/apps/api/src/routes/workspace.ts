@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type { Express } from "express";
@@ -407,7 +408,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
     res.json(TRADE_QUALITY_POLICY);
   });
 
-  app.get("/v1/workspace/paper-trading/bootstrap", async (req, res, next) => {
+  app.get("/v1/workspace/paper-trading/bootstrap", asyncRoute(async (req, res, next) => {
     try {
       const session = await auth.getSession(req);
       const canComment = canManagePaperTradeComments(session?.user);
@@ -466,9 +467,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         permissions: { can_manage_comments: canComment, can_manage_trade_quality: canComment }
       });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/workspace/paper-trading", async (req, res, next) => {
+  app.get("/v1/workspace/paper-trading", asyncRoute(async (req, res, next) => {
     try {
       const session = await auth.getSession(req);
       const canComment = canManagePaperTradeComments(session?.user);
@@ -785,9 +786,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         permissions: { can_manage_comments: canComment, can_manage_trade_quality: canComment }
       });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.post("/v1/workspace/paper-trading/manual-trades", async (req, res, next) => {
+  app.post("/v1/workspace/paper-trading/manual-trades", asyncRoute(async (req, res, next) => {
     try {
       await requirePaperMutationSession(req, auth);
       const parsed = manualPaperTradeSchema.safeParse(req.body);
@@ -897,9 +898,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
       res.setHeader("X-Trading-Environment", "PAPER");
       return res.status(upstream.status).json(responseJson);
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/workspace/paper-trading/trades/:tradeGroupId", async (req, res, next) => {
+  app.get("/v1/workspace/paper-trading/trades/:tradeGroupId", asyncRoute(async (req, res, next) => {
     try {
       const session = await auth.getSession(req);
       const canComment = canManagePaperTradeComments(session?.user);
@@ -1003,9 +1004,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         permissions: { can_manage_comments: canComment }
       });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/workspace/paper-trading/trades/:tradeGroupId/comments", async (req, res, next) => {
+  app.get("/v1/workspace/paper-trading/trades/:tradeGroupId/comments", asyncRoute(async (req, res, next) => {
     try {
       await requirePaperCommentAdmin(req, auth);
       const tradeGroupId = z.string().uuid().parse(req.params.tradeGroupId);
@@ -1017,9 +1018,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         order by c.created_at desc,c.comment_id desc`, tradeGroupId);
       return res.json({ environment: "PAPER", tradeGroupId, comments });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.post("/v1/workspace/paper-trading/trades/:tradeGroupId/comments", async (req, res, next) => {
+  app.post("/v1/workspace/paper-trading/trades/:tradeGroupId/comments", asyncRoute(async (req, res, next) => {
     try {
       const session = await requirePaperCommentAdmin(req, auth, true);
       const tradeGroupId = z.string().uuid().parse(req.params.tradeGroupId);
@@ -1049,9 +1050,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         correlationId, tradeGroupId, commentId, session.user.uid);
       return res.status(201).json({ environment: "PAPER", comment });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.post("/v1/workspace/paper-trading/trades/:tradeGroupId/quality-review", async (req, res, next) => {
+  app.post("/v1/workspace/paper-trading/trades/:tradeGroupId/quality-review", asyncRoute(async (req, res, next) => {
     try {
       const session = await requirePaperCommentAdmin(req, auth, true);
       const tradeGroupId = z.string().uuid().parse(req.params.tradeGroupId);
@@ -1093,9 +1094,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         randomUUID(), tradeGroupId, reviewId, session.user.uid, TRADE_QUALITY_POLICY.version);
       return res.status(201).json({ environment: "PAPER", review: inserted[0] });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/workspace/nifty-500", async (_req, res, next) => {
+  app.get("/v1/workspace/nifty-500", asyncRoute(async (_req, res, next) => {
     try {
       const [latest, history] = await Promise.all([
         prisma.$queryRawUnsafe<Row[]>(`
@@ -1109,9 +1110,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
       ]);
       res.json({ asOf: new Date().toISOString(), latest: latest[0] ?? null, history });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/workspace/futures", async (_req, res, next) => {
+  app.get("/v1/workspace/futures", asyncRoute(async (_req, res, next) => {
     try {
       const [rows, contracts] = await Promise.all([prisma.$queryRawUnsafe<Row[]>(`
         select market_date, client_type, instrument_type, buy_contracts::text, sell_contracts::text,
@@ -1154,9 +1155,9 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
       `)]);
       res.json({ asOf: new Date().toISOString(), ...futuresWorkspacePayload(contracts, rows) });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/workspace/control-plane", async (req, res, next) => {
+  app.get("/v1/workspace/control-plane", asyncRoute(async (req, res, next) => {
     const session = await auth.getSession(req);
     if (!session || session.user.role !== "admin" || !session.user.uid.startsWith("local-admin:")) {
       return res.status(403).json({ error: { code: "ADMIN_REQUIRED", message: "Administrator access required." } });
@@ -1232,5 +1233,5 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         }
       });
     } catch (error) { next(error); }
-  });
+  }));
 }

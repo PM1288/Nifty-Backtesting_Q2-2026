@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import crypto from "node:crypto";
 import type { Express, Request } from "express";
 import type { PrismaClient } from "@prisma/client";
@@ -369,7 +370,7 @@ function summarizeAttribution(attribution: z.infer<typeof attributionSchema>) {
 export function registerFeedbackRoutes(app: Express, prisma: PrismaClient, auth: RequestAuthenticator) {
   const ensureStore = ensureFeedbackStoreReady(prisma);
 
-  app.get("/v1/feedback/challenge", feedbackChallengeRateLimiter, async (req, res) => {
+  app.get("/v1/feedback/challenge", feedbackChallengeRateLimiter, asyncRoute(async (req, res) => {
     const session = await auth.getSession(req);
     if (!session?.user) {
       return res.status(401).json({
@@ -401,9 +402,9 @@ export function registerFeedbackRoutes(app: Express, prisma: PrismaClient, auth:
       },
       categories: FEEDBACK_CATEGORIES
     });
-  });
+  }));
 
-  app.post("/v1/feedback", feedbackSubmitBurstLimiter, feedbackSubmitDailyLimiter, async (req, res) => {
+  app.post("/v1/feedback", feedbackSubmitBurstLimiter, feedbackSubmitDailyLimiter, asyncRoute(async (req, res) => {
     await ensureStore;
 
     try {
@@ -650,5 +651,5 @@ export function registerFeedbackRoutes(app: Express, prisma: PrismaClient, auth:
         status: "saved"
       });
     }
-  });
+  }));
 }

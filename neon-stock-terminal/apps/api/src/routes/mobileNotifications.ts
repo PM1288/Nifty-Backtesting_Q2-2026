@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import crypto from "node:crypto";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
@@ -113,7 +114,7 @@ function paperPopupEvent(row: Row) {
 }
 
 export function registerMobileNotifications(app: Express, prisma: PrismaClient) {
-  app.post("/v1/mobile/devices", async (req, res, next) => {
+  app.post("/v1/mobile/devices", asyncRoute(async (req, res, next) => {
     try {
       const userUid = req.authUser?.uid;
       if (!userUid) return res.status(401).json({ error: { code: "AUTH_REQUIRED", message: "Authentication is required." } });
@@ -133,9 +134,9 @@ export function registerMobileNotifications(app: Express, prisma: PrismaClient) 
       );
       return res.status(200).json({ deviceId: rows[0]?.device_id, enabled: rows[0]?.enabled, registeredAt: rows[0]?.last_registered_at });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/mobile/notifications", async (req, res, next) => {
+  app.get("/v1/mobile/notifications", asyncRoute(async (req, res, next) => {
     try {
       const userUid = req.authUser?.uid;
       if (!userUid) return res.status(401).json({ error: { code: "AUTH_REQUIRED", message: "Authentication is required." } });
@@ -150,9 +151,9 @@ export function registerMobileNotifications(app: Express, prisma: PrismaClient) 
         limit $2`, userUid, limit);
       return res.json({ asOf: new Date().toISOString(), source: "paper_trading.trade_events", items: rows.map((row) => ({ event: paperEvent(row) })) });
     } catch (error) { next(error); }
-  });
+  }));
 
-  app.get("/v1/paper/notifications", async (req, res, next) => {
+  app.get("/v1/paper/notifications", asyncRoute(async (req, res, next) => {
     try {
       const userUid = req.authUser?.uid;
       if (!userUid) return res.status(401).json({ error: { code: "AUTH_REQUIRED", message: "Authentication is required." } });
@@ -177,5 +178,5 @@ export function registerMobileNotifications(app: Express, prisma: PrismaClient) 
         items: rows.map(paperPopupEvent),
       });
     } catch (error) { next(error); }
-  });
+  }));
 }

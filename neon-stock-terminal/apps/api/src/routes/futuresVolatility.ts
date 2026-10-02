@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
@@ -149,16 +150,16 @@ async function screenRows(prisma: PrismaClient, runId: string, scope: "stocks" |
 }
 
 export function registerFuturesVolatility(app: Express, prisma: PrismaClient) {
-  app.get("/v1/futures-volatility/reports", async (_req, res) => {
+  app.get("/v1/futures-volatility/reports", asyncRoute(async (_req, res) => {
     try {
       const reports = await reportCatalog(prisma);
       res.json({ ruleVersion: FUTURES_VOLATILITY_RULE_VERSION, thresholdRaw: FUTURES_VOLATILITY_THRESHOLD_RAW, reports });
     } catch {
       res.status(503).json(errorPayload("FOVOLT storage is not ready. Apply the additive migration and load a validated report."));
     }
-  });
+  }));
 
-  app.get("/v1/futures-volatility/screener", async (req, res) => {
+  app.get("/v1/futures-volatility/screener", asyncRoute(async (req, res) => {
     const parsed = z.object({
       analysisDate: dateSchema.optional(), reportDate: dateSchema.optional(),
       scope: scopeSchema.default("stocks"), matchesOnly: z.enum(["true", "false"]).default("true"),
@@ -183,9 +184,9 @@ export function registerFuturesVolatility(app: Express, prisma: PrismaClient) {
     } catch {
       return res.status(503).json(errorPayload("FOVOLT screener evidence is unavailable from the canonical database."));
     }
-  });
+  }));
 
-  app.get("/v1/futures-volatility/history", async (req, res) => {
+  app.get("/v1/futures-volatility/history", asyncRoute(async (req, res) => {
     const parsed = z.object({ symbol: z.string().trim().min(1).max(40) }).safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_SYMBOL", message: "A symbol is required." } });
     try {
@@ -203,9 +204,9 @@ export function registerFuturesVolatility(app: Express, prisma: PrismaClient) {
     } catch {
       return res.status(503).json(errorPayload("FOVOLT history is unavailable."));
     }
-  });
+  }));
 
-  app.get("/v1/futures-volatility/backtest", async (req, res) => {
+  app.get("/v1/futures-volatility/backtest", asyncRoute(async (req, res) => {
     const parsed = z.object({ from: dateSchema, to: dateSchema }).safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_FUTURES_VOLATILITY_BACKTEST_QUERY", message: "from and to must use YYYY-MM-DD" } });
     const from = new Date(`${parsed.data.from}T00:00:00Z`);
@@ -322,5 +323,5 @@ export function registerFuturesVolatility(app: Express, prisma: PrismaClient) {
     } catch {
       return res.status(503).json(errorPayload("FOVOLT backtest evidence is unavailable from the canonical database."));
     }
-  });
+  }));
 }

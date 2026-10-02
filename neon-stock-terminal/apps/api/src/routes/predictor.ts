@@ -1,8 +1,9 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { readPredictor } from "../lib/predictorService";
 export function registerPredictor(app: Express, prisma: PrismaClient) {
-  app.get("/v1/predictor", async (req, res) => {
+  app.get("/v1/predictor", asyncRoute(async (req, res) => {
     const day = req.query.day;
     if (
       day != null &&
@@ -22,8 +23,8 @@ export function registerPredictor(app: Express, prisma: PrismaClient) {
             "Predictor evidence unavailable. No forecast or success is implied.",
         });
     }
-  });
-  app.get("/v1/predictor/evidence/:id", async (req, res) => {
+  }));
+  app.get("/v1/predictor/evidence/:id", asyncRoute(async (req, res) => {
     if (!/^\d{1,18}$/.test(req.params.id)) return res.status(400).end();
     try {
       const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
@@ -37,5 +38,5 @@ export function registerPredictor(app: Express, prisma: PrismaClient) {
     } catch {
       return res.status(503).json({ error: "Evidence unavailable" });
     }
-  });
+  }));
 }

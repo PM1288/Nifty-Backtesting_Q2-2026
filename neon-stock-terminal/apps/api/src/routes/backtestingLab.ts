@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import { createHash, randomUUID } from "node:crypto";
 import { stat } from "node:fs/promises";
 import path from "node:path";
@@ -132,7 +133,7 @@ function integerQuery(value: unknown, fallback: number, maximum: number) {
 }
 
 export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth: RequestAuthenticator) {
-  app.get("/v1/backtesting/lab/catalogue", async (_req, res) => {
+  app.get("/v1/backtesting/lab/catalogue", asyncRoute(async (_req, res) => {
     const batches = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT b.batch_run_id::int AS "batchRunId",b.data_as_of_date AS "dataAsOfDate",b.generated_at AS "generatedAt",
              min(f.trade_date) AS "dateStart",max(f.trade_date) AS "dateEnd",count(DISTINCT f.symbol)::int AS "symbolCount"
@@ -149,9 +150,9 @@ export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth:
       limits: { maximumCalendarDays: 1098, maximumSymbols: 100 },
       ladders: { intradayPct: [0.3, 0.5, 0.7], d5Pct: [1, 2, 5], adversePct: [-0.5, -1, -2, -5, -10, "BELOW_-10"], h30Pct: [1, 2, 5] }
     });
-  });
+  }));
 
-  app.post("/v1/backtesting/lab/runs", async (req, res, next) => {
+  app.post("/v1/backtesting/lab/runs", asyncRoute(async (req, res, next) => {
     try {
       await requireMutationAuth(req, auth);
       const idempotencyKey = String(req.header("Idempotency-Key") || "").trim();
@@ -209,9 +210,9 @@ export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth:
       });
       return res.status(202).json(jsonSafe(created));
     } catch (error) { return next(error); }
-  });
+  }));
 
-  app.get("/v1/backtesting/lab/runs", async (req, res) => {
+  app.get("/v1/backtesting/lab/runs", asyncRoute(async (req, res) => {
     const limit = integerQuery(req.query.limit, 25, 100);
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT run_id AS "runId",strategy_version_id AS "strategyVersionId",source_batch_run_id::int AS "sourceBatchRunId",
@@ -222,9 +223,9 @@ export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth:
              summary,result_hash AS "resultHash",error_code AS "errorCode",created_at AS "createdAt",started_at AS "startedAt",finished_at AS "finishedAt"
         FROM research.strategy_lab_run ORDER BY created_at DESC LIMIT $1`, limit);
     return res.json({ items: rows });
-  });
+  }));
 
-  app.get("/v1/backtesting/lab/runs/:runId", async (req, res) => {
+  app.get("/v1/backtesting/lab/runs/:runId", asyncRoute(async (req, res) => {
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT run.run_id AS "runId",run.strategy_version_id AS "strategyVersionId",
       run.source_batch_run_id::int AS "sourceBatchRunId",run.requested_date_start AS "requestedDateStart",
@@ -244,17 +245,17 @@ export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth:
       FROM research.strategy_lab_run run WHERE run.run_id=$1 LIMIT 1`, req.params.runId);
     if (!rows[0]) return res.status(404).json({ error: { code: "LAB_RUN_NOT_FOUND", message: "Run not found." } });
     return res.json(jsonSafe(rows[0]));
-  });
+  }));
 
-  app.get("/v1/backtesting/lab/runs/:runId/trades", async (req, res) => {
+  app.get("/v1/backtesting/lab/runs/:runId/trades", asyncRoute(async (req, res) => {
     const limit = integerQuery(req.query.limit, 100, 500);
     const offset = Math.max(0, Number(req.query.offset) || 0);
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT * FROM simulation.strategy_lab_trade WHERE run_id=$1 ORDER BY entry_date,symbol LIMIT $2 OFFSET $3`, req.params.runId,limit,offset);
     return res.json({ items: rows, limit, offset });
-  });
+  }));
 
-  app.get("/v1/backtesting/lab/runs/:runId/trades.csv", async (req, res) => {
+  app.get("/v1/backtesting/lab/runs/:runId/trades.csv", asyncRoute(async (req, res) => {
     const runId = z.string().uuid().safeParse(req.params.runId);
     if (!runId.success) return res.status(400).json({ error: { code: "INVALID_RUN_ID", message: "Run ID must be a UUID." } });
     const rootSetting = process.env.STRATEGY_LAB_ARTIFACT_ROOT?.trim();
@@ -277,9 +278,9 @@ export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth:
     }
     res.setHeader("Cache-Control", "private, no-store");
     return res.download(candidate, `strategy-lab-${runId.data}-trades.csv`);
-  });
+  }));
 
-  app.get("/v1/backtesting/lab/runs/:runId/ladders", async (req, res) => {
+  app.get("/v1/backtesting/lab/runs/:runId/ladders", asyncRoute(async (req, res) => {
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT ladder_kind AS "ladderKind",level_key AS "levelKey",level_pct::double precision AS "levelPct",
              count(*)::int AS "sampleCount",count(*) FILTER (WHERE hit)::int AS "hitCount",
@@ -287,18 +288,18 @@ export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth:
         FROM simulation.strategy_lab_ladder_result WHERE run_id=$1
        GROUP BY ladder_kind,level_key,level_pct ORDER BY ladder_kind,level_pct`, req.params.runId);
     return res.json({ items: rows });
-  });
+  }));
 
-  app.get("/v1/backtesting/lab/runs/:runId/equity", async (req, res) => {
+  app.get("/v1/backtesting/lab/runs/:runId/equity", asyncRoute(async (req, res) => {
     const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT trade_date AS "tradeDate",cash::double precision,deployed_capital::double precision AS "deployedCapital",
              net_liquidation_equity::double precision AS "netLiquidationEquity",realised_pnl::double precision AS "realisedPnl",
              unrealised_pnl::double precision AS "unrealisedPnl",drawdown_pct::double precision AS "drawdownPct",open_positions AS "openPositions"
         FROM simulation.strategy_lab_equity_point WHERE run_id=$1 ORDER BY trade_date`, req.params.runId);
     return res.json({ items: rows });
-  });
+  }));
 
-  app.post("/v1/backtesting/lab/runs/:runId/cancel", async (req, res, next) => {
+  app.post("/v1/backtesting/lab/runs/:runId/cancel", asyncRoute(async (req, res, next) => {
     try {
       await requireMutationAuth(req, auth);
       const updated = await prisma.$transaction(async (tx) => {
@@ -316,7 +317,7 @@ export function registerBacktestingLab(app: Express, prisma: PrismaClient, auth:
       if (!updated) return res.status(409).json({ error: { code: "RUN_NOT_CANCELLABLE", message: "Run is not queued or running." } });
       return res.json(jsonSafe(updated));
     } catch (error) { return next(error); }
-  });
+  }));
 }
 
 export const backtestingLabTestExports = { canonical, hashRequest, validateParameters, createRunSchema };

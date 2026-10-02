@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import { Prisma, type PrismaClient } from "@prisma/client";
 
@@ -794,7 +795,7 @@ export async function getAnalyticsFiiFlow(prisma: PrismaClient) {
 }
 
 export function registerAnalyticsFiiFlow(app: Express, prisma: PrismaClient) {
-  app.get("/v1/analytics/fii-flow", async (_req, res) => {
+  app.get("/v1/analytics/fii-flow", asyncRoute(async (_req, res) => {
     try {
       const payload = await getAnalyticsFiiFlow(prisma);
       res.json(payload);
@@ -802,5 +803,5 @@ export function registerAnalyticsFiiFlow(app: Express, prisma: PrismaClient) {
       console.error("[analytics-fii-flow] failed", error);
       res.status(500).json({ error: "analytics_fii_flow_failed" });
     }
-  });
+  }));
 }

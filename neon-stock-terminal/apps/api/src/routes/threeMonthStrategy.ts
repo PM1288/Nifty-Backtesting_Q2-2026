@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -273,7 +274,7 @@ export async function getThreeMonthStrategy(prisma: Pick<PrismaClient, "$queryRa
 }
 
 export function registerThreeMonthStrategy(app: Express, prisma: PrismaClient) {
-  app.get("/v1/strategy/three-month", async (req, res, next) => {
+  app.get("/v1/strategy/three-month", asyncRoute(async (req, res, next) => {
     try {
       const rawMode = String(req.query.intradayMode ?? "completed");
       if (rawMode !== "completed" && rawMode !== "forming") return res.status(400).json({ error: { code: "INVALID_INTRADAY_MODE", message: "intradayMode must be completed or forming." } });
@@ -289,5 +290,5 @@ export function registerThreeMonthStrategy(app: Express, prisma: PrismaClient) {
       res.setHeader("Cache-Control", "private, no-cache");
       res.json(payload);
     } catch (error) { next(error); }
-  });
+  }));
 }

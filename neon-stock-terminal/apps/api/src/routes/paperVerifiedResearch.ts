@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import type { RequestAuthenticator } from "../auth/guard";
@@ -118,7 +119,7 @@ export function buildVerifiedResearch(trades: Row[], candidates: Row[], asOf: st
 
 export function registerPaperVerifiedResearch(app: Express, prisma: PrismaClient, auth: RequestAuthenticator) {
   let cache: { key: string; until: number; promise: Promise<Row> } | undefined;
-  app.get("/v1/workspace/paper-trading/research", async (req, res, next) => {
+  app.get("/v1/workspace/paper-trading/research", asyncRoute(async (req, res, next) => {
     try {
       if (!await auth.getSession(req)) return void res.status(401).json({ error: "Authentication required" });
       const asOf = req.query.asOf == null ? new Date().toISOString() : String(req.query.asOf);
@@ -147,5 +148,5 @@ export function registerPaperVerifiedResearch(app: Express, prisma: PrismaClient
       res.setHeader("Cache-Control", "private, no-store");
       res.json(await cache.promise);
     } catch (error) { next(error); }
-  });
+  }));
 }

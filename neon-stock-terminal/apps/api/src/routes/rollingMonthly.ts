@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -71,7 +72,38 @@ function spreadsheetXml(sheets: Array<{ name: string; rows: Array<Record<string,
 }
 
 export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
-  app.get("/v1/rolling-monthly/absolute-months", async (req, res) => {
+  // The table needs identities and rejection reasons, not every condition trace
+  // for every historical stock-month. Full evidence remains available on demand.
+  app.get("/v1/rolling-monthly/absolute-evaluations", asyncRoute(async (req, res) => {
+    const year = clean(req.query.year, 4);
+    const month = clean(req.query.month, 2);
+    if (year && !YEAR.test(year)) return void res.status(400).json({ error: "year must be YYYY" });
+    if (month && !MONTH.test(month)) return void res.status(400).json({ error: "month must be MM" });
+    const evaluations = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT evaluation_id, symbol, company_name, sector, evaluation_month,
+        signal_date, selection_status, failed_condition_codes, rejection_reasons,
+        false AS details_loaded
+       FROM rolling_monthly.evaluation_ledger
+       WHERE variant='ABSOLUTE_MONTH'
+         AND ($1::int IS NULL OR extract(year FROM evaluation_month)::int=$1::int)
+         AND ($2::int IS NULL OR extract(month FROM evaluation_month)::int=$2::int)
+       ORDER BY evaluation_month DESC,symbol`, year ? Number(year) : null, month ? Number(month) : null);
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ evaluations });
+  }));
+
+  app.get("/v1/rolling-monthly/absolute-evaluations/:evaluationId", asyncRoute(async (req, res) => {
+    const id = clean(req.params.evaluationId, 36);
+    if (!UUID.test(id)) return void res.status(400).json({ error: "Invalid evaluation identifier" });
+    const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT * FROM rolling_monthly.evaluation_ledger
+       WHERE evaluation_id=$1::uuid AND variant='ABSOLUTE_MONTH'`, id);
+    if (!rows[0]) return void res.status(404).json({ error: "Evaluation not found" });
+    res.setHeader("Cache-Control", "no-store");
+    res.json(rows[0]);
+  }));
+
+  app.get("/v1/rolling-monthly/absolute-months", asyncRoute(async (req, res) => {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
     const includeEvaluations = clean(req.query.includeEvaluations, 5).toLowerCase() !== "false";
@@ -149,9 +181,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
         "INCOMPLETE candidate paths remain visible but are excluded from aggregate performance and hypothetical P&L.",
       ],
     });
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/absolute-months/export", async (req, res) => {
+  app.get("/v1/rolling-monthly/absolute-months/export", asyncRoute(async (req, res) => {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
     const format = clean(req.query.format, 8).toLowerCase() || "csv";
@@ -200,9 +232,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
       { name: "Monthly Summary", rows: monthly, columns: monthlyColumns },
       { name: "Yearly Summary", rows: yearly, columns: yearlyColumns },
     ]));
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/absolute-month-candidates/:candidateId/chart", async (req, res) => {
+  app.get("/v1/rolling-monthly/absolute-month-candidates/:candidateId/chart", asyncRoute(async (req, res) => {
     const candidateId = clean(req.params.candidateId, 36);
     if (!UUID.test(candidateId)) return void res.status(400).json({ error: "Invalid candidateId" });
     const candidate = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
@@ -231,9 +263,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
        SELECT DISTINCT ON (trade_date) trade_date,open,high,low,close,volume,source
        FROM combined ORDER BY trade_date,priority`, row.symbol, row.signal_date, row.evaluation_end_date);
     res.json({ candidate: row, timeframe: "1D", source: "Yahoo split-adjusted OHLC with NSE EOD and SmartAPI REST latest-session fallback", bars });
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/absolute-first-session", async (req, res) => {
+  app.get("/v1/rolling-monthly/absolute-first-session", asyncRoute(async (req, res) => {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
     const threshold = clean(req.query.threshold, 4) || "0.50";
@@ -303,9 +335,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
         "Gross scenarios exclude brokerage, taxes, slippage and liquidity limits.",
       ],
     });
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/absolute-first-session/export", async (req, res) => {
+  app.get("/v1/rolling-monthly/absolute-first-session/export", asyncRoute(async (req, res) => {
     const year = clean(req.query.year, 4);
     const month = clean(req.query.month, 2);
     const threshold = clean(req.query.threshold, 4) || "0.50";
@@ -330,9 +362,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
     res.setHeader("Content-Type", "application/vnd.ms-excel; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="absolute-first-session-${stamp}.xls"`);
     res.send(spreadsheetXml([{ name: "First Session Scenarios", rows, columns: absoluteFirstSessionColumns }]));
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/absolute-first-session/:candidateId/chart", async (req, res) => {
+  app.get("/v1/rolling-monthly/absolute-first-session/:candidateId/chart", asyncRoute(async (req, res) => {
     const candidateId = clean(req.params.candidateId, 36);
     if (!UUID.test(candidateId)) return void res.status(400).json({ error: "Invalid candidateId" });
     const candidate = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
@@ -355,9 +387,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
        SELECT DISTINCT ON (trade_date) trade_date,open,high,low,close,volume,source
        FROM combined ORDER BY trade_date,priority`, row.symbol, row.first_session_date, row.evaluation_end_date);
     res.json({ candidate: row, timeframe: "1D", source: "Yahoo split-adjusted OHLC with NSE EOD fallback", bars });
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/expiry-candidates/:candidateId/chart", async (req, res) => {
+  app.get("/v1/rolling-monthly/expiry-candidates/:candidateId/chart", asyncRoute(async (req, res) => {
     const candidateId = clean(req.params.candidateId, 36);
     if (!UUID.test(candidateId)) {
       res.status(400).json({ error: "Invalid candidateId" });
@@ -470,9 +502,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
         ),
       })),
     });
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/dashboard", async (req, res) => {
+  app.get("/v1/rolling-monthly/dashboard", asyncRoute(async (req, res) => {
     const requestedDate = clean(req.query.signalDate, 10);
     if (requestedDate && !DATE.test(requestedDate)) {
       res.status(400).json({ error: "signalDate must be YYYY-MM-DD" });
@@ -732,9 +764,9 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
         "Daily OHLC cannot resolve intraday target/stop order; fixture uses stop-first.",
       ],
     });
-  });
+  }));
 
-  app.get("/v1/rolling-monthly/candidates/:symbol", async (req, res) => {
+  app.get("/v1/rolling-monthly/candidates/:symbol", asyncRoute(async (req, res) => {
     const symbol = clean(req.params.symbol).toUpperCase();
     if (!SYMBOL.test(symbol)) {
       res.status(400).json({ error: "Invalid symbol" });
@@ -749,5 +781,5 @@ export function registerRollingMonthly(app: Express, prisma: PrismaClient) {
       symbol,
     );
     res.json({ symbol, history });
-  });
+  }));
 }

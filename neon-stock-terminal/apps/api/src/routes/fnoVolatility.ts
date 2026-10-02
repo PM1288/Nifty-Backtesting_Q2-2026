@@ -1,3 +1,4 @@
+import { asyncRoute } from "../lib/asyncRoute";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 
@@ -163,13 +164,13 @@ async function dashboardPayload(prisma: PrismaClient) {
 }
 
 export function registerFnoVolatility(app: Express, prisma: PrismaClient) {
-  app.get("/v1/fno-volatility/dashboard", async (_req, res) => {
+  app.get("/v1/fno-volatility/dashboard", asyncRoute(async (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const payload = await dashboardPayload(prisma);
     res.json({ environment: "PAPER", strategyId: "FNO_VOLATILITY_TWO_GATE", strategyVersion: "1.0.0", modelKind: "TRANSPARENT_PERCENTILE_MVP", ...payload });
-  });
+  }));
 
-  app.get("/v1/options-intelligence/summary", async (_req, res) => {
+  app.get("/v1/options-intelligence/summary", asyncRoute(async (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const payload = await dashboardPayload(prisma);
     const chainByUnderlying = payload.liveRun ? await prisma.$queryRawUnsafe<Row[]>(
@@ -223,9 +224,9 @@ export function registerFnoVolatility(app: Express, prisma: PrismaClient) {
       rejectionDistribution: [...rejectionDistribution.entries()].map(([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count),
       candidates
     });
-  });
+  }));
 
-  app.get("/v1/options-intelligence/candidates/:symbol", async (req, res) => {
+  app.get("/v1/options-intelligence/candidates/:symbol", asyncRoute(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const symbol = String(req.params.symbol ?? "").trim().toUpperCase();
     if (!/^[A-Z0-9&-]{1,32}$/.test(symbol)) return res.status(400).json({ error: { code: "INVALID_SYMBOL", message: "Invalid F&O underlying." } });
@@ -317,5 +318,5 @@ export function registerFnoVolatility(app: Express, prisma: PrismaClient) {
         note: "Decision evidence is immutable. Current-chain monitoring is shown separately and never rewrites the original decision."
       }
     });
-  });
+  }));
 }

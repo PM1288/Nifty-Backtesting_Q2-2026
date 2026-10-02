@@ -235,7 +235,7 @@ export function AnalyticsOverviewPage() {
 
         <div>
           <h2 className={styles.panelTitle}>{tr("Market headline")}</h2>
-          <p className={styles.date}>{brief.sessionReference.label} · {formatDateTime(brief.asOf, { includeTime: true })} · {brief.sessionReference.marketStatus}</p>
+          <p className={styles.date}>{brief.sessionReference.label} · {brief.sessionReference.tradeDate ?? "—"} · {tr("Updated")} {formatDateTime(brief.asOf, { includeTime: true })} · {brief.sessionReference.marketStatus}</p>
           <p className={styles.sectionIntro}>{tr(brief.marketHeadline)}</p>
           <p className={styles.muted}>{tr(brief.marketBias)}</p>
         </div>
@@ -310,7 +310,7 @@ export function AnalyticsOverviewPage() {
               <thead>
                 <tr>
                   {brief.fullStockSnapshot.columns.map((column) => (
-                    <th key={column}>{column}</th>
+                    <th key={column}>{formatMarketSnapshot(`${column}=`).replace(/: $/, "")}</th>
                   ))}
                 </tr>
               </thead>

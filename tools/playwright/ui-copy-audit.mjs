@@ -40,4 +40,4 @@ try{
  }
  await context.close();
 }finally{await browser.close();}
-if(results.some(r=>r.failure||r.status>=400||r.errors.length))throw new Error('Audit has failed routes; inspect routes.json');
+if(results.some(r=>r.failure||r.status>=400||r.errors.length||r.views.some(v=>v.mainCount!==1||v.overflow)))throw new Error('Audit has failed routes; inspect routes.json');

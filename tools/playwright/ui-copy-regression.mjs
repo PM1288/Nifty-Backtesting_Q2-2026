@@ -18,8 +18,16 @@ try {
  await details.locator('summary').focus();await page.keyboard.press('Enter');assert.ok(await details.getAttribute('open')!==null);
  assert.ok(await details.getByRole('heading',{name:'Data quality',exact:true}).isVisible());
  assert.doesNotMatch(await page.locator('main').innerText(),/LLM brief|Machine facts|One short teaching note beginning/);
+ assert.doesNotMatch(await details.innerText(), /\b(?:last|weekly_pcr|fii_buy_value_cr)=/i);
  checks.push('Market details open by keyboard and retain data-quality evidence without prompt residue');
  await page.screenshot({path:path.join(out,'market-details.png')});
+ await page.goto(base+'/analytics/leadership');
+ const interpretation=page.getByText('Interpretation and limitations',{exact:true}).first();
+ await interpretation.waitFor({timeout:60000});
+ assert.equal(await interpretation.locator('..').getAttribute('open'),null);
+ await interpretation.focus();await page.keyboard.press('Enter');
+ assert.notEqual(await interpretation.locator('..').getAttribute('open'),null);
+ checks.push('Chart definitions and limitations remain keyboard accessible');
  for(const viewport of [{width:1440,height:1000},{width:390,height:844}]) {
   await page.setViewportSize(viewport);await page.goto(base+'/analytics/system/map');await page.getByRole('heading',{name:'Workspace directory'}).waitFor();
   assert.equal(await page.locator('main').count(),1);

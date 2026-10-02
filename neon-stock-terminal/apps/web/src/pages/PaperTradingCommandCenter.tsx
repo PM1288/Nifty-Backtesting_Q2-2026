@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "../design-system/WorkspacePrimitives";
 import { userFacingError } from "../lib/userFacingError";
 import {
   useEffect,
@@ -690,11 +691,7 @@ export function PaperTradingCommandCenter() {
       <>
 
       {trades.length === 0 && query.detailsLoading ? (
-        <section className={styles.emptyPortfolio} aria-busy="true">
-          <span>DETAILED EVIDENCE LOADING</span>
-          <h1>{number(summary.total_groups)} durable paper trades found</h1>
-          <p>The accounting summary is ready. Complete targets, horizons, reward/pain paths and simulations are still being assembled.</p>
-        </section>
+        <LoadingSkeleton label="Loading trades" rows={3} />
       ) : trades.length === 0 ? (
         <section className={styles.emptyPortfolio}>
           <span>PAPER ONLY</span>
@@ -996,9 +993,7 @@ export function PaperTradingCommandCenter() {
             title: "Data sources and freshness",
             content: (
               <p>
-                Execution uses the durable paper ledger. Observation uses
-                canonical cash-equity bars, exchange sessions and versioned
-                target rules. Current evidence is dated above.
+                Paper fills and observed price paths are tracked separately. Source times are shown above.
               </p>
             ),
           },

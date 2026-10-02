@@ -120,3 +120,17 @@ docker compose -p trading-stack-novius2 --env-file .env -f docker-compose.yml up
 ```
 
 No database rollback applies. Keep unrelated untracked research artifacts intact.
+
+## Final visual corrections
+
+The first deployment was healthy. Inspection of expanded market details caught
+lowercase source keys missed by the initial display formatter; matching now
+handles both cases, with regression assertions on the actual rendered details.
+The completed-session trade date is separate from the refresh timestamp.
+Paper trading's large intermediate loading message now uses the existing shared
+skeleton; the accounting and trade-loading sequence are unchanged.
+
+Detailed chart interpretations now use native disclosure controls on six analytical
+screens. Definitions and limitations remain accessible without eleven explanatory
+blocks competing with each chart. Primary freshness and trading warnings remain
+visible outside these disclosures.

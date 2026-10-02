@@ -439,14 +439,14 @@ export function AnalyticsStrategyEvaluationPage() {
           <ChartCard key={chart.id} title={chart.title} subtitle={chart.subtitle}>
             <div className={styles.chartPanel}>
               <EChartSurface ariaLabel={chart.title} className={styles.chartSurface} option={chart.option} />
-              <div className={styles.rubricGrid}>
+              <details className={styles.marketDetails}><summary>{tr("Interpretation and limitations")}</summary><div className={styles.rubricGrid}>
                 {chart.rubric.map((item) => (
                   <article key={`${chart.id}-${item.label}`} className={styles.rubricItem}>
                     <strong>{item.label}</strong>
                     <p>{item.value}</p>
                   </article>
                 ))}
-              </div>
+              </div></details>
             </div>
           </ChartCard>
         ))}

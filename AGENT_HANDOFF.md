@@ -6880,3 +6880,11 @@ logs unresolved rows and returns failure. Full Go race suite, canonical gate and
 diff check passed. Only collector runtime code changes; existing dashboard and
 strategy behavior retained. Release commands, limits and rollback:
 `docs/trading-analytics/REALTIME_REDEPLOY_20261002.md`.
+
+Follow-up release complete: runtime commit `1b9de6e`, collector image
+`sha256:cc4a1497bd80f1270a087ce0d2746ec24812c0fed848f1697aa7e414867a35a5`,
+healthy with zero restarts and 3,000 subscriptions. Realtime browser 4/4 and
+canonical preservation 9/9 passed after deployment. First realtime screenshot
+attempt timed out waiting for fonts; functional checks passed and the full rerun
+passed. Only collector recreated; DB/dashboard/NSE remain healthy. Evidence:
+`/home/novius2/NIFTY50/evidence/realtime-redeploy-20261002`.

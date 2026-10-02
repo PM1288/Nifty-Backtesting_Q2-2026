@@ -60,3 +60,23 @@ docker compose -p trading-stack-novius2 --env-file .env -f docker-compose.yml up
 Live market latency cannot be measured while the persisted exchange calendar is
 closed. Readiness and authenticated snapshot/reconnect checks do not establish
 market-hour throughput. See the prior review for NSE source HTTP-404 limitations.
+
+## Completed deployment
+
+- Runtime source: pushed master `1b9de6e73136f407ad03345d3a2172240b1fdb1e`.
+- Collector image: `sha256:cc4a1497bd80f1270a087ce0d2746ec24812c0fed848f1697aa7e414867a35a5`.
+- Started at `2026-10-02T06:30:35.81550194Z`; healthy, zero restarts after startup
+  subscription refresh. An early readiness request during startup failed; the
+  post-startup request returned `status=ok`, `subscriptions_count=3000`,
+  `market_open=false`, `ws_connected=false`, with the original source tick age.
+- Dashboard, PostgreSQL and NSE remained healthy, with zero restarts on their
+  existing containers. Only collector was rebuilt/recreated for this follow-up.
+- Authenticated real-time browser test: **4 checks passed** (snapshots, valid
+  prices/source timestamps, network/session failure recovery, no browser errors).
+  First attempt passed the functional checks but timed out during font loading
+  for a screenshot; the complete repeat passed. Original failure log retained.
+- Canonical authenticated preservation test: **9/9 passed**.
+- Evidence files: `go-race.txt`, `build.txt`, `deploy.txt`, `collector-health.json`,
+  `readyz.json`, `services-health.txt`, browser logs and `preservation/` screenshots.
+- Previous collector image is retained at the rollback tag documented above.
+  Database schema/data and all unrelated pre-existing untracked reports are preserved.

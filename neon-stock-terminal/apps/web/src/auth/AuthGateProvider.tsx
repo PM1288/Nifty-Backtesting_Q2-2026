@@ -34,7 +34,7 @@ import {
   destroyServerSession,
   fetchSessionState
 } from "../lib/session";
-import type { SessionUser } from "../lib/types";
+import type { SessionState, SessionUser } from "../lib/types";
 
 const AUTO_AUTH_GATE_ENABLED = true;
 const ACTION_QUEUE_STORAGE_KEY = "nifty50trader.pendingActions";
@@ -204,8 +204,8 @@ async function ensureUserProfile(user: User, preferredName?: string, mobileProfi
   await Promise.all(updates);
 }
 
-async function syncSessionFromFirebase(nextUser: User | null): Promise<SessionUser | null> {
-  const existing = await fetchSessionState().catch(() => null);
+async function syncSessionFromFirebase(nextUser: User | null, initialSession?: Promise<SessionState | null>): Promise<SessionUser | null> {
+  const existing = await (initialSession ?? fetchSessionState().catch(() => null));
   if (existing?.authenticated && existing.user) {
     if (!nextUser || existing.user.uid === nextUser.uid) {
       return existing.user;
@@ -341,8 +341,22 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
 
     let active = true;
     let unsubscribe: (() => void) | null = null;
+    // The server session is authoritative and can restore the workspace while
+    // optional Firebase chunks load. Reuse this request for the first SDK event.
+    const initialSequence = authSyncSeqRef.current;
+    const initialSession = fetchSessionState().catch(() => null);
+    let firstSync = true;
+    void initialSession.then((existing) => {
+      if (!active || authSyncSeqRef.current !== initialSequence || !existing?.authenticated || !existing.user) return;
+      setUser(existing.user);
+      sessionUserRef.current = existing.user;
+      setAuthReady(true);
+      void setAnalyticsUser(existing.user.uid, existing.user.email);
+    });
 
     void subscribeToFirebaseAuthStateChanged(async (nextUser) => {
+      const sessionRequest = firstSync ? initialSession : undefined;
+      firstSync = false;
       const seq = authSyncSeqRef.current + 1;
       authSyncSeqRef.current = seq;
       firebaseUserRef.current = nextUser;
@@ -355,7 +369,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const syncedUser = await syncSessionFromFirebase(nextUser);
+        const syncedUser = await syncSessionFromFirebase(nextUser, sessionRequest);
         if (!active || authSyncSeqRef.current !== seq) return;
 
         if (syncedUser) {
@@ -388,6 +402,13 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
         return;
       }
       unsubscribe = unsub;
+    }).catch(async () => {
+      await initialSession;
+      if (!active) return;
+      // SDK download failure must not leave an infinite loading screen or
+      // invalidate a session that the server has already verified.
+      if (!sessionUserRef.current) setAuthError("Sign-in services are unavailable. Please reload and try again.");
+      setAuthReady(true);
     });
 
     return () => {

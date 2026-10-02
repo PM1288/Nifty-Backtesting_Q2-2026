@@ -1,6 +1,7 @@
 import type { SessionState, SessionUser } from "./types";
 import type { IndianMobileProfile } from "./mobile";
 import type { AttributionPayload } from "./attribution";
+import { readJson } from "./httpClient";
 
 const FALLBACK_API_BASE = "";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? FALLBACK_API_BASE;
@@ -29,17 +30,7 @@ export function getSessionCsrfToken() {
 }
 
 export async function fetchSessionState(): Promise<SessionState> {
-  const res = await fetch(`${API_BASE_URL}/auth/session`, {
-    method: "GET",
-    credentials: "include",
-    headers: { Accept: "application/json" }
-  });
-
-  if (!res.ok) {
-    throw new Error(`API ${res.status}: Unable to fetch session.`);
-  }
-
-  const payload = (await parseJson<SessionState>(res)) ?? { authenticated: false, user: null, csrfToken: null };
+  const payload = (await readJson<SessionState>(`${API_BASE_URL}/auth/session`, undefined, 10_000)) ?? { authenticated: false, user: null, csrfToken: null };
   setCsrfToken(payload.csrfToken ?? null);
   return payload;
 }

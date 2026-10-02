@@ -27,3 +27,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5m --retries=3 \
 
 # Persistent scheduler: startup run, then weekdays at 07:00 IST.
 CMD ["python", "scheduler.py"]
+
+# Runtime images are immutable: keep installers in build/test environments only.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && for interpreter in /opt/venv/bin/python /venv/bin/python /usr/local/bin/python; do \
+         if [ -x "$interpreter" ]; then "$interpreter" -m pip uninstall -y setuptools wheel pip; fi; \
+       done \
+    && rm -rf /usr/local/lib/python*/ensurepip

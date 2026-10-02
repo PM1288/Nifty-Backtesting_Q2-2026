@@ -77,3 +77,11 @@ pip-audit does not provide a consistent severity field. Treat untrusted HTTP, JS
 Old dashboard: 5 critical / 73 high / 132 medium / 91 low / 2 unknown (Trivy). OS findings without vendor fixes cannot be declared fixed from an npm audit. Dashboard moves from Debian 12 to Debian 13, removes npm/corepack and optional cloud dependencies, and runs as UID 1000. Collector gets a patched compiler and Alpine base. Final image counts and remaining fix availability are recorded after rebuild. Other worker/base images are not all claimed CVE-free.
 
 Public exploitability of each OS/library advisory requires its affected feature and reachable input; scanner presence alone does not establish exploitation. Remaining vendor-unfixed OS and build-only installer findings are retained, not ignored.
+
+## Final container verification follow-up
+
+Installed-package pip-audit was clean, but filesystem scanning found additional copies vendored inside pip/setuptools and the base interpreter. A clean active-venv inventory therefore did not prove the whole image was clean. Findings included CVE-2026-23949 (jaraco.context), GHSA-6v7p-g79w-8964 (msgpack), CVE-2025-47273 (setuptools), CVE-2026-97687 / CVE-2026-97689 (urllib3) and CVE-2026-24049 (wheel). These copies belonged to installation/build tooling; no public application invocation of that tooling was found.
+
+Production Python images now remove pip, setuptools, wheel and ensurepip after building the application. Builder stages retain installation tooling. Active application dependencies are unchanged by this cleanup; inventory uses `importlib.metadata` and does not require pip. This removes the vulnerable runtime copies rather than suppressing scanner findings.
+
+CVE-2026-103111 affected base-image libpcre2-8-0 `10.46-1~deb13u2`; runtime OS updates install the supported `10.46-1~deb13u3` fix. The hardened recommendation candidate imports/generates OpenAPI successfully, exposes no pip module, and has no fixable critical/high scanner finding. Final deployed-image results follow in the engineering report.

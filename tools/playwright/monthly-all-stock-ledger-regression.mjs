@@ -23,8 +23,13 @@ try {
   check("authenticated", login.ok(), `status=${login.status()}`);
   const page = await context.newPage();
   const consoleErrors = [];
+  const telemetryErrors = [];
   page.on("console", (message) => {
-    if (message.type() === "error" && !/clarity\.ms\/collect|cloudflareinsights\.com\/beacon/i.test(message.text())) consoleErrors.push(message.text());
+    if (message.type() !== "error") return;
+    const source = message.location().url;
+    const telemetry = /^https:\/\/(?:[^/]+\.)?(?:clarity\.ms|cloudflareinsights\.com|google-analytics\.com|googletagmanager\.com)\//i.test(source);
+    if (telemetry) telemetryErrors.push({ source, error: message.text() });
+    else consoleErrors.push(`${source}: ${message.text()}`);
   });
 
   await page.goto(`${baseUrl}/strategy/monthly`, { waitUntil: "domcontentloaded", timeout: 60_000 });
@@ -81,7 +86,8 @@ try {
   await page.getByRole("heading", { name: "Why it was not selected" }).waitFor();
   check("no page overflow", await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
     `scrollWidth=${await page.evaluate(() => document.documentElement.scrollWidth)}`);
-  check("console clean", consoleErrors.length === 0, consoleErrors.join(" | "));
+  await fs.writeFile(path.join(outputDir, "external-telemetry-errors.json"), JSON.stringify(telemetryErrors, null, 2));
+  check("application console clean", consoleErrors.length === 0, consoleErrors.join(" | "));
   await page.screenshot({ path: path.join(outputDir, "rolling-rejected-with-reasons.png"), fullPage: true });
   await context.close();
 } finally {

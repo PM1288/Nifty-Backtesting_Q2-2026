@@ -17,6 +17,14 @@ COPY --chown=paper:paper alembic.ini ./alembic.ini
 COPY --chown=paper:paper alembic ./alembic
 COPY --chown=paper:paper schemas ./schemas
 COPY --chown=paper:paper examples ./examples
+# Runtime images are immutable: keep installers in build/test environments only.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && for interpreter in /opt/venv/bin/python /venv/bin/python /usr/local/bin/python; do \
+         if [ -x "$interpreter" ]; then "$interpreter" -m pip uninstall -y setuptools wheel pip; fi; \
+       done \
+    && rm -rf /usr/local/lib/python*/ensurepip
+
 USER 10001:10001
 EXPOSE 8088
 ENTRYPOINT ["papertrade"]

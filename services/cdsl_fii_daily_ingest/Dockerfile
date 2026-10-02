@@ -16,3 +16,11 @@ COPY app ./app
 COPY scripts ./scripts
 
 CMD ["python", "scripts/scheduler.py"]
+
+# Runtime images are immutable: keep installers in build/test environments only.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && for interpreter in /opt/venv/bin/python /venv/bin/python /usr/local/bin/python; do \
+         if [ -x "$interpreter" ]; then "$interpreter" -m pip uninstall -y setuptools wheel pip; fi; \
+       done \
+    && rm -rf /usr/local/lib/python*/ensurepip

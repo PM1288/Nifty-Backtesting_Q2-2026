@@ -25,3 +25,11 @@ COPY app.py .
 EXPOSE 8000
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Runtime images are immutable: keep installers in build/test environments only.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && for interpreter in /opt/venv/bin/python /venv/bin/python /usr/local/bin/python; do \
+         if [ -x "$interpreter" ]; then "$interpreter" -m pip uninstall -y setuptools wheel pip; fi; \
+       done \
+    && rm -rf /usr/local/lib/python*/ensurepip

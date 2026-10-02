@@ -16,7 +16,7 @@ test("rejected route completes HTTP response through the error middleware", asyn
  const { default: express } = await import("express");
  const app=express();let errors=0;
  app.get("/failure",asyncRoute(async()=>{throw new Error("fixture storage outage");}));
- app.use((_error: unknown,_req: import("express").Request,res: import("express").Response,_next: import("express").NextFunction)=>{errors++;res.status(503).json({error:"Temporarily unavailable"});});
+ app.use((_error: unknown,_req: import("express").Request,res: import("express").Response,_next: import("express").NextFunction)=>{if(res.headersSent)return _next(_error);errors++;res.status(503).json({error:"Temporarily unavailable"});});
  const server=app.listen(0,"127.0.0.1");
  await new Promise<void>(resolve=>server.once("listening",resolve));
  try {

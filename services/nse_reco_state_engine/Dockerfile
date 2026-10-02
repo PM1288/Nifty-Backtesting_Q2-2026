@@ -44,3 +44,11 @@ COPY agent ./agent
 EXPOSE 8010
 
 CMD ["uvicorn", "nse_reco_state_aware_engine.api.main:app", "--host", "0.0.0.0", "--port", "8010"]
+
+# Runtime images are immutable: keep installers in build/test environments only.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && for interpreter in /opt/venv/bin/python /venv/bin/python /usr/local/bin/python; do \
+         if [ -x "$interpreter" ]; then "$interpreter" -m pip uninstall -y setuptools wheel pip; fi; \
+       done \
+    && rm -rf /usr/local/lib/python*/ensurepip

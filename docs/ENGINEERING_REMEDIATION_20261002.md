@@ -95,3 +95,65 @@ Final release measurements and validation results are appended after deployment.
 - Server session restoration previously waited for Firebase SDK initialization. A browser fixture holding Firebase chunks timed out after eight seconds. Server-authoritative restoration now starts immediately, shares its first request with the SDK callback, and handles SDK loading failure. A valid-session fixture subsequently rendered main content in 597 ms while two SDK chunks remained held; final reruns are recorded separately.
 - 148 bare asynchronous Express handlers across 45 files were wrapped with the existing `asyncRoute` helper. Express 4 now forwards rejected promises to the error middleware. An AST regression check covers route registration, and an HTTP test confirms storage rejection produces a completed error response.
 - Visual inspection found the Paper overview using a percentage metric definition for the rupee-valued `analytical_upside` total. Added a distinct INR metric definition, matching the existing server formula `SUM(max(0, entry_notional * mfe_30d_pct / 100))`, currency formatting and two-decimal precision. Calculation and financial source values are unchanged.
+
+## Final release results
+
+### Executive summary
+
+Production was rebuilt from pushed canonical master. The dashboard, Go collector and 17 affected Python services were upgraded; existing dispatcher code was aligned with the dashboard runtime. PostgreSQL retained its exact original image and data-volume mounts. All 36 running project services were up with no unhealthy status after release. Changes preserve source records, financial calculations, live-order controls and unrelated user files.
+
+A final browser run exposed an intermittent Paper inspector race: a background data update could restore local selection after its URL had been cleared. Selection now derives from the URL, including the global close action. The workbench regression verifies dismissal and reload persistence.
+
+### Before versus after
+
+| Measurement | Before | After | Qualification |
+| --- | --- | --- | --- |
+| Production main JavaScript | 495,059 bytes | 417,868 bytes | 15.6% smaller; final inspector patch changes a separate lazy route chunk |
+| Main gzip | 147,039 bytes | 125,725 bytes | 14.5% smaller; gzip settings can change wire size |
+| Dashboard image | 195,607,500 bytes | approximately 110,345,000 bytes | 43.6% smaller; exact final image ID/size in evidence |
+| Monthly rejection read | 20,278,780 bytes / 20,840 ms | 3,594,175 bytes / 2,247 ms | Same 9,648 evaluations; single public samples, 82.3% fewer bytes, 89.2% lower elapsed time |
+| Monthly rejection query count | 5 | 1 | Full condition evidence fetched only on inspection |
+| Valid session with held Firebase chunks | Main absent after 8 seconds | Main visible in 410 ms | Controlled fixture with two held SDK chunks; not normal field startup |
+| Dashboard npm audit | 31 findings | 0 | Full installed/locked dependency tree |
+| API/web unit tests | 280 / 283 | 289 / 286 | Added boundary, correctness and regression coverage |
+| Six-screen axe checks | ARIA, contrast, badge and scroll-region failures | 0 violations in tested WCAG A/AA rules | Automated coverage, not an accessibility certification |
+| Dashboard container scan | 5 critical / 73 high | 0 critical / 43 high | Remaining high findings have no vendor fix; no fixed-version critical/high finding left |
+
+Performance samples are not a controlled sustained load test. Total JavaScript is still approximately 4 MB across lazy chunks; ECharts grew slightly with its security upgrade. Browser LCP samples are mixed (final Home 1,104 ms, Scalper 540 ms, monthly 1,224 ms, Paper 544 ms, NSE 1,420 ms, data health 3,804 ms). No universal page-speed or CPU/RSS reduction is claimed. Runtime snapshots are retained but restarts/workload/cache differences prevent causal comparison.
+
+### Final validation
+
+- Node 22: API/web typecheck, build and all 575 unit tests pass. Regression coverage includes rejected async handlers, cache bounds, HTTP deadlines, malformed cookies, compact ledger validation and metric units.
+- Go 1.26.8: `go test -race ./cmd/... ./internal/...` passes; `govulncheck` reports no vulnerabilities. Collector filesystem scan reports zero findings.
+- Python: ingestor 12, intraday 19 plus retention fixture 1, bounded subprocess 2, recommendation 7, disclosures 15, FII 40, Trendlyne 3, Paper 34 including disposable PostgreSQL integration tests pass. Paper has two upstream deprecation warnings. Scratch databases/network were removed; production was never used for destructive tests.
+- Final hardened images: seven API imports/OpenAPI schemas pass and pip is absent; ingestor 12 and Trendlyne 3 tests rerun successfully. Installed package audits cover 11 actual running image IDs / 17 services, all zero findings. Filesystem scans of those images have no critical or fixable high findings; vendor-unfixed OS highs remain (44 or 52 per image).
+- Browser: six major screens inspected with screenshots, responsive Paper views, nine canonical feature checks, 14 monthly-ledger checks, 17 notifier checks, keyboard login/focus checks, held-SDK startup and websocket reconnect recovery. Scalper remained on one document with three stable chart roots through a 70-second refresh observation.
+- Final reconnect run: three connections and 222 quote snapshots across four checks. This verifies cached snapshot/reconnect behavior, not a fresh exchange session.
+- Six-screen final profile: no application exceptions or HTTP errors. Intermittent `ERR_NETWORK_CHANGED` came from Bing/Clarity telemetry; these are recorded with source URLs. Some earlier preservation attempts timed out; investigation found and fixed the Paper inspector race, while isolated browser/network transients passed on rerun. Failed attempts were not treated as successful acceptance.
+- Anonymous GET/HEAD requests to 16 legacy public/local proxy paths return 401. Collector readiness reports `status=ok`, 3,000 subscriptions and `market_open=false`.
+- Canonical repository gate, `git diff --check`, shell syntax check and Prisma generation pass. The local check script now generates Prisma explicitly after installation.
+- Lint remains nonzero: API 119 errors / 25 warnings; web 227 errors / 65 warnings. Broken API configuration and generated-file noise were repaired; existing source debt was not suppressed. The aggregate check intentionally fails at lint until that debt is resolved.
+
+### Remaining issues and useful next work
+
+1. **Market-open acceptance:** 2 October is an exchange holiday. Measure sustained Smart API ingress rate, queue age, DB commit latency, reconnect recovery and display age in the next real session. Do not treat current cached ticks as fresh exchange data.
+2. **Historical source gaps:** the data-health snapshot has 48/63 retained NSE reports (16 parsed, 32 archived-only), 15 missing; core five reports are available. Existing broker 24-hour totals include failures/throttles and are not reset by deployment. No missing reports or market observations were fabricated. Upstream availability and authenticated recovery require a separate operational backfill run with provenance.
+3. **Residual security:** vendor-unfixed OS advisories remain in Debian images; unaffected internal worker images retain installer-only findings. Full per-image/advisory evidence is retained. Rebuild when vendor fixes arrive; do not replace operating systems blindly to conceal scan counts.
+4. **Source lint and oversized legacy modules:** real typing/hook/unused-code debt remains. Small tested boundaries were extracted; rewriting strategy/Paper domain modules and financial logic wholesale would exceed safely verified changes.
+5. **Remote CI:** GitHub rejected workflow creation because the available OAuth token lacks `workflow` scope. The reviewed template is `docs/ci/engineering.github-actions.yml`; executable local gates are present. Remote CI was not falsely declared active.
+6. **Large compatibility reads:** the legacy complete monthly endpoint still returns approximately 20 MB for existing exports/consumers. The primary rejection UI now uses the compact contract. Data-health and Paper full-evidence reads are also sizeable; retain their contracts until consumer-specific pagination can be verified.
+
+### Durable evidence and rollback
+
+Evidence root: `/home/novius2/NIFTY50/evidence/engineering-20261002`.
+
+- `release-before.json`: original image IDs, mounts and Compose combinations; `runtime-services-final.json`, `final-measurements.json`, `collector-ready-final.json`: resulting runtime.
+- `hardening-build-results.json`, `release-deploy-results.json`, `deploy-dashboard-final.txt`: build/deploy results.
+- `types-final.txt`, `tests-final.txt`, `build-final.txt`, `lint-final.txt`, `go-final.txt`, `go-vuln-final.txt`, `python-*-tests*.txt`, `python-paper-integration.txt`: checks.
+- `deployed-python-audit-summary.json`, `deployed-container-scan-summary.json`, `container-dashboard-final.json`, `npm-audit-final.json`: security evidence. Before-hardening image results remain separately saved.
+- `browser-before/`, `browser-after/`: screenshots, timings, request/console diagnostics and preservation results.
+- `operations/`: copies of the exact build/deploy/audit/browser helper scripts. These read protected configuration internally; no credentials are embedded. Do not rerun the initial release backup helper: that would replace the preserved rollback tags.
+
+Rollback tags are `engineering-rollback-20261002:<service>`. Select the original Compose file combination from `release-before.json`, tag the preserved image back to the configured service tag, then run `docker compose -p trading-stack-novius2 --env-file .env -f <original-file> ... up -d --no-deps --no-build --pull never <service>`. Verify health, public route assets and authenticated reads. Never use `down -v`, delete authoritative volumes or remove Compose orphans.
+
+Two original images were missing from the local content store: intraday API and Paper webhook rollback images were reconstructed from their running filesystems with runtime command/user/path settings preserved. The dispatcher rollback tag is the pre-remediation dashboard application image, not an exact copy of its older filesystem. These limitations are explicit; original mounts/environment remain in Compose/protected configuration. Source rollback must follow the canonical branch/release procedure rather than overwrite the current worktree.

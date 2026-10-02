@@ -6892,3 +6892,14 @@ passed. Only collector recreated; DB/dashboard/NSE remain healthy. Evidence:
 ## 2026-10-02 Stack engineering remediation
 
 Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`; release only after pushed master. See `docs/ENGINEERING_REMEDIATION_20261002.md` for architecture, prioritized findings, exact validation/release procedure and limitations. Evidence: `/home/novius2/NIFTY50/evidence/engineering-20261002`. Authenticated NSE streaming, bounded caches/queues/subprocesses, request deadlines, UI accessibility/lazy loading, dependency and image security updates implemented. Preserve all unrelated untracked OIIS reports/tools. Final deployment evidence follows in the report.
+
+## 2026-10-02 — Engineering remediation release verification
+
+- Comprehensive implementation and measurement: `docs/ENGINEERING_REMEDIATION_20261002.md`; advisory/version/exposure inventory: `docs/ENGINEERING_SECURITY_20261002.md`.
+- Runtime Python hardening source: pushed `a73ac9c`; final dashboard additionally makes Paper inspector selection URL-authoritative after a browser-exposed close/refresh race. Final dashboard release SHA/image are recorded in the evidence source/runtime files.
+- Rebuilt/deployed dashboard, collector and 17 Python services; 36 project services running, none unhealthy. PostgreSQL exact original image and mounts retained; localhost bindings verified. Existing automation configuration was preserved; no manual external notifications were sent.
+- Measured monthly rejection payload 20.28 MB → 3.59 MB, single request 20.84 s → 2.25 s; main JS 15.6% smaller; dashboard image approximately 44% smaller. Preserve qualifications in the report.
+- API/web 289/286 tests, typechecks/builds, Go race/vulnerability checks and affected Python tests pass. Six-screen axe profile has zero violations; public auth/reconnect/feature/keyboard/monthly/Paper checks recorded. Installed package audits clean; rebuilt image scans have no fixable critical/high findings. Vendor-unfixed OS findings remain.
+- Do not claim the aggregate lint gate is clean (119 API / 227 web source errors remain), that GitHub Actions is active (workflow OAuth scope blocked), or that holiday reconnect evidence proves market-open throughput. NSE source gaps remain visible.
+- Evidence and exact helper copies: `/home/novius2/NIFTY50/evidence/engineering-20261002`, especially `operations/`, `release-before.json`, `runtime-services-final.json`, security summaries and `browser-after/`. Rollback tags `engineering-rollback-20261002:<service>` are retained; reconstruction limitations are documented. Never rerun the initial backup helper, overwrite those tags, remove Compose orphans, or delete database volumes.
+- Disposable test DB/network cleaned up. Untracked OIIS reports and user report generator remain untouched.

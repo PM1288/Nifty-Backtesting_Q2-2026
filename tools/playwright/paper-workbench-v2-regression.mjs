@@ -79,6 +79,12 @@ try {
   await inspector.getByRole("heading", { name: "Calculation trace" }).waitFor();
   await inspector.getByRole("button", { name: "Close trade detail" }).click();
   if (page.url().includes("tradeId=")) throw new Error("closing the inspector did not clear selected trade context");
+  await inspector.waitFor({ state: "hidden" });
+  // Recreate the page from URL state, then let the background detail read settle.
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await sectionNav.waitFor();
+  await table.locator("tbody tr").first().waitFor();
+  if (await inspector.count()) throw new Error("closed inspector was restored without a tradeId");
 
   for (const expected of ["Path Through Time", "Reward & Pain", "Factor Analysis", "Capital Recycling", "Scenario Analysis", "Methodology & Audit"]) {
     await sectionNav.getByRole("button", { name: new RegExp(expected.replace("&", "&")) }).click();

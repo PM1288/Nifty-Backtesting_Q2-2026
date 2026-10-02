@@ -1089,3 +1089,5 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
 - Monthly all-stock populations and rejection reasons remain complete. Heavy condition traces are fetched when opening the evidence inspector; the original full API/export contract remains available.
 - Existing server sessions restore before Firebase downloads; required authentication still traps keyboard focus and cannot be dismissed with Escape.
 - Paper overview observed favourable value now uses its correct INR definition and currency precision. The separate per-trade thirty-session MFE percentage definition is preserved.
+
+2026-10-02 final verification: Paper trade inspector selection is owned by the URL; closing removes tradeId and cannot be reversed by a background ledger refresh. The workbench regression now asserts the drawer disappears and stays closed after route reload.

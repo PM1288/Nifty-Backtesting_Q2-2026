@@ -85,3 +85,13 @@ Installed-package pip-audit was clean, but filesystem scanning found additional 
 Production Python images now remove pip, setuptools, wheel and ensurepip after building the application. Builder stages retain installation tooling. Active application dependencies are unchanged by this cleanup; inventory uses `importlib.metadata` and does not require pip. This removes the vulnerable runtime copies rather than suppressing scanner findings.
 
 CVE-2026-103111 affected base-image libpcre2-8-0 `10.46-1~deb13u2`; runtime OS updates install the supported `10.46-1~deb13u3` fix. The hardened recommendation candidate imports/generates OpenAPI successfully, exposes no pip module, and has no fixable critical/high scanner finding. Final deployed-image results follow in the engineering report.
+
+## Deployed scan results
+
+Final installed package audits: zero findings in 11 distinct running Python image IDs covering 17 rebuilt services. Final filesystem scans: zero critical and zero fixed-version high findings in those images. Images with additional OS tools retain 52 vendor-unfixed highs; slimmer Python images retain 44. Dashboard: zero critical, 43 vendor-unfixed highs, zero Node-package findings. Collector: zero findings. Exact counts, versions, image IDs and advisory paths are in `deployed-container-scan-summary.json`, the corresponding individual JSON files, and `container-dashboard-final.json` under the evidence directory.
+
+Installer rows above describe the upgrade stage; the final affected production images remove pip/setuptools/wheel/ensurepip entirely after building. The packages remain available in build stages only. The libpcre2 vendor update and removal of vendored installer copies were verified by whole-image rescans, not just active-venv inventories. Seven hardened API images generated their OpenAPI schemas without installation tooling. Application package APIs remain unchanged by the final image cleanup.
+
+Installed dashboard examples: ws 8.22.0, ECharts 6.1.0, React Router DOM 7.18.4, Express 4.22.3, Firebase Admin 14.5.0, Vite 6.4.3, Storybook 8.6.18. Full npm audit reports zero. Dormant Parrot audit fell from 16 to zero; BFF/lite locked trees also audit clean. No advisory ignore rules were added.
+
+No exploitation was established from scanner presence alone. The legacy anonymous proxy bypass was an actual public access-control defect; 16 anonymous GET/HEAD public/local probes now return 401. Strong credential enforcement in the dormant BFF was smoke-tested without activating that service. Local-only DB/collector/intraday/FII bindings and preserved DB mounts were verified after deployment.

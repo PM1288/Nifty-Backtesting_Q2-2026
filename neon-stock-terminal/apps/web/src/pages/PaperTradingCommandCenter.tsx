@@ -360,12 +360,15 @@ export function PaperTradingCommandCenter() {
   const [entryFilter, setEntryFilter] = useState("ALL");
   const [sort, setSort] = useState("NEWEST");
   const [lens, setLens] = useState<AtlasLens>("5D");
-  const [selectedTrade, setSelectedTrade] = useState<AnyRow | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [calm, setCalm] = useState(false);
   const [profileFilters, setProfileFilters] = useState<StockProfileFilters>({ universe: "ALL", capBucket: "ALL", sector: "ALL" });
   const profiles = useProfileIndex();
   const [routeParams, setRouteParams] = useSearchParams();
+  // The URL owns inspector selection; background data refreshes cannot reopen it.
+  const selectedTrade = query.data?.stockTrades?.find(
+    (row: AnyRow) => String(row.trade_group_id) === routeParams.get("tradeId"),
+  ) ?? null;
   const [workbenchContext, setWorkbenchContext] = useState<PaperWorkbenchContext>(() => parsePaperWorkbenchContext(routeParams));
   const [calculationTrace, setCalculationTrace] = useState<CalculationTrace | null>(null);
   const [pageView, setPageView] = useState<PageView>(
@@ -384,7 +387,11 @@ export function PaperTradingCommandCenter() {
     const focusSearch = () => searchRef.current?.focus();
     const add = () => setAddOpen(true);
     const close = () => {
-      setSelectedTrade(null);
+      setRouteParams((current) => {
+        const next = new URLSearchParams(current);
+        next.delete("tradeId");
+        return next;
+      }, { replace: true });
       setAddOpen(false);
     };
     window.addEventListener("n50:focus-page-search", focusSearch);
@@ -395,7 +402,7 @@ export function PaperTradingCommandCenter() {
       window.removeEventListener("n50:paper-add", add);
       window.removeEventListener("n50:close-active-surface", close);
     };
-  }, []);
+  }, [setRouteParams]);
 
   useEffect(() => {
     if (routeParams.get("action") === "add") setAddOpen(true);
@@ -436,25 +443,15 @@ export function PaperTradingCommandCenter() {
     window.requestAnimationFrame(() => document.getElementById(section)?.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" }));
   };
   const openSelectedTrade = (trade: AnyRow) => {
-    setSelectedTrade(trade);
     const next = new URLSearchParams(routeParams);
     next.set("tradeId", String(trade.trade_group_id));
     setRouteParams(next, { replace: true });
   };
   const closeSelectedTrade = () => {
-    setSelectedTrade(null);
     const next = new URLSearchParams(routeParams);
     next.delete("tradeId");
     setRouteParams(next, { replace: true });
   };
-  useEffect(() => {
-    const tradeId = routeParams.get("tradeId");
-    if (!tradeId || !query.data?.stockTrades?.length) return;
-    const trade = query.data.stockTrades.find(
-      (row: AnyRow) => String(row.trade_group_id) === tradeId,
-    );
-    if (trade) setSelectedTrade(trade);
-  }, [query.data?.stockTrades, routeParams]);
 
   if (query.error && !query.data)
     return (

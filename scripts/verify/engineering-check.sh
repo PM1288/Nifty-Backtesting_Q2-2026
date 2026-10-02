@@ -5,6 +5,7 @@ bash scripts/verify/canonical-repository-gate.sh
 git diff --check
 go test -race ./cmd/... ./internal/...
 npm ci --prefix neon-stock-terminal --no-fund
+npm run prisma:generate --prefix neon-stock-terminal --workspace=@app/api
 npm run typecheck --prefix neon-stock-terminal
 npm test --prefix neon-stock-terminal
 npm run build --prefix neon-stock-terminal

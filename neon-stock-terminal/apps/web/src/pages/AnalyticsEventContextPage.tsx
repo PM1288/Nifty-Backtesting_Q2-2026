@@ -454,7 +454,7 @@ function buildCharts(
         [
           tr("Current reading"),
           tr(
-            `The latest corporate-action tape is dominated by ${payload.charts.corporateActionTimeline[0]?.symbol ?? "—"}, and the page explicitly tags whether the row is an ex-date, record date, or announcement date.`
+            `The latest corporate-action tape is dominated by ${payload.charts.corporateActionTimeline[0]?.symbol ?? "—"}, with ex-dates, record dates and announcement dates labelled separately.`
           )
         ],
         [
@@ -517,7 +517,7 @@ function buildCharts(
         ],
         [
           tr("Contradictions"),
-          tr("The page still warns that large prints can be mechanically large but not informationally important, so value alone cannot overrule weak price behavior.")
+          tr("Large trade values alone do not establish directional conviction; price confirmation is required.")
         ],
         [
           tr('Interpretation'),
@@ -729,7 +729,7 @@ export function AnalyticsEventContextPage() {
 
       <PageIntroAccordion
         title={tr("Use catalysts to frame risk, not to force causation")}
-        body={tr("This page merges official schedules, persisted announcement rows, corporate-action timing, and deal context so you can separate meaningful catalyst clustering from noise.")}
+
         items={[
           tr("Separate board meeting date, announcement date, ex-date, and effective date before judging price."),
           tr("Treat block and bulk deals as attention markers first. Large prints still need price follow-through to become informative."),

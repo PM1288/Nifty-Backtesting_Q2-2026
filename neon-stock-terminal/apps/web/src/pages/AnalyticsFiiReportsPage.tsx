@@ -98,7 +98,6 @@ export function AnalyticsFiiReportsPage() {
   const latestDaily = runsQuery.data?.daily_runs[0] ?? null;
   const hasRuns = Boolean(latestBackfill || latestDaily);
   const detailSummary = summarizeDetail(detailQuery.data);
-  const detailRun = detailQuery.data?.run;
 
   const manifestRows = useMemo(() => {
     if (!detailQuery.data) return [];

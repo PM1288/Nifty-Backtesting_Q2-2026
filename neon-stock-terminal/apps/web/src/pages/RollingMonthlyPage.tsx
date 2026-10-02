@@ -2056,8 +2056,7 @@ export function RollingMonthlyPage() {
             title: "Formula and model version",
             content: (
               <p>
-                {data.factorId} · {data.factorVersion}. This page has no Paper
-                Trading or broker-order connection.
+                {data.factorId} · {data.factorVersion}. Research only; paper and live order entry are unavailable.
               </p>
             ),
           },

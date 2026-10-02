@@ -271,7 +271,7 @@ export function AnalyticsSupportingMetricsPage() {
             {tr(overnightSentiment)}
           </div>
           <p className={styles.sectionIntro}>
-            {t("literals.Overnight sentiment is {{sentiment}}, FX pressure is {{fx}}, and commodity pressure is {{commodity}}. Use this page as optional context before you over-interpret the local tape.", "Overnight sentiment is {{sentiment}}, FX pressure is {{fx}}, and commodity pressure is {{commodity}}. Use this page as optional context before you over-interpret the local tape.", {
+            {t("literals.Overnight: {{sentiment}} · FX: {{fx}} · Commodities: {{commodity}}", "Overnight: {{sentiment}} · FX: {{fx}} · Commodities: {{commodity}}", {
               sentiment: tr(overnightSentiment).toLowerCase(),
               fx: tr(fxPressure).toLowerCase(),
               commodity: tr(commodityPressure).toLowerCase()

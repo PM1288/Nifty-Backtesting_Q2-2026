@@ -202,7 +202,7 @@ export function AnalyticsEventsPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title="Event Calendar"
+        title="Events"
         meta={`${tr("Latest run")} ${payload.latestRunId ?? "—"} • ${tr("Updated")} ${formatDateIST(payload.latestLoadedAt, { includeTime: true })}`}
         sectionTabs={[...CATALYSTS_SECTION_TABS]}
       />

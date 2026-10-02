@@ -938,7 +938,7 @@ export function AnalyticsOptionsPage() {
             />
             <ExplainThis
               label={tr("Strike window")}
-              summary={tr("The page uses the nearest listed ATM strike and its three neighboring strikes on both sides.")}
+              summary={tr("Nearest listed ATM strike and three strikes on either side.")}
               detail={tr("If spot sits exactly between two listed strikes, the lower strike is chosen consistently to avoid ambiguous flips.")}
               takeaway={tr("The same strike window drives the ladder, equilibrium chart, and summary cards.")}
             />
@@ -976,7 +976,7 @@ export function AnalyticsOptionsPage() {
             emptyBody={tr("No strike rows are available for the selected expiry right now.")}
             footer={
               mode === "beginner"
-                ? tr("Switch to Advanced audience mode in the page header if you need the extended strike diagnostics.")
+                ? tr("Advanced mode shows extended strike diagnostics.")
                 : overlaySummary(compareSeries, t)
             }
             tableName="options_ladder"

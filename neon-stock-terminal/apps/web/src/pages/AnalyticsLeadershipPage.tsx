@@ -174,7 +174,7 @@ function chartReadings(payload: AnalyticsLeadershipResponse, tr: (value: string)
       [tr("Contradictions"), tr(`If the market state slips back into broader chop, catch-up names can fail before the leaders do.`)],
       [tr("Interpretation"), tr("How to read: a catch-up candidate is not late if its VWAP and persistence are still improving.")]
     ]) },
-    { id: "ranking", title: tr("Leader / follower / avoid ranking board"), subtitle: tr("This combines residual, structure, continuation, beta-follow, and spike penalties into one teaching-first board."), option: buildRankingOption(ranking), rubric: makeRubric([
+    { id: "ranking", title: tr("Leader / follower / avoid ranking board"), subtitle: tr(""), option: buildRankingOption(ranking), rubric: makeRubric([
       [tr("Definition"), tr("The highest leadership scores across leaders, followers, catch-up names, reversals, and avoids.")],
       [tr("Context"), tr("It turns a noisy stock list into a ranked view of names worth stalking versus names to fade or ignore.")],
       [tr("Axes and units"), tr("Y-axis is stock and category rank. X-axis is composite leadership score on a 0-100 scale.")],

@@ -350,7 +350,7 @@ export function ChangeHeatmapPage() {
       <PageIntroAccordion
         label={tr("Methodology heatmap")}
         title={tr("Scan the map first, then use the chips and legend to explain what you saw.")}
-        body={tr("Use the average change first, then the range, then the top and bottom rows. This view teaches whether the move is broad, narrow, or heavily concentrated.")}
+
         widgetId="heatmap_change_help"
         items={[
           tr("Raw range can be wider than the color legend. The display stays clamped so sessions remain comparable."),

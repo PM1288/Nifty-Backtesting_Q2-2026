@@ -206,7 +206,7 @@ function buildCharts(payload: AnalyticsStrategyEvaluationResponse, tr: (value: s
         [tr("Bearish"), tr("Final score looks attractive at first glance but risk and anomaly drag eat most of the gross signal.")],
         [tr("Neutral"), tr("Stocks cluster in the middle and the positive and negative components are too balanced to support conviction.")],
         [tr("Limitations"), tr("High score can be mistaken for high certainty when it may only reflect one strong factor inside an overfit regime.")],
-        [tr("Current reading"), tr(`The strongest current setup is ${leadSetup?.symbol ?? "—"} with final score ${num(leadSetup?.finalScore, 1)}, but the page still shows its penalty layer because score is not the same thing as certainty.`)],
+        [tr("Current reading"), tr(`The strongest current setup is ${leadSetup?.symbol ?? "—"} with final score ${num(leadSetup?.finalScore, 1)}, including penalties. A score does not establish certainty.`)],
         [tr("Confirmation"), tr(confirmText)],
         [tr("Contradictions"), tr(cautionLead ? `${cautionLead.symbol} carries elevated penalties despite score strength, which is exactly why the decomposition matters.` : contradictText)],
         [tr("Interpretation"), tr("How to read: trust the score only after you inspect how much of it survives the penalty layer.")]

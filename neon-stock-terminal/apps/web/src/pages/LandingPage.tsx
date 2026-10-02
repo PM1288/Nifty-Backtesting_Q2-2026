@@ -876,9 +876,7 @@ export function LandingPage() {
         <div className={styles.overviewIntro}>
           <span className={styles.overviewEyebrow}>{tr("Overview")}</span>
           <h1 className={styles.compactTitle}>{tr("Monitor the tape first.")}</h1>
-          <p className={styles.overviewSubtitle}>
-            {tr("NIFTY 50, BANK NIFTY, INDIA VIX, then sector rotation. Keep this page for headline monitoring and use the lower support cards only to decide where to go next.")}
-          </p>
+
         </div>
       </section>
 

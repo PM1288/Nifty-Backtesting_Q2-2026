@@ -362,7 +362,7 @@ function buildCharts(payload: AnalyticsFiiFlowResponse, tr: (value: string) => s
         [tr("Neutral"), tr("The percentile moves around without a stable relationship to index returns.")],
         [tr("Limitations"), tr("Same-day association can look persuasive even when next-session predictive value is weak; this chart does not prove causation.")],
         [tr("Current reading"), tr(`Latest official regime is ${clean(payload.summary?.regimeLabel)} with Nifty same-day return at ${pct(payload.marketContext?.niftyReturnPct, 2, true)}, which is more context alignment than outright signal quality.`)],
-        [tr("Confirmation"), tr(payload.summary?.reportLagNote ?? "The page explicitly treats participant data as daily context rather than live flow.")],
+        [tr("Confirmation"), tr(payload.summary?.reportLagNote ?? "Daily institutional context, not live flow.")],
         [tr("Contradictions"), tr(`The next-session scatter remains mixed, so any same-day visual confirmation still fails the timing-signal test.`)],
         [tr("Interpretation"), tr("How to read: use the overlay to ask whether flow and price agree, then check the percentile chart to see whether that agreement has paid off historically.")]])
     },
@@ -482,7 +482,7 @@ export function AnalyticsFiiFlowPage() {
           {payload.charts.cashFlowTrend.length ? (
             <EChartSurface className={styles.chartSurface} ariaLabel={tr("FII and DII daily and cumulative cash-flow trend in rupees crore")} option={buildCashFlowTrendOption(payload.charts.cashFlowTrend)} />
           ) : (
-            <DataState kind="empty" title={tr("Cash-flow trend unavailable")} body={tr("No normalized NSE FII/DII cash records are available. Refreshing the page rechecks PostgreSQL but does not fabricate missing reports.")} />
+            <DataState kind="empty" title={tr("Cash-flow trend unavailable")} body={tr("No FII/DII reports are available for this period.")} />
           )}
           <div className={styles.trendSummary}>
             <span><strong>{tr("Latest FII/FPI")}</strong>{latestCashPoint?.fiiNetCr == null ? "—" : `${latestCashPoint.fiiNetCr >= 0 ? "+" : ""}₹${num(latestCashPoint.fiiNetCr, 2)} cr`}</span>

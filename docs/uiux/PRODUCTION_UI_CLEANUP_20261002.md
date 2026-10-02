@@ -152,3 +152,8 @@ separate data/runtime task; no replacement chart or synthetic data was invented.
 The final institutional review removed a duplicate flow heading, a prototype
 subtitle and filesystem paths from the ordinary report header/browser. Report
 dates, availability counts, download controls and administrator diagnostics remain.
+
+The source sweep also removed the remaining self-referential indicator/heatmap
+introductions, database retry explanation and duplicate leaderboard heading.
+Methodology disclosures accept an optional introduction, so warnings and formula
+notes do not need filler prose. Source regression checks cover those exact remnants.

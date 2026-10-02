@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { DataTable, ErrorState, KpiCard, LoadingTableCard, SectionDivider } from "../components/ui/DashboardPrimitives";
+import { DataTable, ErrorState, KpiCard, LoadingTableCard } from "../components/ui/DashboardPrimitives";
 import { usePageLoadProfile } from "../analytics/usePageLoadProfile";
 import { useAuthGate } from "../auth/AuthGateProvider";
 import { useI18n } from "../i18n/LocaleProvider";
@@ -74,11 +74,7 @@ export function BacktestingStrategyLibraryPage() {
         meta={t("literals.As of {{date}}", "As of {{date}}", { date: formatDateIST(strategies.data.asOfDate) })}
       />
 
-      <SectionDivider
-        eyebrow={tr("Backtesting")}
-        title={tr("Published strategy leaderboard")}
-        subtitle={tr("NIFTY 100 · ₹16 lakh capital · ₹2 lakh per position · Maximum 8 positions")}
-      />
+      <p className={styles.sectionIntro}>{tr("NIFTY 100 · ₹16 lakh capital · ₹2 lakh per position · Maximum 8 positions")}</p>
 
       <section className={styles.systemHealthRow}>
         <KpiCard

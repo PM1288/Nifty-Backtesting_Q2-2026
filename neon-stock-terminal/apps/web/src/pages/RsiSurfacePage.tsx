@@ -365,7 +365,7 @@ export function RsiSurfacePage() {
         <ExplainThis
           label={tr("When RSI stays stretched")}
           summary={tr("Strong trends can keep RSI elevated or depressed for longer than beginners expect.")}
-          detail={tr("That is why the page is a scan, not a timing engine. Use regime, breadth, and stock quality before treating a high or low reading as a reversal cue.")}
+          detail={tr("Extreme readings alone do not establish a reversal. Confirm with regime, breadth and stock quality.")}
           takeaway={tr("Overbought and oversold describe condition, not an automatic action.")}
         />
       </section>

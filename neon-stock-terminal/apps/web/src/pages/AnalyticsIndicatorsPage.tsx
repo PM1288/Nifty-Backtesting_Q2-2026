@@ -199,7 +199,7 @@ export function AnalyticsIndicatorsPage() {
         <SectionDivider
           eyebrow={tr("Indicator basics")}
           title={tr("What it is and how to read it")}
-          subtitle={tr("The page explains the indicator first, then applies the same thresholds to today's universe and the 3-year evidence.")}
+
         />
 
         <div className={styles.summaryGrid}>

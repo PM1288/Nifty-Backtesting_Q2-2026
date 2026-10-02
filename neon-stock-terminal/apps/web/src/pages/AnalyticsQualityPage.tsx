@@ -415,7 +415,7 @@ export function AnalyticsQualityPage() {
   return (
     <div className={styles.page}>
       <AnalyticsHeader
-        title="Quality & Freshness"
+        title="Data quality"
         meta={`${tr("Expected trade date")} ${payload.expectedTradeDate ?? "—"} • ${tr("Updated")} ${formatDateIST(payload.asOf, { includeTime: true })}`}
         sectionTabs={[...SYSTEM_SECTION_TABS]}
       />

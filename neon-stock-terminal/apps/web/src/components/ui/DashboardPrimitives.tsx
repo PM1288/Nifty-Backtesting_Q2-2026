@@ -266,7 +266,7 @@ export function PageIntroAccordion({
 }: {
   label?: string;
   title: string;
-  body: string;
+  body?: string;
   items?: string[];
   defaultOpen?: boolean;
   widgetId?: string;
@@ -298,7 +298,7 @@ export function PageIntroAccordion({
         <span className={styles.introTitle}>{tr(title)}</span>
       </summary>
       <div className={styles.introBody}>
-        <p className={styles.introText}>{tr(body)}</p>
+        {body ? <p className={styles.introText}>{tr(body)}</p> : null}
         {items?.length ? (
           <div className={styles.introList}>
             {items.map((item) => (

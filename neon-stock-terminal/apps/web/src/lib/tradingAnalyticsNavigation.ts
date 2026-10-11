@@ -2,6 +2,7 @@ export const analyticsTabs = {
   morning: "Morning View",
   structure: "Market Structure",
   scalper_v2: "Scalper V2",
+  crypto: "Crypto Scalper",
   "trade-log": "Trade Log",
   matrix: "1m · 5m · 15m",
   oi: "OI & PCR",

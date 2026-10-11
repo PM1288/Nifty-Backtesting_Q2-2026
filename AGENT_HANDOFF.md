@@ -6923,3 +6923,15 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
 - Final visual follow-up: Paper compact headers now stack/wrap on tablet/mobile and relative navigation offsets reset. Geometry checks catch title/fact overlap; browser failures retain screenshots/text. This is an additive responsive fix, preserving desktop layout and all financial behavior.
 - Infrastructure scan extension: PostgreSQL/Nginx/Redis receive digest-pinned OS-patched derivative images. This supersedes the earlier exact PostgreSQL image preservation statement; the 16.13 server binary hash, cluster identity and volume must remain unchanged. Nginx/Redis candidate scans are clean; PostgreSQL retains vendor-unfixed libxml2 CVE-2026-6653 (critical) and 61 highs. See security report, `infrastructure-before.json`, fixture/scan evidence and final runtime manifest. No database-format migration is involved.
 - Final infrastructure deployment from `f4a36b4` passed health, mounts, server binary/cluster identity and collation checks. Actual deployed scans match candidates (PostgreSQL 1 vendor-unfixed critical/61 highs; Nginx/Redis zero). Dashboard is `a0e2f70`; Python hardening is `a73ac9c`. API diagnostic now fails on non-200; preserve the cutover-time 502 sample separately from post-deployment acceptance. Full final evidence is outside Git; source tree retains only unrelated user untracked files.
+
+## 2026-10-11 — Crypto Scalper
+
+- Adds Trading Analytics `?view=crypto` beside V2 for BTC, ETH, SOL, XRP, ADA,
+  DOGE Binance spot USDT pairs. Completed 5m OHLC, EMA9, actual coin/USDT volume,
+  trades, UTC timestamps, CSV, responsive charts and stale/gap evidence.
+- New authenticated `/v1/crypto-market` uses fixed public Binance klines,
+  validates completed observations and shares reads/cache per UTC 5m boundary.
+- Handoff, exact rerun/release commands and limitations:
+  `docs/trading-analytics/CRYPTO_SCALPER_20261011.md`.
+- Retain unrelated user OIIS reports/generator. No database/collector/notification
+  configuration changes. Runtime evidence remains outside Git.

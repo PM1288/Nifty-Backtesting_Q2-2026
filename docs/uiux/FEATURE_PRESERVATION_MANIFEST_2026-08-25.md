@@ -1,5 +1,16 @@
 # UI feature preservation manifest — 25 August 2026
 
+## 2026-10-11 Crypto Scalper
+
+- Adds a Crypto Scalper tab beside V2, six Binance spot USDT pairs, completed
+  5-minute OHLC, EMA9, actual coin/USDT candle volume, trade counts, range controls,
+  source timestamps, stale/unavailable/gap states and CSV export. Uses a fixed
+  public upstream through the existing authenticated dashboard API.
+- Existing analytics navigation and V2 alias behavior are preserved. Crypto
+  renders its own 24/7 UTC workspace without NSE session or option assumptions.
+- Source, validation, commands and limitations:
+  `docs/trading-analytics/CRYPTO_SCALPER_20261011.md`.
+
 ## 2026-10-02 Production UI copy and hierarchy
 
 - Simplified headings, navigation, research instructions and loading/error copy.

@@ -38,6 +38,7 @@ import { registerDataHealth } from "./dataHealth";
 import { registerPredictor } from "./predictor";
 import { registerLongOptions } from "./longOptions";
 import { registerNiftyWeeklyOptions } from "./niftyWeeklyOptions";
+import { registerCryptoMarket } from "./cryptoMarket";
 import { registerTradingAnalytics } from "./tradingAnalytics";
 import { registerNiftyContext } from "./niftyContext";
 import { registerMobileNotifications } from "./mobileNotifications";
@@ -97,6 +98,7 @@ export function registerRoutes(
   registerLongOptions(app, prisma);
   registerNiftyWeeklyOptions(app, prisma);
   registerTradingAnalytics(app, prisma, authRuntime);
+  registerCryptoMarket(app);
   registerNiftyContext(app, prisma);
   registerNseIntelligence(app, prisma);
   registerDataHealth(app, prisma);

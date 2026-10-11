@@ -32,6 +32,7 @@ const Chart = lazy(async () => ({
 const TimeframeMatrix = lazy(async () => ({
   default: (await import("./TradingAnalyticsTimeframeMatrix")).TradingAnalyticsTimeframeMatrix,
 }));
+const CryptoScalper = lazy(async () => ({ default: (await import("./CryptoScalper")).CryptoScalper }));
 const ScalperV2 = lazy(async () => ({
   default: (await import("./TradingAnalyticsScalperV2")).TradingAnalyticsScalperV2,
 }));
@@ -145,6 +146,7 @@ const tabs = {
   flow: "Positioning & Flow",
   scalper: "Scalper / Exact Contracts",
   scalper_v2: "Scalper V2 / Three Charts",
+  crypto: "Crypto Scalper",
   "trade-log": "Scalper Trade Log",
   matrix: "1m / 5m / 15m Matrix",
   structure: "Price & EMA",
@@ -410,7 +412,7 @@ export function TradingAnalyticsPage() {
     // Scalper has a deliberately small context endpoint. Load the full research
     // contract only when another lens owns it or a shared evidence drawer is
     // explicitly requested.
-    enabled: !["scalper", "scalper_v2"].includes(tab) || drawer != null,
+    enabled: tab !== "crypto" && (!["scalper", "scalper_v2"].includes(tab) || drawer != null),
   });
   const scalperQuery = new URLSearchParams();
   for (const k of ["symbol", "expiry", "asOf"])
@@ -448,6 +450,10 @@ export function TradingAnalyticsPage() {
     ? universeQ.data.universe
     : pageContext?.universe ?? [];
   const activeQuery = isScalperView ? scalperQ : q;
+  if (tab === "crypto") return <section className={styles.page} aria-label="Trading Analytics workspace" data-route-view="crypto">
+    <nav className={styles.tabs} aria-label="Trading analytics lenses">{Object.entries(analyticsTabs).map(([id, label]) => <button key={id} aria-current={id === "crypto" ? "page" : undefined} onClick={() => change("view", id === "oi" ? "smartapi" : id)}>{label}</button>)}</nav>
+    <Suspense fallback={<p role="status">Loading Crypto Scalper…</p>}><CryptoScalper /></Suspense>
+  </section>;
   const inspect = (row: Row) => {
     setInspected(row);
     setDrawer("source");

@@ -1,0 +1,31 @@
+.page { min-width: 0; padding: 12px; color: var(--text-primary, #dce6f3); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+.toolbar > div { margin-right: auto; }
+.toolbar h1 { font-size: 21px; margin: 0; }
+.toolbar p { margin: 5px 0; }
+.page button, .page select { background: #15243a; color: #e2ecf8; border: 1px solid #425775; border-radius: 6px; padding: 8px; }
+.page button { cursor: pointer; }
+.page button:disabled { opacity: .55; cursor: default; }
+.page :is(button, select, summary):focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
+.toolbar label { display: flex; gap: 6px; align-items: center; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.card { min-width: 0; background: #091321; color: #e2ecf8; border: 1px solid #293b54; border-radius: 9px; padding: 12px; }
+.card header { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.card h2 { font-size: 16px; margin: 0 0 8px; }
+.card small { font-weight: 400; font-size: 12px; color: #a5b8d0; }
+.card header strong { font-size: 23px; font-variant-numeric: tabular-nums; }
+.chart { width: 100%; height: 330px; }
+.meta { font-size: 12px; line-height: 1.6; color: #93a9c3; }
+.page > .meta { color: #52677e; }
+.ready { color: #37d8a3; font-size: 12px; }
+.warning { color: #fbbf24; font-size: 13px; }
+.ema { color: #fbbf24; }
+.readout { display: grid; gap: 5px; font-size: 12px; line-height: 1.7; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-height: 80px; }
+.evidence { margin-top: 16px; border: 1px solid #425775; border-radius: 6px; padding: 12px; }
+.evidence summary { cursor: pointer; margin-bottom: 8px; }
+.tableScroll { overflow-x: auto; }
+.tableScroll table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.tableScroll th, .tableScroll td { text-align: right; padding: 8px; border-bottom: 1px solid #293b54; }
+.tableScroll th:first-child, .tableScroll td:first-child { text-align: left; }
+@media (min-width: 1800px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 850px) { .grid { grid-template-columns: minmax(0, 1fr); } .page { padding: 6px; } .toolbar label { flex-wrap: wrap; } }

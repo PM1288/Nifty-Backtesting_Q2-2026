@@ -6935,3 +6935,13 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   `docs/trading-analytics/CRYPTO_SCALPER_20261011.md`.
 - Retain unrelated user OIIS reports/generator. No database/collector/notification
   configuration changes. Runtime evidence remains outside Git.
+- Released pushed application commit `7510c1b`; image
+  `sha256:e319752ab4ca99582e3d357356a235880aa8710ac66164839292c7a6a4173b12`.
+  Public Crypto 10/10 and canonical 9/9 browser checks pass; 1440/390px Crypto
+  accessibility scans show zero violations; health healthy, restarts zero.
+  Brief cutover 502 recovered, public page/asset 200 and unauthenticated API 401.
+  Receipt/screenshots: `/home/novius2/NIFTY50/evidence/crypto-scalper-20261011-production`.
+- Real production boundary acceptance: at `2026-10-11T17:35:05.224Z`, all six
+  pairs automatically advanced exactly one completed 5m candle with new actual
+  coin/USDT volume and trades. Evidence: `boundary-refresh.json`. No manual
+  refresh. Temporary local API/Vite/preview servers were stopped.

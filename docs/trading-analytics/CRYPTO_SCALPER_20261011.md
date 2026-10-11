@@ -108,3 +108,53 @@ migration or volume change is required.
   rerun passed. One generic preservation harness pointed at an unsupported local
   `/n50/auth` proxy and returned 404; public-origin rerun passed. These were test
   harness/preview failures, not production acceptance results.
+
+## Production release
+
+- Application commit pushed and released: `7510c1beba58955832eedd025bf7235f410462f9`.
+- Image: `sha256:e319752ab4ca99582e3d357356a235880aa8710ac66164839292c7a6a4173b12`.
+- Dashboard health: healthy; zero restarts. Public page and entry asset HTTP 200;
+  unauthenticated crypto API HTTP 401. Authenticated six-pair endpoint and browser
+  acceptance pass. Initial deploy-script route smoke returned transient 502 just
+  after recreation; subsequent independent public checks passed.
+- Public Crypto browser regression: 10/10 pass. Public canonical preservation:
+  9/9 pass. Focused Crypto WCAG accessibility scans at 1440px and 390px: zero
+  violations. Desktop/mobile screenshots, source snapshot, release receipt and
+  checks: `/home/novius2/NIFTY50/evidence/crypto-scalper-20261011-production`.
+- Existing unrelated untracked OIIS reports/tools remain; tracked source is clean.
+
+Rollback commands (use only if rollback is needed):
+
+```bash
+cd /home/novius2/trading-stack
+docker image tag trading-stack-n50-dashboard:pre-crypto-20261011 trading-stack-n50-dashboard:latest
+docker compose -p trading-stack-novius2 --env-file .env -f docker-compose.yml up -d --no-deps --no-build --force-recreate n50-dashboard
+```
+
+Protected canonical browser rerun without printing credentials:
+
+```bash
+cd /home/novius2/trading-stack
+python3 - <<'PY'
+import os, subprocess
+password = next(line.split('=', 1)[1].strip() for line in open('.env')
+                if line.startswith('DEV_LOCAL_AUTH_PASSWORD='))
+env = dict(os.environ,
+           PLAYWRIGHT_ADMIN_PASSWORD=password,
+           PLAYWRIGHT_BASE_URL='https://n50.nifty50today.co.in/n50',
+           PLAYWRIGHT_OUTPUT_DIR='/tmp/crypto-preservation-rerun')
+subprocess.run(['node', 'tools/playwright/canonical-feature-regression.mjs'],
+               env=env, check=True)
+PY
+# Boundary check keeps an authenticated visible tab open until next UTC 5m close:
+node /home/novius2/NIFTY50/evidence/crypto-scalper-20261011-production/boundary-check.mjs
+```
+
+## Automatic five-minute refresh acceptance
+
+An authenticated visible production tab loaded at `2026-10-11T17:32:42.635Z`
+and automatically received the next completed candles at
+`2026-10-11T17:35:05.224Z`. All six pairs advanced by exactly 300,000 ms with
+actual new base volume, quote volume and trade counts. No manual refresh was
+used. Evidence: `boundary-refresh.json` and `boundary-check.mjs` in the
+production evidence directory. Temporary loopback test servers were stopped.

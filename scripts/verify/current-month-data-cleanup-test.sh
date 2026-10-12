@@ -15,6 +15,11 @@ CREATE SCHEMA oiis;
 CREATE SCHEMA oiis_live;
 CREATE SCHEMA oiss;
 CREATE SCHEMA paper_trading;
+CREATE SCHEMA strategy_eval;
+CREATE TABLE strategy_eval.entry_path_evaluation(entry_path_id text,entry_fill_ts timestamptz);
+CREATE TABLE strategy_eval.ladder_event(entry_path_id text);
+CREATE TABLE strategy_eval.long_horizon_observation(entry_path_id text,horizon_policy_id text,data_snapshot_hash text,entry_date date,max_close_date date);
+CREATE TABLE strategy_eval.long_horizon_checkpoint(entry_path_id text,horizon_policy_id text,data_snapshot_hash text,trade_date date);
 CREATE TABLE nse.dim_security_master_snapshot(fininstrm_id bigint,snapshot_date date);
 CREATE TABLE public.instrument_master_snapshot(exchange text,symbol_token text,snapshot_date date,expiry date);
 CREATE TABLE public.instruments(exchange text,symbol_token text,expiry date);
@@ -68,6 +73,10 @@ INSERT INTO oiis_live.daily_candidate VALUES
  (4,4,'XYZ','LONG','2026-10-03','2026-10-03','2026-10-03');
 INSERT INTO oiis_live.selection_run VALUES (3);
 INSERT INTO oiis_live.candidate_run_change VALUES (1,'2026-09-01'),(2,'2026-09-03');
+INSERT INTO strategy_eval.entry_path_evaluation VALUES ('old','2025-01-01'),('current','2026-10-01');
+INSERT INTO strategy_eval.ladder_event VALUES ('old'),('current');
+INSERT INTO strategy_eval.long_horizon_observation VALUES ('old','h','s','2025-01-01','2025-02-01'),('current','h','s','2026-09-01','2026-10-01'),('checkpoint','h','s','2026-09-01','2026-09-02');
+INSERT INTO strategy_eval.long_horizon_checkpoint VALUES ('checkpoint','h','s','2026-10-01');
 SQL
 run_cleanup() {
  psql_test -v "apply=$1" -v compact=true -v "paper_only=$2" -v as_of=2026-10-12T09:00:00Z < "$root_dir/scripts/sql/current_month_data_cleanup.sql"
@@ -90,6 +99,8 @@ DO $$ BEGIN
     (SELECT count(*) FROM public.instrument_master_snapshot)<>2 OR
     (SELECT count(*) FROM public.instruments)<>2 OR
     (SELECT count(*) FROM oiis_live.candidate_run_change)<>1 OR
+    (SELECT count(*) FROM strategy_eval.ladder_event)<>1 OR
+    (SELECT count(*) FROM strategy_eval.long_horizon_observation)<>2 OR
     (SELECT count(*) FROM paper_trading.valuation_snapshots)<>2 OR
     (SELECT count(*) FROM paper_trading.account_equity_snapshots)<>2 OR
     (SELECT count(*) FROM paper_trading.processed_market_bars)<>1 OR

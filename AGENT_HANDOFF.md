@@ -7007,3 +7007,7 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   whose data-as-of date predates the cutoff are also retired; current batches stay.
   Fixture tests additionally cover subscribed expired-contract protection,
   unused expired-master removal and old/current backtest-batch separation.
+- Review also confirms ladder/path observations only contain entries through
+  August 2025 and long-horizon maxima through September 2025. Cleanup retires
+  old ladder evidence and long-horizon observations, protecting any entry or
+  checkpoint that progressed during the retained month. Tests cover both cases.

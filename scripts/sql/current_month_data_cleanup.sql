@@ -46,6 +46,8 @@ INSERT INTO cleanup_rules VALUES
  (80,'strategy_eval.long_horizon_checkpoint','trade_date<(SELECT cutoff FROM cleanup_params)'),
  (80,'strategy_eval.path_checkpoint','checkpoint_ts<(SELECT cutoff FROM cleanup_params)'),
  (80,'strategy_eval.period_metric','period_end<(SELECT cutoff FROM cleanup_params)'),
+ (90,'strategy_eval.ladder_event','EXISTS(SELECT FROM strategy_eval.entry_path_evaluation e WHERE e.entry_path_id=t.entry_path_id AND e.entry_fill_ts<(SELECT cutoff FROM cleanup_params)) AND NOT EXISTS(SELECT FROM strategy_eval.entry_path_evaluation e WHERE e.entry_path_id=t.entry_path_id AND e.entry_fill_ts>=(SELECT cutoff FROM cleanup_params))'),
+ (90,'strategy_eval.long_horizon_observation','entry_date<(SELECT cutoff FROM cleanup_params) AND coalesce(max_close_date,entry_date)<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM strategy_eval.long_horizon_checkpoint c WHERE c.entry_path_id=t.entry_path_id AND c.horizon_policy_id=t.horizon_policy_id AND c.data_snapshot_hash=t.data_snapshot_hash AND c.trade_date>=(SELECT cutoff FROM cleanup_params))'),
  (80,'nse_app.backtest_skipped_signal','coalesce(entry_date,signal_date)<(SELECT cutoff FROM cleanup_params)'),
  (80,'nse_app.backtest_trade_log','exit_date<(SELECT cutoff FROM cleanup_params)'),
  (80,'nse_app.backtest_trade_template','theoretical_exit_date<(SELECT cutoff FROM cleanup_params)');

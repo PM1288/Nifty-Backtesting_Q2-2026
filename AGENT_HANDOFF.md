@@ -6945,3 +6945,23 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   pairs automatically advanced exactly one completed 5m candle with new actual
   coin/USDT volume and trades. Evidence: `boundary-refresh.json`. No manual
   refresh. Temporary local API/Vite/preview servers were stopped.
+
+## 2026-10-12 — Monthly market-data partition retention
+
+- User authorized deleting September data and recurring cleanup on each seventh.
+- `scripts/monthly_partition_cleanup.sh --plan` previews; `--apply` drops only
+  allowlisted market-data monthly partitions with matching UTC range bounds.
+  The seventh-day boundary retains the current month; before the seventh a
+  catch-up run retains the previous month too. Current/future partitions and
+  unrelated relations are preserved. DROP RESTRICT, lock/statement timeouts,
+  advisory locking and transactional audit protect execution.
+- Install the tracked `scripts/systemd/trading-stack-monthly-cleanup.*` units
+  into `/etc/systemd/system`, reload and enable the timer. Schedule: seventh at
+  02:00 UTC, persistent catch-up, failed runs retry hourly. Audit evidence:
+  `operations.monthly_partition_cleanup_log` (relation, cutoff, bytes, time).
+- Initial plan: 15 September partitions (~692 GB) and four expired August
+  intraday partitions (~2 GB); October retained. No additional backup was made.
+- Validation: disposable-DB integration tests cover planning, dependencies,
+  pre-seventh catch-up, seventh-day rolling boundary, future-bound protection,
+  repeated execution and next-month cleanup. Bash syntax, systemd verification
+  and canonical repository preservation gate passed.

@@ -1,0 +1,10 @@
+[Unit]
+Description=Clean trading-stack prior-month partitions on the seventh (UTC)
+
+[Timer]
+OnCalendar=*-*-07 02:00:00 UTC
+Persistent=true
+Unit=trading-stack-monthly-cleanup.service
+
+[Install]
+WantedBy=timers.target

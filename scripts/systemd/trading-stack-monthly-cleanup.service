@@ -1,0 +1,13 @@
+[Unit]
+Description=Trading-stack prior-month market partition cleanup
+After=docker.service
+Requires=docker.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/novius2/trading-stack
+ExecStart=/bin/bash /home/novius2/trading-stack/scripts/monthly_partition_cleanup.sh --apply
+TimeoutStartSec=10min
+Restart=on-failure
+RestartSec=1h

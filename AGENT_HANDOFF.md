@@ -7011,3 +7011,8 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   August 2025 and long-horizon maxima through September 2025. Cleanup retires
   old ladder evidence and long-horizon observations, protecting any entry or
   checkpoint that progressed during the retained month. Tests cover both cases.
+- Production cleanup exposed missing indexes on four OIIS candidate-reference
+  foreign-key columns. Adds small indexes on selection auto-candidate,
+  watchlist candidate, candidate-change candidate and OISS source candidate.
+  These bound referential checks during deletion; five-second lock timeout and
+  thirty-second index setup timeout protect writers. Fixture tests include setup.

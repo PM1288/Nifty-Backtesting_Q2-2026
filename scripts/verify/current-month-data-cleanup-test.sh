@@ -79,7 +79,8 @@ INSERT INTO strategy_eval.long_horizon_observation VALUES ('old','h','s','2025-0
 INSERT INTO strategy_eval.long_horizon_checkpoint VALUES ('checkpoint','h','s','2026-10-01');
 SQL
 run_cleanup() {
- psql_test -v "apply=$1" -v compact=true -v "paper_only=$2" -v as_of=2026-10-12T09:00:00Z < "$root_dir/scripts/sql/current_month_data_cleanup.sql"
+ cat "$root_dir/scripts/sql/current_month_retention_indexes.sql" "$root_dir/scripts/sql/current_month_data_cleanup.sql" |
+ psql_test -v "apply=$1" -v compact=true -v "paper_only=$2" -v as_of=2026-10-12T09:00:00Z
 }
 run_cleanup false false
 psql_test <<'SQL'

@@ -18,6 +18,10 @@ CREATE TABLE public.market_ticks_2026_11 PARTITION OF public.market_ticks FOR VA
 -- A misleading old name with future bounds must survive.
 CREATE TABLE public.market_ticks_2026_07 PARTITION OF public.market_ticks FOR VALUES FROM ('2026-12-01') TO ('2027-01-01');
 CREATE TABLE public.unrelated_2026_09(ts timestamptz);
+CREATE SCHEMA oiis_research;
+CREATE TABLE oiis_research.all_signal_observation(signal_date date) PARTITION BY RANGE(signal_date);
+CREATE TABLE oiis_research.all_signal_observation_202609 PARTITION OF oiis_research.all_signal_observation FOR VALUES FROM ('2026-09-01') TO ('2026-10-01');
+CREATE TABLE oiis_research.all_signal_observation_202610 PARTITION OF oiis_research.all_signal_observation FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');
 CREATE VIEW public.protected_old_data AS SELECT * FROM public.market_ticks_2026_08;
 SQL
 # RESTRICT must prevent dependent-object deletion and roll back audit inserts.
@@ -57,7 +61,9 @@ DO $$ BEGIN
     to_regclass('public.market_ticks_2026_11') IS NULL OR
     to_regclass('public.market_ticks_2026_07') IS NULL OR
     to_regclass('public.unrelated_2026_09') IS NULL OR
-    (SELECT count(*) FROM operations.monthly_partition_cleanup_log) <> 2 THEN
+    to_regclass('oiis_research.all_signal_observation_202609') IS NOT NULL OR
+    to_regclass('oiis_research.all_signal_observation_202610') IS NULL OR
+    (SELECT count(*) FROM operations.monthly_partition_cleanup_log) <> 3 THEN
    RAISE EXCEPTION 'Seventh-day retention, bounds validation, or idempotency failed';
  END IF;
 END $$;
@@ -67,7 +73,7 @@ psql_test <<'SQL'
 DO $$ BEGIN
  IF to_regclass('public.market_ticks_2026_10') IS NOT NULL OR
     to_regclass('public.market_ticks_2026_11') IS NULL OR
-    (SELECT count(*) FROM operations.monthly_partition_cleanup_log) <> 3 THEN
+    (SELECT count(*) FROM operations.monthly_partition_cleanup_log) <> 5 THEN
    RAISE EXCEPTION 'Next-month rolling cleanup failed';
  END IF;
 END $$;

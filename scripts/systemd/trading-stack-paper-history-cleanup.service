@@ -1,0 +1,13 @@
+[Unit]
+Description=Trading-stack paper valuation history cleanup with prior-day baseline
+After=docker.service
+Requires=docker.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/novius2/trading-stack
+ExecStart=/bin/bash /home/novius2/trading-stack/scripts/current_month_data_cleanup.sh --paper-only
+TimeoutStartSec=45min
+Restart=on-failure
+RestartSec=1h

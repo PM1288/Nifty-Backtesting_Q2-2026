@@ -1,0 +1,10 @@
+[Unit]
+Description=Keep today's paper valuations and previous-day baseline
+
+[Timer]
+OnCalendar=*-*-* 00:30:00 UTC
+Persistent=true
+Unit=trading-stack-paper-history-cleanup.service
+
+[Install]
+WantedBy=timers.target

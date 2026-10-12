@@ -12,7 +12,7 @@ WITH boundary AS (
       THEN interval '1 month' ELSE interval '0 month' END)::date AS cutoff
 ), partitions AS (
   SELECT c.oid, n.nspname, c.relname, pn.nspname || '.' || p.relname AS parent,
-    to_date(substring(c.relname FROM '([0-9]{4}_[0-9]{2})$'), 'YYYY_MM') AS month_start,
+    to_date(replace(substring(c.relname FROM '([0-9]{4}_?[0-9]{2})$'),'_',''), 'YYYYMM') AS month_start,
     regexp_match(pg_get_expr(c.relpartbound,c.oid),
       '^FOR VALUES FROM \(''([^'']+)''\) TO \(''([^'']+)''\)$') AS bounds
   FROM pg_inherits i
@@ -21,8 +21,8 @@ WITH boundary AS (
   JOIN pg_namespace n ON n.oid=c.relnamespace
   JOIN pg_namespace pn ON pn.oid=p.relnamespace
   WHERE c.relispartition AND c.relkind='r' AND n.oid=pn.oid
-    AND c.relname ~ '_[0-9]{4}_(0[1-9]|1[0-2])$'
-    AND left(c.relname,length(c.relname)-8)=p.relname
+    AND c.relname ~ '_[0-9]{4}_?(0[1-9]|1[0-2])$'
+    AND regexp_replace(c.relname,'_[0-9]{4}_?[0-9]{2}$','')=p.relname
     AND pn.nspname || '.' || p.relname = ANY(ARRAY[
       'public.market_ticks','public.depth_5_snapshots','public.depth_5_metrics',
       'public.quote_snapshots','public.oi_snapshots_options',
@@ -33,7 +33,8 @@ WITH boundary AS (
       'public.putcallratio_snapshots',
       'nse_intraday.raw_security_1m','nse_intraday.raw_index_1m',
       'nse_intraday.security_minute_feature','nse_intraday.market_minute_feature',
-      'nse_intraday.stock_minute_volume_profile'])
+      'nse_intraday.stock_minute_volume_profile',
+      'oiis_research.all_signal_observation'])
 )
 SELECT partitions.*, boundary.cutoff, pg_total_relation_size(oid) AS bytes
 FROM partitions CROSS JOIN boundary

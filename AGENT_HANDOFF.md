@@ -6971,3 +6971,32 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   695 GB available. PostgreSQL running/healthy. Enabled persistent timer next
   fires 2026-11-07 02:00 UTC. Service replay completed successfully with no
   remaining candidates, confirming deployed idempotency.
+
+## 2026-10-12 — Current-month operational data retention
+
+- User further authorized removing obsolete prior-month data, retaining current
+  work/trade progress and paper purchase times/today's P&L.
+- Adds `scripts/current_month_data_cleanup.sh --plan|--apply|--paper-only`.
+  Known log/performance/backtest history is pruned by event/session date;
+  latest security/instrument master records remain even if originally old.
+  Old OIIS research captures now qualify for seventh-day partition retirement.
+- Retains authoritative paper purchases, fills, quantities, accounts, costs,
+  tax and P&L ledgers/cursors. Historical simulated research is separate from
+  actual open paper positions. Paper valuation history retains today's IST
+  values plus one previous baseline per open group/account. Candidate evidence
+  used by paper purchases and all foreign-key-referenced candidates survive.
+- Current signals still need historical daily prices/features (EMA/RSI and
+  prior month/week comparisons); these source inputs/configuration are retained.
+  No dashboard fields, routes or trading calculations were removed.
+- Monthly cleanup service now also prunes/compacts non-partition history.
+  A daily 00:30 UTC paper-history timer removes old valuations without rewriting
+  active tables; deleted space is reused and compacted in monthly maintenance.
+- Each cleanup audits rows and before/after bytes in
+  `operations.current_month_cleanup_log`. Session advisory lock, five-second
+  lock timeout, restrictive dependencies and retries preserve current execution.
+  Pending compaction is retried even if a later run deletes zero additional rows.
+- Tests: disposable database exercises planning, current-month preservation,
+  latest old master identity, candidate dependencies, entry timestamp/P&L,
+  previous-day valuation baseline, monitor dedup/cursor safety, idempotency,
+  daily paper-only scope and all-expired research truncation. Extended partition
+  tests cover research YYYYMM names alongside market YYYY_MM names.

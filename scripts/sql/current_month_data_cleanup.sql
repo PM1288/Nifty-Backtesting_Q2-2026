@@ -26,8 +26,10 @@ INSERT INTO cleanup_rules VALUES
  (40,'public.oibuildup_snapshots','ts<(SELECT cutoff FROM cleanup_params)'),
  (40,'public.putcallratio_snapshots','ts<(SELECT cutoff FROM cleanup_params)'),
  (40,'public.gainers_losers_snapshots','ts<(SELECT cutoff FROM cleanup_params)'),
+ (45,'public.instruments','expiry<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM public.instrument_state s WHERE s.symbol_token=t.symbol_token) AND NOT EXISTS(SELECT FROM public.instrument_universe s WHERE s.symbol_token=t.symbol_token) AND NOT EXISTS(SELECT FROM public.subscriptions s WHERE s.symbol_token=t.symbol_token) AND NOT EXISTS(SELECT FROM paper_trading.instrument_snapshots s WHERE s.instrument_token=t.symbol_token)'),
+ (48,'oiis_live.candidate_run_change','trade_date<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM cleanup_paper_candidate_keep k WHERE k.candidate_id=t.candidate_id)'),
  (50,'nse.dim_security_master_snapshot','snapshot_date<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM cleanup_security_master_keep k WHERE k.fininstrm_id=t.fininstrm_id AND k.snapshot_date=t.snapshot_date)'),
- (50,'public.instrument_master_snapshot','snapshot_date<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM cleanup_instrument_master_keep k WHERE k.exchange=t.exchange AND k.symbol_token=t.symbol_token AND k.snapshot_date=t.snapshot_date)'),
+ (50,'public.instrument_master_snapshot','(snapshot_date<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM cleanup_instrument_master_keep k WHERE k.exchange=t.exchange AND k.symbol_token=t.symbol_token AND k.snapshot_date=t.snapshot_date)) OR (expiry<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM public.instruments i WHERE i.exchange=t.exchange AND i.symbol_token=t.symbol_token))'),
  (50,'oiis_live.daily_candidate','trade_date<(SELECT cutoff FROM cleanup_params) AND NOT EXISTS(SELECT FROM cleanup_paper_candidate_keep k WHERE k.candidate_id=t.candidate_id) AND NOT EXISTS(SELECT FROM oiis_live.selection_run r WHERE r.auto_paper_candidate_id=t.candidate_id) AND NOT EXISTS(SELECT FROM oiis_live.watchlist_item r WHERE r.candidate_id=t.candidate_id) AND NOT EXISTS(SELECT FROM oiis_live.candidate_run_change r WHERE r.candidate_id=t.candidate_id) AND NOT EXISTS(SELECT FROM oiss.candidate r WHERE r.source_oiis_candidate_id=t.candidate_id)'),
  (60,'paper_trading.valuation_snapshots','valued_at<(SELECT today FROM cleanup_params) AND NOT EXISTS(SELECT FROM cleanup_valuation_keep k WHERE k.valuation_snapshot_id=t.valuation_snapshot_id)'),
  (60,'paper_trading.account_equity_snapshots','snapshot_at<(SELECT today FROM cleanup_params) AND NOT EXISTS(SELECT FROM cleanup_equity_keep k WHERE k.account_id=t.account_id AND k.snapshot_at=t.snapshot_at)'),
@@ -47,6 +49,11 @@ INSERT INTO cleanup_rules VALUES
  (80,'nse_app.backtest_skipped_signal','coalesce(entry_date,signal_date)<(SELECT cutoff FROM cleanup_params)'),
  (80,'nse_app.backtest_trade_log','exit_date<(SELECT cutoff FROM cleanup_params)'),
  (80,'nse_app.backtest_trade_template','theoretical_exit_date<(SELECT cutoff FROM cleanup_params)');
+INSERT INTO cleanup_rules
+SELECT 70,relation_name,'EXISTS(SELECT FROM nse_app.batch_run_audit a WHERE a.batch_run_id=t.batch_run_id AND a.data_as_of_date<(SELECT cutoff FROM cleanup_params))'
+FROM unnest(ARRAY['nse_app.backtest_stock_summary','nse_app.backtest_stock_summary_mart',
+ 'nse_app.backtest_regime_summary','nse_app.backtest_regime_summary_mart',
+ 'nse_app.backtest_run_validation']) AS relation_name;
 DELETE FROM cleanup_rules WHERE to_regclass(relation_name) IS NULL;
 \if :paper_only
 DELETE FROM cleanup_rules WHERE relation_name NOT IN

@@ -7000,3 +7000,10 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   previous-day valuation baseline, monitor dedup/cursor safety, idempotency,
   daily paper-only scope and all-expired research truncation. Extended partition
   tests cover research YYYYMM names alongside market YYYY_MM names.
+- Further dependency review adds expired derivative-contract pruning only when
+  no subscription, instrument state/universe or paper snapshot uses the token.
+  Expired master duplicates and prior-month candidate-change history are pruned
+  while paper entry candidates stay. Backtest summaries/validation from batches
+  whose data-as-of date predates the cutoff are also retired; current batches stay.
+  Fixture tests additionally cover subscribed expired-contract protection,
+  unused expired-master removal and old/current backtest-batch separation.

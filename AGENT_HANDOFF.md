@@ -6965,3 +6965,9 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   pre-seventh catch-up, seventh-day rolling boundary, future-bound protection,
   repeated execution and next-month cleanup. Bash syntax, systemd verification
   and canonical repository preservation gate passed.
+- Production execution completed: 19 partitions dropped, 694 GB audited as
+  reclaimed; tradingdb 1,056 GB -> 362 GB. Zero `_2026_09` tables remain;
+  15 October partitions (295 GB) retained. Host filesystem now 59% used with
+  695 GB available. PostgreSQL running/healthy. Enabled persistent timer next
+  fires 2026-11-07 02:00 UTC. Service replay completed successfully with no
+  remaining candidates, confirming deployed idempotency.

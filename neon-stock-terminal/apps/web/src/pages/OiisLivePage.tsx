@@ -307,11 +307,8 @@ export function OiisLivePage() {
       );
     })
     .sort((left, right) => qualityScore(right) - qualityScore(left));
-  const opportunityRows = candidates
-    .filter((row) => Number.isFinite(qualityScore(row)))
-    .sort((left, right) => qualityScore(right) - qualityScore(left));
-  const executionRows = candidates
-    .filter((row) => Number.isFinite(qualityScore(row)))
+  const buyQueue = candidates
+    .filter((row) => row.direction === "LONG" && Number.isFinite(qualityScore(row)))
     .sort((left, right) => qualityScore(right) - qualityScore(left));
   const setupStats = candidates.reduce(
     (totals, row) => {
@@ -656,7 +653,7 @@ export function OiisLivePage() {
             <th>Structure / session</th><th>Setup</th><th>Status</th><th>Why</th>
           </tr></thead>
           <tbody>
-            {(view === "opportunities" ? opportunityRows : executionRows).map((row, index) => (
+            {buyQueue.map((row, index) => (
               <tr key={row.candidate_id} data-quality-band={qualityBand(row)}>
                 <td><Link className={styles.stockLink} to={`/analytics/stock/${encodeURIComponent(row.symbol)}?strategy=oiis-live&runId=${encodeURIComponent(String(latestRun.run_id ?? ""))}&source=oiis-live&selectedEntityId=${encodeURIComponent(String(row.candidate_id))}&returnTo=${encodeURIComponent("/strategy/oiis-live")}`}>#{index + 1} {row.symbol}</Link><MwhdRankBadge compact ranking={mwhd.rankings.get(String(row.symbol).toUpperCase())} /><small>{row.universe_flags?.is_nifty50 ? "NIFTY 50 · " : ""}F&amp;O · {value(row, "sector")}</small></td>
                 <td><span className={styles.pill} data-state={row.direction}>{value(row, "direction")}</span><small>{humanise(row.direction_state)}</small></td>
@@ -732,8 +729,8 @@ export function OiisLivePage() {
         >
           Overview
         </button>
-        <button role="tab" aria-selected={view === "opportunities"} className={view === "opportunities" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("opportunities")}>Opportunity leaderboard ({opportunityRows.length})</button>
-        <button role="tab" aria-selected={view === "execution"} className={view === "execution" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("execution")}>Execution queue ({executionRows.length})</button>
+        <button role="tab" aria-selected={view === "opportunities"} className={view === "opportunities" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("opportunities")}>Opportunity leaderboard ({buyQueue.length})</button>
+        <button role="tab" aria-selected={view === "execution"} className={view === "execution" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("execution")}>Execution queue ({buyQueue.length})</button>
         <button role="tab" aria-selected={view === "diagnostics"} className={view === "diagnostics" ? styles.viewTabActive : styles.viewTab} onClick={() => setView("diagnostics")}>Diagnostics</button>
         <button
           role="tab"
@@ -847,7 +844,7 @@ export function OiisLivePage() {
             <section className={styles.panel}>
               <div className={styles.sectionHeading}>
                 <div>
-                  <span className={styles.kicker}>Directional opportunities</span>
+                  <span className={styles.kicker}>BUY opportunities</span>
                   <h2>Current opportunity leaderboard</h2>
                 </div>
                 <span className={styles.note}>

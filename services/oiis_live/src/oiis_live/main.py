@@ -530,6 +530,8 @@ def resolve_decision_as_of(
         if value.astimezone(IST).date() != trade_date:
             raise ValueError("decision_as_of must fall on trade_date in Asia/Kolkata")
         return value.astimezone(IST)
+    if run_slot == "PREOPEN_0830":  # Archived runs used this slot before the 09:30 schedule.
+        return datetime.combine(trade_date, wall_time(8, 30), tzinfo=IST)
     if run_slot in SELECTION_SLOTS:
         return datetime.combine(trade_date,SELECTION_SLOTS[run_slot],tzinfo=IST)
     execution_timestamp = (execution_timestamp or datetime.now(IST)).astimezone(IST)

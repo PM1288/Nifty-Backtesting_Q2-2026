@@ -452,11 +452,14 @@ def evaluate_latest(conn: Any, signal_date: date, as_of_ts: datetime | None = No
         -float(item["data_quality"]),
         item["symbol"],
     ))
+    recommendation_rank = 0
     selected_rank = 0
     for index, item in enumerate(output, start=1):
         item["opportunity_rank"] = index
-        item["recommended"] = index <= OPPORTUNITY_REVIEW_LIMIT
-        item["recommendation_rank"] = index if index <= OPPORTUNITY_REVIEW_LIMIT else None
+        item["recommended"] = item["direction"] == "LONG" and recommendation_rank < OPPORTUNITY_REVIEW_LIMIT
+        if item["recommended"]:
+            recommendation_rank += 1
+        item["recommendation_rank"] = recommendation_rank if item["recommended"] else None
         if item["selected"]:
             selected_rank += 1
             item["rank"] = selected_rank

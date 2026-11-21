@@ -24,7 +24,7 @@ from .selector import evaluate_latest, refresh_universe, result_hash
 LOG = logging.getLogger("oiis-live")
 IST = ZoneInfo("Asia/Kolkata")
 POLICY_ID = "OIIS_DAILY_SELECTION_INTRADAY_ENTRY_V1.0"
-POLICY_VERSION = "3.9"
+POLICY_VERSION = "4.0"
 ENTRY_METHOD_RSI_WILLR = "RSI_WILLR"
 ENTRY_METHOD_PRICE_MOMENTUM = "PRICE_MOMENTUM_1D_1H_15M"
 ENTRY_METHODS = (ENTRY_METHOD_RSI_WILLR, ENTRY_METHOD_PRICE_MOMENTUM)
@@ -183,7 +183,7 @@ class Runtime:
                 score=quality_sum(item)
                 conn.execute("""UPDATE oiis_live.daily_candidate SET quality_score=%s,
                   auto_paper_eligible=%s WHERE candidate_id=%s""",
-                  (score,score is not None and score>auto_threshold,candidate["candidate_id"]))
+                  (score,item["direction"]=="LONG" and score is not None and score>auto_threshold,candidate["candidate_id"]))
                 if item["recommended"]:
                     conn.execute("""INSERT INTO oiis_live.watchlist_item(candidate_id,policy_id,trade_date,symbol,instrument_token,source,active,entry_enabled,daily_level,canonical_status,rank,buy_limit,no_chase_price)
                       VALUES (%s,%s,%s,%s,%s,'DAILY_SELECTION',true,%s,%s,%s,%s,%s,%s)
@@ -192,6 +192,13 @@ class Runtime:
                         daily_level=excluded.daily_level,canonical_status=excluded.canonical_status,rank=excluded.rank,
                         buy_limit=excluded.buy_limit,no_chase_price=excluded.no_chase_price,updated_at=now()""",
                       (candidate["candidate_id"],POLICY_ID,trade_date,item["symbol"],item["instrument_token"],item["selected"],item["daily_level"],item["canonical_status"],item["recommendation_rank"],reference_price,no_chase_price))
+            # A partially claimed watch can survive refresh. Revoke its remaining
+            # entry permission when the latest scan no longer supports a BUY.
+            conn.execute("""UPDATE oiis_live.watchlist_item w SET active=false,entry_enabled=false,updated_at=now()
+              FROM oiis_live.daily_candidate c WHERE c.run_id=%s AND c.symbol=w.symbol
+              AND w.trade_date=%s AND w.policy_id=%s AND w.candidate_id IS NOT NULL
+              AND (w.active OR w.entry_enabled) AND c.direction IS DISTINCT FROM 'LONG'""",
+              (run["run_id"],trade_date,POLICY_ID))
             self.record_run_changes(conn,run["run_id"],previous["run_id"] if previous else None,trade_date,auto_threshold)
             auto_paper=self.auto_paper_top_candidate(conn,run["run_id"],trade_date,run_slot,decision_as_of,execution_timestamp,auto_threshold)
             digest=result_hash(rows)
@@ -225,9 +232,9 @@ class Runtime:
                                  threshold: Decimal) -> dict[str,Any]:
         config=self.policy.get("auto_paper_entry",{})
         top=conn.execute("""SELECT * FROM oiis_live.daily_candidate WHERE run_id=%s
-          AND auto_paper_eligible AND direction IN ('LONG','SHORT') AND instrument_token IS NOT NULL
+          AND auto_paper_eligible AND direction='LONG' AND instrument_token IS NOT NULL
           AND reference_price>0 ORDER BY quality_score DESC,opportunity_rank NULLS LAST,symbol LIMIT 1""",(run_id,)).fetchone()
-        eligible=conn.execute("SELECT count(*) n FROM oiis_live.daily_candidate WHERE run_id=%s AND auto_paper_eligible",(run_id,)).fetchone()["n"]
+        eligible=conn.execute("SELECT count(*) n FROM oiis_live.daily_candidate WHERE run_id=%s AND auto_paper_eligible AND direction='LONG'",(run_id,)).fetchone()["n"]
         status="BELOW_THRESHOLD" if not top else "INELIGIBLE"
         submitted=0
         if top:
@@ -270,6 +277,7 @@ class Runtime:
                 "method_submitted":{method:0 for method in ENTRY_METHODS}}
         with self.pool.connection() as conn:
             rows=conn.execute("""SELECT * FROM oiis_live.v_current_watchlist WHERE trade_date=%s AND active AND entry_enabled
+              AND (direction='LONG' OR (source='MANUAL' AND candidate_id IS NULL))
               AND instrument_token IS NOT NULL ORDER BY rank NULLS LAST,symbol""",(trade_date,)).fetchall()
             result["watchlist"]=len(rows)
             for item in rows:
@@ -292,8 +300,13 @@ class Runtime:
                 highs=[float(value["high"]) for value in bars]
                 lows=[float(value["low"]) for value in bars]
                 closes=[float(value["close"]) for value in bars]
+                now = datetime.now(IST)
+                enabled_at = max(item["created_at"], item["updated_at"])
+                max_age = timedelta(minutes=self.policy["auto_paper_entry"]["maximum_signal_age_minutes"])
                 for index in range(14,len(bars)):
                     bar=bars[index]
+                    if not actionable_bar(bar["ts"], enabled_at, now, max_age):
+                        continue
                     source_bar=f"NSE:{item['instrument_token']}:{bar['ts'].isoformat()}:{bar['source']}"
                     if ENTRY_METHOD_RSI_WILLR in pending:
                         exists=conn.execute("""SELECT 1 FROM oiis_live.intraday_evaluation
@@ -363,7 +376,11 @@ class Runtime:
         key=f"oiis-live:{item['trade_date']}:{item['symbol']}:{method_slug}"
         event=f"oiis-{item['trade_date']}-{item['symbol']}-{method_slug}".lower()
         lot_size=resolve_fno_lot_size(conn,str(item["symbol"]),item["trade_date"])
-        payload=trade_payload(item,bar,rsi,willr,lot_size,event,entry_rule,run_id,run_slot,quality_score,threshold,entry_evidence)
+        budget = Decimal(str(self.policy["entry"]["maximum_ticket_inr"]))
+        price = Decimal(str(bar["close"]))
+        if not price.is_finite() or price <= 0 or price > budget:
+            return "INELIGIBLE"
+        payload=trade_payload(item,bar,rsi,willr,lot_size,event,entry_rule,run_id,run_slot,quality_score,threshold,entry_evidence,maximum_ticket=budget)
         claim=conn.execute("""INSERT INTO oiis_live.entry_claim(watchlist_item_id,policy_id,trade_date,symbol,entry_method,signal_ts,source_bar_id,status,idempotency_key,client_event_id,request_payload)
           VALUES (%s,%s,%s,%s,%s,%s,%s,'CLAIMED',%s,%s,%s::jsonb)
           ON CONFLICT(policy_id,trade_date,symbol,entry_method) DO NOTHING RETURNING entry_claim_id""",
@@ -438,14 +455,29 @@ def resolve_fno_lot_size(conn: Any, symbol: str, trade_date: date) -> int:
     return int(row["lotsize"])
 
 
+def actionable_bar(start: datetime, enabled_at: datetime, now: datetime, max_age: timedelta) -> bool:
+    """Earlier bars can warm up indicators. Only fresh, completed bars can trigger an entry."""
+    return start >= enabled_at and now - max_age <= start + timedelta(minutes=1) <= now
+
+
 def trade_payload(item: dict[str,Any], bar: dict[str,Any], rsi: float | None, willr: float | None,
                   quantity: int, event: str, entry_rule: str="RSI_WILLR",
                   run_id: str | None=None, run_slot: str | None=None,
                   quality_score: Any=None, threshold: Any=None,
-                  entry_evidence: dict[str,Any] | None=None) -> dict[str,Any]:
-    symbol=item["symbol"]; price=Decimal(str(bar["close"])); amount=price*quantity
+                  entry_evidence: dict[str,Any] | None=None, *, maximum_ticket: Decimal) -> dict[str,Any]:
+    symbol = item["symbol"]
+    price = Decimal(str(bar["close"]))
+    lot_size = quantity
+    quantity = min(lot_size, int(maximum_ticket // price))
+    if quantity < 1:
+        raise ValueError("ticket budget must cover at least one share")
+    amount = price * quantity
     qualified=item.get("canonical_status")=="QUALIFIED_FOR_INTRADAY_REVALIDATION"
-    direction=item.get("direction") if item.get("direction") in {"LONG","SHORT"} else "LONG"
+    direction = item.get("direction")
+    if direction is None and not item.get("candidate_id"):
+        direction = "LONG"  # An operator-created cash watch has no scanner candidate.
+    if direction != "LONG":
+        raise ValueError("OIIS opens BUY positions only")
     auto=entry_rule=="QUALITY_SUM_THRESHOLD"
     momentum=entry_rule==ENTRY_METHOD_PRICE_MOMENTUM
     reasons=(["TOP_CANDIDATE_FOR_RUN","QUALITY_SUM_ABOVE_THRESHOLD"] if auto else
@@ -463,7 +495,7 @@ def trade_payload(item: dict[str,Any], bar: dict[str,Any], rsi: float | None, wi
     strategy_name=("OIIS Run Quality Auto Paper" if auto else
       "OIIS Daily Selection + Price Momentum 1D/1H/15M Entry" if momentum else
       "OIIS Daily Selection + RSI/WILLR Entry")
-    return {"schema_version":"1.0","client_event_id":event,"account_id":"paper-main","environment":"PAPER","source":{"service":"oiis-live","instance":os.getenv("HOSTNAME","oiis-live")},"strategy":{"strategy_id":"OIIS_LIVE","strategy_name":strategy_name,"strategy_family":"OIIS","strategy_version":POLICY_VERSION,"strategy_run_id":run_id or f"live-{item['trade_date']}","signal_id":event,"tags":["equity","live-data","paper","daily-selection",entry_rule.lower()]},"signal":{"occurred_at":bar["ts"].isoformat(),"exchange_timezone":"Asia/Kolkata","direction":direction,"reason_codes":reasons,"features":features},"trade_group":{"client_group_id":event,"asset_class":"EQUITY","expected_leg_count":1,"group_entry_policy":"ATOMIC","group_close_policy":"ALL_LEGS","performance_basis":{"type":"ENTRY_NOTIONAL","amount":str(amount),"currency":"INR"}},"legs":[{"client_leg_id":"equity-1","role":"PRIMARY","position_effect":"OPEN","instrument":{"instrument_id":f"NSE:CASH:{symbol}","instrument_token":item["instrument_token"],"exchange":"NSE","segment":"CASH","symbol":symbol,"underlying":symbol,"lot_size":str(quantity),"contract_multiplier":"1","currency":"INR"},"side":"BUY" if direction=="LONG" else "SELL","quantity":{"value":str(quantity),"unit":"SHARES"},"entry_order":{"type":"MARKET","time_in_force":"DAY","price_source":"NEXT_AVAILABLE_BAR_OPEN"}}],"execution_policy":{"mode":"RULES","intraday_square_off":False,"exit_rules":[{"rule_id":"I100","kind":"TARGET_PCT","value":"0.010","action":"FULL_CLOSE","target_lifecycle":"INTRADAY"},{"rule_id":"S300","kind":"TARGET_PCT","value":"0.030","action":"FULL_CLOSE","target_lifecycle":"SWING"}]},"analytics_policy":{"apply_default_ladders":False,"intraday_targets_pct":["0.003","0.004","0.005","0.010"],"swing_targets_pct":["0.010","0.030","0.050"],"horizons_trading_sessions":[5,30],"track_after_execution_close":True,"snapshot_cadence":"EVENTS_AND_EOD"},"cost_profile_id":"india-equity-current","tax_profile_id":"management-profit-tax-35pct","metadata":{"policy_id":POLICY_ID,"one_entry_per_symbol_trade_date":False,"one_entry_per_symbol_trade_date_per_method":True,"operator_override":False if auto else not qualified,"entry_rule":entry_rule,"entry_evidence":entry_evidence or {},"run_id":run_id,"run_slot":run_slot,"quality_score":str(quality_score) if quality_score is not None else None,"quality_threshold":str(threshold) if threshold is not None else None,"sizing_policy":"ONE_CURRENT_FNO_LOT","fno_lot_size":quantity,"source_bar_id":f"NSE:{item['instrument_token']}:{bar['ts'].isoformat()}:{bar['source']}"}}
+    return {"schema_version":"1.0","client_event_id":event,"account_id":"paper-main","environment":"PAPER","source":{"service":"oiis-live","instance":os.getenv("HOSTNAME","oiis-live")},"strategy":{"strategy_id":"OIIS_LIVE","strategy_name":strategy_name,"strategy_family":"OIIS","strategy_version":POLICY_VERSION,"strategy_run_id":run_id or f"live-{item['trade_date']}","signal_id":event,"tags":["equity","live-data","paper","daily-selection",entry_rule.lower()]},"signal":{"occurred_at":bar["ts"].isoformat(),"exchange_timezone":"Asia/Kolkata","direction":direction,"reason_codes":reasons,"features":features},"trade_group":{"client_group_id":event,"asset_class":"EQUITY","expected_leg_count":1,"group_entry_policy":"ATOMIC","group_close_policy":"ALL_LEGS","performance_basis":{"type":"ENTRY_NOTIONAL","amount":str(amount),"currency":"INR"}},"legs":[{"client_leg_id":"equity-1","role":"PRIMARY","position_effect":"OPEN","instrument":{"instrument_id":f"NSE:CASH:{symbol}","instrument_token":item["instrument_token"],"exchange":"NSE","segment":"CASH","symbol":symbol,"underlying":symbol,"lot_size":"1","contract_multiplier":"1","currency":"INR"},"side":"BUY","quantity":{"value":str(quantity),"unit":"SHARES"},"entry_order":{"type":"MARKET","time_in_force":"DAY","price_source":"NEXT_AVAILABLE_BAR_OPEN"}}],"execution_policy":{"mode":"RULES","intraday_square_off":False,"exit_rules":[{"rule_id":"I100","kind":"TARGET_PCT","value":"0.010","action":"FULL_CLOSE","target_lifecycle":"INTRADAY"},{"rule_id":"S300","kind":"TARGET_PCT","value":"0.030","action":"FULL_CLOSE","target_lifecycle":"SWING"}]},"analytics_policy":{"apply_default_ladders":False,"intraday_targets_pct":["0.003","0.004","0.005","0.010"],"swing_targets_pct":["0.010","0.030","0.050"],"horizons_trading_sessions":[5,30],"track_after_execution_close":True,"snapshot_cadence":"EVENTS_AND_EOD"},"cost_profile_id":"india-equity-current","tax_profile_id":"management-profit-tax-35pct","metadata":{"policy_id":POLICY_ID,"one_entry_per_symbol_trade_date":False,"one_entry_per_symbol_trade_date_per_method":True,"operator_override":False if auto else not qualified,"entry_rule":entry_rule,"entry_evidence":entry_evidence or {},"run_id":run_id,"run_slot":run_slot,"quality_score":str(quality_score) if quality_score is not None else None,"quality_threshold":str(threshold) if threshold is not None else None,"sizing_policy":"CAPPED_FNO_LOT_CASH_SHARES","maximum_ticket_inr":str(maximum_ticket),"fno_lot_size":lot_size,"source_bar_id":f"NSE:{item['instrument_token']}:{bar['ts'].isoformat()}:{bar['source']}"}}
 
 
 def required(name: str) -> str:

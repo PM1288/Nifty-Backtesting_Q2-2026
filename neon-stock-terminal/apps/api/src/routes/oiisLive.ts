@@ -99,7 +99,7 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
       universe,
     ] = await runWithConcurrency<unknown>([
       () => prisma.$queryRawUnsafe(
-        `SELECT * FROM oiis_live.v_current_watchlist WHERE active AND ($1::date IS NULL OR trade_date=$1::date) ORDER BY rank NULLS LAST,symbol`,
+        `SELECT * FROM oiis_live.v_current_watchlist WHERE active AND (direction='LONG' OR (source='MANUAL' AND candidate_id IS NULL)) AND ($1::date IS NULL OR trade_date=$1::date) ORDER BY rank NULLS LAST,symbol`,
         tradeDate,
       ),
       () => prisma.$queryRawUnsafe(
@@ -173,7 +173,7 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
           CASE WHEN blocking_gate_count=0 THEN 10 ELSE 0 END
         )::numeric,2) readiness_score
        FROM oiis_live.daily_candidate
-       WHERE run_id=$1::uuid AND NOT selected
+       WHERE run_id=$1::uuid AND NOT selected AND direction='LONG'
        ORDER BY readiness_score DESC,ofactor DESC NULLS LAST,xfactor_snapshot DESC NULLS LAST,symbol
        LIMIT 15`,
         latestRunId,
@@ -190,7 +190,7 @@ export function registerOiisLivePublic(app: Express, prisma: PrismaClient) {
         data_quality,data_permission,data_coverage,setup_id,setup_state,selected,reason_codes,
         feature_values,gate_evidence,universe_flags
        FROM oiis_live.daily_candidate
-       WHERE run_id=$1::uuid AND recommended
+       WHERE run_id=$1::uuid AND recommended AND direction='LONG'
        ORDER BY opportunity_rank NULLS LAST,recommendation_rank NULLS LAST`,
         latestRunId,
       ),

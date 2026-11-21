@@ -7016,3 +7016,9 @@ Canonical branch `remediation/stack-modernization-20261002`, based on `d49b31b`;
   watchlist candidate, candidate-change candidate and OISS source candidate.
   These bound referential checks during deletion; five-second lock timeout and
   thirty-second index setup timeout protect writers. Fixture tests include setup.
+
+## OIIS equity BUY intraday review, 21 November 2026
+
+Across the 21 NIFTY 50 BUY fills through 20 November, five closed on entry day for INR 22,346.76 net. A same-day liquidation sensitivity gave 12/21 positive gross returns using actual same-day exits and the entry-day closing price for the other 16. Diagnostic touches at +0.3%, +0.4%, +0.5%, and +1% were 18, 16, 15, and 4. These observations do not establish a better target after costs.
+
+Policy 4.0 ranks BUY recommendations before the quota, restricts automatic and monitored entries to BUY, and preserves historical paper ledgers. The monitor uses full-session indicator warmup but requires a fresh completed minute after watch activation. One of 14 linked constituent claims had a completed signal before watch creation. Whole cash shares are sized at signal close up to the configured INR 200,000 ticket and one F&O lot. Market fills remain subject to next-bar gaps. The existing +1%/+3% exits continue.

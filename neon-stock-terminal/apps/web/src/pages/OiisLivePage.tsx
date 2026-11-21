@@ -207,7 +207,7 @@ export function OiisLivePage() {
   }, []);
 
   useEffect(() => {
-    void load();
+    void load(tradeDate || undefined);
     const timer = window.setInterval(
       () => void load(tradeDate || undefined),
       30_000,
@@ -1073,7 +1073,7 @@ export function OiisLivePage() {
                     value={tradeDate}
                     onChange={(event) => {
                       setTradeDate(event.target.value);
-                      void load(event.target.value);
+                      setCandidates([]);
                     }}
                   >
                     {(data?.availableDates ?? []).map((row) => {

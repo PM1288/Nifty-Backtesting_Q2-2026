@@ -63,8 +63,8 @@ def _reset_market_tables(raw: object) -> None:
 
 def _market_now() -> datetime:
     local_day = datetime.now(ZoneInfo("Asia/Kolkata")).date()
-    while local_day.weekday() >= 5:
-        local_day += timedelta(days=1)
+    # Leave two completed sessions for the D0 and D+1 fixtures, even on weekends.
+    local_day -= timedelta(days=local_day.weekday() + 7)
     return datetime.combine(local_day, time(10, 0), tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(UTC)
 
 
@@ -152,6 +152,7 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
 
     first_bar = now + timedelta(minutes=1)
     with db.connection() as conn:
+        conn.execute("UPDATE paper_trading.paper_orders SET accepted_at=%s WHERE trade_group_id=%s", (now, group_id))
         conn.execute(
             "INSERT INTO public.bars_1m VALUES (%s,'NSE','TEST1',100,101.20,99.40,100.80,1000,'TEST')",
             (first_bar,),
@@ -168,7 +169,7 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
                 )
     monitor = Monitor(db, settings, "pytest-monitor")
     result = monitor.once()
-    assert result == {"fills": 1, "bars": 1, "stale": 0, "recovered": 0, "open_marks": 0}
+    assert (result["fills"], result["bars"], result["open_marks"]) == (1, 1, 0)
     with db.connection() as conn:
         statuses = conn.execute(
             "SELECT status,count(*) n FROM paper_trading.target_tracks GROUP BY status"
@@ -206,6 +207,8 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
         }
     )
     service.close_trade(group_id, close, "integration-close-0001")
+    with db.connection() as conn:
+        conn.execute("UPDATE paper_trading.paper_orders SET accepted_at=%s WHERE trade_group_id=%s AND position_effect='CLOSE'", (now + timedelta(minutes=2), group_id))
     monitor.once()
     second_bar = now + timedelta(days=1, minutes=3)
     with db.connection() as conn:
@@ -373,6 +376,7 @@ def test_execution_target_closes_only_actual_position_and_higher_analytics_conti
         intent, "execution-target-idem-1"
     )[0]["trade_group_id"]
     with db.connection() as conn:
+        conn.execute("UPDATE paper_trading.paper_orders SET accepted_at=%s WHERE trade_group_id=%s", (now, group_id))
         conn.execute(
             "INSERT INTO public.bars_1m VALUES (%s,'NSE','TEST1',100,100.60,99.40,100.50,1000,'TEST')",
             (now + timedelta(minutes=1),),

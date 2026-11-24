@@ -2458,7 +2458,7 @@ function targetCell(trade: AnyRow, lifecycle: string, value: number) {
     <span
       data-state={state.toLowerCase()}
       title={
-        target.first_hit_at ? `First hit ${time(target.first_hit_at)}` : state
+        target.first_hit_at ? `${target.result_kind === "INFERRED_MONOTONIC" ? "Inferred threshold crossing" : "First hit"} ${time(target.first_hit_at)}` : state
       }
     >
       {state === "HIT" ? "✓" : state === "FAILED" ? "×" : "○"}
@@ -3459,7 +3459,7 @@ function DrawerTargets({ detail }: { detail: AnyRow }) {
             <strong data-state={state.toLowerCase()}>{state}</strong>
             <span>
               {target.first_hit_at
-                ? `First hit ${time(target.first_hit_at)}`
+                ? `${target.result_kind === "INFERRED_MONOTONIC" ? "Inferred threshold crossing" : "First hit"} ${time(target.first_hit_at)}`
                 : "No first-hit evidence yet"}
             </span>
             {profit ? (

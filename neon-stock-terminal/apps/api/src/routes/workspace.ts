@@ -619,7 +619,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                  coalesce((
                    select jsonb_agg(jsonb_build_object(
                      'lifecycle',d.lifecycle,'target_pct',d.target_pct::text,'target_price',t.target_price::text,
-                     'status',t.status,'first_hit_at',t.first_hit_at,'gross_pnl',h.gross_pnl::text,
+                     'status',t.status,'result_kind',t.result_kind,'observed_hit_at',h.hit_at,'first_hit_at',t.first_hit_at,'gross_pnl',h.gross_pnl::text,
                      'estimated_costs',h.estimated_costs::text,'tax_provision',h.tax_provision::text,'after_tax_pnl',h.after_tax_pnl::text
                    ) order by d.lifecycle,d.target_pct)
                    from paper_trading.target_tracks t
@@ -963,7 +963,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
       const [targets, horizons, events, bars, comments] = await Promise.all([
         prisma.$queryRawUnsafe<Row[]>(`
           select d.lifecycle,d.target_code,d.target_pct::text,d.execution_action,
-                 t.status,t.target_price::text,t.activated_at,t.first_hit_at,t.elapsed_bars::text,t.elapsed_minutes::text,
+                 t.status,t.result_kind,t.target_price::text,t.activated_at,t.first_hit_at,t.elapsed_bars::text,t.elapsed_minutes::text,
                  h.hit_at,h.source_price::text,h.assumed_exit_price::text,h.sequence_ambiguous,h.calculation_version,h.source_bar_id::text
           from paper_trading.target_tracks t
           join paper_trading.target_definitions d using(target_definition_id)

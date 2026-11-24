@@ -440,7 +440,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     let checking = false;
     let active = true;
     const verify = async () => {
-      if (checking || document.visibilityState === "hidden" || !navigator.onLine) return;
+      if (checking || document.visibilityState === "hidden") return;
       checking = true;
       try {
         const session = await fetchSessionState();

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 /** Keep the current route and form state until the user reloads fresh server data. */
 export function ConnectionNotice() {
   const [status, setStatus] = useState<"current" | "offline" | "restored">(
-    navigator.onLine ? "current" : "offline",
+    "current",
   );
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {

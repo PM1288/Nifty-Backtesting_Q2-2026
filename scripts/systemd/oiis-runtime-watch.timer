@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch OIIS worker, paper API, dashboard and database health
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=1min
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

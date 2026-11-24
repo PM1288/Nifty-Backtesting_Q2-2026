@@ -1,0 +1,14 @@
+[Unit]
+Description=Check OIIS paper runtime independently of the trading worker
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/libexec/oiis_runtime_watch.py
+StateDirectory=oiis-runtime-watch
+StateDirectoryMode=0700
+LoadCredential=webhook:/etc/oiis-runtime-watch/webhook
+TimeoutStartSec=40
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes

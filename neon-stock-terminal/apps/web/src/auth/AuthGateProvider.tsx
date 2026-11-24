@@ -436,6 +436,36 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user?.uid) return;
+    const uid = user.uid;
+    let checking = false;
+    let active = true;
+    const verify = async () => {
+      if (checking || document.visibilityState === "hidden" || !navigator.onLine) return;
+      checking = true;
+      try {
+        const session = await fetchSessionState();
+        if (active && sessionUserRef.current?.uid === uid && (!session.authenticated || session.user?.uid !== uid)) {
+          window.location.reload();
+        }
+      } catch { /* Network errors do not establish expiry. */ }
+      finally { checking = false; }
+    };
+    const onDenied = (event: Event) => {
+      if ((event as CustomEvent).detail?.status === 401) void verify();
+    };
+    document.addEventListener("visibilitychange", verify);
+    window.addEventListener("online", verify);
+    window.addEventListener("n50:auth-required", onDenied);
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", verify);
+      window.removeEventListener("online", verify);
+      window.removeEventListener("n50:auth-required", onDenied);
+    };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
     void flushQueuedActions(user.uid);
   }, [user?.uid]);
 

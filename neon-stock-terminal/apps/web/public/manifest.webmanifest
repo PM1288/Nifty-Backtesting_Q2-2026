@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Nifty 50 Market Intelligence",
+  "short_name": "N50",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef3f9",
+  "theme_color": "#10233f",
+  "icons": [
+    { "src": "app-icons/n50-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "app-icons/n50-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "app-icons/n50-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -360,3 +360,17 @@
 
 .skipLink { position: fixed; top: 8px; left: 8px; z-index: 10000; padding: 10px 16px; background: var(--color-surface, white); color: var(--color-text, #10233f); border: 2px solid currentColor; border-radius: 6px; transform: translateY(-180%); }
 .skipLink:focus { transform: translateY(0); }
+
+@media (pointer: coarse), (display-mode: standalone) {
+  .header {
+    padding-top: env(safe-area-inset-top);
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  }
+  .shell, .shell[data-ui-compact-v5="true"] {
+    --app-sticky-content-top: calc(var(--app-header-height) + env(safe-area-inset-top));
+  }
+  .contentColumn {
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+    box-sizing: border-box;
+  }
+}

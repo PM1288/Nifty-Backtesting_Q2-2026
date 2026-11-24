@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { ConnectionNotice } from "./components/chrome/ConnectionNotice";
 import { AuthGateProvider } from "./auth/AuthGateProvider";
 import { LocaleProvider } from "./i18n/LocaleProvider";
 import { analytics } from "./analytics";
@@ -27,6 +28,10 @@ if (typeof window !== "undefined") {
   applyFontMode(readFontMode());
   analytics.init();
   startAppVersionGuard();
+  if (import.meta.env.PROD && window.isSecureContext && "serviceWorker" in navigator) {
+    void navigator.serviceWorker.register(import.meta.env.BASE_URL + "sw.js", {updateViaCache: "none"})
+      .catch(() => { /* The browser application also runs without service workers. */ });
+  }
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -36,6 +41,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <AuthGateProvider>
           <LocaleProvider>
             <App />
+            <ConnectionNotice />
           </LocaleProvider>
         </AuthGateProvider>
       </BrowserRouter>

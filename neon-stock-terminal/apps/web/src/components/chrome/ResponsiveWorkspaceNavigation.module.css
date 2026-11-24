@@ -314,3 +314,13 @@
   .primaryLink svg:last-child,
   .mobileGroup > button svg { transition: none; }
 }
+
+@media (max-width: 1519px) and (pointer: coarse) {
+  .mobileSheet {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+    max-height: 100dvh;
+    overscroll-behavior: contain;
+  }
+  .mobileMenuTrigger { min-height: 44px; }
+}

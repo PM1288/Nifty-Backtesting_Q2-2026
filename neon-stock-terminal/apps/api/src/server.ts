@@ -245,6 +245,11 @@ async function main() {
     next();
   });
 
+  app.use(["/auth", "/v1", "/api"], (_req, res, next) => {
+    res.setHeader("Cache-Control", "private, no-store");
+    next();
+  });
+
   const exportApiBaseUrl = (process.env.EXPORT_API_BASE_URL ?? "http://nse-export-api:8091").replace(/\/+$/, "");
   const intradayApiBaseUrl = (process.env.INTRADAY_API_BASE_URL ?? "http://nse-intraday-api:8092").replace(/\/+$/, "");
   const matomoProxyBaseUrl = (process.env.MATOMO_PROXY_BASE_URL ?? "http://matomo:80").replace(/\/+$/, "");
@@ -369,7 +374,7 @@ async function main() {
       });
       app.use(express.static(clientDist, {
         setHeaders: (res, filePath) => {
-          if (path.basename(filePath) === "index.html") {
+          if (["index.html", "sw.js", "manifest.webmanifest", "install.html"].includes(path.basename(filePath))) {
             res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
           } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
             res.setHeader("Cache-Control", "public, max-age=31536000, immutable");

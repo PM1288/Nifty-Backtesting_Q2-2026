@@ -96,6 +96,23 @@ export function AuthGateModal() {
     trackAction
   } = useAuthGate();
   const modalRef = useModalFocus(gateVisible, canDismissGate ? dismissGate : undefined);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const overlay = modalRef.current;
+    if (!gateVisible || !viewport || !overlay || !matchMedia("(pointer: coarse)").matches) return;
+    const resize = () => {
+      overlay.style.height = viewport.height + "px";
+      overlay.style.top = viewport.offsetTop + "px";
+    };
+    resize();
+    viewport.addEventListener("resize", resize);
+    viewport.addEventListener("scroll", resize);
+    return () => {
+      viewport.removeEventListener("resize", resize);
+      viewport.removeEventListener("scroll", resize);
+    };
+  }, [gateVisible, modalRef]);
+
   const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");

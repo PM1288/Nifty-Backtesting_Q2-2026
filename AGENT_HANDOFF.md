@@ -7026,3 +7026,7 @@ Policy 4.0 ranks BUY recommendations before the quota, restricts automatic and m
 ## OIIS paper runtime, 24 November 2026
 
 The November 23 paper ledger contained three BUY fills. The momentum branch raised 703 timestamp serialization errors and a rolled-back local transaction obscured two accepted paper acknowledgements. The exchange calendar marked November 24 closed. The worker now persists claims before HTTP submission, reuses original retry payloads, recovers confirmed paper acknowledgements by stable IDs, serializes candle timestamps on the wire, and checks the exchange calendar before scans and monitoring. Scan completion uses wall-clock time. Heartbeats report monitor latency, stale feeds and market windows. Docker health checks a fresh worker heartbeat and an active-session monitor heartbeat. Polling batches completed-slot and recent evaluation lookups.
+
+## 2026-11-24 · Installable N50 workspace
+
+The shared dashboard includes a scoped manifest, Apple icons, mobile installation help and a network-only navigation worker with a data-free offline page. The existing release guard keeps active workflows open until the user applies an update. Run tools/playwright/pwa-regression.mjs for mobile and offline checks.

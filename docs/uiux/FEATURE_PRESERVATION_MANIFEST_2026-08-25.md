@@ -1114,3 +1114,7 @@ changed. Evidence: `docs/trading-analytics/SCALPER_V2_AXIS_IV_HEADER_REPAIR_2026
 
 2026-10-02 final verification: Paper trade inspector selection is owned by the URL; closing removes tradeId and cannot be reversed by a background ledger refresh. The workbench regression now asserts the drawer disappears and stays closed after route reload.
 2026-10-02 responsive follow-up: compact Paper headers stack at tablet/mobile widths; header title/counts/actions remain visible without overlap, and relative mobile subnav/context offsets are reset. Browser geometry assertions protect the shared header.
+
+## 2026-11-24 · Installable N50 workspace
+
+The shared dashboard includes a scoped manifest, Apple icons, mobile installation help and a network-only navigation worker with a data-free offline page. The existing release guard keeps active workflows open until the user applies an update. Run tools/playwright/pwa-regression.mjs for mobile and offline checks.

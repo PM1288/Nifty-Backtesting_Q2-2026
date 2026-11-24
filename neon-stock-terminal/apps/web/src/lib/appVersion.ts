@@ -91,21 +91,30 @@ export function startAppVersionGuard(options: { pollMs?: number } = {}): () => v
   const check = async () => {
     if (checking || reloadQueued || document.visibilityState === "hidden") return;
     checking = true;
+    const probe = new AbortController();
+    const stop = () => probe.abort();
+    controller.signal.addEventListener("abort", stop, { once: true });
+    const deadline = window.setTimeout(stop, 12000);
     try {
       const response = await fetch(`${endpoint}?t=${Date.now()}`, {
         cache: "no-store",
         credentials: "same-origin",
         headers: { "Cache-Control": "no-cache" },
-        signal: controller.signal,
+        signal: probe.signal,
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        if (response.status >= 500) window.dispatchEvent(new Event("n50:service-unavailable"));
+        return;
+      }
       const remote = remoteClientBuildVersion(await response.json() as AppVersionPayload);
+      if (remote) window.dispatchEvent(new Event("n50:service-reachable"));
       if (remote === current) sessionStorage.removeItem(RELOAD_TARGET_KEY);
       else if (remote) announceVersion(remote);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      // A version check must never interrupt the trading UI during a network outage.
+    } catch {
+      if (!controller.signal.aborted) window.dispatchEvent(new Event("n50:service-unavailable"));
     } finally {
+      window.clearTimeout(deadline);
+      controller.signal.removeEventListener("abort", stop);
       checking = false;
     }
   };

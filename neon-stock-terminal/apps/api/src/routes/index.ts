@@ -42,6 +42,7 @@ import { registerCryptoMarket } from "./cryptoMarket";
 import { registerTradingAnalytics } from "./tradingAnalytics";
 import { registerNiftyContext } from "./niftyContext";
 import { registerMobileNotifications } from "./mobileNotifications";
+import { registerBrowserPaperPush } from "../services/browserPaperPush";
 import { registerStockProfiles } from "./stockProfiles";
 import { registerTrendlyneSummary } from "./trendlyneSummary";
 import { registerOissV1 } from "./oissV1";
@@ -104,6 +105,7 @@ export function registerRoutes(
   registerDataHealth(app, prisma);
   registerPredictor(app, prisma);
   registerMobileNotifications(app, prisma);
+  registerBrowserPaperPush(app, prisma, authRuntime);
   registerStockProfiles(app, prisma);
   registerTrendlyneSummary(app, prisma);
   registerOissV1(app, prisma);

@@ -16,13 +16,17 @@ export function ScalperV2Freshness({ sessions, observations, interval, historica
     if (status.state !== 'stale') { sent.current = ''; return; }
     const key = `${symbol}:${status.message}`;
     if (sent.current === key || permission !== 'granted') return;
-    try {
-      new Notification(`${symbol} · Scalper data alert`, { body: status.message, tag: `scalper-data-${symbol}` });
-      sent.current = key;
-    } catch { /* Persistent in-page alert remains available when browser notifications are unsupported. */ }
+    sent.current = key;
+    const title = `${symbol} · Scalper data alert`;
+    const options = { body: status.message, tag: `scalper-data-${symbol}` };
+    void (async () => {
+      const worker = "serviceWorker" in navigator && await navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL);
+      if (worker && worker.active) await worker.showNotification(title, options);
+      else new Notification(title, options);
+    })().catch(() => { if (sent.current === key) sent.current = ""; });
   }, [symbol, status.state, status.message, permission]);
   return <div data-testid="v2-data-freshness" data-state={status.state} role={status.state === 'stale' || status.state === 'unknown' ? 'alert' : 'status'} title={status.message} style={{ display: compact ? 'inline-flex' : 'block', alignItems: 'center', gap: compact ? 4 : undefined, maxWidth: compact ? 210 : undefined, overflow: compact ? 'hidden' : undefined, whiteSpace: compact ? 'nowrap' : undefined, textOverflow: compact ? 'ellipsis' : undefined, padding: compact ? '2px 6px' : '6px 10px', borderRadius: compact ? 5 : undefined, fontSize: compact ? 10 : undefined, background: status.state === 'stale' ? '#fff0f2' : '#f1f5f9', color: status.state === 'stale' ? '#b42336' : '#475569' }}>
-    <span style={{ overflow: compact ? 'hidden' : undefined, textOverflow: compact ? 'ellipsis' : undefined }}>{status.message}</span>{!historical && permission === 'default' && <button style={{ marginLeft: compact ? 2 : 12, minHeight: compact ? 22 : undefined, padding: compact ? '0 4px' : undefined }} onClick={() => void Notification.requestPermission().then(setPermission)}>Alerts</button>}
+    <span style={{ overflow: compact ? 'hidden' : undefined, textOverflow: compact ? 'ellipsis' : undefined }}>{status.message}</span>{!historical && permission === 'default' && <button style={{ marginLeft: compact ? 2 : 12, minHeight: compact ? 22 : undefined, padding: compact ? '0 4px' : undefined }} onClick={() => void Notification.requestPermission().then(setPermission).catch(() => setPermission(Notification.permission))}>Alerts</button>}
     {!historical && permission === 'denied' && <span> · Browser alerts blocked; data alerts remain visible here.</span>}
   </div>;
 }

@@ -124,6 +124,10 @@ export async function destroyServerSession() {
     res = await doLogout();
   }
 
+  if (res.ok && "serviceWorker" in navigator && "PushManager" in window) {
+    void navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL)
+      .then(reg => reg?.pushManager.getSubscription()).then(sub => sub?.unsubscribe()).catch(() => {});
+  }
   setCsrfToken(null);
   dispatchSessionChanged();
 

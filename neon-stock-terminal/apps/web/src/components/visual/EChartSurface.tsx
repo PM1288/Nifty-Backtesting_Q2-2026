@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts/core";
 import { BarChart, CandlestickChart, HeatmapChart, LineChart, ScatterChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
@@ -92,8 +92,7 @@ function translateLegendData(data: unknown, translate: (value: string) => string
   }) as Array<string | Record<string, unknown>>;
 }
 
-function normalizeLegend(legend: unknown, translate: (value: string) => string, fontFamily: string, appearance: ChartAppearance) {
-  const compact = isCompactViewport();
+function normalizeLegend(legend: unknown, translate: (value: string) => string, fontFamily: string, appearance: ChartAppearance, compact: boolean) {
   const palette = chartPalette(appearance);
   return asArray<Record<string, unknown>>(legend as Record<string, unknown> | Record<string, unknown>[]).map((item) => {
     const translatedData = item.data ? translateLegendData(item.data, translate) : undefined;
@@ -109,7 +108,7 @@ function normalizeLegend(legend: unknown, translate: (value: string) => string, 
       textStyle: {
         color: palette.text,
         fontFamily,
-        fontSize: compact ? 10 : 11,
+        fontSize: 11,
         ...(item.textStyle as Record<string, unknown> | undefined)
       },
       ...item
@@ -128,11 +127,11 @@ function normalizeGrid(
   grid: unknown,
   legends: Record<string, unknown>[],
   xAxis: unknown,
-  yAxis: unknown
+  yAxis: unknown,
+  compact: boolean
 ) {
   const hasTopLegend = legends.some((item) => item.bottom == null);
   const hasBottomLegend = legends.some((item) => item.bottom != null);
-  const compact = isCompactViewport();
   const hasXAxisName = hasAxisName(xAxis);
   const hasYAxisName = hasAxisName(yAxis);
   return asArray<Record<string, unknown>>(grid as Record<string, unknown> | Record<string, unknown>[]).map((item) => ({
@@ -147,8 +146,7 @@ function normalizeGrid(
   }));
 }
 
-function normalizeVisualMap(visualMap: unknown, translate: (value: string) => string, fontFamily: string, appearance: ChartAppearance) {
-  const compact = isCompactViewport();
+function normalizeVisualMap(visualMap: unknown, translate: (value: string) => string, fontFamily: string, appearance: ChartAppearance, compact: boolean) {
   const palette = chartPalette(appearance);
   return asArray<Record<string, unknown>>(visualMap as Record<string, unknown> | Record<string, unknown>[]).map((item) => ({
     ...item,
@@ -194,14 +192,14 @@ function normalizeAxis(
   isValueAxis: boolean,
   translate: (value: string) => string,
   fontFamily: string,
-  appearance: ChartAppearance
+  appearance: ChartAppearance,
+  compact: boolean
 ) {
-  const compact = isCompactViewport();
   const palette = chartPalette(appearance);
   const baseNameTextStyle = {
     color: palette.text,
     fontFamily,
-    fontSize: compact ? 10 : 11,
+    fontSize: 11,
     fontWeight: 600,
     align: isValueAxis ? "left" : "center",
     verticalAlign: isValueAxis ? "bottom" : "middle"
@@ -212,7 +210,7 @@ function normalizeAxis(
     axisLabel: {
       color: palette.muted,
       fontFamily,
-      fontSize: compact ? 10 : 11,
+      fontSize: 11,
       hideOverlap: true,
       margin: compact ? 10 : 12,
       ...(item.axisLabel as Record<string, unknown> | undefined),
@@ -375,10 +373,11 @@ function normalizeOption(
   fontFamily: string,
   appearance: ChartAppearance,
   axisExtentPolicy: "normalized" | "native",
+  compact: boolean,
 ): EChartsOption {
   const palette = chartPalette(appearance);
   const legends = option.legend != null
-    ? normalizeLegend(option.legend, translate, fontFamily, appearance)
+    ? normalizeLegend(option.legend, translate, fontFamily, appearance, compact)
     : [];
   const hasVisualMap = option.visualMap != null;
   let nextOption: EChartsOption = {
@@ -392,6 +391,7 @@ function normalizeOption(
     tooltip: option.tooltip
       ? ({
         ...option.tooltip,
+        ...(compact ? { confine: true } : {}),
         formatter: normalizeChartTooltipFormatter((option.tooltip as { formatter?: unknown }).formatter),
         valueFormatter: normalizeChartTooltipValueFormatter((option.tooltip as { valueFormatter?: unknown }).valueFormatter),
         backgroundColor: palette.tooltipBackground,
@@ -436,12 +436,12 @@ function normalizeOption(
   }
 
   if (option.grid != null) {
-    const grid = normalizeGrid(option.grid, legends, option.xAxis, option.yAxis);
+    const grid = normalizeGrid(option.grid, legends, option.xAxis, option.yAxis, compact);
     nextOption.grid = (Array.isArray(option.grid) ? grid : grid[0]) as EChartsOption["grid"];
   }
 
   if (option.visualMap != null) {
-    const visualMap = normalizeVisualMap(option.visualMap, translate, fontFamily, appearance);
+    const visualMap = normalizeVisualMap(option.visualMap, translate, fontFamily, appearance, compact);
     nextOption.visualMap = (Array.isArray(option.visualMap) ? visualMap : visualMap[0]) as EChartsOption["visualMap"];
   }
 
@@ -451,12 +451,12 @@ function normalizeOption(
   }
 
   if (option.xAxis != null) {
-    const xAxis = normalizeAxis(option.xAxis, false, translate, fontFamily, appearance);
+    const xAxis = normalizeAxis(option.xAxis, false, translate, fontFamily, appearance, compact);
     nextOption.xAxis = (Array.isArray(option.xAxis) ? xAxis : xAxis[0]) as EChartsOption["xAxis"];
   }
 
   if (option.yAxis != null) {
-    const yAxis = normalizeAxis(option.yAxis, true, translate, fontFamily, appearance);
+    const yAxis = normalizeAxis(option.yAxis, true, translate, fontFamily, appearance, compact);
     nextOption.yAxis = (Array.isArray(option.yAxis) ? yAxis : yAxis[0]) as EChartsOption["yAxis"];
   }
 
@@ -534,15 +534,17 @@ export function EChartSurface({
         : "\"Inter Variable\", \"Inter\", sans-serif",
     [digits, fontMode, language]
   );
+  const [compact, setCompact] = useState(isCompactViewport);
   const normalizedOption = useMemo(
-    () => normalizeOption(option, tr, fontFamily, appearance, axisExtentPolicy),
-    [appearance, axisExtentPolicy, fontFamily, option, tr]
+    () => normalizeOption(option, tr, fontFamily, appearance, axisExtentPolicy, compact),
+    [appearance, axisExtentPolicy, compact, fontFamily, option, tr]
   );
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
 
+    if (host.clientWidth > 0) setCompact(host.clientWidth <= 480);
     const chart = echarts.init(host, undefined, { renderer: "canvas" });
     chartRef.current = chart;
     let timeHoverFrame = 0;
@@ -606,6 +608,7 @@ export function EChartSurface({
         const nextDpr = window.devicePixelRatio;
         if (nextWidth <= 0 || nextHeight <= 0) return;
         if (width === nextWidth && height === nextHeight && dpr === nextDpr) return;
+        setCompact(nextWidth <= 480);
         width = nextWidth; height = nextHeight; dpr = nextDpr;
         chart.resize({ width, height, silent: true });
       });

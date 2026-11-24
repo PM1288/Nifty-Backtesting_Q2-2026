@@ -15,3 +15,22 @@ self.addEventListener("fetch", event => {
     {status: 503, headers: {"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","Referrer-Policy":"no-referrer","Content-Security-Policy":"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"}}
   )));
 });
+
+self.addEventListener("push", event => {
+  event.waitUntil(self.registration.showNotification("N50 · Paper alerts", {
+    body: "Open N50 to check your paper alerts.",
+    icon: new URL("app-icons/n50-192.png", self.registration.scope).href,
+    tag: "n50-paper-activity", data: {workspace:"paper"}
+  }));
+});
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  if (event.notification.data?.workspace !== "paper") return;
+  const target = new URL("paper-trading?source=paper-alerts", self.registration.scope).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({type:"window"});
+    const existing = windows.find(client => client.url === target);
+    if (existing) return existing.focus();
+    return self.clients.openWindow(target);
+  })());
+});

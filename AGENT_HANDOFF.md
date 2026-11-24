@@ -7030,3 +7030,7 @@ The November 23 paper ledger contained three BUY fills. The momentum branch rais
 ## 2026-11-24 · Installable N50 workspace
 
 The shared dashboard includes a scoped manifest, Apple icons, mobile installation help and a network-only navigation worker with a data-free offline page. The existing release guard keeps active workflows open until the user applies an update. Run tools/playwright/pwa-regression.mjs for mobile and offline checks.
+
+## 2026-11-24 · Browser paper alerts and mobile charts
+
+Apply db/sql/067_browser_paper_alerts.sql before the dashboard release. Paper alerts provides per-device enable, test and disable controls. The dispatcher uses the existing paper event outbox and sends generic lock-screen notifications for recent entries and target hits. Monitor browser_paper_push_delivery and browser_paper_push_poll_failed in the dashboard logs. Mobile chart acceptance covers crypto, strike charts, touch controls and rotation in tools/playwright/mobile-paper-charts.mjs.

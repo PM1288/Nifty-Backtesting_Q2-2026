@@ -143,3 +143,12 @@
   .launcher { transition: none; }
   .panel { animation: none; }
 }
+
+.deviceAlerts { padding: 4px 12px; }
+.deviceAlerts button { min-height: 44px; background: transparent; border: 0; color: #195fbd; font: inherit; cursor: pointer; }
+.deviceAlerts p { margin: 0 0 6px; font-size: 13px; }
+@media (pointer: coarse) {
+  .panel { display: flex; flex-direction: column; max-height: calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .list { min-height: 0; overflow: auto; }
+  .headerActions button { width: 44px; height: 44px; }
+}

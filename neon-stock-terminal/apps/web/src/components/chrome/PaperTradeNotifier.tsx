@@ -4,6 +4,7 @@ import { BellRing, CheckCircle2, Crosshair, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { fetchPaperTradeNotifications } from "../../lib/api";
 import { paperTradeSpeechText, unseenNotificationIds, validPaperTradeNotifications } from "./paperTradeNotifications";
+import { BrowserPaperAlerts } from "./BrowserPaperAlerts";
 import styles from "./PaperTradeNotifier.module.css";
 
 const AUTO_CLOSE_MS = 9_000;
@@ -172,6 +173,7 @@ export function PaperTradeNotifier({ enabled, audible }: { enabled: boolean; aud
               </Link>
             ))}
           </div>
+          <div className={styles.deviceAlerts} onFocus={() => { autoOpenedRef.current = false; }}><BrowserPaperAlerts /></div>
           <footer><Link to="/paper-trading?source=paper-alerts" onClick={() => setOpen(false)}>Open Paper Trading evidence</Link><span>{query.data?.asOf ? `Checked ${formatTimestamp(query.data.asOf)} IST` : "Durable event feed"}</span></footer>
         </section>
       ) : null}

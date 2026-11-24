@@ -236,8 +236,8 @@ def price_momentum_entry_evaluation(
         "previous_daily_close": float(previous_daily_close),
         "current_hour_close": current_hour["close"],
         "previous_hour_close": previous_hour["close"],
-        "current_hour_closed_at": current_hour["closed_at"],
+        "current_hour_closed_at": current_hour["closed_at"].isoformat(),
         "current_15m_close": current_fifteen["close"],
         "previous_15m_close": previous_fifteen["close"],
-        "current_15m_closed_at": current_fifteen["closed_at"],
+        "current_15m_closed_at": current_fifteen["closed_at"].isoformat(),
     }

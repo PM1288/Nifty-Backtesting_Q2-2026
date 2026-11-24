@@ -5,15 +5,17 @@ import hashlib
 import json
 import logging
 import os
-import sys
 import time
 import uuid
-from datetime import UTC, date, datetime, time as wall_time, timedelta
+from datetime import UTC, date, datetime, timedelta
+from datetime import time as wall_time
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
+import psycopg
 import httpx
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
@@ -49,7 +51,9 @@ class Runtime:
         self.database_url = required("DATABASE_URL")
         self.paper_api_url = os.getenv("PAPER_API_URL", "http://paper-api:8088").rstrip("/")
         self.paper_token = os.getenv("PAPER_API_SERVICE_TOKEN") or required("API_SERVICE_TOKENS").split(",")[0]
-        self.error_webhook = os.getenv("OIIS_ERROR_WEBHOOK_URL", "")
+        self.error_webhook = validate_webhook_url(os.getenv("OIIS_ERROR_WEBHOOK_URL", ""))
+        if not self.error_webhook:
+            LOG.warning("OIIS error webhook is not configured; errors will remain in the database outbox")
         self.poll_seconds = max(2, int(os.getenv("OIIS_POLL_SECONDS", "10")))
         self.policy_path = Path(os.getenv("OIIS_POLICY_PATH", "/app/config/policy.json"))
         self.policy = json.loads(self.policy_path.read_text())
@@ -103,21 +107,29 @@ class Runtime:
             return 0
         delivered=0
         with self.pool.connection() as conn:
+            # A short lease makes claims recoverable after a worker exits mid-send.
+            conn.execute("""UPDATE oiis_live.error_outbox SET status='PENDING'
+              WHERE status='PROCESSING' AND available_at<=now()""")
             rows=conn.execute("""SELECT * FROM oiis_live.error_outbox WHERE status='PENDING' AND available_at<=now()
               ORDER BY created_at LIMIT 20 FOR UPDATE SKIP LOCKED""").fetchall()
             for row in rows:
-                conn.execute("UPDATE oiis_live.error_outbox SET status='PROCESSING',attempts=attempts+1 WHERE error_id=%s",(row["error_id"],))
-                detail={"service":"oiis-live","severity":row["severity"],"error_class":row["error_class"],"message":row["message"],"context":row["context"],"occurred_at":row["created_at"].isoformat(),"environment":"PAPER"}
-                # The configured endpoint is Mattermost-compatible and requires
-                # a top-level text field; props preserve structured evidence.
-                payload={"text":f"OIIS LIVE PAPER {row['severity']}: {row['error_class']} - {row['message']}","props":{"oiis_error":detail}}
-                try:
-                    response=httpx.post(self.error_webhook,json=payload,timeout=10)
-                    response.raise_for_status()
-                    conn.execute("UPDATE oiis_live.error_outbox SET status='DELIVERED',delivered_at=now(),last_error=NULL WHERE error_id=%s",(row["error_id"],)); delivered+=1
-                except Exception as exc:
-                    dead=int(row["attempts"])+1>=8
-                    conn.execute("UPDATE oiis_live.error_outbox SET status=%s,last_error=%s,available_at=now()+make_interval(secs=>%s) WHERE error_id=%s",("DEAD" if dead else "PENDING",str(exc)[:1000],min(3600,30*2**int(row["attempts"])),row["error_id"]))
+                conn.execute("""UPDATE oiis_live.error_outbox SET status='PROCESSING',attempts=attempts+1,
+                  available_at=now()+interval '5 minutes' WHERE error_id=%s""",(row["error_id"],))
+        # Network I/O is outside the claim transaction so slow endpoints cannot
+        # hold database row locks or a pooled connection.
+        for row in rows:
+            detail={"service":"oiis-live","severity":row["severity"],"error_class":row["error_class"],"message":row["message"],"context":row["context"],"occurred_at":row["created_at"].isoformat(),"environment":"PAPER"}
+            payload={"text":f"OIIS LIVE PAPER {row['severity']}: {row['error_class']} - {row['message']}","props":{"oiis_error":detail}}
+            try:
+                response=httpx.post(self.error_webhook,json=payload,timeout=10,follow_redirects=False)
+                response.raise_for_status()
+                with self.pool.connection() as conn:
+                    conn.execute("UPDATE oiis_live.error_outbox SET status='DELIVERED',delivered_at=now(),last_error=NULL WHERE error_id=%s AND status='PROCESSING'",(row["error_id"],))
+                delivered+=1
+            except Exception as exc:
+                dead=int(row["attempts"])+1>=8
+                with self.pool.connection() as conn:
+                    conn.execute("UPDATE oiis_live.error_outbox SET status=%s,last_error=%s,available_at=now()+make_interval(secs=>%s) WHERE error_id=%s AND status='PROCESSING'",("DEAD" if dead else "PENDING",str(exc)[:1000],min(3600,30*2**int(row["attempts"])),row["error_id"]))
         return delivered
 
     def run_selection(
@@ -131,13 +143,16 @@ class Runtime:
         if trade_date is None or trade_date == today_ist:
             self.expire_prior_watchlists(today_ist)
         with self.pool.connection() as conn:
-            universe_counts = refresh_universe(conn, self.universe_mode)
+            started = time.monotonic()
             if trade_date is None and signal_date is None:
                 row=conn.execute("""SELECT greatest(
                   coalesce((SELECT max(trade_date) FROM nse.fact_eod_prices),date '1900-01-01'),
                   coalesce((SELECT max(trade_date) FROM strategy_eval.stock_daily_regime),date '1900-01-01')) signal_date""").fetchone()
                 signal_date=row["signal_date"]
             trade_date=trade_date or next_session(conn,signal_date)
+            if not is_trading_session(conn, trade_date):
+                return {"status":"MARKET_CLOSED","trade_date":str(trade_date)}
+            universe_counts = refresh_universe(conn, self.universe_mode)
             run_slot = run_slot or f"MANUAL_{datetime.now(IST).strftime('%H%M%S')}"
             execution_timestamp = datetime.now(IST)
             decision_as_of = resolve_decision_as_of(trade_date,run_slot,execution_timestamp,decision_as_of)
@@ -202,8 +217,11 @@ class Runtime:
             self.record_run_changes(conn,run["run_id"],previous["run_id"] if previous else None,trade_date,auto_threshold)
             auto_paper=self.auto_paper_top_candidate(conn,run["run_id"],trade_date,run_slot,decision_as_of,execution_timestamp,auto_threshold)
             digest=result_hash(rows)
-            conn.execute("""UPDATE oiis_live.selection_run SET status='COMPLETED',requested_symbols=%s,evaluated_symbols=%s,selected_symbols=%s,qualified_symbols=%s,completed_at=now(),result_hash=%s WHERE run_id=%s""",(len(rows),len(rows),selected,qualified,digest,run["run_id"]))
+            conn.execute("""UPDATE oiis_live.selection_run SET status='COMPLETED',requested_symbols=%s,evaluated_symbols=%s,selected_symbols=%s,qualified_symbols=%s,completed_at=clock_timestamp(),result_hash=%s WHERE run_id=%s""",(len(rows),len(rows),selected,qualified,digest,run["run_id"]))
             result={"run_id":str(run["run_id"]),"run_slot":run_slot,"signal_date":str(signal_date),"trade_date":str(trade_date),"decision_as_of":decision_as_of.isoformat(),"execution_timestamp":execution_timestamp.isoformat(),"requested_universe":self.universe_mode,"universe":universe_counts,"evaluated":len(rows),"selected":selected,"recommended":sum(int(item["recommended"]) for item in rows),"qualified":qualified,"auto_paper":auto_paper,"result_hash":digest}
+            result["duration_ms"] = round((time.monotonic()-started)*1000)
+            LOG.info("selection run=%s slot=%s evaluated=%s selected=%s duration_ms=%s",
+                     run["run_id"], run_slot, len(rows), selected, result["duration_ms"])
             self.heartbeat("oiis-live-selector","OK",result)
             return result
 
@@ -273,9 +291,13 @@ class Runtime:
 
     def monitor_once(self, trade_date: date | None = None, submit: bool = True) -> dict[str, Any]:
         trade_date=trade_date or datetime.now(IST).date()
-        result={"watchlist":0,"evaluated":0,"eligible":0,"submitted":0,
+        started = time.monotonic()
+        stale_feeds = []
+        result={"watchlist":0,"evaluated":0,"eligible":0,"submitted":0,"failed":0,
                 "method_submitted":{method:0 for method in ENTRY_METHODS}}
         with self.pool.connection() as conn:
+            if not is_trading_session(conn,trade_date):
+                return {**result, "status":"MARKET_CLOSED"}
             rows=conn.execute("""SELECT * FROM oiis_live.v_current_watchlist WHERE trade_date=%s AND active AND entry_enabled
               AND (direction='LONG' OR (source='MANUAL' AND candidate_id IS NULL))
               AND instrument_token IS NOT NULL ORDER BY rank NULLS LAST,symbol""",(trade_date,)).fetchall()
@@ -291,6 +313,9 @@ class Runtime:
                 bars=conn.execute("""SELECT ts,open,high,low,close,volume,source FROM public.bars_1m
                   WHERE exchange='NSE' AND symbol_token=%s AND ts>=%s AND ts<%s
                   ORDER BY ts""",(item["instrument_token"],session_open,session_end)).fetchall()
+                if datetime.now(IST) >= session_open+timedelta(minutes=15) and (
+                    not bars or datetime.now(IST)-bars[-1]["ts"] > timedelta(minutes=10)):
+                    stale_feeds.append(item["symbol"])
                 if len(bars)<15:
                     continue
                 previous_daily=conn.execute("""SELECT close_price FROM nse.fact_eod_prices
@@ -303,16 +328,17 @@ class Runtime:
                 now = datetime.now(IST)
                 enabled_at = max(item["created_at"], item["updated_at"])
                 max_age = timedelta(minutes=self.policy["auto_paper_entry"]["maximum_signal_age_minutes"])
+                seen = {(r["source_bar_id"],r["entry_method"]) for r in conn.execute(
+                    """SELECT source_bar_id,entry_method FROM oiis_live.intraday_evaluation
+                       WHERE watchlist_item_id=%s AND bar_ts >= %s""",
+                    (item["watchlist_item_id"],now-max_age-timedelta(minutes=1))).fetchall()}
                 for index in range(14,len(bars)):
                     bar=bars[index]
                     if not actionable_bar(bar["ts"], enabled_at, now, max_age):
                         continue
                     source_bar=f"NSE:{item['instrument_token']}:{bar['ts'].isoformat()}:{bar['source']}"
                     if ENTRY_METHOD_RSI_WILLR in pending:
-                        exists=conn.execute("""SELECT 1 FROM oiis_live.intraday_evaluation
-                          WHERE watchlist_item_id=%s AND source_bar_id=%s AND entry_method=%s""",
-                          (item["watchlist_item_id"],source_bar,ENTRY_METHOD_RSI_WILLR)).fetchone()
-                        if not exists:
+                        if (source_bar,ENTRY_METHOD_RSI_WILLR) not in seen:
                             rsi=wilder_rsi(closes[:index+1])
                             willr=williams_r(highs[:index+1],lows[:index+1],closes[:index+1])
                             eligible=intraday_entry_eligible(rsi,willr,float(item["rsi_max"]),float(item["willr_max"]))
@@ -328,17 +354,18 @@ class Runtime:
                             result["evaluated"]+=1
                             if eligible:
                                 result["eligible"]+=1
-                                if submit and self.claim_and_submit(conn,item,bar,rsi,willr,source_bar,
-                                  ENTRY_METHOD_RSI_WILLR)=="SUBMITTED":
-                                    result["submitted"]+=1
-                                    result["method_submitted"][ENTRY_METHOD_RSI_WILLR]+=1
+                                if submit:
+                                    submission=self.claim_and_submit(conn,item,bar,rsi,willr,source_bar,
+                                      ENTRY_METHOD_RSI_WILLR)
+                                    if submission=="SUBMITTED":
+                                        result["submitted"]+=1
+                                        result["method_submitted"][ENTRY_METHOD_RSI_WILLR]+=1
+                                    elif submission=="FAILED":
+                                        result["failed"]+=1
                                 pending.remove(ENTRY_METHOD_RSI_WILLR)
                     if (ENTRY_METHOD_PRICE_MOMENTUM in pending
                         and str(item.get("direction") or "LONG").upper()=="LONG"):
-                        exists=conn.execute("""SELECT 1 FROM oiis_live.intraday_evaluation
-                          WHERE watchlist_item_id=%s AND source_bar_id=%s AND entry_method=%s""",
-                          (item["watchlist_item_id"],source_bar,ENTRY_METHOD_PRICE_MOMENTUM)).fetchone()
-                        if not exists:
+                        if (source_bar,ENTRY_METHOD_PRICE_MOMENTUM) not in seen:
                             momentum=price_momentum_entry_evaluation(bars[:index+1],previous_close)
                             checks=momentum.get("checks") or {}
                             eligible=bool(momentum.get("eligible"))
@@ -358,14 +385,29 @@ class Runtime:
                             result["evaluated"]+=1
                             if eligible:
                                 result["eligible"]+=1
-                                if submit and self.claim_and_submit(conn,item,bar,None,None,source_bar,
-                                  ENTRY_METHOD_PRICE_MOMENTUM,entry_evidence=momentum)=="SUBMITTED":
-                                    result["submitted"]+=1
-                                    result["method_submitted"][ENTRY_METHOD_PRICE_MOMENTUM]+=1
+                                if submit:
+                                    submission=self.claim_and_submit(conn,item,bar,None,None,source_bar,
+                                      ENTRY_METHOD_PRICE_MOMENTUM,entry_evidence=momentum)
+                                    if submission=="SUBMITTED":
+                                        result["submitted"]+=1
+                                        result["method_submitted"][ENTRY_METHOD_PRICE_MOMENTUM]+=1
+                                    elif submission=="FAILED":
+                                        result["failed"]+=1
                                 pending.remove(ENTRY_METHOD_PRICE_MOMENTUM)
                     if not pending:
                         break
-        self.heartbeat("oiis-live-monitor","OK",result)
+            if not submit:
+                conn.rollback()  # A diagnostic poll must not consume an entry.
+        result["stale_feed_symbols"] = stale_feeds
+        if stale_feeds and submit:
+            self.record_error("oiis-live-monitor", RuntimeError("watchlist minute feed stale"),
+                              {"symbols":stale_feeds,"trade_date":str(trade_date)})
+        result["duration_ms"] = round((time.monotonic()-started)*1000)
+        if result["submitted"] or result["failed"] or result["duration_ms"] > 5000:
+            LOG.info("monitor %s", json.dumps(result))
+        self.heartbeat("oiis-live-monitor","ERROR" if result["failed"] or stale_feeds else "OK",result,success=not (result["failed"] or stale_feeds))
+        self.heartbeat("oiis-live-paper-submit", "ERROR" if result["failed"] else "OK",
+                       result, success=result["failed"] == 0)
         return result
 
     def claim_and_submit(self, conn: Any, item: dict[str,Any], bar: dict[str,Any], rsi: float | None, willr: float | None, source_bar: str,
@@ -386,21 +428,32 @@ class Runtime:
           ON CONFLICT(policy_id,trade_date,symbol,entry_method) DO NOTHING RETURNING entry_claim_id""",
           (item["watchlist_item_id"],POLICY_ID,item["trade_date"],item["symbol"],entry_rule,bar["ts"],source_bar,key,event,json.dumps(payload))).fetchone()
         if not claim:
-            claim=conn.execute("""SELECT entry_claim_id,status FROM oiis_live.entry_claim
-              WHERE policy_id=%s AND trade_date=%s AND symbol=%s AND entry_method=%s""",
+            claim=conn.execute("""SELECT entry_claim_id,status,request_payload,signal_ts FROM oiis_live.entry_claim
+              WHERE policy_id=%s AND trade_date=%s AND symbol=%s AND entry_method=%s FOR UPDATE""",
               (POLICY_ID,item["trade_date"],item["symbol"],entry_rule)).fetchone()
             if not claim or claim["status"]!="FAILED_RETRYABLE": return "DUPLICATE"
+            payload = claim["request_payload"]
+            if not actionable_bar(claim["signal_ts"],claim["signal_ts"],datetime.now(IST),
+                                  timedelta(minutes=self.policy["auto_paper_entry"]["maximum_signal_age_minutes"])):
+                return "INELIGIBLE"
         conn.execute("""UPDATE oiis_live.entry_claim SET status='SUBMITTING',attempts=attempts+1,
-          signal_ts=%s,source_bar_id=%s,request_payload=%s::jsonb,last_error=NULL,updated_at=now()
-          WHERE entry_claim_id=%s""",(bar["ts"],source_bar,json.dumps(payload),claim["entry_claim_id"]))
+          last_error=NULL,updated_at=now() WHERE entry_claim_id=%s""",(claim["entry_claim_id"],))
+        conn.commit()  # Persist the original signal and key before the external side effect.
         try:
             correlation=str(uuid.uuid5(uuid.NAMESPACE_URL,event))
             response=httpx.post(f"{self.paper_api_url}/api/v1/trade-intents",json=payload,headers={"Authorization":f"Bearer {self.paper_token}","Idempotency-Key":key,"X-Correlation-Id":correlation},timeout=20)
             body=response.json(); response.raise_for_status()
             conn.execute("""UPDATE oiis_live.entry_claim SET status='ACCEPTED',paper_trade_intent_id=%s,paper_trade_group_id=%s,response_payload=%s::jsonb,last_error=NULL,updated_at=now() WHERE entry_claim_id=%s""",(body.get("trade_intent_id"),body.get("trade_group_id"),json.dumps(body),claim["entry_claim_id"]))
+            conn.commit()
+            LOG.info("paper accepted symbol=%s method=%s group=%s",item["symbol"],entry_rule,body.get("trade_group_id"))
             return "SUBMITTED"
         except Exception as exc:
-            conn.execute("UPDATE oiis_live.entry_claim SET status='FAILED_RETRYABLE',last_error=%s,updated_at=now() WHERE entry_claim_id=%s",(str(exc)[:1000],claim["entry_claim_id"])); self.record_error("oiis-live-paper-submit",exc,{"symbol":item["symbol"],"trade_date":str(item["trade_date"]),"entry_method":entry_rule}); return "FAILED"
+            status = submission_failure_status(exc)
+            conn.execute("UPDATE oiis_live.entry_claim SET status=%s,last_error=%s,updated_at=now() WHERE entry_claim_id=%s",
+                         (status,str(exc)[:1000],claim["entry_claim_id"]))
+            conn.commit()
+            self.record_error("oiis-live-paper-submit",exc,{"symbol":item["symbol"],"trade_date":str(item["trade_date"]),"entry_method":entry_rule})
+            return "FAILED"
 
     def process_commands(self) -> int:
         completed=0
@@ -417,6 +470,33 @@ class Runtime:
                 except Exception as exc:
                     conn.execute("UPDATE oiis_live.command_queue SET status='FAILED',result=%s::jsonb,completed_at=now() WHERE command_id=%s",(json.dumps({"error":str(exc)}),row["command_id"])); self.record_error("oiis-live-command",exc,{"command_id":str(row["command_id"])})
         return completed
+
+    def recover_accepted_claims(self) -> int:
+        # Recover an acknowledgement lost after the paper API committed a trade.
+        with self.pool.connection() as conn:
+            matches=conn.execute("""UPDATE oiis_live.entry_claim e SET status='ACCEPTED',
+                paper_trade_intent_id=i.trade_intent_id,paper_trade_group_id=g.trade_group_id,
+                signal_ts=(i.request_json->'signal'->>'occurred_at')::timestamptz,
+                source_bar_id=i.request_json->'metadata'->>'source_bar_id',request_payload=i.request_json,
+                response_payload=jsonb_build_object('reconciled',true,'prior_status',e.status,
+                    'prior_signal_ts',e.signal_ts,'prior_error',e.last_error),
+                last_error=NULL,updated_at=clock_timestamp()
+                FROM paper_trading.trade_intents i JOIN paper_trading.trade_groups g USING(trade_intent_id)
+                WHERE e.status IN ('CLAIMED','SUBMITTING','FAILED_RETRYABLE','REJECTED')
+                AND e.paper_trade_group_id IS NULL AND i.client_event_id=e.client_event_id
+                AND i.idempotency_key=e.idempotency_key AND i.account_id='paper-main'
+                AND i.source_service='oiis-live' AND i.environment='PAPER' AND i.status='ACCEPTED'
+                AND i.strategy_id='OIIS_LIVE' AND i.request_json->'legs'->0->>'side'='BUY'
+                AND i.request_json->'legs'->0->'instrument'->>'symbol'=e.symbol
+                AND i.request_json->'metadata'->>'entry_rule'=e.entry_method
+                AND i.request_json->'metadata'->>'source_bar_id' IS NOT NULL
+                RETURNING e.symbol,e.entry_method,e.paper_trade_group_id""").fetchall()
+        for row in matches:
+            LOG.info("paper acknowledgement recovered symbol=%s method=%s group=%s",
+                     row["symbol"],row["entry_method"],row["paper_trade_group_id"])
+        if matches:
+            self.heartbeat("oiis-live-paper-submit","OK",{"recovered":len(matches)})
+        return len(matches)
 
     def reconcile(self) -> dict[str,int]:
         with self.pool.connection() as conn:
@@ -504,18 +584,38 @@ def required(name: str) -> str:
     return value
 
 
+def submission_failure_status(error: Exception) -> str:
+    """Do not blindly retry HTTP 409 idempotency conflicts with a changed payload."""
+    if isinstance(error, httpx.HTTPStatusError) and error.response.status_code == 409:
+        return "REJECTED"
+    return "FAILED_RETRYABLE"
+
+
+def validate_webhook_url(value: str) -> str:
+    """Accept only an explicitly configured HTTPS webhook URL."""
+    value=value.strip()
+    if not value:
+        return ""
+    parsed=urlsplit(value)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+        raise ValueError("OIIS_ERROR_WEBHOOK_URL must be an HTTPS URL without embedded credentials")
+    return value
+
+
 def next_session(conn: Any, after: date) -> date:
-    row=conn.execute("SELECT min(session_date) d FROM paper_trading.trading_sessions WHERE exchange='NSE' AND session_date>%s AND NOT is_holiday",(after,)).fetchone()
-    if row and row["d"]: return row["d"]
     value=after+timedelta(days=1)
-    while value.weekday()>=5: value+=timedelta(days=1)
+    while not is_trading_session(conn,value):
+        value+=timedelta(days=1)
     return value
 
 
 def is_trading_session(conn: Any, value: date) -> bool:
-    row = conn.execute("""SELECT NOT is_holiday AS open FROM paper_trading.trading_sessions
-      WHERE exchange='NSE' AND session_date=%s LIMIT 1""", (value,)).fetchone()
-    return bool(row["open"]) if row else value.weekday() < 5
+    row = conn.execute("""SELECT coalesce(
+        (SELECT is_trading_day FROM market_status.exchange_session_calendar WHERE trade_date=%s),
+        (SELECT NOT is_holiday FROM paper_trading.trading_sessions WHERE exchange='NSE' AND session_date=%s),
+        (SELECT is_trading_day FROM public.trading_calendar WHERE trade_date=%s), %s) AS open""",
+        (value,value,value,value.weekday()<5)).fetchone()
+    return bool(row["open"])
 
 
 def resolve_decision_as_of(
@@ -553,8 +653,12 @@ def in_market(now: datetime) -> bool:
 def run_loop(runtime: Runtime) -> None:
     LOG.info("OIIS live service started in PAPER mode")
     expired_for_date: date | None = None
+    last_reconcile = float("-inf")
     while True:
         try:
+            if time.monotonic()-last_reconcile >= 60:
+                runtime.recover_accepted_claims()
+                last_reconcile = time.monotonic()
             now=datetime.now(IST)
             if expired_for_date != now.date():
                 runtime.expire_prior_watchlists(now.date())
@@ -562,17 +666,17 @@ def run_loop(runtime: Runtime) -> None:
             runtime.process_commands()
             with runtime.pool.connection() as conn:
                 trading_day = is_trading_session(conn, now.date())
-            if trading_day:
-                for run_slot in due_selection_slots(now):
-                    with runtime.pool.connection() as conn:
-                        exists=conn.execute("""SELECT 1 FROM oiis_live.selection_run
-                          WHERE policy_id=%s AND trade_date=%s
-                            AND run_slot=%s AND status='COMPLETED'""",
-                          (POLICY_ID,now.date(),run_slot)).fetchone()
-                    if not exists:
-                        runtime.run_selection(trade_date=now.date(),run_slot=run_slot)
+                slots = due_selection_slots(now) if trading_day else []
+                completed = {r["run_slot"] for r in conn.execute("""SELECT run_slot FROM oiis_live.selection_run
+                    WHERE policy_id=%s AND trade_date=%s AND status='COMPLETED'""",
+                    (POLICY_ID,now.date())).fetchall()} if slots else set()
+            for slot in slots:
+                if slot not in completed:
+                    runtime.run_selection(trade_date=now.date(),run_slot=slot)
             if trading_day and in_market(now): runtime.monitor_once(now.date(),submit=True)
-            runtime.deliver_errors(); runtime.heartbeat("oiis-live","OK",{"mode":"PAPER","now_ist":now.isoformat()})
+            runtime.deliver_errors()
+            runtime.heartbeat("oiis-live","OK",{"mode":"PAPER","now_ist":now.isoformat(),
+                "trading_day":trading_day,"monitor_window":trading_day and in_market(now)})
         except Exception as exc:
             LOG.exception("OIIS live loop failed"); runtime.record_error("oiis-live",exc)
             try: runtime.deliver_errors()
@@ -587,7 +691,21 @@ def main() -> None:
     sub.add_parser("refresh-universe")
     monitor=sub.add_parser("monitor-once"); monitor.add_argument("--trade-date",type=date.fromisoformat); monitor.add_argument("--no-submit",action="store_true")
     sub.add_parser("verify-config"); sub.add_parser("reconcile")
-    args=parser.parse_args(); runtime=Runtime()
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    args=parser.parse_args()
+    if args.command == "verify-config":
+        with psycopg.connect(required("DATABASE_URL"), connect_timeout=4,
+                             options="-c statement_timeout=4000 -c default_transaction_read_only=on") as conn:
+            row = conn.execute("""SELECT h.status, clock_timestamp()-h.updated_at < interval '5 minutes'
+                AND (coalesce((h.detail->>'monitor_window')::boolean,false)=false OR EXISTS
+                    (SELECT 1 FROM oiis_live.service_heartbeat m WHERE m.service_name='oiis-live-monitor'
+                     AND m.status='OK' AND clock_timestamp()-m.updated_at < interval '5 minutes'))
+                FROM oiis_live.service_heartbeat h WHERE h.service_name='oiis-live' """).fetchone()
+        if not row or row != ("OK",True):
+            raise SystemExit("OIIS loop heartbeat missing, stale or in error")
+        print(json.dumps({"status":"PASS","database":True,"heartbeat":"fresh"}))
+        return
+    runtime=Runtime()
     try:
         if args.command=="run": run_loop(runtime)
         elif args.command=="select": print(json.dumps(runtime.run_selection(args.signal_date,args.trade_date,args.run_slot,args.decision_as_of),indent=2,default=str))

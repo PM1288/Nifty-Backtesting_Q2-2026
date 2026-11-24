@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import logging
 from datetime import date, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -14,7 +15,6 @@ from nifty_stratlab.oiis import OIISFeature, evaluate_feature
 
 from .policy import (
     DIRECTIONAL_EDGE_THRESHOLDS,
-    EXTENSION_ATR_THRESHOLDS,
     OFACTOR_THRESHOLDS,
     VOLUME_PERCENTILE_THRESHOLDS,
     classify_daily,
@@ -23,6 +23,7 @@ from .policy import (
 )
 
 IST = ZoneInfo("Asia/Kolkata")
+LOG = logging.getLogger("oiis-live.selector")
 NIFTY50_CSV_URL = "https://archives.nseindia.com/content/indices/ind_nifty50list.csv"
 OPPORTUNITY_REVIEW_LIMIT = 15
 
@@ -50,7 +51,7 @@ def refresh_universe(conn: Any, universe_mode: str = "NIFTY50_FNO_INTERSECTION")
             source=CASE WHEN oiis_live.universe_member.is_nifty50 THEN 'FNO_AND_NIFTY50' ELSE excluded.source END,
             refreshed_at=now()""", (row["symbol"],))
     try:
-        response = httpx.get(NIFTY50_CSV_URL, timeout=20, follow_redirects=True)
+        response = httpx.get(NIFTY50_CSV_URL, timeout=20, follow_redirects=False)
         response.raise_for_status()
         frame = pd.read_csv(io.StringIO(response.text))
         symbols = sorted({str(value).strip().upper() for value in frame["Symbol"] if str(value).strip()})
@@ -65,8 +66,8 @@ def refresh_universe(conn: Any, universe_mode: str = "NIFTY50_FNO_INTERSECTION")
               ON CONFLICT(symbol) DO UPDATE SET is_nifty50=true,
                 source=CASE WHEN oiis_live.universe_member.is_fno THEN 'FNO_AND_NIFTY50' ELSE excluded.source END,
                 refreshed_at=now()""", (symbol,))
-    except Exception:
-        pass
+    except Exception as exc:
+        LOG.warning("NIFTY 50 constituent refresh failed (%s); retaining the previous reference set", type(exc).__name__)
     if universe_mode == "ALL_FNO":
         conn.execute("UPDATE oiis_live.universe_member SET active=is_fno")
     else:

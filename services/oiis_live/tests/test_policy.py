@@ -1,3 +1,4 @@
+import json
 from oiis_live.policy import (
     DIRECTIONAL_EDGE_THRESHOLDS,
     OFACTOR_THRESHOLDS,
@@ -102,6 +103,7 @@ def test_price_momentum_requires_all_three_strict_confirmations() -> None:
     result = price_momentum_entry_evaluation(bars,100)
     assert result["eligible"] is True
     assert all(result["checks"].values())
+    assert json.loads(json.dumps(result))["current_hour_closed_at"] == bars[-1]["ts"].isoformat()
     assert result["current_hour_close"] == 103
     assert result["previous_hour_close"] == 101
 

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
+from time import monotonic
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -12,6 +13,15 @@ from psycopg import sql
 from .domain import adverse_return, favourable_return, leg_pnl, money, target_crossed, tax_provision
 from .events import append_event
 from .market_quality import valid_ohlc
+
+_SESSION_MISSING_RECHECK_SECONDS = 30.0
+
+
+class _SessionCacheEntry:
+    def __init__(self, bounds: tuple[time, time] | None, available: bool, expires_at: float | None = None):
+        self.bounds = bounds
+        self.available = available
+        self.expires_at = expires_at
 
 
 def _bar_id(row: dict[str, Any]) -> str:
@@ -49,6 +59,7 @@ class Monitor:
     def __init__(self, db: Any, settings: Any, worker_id: str | None = None) -> None:
         self.db, self.settings, self.schema = db, settings, settings.PAPER_TRADING_SCHEMA
         self.worker_id = worker_id or f"monitor-{uuid.uuid4()}"
+        self._session_cache: dict[date, _SessionCacheEntry] = {}
 
     def _market_table(self) -> sql.Composed:
         return sql.SQL("{}.{}").format(
@@ -56,12 +67,66 @@ class Monitor:
             sql.Identifier(self.settings.MARKET_DATA_BAR_TABLE),
         )
 
+    def _session_status(self, conn: Any, timestamp: datetime) -> bool | None:
+        timezone = ZoneInfo(getattr(self.settings, "EXCHANGE_TIMEZONE", "Asia/Kolkata"))
+        local_timestamp = timestamp.astimezone(timezone)
+        session_date = local_timestamp.date()
+        now = monotonic()
+        cached = self._session_cache.get(session_date)
+        if cached is None or (
+            not cached.available and cached.expires_at is not None and cached.expires_at <= now
+        ):
+            row = conn.execute(
+                "SELECT is_trading_day,regular_open_time,regular_close_trigger_time "
+                "FROM market_status.exchange_session_calendar WHERE trade_date=%s",
+                (session_date,),
+            ).fetchone()
+            bounds = None
+            if row is None or (
+                row["is_trading_day"]
+                and (row["regular_open_time"] is None or row["regular_close_trigger_time"] is None)
+            ):
+                cached = _SessionCacheEntry(
+                    None,
+                    False,
+                    now + _SESSION_MISSING_RECHECK_SECONDS,
+                )
+            else:
+                if row["is_trading_day"]:
+                    bounds = (row["regular_open_time"], row["regular_close_trigger_time"])
+                cached = _SessionCacheEntry(bounds, True)
+            if len(self._session_cache) >= 64:
+                self._session_cache.pop(next(iter(self._session_cache)))
+            self._session_cache[session_date] = cached
+        if not cached.available:
+            return None
+        bounds = cached.bounds
+        local_time = local_timestamp.replace(tzinfo=None).time()
+        return bounds is not None and bounds[0] <= local_time <= bounds[1]
+
+    def _is_session_time(self, conn: Any, timestamp: datetime) -> bool:
+        return self._session_status(conn, timestamp) is True
+
     def _candidate(self, conn: Any, order: dict[str, Any]) -> dict[str, Any] | None:
         query = sql.SQL(
-            "SELECT ts,exchange,symbol_token,open,high,low,close,volume,source FROM {} WHERE exchange=%s AND symbol_token=%s AND ts>%s ORDER BY ts LIMIT 1"
+            "SELECT b.ts,b.exchange,b.symbol_token,b.open,b.high,b.low,b.close,b.volume,b.source "
+            "FROM {} b JOIN market_status.exchange_session_calendar c "
+            "ON c.trade_date=(b.ts AT TIME ZONE %s)::date AND c.is_trading_day "
+            "AND (b.ts AT TIME ZONE %s)::time>=c.regular_open_time "
+            "AND (b.ts AT TIME ZONE %s)::time<=c.regular_close_trigger_time "
+            "WHERE b.exchange=%s AND b.symbol_token=%s AND b.ts>%s AND b.ts<=now() "
+            "AND b.low>0 AND b.low<=least(b.open,b.close) AND b.high>=greatest(b.open,b.close) ORDER BY b.ts LIMIT 1"
         ).format(self._market_table())
         candidate = conn.execute(
-            query, (order["exchange"], order["instrument_token"], order["accepted_at"])
+            query,
+            (
+                getattr(self.settings, "EXCHANGE_TIMEZONE", "Asia/Kolkata"),
+                getattr(self.settings, "EXCHANGE_TIMEZONE", "Asia/Kolkata"),
+                getattr(self.settings, "EXCHANGE_TIMEZONE", "Asia/Kolkata"),
+                order["exchange"],
+                order["instrument_token"],
+                order["accepted_at"],
+            ),
         ).fetchone()
         return candidate if candidate and valid_ohlc(candidate) else None
 
@@ -483,25 +548,43 @@ class Monitor:
                         limit_per_instrument,
                     ),
                 ).fetchall()
+                last_consumed_bar = None
                 for bar in bars:
-                    self._process_bar(conn, bar)
+                    if valid_ohlc(bar):
+                        session_open = self._session_status(conn, bar["ts"])
+                        if session_open is None:
+                            break
+                        self._process_bar(conn, bar, session_open=session_open)
+                    else:
+                        self._process_bar(conn, bar, session_open=False)
+                    last_consumed_bar = bar
                     processed += 1
-                if bars:
+                if last_consumed_bar is not None:
                     conn.execute(
                         f"UPDATE {self.schema}.instrument_monitor_cursors SET last_bar_ts=%s,last_bar_id=%s,updated_at=now() WHERE exchange=%s AND instrument_token=%s",
                         (
-                            bars[-1]["ts"],
-                            _bar_id(bars[-1]),
+                            last_consumed_bar["ts"],
+                            _bar_id(last_consumed_bar),
                             instrument["exchange"],
                             instrument["instrument_token"],
                         ),
                     )
         return processed
 
-    def _process_bar(self, conn: Any, bar: dict[str, Any]) -> None:
+    def _process_bar(
+        self,
+        conn: Any,
+        bar: dict[str, Any],
+        *,
+        session_open: bool | None = None,
+    ) -> None:
         # Invalid source lows can manufacture 100% short opportunities. Preserve
         # the source, but exclude it from marks, extrema and target evaluation.
         if not valid_ohlc(bar):
+            return
+        if session_open is None:
+            session_open = self._is_session_time(conn, bar["ts"])
+        if not session_open:
             return
         bar_id = _bar_id(bar)
         inserted = conn.execute(
@@ -765,13 +848,12 @@ class Monitor:
     def check_freshness(self, force: bool = False) -> dict[str, int]:
         """Create one stale incident and one recovery event per degraded interval."""
         local_now = datetime.now(UTC).astimezone(ZoneInfo(self.settings.EXCHANGE_TIMEZONE))
-        in_session = local_now.weekday() < 5 and (9, 15) <= (local_now.hour, local_now.minute) <= (15, 30)
-        if not force and not in_session:
-            return {"stale": 0, "recovered": 0}
         result = {"stale": 0, "recovered": 0}
         stale_changed: list[dict[str, Any]] = []
         recovered_changed: list[dict[str, Any]] = []
         with self.db.connection() as conn:
+            if not force and not self._is_session_time(conn, local_now):
+                return result
             instruments = conn.execute(
                 f"SELECT exchange,instrument_token FROM {self.schema}.instrument_monitor_cursors"
             ).fetchall()
@@ -850,10 +932,20 @@ class Monitor:
                 if not entry.is_finite() or entry <= 0:
                     continue
                 bar = conn.execute(
-                    sql.SQL("SELECT ts,exchange,symbol_token,open,high,low,close,source FROM {} WHERE exchange=%s AND symbol_token=%s AND ts>=%s AND ts<=now() AND ts>COALESCE(%s::timestamptz,'epoch'::timestamptz) AND open>0 AND high>0 AND low>0 AND close>0 AND low<=least(open,close) AND high>=greatest(open,close) ORDER BY ts DESC LIMIT 1").format(self._market_table()),
-                    (leg["exchange"], leg["instrument_token"], leg["opened_at"], leg["last_mark_at"]),
+                    sql.SQL(
+                        "SELECT b.ts,b.exchange,b.symbol_token,b.open,b.high,b.low,b.close,b.source FROM {} b "
+                        "JOIN market_status.exchange_session_calendar c ON c.trade_date=(b.ts AT TIME ZONE %s)::date "
+                        "AND c.is_trading_day AND (b.ts AT TIME ZONE %s)::time BETWEEN c.regular_open_time AND c.regular_close_trigger_time "
+                        "WHERE b.exchange=%s AND b.symbol_token=%s AND b.ts>=%s AND b.ts<=now() "
+                        "AND b.ts>COALESCE(%s::timestamptz,'epoch'::timestamptz) "
+                        "AND b.low>0 AND b.low<=least(b.open,b.close) AND b.high>=greatest(b.open,b.close) "
+                        "ORDER BY ts DESC LIMIT 1"
+                    ).format(self._market_table()),
+                    (getattr(self.settings, "EXCHANGE_TIMEZONE", "Asia/Kolkata"),
+                     getattr(self.settings, "EXCHANGE_TIMEZONE", "Asia/Kolkata"), leg["exchange"], leg["instrument_token"],
+                     leg["opened_at"], leg["last_mark_at"]),
                 ).fetchone()
-                if not bar or not valid_ohlc(bar):
+                if not bar or not valid_ohlc(bar) or not self._is_session_time(conn, bar["ts"]):
                     continue
                 close = Decimal(bar["close"])
                 units = Decimal(leg["remaining_quantity"])

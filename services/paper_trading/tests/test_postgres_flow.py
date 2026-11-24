@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import pytest
 from psycopg import connect
@@ -17,6 +18,23 @@ pytestmark = pytest.mark.skipif(not os.getenv("TEST_DATABASE_URL"), reason="TEST
 
 
 def _reset_market_tables(raw: object) -> None:
+    raw.execute("CREATE SCHEMA IF NOT EXISTS market_status")
+    raw.execute(
+        """CREATE TABLE IF NOT EXISTS market_status.exchange_session_calendar(
+           trade_date date PRIMARY KEY, is_trading_day boolean NOT NULL,
+           regular_open_time time, regular_close_trigger_time time,
+           special_session boolean NOT NULL DEFAULT false, source text NOT NULL DEFAULT 'pytest')"""
+    )
+    raw.execute(
+        """INSERT INTO market_status.exchange_session_calendar
+           (trade_date,is_trading_day,regular_open_time,regular_close_trigger_time,special_session,source)
+           SELECT day::date,TRUE,TIME '09:15',TIME '15:30',FALSE,'pytest'
+           FROM generate_series(CURRENT_DATE-INTERVAL '3 years',CURRENT_DATE+INTERVAL '1 year',INTERVAL '1 day') day
+           WHERE EXTRACT(ISODOW FROM day) BETWEEN 1 AND 5
+           ON CONFLICT (trade_date) DO UPDATE SET is_trading_day=EXCLUDED.is_trading_day,
+             regular_open_time=EXCLUDED.regular_open_time,
+             regular_close_trigger_time=EXCLUDED.regular_close_trigger_time"""
+    )
     raw.execute("DROP TABLE IF EXISTS public.depth_5_snapshots")
     raw.execute("DROP TABLE IF EXISTS public.quote_snapshots")
     raw.execute("DROP TABLE IF EXISTS public.bars_1m")
@@ -41,6 +59,13 @@ def _reset_market_tables(raw: object) -> None:
            cumulative_quantity bigint,cumulative_notional numeric,
            PRIMARY KEY(exchange,symbol_token,ts,side,level))"""
     )
+
+
+def _market_now() -> datetime:
+    local_day = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+    while local_day.weekday() >= 5:
+        local_day += timedelta(days=1)
+    return datetime.combine(local_day, time(10, 0), tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(UTC)
 
 
 def _settings(dsn: str) -> Settings:
@@ -120,7 +145,7 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
     db.open()
     db.migrate()
     service = PaperService(db, settings.PAPER_TRADING_SCHEMA)
-    now = datetime.now(UTC)
+    now = _market_now()
     response, code = service.create_trade(_intent(now), "integration-create-0001")
     assert code == 202
     group_id = response["trade_group_id"]
@@ -209,6 +234,36 @@ def test_postgres_entry_targets_close_and_continued_observation() -> None:
     db.close()
 
 
+def test_candidate_skips_off_session_bars() -> None:
+    dsn = os.environ["TEST_DATABASE_URL"]
+    with connect(dsn, autocommit=True) as raw:
+        _reset_market_tables(raw)
+        local_day = _market_now().date()
+        off_session = datetime.combine(
+            local_day, time(8, 30), tzinfo=ZoneInfo("Asia/Kolkata")
+        ).astimezone(UTC)
+        in_session = datetime.combine(
+            local_day, time(9, 15), tzinfo=ZoneInfo("Asia/Kolkata")
+        ).astimezone(UTC)
+        for ts in (off_session, in_session):
+            raw.execute(
+                "INSERT INTO public.bars_1m VALUES (%s,'NSE','TEST1',100,101,99,100,1000,'TEST')",
+                (ts,),
+            )
+
+    db = Database(_settings(dsn))
+    db.open()
+    monitor = Monitor(db, _settings(dsn), "pytest-session-candidate")
+    with db.connection() as conn:
+        candidate = monitor._candidate(conn, {
+            "exchange": "NSE", "instrument_token": "TEST1",
+            "accepted_at": off_session - timedelta(minutes=1),
+        })
+    assert candidate is not None
+    assert candidate["ts"] == in_session
+    db.close()
+
+
 def test_incremental_multileg_group_commit() -> None:
     dsn = os.environ["TEST_DATABASE_URL"]
     with connect(dsn, autocommit=True) as raw:
@@ -218,7 +273,7 @@ def test_incremental_multileg_group_commit() -> None:
     db.open()
     db.migrate()
     service = PaperService(db, settings.PAPER_TRADING_SCHEMA)
-    now = datetime.now(UTC)
+    now = _market_now()
     request = BuildingGroupRequest.model_validate(
         {
             "schema_version": "1.0",
@@ -301,7 +356,7 @@ def test_execution_target_closes_only_actual_position_and_higher_analytics_conti
     db = Database(settings)
     db.open()
     db.migrate()
-    now = datetime.now(UTC)
+    now = _market_now()
     intent = _intent(now)
     intent.client_event_id = "execution-target-1"
     intent.strategy.signal_id = "execution-target-signal-1"

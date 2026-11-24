@@ -7034,3 +7034,7 @@ The shared dashboard includes a scoped manifest, Apple icons, mobile installatio
 ## 2026-11-24 · Browser paper alerts and mobile charts
 
 Apply db/sql/067_browser_paper_alerts.sql before the dashboard release. Paper alerts provides per-device enable, test and disable controls. The dispatcher uses the existing paper event outbox and sends generic lock-screen notifications for recent entries and target hits. Monitor browser_paper_push_delivery and browser_paper_push_poll_failed in the dashboard logs. Mobile chart acceptance covers crypto, strike charts, touch controls and rotation in tools/playwright/mobile-paper-charts.mjs.
+
+## 2026-11-24 · Paper capture and reconciliation
+
+Trade counts exclude legless system summary envelopes. The trade inspector and methodology audit flag fills and target hits outside governed exchange sessions or without calendar coverage. Paper monitoring validates entry, mark and target bars against the exchange calendar. Apply db/sql/068_paper_holiday_incident_correction.sql to classify the November 24 holiday alerts. Recorded executions are preserved for historical review.

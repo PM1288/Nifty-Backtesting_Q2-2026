@@ -66,6 +66,23 @@ export function futuresWorkspacePayload(contracts: Row[], participantRows: Row[]
   return { contracts: jsonSafeContracts, participantRows, rows: participantRows };
 }
 
+// Daily summary envelopes have a group ID for event sequencing but no trade intent or legs.
+const actualTradeGroup = `(g.strategy_id <> 'SYSTEM' or g.trade_intent_id is not null or exists
+  (select 1 from paper_trading.trade_legs leg where leg.trade_group_id=g.trade_group_id))`;
+
+const sessionEvidence = `left join lateral (
+  select count(*) filter (where c.is_trading_day is false or
+    (v.at_time at time zone 'Asia/Kolkata')::time not between c.regular_open_time and c.regular_close_trigger_time)::int as outside_session,
+    count(*) filter (where c.trade_date is null or (c.is_trading_day and
+      (c.regular_open_time is null or c.regular_close_trigger_time is null)))::int as unverified
+  from (
+    select f.filled_at as at_time from paper_trading.paper_fills f where f.trade_leg_id=l.trade_leg_id
+    union all
+    select h.hit_at from paper_trading.target_tracks t join paper_trading.target_hits h using(target_track_id)
+    where t.trade_leg_id=l.trade_leg_id
+  ) v left join market_status.exchange_session_calendar c on c.trade_date=(v.at_time at time zone 'Asia/Kolkata')::date
+) session_evidence on true`;
+
 export function paperTradeProjection(row: Row) {
   const targets = Array.isArray(row.targets) ? row.targets as Row[] : [];
   const entryStrategy = String((row.metadata as Row | undefined)?.entry_rule ?? "UNSPECIFIED");
@@ -419,10 +436,10 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
       const [summary, recent] = await runWithConcurrency([
         () => paperPrisma.$queryRawUnsafe<Row[]>(`
           select
-            (select count(*)::int from paper_trading.trade_groups) as total_groups,
-            (select count(*)::int from paper_trading.trade_groups where status in ('OPEN','PARTIALLY_OPEN','PARTIALLY_CLOSED','PENDING_ENTRY')) as active_groups,
-            (select count(*)::int from paper_trading.trade_groups where status='CLOSED') as closed_groups,
-            (select count(*)::int from paper_trading.trade_groups where status='PENDING_ENTRY') as pending_entry_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup}) as total_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup} and status in ('OPEN','PARTIALLY_OPEN','PARTIALLY_CLOSED','PENDING_ENTRY')) as active_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup} and status='CLOSED') as closed_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup} and status='PENDING_ENTRY') as pending_entry_groups,
             (select count(*)::int from paper_trading.positions where remaining_quantity > 0) as open_positions,
             (select coalesce(sum(realised_pnl),0)::text from paper_trading.positions) as realised_pnl,
             (select coalesce(sum(amount),0)::text from paper_trading.pnl_ledger where entry_kind='REALISED_GROSS') as realised_gross_pnl,
@@ -438,6 +455,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
           from paper_trading.trade_groups g
           left join paper_trading.trade_legs l using(trade_group_id)
           left join paper_trading.positions p using(trade_leg_id)
+          where ${actualTradeGroup}
           group by g.trade_group_id
           order by g.created_at desc limit 5
         `)
@@ -481,16 +499,17 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
       const [summary, statuses, recent, openPositions, stockTrades, targetStatuses, incidents, targetConversion] = await runWithConcurrency([
         () => paperPrisma.$queryRawUnsafe<Row[]>(`
           select
-            (select count(*)::int from paper_trading.trade_groups) as total_groups,
-            (select count(*)::int from paper_trading.trade_groups where status in ('OPEN','PARTIALLY_OPEN','PARTIALLY_CLOSED','PENDING_ENTRY')) as active_groups,
-            (select count(*)::int from paper_trading.trade_groups where status='CLOSED') as closed_groups,
-            (select count(*)::int from paper_trading.trade_groups where status='PENDING_ENTRY') as pending_entry_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup}) as total_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup} and status in ('OPEN','PARTIALLY_OPEN','PARTIALLY_CLOSED','PENDING_ENTRY')) as active_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup} and status='CLOSED') as closed_groups,
+            (select count(*)::int from paper_trading.trade_groups g where ${actualTradeGroup} and status='PENDING_ENTRY') as pending_entry_groups,
             (select count(*)::int from paper_trading.positions where remaining_quantity > 0) as open_positions,
             (select coalesce(sum(realised_pnl),0)::text from paper_trading.positions) as realised_pnl,
             (select coalesce(sum(amount),0)::text from paper_trading.pnl_ledger where entry_kind='REALISED_GROSS') as realised_gross_pnl,
             (select coalesce(sum(unrealised_pnl),0)::text from paper_trading.positions) as unrealised_pnl,
             (select max(last_mark_at) from paper_trading.positions) as latest_mark_at,
-            (select count(*)::int from paper_trading.webhook_outbox where status not in ('DELIVERED','CANCELLED')) as pending_webhooks,
+            (select count(*)::int from paper_trading.webhook_outbox where status in ('PENDING','RETRY','PROCESSING')) as pending_webhooks,
+            (select count(*)::int from paper_trading.webhook_outbox where status='DEAD') as dead_webhooks,
             (select max(delivered_at) from paper_trading.webhook_outbox where status='DELIVERED') as latest_webhook_delivery,
             (select count(*)::int from paper_trading.target_tracks where status in ('ACTIVE','PENDING_ENTRY')) as active_target_tracks,
             (select count(*)::int from paper_trading.target_tracks where status in ('HIT','CLOSED_AT_TARGET')) as completed_target_tracks,
@@ -498,7 +517,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         `),
         () => paperPrisma.$queryRawUnsafe<Row[]>(`
           select status, count(*)::int as count
-          from paper_trading.trade_groups group by status order by count(*) desc, status
+          from paper_trading.trade_groups g where ${actualTradeGroup} group by status order by count(*) desc, status
         `),
         () => paperPrisma.$queryRawUnsafe<Row[]>(`
           select g.trade_group_id::text,g.strategy_id,g.strategy_version,g.asset_class,g.status,g.fully_closed,
@@ -509,6 +528,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
           from paper_trading.trade_groups g
           left join paper_trading.trade_legs l on l.trade_group_id=g.trade_group_id
           left join paper_trading.positions p on p.trade_leg_id=l.trade_leg_id
+          where ${actualTradeGroup}
           group by g.trade_group_id order by g.created_at desc limit 20
         `),
         () => paperPrisma.$queryRawUnsafe<Row[]>(`
@@ -550,6 +570,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                  fno.lotsize::text as fno_lot_size,fno.expiry as fno_lot_expiry,
                  p.opened_quantity::text,p.remaining_quantity::text,p.average_entry_price::text,
                  p.last_mark::text,p.last_mark_at,p.unrealised_pnl::text,p.realised_pnl::text,l.opened_at,
+                 session_evidence.outside_session as outside_session_records,session_evidence.unverified as unverified_session_records,
                  eme.availability_status as entry_book_status,eme.quote_ts as entry_book_quote_ts,
                  eme.quote_age_ms::text as entry_book_quote_age_ms,eme.quote_source as entry_book_quote_source,
                  eme.ltp::text as entry_book_ltp,eme.last_trade_qty::text as entry_book_last_trade_qty,
@@ -620,6 +641,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
           join paper_trading.accounts a using(account_id)
           join paper_trading.instrument_snapshots i using(instrument_snapshot_id)
           left join paper_trading.entry_market_evidence eme using(trade_leg_id)
+          ${sessionEvidence}
           left join lateral (
             select f.lotsize,f.expiry
             from public.instruments f
@@ -912,7 +934,8 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
                i.symbol,i.underlying,i.exchange,i.instrument_token,i.segment,i.expiry,i.strike::text,i.option_type,i.snapshot as instrument_snapshot,
                p.opened_quantity::text,p.closed_quantity::text,p.remaining_quantity::text,
                p.average_entry_price::text,p.last_mark::text,p.last_mark_at,p.unrealised_pnl::text,p.realised_pnl::text,
-               eme.availability_status as entry_book_status,eme.quote_ts as entry_book_quote_ts,
+               session_evidence.outside_session as outside_session_records,session_evidence.unverified as unverified_session_records,
+                 eme.availability_status as entry_book_status,eme.quote_ts as entry_book_quote_ts,
                eme.quote_age_ms::text as entry_book_quote_age_ms,eme.quote_source as entry_book_quote_source,
                eme.ltp::text as entry_book_ltp,eme.last_trade_qty::text as entry_book_last_trade_qty,
                eme.cumulative_volume::text as entry_book_cumulative_volume,
@@ -930,6 +953,7 @@ export function registerWorkspaceRoutes(app: Express, prisma: PrismaClient, auth
         join paper_trading.positions p using(trade_leg_id)
         join paper_trading.instrument_snapshots i using(instrument_snapshot_id)
         left join paper_trading.entry_market_evidence eme using(trade_leg_id)
+          ${sessionEvidence}
         left join paper_trading.observation_trackers o using(trade_leg_id)
         where g.trade_group_id=$1::uuid and g.asset_class='EQUITY'
         order by l.opened_at

@@ -914,6 +914,9 @@ export function PaperTradingCommandCenter() {
       {pageView !== "SIMPLE" && (pageView === "WHAT_GOOD_LOOKS_LIKE" || workbenchContext.section === "methodology-audit") ? <div id="methodology-audit" className={styles.workbenchSection}>
       <header className={styles.workbenchSectionHeader}><span>METHODOLOGY, DATA QUALITY &amp; AUDIT</span><h2>Can this evidence be trusted and reproduced?</h2><p>Definitions, source freshness, versioned formula ownership and direct links to affected evidence are kept together.</p></header>
       <PaperDataQualityPanel data={data} trades={trades} />
+      {trades.some(t => number(t.outside_session_records) || number(t.unverified_session_records)) &&
+        <p>Session audit · {trades.filter(t => number(t.outside_session_records) > 0).length} trades include a recorded fill or target hit outside exchange hours. Calendar coverage is incomplete for {trades.filter(t => number(t.unverified_session_records) > 0).length} trades. See each trade’s entry evidence for counts.</p>}
+      {number(summary.dead_webhooks) > 0 && <p>Webhook delivery history · {number(summary.dead_webhooks)} deliveries exhausted their retries.</p>}
       <RelatedJourney
         title="Related evidence"
         items={[
@@ -3499,6 +3502,8 @@ function EntryMarketBook({ trade }: { trade: AnyRow }) {
         </div>
         <strong data-state={captured ? String(trade.entry_book_status).toLowerCase() : "not-captured"}>{statusLabel}</strong>
       </header>
+      {number(trade.outside_session_records) > 0 && <p role="note">Session audit · {number(trade.outside_session_records)} recorded fills or target hits occurred outside exchange hours. Historical P&amp;L includes the original executions.</p>}
+      {number(trade.unverified_session_records) > 0 && <p role="note">Calendar coverage · {number(trade.unverified_session_records)} fill or target-hit timestamps could not be checked against exchange hours.</p>}
       {!captured ? (
         <div className={styles.entryBookUnavailable}>
           <b>Historical entry book unavailable</b>

@@ -201,7 +201,7 @@ export function OiisLivePage() {
         displayedRun.current = null;
         setCandidates([]);
         if (key) {
-          const details = await fetchOiisLiveCandidates(next.tradeDate);
+          const details = await fetchOiisLiveCandidates(next.tradeDate ?? undefined);
           if (revision !== requestRevision.current) return;
           if (details.runId === run?.run_id) {
             setCandidates(details.candidates);

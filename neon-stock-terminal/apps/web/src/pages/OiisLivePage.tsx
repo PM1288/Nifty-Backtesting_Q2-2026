@@ -186,6 +186,7 @@ export function OiisLivePage() {
   const profiles = useProfileIndex();
   const mwhd = useMwhdRankings(authReady);
   const requestRevision = useRef(0);
+  const displayedRun = useRef<string | null>(null);
 
   const load = useCallback(async (date?: string) => {
     const revision = ++requestRevision.current;
@@ -194,12 +195,20 @@ export function OiisLivePage() {
       const next = await fetchOiisLiveDashboard(date);
       if (revision !== requestRevision.current) return;
       setData(next);
-      setCandidates([]);
-      const details = await fetchOiisLiveCandidates(
-        date || next.tradeDate || undefined,
-      );
-      if (revision !== requestRevision.current) return;
-      setCandidates(details.candidates);
+      const run = next.latestRun;
+      const key = run?.run_id ? JSON.stringify([next.tradeDate, run.run_id, run.completed_at, run.result_hash]) : null;
+      if (displayedRun.current !== key) {
+        displayedRun.current = null;
+        setCandidates([]);
+        if (key) {
+          const details = await fetchOiisLiveCandidates(next.tradeDate);
+          if (revision !== requestRevision.current) return;
+          if (details.runId === run?.run_id) {
+            setCandidates(details.candidates);
+            displayedRun.current = key;
+          }
+        }
+      }
       if (next.tradeDate) setTradeDate(next.tradeDate);
     } catch (caught) {
       if (revision === requestRevision.current) setError(caught instanceof Error ? caught.message : String(caught));
@@ -1072,6 +1081,7 @@ export function OiisLivePage() {
                   <select
                     value={tradeDate}
                     onChange={(event) => {
+                      displayedRun.current = null;
                       setTradeDate(event.target.value);
                       setCandidates([]);
                     }}
